@@ -1,17 +1,70 @@
 import { prisma } from '../../lib/prisma.js'
 import { AppError } from '../../types/errors.js'
 import type { Request } from 'express'
+import { env } from '../../config/env.js'
 import { catalogRepository } from '../catalog/catalog.repository.js'
+import { resolveCatalogProduct } from '../catalog/catalogResolver.service.js'
+import { formatOdooTemplateRef, parseOdooTemplateId } from '../catalog/odooRef.js'
+import { hubCatalogRepository } from '../hub-catalog/hub-catalog.repository.js'
 import { cartRepository } from './cart.repository.js'
 import { mapCartToDTO } from './cart.mappers.js'
 import { repriceCartFromOdoo } from '../catalog/odooPricing.service.js'
 import type { ProductDetailDTO } from '../../types/dto.js'
 
-async function priceMapForCart(items: { productRef: string }[], correlationId: string) {
+async function useHubCatalog(): Promise<boolean> {
+  if (!env.HUB_CATALOG_ENABLED) return false
+  try {
+    return await hubCatalogRepository.hasCatalog()
+  } catch {
+    return false
+  }
+}
+
+function storedProductRef(product: ProductDetailDTO): string {
+  if (product.odooTemplateId != null) {
+    return formatOdooTemplateRef(product.odooTemplateId)
+  }
+  return product.slug
+}
+
+async function priceMapForCart(
+  items: { productRef: string }[],
+  correlationId: string,
+): Promise<Map<string, number>> {
   const map = new Map<string, number>()
   for (const { productRef } of items) {
-    const p = await catalogRepository.findProductBySlug(correlationId, productRef)
+    const p = await resolveCatalogProduct({ correlationId }, productRef)
     if (p) map.set(productRef, p.priceCents)
+  }
+  return map
+}
+
+async function displayMapForCart(
+  items: { productRef: string }[],
+  correlationId: string,
+): Promise<Map<string, { slug: string; name: string }>> {
+  const map = new Map<string, { slug: string; name: string }>()
+
+  if (await useHubCatalog()) {
+    const templateIds = items
+      .map((i) => parseOdooTemplateId(i.productRef))
+      .filter((id): id is number => id != null)
+    const byOdoo = await hubCatalogRepository.findSlugsByOdooTemplateIds(templateIds)
+    for (const line of items) {
+      const tid = parseOdooTemplateId(line.productRef)
+      if (tid != null && byOdoo.has(tid)) {
+        map.set(line.productRef, byOdoo.get(tid)!)
+        continue
+      }
+      const p = await resolveCatalogProduct({ correlationId }, line.productRef)
+      if (p) map.set(line.productRef, { slug: p.slug, name: p.name })
+    }
+    return map
+  }
+
+  for (const { productRef } of items) {
+    const p = await catalogRepository.findProductBySlug(correlationId, productRef)
+    if (p) map.set(productRef, { slug: p.slug, name: p.name })
   }
   return map
 }
@@ -59,8 +112,11 @@ async function dtoFromCartId(req: Request, cartId: string) {
   if (!full) {
     throw new AppError('CART_NOT_FOUND', 'Cart not found', 'Carrello non trovato.', 404, false)
   }
-  const lookup = await priceMapForCart(full.items, req.correlationId)
-  return mapCartToDTO(full, lookup)
+  const [priceLookup, displayLookup] = await Promise.all([
+    priceMapForCart(full.items, req.correlationId),
+    displayMapForCart(full.items, req.correlationId),
+  ])
+  return mapCartToDTO(full, priceLookup, displayLookup)
 }
 
 function resolveVariantRef(product: ProductDetailDTO, variantRef: string | null | undefined) {
@@ -88,14 +144,15 @@ export const cartService = {
     req: Request,
     input: { productRef: string; variantRef?: string | null; quantity: number },
   ) {
-    const product = await catalogRepository.findProductBySlug(req.correlationId, input.productRef)
+    const product = await resolveCatalogProduct(req, input.productRef)
     if (!product) {
       throw new AppError('PRODUCT_NOT_FOUND', 'Unknown product', 'Prodotto non disponibile.', 404, false)
     }
     const cart = await resolveOrCreateCart(req)
     const variantRef = resolveVariantRef(product, input.variantRef)
+    const productRef = storedProductRef(product)
     const existing = await prisma.cartItem.findFirst({
-      where: { cartId: cart.id, productRef: input.productRef, variantRef },
+      where: { cartId: cart.id, productRef, variantRef },
     })
     if (existing) {
       await cartRepository.updateItem(existing.id, {
@@ -104,7 +161,7 @@ export const cartService = {
     } else {
       await cartRepository.addItem({
         cart: { connect: { id: cart.id } },
-        productRef: product.slug,
+        productRef,
         variantRef,
         quantity: input.quantity,
         clientUnitPriceEstimate: product.priceCents,
@@ -151,8 +208,15 @@ export const cartService = {
     const full = await cartRepository.getWithItems(cart.id)
     if (!full || full.items.length === 0) return []
 
-    const productRefs = [...new Set(full.items.map((line) => line.productRef))]
-    return catalogRepository.findRecommendedProducts(req.correlationId, productRefs, { limit: 6 })
+    const display = await displayMapForCart(full.items, req.correlationId)
+    const productSlugs = [
+      ...new Set(
+        full.items.map((line) => display.get(line.productRef)?.slug ?? line.productRef),
+      ),
+    ]
+    return catalogRepository.findRecommendedProducts(req.correlationId, productSlugs, {
+      limit: 6,
+    })
   },
 
   async reprice(req: Request) {
@@ -165,7 +229,7 @@ export const cartService = {
 
     let subtotal = 0
     for (const line of full.items) {
-      const p = await catalogRepository.findProductBySlug(req.correlationId, line.productRef)
+      const p = await resolveCatalogProduct(req, line.productRef)
       const unit = p?.priceCents ?? line.clientUnitPriceEstimate
       if (unit != null) {
         await cartRepository.updateItem(line.id, { clientUnitPriceEstimate: unit })

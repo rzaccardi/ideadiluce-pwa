@@ -2,6 +2,7 @@ import { OdooClientError, toAppError } from '../../adapters/odoo/odooClient.js'
 import { env } from '../../config/env.js'
 import { hubCatalogRepository } from '../hub-catalog/hub-catalog.repository.js'
 import { catalogRepository } from './catalog.repository.js'
+import { composeHubProduct, composeHubProductList } from './catalogComposer.service.js'
 
 async function withOdooAppError<T>(correlationId: string, run: () => Promise<T>): Promise<T> {
   try {
@@ -33,7 +34,8 @@ export const catalogService = {
     options: { categorySlug?: string; q?: string; page: number; pageSize: number },
   ) {
     if (await useHubCatalog()) {
-      return hubCatalogRepository.findProducts(options)
+      const { list, snapshots } = await hubCatalogRepository.findProducts(options)
+      return composeHubProductList({ correlationId }, list, snapshots)
     }
     return withOdooAppError(correlationId, () =>
       catalogRepository.findProducts(correlationId, options),
@@ -41,7 +43,9 @@ export const catalogService = {
   },
   async getProduct(correlationId: string, slug: string) {
     if (await useHubCatalog()) {
-      return hubCatalogRepository.findProductBySlug(slug)
+      const hub = await hubCatalogRepository.findProductBySlug(slug)
+      if (!hub) return null
+      return composeHubProduct({ correlationId }, hub)
     }
     return withOdooAppError(correlationId, () =>
       catalogRepository.findProductBySlug(correlationId, slug),

@@ -15,7 +15,7 @@ import { syncSaleOrderFunnelState } from '../../adapters/odoo/odooFunnelSync.js'
 import { createProviderPaymentSession } from '../../adapters/payments/paymentProviderAdapter.js'
 import type { StripeLineItemInput } from '../../adapters/payments/stripeCheckoutAdapter.js'
 import { shippingService } from '../shipping/shipping.service.js'
-import { catalogRepository } from '../catalog/catalog.repository.js'
+import { resolveCatalogProduct } from '../catalog/catalogResolver.service.js'
 import { repriceCartFromOdoo } from '../catalog/odooPricing.service.js'
 import { checkCartStock } from '../../adapters/odoo/odooInventoryAdapter.js'
 import { env } from '../../config/env.js'
@@ -76,7 +76,7 @@ async function stripeLineItemsForOrder(
 ): Promise<StripeLineItemInput[]> {
   const lines: StripeLineItemInput[] = []
   for (const item of cart.items) {
-    const p = await catalogRepository.findProductBySlug(req.correlationId, item.productRef)
+    const p = await resolveCatalogProduct(req, item.productRef)
     const unit = item.clientUnitPriceEstimate ?? p?.priceCents ?? 0
     if (unit <= 0) continue
     lines.push({

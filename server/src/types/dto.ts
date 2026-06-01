@@ -45,6 +45,8 @@ export type ProductVariantDTO = {
   label: string
   imageUrl: string | null
   attributes: ProductVariantAttributeDTO[]
+  /** ID Odoo `product.product` quando mappato da Hub. */
+  odooVariantId?: number | null
 }
 
 export type PaginatedDTO<T> = {
@@ -64,6 +66,8 @@ export type ProductDetailDTO = ProductCardDTO & {
   sku: string | null
   inStock: boolean
   images: string[]
+  /** ID Odoo `product.template` quando mappato da Hub. */
+  odooTemplateId?: number | null
   variants: ProductVariantDTO[]
 }
 
@@ -74,6 +78,9 @@ export type CartItemDTO = {
   quantity: number
   clientUnitPriceEstimateCents: number | null
   lineTotalEstimateCents: number | null
+  /** Slug Woo per link UI quando productRef è ID Odoo. */
+  productSlug: string | null
+  productName: string | null
 }
 
 export type CartDTO = {

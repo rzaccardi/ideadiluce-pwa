@@ -84,10 +84,10 @@ export function CartPage() {
               >
                 <div>
                   <Link
-                    to={`/prodotto/${line.productRef}`}
+                    to={`/prodotto/${line.productSlug ?? line.productRef}`}
                     className="font-medium text-zinc-900 hover:underline"
                   >
-                    {line.productRef}
+                    {line.productName ?? line.productSlug ?? line.productRef}
                   </Link>
                   {line.variantRef ? (
                     <p className="text-xs text-zinc-500">Variante: {line.variantRef}</p>

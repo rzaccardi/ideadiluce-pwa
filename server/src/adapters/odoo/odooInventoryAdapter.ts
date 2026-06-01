@@ -1,4 +1,5 @@
 import { env } from '../../config/env.js'
+import { parseOdooTemplateId, parseOdooVariantId } from '../../modules/catalog/odooRef.js'
 import { isOdooConfigured, odooExecuteKw, type OdooCallContext } from './odooClient.js'
 
 export type StockCheckLine = {
@@ -14,28 +15,14 @@ export type StockCheckResult = {
   insufficient: Array<{ productRef: string; requested: number; available: number }>
 }
 
-function idFromProductRef(productRef: string): number | null {
-  const match = /-(\d+)$/.exec(productRef) ?? /^p-(\d+)$/.exec(productRef)
-  if (!match) return null
-  const id = Number(match[1])
-  return Number.isInteger(id) && id > 0 ? id : null
-}
-
-function idFromVariantRef(variantRef: string | null | undefined): number | null {
-  const match = variantRef ? /^VAR-(\d+)$/.exec(variantRef) : null
-  if (!match) return null
-  const id = Number(match[1])
-  return Number.isInteger(id) && id > 0 ? id : null
-}
-
 async function resolveVariantId(
   ctx: OdooCallContext,
   productRef: string,
   variantRef?: string | null,
 ): Promise<number | null> {
-  const vid = idFromVariantRef(variantRef)
+  const vid = parseOdooVariantId(variantRef)
   if (vid != null) return vid
-  const productId = idFromProductRef(productRef)
+  const productId = parseOdooTemplateId(productRef)
   if (productId == null) return null
   const rows = await odooExecuteKw<Array<{ product_variant_ids: number[] }>>(
     ctx,

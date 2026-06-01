@@ -151,6 +151,7 @@ function mapProductDetail(
     slug,
     imageUrl,
     images: imageUrl ? [imageUrl] : [],
+    odooTemplateId: row.id,
     longDescription: textOrNull(row.description) ?? textOrNull(row.description_sale),
     sku: row.product_variant_ids?.[0] != null ? `VAR-${row.product_variant_ids[0]}` : null,
     inStock,
@@ -183,6 +184,7 @@ async function resolveProductVariants(
       label: code && !label.includes(code) ? `${label} (${code})` : label,
       imageUrl: null,
       attributes: [],
+      odooVariantId: id,
     }
   })
 }

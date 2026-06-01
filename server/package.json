@@ -11,9 +11,11 @@
     "start": "node dist/server.js",
     "db:generate": "node scripts/with-root-env.mjs generate",
     "db:migrate": "node scripts/with-root-env.mjs migrate dev",
+    "db:migrate:deploy": "node scripts/with-root-env.mjs migrate deploy",
     "db:push": "node scripts/with-root-env.mjs db push",
     "db:seed": "node scripts/with-root-env.mjs db seed",
-    "db:studio": "node scripts/with-root-env.mjs studio"
+    "db:studio": "node scripts/with-root-env.mjs studio",
+    "sync-odoo": "npx tsx scripts/sync-hub-odoo-mapping.ts"
   },
   "dependencies": {
     "@ideadiluce/hub-api": "*",

@@ -1,0 +1,86 @@
+# Idea di Luce — DigitalOcean App Platform
+#
+# Collegamento repo:
+#   1. Control Panel → Apps → Create App → GitHub → seleziona questo repo
+#   2. Se rileva .do/app.yaml, propone "Use existing app spec" — conferma
+#   3. Sostituisci YOUR_GITHUB_ORG sotto e aggiungi i secret (Stripe, Odoo, …) in Settings → Environment
+#
+# Documentazione: docs/deploy-digitalocean.md
+
+name: ideadiluce-pwa
+region: fra1
+
+# Postgres gestito: schema `public` (BFF) + `hub` (catalogo import)
+databases:
+  - name: postgres
+    engine: PG
+    version: "16"
+    production: false
+    # production: true   # staging/prod: decommenta e usa un piano DB adeguato
+
+services:
+  - name: api
+    environment_slug: node-js
+    github:
+      repo: YOUR_GITHUB_ORG/ideadiluce-pwa
+      branch: main
+      deploy_on_push: true
+    # Monorepo: root come cwd (workspaces + .env pattern + hub-api)
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    http_port: 8080
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 20
+      period_seconds: 10
+      timeout_seconds: 5
+    build_command: npm ci && npm run build:server && npm run db:deploy && npm run hub:migrate
+    run_command: node server/dist/server.js
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8080"
+      - key: DATABASE_URL
+        value: ${postgres.DATABASE_URL}
+        scope: RUN_AND_BUILD_TIME
+      - key: HUB_CATALOG_ENABLED
+        value: "true"
+      - key: CLIENT_ORIGIN
+        value: ${shop.PUBLIC_URL}
+      - key: CHECKOUT_REDIRECT_BASE
+        value: ${shop.PUBLIC_URL}
+
+static_sites:
+  - name: shop
+    environment_slug: node-js
+    github:
+      repo: YOUR_GITHUB_ORG/ideadiluce-pwa
+      branch: main
+      deploy_on_push: true
+    build_command: npm ci && npm run build --workspace=client
+    output_dir: client/dist
+    index_document: index.html
+    catchall_document: index.html
+    envs:
+      - key: VITE_API_URL
+        value: ${api.PUBLIC_URL}
+        scope: BUILD_TIME
+
+  - name: admin
+    environment_slug: node-js
+    github:
+      repo: YOUR_GITHUB_ORG/ideadiluce-pwa
+      branch: main
+      deploy_on_push: true
+    build_command: npm ci && npm run build --workspace=admin
+    output_dir: admin/dist
+    index_document: index.html
+    catchall_document: index.html
+    envs:
+      - key: VITE_API_URL
+        value: ${api.PUBLIC_URL}
+        scope: BUILD_TIME
+
+# Domini custom (es. shop.ideadiluce.com, api.ideadiluce.com):
+# impostali in Apps → Settings → Domains, poi aggiorna CLIENT_ORIGIN e i CNAME.

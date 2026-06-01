@@ -44,6 +44,7 @@ export type ProductVariantDTO = {
   label: string
   imageUrl: string | null
   attributes: ProductVariantAttributeDTO[]
+  odooVariantId?: number | null
 }
 
 export type PaginatedDTO<T> = {
@@ -63,6 +64,7 @@ export type ProductDetailDTO = ProductCardDTO & {
   sku: string | null
   inStock: boolean
   images: string[]
+  odooTemplateId?: number | null
   variants: ProductVariantDTO[]
 }
 
@@ -73,6 +75,8 @@ export type CartItemDTO = {
   quantity: number
   clientUnitPriceEstimateCents: number | null
   lineTotalEstimateCents: number | null
+  productSlug: string | null
+  productName: string | null
 }
 
 export type CartDTO = {

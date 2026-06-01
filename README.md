@@ -89,6 +89,8 @@ Script utili:
 
 ## Deploy (es. DigitalOcean App Platform)
 
+**Setup automatico da repo:** file [`.do/app.yaml`](.do/app.yaml) + guida [docs/deploy-digitalocean.md](docs/deploy-digitalocean.md).
+
 Linee guida:
 
 1. **Due componenti** (o più): static site / SPA dal `client/dist` e **Web Service** per `server`.

@@ -83,6 +83,7 @@ export function createMockOdooCatalogAdapter(): OdooCatalogAdapter {
         currency: p.currency,
         imageUrl: p.imageUrl,
         images: p.imageUrl ? [p.imageUrl] : [],
+        odooTemplateId: null,
         categorySlug: p.categorySlug,
         sku: p.sku,
         inStock: p.inStock,

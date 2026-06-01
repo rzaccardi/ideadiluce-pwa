@@ -27,7 +27,8 @@
     "db:studio": "tsx scripts/prisma-cli.ts studio",
     "import:woo": "npx tsx scripts/import-woo.ts",
     "patch:og-images": "npx tsx scripts/patch-og-images.ts",
-    "import:woo:enrich": "npx tsx scripts/import-woo-enrichment.ts"
+    "import:woo:enrich": "npx tsx scripts/import-woo-enrichment.ts",
+    "import:long-content": "npx tsx scripts/import-long-content.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",

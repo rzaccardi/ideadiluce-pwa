@@ -1,7 +1,7 @@
 import { AppError } from '../../types/errors.js'
 import type { ProductDetailDTO, WishlistItemDTO } from '../../types/dto.js'
 import type { Request } from 'express'
-import { catalogRepository } from '../catalog/catalog.repository.js'
+import { resolveCatalogProduct } from '../catalog/catalogResolver.service.js'
 import { wishlistRepository } from './wishlist.repository.js'
 
 function assertSession(req: Request) {
@@ -45,7 +45,7 @@ export const wishlistService = {
     input: { productRef: string; variantRef?: string | null },
   ): Promise<WishlistItemDTO> {
     const s = assertSession(req)
-    const product = await catalogRepository.findProductBySlug(req.correlationId, input.productRef)
+    const product = await resolveCatalogProduct(req, input.productRef)
     if (!product) {
       throw new AppError('PRODUCT_NOT_FOUND', 'Unknown product', 'Prodotto non disponibile.', 404, false)
     }

@@ -74,7 +74,10 @@ export function ProductDetailPage() {
             {product.inStock ? 'Disponibile' : 'Non disponibile'}
           </p>
           {product.longDescription ? (
-            <p className="mt-6 text-sm leading-relaxed text-zinc-600">{product.longDescription}</p>
+            <div
+              className="product-description mt-6 text-sm leading-relaxed text-zinc-600 [&_li]:ml-4 [&_p]:mb-3 [&_ul]:list-disc"
+              dangerouslySetInnerHTML={{ __html: product.longDescription }}
+            />
           ) : null}
 
           <div className="mt-6 max-w-md space-y-4">

@@ -102,7 +102,7 @@ export function FloatingCartMonitor() {
                 >
                   <div className="min-w-0">
                     <Link
-                      to={`/prodotto/${item.productRef}`}
+                      to={`/prodotto/${item.productSlug ?? item.productRef}`}
                       className="block truncate font-medium text-zinc-900 hover:underline"
                       onClick={() => setIsOpen(false)}
                     >

@@ -3,27 +3,14 @@ import { env } from '../../config/env.js'
 import { isOdooConfigured, odooExecuteKw, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { prisma } from '../../lib/prisma.js'
 import { cartRepository } from '../cart/cart.repository.js'
-
-function idFromProductRef(productRef: string): number | null {
-  const match = /-(\d+)$/.exec(productRef) ?? /^p-(\d+)$/.exec(productRef)
-  if (!match) return null
-  const id = Number(match[1])
-  return Number.isInteger(id) && id > 0 ? id : null
-}
-
-function idFromVariantRef(variantRef: string | null | undefined): number | null {
-  const match = variantRef ? /^VAR-(\d+)$/.exec(variantRef) : null
-  if (!match) return null
-  const id = Number(match[1])
-  return Number.isInteger(id) && id > 0 ? id : null
-}
+import { parseOdooTemplateId, parseOdooVariantId } from './odooRef.js'
 
 async function unitPriceCentsFromOdoo(
   ctx: OdooCallContext,
   productRef: string,
   variantRef?: string | null,
 ): Promise<number | null> {
-  const vid = idFromVariantRef(variantRef)
+  const vid = parseOdooVariantId(variantRef)
   if (vid != null) {
     const rows = await odooExecuteKw<Array<{ list_price: number }>>(
       ctx,
@@ -35,7 +22,7 @@ async function unitPriceCentsFromOdoo(
     const p = rows[0]?.list_price
     return p != null ? Math.round(Number(p) * 100) : null
   }
-  const productId = idFromProductRef(productRef)
+  const productId = parseOdooTemplateId(productRef)
   if (productId == null) return null
   const rows = await odooExecuteKw<Array<{ list_price: number }>>(
     ctx,

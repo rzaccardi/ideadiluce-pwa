@@ -1,3 +1,4 @@
+import { parseOdooTemplateId, parseOdooVariantId } from '../../modules/catalog/odooRef.js'
 import { odooExecuteKw, type OdooCallContext } from './odooClient.js'
 import { normalizeOdooCreateId } from './odooId.js'
 import type {
@@ -13,22 +14,9 @@ type TemplateMini = {
   list_price: number
 }
 
-function idFromProductRef(productRef: string): number | null {
-  const match = /-(\d+)$/.exec(productRef) ?? /^p-(\d+)$/.exec(productRef)
-  if (!match) return null
-  const id = Number(match[1])
-  return Number.isInteger(id) && id > 0 ? id : null
-}
-
-function idFromVariantRef(variantRef: string | null | undefined): number | null {
-  const match = variantRef ? /^VAR-(\d+)$/.exec(variantRef) : null
-  if (!match) return null
-  const id = Number(match[1])
-  return Number.isInteger(id) && id > 0 ? id : null
-}
-
 function nameProbeFromProductRef(productRef: string): string | null {
-  const withoutId = productRef.replace(/-\d+$/, '').replace(/^p-\d+$/, '')
+  if (/^\d+$/.test(productRef.trim())) return null
+  const withoutId = productRef.replace(/-\d+$/, '').replace(/^p-\d+$/i, '')
   const probe = withoutId.replace(/-+/g, ' ').trim()
   return probe || null
 }
@@ -52,7 +40,7 @@ async function variantForProductRef(
   productRef: string,
   variantRef?: string | null,
 ): Promise<{ variantId: number; priceUnit: number } | null> {
-  const productId = idFromProductRef(productRef)
+  const productId = parseOdooTemplateId(productRef)
   let row = productId != null ? await readTemplate(ctx, [['id', '=', productId]]) : undefined
 
   if (!row) {
@@ -62,7 +50,7 @@ async function variantForProductRef(
 
   if (!row) return null
 
-  const selectedVariantId = idFromVariantRef(variantRef)
+  const selectedVariantId = parseOdooVariantId(variantRef)
   const vid =
     selectedVariantId != null && row.product_variant_ids?.includes(selectedVariantId)
       ? selectedVariantId

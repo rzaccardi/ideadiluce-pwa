@@ -9,11 +9,13 @@ function unitForLine(line: CartItem, catalogUnitCents: number | null): number | 
 export function mapCartToDTO(
   cart: Cart & { items: CartItem[] },
   priceLookup: Map<string, number>,
+  displayLookup: Map<string, { slug: string; name: string }> = new Map(),
 ): CartDTO {
   const items: CartItemDTO[] = cart.items.map((line) => {
     const cat = priceLookup.get(line.productRef) ?? null
     const unit = unitForLine(line, cat)
     const lineTotal = unit != null ? unit * line.quantity : null
+    const display = displayLookup.get(line.productRef)
     return {
       id: line.id,
       productRef: line.productRef,
@@ -21,6 +23,8 @@ export function mapCartToDTO(
       quantity: line.quantity,
       clientUnitPriceEstimateCents: line.clientUnitPriceEstimate,
       lineTotalEstimateCents: lineTotal,
+      productSlug: display?.slug ?? line.productRef,
+      productName: display?.name ?? line.productRef,
     }
   })
 

@@ -1,54 +1,21 @@
 import { hubPrisma } from '@ideadiluce/hub-api'
-import type {
-  CategoryDTO,
-  ProductCardDTO,
-  ProductDetailDTO,
-  ProductListDTO,
-  ProductVariantAttributeDTO,
-  ProductVariantDTO,
-} from '../../types/dto.js'
+import type { CategoryDTO, ProductListDTO } from '../../types/dto.js'
+import { parseOdooTemplateId } from '../catalog/odooRef.js'
+import { hubSnapshotForList, mapHubListCard, mapHubProduct } from './hub-catalog.mapper.js'
+import type { HubProductDetailDTO } from './hub-catalog.types.js'
 
-function humanizeSlug(slug: string): string {
-  return slug
-    .split('-')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ')
-}
-
-function productName(
-  seo: { translations: { metaTitle: string | null }[] } | null,
-  slug: string,
-): string {
-  const title = seo?.translations[0]?.metaTitle
-  if (title && !title.includes('%%')) {
-    return title.replace(/\s*-\s*IdeaDiLuce.*$/i, '').trim() || humanizeSlug(slug)
-  }
-  return humanizeSlug(slug)
-}
-
-function productImages(
-  media: { url: string; kind: string; sortOrder: number }[],
-  fallback: string | null,
-): string[] {
-  const ordered = [...media]
-    .filter((m) => m.kind === 'COVER' || m.kind === 'GALLERY')
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-  const urls = ordered.map((m) => m.url)
-  if (!urls.length && fallback) return [fallback]
-  return urls
-}
-
-function variantLabel(
-  attrs: ProductVariantAttributeDTO[],
-  sku: string | null,
-  slug: string,
-): string {
-  if (attrs.length) {
-    return attrs.map((a) => `${a.name}: ${a.value}`).join(' · ')
-  }
-  if (sku) return sku.split('|').map((s) => s.trim())[0] ?? sku
-  return humanizeSlug(slug)
-}
+const productInclude = {
+  seo: { include: { translations: { where: { locale: 'IT' as const }, take: 1 } } },
+  categories: { include: { category: { select: { slug: true } } } },
+  media: { orderBy: { sortOrder: 'asc' as const } },
+  variants: {
+    orderBy: { sortOrder: 'asc' as const },
+    include: {
+      attributes: { orderBy: { sortOrder: 'asc' as const } },
+      media: { where: { kind: 'VARIANT' as const }, take: 1 },
+    },
+  },
+} as const
 
 export const hubCatalogRepository = {
   async findCategories(): Promise<CategoryDTO[]> {
@@ -70,7 +37,7 @@ export const hubCatalogRepository = {
     q?: string
     page: number
     pageSize: number
-  }): Promise<ProductListDTO> {
+  }): Promise<{ list: ProductListDTO; snapshots: HubProductDetailDTO[] }> {
     const { categorySlug, q, page, pageSize } = options
     const where = {
       status: 'PUBLISHED' as const,
@@ -110,11 +77,7 @@ export const hubCatalogRepository = {
         take: pageSize,
         orderBy: [{ sortOrder: 'asc' }, { slug: 'asc' }],
         include: {
-          seo: { include: { translations: { where: { locale: 'IT' }, take: 1 } } },
-          categories: {
-            take: 1,
-            include: { category: { select: { slug: true } } },
-          },
+          ...productInclude,
           media: {
             where: { kind: { in: ['COVER', 'GALLERY'] } },
             orderBy: { sortOrder: 'asc' },
@@ -125,83 +88,69 @@ export const hubCatalogRepository = {
     ])
 
     const totalPages = Math.max(1, Math.ceil(total / pageSize))
-    const cards: ProductCardDTO[] = items.map((p) => {
-      const cover = p.media[0]?.url ?? p.ogImageUrl
-      return {
-        slug: p.slug,
-        name: productName(p.seo, p.slug),
-        shortDescription:
-          p.shortDescription?.slice(0, 200) ??
-          p.seo?.translations[0]?.metaDescription?.slice(0, 200) ??
-          null,
-        priceCents: 0,
-        currency: 'EUR',
-        imageUrl: cover,
-        categorySlug: p.categories[0]?.category.slug ?? null,
-      }
-    })
+    const snapshots = items.map((p) => hubSnapshotForList(p))
+    const cards = items.map((p) => mapHubListCard(p))
 
     return {
-      items: cards,
-      page,
-      pageSize,
-      total,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPreviousPage: page > 1,
+      list: {
+        items: cards,
+        page,
+        pageSize,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+      snapshots,
     }
   },
 
-  async findProductBySlug(slug: string): Promise<ProductDetailDTO | null> {
+  async findProductBySlug(slug: string): Promise<HubProductDetailDTO | null> {
     const p = await hubPrisma.product.findFirst({
       where: { slug, status: 'PUBLISHED', visibility: 'PUBLIC' },
-      include: {
+      include: productInclude,
+    })
+    return p ? mapHubProduct(p) : null
+  },
+
+  async findProductByOdooTemplateId(templateId: number): Promise<HubProductDetailDTO | null> {
+    const p = await hubPrisma.product.findFirst({
+      where: { odooTemplateId: templateId, status: 'PUBLISHED', visibility: 'PUBLIC' },
+      include: productInclude,
+    })
+    return p ? mapHubProduct(p) : null
+  },
+
+  async findProductByCartRef(productRef: string): Promise<HubProductDetailDTO | null> {
+    const templateId = parseOdooTemplateId(productRef)
+    if (templateId != null) {
+      return this.findProductByOdooTemplateId(templateId)
+    }
+    return this.findProductBySlug(productRef)
+  },
+
+  async findSlugsByOdooTemplateIds(
+    templateIds: number[],
+  ): Promise<Map<number, { slug: string; name: string }>> {
+    if (!templateIds.length) return new Map()
+    const rows = await hubPrisma.product.findMany({
+      where: { odooTemplateId: { in: templateIds } },
+      select: {
+        odooTemplateId: true,
+        slug: true,
         seo: { include: { translations: { where: { locale: 'IT' }, take: 1 } } },
-        categories: { include: { category: { select: { slug: true } } } },
-        media: { orderBy: { sortOrder: 'asc' } },
-        variants: {
-          orderBy: { sortOrder: 'asc' },
-          include: {
-            attributes: { orderBy: { sortOrder: 'asc' } },
-            media: { where: { kind: 'VARIANT' }, take: 1 },
-          },
-        },
       },
     })
-    if (!p) return null
-
-    const tr = p.seo?.translations[0]
-    const images = productImages(p.media, p.ogImageUrl)
-    const cover = images[0] ?? p.ogImageUrl
-
-    const variants: ProductVariantDTO[] = p.variants.map((v) => {
-      const attrs: ProductVariantAttributeDTO[] = v.attributes.map((a) => ({
-        name: a.name,
-        value: a.value,
-      }))
-      return {
-        ref: String(v.wooPostId),
-        label: variantLabel(attrs, v.sku, v.slug),
-        imageUrl: v.media[0]?.url ?? null,
-        attributes: attrs,
-      }
-    })
-
-    return {
-      slug: p.slug,
-      name: productName(p.seo, p.slug),
-      shortDescription:
-        p.shortDescription?.slice(0, 200) ?? tr?.metaDescription?.slice(0, 200) ?? null,
-      longDescription: p.longDescription ?? tr?.metaDescription ?? null,
-      priceCents: 0,
-      currency: 'EUR',
-      imageUrl: cover,
-      images,
-      categorySlug: p.categories[0]?.category.slug ?? null,
-      sku: p.sku,
-      inStock: p.purchasable,
-      variants,
+    const map = new Map<number, { slug: string; name: string }>()
+    for (const row of rows) {
+      if (row.odooTemplateId == null) continue
+      const title = row.seo?.translations[0]?.metaTitle
+      map.set(row.odooTemplateId, {
+        slug: row.slug,
+        name: title?.replace(/\s*-\s*IdeaDiLuce.*$/i, '').trim() || row.slug,
+      })
     }
+    return map
   },
 
   async hasCatalog(): Promise<boolean> {
