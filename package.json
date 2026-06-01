@@ -1,0 +1,35 @@
+{
+  "name": "ideadiluce-pwa",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server",
+    "admin",
+    "product-hub/api"
+  ],
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "dotenv": "^16.6.1"
+  },
+  "scripts": {
+    "dev": "docker compose up -d --wait && concurrently -n client,server -c cyan,magenta \"npm run dev:client\" \"npm run dev:server\"",
+    "dev:client": "npm run dev --workspace=client",
+    "dev:server": "npm run dev --workspace=server",
+    "dev:admin": "npm run dev --workspace=admin",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "npm run build --workspace=client",
+    "build:server": "npm run build --workspace=server",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f postgres",
+    "hub:import": "npm run import:woo --workspace=@ideadiluce/hub-api",
+    "hub:patch-images": "npm run patch:og-images --workspace=@ideadiluce/hub-api",
+    "hub:enrich": "npm run import:woo:enrich --workspace=@ideadiluce/hub-api",
+    "hub:migrate": "npm run db:migrate --workspace=@ideadiluce/hub-api",
+    "hub:migrate:dev": "npm run db:migrate:dev --workspace=@ideadiluce/hub-api",
+    "hub:generate": "npm run db:generate --workspace=@ideadiluce/hub-api"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

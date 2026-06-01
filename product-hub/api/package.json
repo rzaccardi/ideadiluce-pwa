@@ -1,0 +1,42 @@
+{
+  "name": "@ideadiluce/hub-api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./hub-database-url": {
+      "types": "./src/hub-database-url.ts",
+      "import": "./src/hub-database-url.ts",
+      "default": "./src/hub-database-url.ts"
+    }
+  },
+  "scripts": {
+    "postinstall": "tsx scripts/prisma-cli.ts generate",
+    "build": "tsc -p tsconfig.build.json",
+    "db:generate": "tsx scripts/prisma-cli.ts generate",
+    "db:migrate": "tsx scripts/prisma-cli.ts migrate deploy",
+    "db:migrate:dev": "tsx scripts/prisma-cli.ts migrate dev",
+    "db:push": "tsx scripts/prisma-cli.ts db push",
+    "db:studio": "tsx scripts/prisma-cli.ts studio",
+    "import:woo": "npx tsx scripts/import-woo.ts",
+    "patch:og-images": "npx tsx scripts/patch-og-images.ts",
+    "import:woo:enrich": "npx tsx scripts/import-woo-enrichment.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "dotenv": "^16.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "prisma": "^6.19.0",
+    "tsx": "^4.19.3",
+    "typescript": "~5.9.3"
+  }
+}

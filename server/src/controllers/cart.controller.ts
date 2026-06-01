@@ -1,0 +1,43 @@
+import type { Request, Response } from 'express'
+import { ok } from '../lib/api-response.js'
+import { cartService } from '../modules/cart/cart.service.js'
+import { asyncHandler } from '../utils/async-handler.js'
+
+export const cartController = {
+  get: asyncHandler(async (req: Request, res: Response) => {
+    const data = await cartService.get(req)
+    res.json(ok(data))
+  }),
+
+  addItem: asyncHandler(async (req: Request, res: Response) => {
+    const body = req.body as { productRef: string; variantRef?: string | null; quantity: number }
+    const data = await cartService.addItem(req, body)
+    res.status(201).json(ok(data))
+  }),
+
+  patchItem: asyncHandler(async (req: Request, res: Response) => {
+    const body = req.body as { quantity: number }
+    const data = await cartService.patchItem(req, req.params.id, body.quantity)
+    res.json(ok(data))
+  }),
+
+  removeItem: asyncHandler(async (req: Request, res: Response) => {
+    const data = await cartService.removeItem(req, req.params.id)
+    res.json(ok(data))
+  }),
+
+  clear: asyncHandler(async (req: Request, res: Response) => {
+    const data = await cartService.clear(req)
+    res.json(ok(data))
+  }),
+
+  recommendations: asyncHandler(async (req: Request, res: Response) => {
+    const data = await cartService.recommendations(req)
+    res.json(ok(data))
+  }),
+
+  reprice: asyncHandler(async (req: Request, res: Response) => {
+    const data = await cartService.reprice(req)
+    res.json(ok(data))
+  }),
+}

@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ideadiluce-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ideadiluce
+      POSTGRES_PASSWORD: ideadiluce_dev
+      POSTGRES_DB: ideadiluce
+    # Host 5433: spesso 5432 è già usata da Postgres locale o altri container
+    ports:
+      - '5433:5432'
+    volumes:
+      - ideadiluce_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ideadiluce -d ideadiluce']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  ideadiluce_pgdata:

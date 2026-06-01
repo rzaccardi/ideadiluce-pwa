@@ -1,0 +1,16 @@
+openapi: 3.1.0
+info:
+  title: eCommerce headless API
+  version: 0.1.0
+  description: |
+    API interna v1. Il frontend consuma solo questo backend.
+    Contratto completo da espandere (generazione da route o da Zod).
+servers:
+  - url: /api/v1
+paths:
+  /health:
+    get:
+      summary: Health check (root server, non sotto /api/v1 in implementazione Express)
+      responses:
+        '200':
+          description: OK

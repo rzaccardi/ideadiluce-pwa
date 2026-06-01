@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+build/
+*.tsbuildinfo
+
+# Env (solo root — non usare server/.env, client/.env, ecc.)
+.env
+.env.local
+.env.*.local
+server/.env
+client/.env
+admin/.env
+product-hub/api/.env
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# Vite
+client/*.local
+
+# Product Hub — dump DB import (contenuti in product-hub/import/.gitignore)
+product-hub/import/*.sql
+product-hub/import/*.sql.gz
+product-hub/import/*.csv
+product-hub/import/*.zip

@@ -1,0 +1,10 @@
+# Dump DB produzione — non versionare
+*.sql
+*.sql.gz
+*.csv
+*.zip
+
+# Eccezioni
+!.gitignore
+!README.md
+!.gitkeep
