@@ -15,6 +15,11 @@
       "types": "./src/hub-database-url.ts",
       "import": "./src/hub-database-url.ts",
       "default": "./src/hub-database-url.ts"
+    },
+    "./normalize-woo-content": {
+      "types": "./src/normalize-woo-content.ts",
+      "import": "./src/normalize-woo-content.ts",
+      "default": "./src/normalize-woo-content.ts"
     }
   },
   "scripts": {
@@ -28,7 +33,8 @@
     "import:woo": "npx tsx scripts/import-woo.ts",
     "patch:og-images": "npx tsx scripts/patch-og-images.ts",
     "import:woo:enrich": "npx tsx scripts/import-woo-enrichment.ts",
-    "import:long-content": "npx tsx scripts/import-long-content.ts"
+    "import:long-content": "npx tsx scripts/import-long-content.ts",
+    "patch:normalize-content": "npx tsx scripts/patch-normalize-content.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",

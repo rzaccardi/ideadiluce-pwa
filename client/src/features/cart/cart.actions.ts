@@ -1,5 +1,7 @@
 import { api } from '@/api/endpoints'
 import { ApiRequestError } from '@/types/api'
+import type { CartAddedFeedback } from './cart-feedback'
+import { notifyCartItemAdded } from './cart-feedback'
 import { cartStore } from './cart.store'
 
 function errMessage(e: unknown) {
@@ -30,11 +32,21 @@ export async function fetchRecommendations() {
   }
 }
 
-export async function addItem(productRef: string, quantity = 1, variantRef?: string | null) {
+export async function addItem(
+  productRef: string,
+  quantity = 1,
+  variantRef?: string | null,
+  feedback?: CartAddedFeedback,
+) {
   cartStore.isLoading = true
   cartStore.error = null
   try {
     cartStore.cart = await api.cart.addItem({ productRef, quantity, variantRef })
+    notifyCartItemAdded({
+      productName: feedback?.productName ?? productRef,
+      quantity,
+      imageUrl: feedback?.imageUrl,
+    })
   } catch (e) {
     cartStore.error = errMessage(e)
     throw e

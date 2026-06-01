@@ -1,3 +1,4 @@
+import { normalizeWooContent, normalizeWooExcerpt } from '@ideadiluce/hub-api/normalize-woo-content'
 import type {
   ProductCardDTO,
   ProductVariantAttributeDTO,
@@ -98,8 +99,12 @@ export function mapHubProduct(p: ProductRow): HubProductDetailDTO {
     slug: p.slug,
     name: productName(p.seo, p.slug),
     shortDescription:
-      p.shortDescription?.slice(0, 200) ?? tr?.metaDescription?.slice(0, 200) ?? null,
-    longDescription: p.longDescription ?? tr?.metaDescription ?? null,
+      normalizeWooExcerpt(p.shortDescription, 200) ??
+      normalizeWooExcerpt(tr?.metaDescription ?? null, 200) ??
+      null,
+    longDescription:
+      normalizeWooContent(p.longDescription) ??
+      normalizeWooContent(tr?.metaDescription ?? null),
     priceCents: 0,
     currency: 'EUR',
     imageUrl: cover,

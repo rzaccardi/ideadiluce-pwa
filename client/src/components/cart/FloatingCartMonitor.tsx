@@ -2,16 +2,41 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useSnapshot } from 'valtio/react'
 import { cartStore, fetchCart, reprice } from '@/features/cart'
+import { cartFeedbackStore } from '@/features/cart/cart-feedback.store'
 import { formatMoney } from '@/lib/format'
+import { cn } from '@/utils/cn'
 import { Button } from '@/components/Button'
 import { Skeleton } from '@/components/Skeleton'
+import { CartActivityToasts } from '@/components/cart/CartActivityToasts'
+import { CartFlyIn } from '@/components/cart/CartFlyIn'
 
 const POLL_MS = 30_000
 
+function FloatingCartIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={cn('h-5 w-5', className)} fill="none">
+      <path
+        d="M6.5 6.5h14l-1.4 7.2a2 2 0 0 1-2 1.6H9.3a2 2 0 0 1-2-1.7L6.1 4.8H3.5"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M10 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM17 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+}
+
 export function FloatingCartMonitor() {
   const { cart, error, isLoading } = useSnapshot(cartStore)
+  const { cartPulse } = useSnapshot(cartFeedbackStore)
   const { pathname } = useLocation()
   const [isOpen, setIsOpen] = useState(false)
+  const [isBouncing, setIsBouncing] = useState(false)
+  const [badgePop, setBadgePop] = useState(false)
 
   useEffect(() => {
     const refresh = () => {
@@ -33,6 +58,17 @@ export function FloatingCartMonitor() {
     }
   }, [])
 
+  useEffect(() => {
+    if (cartPulse === 0) return
+    setIsBouncing(true)
+    setBadgePop(true)
+    const timer = window.setTimeout(() => {
+      setIsBouncing(false)
+      setBadgePop(false)
+    }, 600)
+    return () => window.clearTimeout(timer)
+  }, [cartPulse])
+
   const itemCount = cart?.itemCount ?? 0
   const total = cart?.estimatedTotal ?? cart?.estimatedSubtotal ?? null
   const isCartFlow = pathname === '/cart' || pathname.startsWith('/checkout')
@@ -41,6 +77,8 @@ export function FloatingCartMonitor() {
 
   return (
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
+      <CartActivityToasts />
+
       {isOpen ? (
         <section className="w-[min(calc(100vw-2.5rem),380px)] rounded-2xl border border-zinc-200 bg-white p-4 shadow-2xl shadow-zinc-950/20">
           <div className="flex items-start justify-between gap-4">
@@ -147,20 +185,32 @@ export function FloatingCartMonitor() {
         </section>
       ) : null}
 
-      <button
-        type="button"
-        onClick={() => setIsOpen((value) => !value)}
-        className="relative rounded-full bg-zinc-900 px-5 py-3 text-sm font-semibold text-white shadow-xl shadow-zinc-950/20 transition hover:bg-zinc-800"
-        aria-expanded={isOpen}
-        aria-label="Apri mini carrello"
-      >
-        Carrello
-        {itemCount > 0 ? (
-          <span className="ml-2 rounded-full bg-white px-2 py-0.5 text-xs text-zinc-900">
-            {itemCount}
-          </span>
-        ) : null}
-      </button>
+      <div className="relative">
+        <CartFlyIn />
+        <button
+          type="button"
+          onClick={() => setIsOpen((value) => !value)}
+          className={cn(
+            'relative inline-flex items-center gap-2 rounded-full bg-zinc-900 px-5 py-3 text-sm font-semibold text-white shadow-xl shadow-zinc-950/20 transition hover:bg-zinc-800',
+            isBouncing && 'cart-bounce',
+          )}
+          aria-expanded={isOpen}
+          aria-label="Apri mini carrello"
+        >
+          <FloatingCartIcon />
+          <span>Carrello</span>
+          {itemCount > 0 ? (
+            <span
+              className={cn(
+                'rounded-full bg-white px-2 py-0.5 text-xs text-zinc-900',
+                badgePop && 'cart-badge-pop',
+              )}
+            >
+              {itemCount}
+            </span>
+          ) : null}
+        </button>
+      </div>
     </div>
   )
 }

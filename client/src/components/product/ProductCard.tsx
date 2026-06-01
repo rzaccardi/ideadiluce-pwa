@@ -47,21 +47,23 @@ function HeartIcon() {
 
 export function ProductCard({ product, className }: Props) {
   const [pendingAction, setPendingAction] = useState<QuickAction | null>(null)
-  const [feedback, setFeedback] = useState<string | null>(null)
+  const [wishlistFeedback, setWishlistFeedback] = useState<string | null>(null)
 
   async function handleQuickAction(action: QuickAction) {
     setPendingAction(action)
-    setFeedback(null)
+    if (action === 'wishlist') setWishlistFeedback(null)
     try {
       if (action === 'cart') {
-        await addItem(product.slug, 1)
-        setFeedback('Aggiunto al carrello')
+        await addItem(product.slug, 1, undefined, {
+          productName: product.name,
+          imageUrl: product.imageUrl,
+        })
       } else {
         await addWishlistItem(product.slug)
-        setFeedback('Aggiunto ai preferiti')
+        setWishlistFeedback('Aggiunto ai preferiti')
       }
     } catch {
-      setFeedback('Azione non riuscita')
+      if (action === 'wishlist') setWishlistFeedback('Azione non riuscita')
     } finally {
       setPendingAction(null)
     }
@@ -119,7 +121,7 @@ export function ProductCard({ product, className }: Props) {
             </button>
           </div>
         </div>
-        {feedback ? <p className="mt-2 text-xs text-zinc-500">{feedback}</p> : null}
+        {wishlistFeedback ? <p className="mt-2 text-xs text-zinc-500">{wishlistFeedback}</p> : null}
       </div>
     </article>
   )

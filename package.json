@@ -27,6 +27,7 @@
     "hub:patch-images": "npm run patch:og-images --workspace=@ideadiluce/hub-api",
     "hub:enrich": "npm run import:woo:enrich --workspace=@ideadiluce/hub-api",
     "hub:import-content": "npm run import:long-content --workspace=@ideadiluce/hub-api",
+    "hub:normalize-content": "npm run patch:normalize-content --workspace=@ideadiluce/hub-api",
     "hub:sync-odoo": "npm run sync-odoo --workspace=server",
     "hub:migrate": "npm run db:migrate --workspace=@ideadiluce/hub-api",
     "hub:migrate:dev": "npm run db:migrate:dev --workspace=@ideadiluce/hub-api",

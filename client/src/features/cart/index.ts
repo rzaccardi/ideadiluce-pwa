@@ -1,2 +1,5 @@
 export { cartStore } from './cart.store'
+export { cartFeedbackStore } from './cart-feedback.store'
+export { notifyCartItemAdded, dismissCartToast } from './cart-feedback'
+export type { CartAddedFeedback } from './cart-feedback'
 export { fetchCart, fetchRecommendations, addItem, updateItem, removeItem, clearCart, reprice } from './cart.actions'

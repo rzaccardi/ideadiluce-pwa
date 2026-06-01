@@ -10,6 +10,7 @@ import { Button } from '@/components/Button'
 import { QuantityInput } from '@/components/QuantityInput'
 import { ProductGrid } from '@/components/product/ProductGrid'
 import { ProductGallery } from '@/components/product/ProductGallery'
+import { ProductDescriptionHtml } from '@/components/product/ProductDescriptionHtml'
 import { ProductDetailSkeleton } from '@/components/Skeleton'
 
 export function ProductDetailPage() {
@@ -74,9 +75,9 @@ export function ProductDetailPage() {
             {product.inStock ? 'Disponibile' : 'Non disponibile'}
           </p>
           {product.longDescription ? (
-            <div
-              className="product-description mt-6 text-sm leading-relaxed text-zinc-600 [&_li]:ml-4 [&_p]:mb-3 [&_ul]:list-disc"
-              dangerouslySetInnerHTML={{ __html: product.longDescription }}
+            <ProductDescriptionHtml
+              html={product.longDescription}
+              className="product-description mt-6 max-w-none text-sm leading-relaxed text-zinc-600 [&_a]:text-zinc-900 [&_a]:underline [&_h3]:mb-3 [&_h3]:mt-6 [&_h3]:text-base [&_h3]:font-semibold [&_li]:ml-4 [&_p]:mb-3 [&_table]:my-4 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-zinc-200 [&_td]:px-3 [&_td]:py-2 [&_th]:border [&_th]:border-zinc-200 [&_th]:bg-zinc-50 [&_th]:px-3 [&_th]:py-2 [&_ul]:list-disc"
             />
           ) : null}
 
@@ -118,7 +119,13 @@ export function ProductDetailPage() {
           <div className="mt-8 flex flex-wrap gap-3">
             <Button
               disabled={!product.inStock}
-              onClick={() => void addItem(product.slug, quantity, variantRef)}
+              onClick={() =>
+                void addItem(product.slug, quantity, variantRef, {
+                  productName: product.name,
+                  imageUrl: galleryImages[0] ?? product.imageUrl,
+                  quantity,
+                })
+              }
             >
               Aggiungi al carrello
             </Button>

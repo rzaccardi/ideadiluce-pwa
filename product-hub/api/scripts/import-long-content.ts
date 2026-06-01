@@ -1,33 +1,46 @@
 /**
  * Importa post_content / post_excerpt dal dump completo Woo.
  */
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { PrismaClient } from '../generated/hub-client/index.js'
+import { normalizeWooContent, normalizeWooExcerpt } from '../src/normalize-woo-content.js'
 import { requireHubDatabaseUrl } from './load-hub-env.js'
 import { loadPostContentFromDump } from './parse-wp-posts-content.js'
-
-import { readdirSync } from 'node:fs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const importDir = resolve(__dirname, '../../import')
 
 function resolveContentDump(): string {
-  const preferred = [
-    'wpidl_posts_full.sql',
-    'cvtg56_wp687_1780322176.sql',
-  ]
-  for (const name of preferred) {
-    const p = resolve(importDir, name)
-    if (existsSync(p)) return p
+  const candidates = readdirSync(importDir)
+    .filter((f) => f.endsWith('.sql') && f.includes('wpidl_posts') && !f.includes('yoast'))
+    .map((f) => resolve(importDir, f))
+    .filter((p) => {
+      try {
+        const head = readFileSync(p, 'utf8').slice(0, 4000)
+        return head.includes('post_content')
+      } catch {
+        return false
+      }
+    })
+
+  const preferredOrder = (a: string, b: string) => {
+    const score = (p: string) => {
+      if (p.includes('wpidl_posts (2)')) return 0
+      if (p.includes('wpidl_posts_full')) return 1
+      if (p.includes('wpidl_posts (1)')) return 2
+      if (p.endsWith('wpidl_posts.sql')) return 4
+      return 3
+    }
+    return score(a) - score(b)
   }
-  const fallback = readdirSync(importDir).find(
-    (f) => f.endsWith('.sql') && f.includes('wpidl_posts') && !f.includes('yoast'),
-  )
-  if (fallback) return resolve(importDir, fallback)
+
+  candidates.sort(preferredOrder)
+  if (candidates[0]) return candidates[0]
+
   throw new Error(
-    `Nessun dump post_content in ${importDir}. Vedi product-hub/import/README.md (wpidl_posts_full.sql)`,
+    `Nessun dump con post_content in ${importDir}. Esporta wpidl_posts con colonne ID, post_name, post_excerpt, post_content.`,
   )
 }
 
@@ -43,18 +56,20 @@ async function main() {
 
   const prisma = new PrismaClient()
   const products = await prisma.product.findMany({
-    select: { id: true, wooPostId: true },
+    select: { id: true, wooPostId: true, slug: true },
   })
   const variants = await prisma.productVariant.findMany({
-    select: { id: true, wooPostId: true, productId: true },
+    select: { id: true, wooPostId: true, slug: true, productId: true },
   })
 
   let productsUpdated = 0
   for (const p of products) {
     const row = byId.get(p.wooPostId) ?? bySlug.get(p.slug)
     if (!row) continue
-    const short = row.excerpt.trim() || stripHtml(row.content).slice(0, 300) || null
-    const long = row.content.trim() || null
+    const long = normalizeWooContent(row.content)
+    const short =
+      normalizeWooExcerpt(row.excerpt, 300) ??
+      (long ? normalizeWooExcerpt(long, 300) : null)
     if (!short && !long) continue
     await prisma.product.update({
       where: { id: p.id },
@@ -77,7 +92,7 @@ async function main() {
     if (!parent?.longDescription) {
       await prisma.product.update({
         where: { id: v.productId },
-        data: { longDescription: row.content.trim() },
+        data: { longDescription: normalizeWooContent(row.content) },
       })
       variantsUpdated++
     }
@@ -91,13 +106,6 @@ async function main() {
   })
 
   await prisma.$disconnect()
-}
-
-function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
 }
 
 main().catch((e) => {
