@@ -1,25 +1,40 @@
 # Idea di Luce — DigitalOcean App Platform (PRODUZIONE)
 #
+# Monorepo npm workspaces: client (shop), server (api), admin (BO).
+# Ogni componente è un deploy separato con URL proprio:
+#   shop  → ${shop.PUBLIC_URL}   (Next.js storefront)
+#   api   → ${api.PUBLIC_URL}    (Express BFF)
+#   admin → ${admin.PUBLIC_URL}  (Vite SPA statica)
+#
 # Deploy:
 #   doctl apps create --spec .do/app.yaml
 #   doctl apps update <APP_ID> --spec .do/app.yaml
 #
 # Prima del primo deploy:
-#   1. Sostituisci github.repo con org/repo corretto
+#   1. Verifica github.repo
 #   2. In Apps → Settings → Environment aggiungi i SECRET da .do/secrets.production.env.example
-#   3. Dopo il primo deploy verde: npm run db:seed (tunnel DATABASE_URL) + hub:import
+#   3. Dopo deploy verde: db:seed + hub:import (tunnel DATABASE_URL)
 #
-# Staging: .do/app.staging.yaml
-# Mappa go-live completa: .do/GO-LIVE.md
-# Guida operativa: docs/deploy-digitalocean.md
-# URL pubblici: placeholder *.ondigitalocean.app (nessun dominio custom nello spec)
+# Staging: .do/app.staging.yaml | Guida: docs/deploy-digitalocean.md
 
 name: ideadiluce-pwa
 region: fra1
 
+features:
+  - buildpack-stack=ubuntu-22
+
 alerts:
   - rule: DEPLOYMENT_FAILED
   - rule: DOMAIN_FAILED
+
+# URL principale dell'app → shop. api e admin restano su sottodomini dedicati.
+ingress:
+  rules:
+    - component:
+        name: shop
+      match:
+        path:
+          prefix: /
 
 databases:
   - name: postgres
@@ -31,8 +46,9 @@ databases:
     db_user: ideadiluce
 
 services:
-  # ——— API Express (BFF, Prisma, Hub, proxy Arfly) ———
+  # ——— Backend API (Express, Prisma, Hub) ———
   - name: api
+    source_dir: /
     environment_slug: node-js
     github:
       repo: rzaccardi/ideadiluce-pwa
@@ -85,7 +101,6 @@ services:
         value: it_IT
       - key: ODOO_PRODUCT_ACTION_ID
         value: "497"
-      # Listini Odoo (product.pricelist id) — valorizzare se segmentazione attiva
       - key: ODOO_PRICELIST_B2C_ID
         scope: RUN_TIME
         type: SECRET
@@ -200,8 +215,9 @@ services:
         scope: RUN_TIME
         type: SECRET
 
-  # ——— Shop Next.js (SSR + rewrite /api → BFF) ———
+  # ——— Client storefront (Next.js) ———
   - name: shop
+    source_dir: /
     environment_slug: node-js
     github:
       repo: rzaccardi/ideadiluce-pwa
@@ -215,6 +231,7 @@ services:
       initial_delay_seconds: 45
       period_seconds: 15
       timeout_seconds: 5
+      failure_threshold: 3
     build_command: npm ci && npm run build --workspace=client
     run_command: npm run start --workspace=client
     envs:
@@ -222,12 +239,16 @@ services:
         value: production
       - key: PORT
         value: "3000"
+      # SSR / rewrite /api → BFF (rete interna DO tra componenti)
+      - key: API_URL
+        value: ${api.PRIVATE_URL}
+        scope: RUN_TIME
       - key: API_URL
         value: ${api.PUBLIC_URL}
-        scope: RUN_AND_BUILD_TIME
+        scope: BUILD_TIME
       - key: NEXT_PUBLIC_API_URL
         value: ${api.PUBLIC_URL}
-        scope: RUN_AND_BUILD_TIME
+        scope: BUILD_TIME
       - key: NEXT_PUBLIC_ARFLY_MEDIA_BASE_URL
         value: https://tlbdb.odoo.com
         scope: BUILD_TIME
@@ -241,6 +262,8 @@ services:
 static_sites:
   # ——— Backoffice admin (Vite SPA) ———
   - name: admin
+    source_dir: /
+    environment_slug: node-js
     github:
       repo: rzaccardi/ideadiluce-pwa
       branch: main

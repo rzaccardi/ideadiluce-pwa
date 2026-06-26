@@ -341,10 +341,12 @@ export type MessageKey =
   | 'checkout.account.requiredHint'
   | 'checkout.account.registerTab'
   | 'checkout.account.loginTab'
+  | 'checkout.account.orDivider'
   | 'checkout.account.createAndContinue'
   | 'checkout.account.registerError'
   | 'checkout.register.firstName'
   | 'checkout.register.lastName'
+  | 'checkout.register.changeCustomerType'
   | 'checkout.customerType.hint'
   | 'checkout.customerType.retail.title'
   | 'checkout.customerType.retail.description'
@@ -363,6 +365,7 @@ export type MessageKey =
   | 'checkout.billing.businessTitle'
   | 'checkout.billing.companyName'
   | 'checkout.billing.vatNumber'
+  | 'checkout.billing.fiscalCode'
   | 'checkout.billing.fiscalCodeOptional'
   | 'checkout.billing.pec'
   | 'checkout.billing.sdiCode'
@@ -1066,11 +1069,13 @@ const IT: Record<MessageKey, string> = {
   'checkout.account.requiredHint': 'Accedi o crea un account per continuare.',
   'checkout.account.registerTab': 'Nuovo account',
   'checkout.account.loginTab': 'Accedi',
+  'checkout.account.orDivider': 'oppure registrati',
   'checkout.account.createAndContinue': 'Crea account e continua',
   'checkout.account.registerError': 'Registrazione non riuscita. Riprova o accedi se hai già un account.',
   'checkout.register.firstName': 'Nome',
   'checkout.register.lastName': 'Cognome',
   'checkout.customerType.hint': 'Seleziona se acquisti come privato o azienda.',
+  'checkout.register.changeCustomerType': 'Modifica tipo cliente',
   'checkout.customerType.retail.title': 'Privato',
   'checkout.customerType.retail.description': 'Acquisto personale con listino retail.',
   'checkout.customerType.business.title': 'Azienda',
@@ -1088,6 +1093,7 @@ const IT: Record<MessageKey, string> = {
   'checkout.billing.businessTitle': 'Dati fatturazione azienda',
   'checkout.billing.companyName': 'Ragione sociale',
   'checkout.billing.vatNumber': 'Partita IVA / VAT',
+  'checkout.billing.fiscalCode': 'Codice fiscale',
   'checkout.billing.fiscalCodeOptional': 'Codice fiscale (opzionale)',
   'checkout.billing.pec': 'PEC',
   'checkout.billing.sdiCode': 'Codice destinatario SDI',
@@ -1807,11 +1813,13 @@ const EN: Record<MessageKey, string> = {
   'checkout.account.requiredHint': 'Sign in or create an account to continue.',
   'checkout.account.registerTab': 'New account',
   'checkout.account.loginTab': 'Sign in',
+  'checkout.account.orDivider': 'or create an account',
   'checkout.account.createAndContinue': 'Create account and continue',
   'checkout.account.registerError': 'Registration failed. Try again or sign in if you already have an account.',
   'checkout.register.firstName': 'First name',
   'checkout.register.lastName': 'Last name',
   'checkout.customerType.hint': 'Choose whether you are buying as a private customer or a business.',
+  'checkout.register.changeCustomerType': 'Change customer type',
   'checkout.customerType.retail.title': 'Private',
   'checkout.customerType.retail.description': 'Personal purchase with retail pricing.',
   'checkout.customerType.business.title': 'Business',
@@ -1829,6 +1837,7 @@ const EN: Record<MessageKey, string> = {
   'checkout.billing.businessTitle': 'Business billing details',
   'checkout.billing.companyName': 'Company name',
   'checkout.billing.vatNumber': 'VAT number',
+  'checkout.billing.fiscalCode': 'Tax ID',
   'checkout.billing.fiscalCodeOptional': 'Tax ID (optional)',
   'checkout.billing.pec': 'PEC email',
   'checkout.billing.sdiCode': 'SDI recipient code',

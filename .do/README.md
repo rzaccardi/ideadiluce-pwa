@@ -21,12 +21,16 @@ doctl apps update <APP_ID> --spec .do/app.yaml
 
 ## Componenti
 
-| Nome | Tipo | Build | Note |
-|------|------|-------|------|
-| `api` | Web Service | `build:server` + migrazioni Prisma + hub | Porta 8080, `/health` |
-| `shop` | Web Service | Next.js `client` | Porta 3000, rewrite `/api` → BFF |
-| `admin` | Static Site | Vite `admin/dist` | SPA con catchall |
-| `postgres` | Managed DB | — | Schema `public` (BFF) + `hub` (catalogo) |
+| Nome | Tipo | Sorgente | Build | URL |
+|------|------|----------|-------|-----|
+| `api` | Web Service | `server/` | `build:server` + migrazioni | `${api.PUBLIC_URL}` |
+| `shop` | Web Service | `client/` | Next.js workspace | `${shop.PUBLIC_URL}` |
+| `admin` | Static Site | `admin/` | Vite → `admin/dist` | `${admin.PUBLIC_URL}` |
+| `postgres` | Managed DB | — | — | rete interna |
+
+Tutti i componenti usano `source_dir: /` (root monorepo npm workspaces). L’`ingress` punta l’URL principale dell’app allo shop; api e admin hanno sottodomini dedicati.
+
+**Attenzione:** se in DO vedi un solo componente, l’app è stata creata con auto-detect. Ricrea con `doctl apps create --spec .do/app.yaml` oppure `doctl apps update <APP_ID> --spec .do/app.yaml`.
 
 ## Checklist post-deploy
 

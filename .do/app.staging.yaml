@@ -1,13 +1,26 @@
 # Idea di Luce — STAGING (branch staging, DB dev)
 #
+# Tre componenti separati come produzione: api + shop + admin
+#
 #   doctl apps create --spec .do/app.staging.yaml
 # Produzione: .do/app.yaml
 
 name: ideadiluce-pwa-staging
 region: fra1
 
+features:
+  - buildpack-stack=ubuntu-22
+
 alerts:
   - rule: DEPLOYMENT_FAILED
+
+ingress:
+  rules:
+    - component:
+        name: shop
+      match:
+        path:
+          prefix: /
 
 databases:
   - name: postgres
@@ -17,6 +30,7 @@ databases:
 
 services:
   - name: api
+    source_dir: /
     environment_slug: node-js
     github:
       repo: rzaccardi/ideadiluce-pwa
@@ -30,6 +44,7 @@ services:
       initial_delay_seconds: 30
       period_seconds: 10
       timeout_seconds: 5
+      failure_threshold: 3
     build_command: npm ci && npm run build:server && npm run db:deploy && npm run hub:migrate
     run_command: node server/dist/server.js
     envs:
@@ -85,6 +100,7 @@ services:
         type: SECRET
 
   - name: shop
+    source_dir: /
     environment_slug: node-js
     github:
       repo: rzaccardi/ideadiluce-pwa
@@ -93,6 +109,12 @@ services:
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-0.5gb
     http_port: 3000
+    health_check:
+      http_path: /
+      initial_delay_seconds: 45
+      period_seconds: 15
+      timeout_seconds: 5
+      failure_threshold: 3
     build_command: npm ci && npm run build --workspace=client
     run_command: npm run start --workspace=client
     envs:
@@ -101,11 +123,14 @@ services:
       - key: PORT
         value: "3000"
       - key: API_URL
+        value: ${api.PRIVATE_URL}
+        scope: RUN_TIME
+      - key: API_URL
         value: ${api.PUBLIC_URL}
-        scope: RUN_AND_BUILD_TIME
+        scope: BUILD_TIME
       - key: NEXT_PUBLIC_API_URL
         value: ${api.PUBLIC_URL}
-        scope: RUN_AND_BUILD_TIME
+        scope: BUILD_TIME
       - key: NEXT_PUBLIC_ARFLY_MEDIA_BASE_URL
         value: https://tlbdb.odoo.com
         scope: BUILD_TIME
@@ -118,6 +143,8 @@ services:
 
 static_sites:
   - name: admin
+    source_dir: /
+    environment_slug: node-js
     github:
       repo: rzaccardi/ideadiluce-pwa
       branch: staging

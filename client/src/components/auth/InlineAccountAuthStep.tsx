@@ -18,7 +18,8 @@ import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { ApiRequestError } from '@/types/api'
 import { CheckoutBusinessFieldsSection } from '@/components/checkout/stripe-ui/CheckoutBusinessFieldsSection'
-import { CheckoutSegmentControl } from '@/components/checkout/stripe-ui/CheckoutStepPrimitives'
+import { CheckoutRetailFiscalCodeField } from '@/components/checkout/stripe-ui/CheckoutRetailFiscalCodeField'
+import { CheckoutCustomerTypeCards } from '@/components/checkout/stripe-ui/CheckoutCustomerTypeCards'
 import {
   CheckoutActionRow,
   StripeErrorBanner,
@@ -88,19 +89,31 @@ export function InlineAccountAuthStep({
   const [password, setPassword] = useState('')
   const [loginEmail, setLoginEmail] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
+  const [registerPhase, setRegisterPhase] = useState<'type' | 'form'>(
+    collectCustomerTypeOnRegister ? 'type' : 'form',
+  )
+  const [typeChoice, setTypeChoice] = useState<'retail' | 'business'>('retail')
   const customerSegment: CustomerSegmentChoice =
-    checkout.customerSegment ?? 'retail'
+    checkout.customerSegment ?? typeChoice
 
   useEffect(() => {
     if (email && !loginEmail) setLoginEmail(email)
   }, [email, loginEmail])
 
-  useEffect(() => {
-    if (!collectCustomerTypeOnRegister || mode !== 'register') return
-    if (checkout.customerSegment == null) {
-      setCustomerSegment('retail')
+  function resetRegisterPhase() {
+    if (collectCustomerTypeOnRegister) {
+      const seg = checkoutStore.customerSegment
+      if (seg === 'retail' || seg === 'business') setTypeChoice(seg)
+      setRegisterPhase('type')
+      setError(null)
     }
-  }, [collectCustomerTypeOnRegister, mode, checkout.customerSegment])
+  }
+
+  function confirmCustomerType() {
+    setCustomerSegment(typeChoice)
+    setRegisterPhase('form')
+    setError(null)
+  }
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
@@ -110,6 +123,23 @@ export function InlineAccountAuthStep({
     setCustomerSegment(segment)
 
     if (segment === 'business') {
+      try {
+        await validateTaxFields()
+      } catch {
+        setError(t('checkout.error.incompleteStep'))
+        return
+      }
+      if (!isBusinessAnagraficaComplete()) {
+        setError(t('checkout.error.incompleteStep'))
+        return
+      }
+    }
+
+    if (collectCustomerTypeOnRegister && segment === 'retail') {
+      if (!checkoutStore.business.fiscalCode.trim()) {
+        setError(t('checkout.error.incompleteStep'))
+        return
+      }
       try {
         await validateTaxFields()
       } catch {
@@ -236,6 +266,7 @@ export function InlineAccountAuthStep({
           onClick={() => {
             setMode('register')
             setError(null)
+            resetRegisterPhase()
           }}
           className={`rounded-full px-3 py-1.5 text-sm font-medium ${
             mode === 'register' ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600'
@@ -258,31 +289,32 @@ export function InlineAccountAuthStep({
       </div>
 
       {mode === 'register' ? (
+        collectCustomerTypeOnRegister && registerPhase === 'type' ? (
+          <div className="space-y-5">
+            <p className="text-sm leading-relaxed text-[#6c727c]">{t('checkout.customerType.hint')}</p>
+            <CheckoutCustomerTypeCards value={typeChoice} onChange={setTypeChoice} />
+            <CheckoutActionRow>
+              <StripePayButton className="w-full" onClick={confirmCustomerType}>
+                {t('checkout.continue')}
+              </StripePayButton>
+            </CheckoutActionRow>
+          </div>
+        ) : (
         <form onSubmit={(e) => void handleRegister(e)} className="space-y-3">
           {collectCustomerTypeOnRegister ? (
-            <div className="space-y-2">
-              <p className="text-sm text-zinc-500">{t('checkout.customerType.hint')}</p>
-              <CheckoutSegmentControl<'retail' | 'business'>
-                value={customerSegment ?? 'retail'}
-                options={(['retail', 'business'] as const).map((value) => ({
-                  value,
-                  label: t(`checkout.customerType.${value}.title`),
-                }))}
-                onChange={(value) => setCustomerSegment(value)}
-              />
+            <div className="flex items-center justify-between gap-3 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm">
+              <span className="font-medium text-zinc-900">
+                {t(`checkout.customerType.${customerSegment ?? typeChoice}.title`)}
+              </span>
+              <button
+                type="button"
+                onClick={resetRegisterPhase}
+                className="shrink-0 text-zinc-900 underline decoration-zinc-300 underline-offset-2 hover:decoration-zinc-900"
+              >
+                {t('checkout.register.changeCustomerType')}
+              </button>
             </div>
           ) : null}
-          <StripeFieldGroup>
-            <StripeInput
-              type="email"
-              name="email"
-              placeholder={t('checkout.emailPlaceholder')}
-              autoComplete="email"
-              value={email}
-              onChange={(e) => onEmailChange(e.target.value)}
-              required
-            />
-          </StripeFieldGroup>
           <div className="grid gap-3 sm:grid-cols-2">
             <StripeFieldGroup>
               <StripeInput
@@ -305,6 +337,23 @@ export function InlineAccountAuthStep({
               />
             </StripeFieldGroup>
           </div>
+          {collectCustomerTypeOnRegister && isBusinessCheckout() ? (
+            <CheckoutBusinessFieldsSection disabled={loading} />
+          ) : null}
+          {collectCustomerTypeOnRegister && !isBusinessCheckout() ? (
+            <CheckoutRetailFiscalCodeField disabled={loading} />
+          ) : null}
+          <StripeFieldGroup>
+            <StripeInput
+              type="email"
+              name="email"
+              placeholder={t('checkout.emailPlaceholder')}
+              autoComplete="email"
+              value={email}
+              onChange={(e) => onEmailChange(e.target.value)}
+              required
+            />
+          </StripeFieldGroup>
           <StripeFieldGroup>
             <StripeInput
               type="tel"
@@ -327,9 +376,6 @@ export function InlineAccountAuthStep({
               minLength={8}
             />
           </StripeFieldGroup>
-          {collectCustomerTypeOnRegister && isBusinessCheckout() ? (
-            <CheckoutBusinessFieldsSection disabled={loading} />
-          ) : null}
           <CheckoutActionRow>
             <StripePayButton
               className="w-full"
@@ -341,6 +387,7 @@ export function InlineAccountAuthStep({
             </StripePayButton>
           </CheckoutActionRow>
         </form>
+        )
       ) : (
         <form onSubmit={(e) => void handleLogin(e)} className="space-y-3">
           <StripeFieldGroup>

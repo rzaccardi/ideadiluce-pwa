@@ -349,7 +349,8 @@ function businessBillingComplete(): boolean {
 
   if (!isBusinessCheckout()) {
     const fc = b.fiscalCode.trim()
-    if (country === 'IT' && fc) {
+    if (country === 'IT') {
+      if (!fc) return false
       return b.fiscalCodeValid === true
     }
     return true

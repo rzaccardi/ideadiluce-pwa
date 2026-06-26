@@ -15,12 +15,16 @@ Guida per mettere online monorepo, database e (opzionale) storage media con **Ap
 
 ## Architettura
 
-| Prodotto DO | Componente | Stack |
-|-------------|------------|--------|
-| **Web Service** | `api` | Express :8080, Prisma, Hub, proxy Arfly |
-| **Web Service** | `shop` | Next.js :3000 (rewrite `/api` → BFF) |
-| **Static Site** | `admin` | Vite SPA `admin/dist` |
-| **Managed PostgreSQL** | `postgres` | Schema `public` + `hub` |
+Tre componenti **separati** nello stesso monorepo (ognuno con URL proprio `*.ondigitalocean.app`):
+
+| Prodotto DO | Nome componente | Sorgente | Stack | URL |
+|-------------|-----------------|----------|-------|-----|
+| **Web Service** | `api` | `server/` | Express :8080, Prisma, Hub | `${api.PUBLIC_URL}` |
+| **Web Service** | `shop` | `client/` | Next.js :3000 | `${shop.PUBLIC_URL}` (anche URL principale app) |
+| **Static Site** | `admin` | `admin/` | Vite SPA → `admin/dist` | `${admin.PUBLIC_URL}` |
+| **Managed PostgreSQL** | `postgres` | — | Schema `public` + `hub` | interno |
+
+Lo spec usa `source_dir: /` (root monorepo) perché i build npm workspaces devono vedere `package.json` root, `client/`, `server/` e `admin/` insieme.
 
 Costo indicativo EU `fra1`: API + shop ~10–20 €/mese, static site admin incluso, DB produzione ~15–30 €/mese — verifica prezzi aggiornati nel pannello.
 
@@ -28,9 +32,26 @@ Costo indicativo EU `fra1`: API + shop ~10–20 €/mese, static site admin incl
 
 ### 1. Collega il repository
 
+**Importante:** non usare l’auto-detect di DigitalOcean (rileva un solo componente Node). Serve lo spec esplicito.
+
+**Opzione A — CLI (consigliata):**
+
+```bash
+doctl apps create --spec .do/app.yaml
+```
+
+**Opzione B — Control Panel:**
+
 1. **Apps** → **Create App** → GitHub → repo `ideadiluce-pwa`
-2. Conferma **Use existing app spec** (legge `.do/app.yaml`)
-3. Verifica `github.repo` e branch `main`
+2. Seleziona **Use existing app spec** e conferma il path `.do/app.yaml`
+3. Verifica che compaiano **3 componenti** (`api`, `shop`, `admin`) + database `postgres`
+4. Verifica `github.repo` e branch `main`
+
+**Se l’app esiste già con un solo componente**, aggiorna lo spec:
+
+```bash
+doctl apps update <APP_ID> --spec .do/app.yaml
+```
 
 ### 2. Secret (Environment)
 

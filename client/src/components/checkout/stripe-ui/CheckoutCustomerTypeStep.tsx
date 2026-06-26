@@ -8,7 +8,8 @@ import {
   goBackCheckoutStep,
   setCustomerSegment,
 } from '@/features/checkout'
-import { CheckoutSegmentControl, CheckoutStepHeader } from './CheckoutStepPrimitives'
+import { CheckoutCustomerTypeCards } from './CheckoutCustomerTypeCards'
+import { CheckoutStepHeader } from './CheckoutStepPrimitives'
 import { useI18n } from '@/hooks/use-i18n'
 import { CheckoutActionRow, StripeBackButton, StripePayButton } from './StripeFields'
 
@@ -23,12 +24,8 @@ export function CheckoutCustomerTypeStep() {
         subtitle={t('checkout.customerType.hint')}
       />
 
-      <CheckoutSegmentControl<'retail' | 'business'>
+      <CheckoutCustomerTypeCards
         value={checkout.customerSegment ?? 'retail'}
-        options={(['retail', 'business'] as const).map((value) => ({
-          value,
-          label: t(`checkout.customerType.${value}.title`),
-        }))}
         onChange={setCustomerSegment}
       />
 
