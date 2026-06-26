@@ -1,0 +1,26 @@
+# Idea di Luce
+
+> E-commerce di illuminazione arredo e tecnica (Italia, multilingua IT/EN/ES/FR/DE).
+
+## Pagine principali
+
+- Home: /
+- Catalogo: /catalog
+- Brand: /brand
+- Professionisti: /professionisti
+- Contatti: /contatti
+
+## Struttura URL
+
+- Prodotto: /prodotto/{slug}/
+- Categoria: /categoria/{slug}
+- Brand: /brand/{slug}
+
+## Sitemap
+
+- /sitemap.xml
+
+## Note
+
+- I prezzi e la disponibilità possono dipendere dal listino e dalla sessione utente.
+- Non indicizzare URL con filtri query complessi sul catalogo; usare le pagine categoria e brand.

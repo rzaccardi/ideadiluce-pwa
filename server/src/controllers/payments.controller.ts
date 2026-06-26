@@ -11,12 +11,23 @@ import { constructStripeWebhookEvent } from '../adapters/payments/stripeCheckout
 import type {
   ConfirmPaymentBody,
   CreatePaymentSessionBody,
+  PrepareWalletCheckoutBody,
 } from '../modules/payments/payments.validators.js'
 
 export const paymentsController = {
+  stripeConfig: asyncHandler(async (_req: Request, res: Response) => {
+    res.json(ok(paymentsService.stripeClientConfig()))
+  }),
+
   createSession: asyncHandler(async (req: Request, res: Response) => {
     const body = req.body as CreatePaymentSessionBody
     const data = await paymentsService.createPaymentSession(req, body)
+    res.status(201).json(ok(data))
+  }),
+
+  prepareWalletCheckout: asyncHandler(async (req: Request, res: Response) => {
+    const body = req.body as PrepareWalletCheckoutBody
+    const data = await paymentsService.prepareWalletCheckout(req, body)
     res.status(201).json(ok(data))
   }),
 

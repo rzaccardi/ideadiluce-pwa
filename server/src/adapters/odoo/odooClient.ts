@@ -28,8 +28,8 @@ const inflate = promisify(zlib.inflate)
 
 export type OdooCallContext = {
   correlationId: string
-  /** Per logging strutturato; opzionale se si invoca fuori da Express */
-  req?: Pick<Request, 'correlationId'>
+  /** Per logging e pricing session; opzionale se si invoca fuori da Express */
+  req?: Request
 }
 
 export class OdooClientError extends Error {
@@ -56,6 +56,45 @@ export function getOdooPublicBaseUrl(): string {
     )
   }
   return raw.replace(/\/$/, '')
+}
+
+/** Base URL web Odoo per link admin BO; `null` se Odoo non è configurato. */
+export function getOdooWebBaseUrlOrNull(): string | null {
+  if (!isOdooConfigured()) return null
+  const raw = env.ODOO_URL?.trim() || env.ODOO_BASE_URL?.trim()
+  if (!raw) return null
+  return raw.replace(/\/$/, '')
+}
+
+/** Base web Odoo con segmento `/odoo` (evita doppio `/odoo/odoo` se `ODOO_URL` lo include già). */
+export function normalizeOdooWebBaseUrl(baseUrl: string): string {
+  let base = baseUrl.trim().replace(/\/$/, '')
+  while (/\/odoo\/odoo$/.test(base)) {
+    base = base.replace(/\/odoo\/odoo$/, '/odoo')
+  }
+  if (base.endsWith('/odoo')) return base
+  return `${base}/odoo`
+}
+
+/** ID azione menu Odoo per aprire un `product.template` nel client web. */
+export function getOdooProductActionId(): number {
+  return env.ODOO_PRODUCT_ACTION_ID
+}
+
+/** Form prodotto `product.template` nel client web Odoo (es. `/odoo/action-497/{id}`). */
+export function buildOdooProductWebUrl(
+  baseUrl: string,
+  templateId: number,
+  actionId: number = getOdooProductActionId(),
+): string {
+  const base = normalizeOdooWebBaseUrl(baseUrl)
+  return `${base}/action-${actionId}/${templateId}`
+}
+
+/** Form contatto `res.partner` nel client web Odoo 17+ (path relativo a `ODOO_URL`). */
+export function buildOdooPartnerWebUrl(baseUrl: string, partnerId: number): string {
+  const base = baseUrl.replace(/\/$/, '')
+  return `${base}/contacts/${partnerId}`
 }
 
 export function isOdooConfigured(): boolean {
@@ -667,6 +706,44 @@ export async function odooHttpGetSimple(
 /**
  * Diagnostica per GET /integrations/odoo/ping: versione RPC, autenticazione, lettura minima ORM.
  */
+/** Autenticazione credenziali utente portal su `/xmlrpc/2/common` (non usa la cache del service account). */
+export async function odooAuthenticatePortalUser(
+  ctx: OdooCallContext,
+  login: string,
+  password: string,
+): Promise<number | null> {
+  if (!isOdooConfigured()) return null
+  const db = env.ODOO_DB!.trim()
+  const normalizedLogin = login.toLowerCase().trim()
+  const operation = 'common/authenticate_portal'
+  const startedAt = new Date()
+
+  try {
+    const uid = await methodCallAsync(
+      '/xmlrpc/2/common',
+      'authenticate',
+      [db, normalizedLogin, password, {}],
+      env.ODOO_TIMEOUT_MS,
+    )
+    const okAuth = typeof uid === 'number' && Number.isFinite(uid) && uid > 0
+    const finishedAt = new Date()
+    void writeIntegrationLog({
+      service: 'odoo',
+      operation,
+      correlationId: ctx.correlationId,
+      success: okAuth,
+      statusCode: okAuth ? 200 : 401,
+      requestRedacted: redactForLog({ db, login: normalizedLogin, password: '[redacted]' }),
+      responseRedacted: okAuth ? { uid } : { result: uid },
+      startedAt,
+      finishedAt,
+    })
+    return okAuth ? uid : null
+  } catch {
+    return null
+  }
+}
+
 /** Autenticazione XML-RPC su `/xmlrpc/2/common` → `uid` (cache in-process quando possibile). */
 export async function authenticate(ctx: OdooCallContext): Promise<number> {
   return getAuthenticatedUid(ctx)

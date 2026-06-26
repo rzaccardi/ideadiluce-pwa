@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:#fff;font-family:'Hanken Grotesk',system-ui,sans-serif;color:#14161b;}
+</style>
+</helmet>
+
+<div style="width:100%;overflow:hidden;position:relative;">
+
+  <!-- utility -->
+  <!-- header (mega-menu component) -->
+  <dc-import name="IdeaDiLuce Header" active="attacco" hint-size="100%,124px"></dc-import>
+
+  <!-- hero -->
+  <div style="background:#fff;border-bottom:1px solid #eef0f3;">
+    <div style="max-width:1320px;margin:0 auto;padding:22px 48px 34px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9298a3;margin-bottom:20px;">Home · <span style="color:#3f4651;">Scegli per attacco</span></div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:30px;flex-wrap:wrap;">
+        <div style="max-width:680px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.22em;color:#d9831a;margin-bottom:14px;">SCEGLI PER ATTACCO</div>
+          <div style="font-size:38px;line-height:1.06;font-weight:800;letter-spacing:-.025em;margin-bottom:12px;">Trova la lampadina giusta<br>per il tuo attacco</div>
+          <div style="font-size:16px;line-height:1.5;color:#5b616b;">Non serve conoscere il nome tecnico. Riconosci l'attacco dalla forma e arriva al prodotto compatibile in pochi click — riducendo errori e resi.</div>
+        </div>
+        <!-- wizard CTA -->
+        <div style="background:#fbf4ea;border:1px solid #f0e3d0;border-radius:12px;padding:22px 24px;width:360px;flex-shrink:0;">
+          <div>
+            <div style="font-size:19px;font-weight:800;letter-spacing:-.02em;color:#14161b;margin-bottom:6px;">Non sai quale attacco hai?</div>
+            <div style="font-size:13.5px;line-height:1.45;color:#7a6a52;margin-bottom:16px;">Rispondi a 3 domande sulla forma e le dimensioni: ti diciamo noi l'attacco e i prodotti compatibili.</div>
+            <button onClick="{{ openWizard }}" style="background:#d9831a;color:#fff;font-size:14.5px;font-weight:700;padding:13px 20px;border-radius:7px;border:none;cursor:pointer;font-family:inherit;" style-hover="background:#c2730f;">Trova il tuo attacco →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- search natural language -->
+  <div style="background:#f7f8fa;border-bottom:1px solid #eef0f3;">
+    <div style="max-width:1320px;margin:0 auto;padding:24px 48px;">
+      <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid #e0e4e9;border-radius:8px;padding:8px 8px 8px 20px;max-width:780px;margin:0 auto;">
+        <span style="flex:1;font-size:15.5px;color:#9298a3;">Descrivi la lampadina: "vite grande", "due pin", "faretto baionetta", "lampadina lunga"…</span>
+        <span style="background:#d9831a;color:#fff;font-size:14.5px;font-weight:700;padding:12px 26px;border-radius:6px;">Cerca</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:13px;justify-content:center;align-items:center;">
+        <span style="font-size:12.5px;color:#8b919b;">La ricerca capisce anche il linguaggio comune:</span>
+        <span style="font-size:12px;color:#3f4651;background:#fff;border:1px solid #e2e6eb;border-radius:30px;padding:5px 12px;">"vite grande" → E27</span>
+        <span style="font-size:12px;color:#3f4651;background:#fff;border:1px solid #e2e6eb;border-radius:30px;padding:5px 12px;">"faretto due pin" → GU5.3</span>
+        <span style="font-size:12px;color:#3f4651;background:#fff;border:1px solid #e2e6eb;border-radius:30px;padding:5px 12px;">"lampadina lunga" → R7s</span>
+        <span style="font-size:12px;color:#3f4651;background:#fff;border:1px solid #e2e6eb;border-radius:30px;padding:5px 12px;">"neon led" → G13 / T8</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- socket grid -->
+  <div style="max-width:1320px;margin:0 auto;padding:40px 48px 50px;">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:8px;">
+      <div style="font-size:24px;font-weight:800;letter-spacing:-.02em;">Trova per attacco</div>
+      <span style="font-size:13px;color:#8b919b;">Ordinati per diffusione</span>
+    </div>
+    <div style="font-size:14px;color:#6c727c;margin-bottom:24px;">Riconosci l'attacco dall'illustrazione e vai dritto ai prodotti compatibili.</div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+
+      <!-- E27 -->
+      <a style="border:1px solid #e7eaee;border-radius:10px;padding:20px;text-decoration:none;display:flex;flex-direction:column;background:#fff;" style-hover="border-color:#d9831a;box-shadow:0 8px 22px rgba(0,0,0,.05);">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">
+          <div style="width:60px;height:60px;flex-shrink:0;background:#f7f8fa;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 64" width="40" height="40" fill="none" stroke="#3f4651" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M24 14 H40 V42 L32 50 L24 42 Z"></path><path d="M24 21 H40 M24 28 H40 M24 35 H40" opacity=".5"></path><path d="M29 50 L32 54 L35 50" stroke="#d9831a"></path></svg>
+          </div>
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:500;color:#14161b;">E27</div><div style="font-size:12px;color:#8b919b;">attacco grande a vite</div></div>
+        </div>
+        <div style="font-size:13px;line-height:1.45;color:#6c727c;flex:1;">Il più comune per lampade da casa, sospensioni e plafoniere.</div>
+        <div style="font-size:13px;font-weight:700;color:#d9831a;margin-top:14px;">Vedi prodotti E27 →</div>
+      </a>
+
+      <!-- E14 -->
+      <a style="border:1px solid #e7eaee;border-radius:10px;padding:20px;text-decoration:none;display:flex;flex-direction:column;background:#fff;" style-hover="border-color:#d9831a;box-shadow:0 8px 22px rgba(0,0,0,.05);">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">
+          <div style="width:60px;height:60px;flex-shrink:0;background:#f7f8fa;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 64" width="40" height="40" fill="none" stroke="#3f4651" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M27 14 H37 V42 L32 49 L27 42 Z"></path><path d="M27 21 H37 M27 28 H37 M27 35 H37" opacity=".5"></path><path d="M30 49 L32 52 L34 49" stroke="#d9831a"></path></svg>
+          </div>
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:500;color:#14161b;">E14</div><div style="font-size:12px;color:#8b919b;">attacco piccolo a vite</div></div>
+        </div>
+        <div style="font-size:13px;line-height:1.45;color:#6c727c;flex:1;">Abat-jour, applique e lampadari decorativi.</div>
+        <div style="font-size:13px;font-weight:700;color:#d9831a;margin-top:14px;">Vedi prodotti E14 →</div>
+      </a>
+
+      <!-- GU10 -->
+      <a style="border:1px solid #e7eaee;border-radius:10px;padding:20px;text-decoration:none;display:flex;flex-direction:column;background:#fff;" style-hover="border-color:#d9831a;box-shadow:0 8px 22px rgba(0,0,0,.05);">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">
+          <div style="width:60px;height:60px;flex-shrink:0;background:#f7f8fa;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 64" width="40" height="40" fill="none" stroke="#3f4651" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16 H42 V30 H22 Z"></path><path d="M29 30 V44 M35 30 V44"></path><circle cx="29" cy="47" r="3" fill="#d9831a" stroke="none"></circle><circle cx="35" cy="47" r="3" fill="#d9831a" stroke="none"></circle></svg>
+          </div>
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:500;color:#14161b;">GU10</div><div style="font-size:12px;color:#8b919b;">faretto a baionetta</div></div>
+        </div>
+        <div style="font-size:13px;line-height:1.45;color:#6c727c;flex:1;">Faretti da incasso, spot e binari. 230V, due piedini larghi.</div>
+        <div style="font-size:13px;font-weight:700;color:#d9831a;margin-top:14px;">Vedi prodotti GU10 →</div>
+      </a>
+
+      <!-- GU5.3 -->
+      <a style="border:1px solid #e7eaee;border-radius:10px;padding:20px;text-decoration:none;display:flex;flex-direction:column;background:#fff;" style-hover="border-color:#d9831a;box-shadow:0 8px 22px rgba(0,0,0,.05);">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">
+          <div style="width:60px;height:60px;flex-shrink:0;background:#f7f8fa;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 64" width="40" height="40" fill="none" stroke="#3f4651" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16 H42 V30 H22 Z"></path><path d="M30 30 V48 M34 30 V48" stroke="#d9831a"></path></svg>
+          </div>
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:500;color:#14161b;">GU5.3</div><div style="font-size:12px;color:#8b919b;">faretto 12V · MR16</div></div>
+        </div>
+        <div style="font-size:13px;line-height:1.45;color:#6c727c;flex:1;">Faretti 12V con trasformatore. Due pin sottili dritti.</div>
+        <div style="font-size:13px;font-weight:700;color:#d9831a;margin-top:14px;">Vedi prodotti GU5.3 →</div>
+      </a>
+
+      <!-- G9 -->
+      <a style="border:1px solid #e7eaee;border-radius:10px;padding:20px;text-decoration:none;display:flex;flex-direction:column;background:#fff;" style-hover="border-color:#d9831a;box-shadow:0 8px 22px rgba(0,0,0,.05);">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">
+          <div style="width:60px;height:60px;flex-shrink:0;background:#f7f8fa;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 64" width="40" height="40" fill="none" stroke="#3f4651" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M24 16 H40 V28 H24 Z"></path><path d="M29 28 V44 Q29 49 31 44 V28" stroke="#d9831a"></path><path d="M35 28 V44 Q35 49 33 44 V28" stroke="#d9831a"></path></svg>
+          </div>
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:500;color:#14161b;">G9</div><div style="font-size:12px;color:#8b919b;">capsula a vite ad asola</div></div>
+        </div>
+        <div style="font-size:13px;line-height:1.45;color:#6c727c;flex:1;">Applique, lampadari moderni e decorative. 230V.</div>
+        <div style="font-size:13px;font-weight:700;color:#d9831a;margin-top:14px;">Vedi prodotti G9 →</div>
+      </a>
+
+      <!-- G4 -->
+      <a style="border:1px solid #e7eaee;border-radius:10px;padding:20px;text-decoration:none;display:flex;flex-direction:column;background:#fff;" style-hover="border-color:#d9831a;box-shadow:0 8px 22px rgba(0,0,0,.05);">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">
+          <div style="width:60px;height:60px;flex-shrink:0;background:#f7f8fa;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 64" width="40" height="40" fill="none" stroke="#3f4651" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M25 18 H39 V30 H25 Z"></path><path d="M31 30 V46 M34 30 V46" stroke="#d9831a"></path></svg>
+          </div>
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:500;color:#14161b;">G4</div><div style="font-size:12px;color:#8b919b;">mini capsula a due pin</div></div>
+        </div>
+        <div style="font-size:13px;line-height:1.45;color:#6c727c;flex:1;">Mobili, camper, nautica. Due pin sottili ravvicinati, 12V.</div>
+        <div style="font-size:13px;font-weight:700;color:#d9831a;margin-top:14px;">Vedi prodotti G4 →</div>
+      </a>
+
+      <!-- R7S -->
+      <a style="border:1px solid #e7eaee;border-radius:10px;padding:20px;text-decoration:none;display:flex;flex-direction:column;background:#fff;" style-hover="border-color:#d9831a;box-shadow:0 8px 22px rgba(0,0,0,.05);">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">
+          <div style="width:60px;height:60px;flex-shrink:0;background:#f7f8fa;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 64" width="40" height="40" fill="none" stroke="#3f4651" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16 32 H48"></path><path d="M16 27 V37 M48 27 V37"></path><path d="M12 32 H16 M48 32 H52" stroke="#d9831a"></path></svg>
+          </div>
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:500;color:#14161b;">R7s</div><div style="font-size:12px;color:#8b919b;">lampadina lineare</div></div>
+        </div>
+        <div style="font-size:13px;line-height:1.45;color:#6c727c;flex:1;">Piantane, proiettori e applique. Contatti ai lati (78 / 118 mm).</div>
+        <div style="font-size:13px;font-weight:700;color:#d9831a;margin-top:14px;">Vedi prodotti R7s →</div>
+      </a>
+
+      <!-- GX53 -->
+      <a style="border:1px solid #e7eaee;border-radius:10px;padding:20px;text-decoration:none;display:flex;flex-direction:column;background:#fff;" style-hover="border-color:#d9831a;box-shadow:0 8px 22px rgba(0,0,0,.05);">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">
+          <div style="width:60px;height:60px;flex-shrink:0;background:#f7f8fa;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 64" width="40" height="40" fill="none" stroke="#3f4651" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="32" cy="26" rx="16" ry="6"></ellipse><path d="M16 26 V32 Q16 38 32 38 Q48 38 48 32 V26"></path><path d="M28 38 V45 M36 38 V45" stroke="#d9831a"></path></svg>
+          </div>
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:500;color:#14161b;">GX53</div><div style="font-size:12px;color:#8b919b;">attacco piatto a disco</div></div>
+        </div>
+        <div style="font-size:13px;line-height:1.45;color:#6c727c;flex:1;">Sottopensili, mobili e faretti bassi. Lampadina circolare piatta.</div>
+        <div style="font-size:13px;font-weight:700;color:#d9831a;margin-top:14px;">Vedi prodotti GX53 →</div>
+      </a>
+
+      <!-- G13 -->
+      <a style="border:1px solid #e7eaee;border-radius:10px;padding:20px;text-decoration:none;display:flex;flex-direction:column;background:#fff;" style-hover="border-color:#d9831a;box-shadow:0 8px 22px rgba(0,0,0,.05);">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">
+          <div style="width:60px;height:60px;flex-shrink:0;background:#f7f8fa;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 64" width="40" height="40" fill="none" stroke="#3f4651" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 27 H46 V37 H14 Z"></path><path d="M46 30 H52 M46 34 H52" stroke="#d9831a"></path></svg>
+          </div>
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:500;color:#14161b;">G13 · T8</div><div style="font-size:12px;color:#8b919b;">tubo LED classico</div></div>
+        </div>
+        <div style="font-size:13px;line-height:1.45;color:#6c727c;flex:1;">Plafoniere, officine, neon LED. Tubo con due pin laterali.</div>
+        <div style="font-size:13px;font-weight:700;color:#d9831a;margin-top:14px;">Vedi prodotti G13 →</div>
+      </a>
+
+      <!-- 2G11 -->
+      <a style="border:1px solid #e7eaee;border-radius:10px;padding:20px;text-decoration:none;display:flex;flex-direction:column;background:#fff;" style-hover="border-color:#d9831a;box-shadow:0 8px 22px rgba(0,0,0,.05);">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">
+          <div style="width:60px;height:60px;flex-shrink:0;background:#f7f8fa;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 64" width="40" height="40" fill="none" stroke="#3f4651" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16 H42 V30 H22 Z"></path><path d="M27 30 V46 M31 30 V46 M37 30 V46" stroke="#d9831a"></path></svg>
+          </div>
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:500;color:#14161b;">2G11</div><div style="font-size:12px;color:#8b919b;">tubo PL a 4 pin</div></div>
+        </div>
+        <div style="font-size:13px;line-height:1.45;color:#6c727c;flex:1;">Tubi PL-L compatti. Quattro contatti su un lato.</div>
+        <div style="font-size:13px;font-weight:700;color:#d9831a;margin-top:14px;">Vedi prodotti 2G11 →</div>
+      </a>
+
+      <!-- G24 -->
+      <a style="border:1px solid #e7eaee;border-radius:10px;padding:20px;text-decoration:none;display:flex;flex-direction:column;background:#fff;" style-hover="border-color:#d9831a;box-shadow:0 8px 22px rgba(0,0,0,.05);">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">
+          <div style="width:60px;height:60px;flex-shrink:0;background:#f7f8fa;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 64" width="40" height="40" fill="none" stroke="#3f4651" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M24 16 H40 V28 H24 Z"></path><path d="M28 28 V40 L26 46 M36 28 V40 L38 46" stroke="#d9831a"></path></svg>
+          </div>
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:500;color:#14161b;">G24</div><div style="font-size:12px;color:#8b919b;">PL-C a innesto</div></div>
+        </div>
+        <div style="font-size:13px;line-height:1.45;color:#6c727c;flex:1;">Lampade PL-C compatte per downlight e plafoniere.</div>
+        <div style="font-size:13px;font-weight:700;color:#d9831a;margin-top:14px;">Vedi prodotti G24 →</div>
+      </a>
+
+      <!-- Altri -->
+      <a style="border:1px dashed #d4d9df;border-radius:10px;padding:20px;text-decoration:none;display:flex;flex-direction:column;background:#fafbfc;" style-hover="border-color:#d9831a;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">
+          <div style="width:60px;height:60px;flex-shrink:0;background:#fff;border:1px solid #e7eaee;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 64" width="34" height="34" fill="none" stroke="#9298a3" stroke-width="1.7" stroke-linecap="round"><circle cx="22" cy="24" r="2.4"></circle><circle cx="32" cy="24" r="2.4"></circle><circle cx="42" cy="24" r="2.4"></circle><circle cx="22" cy="34" r="2.4"></circle><circle cx="32" cy="34" r="2.4"></circle><circle cx="42" cy="34" r="2.4"></circle></svg>
+          </div>
+          <div><div style="font-size:17px;font-weight:700;color:#14161b;">Altri attacchi</div><div style="font-size:12px;color:#8b919b;">B22, BA15d, E10, GY6.35…</div></div>
+        </div>
+        <div style="font-size:13px;line-height:1.45;color:#6c727c;flex:1;">Non trovi il tuo? Vedi tutti gli attacchi o chiedi aiuto.</div>
+        <div style="font-size:13px;font-weight:700;color:#3f4651;margin-top:14px;">Tutti gli attacchi →</div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- scegli per forma -->
+  <div style="background:#fff;border-top:1px solid #eef0f3;">
+    <div style="max-width:1320px;margin:0 auto;padding:44px 48px 50px;">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:24px;font-weight:800;letter-spacing:-.02em;">Scegli per forma della lampadina</div>
+        <span style="font-size:13px;color:#8b919b;">Riconosci la sagoma del vetro</span>
+      </div>
+      <div style="font-size:14px;color:#6c727c;margin-bottom:24px;">Hai già l'attacco giusto? Affina la scelta per forma: estetica, ingombro e fascio di luce cambiano.</div>
+
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;">
+
+        <!-- Goccia A60 -->
+        <a style="border:1px solid #e7eaee;border-radius:10px;padding:18px 16px;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:12px;background:#fff;" style-hover="border-color:#d9831a;box-shadow:0 8px 22px rgba(0,0,0,.05);">
+          <div style="width:100%;height:74px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 80" width="50" height="62" fill="none" stroke="#3f4651" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M32 8 C18 8 14 20 14 30 C14 40 22 44 24 50 H40 C42 44 50 40 50 30 C50 20 46 8 32 8 Z"></path><path d="M24 50 H40 M25 54 H39 M27 58 H37" stroke="#d9831a"></path></svg>
+          </div>
+          <div style="text-align:center;"><div style="font-size:14.5px;font-weight:700;color:#14161b;">Goccia</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8b919b;margin-top:2px;">A60</div></div>
+        </a>
+
+        <!-- Sfera G45 -->
+        <a style="border:1px solid #e7eaee;border-radius:10px;padding:18px 16px;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:12px;background:#fff;" style-hover="border-color:#d9831a;box-shadow:0 8px 22px rgba(0,0,0,.05);">
+          <div style="width:100%;height:74px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 80" width="50" height="62" fill="none" stroke="#3f4651" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="28" r="18"></circle><path d="M24 46 H40 M25 50 H39 M27 54 H37" stroke="#d9831a"></path></svg>
+          </div>
+          <div style="text-align:center;"><div style="font-size:14.5px;font-weight:700;color:#14161b;">Sfera</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8b919b;margin-top:2px;">G45</div></div>
+        </a>
+
+        <!-- Candela C35 -->
+        <a style="border:1px solid #e7eaee;border-radius:10px;padding:18px 16px;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:12px;background:#fff;" style-hover="border-color:#d9831a;box-shadow:0 8px 22px rgba(0,0,0,.05);">
+          <div style="width:100%;height:74px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 80" width="50" height="62" fill="none" stroke="#3f4651" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M32 6 C28 14 26 18 26 26 C26 36 26 42 27 48 H37 C38 42 38 36 38 26 C38 18 36 14 32 6 Z"></path><path d="M27 48 H37 M28 52 H36 M29 56 H35" stroke="#d9831a"></path></svg>
+          </div>
+          <div style="text-align:center;"><div style="font-size:14.5px;font-weight:700;color:#14161b;">Candela</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8b919b;margin-top:2px;">C35</div></div>
+        </a>
+
+        <!-- Tubolare T -->
+        <a style="border:1px solid #e7eaee;border-radius:10px;padding:18px 16px;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:12px;background:#fff;" style-hover="border-color:#d9831a;box-shadow:0 8px 22px rgba(0,0,0,.05);">
+          <div style="width:100%;height:74px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 80" width="50" height="62" fill="none" stroke="#3f4651" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M26 8 Q32 4 38 8 V46 H26 Z"></path><path d="M26 46 H38 M27 50 H37 M28 54 H36" stroke="#d9831a"></path></svg>
+          </div>
+          <div style="text-align:center;"><div style="font-size:14.5px;font-weight:700;color:#14161b;">Tubolare</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8b919b;margin-top:2px;">T</div></div>
+        </a>
+
+        <!-- Riflettore R63 -->
+        <a style="border:1px solid #e7eaee;border-radius:10px;padding:18px 16px;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:12px;background:#fff;" style-hover="border-color:#d9831a;box-shadow:0 8px 22px rgba(0,0,0,.05);">
+          <div style="width:100%;height:74px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 80" width="50" height="62" fill="none" stroke="#3f4651" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 14 Q32 8 46 14 L40 44 H24 Z"></path><path d="M18 14 Q32 22 46 14" opacity=".5"></path><path d="M24 44 H40 M26 48 H38 M28 52 H36" stroke="#d9831a"></path></svg>
+          </div>
+          <div style="text-align:center;"><div style="font-size:14.5px;font-weight:700;color:#14161b;">Riflettore</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8b919b;margin-top:2px;">R63</div></div>
+        </a>
+
+        <!-- Globo G95 -->
+        <a style="border:1px solid #e7eaee;border-radius:10px;padding:18px 16px;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:12px;background:#fff;" style-hover="border-color:#d9831a;box-shadow:0 8px 22px rgba(0,0,0,.05);">
+          <div style="width:100%;height:74px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 80" width="50" height="62" fill="none" stroke="#3f4651" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="26" r="22"></circle><path d="M25 48 H39 M27 52 H37" stroke="#d9831a"></path></svg>
+          </div>
+          <div style="text-align:center;"><div style="font-size:14.5px;font-weight:700;color:#14161b;">Globo</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8b919b;margin-top:2px;">G95</div></div>
+        </a>
+
+        <!-- Spot MR16 -->
+        <a style="border:1px solid #e7eaee;border-radius:10px;padding:18px 16px;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:12px;background:#fff;" style-hover="border-color:#d9831a;box-shadow:0 8px 22px rgba(0,0,0,.05);">
+          <div style="width:100%;height:74px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 80" width="50" height="62" fill="none" stroke="#3f4651" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12 H44 L38 40 H26 Z"></path><path d="M26 40 H38" opacity=".8"></path><path d="M30 40 V48 M34 40 V48" stroke="#d9831a"></path></svg>
+          </div>
+          <div style="text-align:center;"><div style="font-size:14.5px;font-weight:700;color:#14161b;">Spot</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8b919b;margin-top:2px;">MR16</div></div>
+        </a>
+
+        <!-- Lineare R7s -->
+        <a style="border:1px solid #e7eaee;border-radius:10px;padding:18px 16px;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:12px;background:#fff;" style-hover="border-color:#d9831a;box-shadow:0 8px 22px rgba(0,0,0,.05);">
+          <div style="width:100%;height:74px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 80" width="56" height="40" fill="none" stroke="#3f4651" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 32 H52"></path><path d="M12 27 V37 M52 27 V37"></path><path d="M8 32 H12 M52 32 H56" stroke="#d9831a"></path></svg>
+          </div>
+          <div style="text-align:center;"><div style="font-size:14.5px;font-weight:700;color:#14161b;">Lineare</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8b919b;margin-top:2px;">R7s</div></div>
+        </a>
+
+        <!-- Filamento ST64 -->
+        <a style="border:1px solid #e7eaee;border-radius:10px;padding:18px 16px;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:12px;background:#fff;" style-hover="border-color:#d9831a;box-shadow:0 8px 22px rgba(0,0,0,.05);">
+          <div style="width:100%;height:74px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 80" width="50" height="62" fill="none" stroke="#3f4651" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M32 8 C20 8 16 18 16 28 C16 38 24 42 25 48 H39 C40 42 48 38 48 28 C48 18 44 8 32 8 Z"></path><path d="M27 20 V36 M32 18 V38 M37 20 V36" stroke="#d9831a" opacity=".9"></path><path d="M25 48 H39" stroke="#3f4651"></path></svg>
+          </div>
+          <div style="text-align:center;"><div style="font-size:14.5px;font-weight:700;color:#14161b;">Filamento</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8b919b;margin-top:2px;">ST64</div></div>
+        </a>
+
+        <!-- Tutte le forme -->
+        <a style="border:1px dashed #d4d9df;border-radius:10px;padding:18px 16px;text-decoration:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#fafbfc;" style-hover="border-color:#d9831a;">
+          <div style="width:100%;height:74px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 64 64" width="34" height="34" fill="none" stroke="#9298a3" stroke-width="1.7" stroke-linecap="round"><circle cx="22" cy="24" r="2.4"></circle><circle cx="32" cy="24" r="2.4"></circle><circle cx="42" cy="24" r="2.4"></circle><circle cx="22" cy="34" r="2.4"></circle><circle cx="32" cy="34" r="2.4"></circle><circle cx="42" cy="34" r="2.4"></circle></svg>
+          </div>
+          <div style="text-align:center;"><div style="font-size:14px;font-weight:700;color:#14161b;">Tutte le forme</div><div style="font-size:11px;color:#8b919b;margin-top:2px;">oliva, globo, PAR…</div></div>
+        </a>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- guida riconoscimento -->
+  <div style="background:#f7f8fa;border-top:1px solid #eef0f3;">
+    <div style="max-width:1320px;margin:0 auto;padding:50px 48px;">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;">
+        <div>
+          <div style="font-size:24px;font-weight:800;letter-spacing:-.02em;">Come riconoscere l'attacco</div>
+          <div style="font-size:14px;color:#6c727c;margin-top:5px;">Le confusioni più comuni, chiarite in un colpo d'occhio.</div>
+        </div>
+        <a style="font-size:14px;font-weight:700;color:#d9831a;text-decoration:none;">Guida completa agli attacchi →</a>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;">
+        <div style="background:#fff;border:1px solid #e7eaee;border-radius:10px;padding:24px;">
+          <div style="font-size:16px;font-weight:700;margin-bottom:12px;">E27 o E14?</div>
+          <div style="font-size:13.5px;line-height:1.55;color:#5b616b;">Sono entrambi <b>a vite</b>: cambia il diametro. <b>E27</b> ≈ 27 mm (lampade, plafoniere, sospensioni), <b>E14</b> ≈ 14 mm (abat-jour, applique, lampadari). Misura la filettatura per non sbagliare.</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e7eaee;border-radius:10px;padding:24px;">
+          <div style="font-size:16px;font-weight:700;margin-bottom:12px;">GU10 o GU5.3?</div>
+          <div style="font-size:13.5px;line-height:1.55;color:#5b616b;"><b>GU10</b> ha due piedini larghi con testa e si <b>ruota</b> per fissarsi (230V, no trasformatore). <b>GU5.3</b> ha due pin sottili dritti e si <b>infila</b> (12V, con trasformatore). Non sono intercambiabili.</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e7eaee;border-radius:10px;padding:24px;">
+          <div style="font-size:16px;font-weight:700;margin-bottom:12px;">G9 o G4?</div>
+          <div style="font-size:13.5px;line-height:1.55;color:#5b616b;"><b>G9</b> ha due contatti ad asola ed è a <b>230V</b> (applique, lampadari). <b>G4</b> ha due pin sottili ravvicinati ed è a <b>12V</b> (mobili, faretti piccoli). L'alimentazione è diversa: attenzione.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- consulenza -->
+  <div style="background:#fbf4ea;border-top:1px solid #f0e3d0;">
+    <div style="max-width:1320px;margin:0 auto;padding:40px 48px;display:flex;align-items:center;justify-content:space-between;gap:40px;">
+      <div style="max-width:640px;">
+        <div style="font-size:22px;font-weight:800;letter-spacing:-.02em;color:#14161b;margin-bottom:7px;">Ancora un dubbio sull'attacco?</div>
+        <div style="font-size:14.5px;line-height:1.5;color:#7a6a52;">Inviaci una foto della lampadina o dell'attacco da vicino: ti diciamo qual è e ti mostriamo i prodotti compatibili. Niente più acquisti sbagliati.</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-shrink:0;">
+        <a style="background:#d9831a;color:#fff;font-size:14.5px;font-weight:700;padding:13px 22px;border-radius:6px;text-decoration:none;white-space:nowrap;" style-hover="background:#c2730f;">Invia una foto</a>
+        <button onClick="{{ openWizard }}" style="background:#fff;color:#14161b;font-size:14.5px;font-weight:700;padding:12px 22px;border-radius:6px;border:1px solid #e0d2bd;cursor:pointer;font-family:inherit;white-space:nowrap;">Apri il wizard attacchi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- trust + footer (shared) -->
+  <div style="background:#efe6d5;border-top:1px solid #e6dcc9;border-bottom:1px solid #e6dcc9;">
+    <div style="max-width:1320px;margin:0 auto;padding:26px 48px;display:flex;justify-content:space-between;gap:24px;">
+      <div><div style="font-size:14.5px;font-weight:700;color:#211c16;">Assistenza reale</div><div style="font-size:12.5px;color:#8c8273;">Ti aiutiamo a scegliere il prodotto corretto</div></div>
+      <div><div style="font-size:14.5px;font-weight:700;color:#211c16;">Showroom a Roma</div><div style="font-size:12.5px;color:#8c8273;">Sede fisica e consulenza dal vivo</div></div>
+      <div><div style="font-size:14.5px;font-weight:700;color:#211c16;">Ricambi difficili</div><div style="font-size:12.5px;color:#8c8273;">Cerca per foto, EAN o codice</div></div>
+      <div><div style="font-size:14.5px;font-weight:700;color:#211c16;">Spedizione tracciata</div><div style="font-size:12.5px;color:#8c8273;">Consegna in tutta Italia</div></div>
+    </div>
+  </div>
+  <div style="background:#16130d;color:#9a8e78;">
+    <div style="max-width:1320px;margin:0 auto;padding:54px 48px 30px;">
+      <div style="display:grid;grid-template-columns:1.1fr 1fr 1.2fr 1.3fr;gap:40px;padding-bottom:38px;border-bottom:1px solid rgba(255,255,255,.08);">
+        <!-- info aziendali -->
+        <div>
+          <div style="font-family:'Newsreader',serif;font-size:22px;color:#f1e8d8;margin-bottom:14px;">Idea<span style="font-style:italic;color:#f0ad57;">di</span>Luce</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin-bottom:10px;">INFO AZIENDALI</div>
+          <div style="font-size:13px;line-height:1.7;color:#9a8e78;">TLB ITALY Srl<br>P.IVA / VAT: IT17245551001<br>REA: RM-1705840</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin:18px 0 10px;">INDIRIZZO</div>
+          <div style="font-size:13px;line-height:1.7;color:#9a8e78;">Via Appia Pignatelli 450,<br>00178 Roma (Italy)</div>
+        </div>
+        <!-- servizio clienti -->
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin-bottom:12px;">SERVIZIO CLIENTI</div>
+          <div style="font-size:13px;line-height:1.8;color:#c9bfae;"><a href="tel:+390671671 11" style="color:#c9bfae;text-decoration:none;">Tel: (+39) 06 716 7111</a><br><a href="mailto:info@ideadiluce.com" style="color:#f0ad57;text-decoration:none;">info@ideadiluce.com</a></div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin:18px 0 10px;">ORARI</div>
+          <div style="font-size:13px;line-height:1.7;color:#9a8e78;">Lunedì – Venerdì<br>9.00 – 13.00 · 15.00 – 18.00</div>
+        </div>
+        <!-- utility / seguici -->
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin-bottom:12px;">UTILITY</div>
+          <div style="display:flex;flex-direction:column;gap:9px;font-size:13px;">
+            <a style="color:#9a8e78;text-decoration:none;" style-hover="color:#f1e8d8;">Termini d'Uso e Condizioni di Vendita</a>
+            <a style="color:#9a8e78;text-decoration:none;" style-hover="color:#f1e8d8;">Privacy Policy</a>
+            <a style="color:#9a8e78;text-decoration:none;" style-hover="color:#f1e8d8;">Spedizioni e resi</a>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin:18px 0 10px;">SEGUICI</div>
+          <div style="display:flex;gap:9px;">
+            <span style="width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#c9bfae;">Ig</span>
+            <span style="width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#c9bfae;">Fb</span>
+            <span style="width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#c9bfae;">in</span>
+            <span style="width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#c9bfae;">Pin</span>
+          </div>
+        </div>
+        <!-- non trovato -->
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin-bottom:12px;">PRODOTTO NON TROVATO</div>
+          <div style="background:#1f1a12;border:1px solid rgba(240,173,87,.22);border-radius:10px;padding:18px 20px;">
+            <div style="font-size:14px;line-height:1.55;color:#c9bfae;margin-bottom:14px;">Cerchi qualcosa che non è nel sito? Contattaci ora, siamo solo a un modulo di distanza!</div>
+            <a style="display:inline-block;background:#f0ad57;color:#16130d;font-size:13.5px;font-weight:700;padding:11px 18px;border-radius:7px;text-decoration:none;" style-hover="background:#f7bd6f;">Vai al form →</a>
+          </div>
+        </div>
+      </div>
+      <!-- bottom: payments + copyright -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:24px;padding-top:24px;flex-wrap:wrap;">
+        <div style="font-size:12px;color:#6f6450;">© 2026 TLB ITALY Srl · Tutti i diritti riservati</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <span style="font-size:11px;color:#6f6450;margin-right:4px;">Pagamenti sicuri</span>
+          <span style="background:#fff;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;color:#1a1f71;">VISA</span>
+          <span style="background:#fff;border-radius:5px;padding:6px 9px;font-size:11px;font-weight:800;color:#eb001b;">●●</span>
+          <span style="background:#fff;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;color:#0a3a82;">Maestro</span>
+          <span style="background:#fff;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;color:#003087;">Pay<span style="color:#009cde;">Pal</span></span>
+          <span style="background:#fff;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;color:#2e77bc;">AMEX</span>
+          <span style="background:#fff;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;color:#3f4651;">Bonifico</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ WIZARD MODAL ============ -->
+  <sc-if value="{{ open }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:80;background:rgba(20,16,9,.55);display:flex;align-items:center;justify-content:center;padding:24px;" onClick="{{ closeWizard }}">
+      <div style="background:#fff;border-radius:16px;width:680px;max-width:100%;max-height:92vh;overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.4);" onClick="{{ stop }}">
+
+        <!-- modal header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:22px 28px;border-bottom:1px solid #eef0f3;position:sticky;top:0;background:#fff;border-radius:16px 16px 0 0;">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;color:#d9831a;">TROVA IL TUO ATTACCO</div>
+            <div style="display:flex;gap:6px;">
+              <span style="width:24px;height:4px;border-radius:3px;background:{{ dot1 }};"></span>
+              <span style="width:24px;height:4px;border-radius:3px;background:{{ dot2 }};"></span>
+              <span style="width:24px;height:4px;border-radius:3px;background:{{ dot3 }};"></span>
+            </div>
+          </div>
+          <button onClick="{{ closeWizard }}" style="background:#f4f5f7;border:none;width:34px;height:34px;border-radius:8px;font-size:18px;color:#6c727c;cursor:pointer;line-height:1;">✕</button>
+        </div>
+
+        <div style="padding:30px 28px 32px;">
+
+          <!-- STEP 1 -->
+          <sc-if value="{{ isStep1 }}" hint-placeholder-val="{{ true }}">
+            <div>
+              <div style="font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px;">Che tipo di lampadina devi sostituire?</div>
+              <div style="font-size:14px;color:#6c727c;margin-bottom:22px;">Scegli quella che somiglia di più alla tua. Serve solo a restringere il campo.</div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                <button onClick="{{ pickType.classica }}" style="border:1px solid #e2e6eb;background:#fff;border-radius:10px;padding:16px 14px;cursor:pointer;font-family:inherit;text-align:left;display:flex;align-items:center;gap:13px;" style-hover="border-color:#d9831a;background:#fffdf9;"><svg viewBox="0 0 64 80" width="30" height="38" fill="none" stroke="#3f4651" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M32 8 C18 8 14 20 14 30 C14 40 22 44 24 50 H40 C42 44 50 40 50 30 C50 20 46 8 32 8 Z"></path><path d="M24 50 H40 M26 54 H38" stroke="#d9831a"></path></svg><div><div style="font-size:15px;font-weight:700;color:#14161b;margin-bottom:3px;">Classica</div><div style="font-size:12px;color:#8b919b;">a goccia / sfera</div></div></button>
+                <button onClick="{{ pickType.faretto }}" style="border:1px solid #e2e6eb;background:#fff;border-radius:10px;padding:16px 14px;cursor:pointer;font-family:inherit;text-align:left;display:flex;align-items:center;gap:13px;" style-hover="border-color:#d9831a;background:#fffdf9;"><svg viewBox="0 0 64 80" width="30" height="38" fill="none" stroke="#3f4651" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 14 H44 L38 42 H26 Z"></path><path d="M26 42 H38" opacity=".7"></path><path d="M30 42 V50 M34 42 V50" stroke="#d9831a"></path></svg><div><div style="font-size:15px;font-weight:700;color:#14161b;margin-bottom:3px;">Faretto</div><div style="font-size:12px;color:#8b919b;">spot / incasso</div></div></button>
+                <button onClick="{{ pickType.tubo }}" style="border:1px solid #e2e6eb;background:#fff;border-radius:10px;padding:16px 14px;cursor:pointer;font-family:inherit;text-align:left;display:flex;align-items:center;gap:13px;" style-hover="border-color:#d9831a;background:#fffdf9;"><svg viewBox="0 0 64 64" width="30" height="30" fill="none" stroke="#3f4651" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14 28 H50 V36 H14 Z"></path><path d="M50 31 H56 M50 35 H56" stroke="#d9831a"></path><path d="M8 31 H14 M8 35 H14" stroke="#d9831a"></path></svg><div><div style="font-size:15px;font-weight:700;color:#14161b;margin-bottom:3px;">Tubo LED</div><div style="font-size:12px;color:#8b919b;">neon / lineare lungo</div></div></button>
+                <button onClick="{{ pickType.lineare }}" style="border:1px solid #e2e6eb;background:#fff;border-radius:10px;padding:16px 14px;cursor:pointer;font-family:inherit;text-align:left;display:flex;align-items:center;gap:13px;" style-hover="border-color:#d9831a;background:#fffdf9;"><svg viewBox="0 0 64 64" width="30" height="30" fill="none" stroke="#3f4651" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M16 32 H48"></path><path d="M16 27 V37 M48 27 V37"></path><path d="M12 32 H16 M48 32 H52" stroke="#d9831a"></path></svg><div><div style="font-size:15px;font-weight:700;color:#14161b;margin-bottom:3px;">Lineare corta</div><div style="font-size:12px;color:#8b919b;">piantane, proiettori</div></div></button>
+                <button onClick="{{ pickType.capsula }}" style="border:1px solid #e2e6eb;background:#fff;border-radius:10px;padding:16px 14px;cursor:pointer;font-family:inherit;text-align:left;display:flex;align-items:center;gap:13px;" style-hover="border-color:#d9831a;background:#fffdf9;"><svg viewBox="0 0 64 80" width="30" height="38" fill="none" stroke="#3f4651" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="32" cy="24" r="13"></circle><path d="M27 37 V48 M37 37 V48" stroke="#d9831a"></path></svg><div><div style="font-size:15px;font-weight:700;color:#14161b;margin-bottom:3px;">Capsula piccola</div><div style="font-size:12px;color:#8b919b;">decorative, mobili</div></div></button>
+                <button onClick="{{ pickType.nonso }}" style="border:1px solid #e2e6eb;background:#fff;border-radius:10px;padding:16px 14px;cursor:pointer;font-family:inherit;text-align:left;display:flex;align-items:center;gap:13px;" style-hover="border-color:#d9831a;background:#fffdf9;"><svg viewBox="0 0 64 64" width="30" height="30" fill="none" stroke="#9298a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="32" cy="32" r="20"></circle><path d="M26 27 Q26 20 32 20 Q38 20 38 26 Q38 31 32 33 V37"></path><circle cx="32" cy="44" r="1.6" fill="#9298a3" stroke="none"></circle></svg><div><div style="font-size:15px;font-weight:700;color:#14161b;margin-bottom:3px;">Non lo so</div><div style="font-size:12px;color:#8b919b;">guidami dalla forma</div></div></button>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- STEP 2 -->
+          <sc-if value="{{ isStep2 }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <button onClick="{{ back1 }}" style="background:none;border:none;color:#8b919b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;padding:0;margin-bottom:14px;">← Indietro</button>
+              <div style="font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px;">Che forma ha l'attacco?</div>
+              <div style="font-size:14px;color:#6c727c;margin-bottom:22px;">Guarda la base della lampadina e scegli la descrizione che corrisponde.</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <button onClick="{{ pickShape.E27 }}" style="display:flex;align-items:center;gap:14px;border:1px solid #e2e6eb;background:#fff;border-radius:10px;padding:14px 16px;cursor:pointer;font-family:inherit;text-align:left;" style-hover="border-color:#d9831a;background:#fffdf9;"><svg viewBox="0 0 64 64" width="34" height="34" fill="none" stroke="#3f4651" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M24 14 H40 V42 L32 50 L24 42 Z"></path><path d="M24 22 H40 M24 30 H40 M24 38 H40" opacity=".5"></path></svg><div><div style="font-size:14.5px;font-weight:700;color:#14161b;">Vite grande</div><div style="font-size:12px;color:#8b919b;">filettatura larga ~27 mm</div></div></button>
+                <button onClick="{{ pickShape.E14 }}" style="display:flex;align-items:center;gap:14px;border:1px solid #e2e6eb;background:#fff;border-radius:10px;padding:14px 16px;cursor:pointer;font-family:inherit;text-align:left;" style-hover="border-color:#d9831a;background:#fffdf9;"><svg viewBox="0 0 64 64" width="34" height="34" fill="none" stroke="#3f4651" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M27 14 H37 V42 L32 49 L27 42 Z"></path><path d="M27 22 H37 M27 30 H37 M27 38 H37" opacity=".5"></path></svg><div><div style="font-size:14.5px;font-weight:700;color:#14161b;">Vite piccola</div><div style="font-size:12px;color:#8b919b;">filettatura stretta ~14 mm</div></div></button>
+                <button onClick="{{ pickShape.GU10 }}" style="display:flex;align-items:center;gap:14px;border:1px solid #e2e6eb;background:#fff;border-radius:10px;padding:14px 16px;cursor:pointer;font-family:inherit;text-align:left;" style-hover="border-color:#d9831a;background:#fffdf9;"><svg viewBox="0 0 64 64" width="34" height="34" fill="none" stroke="#3f4651" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16 H42 V30 H22 Z"></path><path d="M29 30 V44 M35 30 V44"></path><circle cx="29" cy="46" r="3" fill="#3f4651" stroke="none"></circle><circle cx="35" cy="46" r="3" fill="#3f4651" stroke="none"></circle></svg><div><div style="font-size:14.5px;font-weight:700;color:#14161b;">Due piedini larghi</div><div style="font-size:12px;color:#8b919b;">con testa, si ruota</div></div></button>
+                <button onClick="{{ pickShape.GU53 }}" style="display:flex;align-items:center;gap:14px;border:1px solid #e2e6eb;background:#fff;border-radius:10px;padding:14px 16px;cursor:pointer;font-family:inherit;text-align:left;" style-hover="border-color:#d9831a;background:#fffdf9;"><svg viewBox="0 0 64 64" width="34" height="34" fill="none" stroke="#3f4651" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16 H42 V30 H22 Z"></path><path d="M30 30 V48 M34 30 V48"></path></svg><div><div style="font-size:14.5px;font-weight:700;color:#14161b;">Due pin sottili dritti</div><div style="font-size:12px;color:#8b919b;">si infila, spesso 12V</div></div></button>
+                <button onClick="{{ pickShape.G9 }}" style="display:flex;align-items:center;gap:14px;border:1px solid #e2e6eb;background:#fff;border-radius:10px;padding:14px 16px;cursor:pointer;font-family:inherit;text-align:left;" style-hover="border-color:#d9831a;background:#fffdf9;"><svg viewBox="0 0 64 64" width="34" height="34" fill="none" stroke="#3f4651" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M24 16 H40 V28 H24 Z"></path><path d="M29 28 V44 Q29 49 31 44 V28 M35 28 V44 Q35 49 33 44 V28"></path></svg><div><div style="font-size:14.5px;font-weight:700;color:#14161b;">Contatti ad asola</div><div style="font-size:12px;color:#8b919b;">capsula ravvicinata 230V</div></div></button>
+                <button onClick="{{ pickShape.G4 }}" style="display:flex;align-items:center;gap:14px;border:1px solid #e2e6eb;background:#fff;border-radius:10px;padding:14px 16px;cursor:pointer;font-family:inherit;text-align:left;" style-hover="border-color:#d9831a;background:#fffdf9;"><svg viewBox="0 0 64 64" width="34" height="34" fill="none" stroke="#3f4651" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M25 18 H39 V30 H25 Z"></path><path d="M31 30 V46 M34 30 V46"></path></svg><div><div style="font-size:14.5px;font-weight:700;color:#14161b;">Due mini pin vicini</div><div style="font-size:12px;color:#8b919b;">molto piccoli, 12V</div></div></button>
+                <button onClick="{{ pickShape.R7S }}" style="display:flex;align-items:center;gap:14px;border:1px solid #e2e6eb;background:#fff;border-radius:10px;padding:14px 16px;cursor:pointer;font-family:inherit;text-align:left;" style-hover="border-color:#d9831a;background:#fffdf9;"><svg viewBox="0 0 64 64" width="34" height="34" fill="none" stroke="#3f4651" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 32 H48"></path><path d="M16 27 V37 M48 27 V37"></path></svg><div><div style="font-size:14.5px;font-weight:700;color:#14161b;">Lineare con contatti ai lati</div><div style="font-size:12px;color:#8b919b;">tubo 78 / 118 mm</div></div></button>
+                <button onClick="{{ pickShape.G13 }}" style="display:flex;align-items:center;gap:14px;border:1px solid #e2e6eb;background:#fff;border-radius:10px;padding:14px 16px;cursor:pointer;font-family:inherit;text-align:left;" style-hover="border-color:#d9831a;background:#fffdf9;"><svg viewBox="0 0 64 64" width="34" height="34" fill="none" stroke="#3f4651" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 27 H46 V37 H14 Z"></path><path d="M46 30 H52 M46 34 H52"></path></svg><div><div style="font-size:14.5px;font-weight:700;color:#14161b;">Tubo lungo con due pin</div><div style="font-size:12px;color:#8b919b;">neon / T8</div></div></button>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- STEP 3 RESULT -->
+          <sc-if value="{{ isResult }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <button onClick="{{ back2 }}" style="background:none;border:none;color:#8b919b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;padding:0;margin-bottom:18px;">← Indietro</button>
+              <div style="display:flex;gap:22px;align-items:center;background:#f7f8fa;border:1px solid #e7eaee;border-radius:14px;padding:24px 26px;color:#14161b;">
+                <div style="width:88px;height:88px;flex-shrink:0;background:#fff;border:1px solid #e7eaee;border-radius:12px;display:flex;align-items:center;justify-content:center;">
+                  <sc-if value="{{ isE27 }}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="#3f4651" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M24 14 H40 V42 L32 50 L24 42 Z"></path><path d="M24 22 H40 M24 30 H40 M24 38 H40" opacity=".5"></path></svg></sc-if>
+                  <sc-if value="{{ isE14 }}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="#3f4651" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M27 14 H37 V42 L32 49 L27 42 Z"></path><path d="M27 22 H37 M27 30 H37 M27 38 H37" opacity=".5"></path></svg></sc-if>
+                  <sc-if value="{{ isGU10 }}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="#3f4651" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16 H42 V30 H22 Z"></path><path d="M29 30 V44 M35 30 V44"></path><circle cx="29" cy="46" r="3" fill="#d9831a" stroke="none"></circle><circle cx="35" cy="46" r="3" fill="#d9831a" stroke="none"></circle></svg></sc-if>
+                  <sc-if value="{{ isGU53 }}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="#3f4651" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16 H42 V30 H22 Z"></path><path d="M30 30 V48 M34 30 V48"></path></svg></sc-if>
+                  <sc-if value="{{ isG9 }}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="#3f4651" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M24 16 H40 V28 H24 Z"></path><path d="M29 28 V44 Q29 49 31 44 V28 M35 28 V44 Q35 49 33 44 V28"></path></svg></sc-if>
+                  <sc-if value="{{ isG4 }}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="#3f4651" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M25 18 H39 V30 H25 Z"></path><path d="M31 30 V46 M34 30 V46"></path></svg></sc-if>
+                  <sc-if value="{{ isR7S }}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="#3f4651" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 32 H48"></path><path d="M16 27 V37 M48 27 V37"></path></svg></sc-if>
+                  <sc-if value="{{ isG13 }}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="#3f4651" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 27 H46 V37 H14 Z"></path><path d="M46 30 H52 M46 34 H52"></path></svg></sc-if>
+                </div>
+                <div>
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;color:#d9831a;margin-bottom:6px;">PROBABILMENTE TI SERVE</div>
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:500;color:#14161b;margin-bottom:4px;">{{ recShort }}</div>
+                  <div style="font-size:14px;color:#6c727c;">{{ recName }}</div>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px;">
+                <div style="background:#f7f8fa;border:1px solid #eef0f3;border-radius:10px;padding:16px;"><div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#8b919b;margin-bottom:7px;">COME CONTROLLARE</div><div style="font-size:13.5px;line-height:1.5;color:#3f4651;">{{ recCheck }}</div></div>
+                <div style="background:#f7f8fa;border:1px solid #eef0f3;border-radius:10px;padding:16px;"><div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#8b919b;margin-bottom:7px;">USATO PER</div><div style="font-size:13.5px;line-height:1.5;color:#3f4651;">{{ recUse }}</div></div>
+              </div>
+              <div style="background:#fbf4ea;border:1px solid #f0e3d0;border-radius:10px;padding:13px 16px;margin-top:14px;font-size:13px;color:#7a6a52;">{{ recNote }}</div>
+              <div style="display:flex;gap:11px;margin-top:22px;flex-wrap:wrap;">
+                <a style="background:#d9831a;color:#fff;font-size:14.5px;font-weight:700;padding:13px 22px;border-radius:7px;text-decoration:none;">Vedi lampadine {{ recShort }} →</a>
+                <button onClick="{{ restart }}" style="background:#fff;color:#14161b;font-size:14.5px;font-weight:700;padding:12px 22px;border-radius:7px;border:1px solid #e2e6eb;cursor:pointer;font-family:inherit;">Ricomincia</button>
+                <a style="font-size:14.5px;font-weight:700;color:#d9831a;text-decoration:none;padding:13px 6px;">Guida completa agli attacchi</a>
+              </div>
+            </div>
+          </sc-if>
+
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1320,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = { open:false, step:1, lampType:null, shape:null };
+
+  SOCKETS = {
+    E27:  { short:'E27',  name:'Attacco grande a vite',     use:'Lampade da tavolo, plafoniere, sospensioni.',            check:'Filettatura a vite larga, diametro circa 27 mm.',          note:'' },
+    E14:  { short:'E14',  name:'Attacco piccolo a vite',    use:'Abat-jour, applique, lampadari decorativi.',             check:'Filettatura a vite stretta, diametro circa 14 mm.',        note:'Spesso confuso con E27: misura il diametro della vite.' },
+    GU10: { short:'GU10', name:'Faretto a baionetta',       use:'Faretti da incasso, spot orientabili, binari.',          check:'Due piedini larghi con testa: si inserisce e si ruota.',   note:'<b>Non</b> compatibile con GU5.3 / MR16. Funziona a 230V, senza trasformatore.' },
+    GU53: { short:'GU5.3 / MR16', name:'Faretto con due pin sottili', use:'Faretti a 12V con trasformatore.',           check:'Due pin sottili e dritti: si infila senza ruotare.',       note:'<b>Non</b> compatibile con GU10. Richiede un trasformatore 12V.' },
+    G9:   { short:'G9',   name:'Capsula a contatti ad asola', use:'Applique, lampadari moderni, lampade decorative.',     check:'Due contatti a forma di asola, ravvicinati. 230V.',        note:'Diverso dal G4: il G9 va a 230V.' },
+    G4:   { short:'G4',   name:'Mini capsula a due pin',     use:'Mobili, camper, nautica, piccole lampade.',              check:'Due pin sottili molto vicini tra loro. 12V.',             note:'Diverso dal G9: il G4 va a 12V, con trasformatore.' },
+    R7S:  { short:'R7s',  name:'Lampadina lineare',          use:'Piantane, proiettori, applique lineari.',                check:'Tubo con contatti a molla ai due lati. Misura la lunghezza (78 o 118 mm).', note:'Controlla bene la lunghezza: è il dato che cambia più spesso.' },
+    G13:  { short:'G13 · T8', name:'Tubo LED classico',      use:'Plafoniere, officine, neon LED.',                        check:'Tubo lungo con due pin laterali a una estremità.',         note:'Per i LED retrofit verifica se serve bypassare il reattore/starter.' }
+  };
+
+  iconFor(key){
+    const I = {
+      E27:'<svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="#f0ad57" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M24 14 H40 V42 L32 50 L24 42 Z"/><path d="M24 22 H40 M24 30 H40 M24 38 H40" opacity=".55"/></svg>',
+      E14:'<svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="#f0ad57" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M27 14 H37 V42 L32 49 L27 42 Z"/><path d="M27 22 H37 M27 30 H37 M27 38 H37" opacity=".55"/></svg>',
+      GU10:'<svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="#f0ad57" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16 H42 V30 H22 Z"/><path d="M29 30 V44 M35 30 V44"/><circle cx="29" cy="46" r="3" fill="#f0ad57" stroke="none"/><circle cx="35" cy="46" r="3" fill="#f0ad57" stroke="none"/></svg>',
+      GU53:'<svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="#f0ad57" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16 H42 V30 H22 Z"/><path d="M30 30 V48 M34 30 V48"/></svg>',
+      G9:'<svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="#f0ad57" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M24 16 H40 V28 H24 Z"/><path d="M29 28 V44 Q29 49 31 44 V28 M35 28 V44 Q35 49 33 44 V28"/></svg>',
+      G4:'<svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="#f0ad57" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M25 18 H39 V30 H25 Z"/><path d="M31 30 V46 M34 30 V46"/></svg>',
+      R7S:'<svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="#f0ad57" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 32 H48"/><path d="M16 27 V37 M48 27 V37"/></svg>',
+      G13:'<svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="#f0ad57" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 27 H46 V37 H14 Z"/><path d="M46 30 H52 M46 34 H52"/></svg>'
+    };
+    return I[key] || '';
+  }
+
+  renderVals(){
+    const s = this.state;
+    const setType = (t) => () => this.setState({ lampType:t, step:2 });
+    const setShape = (k) => () => this.setState({ shape:k, step:3 });
+    const rec = s.shape ? this.SOCKETS[s.shape] : null;
+    const active = '#d9831a', idle = '#e2e6eb';
+    return {
+      open: s.open,
+      isStep1: s.step === 1,
+      isStep2: s.step === 2,
+      isResult: s.step === 3 && !!rec,
+      isE27: s.shape==='E27', isE14: s.shape==='E14', isGU10: s.shape==='GU10', isGU53: s.shape==='GU53',
+      isG9: s.shape==='G9', isG4: s.shape==='G4', isR7S: s.shape==='R7S', isG13: s.shape==='G13',
+      dot1: s.step >= 1 ? active : idle,
+      dot2: s.step >= 2 ? active : idle,
+      dot3: s.step >= 3 ? active : idle,
+      openWizard: () => this.setState({ open:true, step:1, lampType:null, shape:null }),
+      closeWizard: () => this.setState({ open:false }),
+      stop: (e) => { e.stopPropagation(); },
+      back1: () => this.setState({ step:1 }),
+      back2: () => this.setState({ step:2 }),
+      restart: () => this.setState({ step:1, lampType:null, shape:null }),
+      pickType: {
+        classica:setType('classica'), faretto:setType('faretto'), tubo:setType('tubo'),
+        lineare:setType('lineare'), capsula:setType('capsula'), nonso:setType('nonso')
+      },
+      pickShape: {
+        E27:setShape('E27'), E14:setShape('E14'), GU10:setShape('GU10'), GU53:setShape('GU53'),
+        G9:setShape('G9'), G4:setShape('G4'), R7S:setShape('R7S'), G13:setShape('G13')
+      },
+      recShort: rec ? rec.short : '',
+      recName:  rec ? rec.name  : '',
+      recUse:   rec ? rec.use   : '',
+      recCheck: rec ? rec.check : '',
+      recNote:  rec ? (rec.note ? rec.note.replace(/<\/?b>/g,'') : 'Controlla la corrispondenza prima dell\u2019acquisto: nel dubbio, inviaci una foto.') : '',
+      recIconEl: rec ? React.createElement('div', { style:{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center'}, dangerouslySetInnerHTML:{ __html:this.iconFor(s.shape) } }) : null
+    };
+  }
+}
+</script>
+</body>
+</html>

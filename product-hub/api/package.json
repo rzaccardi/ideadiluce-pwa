@@ -20,6 +20,16 @@
       "types": "./src/normalize-woo-content.ts",
       "import": "./src/normalize-woo-content.ts",
       "default": "./src/normalize-woo-content.ts"
+    },
+    "./product-technical-specs": {
+      "types": "./src/product-technical-specs.ts",
+      "import": "./src/product-technical-specs.ts",
+      "default": "./src/product-technical-specs.ts"
+    },
+    "./product-technical-specs-db": {
+      "types": "./src/product-technical-specs-db.ts",
+      "import": "./src/product-technical-specs-db.ts",
+      "default": "./src/product-technical-specs-db.ts"
     }
   },
   "scripts": {
@@ -34,7 +44,8 @@
     "patch:og-images": "npx tsx scripts/patch-og-images.ts",
     "import:woo:enrich": "npx tsx scripts/import-woo-enrichment.ts",
     "import:long-content": "npx tsx scripts/import-long-content.ts",
-    "patch:normalize-content": "npx tsx scripts/patch-normalize-content.ts"
+    "patch:normalize-content": "npx tsx scripts/patch-normalize-content.ts",
+    "patch:extract-specs": "npx tsx scripts/patch-extract-technical-specs.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",

@@ -31,3 +31,7 @@ export function notifyCartItemAdded(input: CartAddedFeedback) {
 export function dismissCartToast(id: string) {
   cartFeedbackStore.toasts = cartFeedbackStore.toasts.filter((t) => t.id !== id)
 }
+
+export function requestOpenMiniCart() {
+  cartFeedbackStore.miniCartOpenRequest += 1
+}

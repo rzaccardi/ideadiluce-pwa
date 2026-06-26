@@ -1,13 +1,27 @@
-import { Outlet } from 'react-router-dom'
-import { AccountSidebar } from '@/components/account/AccountSidebar'
+'use client'
 
-export function AccountLayout() {
+import { useEffect } from 'react'
+import { AccountNav } from '@/components/account/AccountNav'
+import { AccountShell } from '@/components/account/AccountShell'
+import { authStore } from '@/features/auth'
+import { fetchOrdersList } from '@/features/orders'
+import { useSnapshot } from 'valtio/react'
+
+export function AccountLayout({ children }: { children: React.ReactNode }) {
+  const auth = useSnapshot(authStore)
+  const user = auth.me
+
+  useEffect(() => {
+    void fetchOrdersList()
+  }, [])
+
+  if (!user) {
+    return null
+  }
+
   return (
-    <div className="grid gap-8 md:grid-cols-[220px_1fr]">
-      <AccountSidebar />
-      <div>
-        <Outlet />
-      </div>
-    </div>
+    <AccountShell user={user} nav={<AccountNav />}>
+      {children}
+    </AccountShell>
   )
 }

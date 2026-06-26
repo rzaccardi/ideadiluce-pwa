@@ -1,5 +1,5 @@
 import { proxy } from 'valtio'
-import type { CartDTO, ProductCardDTO } from '@/types/dto'
+import type { CartDTO, CartStockInsufficientDTO, ProductCardDTO } from '@/types/dto'
 
 export const cartStore = proxy({
   cart: null as CartDTO | null,
@@ -8,4 +8,7 @@ export const cartStore = proxy({
   isLoading: false,
   error: null as string | null,
   recommendationsError: null as string | null,
+  stockInsufficient: [] as CartStockInsufficientDTO[],
+  /** Mostra avviso dopo svuotamento automatico per scadenza riserva. */
+  reservationExpiredNotice: false,
 })

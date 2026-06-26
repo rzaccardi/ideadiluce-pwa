@@ -48,7 +48,49 @@ async function main() {
   const { seedDefaultShippingZones } = await import('../src/modules/shipping/shipping.admin.routes.js')
   await seedDefaultShippingZones()
 
-  console.info('Seed OK:', { email, password: 'password123' })
+  const { seedDefaultTaxRules } = await import('../src/modules/tax/tax.admin.routes.js')
+  await seedDefaultTaxRules()
+
+  await prisma.socialProofSettings.upsert({
+    where: { id: 'default' },
+    create: {
+      id: 'default',
+      enabled: true,
+      minQuantity: 1,
+      lookbackDays: 30,
+      maxEvents: 12,
+      odooImportEnabled: false,
+    },
+    update: {},
+  })
+
+  const adminEmail = (process.env.ADMIN_SEED_EMAIL ?? 'admin@ideadiluce.local').toLowerCase()
+  const adminPassword = process.env.ADMIN_SEED_PASSWORD ?? 'admin123456'
+  const adminPasswordHash = bcrypt.hashSync(adminPassword, 10)
+
+  await prisma.adminUser.upsert({
+    where: { email: adminEmail },
+    create: {
+      email: adminEmail,
+      passwordHash: adminPasswordHash,
+      displayName: 'Amministratore',
+      status: 'ACTIVE',
+    },
+    update: {
+      passwordHash: adminPasswordHash,
+      displayName: 'Amministratore',
+      status: 'ACTIVE',
+    },
+  })
+
+  console.info('Seed OK:', {
+    shopUser: { email, password: 'password123' },
+    adminUser: { email: adminEmail, password: adminPassword },
+  })
+
+  const { seedSitePages } = await import('../src/modules/site/site.service.js')
+  await seedSitePages()
+  console.info('Site pages seeded')
 }
 
 main()

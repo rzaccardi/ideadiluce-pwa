@@ -1,0 +1,466 @@
+import { AppError } from '../../types/errors.js'
+import { deeplConfig } from '../../lib/deepl/deepl.config.js'
+import {
+  normalizeSiteLocale,
+  SITE_LOCALES,
+  SITE_PAGE_LABELS,
+  type SiteLocale,
+} from './site.constants.js'
+import { countTranslatableStrings, translateSiteContentTree } from './site-content-i18n.js'
+import { mergeSiteContentWithDefaults } from './site-content.merge.js'
+import { assertSitePageContent } from './site-content.validate.js'
+import {
+  defaultSiteContent,
+  DEFAULT_AMBIENTI_IT,
+  DEFAULT_HOME_IT,
+  DEFAULT_SHELL_IT,
+  SITE_PAGE_KEYS,
+} from './site-content.defaults.js'
+import { DEFAULT_PROFESSIONISTI_IT } from './site-professionisti.defaults.js'
+import { siteRepository } from './site.repository.js'
+import type {
+  EditorialPageContent,
+  HomePageContent,
+  ProfessionistiPageContent,
+  SitePageKey,
+  SiteShellContent,
+} from './site.types.js'
+
+function assertPageKey(pageKey: string): SitePageKey {
+  if (!SITE_PAGE_KEYS.includes(pageKey as SitePageKey)) {
+    throw new AppError('SITE_PAGE_NOT_FOUND', 'Unknown site page', 'Pagina sito non trovata.', 404, false)
+  }
+  return pageKey as SitePageKey
+}
+
+function prepareContent(pageKey: SitePageKey, content: unknown) {
+  assertSitePageContent(pageKey, content)
+  return mergeSiteContentWithDefaults(pageKey, content)
+}
+
+function toAdminPageDto(
+  pageKey: SitePageKey,
+  locale: SiteLocale,
+  row: {
+    published: boolean
+    content: unknown
+    updatedAt: Date
+  } | null,
+) {
+  const merged = mergeSiteContentWithDefaults(pageKey, row?.content ?? defaultSiteContent(pageKey))
+  return {
+    pageKey,
+    locale,
+    published: row?.published ?? true,
+    content: merged,
+    updatedAt: row?.updatedAt?.toISOString() ?? null,
+    hasCustomContent: Boolean(row),
+  }
+}
+
+export const siteService = {
+  getI18nStatus() {
+    return {
+      locales: [...SITE_LOCALES],
+      sourceLocale: 'IT' as const,
+      deepl: {
+        enabled: deeplConfig.enabled,
+        configured: Boolean(deeplConfig.apiKey),
+        ready: deeplConfig.enabled && Boolean(deeplConfig.apiKey),
+        apiUrl: deeplConfig.apiUrl,
+      },
+    }
+  },
+
+  async getPublicPage(pageKey: string, locale: string) {
+    const key = assertPageKey(pageKey)
+    const loc = normalizeSiteLocale(locale)
+    const row = await siteRepository.findByKeyLocale(key, loc)
+    if (row?.published) {
+      return {
+        pageKey: key,
+        locale: loc,
+        content: mergeSiteContentWithDefaults(key, row.content),
+        updatedAt: row.updatedAt.toISOString(),
+      }
+    }
+
+    const fallback = await siteRepository.findByKeyLocale(key, 'IT')
+    if (fallback?.published) {
+      return {
+        pageKey: key,
+        locale: 'IT',
+        content: mergeSiteContentWithDefaults(key, fallback.content),
+        updatedAt: fallback.updatedAt.toISOString(),
+      }
+    }
+
+    return {
+      pageKey: key,
+      locale: loc,
+      content: defaultSiteContent(key),
+      updatedAt: null,
+    }
+  },
+
+  async listAdminPages() {
+    const rows = await siteRepository.listAll()
+    return rows.map((row) => ({
+      id: row.id,
+      pageKey: row.pageKey,
+      locale: row.locale,
+      published: row.published,
+      updatedAt: row.updatedAt.toISOString(),
+    }))
+  },
+
+  async listAdminCatalog() {
+    const rows = await siteRepository.listAll()
+    const byPage = new Map<string, Map<string, (typeof rows)[number]>>()
+
+    for (const row of rows) {
+      const locales = byPage.get(row.pageKey) ?? new Map()
+      locales.set(row.locale, row)
+      byPage.set(row.pageKey, locales)
+    }
+
+    return {
+      locales: [...SITE_LOCALES],
+      pages: SITE_PAGE_KEYS.map((pageKey) => {
+        const localeRows = byPage.get(pageKey)
+        return {
+          pageKey,
+          label: SITE_PAGE_LABELS[pageKey],
+          locales: Object.fromEntries(
+            SITE_LOCALES.map((locale) => {
+              const row = localeRows?.get(locale)
+              return [
+                locale,
+                {
+                  exists: Boolean(row),
+                  published: row?.published ?? false,
+                  updatedAt: row?.updatedAt.toISOString() ?? null,
+                },
+              ]
+            }),
+          ),
+        }
+      }),
+    }
+  },
+
+  async getAdminPage(pageKey: string, locale: string) {
+    const key = assertPageKey(pageKey)
+    const loc = normalizeSiteLocale(locale)
+    const row = await siteRepository.findByKeyLocale(key, loc)
+    return toAdminPageDto(key, loc, row)
+  },
+
+  async saveAdminPage(pageKey: string, locale: string, content: unknown, published: boolean) {
+    const key = assertPageKey(pageKey)
+    const loc = normalizeSiteLocale(locale)
+    const normalized = prepareContent(key, content)
+    const row = await siteRepository.upsert(key, loc, normalized, published)
+    return {
+      ...toAdminPageDto(key, loc, row),
+      translatableStringCount: countTranslatableStrings(normalized),
+    }
+  },
+
+  async translateAdminPageToLocales(pageKey: string, content: unknown, sourceLocale = 'IT') {
+    const key = assertPageKey(pageKey)
+    const source = normalizeSiteLocale(sourceLocale)
+    if (source !== 'IT') {
+      throw new AppError(
+        'SITE_TRANSLATE_SOURCE',
+        'Only IT source supported',
+        'La traduzione automatica parte solo dalla versione italiana.',
+        400,
+        false,
+      )
+    }
+    if (!deeplConfig.enabled || !deeplConfig.apiKey) {
+      throw new AppError(
+        'DEEPL_NOT_CONFIGURED',
+        'DeepL not configured',
+        'DeepL non configurato — imposta DEEPL_ENABLED e DEEPL_API_KEY sul server.',
+        503,
+        false,
+      )
+    }
+
+    const normalized = prepareContent(key, content)
+    const translatableStringCount = countTranslatableStrings(normalized)
+    const targetLocales = SITE_LOCALES.filter((loc) => loc !== source)
+    const saved: Array<{
+      locale: string
+      updatedAt: string
+      published: boolean
+      translatableStringCount: number
+    }> = []
+
+    for (const targetLocale of targetLocales) {
+      const translated = await translateSiteContentTree(normalized, targetLocale, source)
+      const prepared = prepareContent(key, translated)
+      const existing = await siteRepository.findByKeyLocale(key, targetLocale)
+      const published = existing?.published ?? true
+      const row = await siteRepository.upsert(key, targetLocale, prepared, published)
+      saved.push({
+        locale: row.locale,
+        published: row.published,
+        updatedAt: row.updatedAt.toISOString(),
+        translatableStringCount: countTranslatableStrings(prepared),
+      })
+    }
+
+    return {
+      pageKey: key,
+      sourceLocale: source,
+      translatableStringCount,
+      targetLocales: saved.map((row) => row.locale),
+      locales: saved,
+    }
+  },
+
+  async saveAdminPageAndTranslate(pageKey: string, content: unknown, published: boolean) {
+    const savedIt = await this.saveAdminPage(pageKey, 'IT', content, published)
+    const translated = await this.translateAdminPageToLocales(pageKey, content, 'IT')
+    return {
+      ...savedIt,
+      translated,
+    }
+  },
+}
+
+export async function seedSitePages() {
+  for (const pageKey of SITE_PAGE_KEYS) {
+    const existing = await siteRepository.findByKeyLocale(pageKey, 'IT')
+    if (existing) continue
+    await siteRepository.upsert(pageKey, 'IT', defaultSiteContent(pageKey), true)
+  }
+
+  await patchShellAttaccoMenu()
+  await patchShellNavCategoryLinks()
+  await patchShellMegaMenuColumns()
+  await patchShellNavEditorialLinks()
+  await patchHomeHeroCategoryLinks()
+  await patchAmbientiPageLinks()
+  await patchProfessionistiPageContent()
+}
+
+/** Hero home: catalogo generico → landing categoria prodotto. */
+async function patchHomeHeroCategoryLinks() {
+  for (const locale of SITE_LOCALES) {
+    const row = await siteRepository.findByKeyLocale('home', locale)
+    if (!row?.published) continue
+
+    const content = row.content as HomePageContent
+    const designHref = content.hero?.design?.ctaHref
+    const technicalHref = content.hero?.technical?.ctaHref
+    const nextDesign = DEFAULT_HOME_IT.hero.design.ctaHref
+    const nextTechnical = DEFAULT_HOME_IT.hero.technical.ctaHref
+
+    if (designHref === nextDesign && technicalHref === nextTechnical) continue
+
+    const legacyDesign = designHref === '/catalog?world=design' || designHref === '/catalog'
+    const legacyTechnical = technicalHref === '/catalog?world=technical' || technicalHref === '/catalog'
+    if (!legacyDesign && !legacyTechnical) continue
+
+    if (legacyDesign) content.hero.design.ctaHref = nextDesign
+    if (legacyTechnical) content.hero.technical.ctaHref = nextTechnical
+    await siteRepository.upsert('home', locale, content, row.published)
+  }
+}
+
+/** Mega-menu e href dropdown → landing categoria prodotto. */
+async function patchShellNavCategoryLinks() {
+  const dropdownIds = ['arredo', 'tecnico', 'attacco'] as const
+
+  for (const locale of SITE_LOCALES) {
+    const row = await siteRepository.findByKeyLocale('shell', locale)
+    if (!row?.published) continue
+
+    const content = row.content as SiteShellContent
+    let changed = false
+
+    for (const id of dropdownIds) {
+      const item = content.nav.items.find((navItem) => navItem.kind === 'dropdown' && navItem.id === id)
+      const fresh = DEFAULT_SHELL_IT.nav.items.find((navItem) => navItem.kind === 'dropdown' && navItem.id === id)
+      if (item?.kind !== 'dropdown' || fresh?.kind !== 'dropdown') continue
+
+      if (fresh.href && item.href !== fresh.href) {
+        item.href = fresh.href
+        changed = true
+      }
+
+      const panelJson = JSON.stringify(item.panel)
+      const needsPanelRefresh =
+        (id === 'arredo' && !panelJson.includes('/categoria-prodotto/illuminazione-arredo')) ||
+        (id === 'tecnico' && !panelJson.includes('/categoria-prodotto/illuminazione-tecnica')) ||
+        (id === 'attacco' &&
+          panelJson.includes('Catalogo tecnico') &&
+          panelJson.includes('/catalog?world=technical'))
+
+      if (needsPanelRefresh) {
+        item.panel = fresh.panel
+        changed = true
+      }
+    }
+
+    if (changed) {
+      await siteRepository.upsert('shell', locale, content, row.published)
+    }
+  }
+}
+
+/** Riduce i mega-menu Arredo/Tecnico a 4 colonne (layout header). */
+async function patchShellMegaMenuColumns() {
+  const menuIds = ['arredo', 'tecnico'] as const
+
+  for (const locale of SITE_LOCALES) {
+    const row = await siteRepository.findByKeyLocale('shell', locale)
+    if (!row?.published) continue
+
+    const content = row.content as SiteShellContent
+    let changed = false
+
+    for (const id of menuIds) {
+      const item = content.nav.items.find((navItem) => navItem.kind === 'dropdown' && navItem.id === id)
+      if (item?.kind !== 'dropdown') continue
+
+      const staleTitles =
+        id === 'arredo'
+          ? ['IN EVIDENZA']
+          : ['SCOPRI', 'GUIDE TECNICHE']
+      const beforeCount = item.panel.columns.length
+      item.panel.columns = item.panel.columns.filter((col) => !staleTitles.includes(col.title))
+      if (item.panel.columns.length !== beforeCount) {
+        changed = true
+      }
+    }
+
+    if (changed) {
+      await siteRepository.upsert('shell', locale, content, row.published)
+    }
+  }
+}
+
+/** Aggiorna mega-menu attacco se vuoto (installazioni precedenti alla patch). */
+async function patchShellAttaccoMenu() {
+  const row = await siteRepository.findByKeyLocale('shell', 'IT')
+  if (!row?.published) return
+  const content = row.content as SiteShellContent
+  const attacco = content.nav.items.find((item) => item.kind === 'dropdown' && item.id === 'attacco')
+  if (attacco?.kind !== 'dropdown' || attacco.panel.columns.length > 0) return
+  const fresh = DEFAULT_SHELL_IT.nav.items.find((item) => item.kind === 'dropdown' && item.id === 'attacco')
+  if (fresh?.kind !== 'dropdown') return
+  attacco.panel = fresh.panel
+  await siteRepository.upsert('shell', 'IT', content, row.published)
+}
+
+/** Link top-level nav (Ambienti, Brand, Guide) e footer utilità. */
+async function patchShellNavEditorialLinks() {
+  const linkIds = ['ambienti', 'brand', 'guide'] as const
+
+  for (const locale of SITE_LOCALES) {
+    const row = await siteRepository.findByKeyLocale('shell', locale)
+    if (!row?.published) continue
+
+    const content = row.content as SiteShellContent
+    let changed = false
+
+    for (const id of linkIds) {
+      const item = content.nav.items.find((navItem) => navItem.kind === 'link' && navItem.id === id)
+      const fresh = DEFAULT_SHELL_IT.nav.items.find((navItem) => navItem.kind === 'link' && navItem.id === id)
+      if (item?.kind !== 'link' || fresh?.kind !== 'link') continue
+      if (item.href !== fresh.href || item.label !== fresh.label) {
+        item.href = fresh.href
+        item.label = fresh.label
+        changed = true
+      }
+    }
+
+    const utilityFresh = DEFAULT_SHELL_IT.utilityBar.links
+    const utilityLinks = content.utilityBar.links
+    for (let i = 0; i < utilityFresh.length; i += 1) {
+      const next = utilityFresh[i]
+      const current = utilityLinks[i]
+      if (!current || current.href !== next.href || current.label !== next.label) {
+        utilityLinks[i] = { ...next }
+        changed = true
+      }
+    }
+
+    const utilitaCol = content.footer.columns.find((col) => col.title === 'Utilità')
+    const utilitaFresh = DEFAULT_SHELL_IT.footer.columns.find((col) => col.title === 'Utilità')
+    if (utilitaCol && utilitaFresh) {
+      const freshJson = JSON.stringify(utilitaFresh.links)
+      const currentJson = JSON.stringify(utilitaCol.links)
+      if (freshJson !== currentJson) {
+        utilitaCol.links = utilitaFresh.links.map((link) => ({ ...link }))
+        changed = true
+      }
+    }
+
+    const panelJson = JSON.stringify(content.nav.items)
+    if (
+      panelJson.includes('"PER ATTACCO"') &&
+      panelJson.includes('"/attacco"') &&
+      !panelJson.includes('"/attacco/e27"')
+    ) {
+      for (const id of ['tecnico'] as const) {
+        const item = content.nav.items.find((navItem) => navItem.kind === 'dropdown' && navItem.id === id)
+        const fresh = DEFAULT_SHELL_IT.nav.items.find((navItem) => navItem.kind === 'dropdown' && navItem.id === id)
+        if (item?.kind === 'dropdown' && fresh?.kind === 'dropdown') {
+          item.panel = fresh.panel
+          changed = true
+        }
+      }
+    }
+
+    if (changed) {
+      await siteRepository.upsert('shell', locale, content, row.published)
+    }
+  }
+}
+
+function isProfessionistiPageContent(content: unknown): content is ProfessionistiPageContent {
+  return (
+    typeof content === 'object' &&
+    content !== null &&
+    'registration' in content &&
+    'quickReorder' in content &&
+    'features' in content
+  )
+}
+
+/** Migra contenuto legacy (blocks) → ProfessionistiPageContent completo. */
+async function patchProfessionistiPageContent() {
+  for (const locale of SITE_LOCALES) {
+    const row = await siteRepository.findByKeyLocale('professionisti', locale)
+    if (!row?.published) continue
+    if (isProfessionistiPageContent(row.content)) continue
+
+    await siteRepository.upsert(
+      'professionisti',
+      locale,
+      DEFAULT_PROFESSIONISTI_IT,
+      row.published,
+    )
+  }
+}
+
+/** Tile ambienti CMS → route /ambienti/[room]. */
+async function patchAmbientiPageLinks() {
+  for (const locale of SITE_LOCALES) {
+    const row = await siteRepository.findByKeyLocale('ambienti', locale)
+    if (!row?.published) continue
+
+    const content = row.content as EditorialPageContent
+    const panelJson = JSON.stringify(content.items ?? [])
+    if (!panelJson.includes('/catalog?world=design&category=')) continue
+
+    content.items = DEFAULT_AMBIENTI_IT.items.map((item) => ({ ...item }))
+    await siteRepository.upsert('ambienti', locale, content, row.published)
+  }
+}

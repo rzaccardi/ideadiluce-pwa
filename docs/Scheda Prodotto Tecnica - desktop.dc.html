@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:#fff;font-family:'Hanken Grotesk',system-ui,sans-serif;color:#14161b;}
+</style>
+<script src="./image-slot.js"></script>
+</helmet>
+
+<div style="width:100%;overflow:hidden;">
+
+  <!-- utility -->
+  <!-- header (mega-menu component) -->
+  <dc-import name="IdeaDiLuce Header" active="tecnico" hint-size="100%,124px"></dc-import>
+
+  <!-- breadcrumb -->
+  <div style="max-width:1320px;margin:0 auto;padding:16px 48px 0;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9298a3;">Home · Lampadine LED · R7s · <span style="color:#3f4651;">Lampadina LED R7s 78 mm 4,5W</span></div>
+  </div>
+
+  <!-- HERO -->
+  <div style="max-width:1320px;margin:0 auto;padding:22px 48px 40px;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;">
+
+    <!-- gallery -->
+    <div style="display:flex;flex-direction:column;gap:14px;position:sticky;top:96px;">
+      <div style="border:1px solid #e7eaee;border-radius:12px;overflow:hidden;background:#f7f8fa;aspect-ratio:1/1;">
+        <img src="images/prod-r7s.png" alt="" style="display:block;width:100%;height:100%;;object-fit:cover;">
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+        <div style="border:2px solid #d9831a;border-radius:8px;overflow:hidden;"><div style="aspect-ratio:1/1;"><img src="images/prod-r7s.png" alt="" style="display:block;width:100%;height:100%;;object-fit:cover;"></div><div style="font-size:9px;text-align:center;color:#8b919b;padding:3px 0;font-family:'JetBrains Mono',monospace;">FOTO</div></div>
+        <div style="border:1px solid #e7eaee;border-radius:8px;overflow:hidden;"><div style="aspect-ratio:1/1;"><img src="images/socket-r7s.png" alt="" style="display:block;width:100%;height:100%;;object-fit:cover;"></div><div style="font-size:9px;text-align:center;color:#8b919b;padding:3px 0;font-family:'JetBrains Mono',monospace;">ATTACCO</div></div>
+        <div style="border:1px solid #e7eaee;border-radius:8px;overflow:hidden;"><div style="aspect-ratio:1/1;"><img src="images/dim-r7s.png" alt="" style="display:block;width:100%;height:100%;;object-fit:cover;"></div><div style="font-size:9px;text-align:center;color:#8b919b;padding:3px 0;font-family:'JetBrains Mono',monospace;">MISURE</div></div>
+        <div style="border:1px solid #e7eaee;border-radius:8px;overflow:hidden;"><div style="aspect-ratio:1/1;"><img src="images/prod-r7s.png" alt="" style="display:block;width:100%;height:100%;;object-fit:cover;"></div><div style="font-size:9px;text-align:center;color:#8b919b;padding:3px 0;font-family:'JetBrains Mono',monospace;">ACCESA</div></div>
+      </div>
+    </div>
+
+    <!-- buy column -->
+    <div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;color:#8b919b;margin-bottom:8px;">PHILIPS · LAMPADINA LED LINEARE</div>
+      <h1 style="font-size:30px;line-height:1.1;font-weight:800;letter-spacing:-.02em;margin:0 0 8px;">Lampadina LED R7s 78 mm</h1>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:15px;color:#3f4651;margin-bottom:14px;">78 mm · 4,5W · 3000K · No Flickering</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9298a3;margin-bottom:18px;">SKU IDL-R7S-78-45W-3000K · EAN 8718699764258</div>
+
+      <!-- badge row -->
+      <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:22px;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#14161b;background:#eef1f4;border:1px solid #e2e6eb;border-radius:5px;padding:6px 11px;">R7s</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#14161b;background:#eef1f4;border:1px solid #e2e6eb;border-radius:5px;padding:6px 11px;">78 mm</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#14161b;background:#eef1f4;border:1px solid #e2e6eb;border-radius:5px;padding:6px 11px;">4,5W</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#14161b;background:#fbf1e3;border:1px solid #f0ddc0;border-radius:5px;padding:6px 11px;">3000K calda</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#14161b;background:#eef1f4;border:1px solid #e2e6eb;border-radius:5px;padding:6px 11px;">220-240V</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#14161b;background:#eef1f4;border:1px solid #e2e6eb;border-radius:5px;padding:6px 11px;">Non dimmerabile</span>
+      </div>
+
+      <!-- variant: lunghezza -->
+      <div style="margin-bottom:18px;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px;"><span style="font-size:13.5px;font-weight:700;">Lunghezza</span><span style="font-size:12px;color:#8b919b;">Misura la vecchia lampadina prima di scegliere</span></div>
+        <div style="display:flex;gap:8px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#fff;background:#14161b;border-radius:7px;padding:10px 16px;">78 mm</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#3f4651;background:#fff;border:1px solid #e2e6eb;border-radius:7px;padding:10px 16px;">118 mm</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#3f4651;background:#fff;border:1px solid #e2e6eb;border-radius:7px;padding:10px 16px;">189 mm</span>
+        </div>
+      </div>
+
+      <!-- variant: temperatura -->
+      <div style="margin-bottom:22px;">
+        <div style="font-size:13.5px;font-weight:700;margin-bottom:9px;">Temperatura colore</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <span style="font-size:13px;font-weight:600;color:#fff;background:#14161b;border-radius:7px;padding:10px 14px;">3000K calda</span>
+          <span style="font-size:13px;font-weight:600;color:#3f4651;background:#fff;border:1px solid #e2e6eb;border-radius:7px;padding:10px 14px;">4000K naturale</span>
+        </div>
+        <div style="height:6px;border-radius:4px;background:linear-gradient(90deg,#f4c97a 0%,#fbe9c9 40%,#eaf1f7 70%,#cfe0f0 100%);"></div>
+        <div style="display:flex;justify-content:space-between;font-size:10.5px;color:#9298a3;margin-top:4px;"><span>calda 2700K</span><span>fredda 6500K</span></div>
+      </div>
+
+      <!-- price + buy box -->
+      <div style="border:1px solid #e7eaee;border-radius:12px;padding:22px;background:#fff;box-shadow:0 4px 16px rgba(0,0,0,.04);">
+        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px;">
+          <span style="font-size:30px;font-weight:800;letter-spacing:-.02em;">€ 14,90</span>
+          <span style="font-size:13.5px;color:#8b919b;">IVA inclusa</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;">
+          <span style="font-size:13.5px;font-weight:700;color:#1f9d57;">● Disponibile</span>
+          <span style="font-size:13px;color:#6c727c;">· spedizione entro 24/48h</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:stretch;">
+          <div style="display:flex;align-items:center;border:1px solid #e2e6eb;border-radius:8px;overflow:hidden;">
+            <span style="padding:0 14px;font-size:18px;color:#6c727c;cursor:pointer;line-height:46px;">−</span>
+            <span style="font-size:15px;font-weight:700;width:34px;text-align:center;">1</span>
+            <span style="padding:0 14px;font-size:18px;color:#6c727c;cursor:pointer;line-height:46px;">+</span>
+          </div>
+          <a style="flex:1;background:#d9831a;color:#fff;font-size:15.5px;font-weight:700;padding:14px;border-radius:8px;text-decoration:none;text-align:center;" style-hover="background:#c2730f;">Aggiungi al carrello</a>
+        </div>
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid #eef0f3;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div><div style="font-size:13.5px;font-weight:700;color:#14161b;">Non sei sicuro che sia quello giusto?</div><div style="font-size:12.5px;color:#7a6a52;">Inviaci una foto della vecchia lampadina o del portalampada.</div></div>
+          <a style="flex-shrink:0;background:#fbf4ea;color:#b5701a;font-size:13px;font-weight:700;padding:11px 16px;border-radius:7px;text-decoration:none;border:1px solid #f0ddc0;white-space:nowrap;">Verifica compatibilità</a>
+        </div>
+      </div>
+      <div style="display:flex;gap:18px;margin-top:14px;font-size:12.5px;color:#6c727c;">
+        <span>✓ Reso entro 50 giorni</span><span>✓ Garanzia 2 anni</span><span>✓ Pagamenti sicuri</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- compatibility + alert band -->
+  <div style="background:#f7f8fa;border-top:1px solid #eef0f3;border-bottom:1px solid #eef0f3;">
+    <div style="max-width:1320px;margin:0 auto;padding:34px 48px;display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">
+
+      <!-- compatibilità rapida -->
+      <div style="background:#fff;border:1px solid #e7eaee;border-radius:12px;padding:24px 26px;">
+        <div style="font-size:16px;font-weight:800;letter-spacing:-.01em;margin-bottom:16px;">Compatibilità rapida</div>
+        <div style="display:flex;flex-direction:column;gap:0;">
+          <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f2f5;"><span style="font-size:13px;color:#8b919b;">Attacco</span><span style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:#14161b;">R7s</span></div>
+          <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f2f5;"><span style="font-size:13px;color:#8b919b;">Lunghezza</span><span style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:#14161b;">78 mm</span></div>
+          <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f2f5;"><span style="font-size:13px;color:#8b919b;">Tensione</span><span style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:#14161b;">220-240V</span></div>
+          <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f2f5;"><span style="font-size:13px;color:#8b919b;">Dimmerabile</span><span style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:#14161b;">No</span></div>
+          <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f2f5;"><span style="font-size:13px;color:#8b919b;">Uso consigliato</span><span style="font-size:13.5px;font-weight:600;color:#14161b;text-align:right;max-width:60%;">Piantane, applique, piccoli proiettori</span></div>
+          <div style="display:flex;justify-content:space-between;padding:10px 0;"><span style="font-size:13px;color:#8b919b;">Non compatibile con</span><span style="font-family:'JetBrains Mono',monospace;font-size:13.5px;font-weight:600;color:#b3261e;text-align:right;">R7s 118 / 189 mm</span></div>
+        </div>
+      </div>
+
+      <!-- alert -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div style="background:#fdf6e9;border:1px solid #f0e0bd;border-radius:12px;padding:20px 22px;">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;"><span style="font-size:15px;">⚠️</span><span style="font-size:15px;font-weight:800;color:#8a6212;">Controlla prima dell'acquisto</span></div>
+          <div style="font-size:14px;line-height:1.55;color:#6e5a2f;">Questa lampadina è una R7s da <b>78 mm</b>. Prima di acquistare <b>misura la tua vecchia lampadina</b>: le R7s esistono anche da 118 mm e 189 mm e non sono intercambiabili.</div>
+        </div>
+        <div style="background:#fdeceb;border:1px solid #f3ccc9;border-radius:12px;padding:16px 22px;">
+          <div style="display:flex;align-items:center;gap:9px;"><span style="font-size:14px;">⛔</span><span style="font-size:13.5px;font-weight:700;color:#9a2420;">Non compatibile con portalampada R7s da 118 mm o 189 mm.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- description + main specs -->
+  <div style="max-width:1320px;margin:0 auto;padding:44px 48px;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;">
+    <div>
+      <div style="font-size:18px;font-weight:800;letter-spacing:-.02em;margin-bottom:12px;">Descrizione</div>
+      <div style="font-size:15px;line-height:1.65;color:#3f4651;">Lampadina LED R7s da 78 mm ideale per sostituire vecchie alogene lineari in piantane, applique e piccoli proiettori. Offre luce calda 3000K, consumo ridotto (4,5W al posto di ~40W alogeni) e accensione immediata senza flickering. Prima dell'acquisto controlla che la lunghezza della vecchia lampadina sia 78 mm.</div>
+    </div>
+    <div>
+      <div style="font-size:18px;font-weight:800;letter-spacing:-.02em;margin-bottom:14px;">Specifiche principali</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="background:#f7f8fa;border:1px solid #eef0f3;border-radius:8px;padding:12px 14px;"><div style="font-size:11.5px;color:#8b919b;margin-bottom:3px;">Attacco</div><div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;">R7s</div></div>
+        <div style="background:#f7f8fa;border:1px solid #eef0f3;border-radius:8px;padding:12px 14px;"><div style="font-size:11.5px;color:#8b919b;margin-bottom:3px;">Lunghezza</div><div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;">78 mm</div></div>
+        <div style="background:#f7f8fa;border:1px solid #eef0f3;border-radius:8px;padding:12px 14px;"><div style="font-size:11.5px;color:#8b919b;margin-bottom:3px;">Potenza</div><div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;">4,5W</div></div>
+        <div style="background:#f7f8fa;border:1px solid #eef0f3;border-radius:8px;padding:12px 14px;"><div style="font-size:11.5px;color:#8b919b;margin-bottom:3px;">Flusso luminoso</div><div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;">470 lm</div></div>
+        <div style="background:#f7f8fa;border:1px solid #eef0f3;border-radius:8px;padding:12px 14px;"><div style="font-size:11.5px;color:#8b919b;margin-bottom:3px;">Temperatura colore</div><div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;">3000K</div></div>
+        <div style="background:#f7f8fa;border:1px solid #eef0f3;border-radius:8px;padding:12px 14px;"><div style="font-size:11.5px;color:#8b919b;margin-bottom:3px;">Tensione</div><div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;">220-240V</div></div>
+        <div style="background:#f7f8fa;border:1px solid #eef0f3;border-radius:8px;padding:12px 14px;"><div style="font-size:11.5px;color:#8b919b;margin-bottom:3px;">Dimmerabile</div><div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;">No</div></div>
+        <div style="background:#f7f8fa;border:1px solid #eef0f3;border-radius:8px;padding:12px 14px;"><div style="font-size:11.5px;color:#8b919b;margin-bottom:3px;">Angolo luce</div><div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;">360°</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- full specs table + how to choose -->
+  <div style="background:#f7f8fa;border-top:1px solid #eef0f3;">
+    <div style="max-width:1320px;margin:0 auto;padding:44px 48px;">
+      <div style="font-size:20px;font-weight:800;letter-spacing:-.02em;margin-bottom:22px;">Scheda tecnica completa</div>
+      <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:44px;align-items:start;">
+
+      <!-- table -->
+      <div>
+
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;color:#d9831a;margin-bottom:8px;">DATI PRINCIPALI</div>
+        <div style="background:#fff;border:1px solid #e7eaee;border-radius:10px;overflow:hidden;margin-bottom:18px;">
+          <div style="display:flex;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f0f2f5;"><span style="font-size:13px;color:#6c727c;">Tipologia</span><span style="font-size:13.5px;font-weight:600;">Lampadina LED lineare</span></div>
+          <div style="display:flex;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f0f2f5;"><span style="font-size:13px;color:#6c727c;">Marca</span><span style="font-size:13.5px;font-weight:600;">Philips</span></div>
+          <div style="display:flex;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f0f2f5;"><span style="font-size:13px;color:#6c727c;">Attacco</span><span style="font-family:'JetBrains Mono',monospace;font-size:13.5px;font-weight:600;">R7s</span></div>
+          <div style="display:flex;justify-content:space-between;padding:11px 16px;"><span style="font-size:13px;color:#6c727c;">EAN</span><span style="font-family:'JetBrains Mono',monospace;font-size:13.5px;font-weight:600;">8718699764258</span></div>
+        </div>
+
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;color:#d9831a;margin-bottom:8px;">DATI LUMINOSI</div>
+        <div style="background:#fff;border:1px solid #e7eaee;border-radius:10px;overflow:hidden;margin-bottom:18px;">
+          <div style="display:flex;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f0f2f5;"><span style="font-size:13px;color:#6c727c;">Flusso luminoso</span><span style="font-size:13.5px;font-weight:600;">470 lm</span></div>
+          <div style="display:flex;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f0f2f5;"><span style="font-size:13px;color:#6c727c;">Temperatura colore</span><span style="font-size:13.5px;font-weight:600;">3000K · calda</span></div>
+          <div style="display:flex;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f0f2f5;"><span style="font-size:13px;color:#6c727c;">CRI</span><span style="font-size:13.5px;font-weight:600;">&gt;80</span></div>
+          <div style="display:flex;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f0f2f5;"><span style="font-size:13px;color:#6c727c;">Angolo fascio</span><span style="font-size:13.5px;font-weight:600;">360°</span></div>
+          <div style="display:flex;justify-content:space-between;padding:11px 16px;"><span style="font-size:13px;color:#6c727c;">Flicker</span><span style="font-size:13.5px;font-weight:600;">No flickering</span></div>
+        </div>
+
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;color:#d9831a;margin-bottom:8px;">DATI ELETTRICI</div>
+        <div style="background:#fff;border:1px solid #e7eaee;border-radius:10px;overflow:hidden;margin-bottom:18px;">
+          <div style="display:flex;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f0f2f5;"><span style="font-size:13px;color:#6c727c;">Potenza</span><span style="font-size:13.5px;font-weight:600;">4,5W</span></div>
+          <div style="display:flex;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f0f2f5;"><span style="font-size:13px;color:#6c727c;">Tensione</span><span style="font-size:13.5px;font-weight:600;">220-240V · 50/60Hz</span></div>
+          <div style="display:flex;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f0f2f5;"><span style="font-size:13px;color:#6c727c;">Classe energetica</span><span style="font-size:13.5px;font-weight:600;">F</span></div>
+          <div style="display:flex;justify-content:space-between;padding:11px 16px;"><span style="font-size:13px;color:#6c727c;">Dimmerabile</span><span style="font-size:13.5px;font-weight:600;">No</span></div>
+        </div>
+
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;color:#d9831a;margin-bottom:8px;">DATI FISICI &amp; INSTALLAZIONE</div>
+        <div style="background:#fff;border:1px solid #e7eaee;border-radius:10px;overflow:hidden;">
+          <div style="display:flex;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f0f2f5;"><span style="font-size:13px;color:#6c727c;">Lunghezza</span><span style="font-size:13.5px;font-weight:600;">78 mm</span></div>
+          <div style="display:flex;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f0f2f5;"><span style="font-size:13px;color:#6c727c;">Diametro</span><span style="font-size:13.5px;font-weight:600;">16 mm</span></div>
+          <div style="display:flex;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f0f2f5;"><span style="font-size:13px;color:#6c727c;">Materiale</span><span style="font-size:13.5px;font-weight:600;">Vetro / alluminio</span></div>
+          <div style="display:flex;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f0f2f5;"><span style="font-size:13px;color:#6c727c;">Uso</span><span style="font-size:13.5px;font-weight:600;">Interno</span></div>
+          <div style="display:flex;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f0f2f5;"><span style="font-size:13px;color:#6c727c;">Durata stimata</span><span style="font-size:13.5px;font-weight:600;">25.000 h</span></div>
+          <div style="display:flex;justify-content:space-between;padding:11px 16px;"><span style="font-size:13px;color:#6c727c;">Garanzia</span><span style="font-size:13.5px;font-weight:600;">2 anni</span></div>
+        </div>
+      </div>
+
+      <!-- right: how to choose + dimensions + documents -->
+      <div style="display:flex;flex-direction:column;gap:24px;position:sticky;top:96px;">
+        <div style="background:#fff;border:1px solid #e7eaee;border-radius:12px;padding:24px;">
+          <div style="font-size:16px;font-weight:800;letter-spacing:-.01em;margin-bottom:14px;">Come scegliere la R7s corretta</div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;gap:12px;"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#d9831a;flex-shrink:0;">01</span><span style="font-size:13.5px;line-height:1.45;color:#3f4651;">Misura la lunghezza della vecchia lampadina.</span></div>
+            <div style="display:flex;gap:12px;"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#d9831a;flex-shrink:0;">02</span><span style="font-size:13.5px;line-height:1.45;color:#3f4651;">Controlla se è da 78, 118 o 189 mm.</span></div>
+            <div style="display:flex;gap:12px;"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#d9831a;flex-shrink:0;">03</span><span style="font-size:13.5px;line-height:1.45;color:#3f4651;">Scegli la temperatura: 3000K calda o 4000K naturale.</span></div>
+            <div style="display:flex;gap:12px;"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#d9831a;flex-shrink:0;">04</span><span style="font-size:13.5px;line-height:1.45;color:#3f4651;">Verifica se la tua lampada ha un dimmer.</span></div>
+          </div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #e7eaee;border-radius:12px;padding:24px;">
+          <div style="font-size:16px;font-weight:800;letter-spacing:-.01em;margin-bottom:16px;">Dimensioni e ingombri</div>
+          <svg viewBox="0 0 320 90" style="width:100%;height:auto;" fill="none" stroke="#3f4651" stroke-width="1.5" font-family="JetBrains Mono, monospace"><rect x="40" y="36" width="240" height="20" rx="3"></rect><path d="M30 36 V56 M290 36 V56" stroke="#d9831a"></path><path d="M40 70 H280" stroke="#9298a3" stroke-width="1"></path><path d="M40 66 V74 M280 66 V74" stroke="#9298a3" stroke-width="1"></path><text x="160" y="84" fill="#6c727c" font-size="11" text-anchor="middle" stroke="none">78 mm</text><path d="M295 36 V56" stroke="#9298a3" stroke-width="1"></path><text x="305" y="49" fill="#6c727c" font-size="10" stroke="none">Ø16</text></svg>
+          <div style="font-size:12.5px;color:#8b919b;margin-top:10px;">Lunghezza 78 mm · diametro 16 mm · contatti a molla ai due lati.</div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #e7eaee;border-radius:12px;padding:24px;">
+          <div style="font-size:16px;font-weight:800;letter-spacing:-.01em;margin-bottom:14px;">Documenti tecnici</div>
+          <a style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f0f2f5;text-decoration:none;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:#b3261e;border:1px solid #f3ccca;border-radius:4px;padding:3px 6px;">PDF</span><span style="font-size:13.5px;font-weight:600;color:#14161b;flex:1;">Scheda tecnica</span><span style="font-size:12px;color:#9298a3;">240 KB</span></a>
+          <a style="display:flex;align-items:center;gap:12px;padding:11px 0;text-decoration:none;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:#b3261e;border:1px solid #f3ccca;border-radius:4px;padding:3px 6px;">PDF</span><span style="font-size:13.5px;font-weight:600;color:#14161b;flex:1;">Etichetta energetica</span><span style="font-size:12px;color:#9298a3;">90 KB</span></a>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- alternatives -->
+  <div style="max-width:1320px;margin:0 auto;padding:46px 48px;">
+    <div style="font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px;">Non è quella giusta?</div>
+    <div style="font-size:14px;color:#6c727c;margin-bottom:22px;">Le alternative più simili per lunghezza, colore luce e dimmerabilità.</div>
+    <div style="border:1px solid #e7eaee;border-radius:12px;overflow:hidden;">
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1.1fr;background:#f7f8fa;border-bottom:1px solid #e7eaee;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;color:#8b919b;">
+        <div style="padding:13px 18px;">PRODOTTO</div><div style="padding:13px 12px;">LUNGH.</div><div style="padding:13px 12px;">WATT</div><div style="padding:13px 12px;">LUCE</div><div style="padding:13px 12px;">DIMMER</div><div style="padding:13px 12px;"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1.1fr;border-bottom:1px solid #f0f2f5;background:#fffdf9;align-items:center;">
+        <div style="padding:14px 18px;font-size:13.5px;font-weight:700;">R7s 78 mm <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#d9831a;background:#fbf1e3;border-radius:4px;padding:2px 7px;margin-left:6px;">ATTUALE</span></div>
+        <div style="padding:14px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;">78 mm</div><div style="padding:14px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;">4,5W</div><div style="padding:14px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;">3000K</div><div style="padding:14px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;">No</div><div style="padding:14px 12px;font-size:13px;font-weight:700;color:#9298a3;">In pagina</div>
+      </div>
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1.1fr;border-bottom:1px solid #f0f2f5;align-items:center;">
+        <div style="padding:14px 18px;font-size:13.5px;font-weight:600;">R7s 118 mm <span style="font-size:11.5px;color:#8b919b;font-weight:400;">se la tua è più lunga</span></div>
+        <div style="padding:14px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;">118 mm</div><div style="padding:14px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;">8W</div><div style="padding:14px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;">3000K</div><div style="padding:14px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;">No</div><div style="padding:14px 12px;font-size:13px;font-weight:700;color:#d9831a;">Vedi →</div>
+      </div>
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1.1fr;border-bottom:1px solid #f0f2f5;align-items:center;">
+        <div style="padding:14px 18px;font-size:13.5px;font-weight:600;">R7s 78 mm dimmerabile <span style="font-size:11.5px;color:#8b919b;font-weight:400;">se usi un dimmer</span></div>
+        <div style="padding:14px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;">78 mm</div><div style="padding:14px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;">5W</div><div style="padding:14px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;">3000K</div><div style="padding:14px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#1f9d57;font-weight:600;">Sì</div><div style="padding:14px 12px;font-size:13px;font-weight:700;color:#d9831a;">Vedi →</div>
+      </div>
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1.1fr;align-items:center;">
+        <div style="padding:14px 18px;font-size:13.5px;font-weight:600;">R7s 78 mm 4000K <span style="font-size:11.5px;color:#8b919b;font-weight:400;">luce naturale</span></div>
+        <div style="padding:14px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;">78 mm</div><div style="padding:14px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;">4,5W</div><div style="padding:14px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;">4000K</div><div style="padding:14px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;">No</div><div style="padding:14px 12px;font-size:13px;font-weight:700;color:#d9831a;">Vedi →</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div style="background:#f7f8fa;border-top:1px solid #eef0f3;">
+    <div style="max-width:1320px;margin:0 auto;padding:48px 48px;display:grid;grid-template-columns:1.15fr 1fr;gap:44px;align-items:start;">
+      <!-- FAQ -->
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;color:#d9831a;margin-bottom:10px;">FAQ · R7s</div>
+        <div style="font-size:24px;font-weight:800;letter-spacing:-.025em;margin-bottom:6px;">Domande frequenti</div>
+        <div style="font-size:14px;color:#6c727c;margin-bottom:20px;">Le risposte ai dubbi più comuni su questa lampadina.</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <!-- open -->
+          <div style="background:#fff;border:1px solid #e0d2bd;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.04);">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px 20px;">
+              <span style="font-size:15px;font-weight:700;color:#14161b;">Come capisco se mi serve R7s 78 o 118 mm?</span>
+              <span style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:#d9831a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;">−</span>
+            </div>
+            <div style="padding:0 20px 20px;font-size:14px;line-height:1.6;color:#5b616b;">Misura la lampadina che stai sostituendo da contatto a contatto: la R7s più diffusa è la <b>78 mm</b>, ma esistono anche 118 mm e 189 mm. La lunghezza deve coincidere con quella del portalampada, altrimenti la lampadina non entra o non fa contatto. Nel dubbio, inviaci una foto con un righello accanto.</div>
+          </div>
+          <!-- closed -->
+          <div style="background:#fff;border:1px solid #e7eaee;border-radius:12px;display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px 20px;" style-hover="border-color:#e0d2bd;">
+            <span style="font-size:15px;font-weight:700;color:#14161b;">Questa lampadina è dimmerabile?</span>
+            <span style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:#f4f5f7;color:#d9831a;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;">+</span>
+          </div>
+          <div style="background:#fff;border:1px solid #e7eaee;border-radius:12px;display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px 20px;" style-hover="border-color:#e0d2bd;">
+            <span style="font-size:15px;font-weight:700;color:#14161b;">Posso sostituire una vecchia alogena lineare?</span>
+            <span style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:#f4f5f7;color:#d9831a;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;">+</span>
+          </div>
+          <div style="background:#fff;border:1px solid #e7eaee;border-radius:12px;display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px 20px;" style-hover="border-color:#e0d2bd;">
+            <span style="font-size:15px;font-weight:700;color:#14161b;">Che differenza c'è tra 3000K e 4000K?</span>
+            <span style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:#f4f5f7;color:#d9831a;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;">+</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUPPORTO TECNICO -->
+      <div style="background:#fff;border:1px solid #e7eaee;border-radius:16px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.06);align-self:start;">
+        <div style="padding:26px 28px 22px;border-bottom:1px solid #f0f2f5;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+            <span style="width:38px;height:38px;border-radius:10px;background:#fbf4ea;border:1px solid #f0e0bd;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#d9831a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8 h3 l1.5 -2 h7 L19 8 h2 a1 1 0 0 1 1 1 v9 a1 1 0 0 1 -1 1 H3 a1 1 0 0 1 -1 -1 V9 a1 1 0 0 1 1 -1 Z"></path><circle cx="12" cy="13" r="3.4"></circle></svg></span>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;color:#d9831a;">SUPPORTO TECNICO</div>
+          </div>
+          <div style="font-size:21px;font-weight:800;letter-spacing:-.02em;color:#14161b;margin-bottom:8px;">Non sei sicuro che sia la misura giusta?</div>
+          <div style="font-size:14px;line-height:1.55;color:#6c727c;">Inviaci una foto della vecchia lampadina o del portalampada: un nostro tecnico ti dice qual è il ricambio corretto, di solito <b style="color:#14161b;">in giornata</b>.</div>
+        </div>
+        <div style="padding:20px 28px 24px;display:flex;flex-direction:column;gap:10px;">
+          <a style="display:flex;align-items:center;gap:13px;background:#d9831a;color:#fff;padding:14px 18px;border-radius:10px;text-decoration:none;" style-hover="background:#c2730f;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M3 8 h3 l1.5 -2 h7 L19 8 h2 a1 1 0 0 1 1 1 v9 a1 1 0 0 1 -1 1 H3 a1 1 0 0 1 -1 -1 V9 a1 1 0 0 1 1 -1 Z"></path><circle cx="12" cy="13" r="3.4"></circle></svg>
+            <span style="flex:1;font-size:14.5px;font-weight:700;">Invia una foto</span><span style="font-size:18px;">→</span>
+          </a>
+          <a style="display:flex;align-items:center;gap:13px;background:#fff;color:#14161b;padding:13px 18px;border-radius:10px;text-decoration:none;border:1px solid #e2e6eb;" style-hover="border-color:#d9831a;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#3f4651" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="3" y="7" width="18" height="10" rx="1.5"></rect><path d="M7 9 V15 M10 9 V15 M13 9 V15 M16 9 V15"></path></svg>
+            <span style="flex:1;font-size:14.5px;font-weight:700;">Cerca per EAN o codice</span><span style="font-size:18px;color:#9298a3;">→</span>
+          </a>
+          <a style="display:flex;align-items:center;gap:13px;background:#fff;color:#14161b;padding:13px 18px;border-radius:10px;text-decoration:none;border:1px solid #e2e6eb;" style-hover="border-color:#d9831a;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#3f4651" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21 12 a8 8 0 0 1 -11.5 7.2 L4 20.5 l1.3 -5.4 A8 8 0 1 1 21 12 Z"></path></svg>
+            <span style="flex:1;font-size:14.5px;font-weight:700;">Scrivi una domanda</span><span style="font-size:18px;color:#9298a3;">→</span>
+          </a>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12.5px;color:#8b919b;">
+            <span style="width:6px;height:6px;border-radius:50%;background:#1f9d57;flex-shrink:0;"></span>
+            Tecnici disponibili · risposta in giornata · oppure passa dallo showroom di Roma.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- trust + footer (shared) -->
+  <div style="background:#efe6d5;border-top:1px solid #e6dcc9;border-bottom:1px solid #e6dcc9;">
+    <div style="max-width:1320px;margin:0 auto;padding:26px 48px;display:flex;justify-content:space-between;gap:24px;">
+      <div><div style="font-size:14.5px;font-weight:700;color:#211c16;">Assistenza reale</div><div style="font-size:12.5px;color:#8c8273;">Ti aiutiamo a scegliere il prodotto corretto</div></div>
+      <div><div style="font-size:14.5px;font-weight:700;color:#211c16;">Showroom a Roma</div><div style="font-size:12.5px;color:#8c8273;">Sede fisica e consulenza dal vivo</div></div>
+      <div><div style="font-size:14.5px;font-weight:700;color:#211c16;">Ricambi difficili</div><div style="font-size:12.5px;color:#8c8273;">Cerca per foto, EAN o codice</div></div>
+      <div><div style="font-size:14.5px;font-weight:700;color:#211c16;">Spedizione tracciata</div><div style="font-size:12.5px;color:#8c8273;">Consegna in tutta Italia</div></div>
+    </div>
+  </div>
+  <div style="background:#16130d;color:#9a8e78;">
+    <div style="max-width:1320px;margin:0 auto;padding:54px 48px 30px;">
+      <div style="display:grid;grid-template-columns:1.1fr 1fr 1.2fr 1.3fr;gap:40px;padding-bottom:38px;border-bottom:1px solid rgba(255,255,255,.08);">
+        <!-- info aziendali -->
+        <div>
+          <div style="font-family:'Newsreader',serif;font-size:22px;color:#f1e8d8;margin-bottom:14px;">Idea<span style="font-style:italic;color:#f0ad57;">di</span>Luce</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin-bottom:10px;">INFO AZIENDALI</div>
+          <div style="font-size:13px;line-height:1.7;color:#9a8e78;">TLB ITALY Srl<br>P.IVA / VAT: IT17245551001<br>REA: RM-1705840</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin:18px 0 10px;">INDIRIZZO</div>
+          <div style="font-size:13px;line-height:1.7;color:#9a8e78;">Via Appia Pignatelli 450,<br>00178 Roma (Italy)</div>
+        </div>
+        <!-- servizio clienti -->
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin-bottom:12px;">SERVIZIO CLIENTI</div>
+          <div style="font-size:13px;line-height:1.8;color:#c9bfae;"><a href="tel:+390671671 11" style="color:#c9bfae;text-decoration:none;">Tel: (+39) 06 716 7111</a><br><a href="mailto:info@ideadiluce.com" style="color:#f0ad57;text-decoration:none;">info@ideadiluce.com</a></div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin:18px 0 10px;">ORARI</div>
+          <div style="font-size:13px;line-height:1.7;color:#9a8e78;">Lunedì – Venerdì<br>9.00 – 13.00 · 15.00 – 18.00</div>
+        </div>
+        <!-- utility / seguici -->
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin-bottom:12px;">UTILITY</div>
+          <div style="display:flex;flex-direction:column;gap:9px;font-size:13px;">
+            <a style="color:#9a8e78;text-decoration:none;" style-hover="color:#f1e8d8;">Termini d'Uso e Condizioni di Vendita</a>
+            <a style="color:#9a8e78;text-decoration:none;" style-hover="color:#f1e8d8;">Privacy Policy</a>
+            <a style="color:#9a8e78;text-decoration:none;" style-hover="color:#f1e8d8;">Spedizioni e resi</a>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin:18px 0 10px;">SEGUICI</div>
+          <div style="display:flex;gap:9px;">
+            <span style="width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#c9bfae;">Ig</span>
+            <span style="width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#c9bfae;">Fb</span>
+            <span style="width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#c9bfae;">in</span>
+            <span style="width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#c9bfae;">Pin</span>
+          </div>
+        </div>
+        <!-- non trovato -->
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin-bottom:12px;">PRODOTTO NON TROVATO</div>
+          <div style="background:#1f1a12;border:1px solid rgba(240,173,87,.22);border-radius:10px;padding:18px 20px;">
+            <div style="font-size:14px;line-height:1.55;color:#c9bfae;margin-bottom:14px;">Cerchi qualcosa che non è nel sito? Contattaci ora, siamo solo a un modulo di distanza!</div>
+            <a style="display:inline-block;background:#f0ad57;color:#16130d;font-size:13.5px;font-weight:700;padding:11px 18px;border-radius:7px;text-decoration:none;" style-hover="background:#f7bd6f;">Vai al form →</a>
+          </div>
+        </div>
+      </div>
+      <!-- bottom: payments + copyright -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:24px;padding-top:24px;flex-wrap:wrap;">
+        <div style="font-size:12px;color:#6f6450;">© 2026 TLB ITALY Srl · Tutti i diritti riservati</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <span style="font-size:11px;color:#6f6450;margin-right:4px;">Pagamenti sicuri</span>
+          <span style="background:#fff;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;color:#1a1f71;">VISA</span>
+          <span style="background:#fff;border-radius:5px;padding:6px 9px;font-size:11px;font-weight:800;color:#eb001b;">●●</span>
+          <span style="background:#fff;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;color:#0a3a82;">Maestro</span>
+          <span style="background:#fff;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;color:#003087;">Pay<span style="color:#009cde;">Pal</span></span>
+          <span style="background:#fff;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;color:#2e77bc;">AMEX</span>
+          <span style="background:#fff;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;color:#3f4651;">Bonifico</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- sticky add to cart -->
+  <div style="position:sticky;bottom:0;z-index:40;background:#fff;border-top:1px solid #e7eaee;box-shadow:0 -4px 16px rgba(0,0,0,.05);">
+    <div style="max-width:1320px;margin:0 auto;padding:12px 48px;display:flex;align-items:center;justify-content:space-between;gap:24px;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="width:40px;height:40px;background:#f7f8fa;border:1px solid #eef0f3;border-radius:7px;flex-shrink:0;"></div>
+        <div><div style="font-size:14px;font-weight:700;line-height:1.2;">Lampadina LED R7s 78 mm</div><div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#8b919b;">78 mm · 4,5W · 3000K</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:18px;">
+        <span style="font-size:13px;font-weight:700;color:#1f9d57;">● Disponibile</span>
+        <span style="font-size:22px;font-weight:800;">€ 14,90</span>
+        <a style="background:#d9831a;color:#fff;font-size:14.5px;font-weight:700;padding:12px 26px;border-radius:8px;text-decoration:none;" style-hover="background:#c2730f;">Aggiungi al carrello</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

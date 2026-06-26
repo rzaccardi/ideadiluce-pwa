@@ -4,6 +4,8 @@
  * `website_slug` non sono garantiti su tutti i database Odoo.
  */
 import { env } from '../../config/env.js'
+import { splitProductDescription } from '../../lib/product-description-split.js'
+import { defaultProductAlternates, defaultProductSeo } from '../../lib/product-seo-defaults.js'
 import type {
   CategoryDTO,
   ProductCardDTO,
@@ -124,11 +126,14 @@ function templateToCard(row: TemplateRow, categorySlug: string | null): ProductC
   const slug = slugify(row.name, row.id)
   const currency = m2oLabel(row.currency_id) ?? 'EUR'
   const priceCents = Math.round(Number(row.list_price || 0) * 100)
+  const shortDescription = textOrNull(row.description_sale)
   return {
     slug,
+    locale: 'IT',
     name: row.name,
-    shortDescription: textOrNull(row.description_sale),
+    shortDescription,
     priceCents,
+    priceDisplayMode: 'ex_vat',
     currency,
     imageUrl: imageDataUrl(row.image_128),
     categorySlug,
@@ -146,16 +151,25 @@ function mapProductDetail(
   const inStock = true
   const slug = slugify(row.name, row.id)
   const imageUrl = imageDataUrl(row.image_512) ?? card.imageUrl
+  const longRaw = textOrNull(row.description) ?? textOrNull(row.description_sale)
+  const { descriptionHtml, additionalInfoTableHtml, specsTableHtml } =
+    splitProductDescription(longRaw)
   return {
     ...card,
     slug,
     imageUrl,
     images: imageUrl ? [imageUrl] : [],
     odooTemplateId: row.id,
-    longDescription: textOrNull(row.description) ?? textOrNull(row.description_sale),
+    longDescription: descriptionHtml,
+    additionalInfoTableHtml,
+    specsTableHtml,
+    categories: categorySlug ? [{ slug: categorySlug, name: categorySlug }] : [],
+    brand: null,
     sku: row.product_variant_ids?.[0] != null ? `VAR-${row.product_variant_ids[0]}` : null,
     inStock,
     variants,
+    seo: defaultProductSeo(row.name, slug, textOrNull(row.description_sale)),
+    alternates: defaultProductAlternates(slug),
   }
 }
 
@@ -381,7 +395,7 @@ export function createLiveOdooCatalogAdapter(): OdooCatalogAdapter {
     },
 
     async getRecommendedProducts(ctx: OdooCallContext, productSlugs: string[], options = {}) {
-      const limit = options.limit ?? 6
+      const limit = options.limit ?? 8
       const productIds = productSlugs
         .map(idFromSlug)
         .filter((id): id is number => id != null)
@@ -389,6 +403,59 @@ export function createLiveOdooCatalogAdapter(): OdooCatalogAdapter {
       if (productIds.length === 0 || limit <= 0) return []
 
       const baseDomain = parseDomain(env.ODOO_PRODUCT_DOMAIN, [['sale_ok', '=', true]])
+
+      if (options.strategy !== 'category') {
+        const cartRowsFull = await odooExecuteKw<
+          Array<{
+            id: number
+            categ_id: unknown
+            optional_product_ids: number[]
+            accessory_product_ids: number[]
+          }>
+        >(
+          ctx,
+          'product.template',
+          'search_read',
+          [[...baseDomain, ['id', 'in', productIds]]],
+          {
+            fields: ['id', 'categ_id', 'optional_product_ids', 'accessory_product_ids'],
+            context: catalogContext(),
+          },
+        )
+
+        const relatedIds = new Set<number>()
+        for (const row of cartRowsFull) {
+          for (const id of row.optional_product_ids ?? []) {
+            if (!productIds.includes(id)) relatedIds.add(id)
+          }
+          for (const id of row.accessory_product_ids ?? []) {
+            if (!productIds.includes(id)) relatedIds.add(id)
+          }
+        }
+
+        if (relatedIds.size > 0) {
+          const accessoryRows = await odooExecuteKw<TemplateRow[]>(
+            ctx,
+            'product.template',
+            'search_read',
+            [[...baseDomain, ['id', 'in', [...relatedIds]]]],
+            {
+              fields: [...TEMPLATE_FIELDS],
+              limit,
+              context: catalogContext(),
+            },
+          )
+          if (accessoryRows.length > 0) {
+            const categMap = await resolveCategorySlugMap(ctx)
+            return accessoryRows.map((row) => {
+              const categoryId = m2oId(row.categ_id)
+              const categorySlug = categoryId != null ? categorySlugById(categMap, categoryId) : null
+              return templateToCard(row, categorySlug)
+            })
+          }
+        }
+      }
+
       const cartRows = await odooExecuteKw<Pick<TemplateRow, 'id' | 'categ_id'>[]>(
         ctx,
         'product.template',

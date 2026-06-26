@@ -4,6 +4,7 @@ import {
   odooExecuteKw,
   type OdooCallContext,
 } from './odooClient.js'
+import { syncSaleOrderFunnelState } from './odooFunnelSync.js'
 import { AppError } from '../../types/errors.js'
 import type {
   OdooPaymentAdapter,
@@ -347,6 +348,63 @@ async function createPortalPaymentUrl(
       document,
     },
   }
+}
+
+export type RegisterPaymentMethod = 'stripe' | 'bank_transfer'
+
+export type RegisterPaymentInput = {
+  saleOrderId: number
+  pwaOrderId: string
+  method: RegisterPaymentMethod
+  amountCents: number
+  transactionId?: string | null
+  status: 'captured' | 'pending'
+}
+
+/**
+ * Registra il pagamento PWA su Odoo (campi custom + sync funnel).
+ * Per bonifico: stato pending; per Stripe catturato: stato paid/captured.
+ */
+export async function registerPayment(
+  ctx: OdooCallContext,
+  input: RegisterPaymentInput,
+): Promise<'synced' | 'skipped' | 'failed'> {
+  if (!env.ODOO_ENABLED) return 'skipped'
+
+  const orderStatus = input.status === 'captured' ? 'paid' : 'payment_pending'
+  const paymentStatus = input.status === 'captured' ? 'captured' : 'pending'
+
+  const result = await syncSaleOrderFunnelState(ctx, input.saleOrderId, {
+    pwaOrderId: input.pwaOrderId,
+    orderStatus,
+    paymentStatus,
+    paymentMethod: input.method,
+    providerTransactionId: input.transactionId ?? null,
+  })
+
+  if (result === 'failed') return 'failed'
+
+  try {
+    const fields = await odooExecuteKw<Record<string, unknown>>(
+      ctx,
+      'sale.order',
+      'fields_get',
+      [],
+      { attributes: ['string'] },
+    )
+    const fieldNames = new Set(Object.keys(fields))
+    const vals: Record<string, unknown> = {}
+    if (fieldNames.has('x_pwa_payment_amount_cents')) {
+      vals.x_pwa_payment_amount_cents = input.amountCents
+    }
+    if (Object.keys(vals).length > 0) {
+      await odooExecuteKw<boolean>(ctx, 'sale.order', 'write', [[input.saleOrderId], vals], {})
+    }
+  } catch {
+    /* campi custom opzionali */
+  }
+
+  return result
 }
 
 /**

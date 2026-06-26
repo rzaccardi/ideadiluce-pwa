@@ -2,6 +2,7 @@ import { getOdooCustomerPrefill, postOdooTestCheckout } from '@/api/integrations
 import { ApiRequestError } from '@/types/api'
 import type { UserDTO } from '@/types/dto'
 import type { AddressInput } from '@/types/integrations'
+import { isCheckoutAddressValid } from '@/lib/checkout-address.validators'
 import { formatTestCheckoutError } from '@/lib/checkoutTestErrors'
 import { cartStore } from '@/features/cart/cart.store'
 import { checkoutTestStore, emptyAddress } from './checkoutTest.store'
@@ -104,14 +105,7 @@ export function resetCheckoutTestForm() {
 }
 
 function addressComplete(a: AddressInput): boolean {
-  return Boolean(
-    a.firstName.trim() &&
-      a.lastName.trim() &&
-      a.line1.trim() &&
-      a.city.trim() &&
-      a.postalCode.trim() &&
-      a.country.trim(),
-  )
+  return isCheckoutAddressValid(a)
 }
 
 export function isTestCheckoutFormValid(): boolean {

@@ -1,0 +1,66 @@
+---
+description: UX/UI backoffice Idea di Luce — stile enterprise VIX (shadcn, gray shell, italiano)
+globs: admin/**/*
+alwaysApply: false
+---
+
+# Admin BO — UX/UI (VIX Capital)
+
+Stack attuale in `admin/`: React + Vite + TypeScript, Tailwind v4, shadcn **base-nova**, Radix/base-ui, Lucide, CVA, `cn()` in `@/lib/utils`.
+
+Riferimenti: `admin/src/index.css`, `admin/components.json`, `admin/src/components/ui/*`, `admin/src/components/shared/*`, `admin/src/components/admin-layout.tsx`.
+
+## Colori
+
+- **Token semantici** (`--primary`, `--muted`, `--success`, `--cancel`, …) → componenti shadcn, focus, stati.
+- **Scala `gray-*`** → shell (sidebar, topbar, titoli pagina, bordi layout). Non sostituire tutto con token semantici.
+
+Accent colorati **solo** su icone/navigazione moduli, mai sulle CTA primarie.
+
+## Tipografia
+
+- System font (no Google/Geist custom).
+- Titolo pagina: `text-2xl font-bold text-gray-900`
+- Sezione/card: `text-xl font-semibold sm:text-2xl` o `PageHeader`
+- Descrizioni: `text-sm text-gray-500` / `text-muted-foreground`
+- Label dettaglio: `text-sm text-gray-500`; valori `font-medium`; vuoto → `-` in `text-gray-400 italic font-normal`
+- UI **sempre in italiano** (copy, aria-label, placeholder)
+
+## Layout shell
+
+- Wrapper: `bg-gray-100 h-[100dvh] overflow-hidden`
+- Sidebar desktop `w-72`, `border-gray-200`, gradient `from-gray-50 to-white`; mobile = drawer + overlay
+- Topbar: `border-gray-200 bg-white/95 backdrop-blur-sm` (mobile), `bg-white` (desktop)
+- Main: `px-3 py-4 sm:px-4 sm:py-5 lg:px-6 lg:py-6`, pagine `space-y-6` o `.page-stack`
+- Breakpoint shell: `lg` (sidebar fissa vs drawer)
+
+## Bottoni (semantica azioni)
+
+| Azione | variant |
+|--------|---------|
+| Conferma / Salva / Approva | `success` |
+| Annulla | `cancel` |
+| Elimina / Rifiuta | `destructive` (rosso pieno) |
+| Secondarie | `outline` |
+| Primaria flusso | `default` (primary nero) |
+
+Altezze: default `h-10`, input/select `h-10`, `rounded-md` su controlli.
+
+## Pattern pagina
+
+**Lista:** `PageHeader` → `Card` → `TableFilters` → `TableSkeleton` (primo load) → `Table` + `InfiniteScrollSentinel`.
+
+**Dettaglio:** `SitePageHeader` + `DetailPageActionBar` → `Card` con `DetailField` / `DetailValue`.
+
+Composizione: `@/components/ui/*` + `@/components/shared/*`. Mai spinner fullscreen sulle liste.
+
+## Cosa NON fare
+
+- CTA colorate fuori semantica (primary/success/destructive)
+- Font custom, hex hardcoded, copy mista IT/EN
+- `rounded-2xl` o ombre pesanti
+- Paginazione client con `limit: 500` — sempre server-side + infinite scroll
+
+## Checklist prima di chiudere una UI
+
+Shell gray-100, spacing `space-y-6`, input `h-10`, card `shadow-sm`, Lucide `h-4 w-4` (titoli `h-5 w-5`), responsive mobile stacked, loading/empty/error, truncazione `min-w-0 truncate`.

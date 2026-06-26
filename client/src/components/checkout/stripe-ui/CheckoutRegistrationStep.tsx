@@ -1,0 +1,53 @@
+'use client'
+
+import { useSnapshot } from 'valtio/react'
+import { fetchCart } from '@/features/cart'
+import {
+  checkoutStore,
+  prepareCheckoutAfterAuth,
+  updateCheckoutAddress,
+  updateCheckoutEmail,
+} from '@/features/checkout'
+import { useI18n } from '@/hooks/use-i18n'
+import { useLocalePath } from '@/hooks/use-locale-path'
+import { InlineAccountAuthStep } from '@/components/auth/InlineAccountAuthStep'
+
+export function CheckoutRegistrationStep() {
+  const { t } = useI18n()
+  const lp = useLocalePath()
+  const checkout = useSnapshot(checkoutStore)
+
+  async function handleAuthSuccess(info: {
+    mode: 'register' | 'login'
+    email: string
+    firstName?: string
+    lastName?: string
+    phone?: string
+  }) {
+    updateCheckoutEmail(info.email)
+    if (info.mode === 'register') {
+      if (info.firstName) updateCheckoutAddress('shipping', 'firstName', info.firstName)
+      if (info.lastName) updateCheckoutAddress('shipping', 'lastName', info.lastName)
+      if (info.phone) updateCheckoutAddress('shipping', 'phone', info.phone)
+    }
+    await fetchCart({ force: true })
+    await prepareCheckoutAfterAuth()
+  }
+
+  return (
+    <InlineAccountAuthStep
+      email={checkout.draft.email}
+      onEmailChange={updateCheckoutEmail}
+      forgotPasswordFrom={lp('/checkout')}
+      title={t('checkout.steps.account')}
+      hint={t('checkout.account.requiredHint')}
+      registerContinueLabel={t('checkout.account.createAndContinue')}
+      onAuthSuccess={handleAuthSuccess}
+      showAuthenticatedContinue
+      authenticatedContinueLabel={t('checkout.continue')}
+      authenticatedContinueLoading={checkout.addressPrefillLoading}
+      onAuthenticatedContinue={() => void prepareCheckoutAfterAuth()}
+      logoutScope="checkout"
+    />
+  )
+}

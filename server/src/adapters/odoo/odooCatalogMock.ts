@@ -1,4 +1,5 @@
 import type { ProductCardDTO, ProductDetailDTO } from '../../types/dto.js'
+import { defaultProductAlternates, defaultProductSeo } from '../../lib/product-seo-defaults.js'
 import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '../../modules/catalog/catalog.mock.js'
 import type { OdooCatalogAdapter } from './odooCatalogAdapter.js'
 import type { OdooCallContext } from './odooClient.js'
@@ -40,12 +41,15 @@ function paginate<T>(items: T[], page = 1, pageSize = 24) {
 function productToCard(p: (typeof MOCK_PRODUCTS)[number]): ProductCardDTO {
   return {
     slug: p.slug,
+    locale: 'IT',
     name: p.name,
     shortDescription: p.shortDescription,
     priceCents: p.priceCents,
+    priceDisplayMode: 'ex_vat',
     currency: p.currency,
     imageUrl: p.imageUrl,
     categorySlug: p.categorySlug,
+    inStock: p.inStock,
   }
 }
 
@@ -76,18 +80,32 @@ export function createMockOdooCatalogAdapter(): OdooCatalogAdapter {
       if (!p) return null
       const d: ProductDetailDTO = {
         slug: p.slug,
+        locale: 'IT',
         name: p.name,
         shortDescription: p.shortDescription,
         longDescription: p.longDescription,
+        additionalInfoTableHtml: null,
+        specsTableHtml: null,
         priceCents: p.priceCents,
+        priceDisplayMode: 'ex_vat',
         currency: p.currency,
         imageUrl: p.imageUrl,
         images: p.imageUrl ? [p.imageUrl] : [],
         odooTemplateId: null,
         categorySlug: p.categorySlug,
+        categories: p.categorySlug
+          ? [{ slug: p.categorySlug, name: p.categorySlug }]
+          : [],
+        brand: null,
         sku: p.sku,
         inStock: p.inStock,
-        variants: p.variants,
+        variants: p.variants.map((v) => ({
+          ...v,
+          priceCents: p.priceCents,
+          inStock: p.inStock,
+        })),
+        seo: defaultProductSeo(p.name, p.slug, p.shortDescription),
+        alternates: defaultProductAlternates(p.slug),
       }
       return d
     },

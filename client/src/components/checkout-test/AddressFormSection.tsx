@@ -1,4 +1,6 @@
 import { TextInput } from '@/components/TextInput'
+import { AddressAutocompleteField } from '@/components/checkout/AddressAutocompleteField'
+import type { ResolvedAddress } from '@/lib/addressAutocomplete'
 import type { AddressInput } from '@/types/integrations'
 
 type Props = {
@@ -7,9 +9,10 @@ type Props = {
   address: AddressInput
   disabled?: boolean
   onChange: <K extends keyof AddressInput>(key: K, value: AddressInput[K]) => void
+  onAddressResolved?: (resolved: ResolvedAddress) => void
 }
 
-export function AddressFormSection({ title, prefix, address, disabled, onChange }: Props) {
+export function AddressFormSection({ title, prefix, address, disabled, onChange, onAddressResolved }: Props) {
   return (
     <div className={disabled ? 'pointer-events-none opacity-60' : ''}>
       <h3 className="mb-3 text-sm font-medium text-zinc-800">{title}</h3>
@@ -30,14 +33,16 @@ export function AddressFormSection({ title, prefix, address, disabled, onChange 
           disabled={disabled}
           autoComplete="family-name"
         />
-        <TextInput
-          label="Indirizzo (riga 1)"
+        <AddressAutocompleteField
+          label="Indirizzo"
           name={`${prefix}-line1`}
           value={address.line1}
-          onChange={(e) => onChange('line1', e.target.value)}
+          countryBias={address.country}
           disabled={disabled}
           autoComplete="address-line1"
           className="sm:col-span-2"
+          onChange={(value) => onChange('line1', value)}
+          onResolved={(resolved) => onAddressResolved?.(resolved)}
         />
         <TextInput
           label="Indirizzo (riga 2) — opz."

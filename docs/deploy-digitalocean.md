@@ -1,108 +1,128 @@
 # Deploy su DigitalOcean (Idea di Luce PWA)
 
-Guida per mettere online monorepo, database e (opzionale) storage media con **App Platform** — il prodotto giusto per questo stack, senza gestire server Linux a mano.
+Guida per mettere online monorepo, database e (opzionale) storage media con **App Platform**.
 
-## Cosa usare su DigitalOcean
+## File nel repo
 
-| Prodotto | Ruolo | Note |
-|----------|--------|------|
-| **App Platform** | API Node + PWA statica + admin statico | Definito in [`.do/app.yaml`](../.do/app.yaml) |
-| **Managed PostgreSQL** | DB BFF (`public`) + catalogo hub (`hub`) | Creato dall’app spec come componente `postgres` |
-| **Spaces** (opzionale) | CDN per file caricati in futuro | **Oggi** le immagini catalogo sono URL esterni (import Woo); Spaces serve solo se aggiungi upload |
-| ~~Droplet~~ | — | Non necessario salvo esigenze speciali (Odoo self-hosted, job pesanti) |
+| File | Ambiente |
+|------|----------|
+| [`.do/platform-map.yaml`](../.do/platform-map.yaml) | **Mappa collegamenti** — solo topologia, no deploy |
+| [`.do/GO-LIVE.md`](../.do/GO-LIVE.md) | **Mappa go-live** — piattaforma + sistemi annessi + checklist |
+| [`.do/app.yaml`](../.do/app.yaml) | **Produzione** (`main`, Postgres `production: true`) |
+| [`.do/app.staging.yaml`](../.do/app.staging.yaml) | Staging (`staging`, Postgres dev) |
+| [`.do/secrets.production.env.example`](../.do/secrets.production.env.example) | Secret da impostare in UI |
+| [`.do/README.md`](../.do/README.md) | Riferimento rapido |
 
-Costo indicativo di partenza (EU `fra1`): API ~5–12 €/mese, 2 static site inclusi nel piano app, DB dev ~15 €/mese — verifica i prezzi aggiornati nel pannello.
+## Architettura
 
-## Setup “repo-aware” (già pronto nel progetto)
+| Prodotto DO | Componente | Stack |
+|-------------|------------|--------|
+| **Web Service** | `api` | Express :8080, Prisma, Hub, proxy Arfly |
+| **Web Service** | `shop` | Next.js :3000 (rewrite `/api` → BFF) |
+| **Static Site** | `admin` | Vite SPA `admin/dist` |
+| **Managed PostgreSQL** | `postgres` | Schema `public` + `hub` |
 
-Il file **`.do/app.yaml`** è la *App Spec*: quando colleghi GitHub, DigitalOcean può importarla e creare automaticamente:
+Costo indicativo EU `fra1`: API + shop ~10–20 €/mese, static site admin incluso, DB produzione ~15–30 €/mese — verifica prezzi aggiornati nel pannello.
 
-- **api** — Web Service Node (Express, porta `8080`, health `/health`)
-- **shop** — Static site da `client/dist` (SPA con `catchall_document`)
-- **admin** — Static site da `admin/dist`
-- **postgres** — PostgreSQL 16 gestito
+## Setup produzione
 
-Build e migrazioni Prisma (server + schema `hub`) partono nel `build_command` del servizio API.
+### 1. Collega il repository
 
-### Passi operativi
+1. **Apps** → **Create App** → GitHub → repo `ideadiluce-pwa`
+2. Conferma **Use existing app spec** (legge `.do/app.yaml`)
+3. Verifica `github.repo` e branch `main`
 
-1. **GitHub** — push del codice (branch `main` o quello che usi).
+### 2. Secret (Environment)
 
-2. **DigitalOcean** → **Apps** → **Create App** → scegli il repository.
+Copia l’elenco da [`.do/secrets.production.env.example`](../.do/secrets.production.env.example) e imposta i valori nella UI per ogni componente.
 
-3. Se compare **“App spec detected”** / **Use existing app spec** → conferma (legge `.do/app.yaml`).
+| Variabile | Componente | Obbligatoria |
+|-----------|------------|--------------|
+| `ARFLY_API_KEY` | api | Sì (catalogo Odoo REST) |
+| `ODOO_DB`, `ODOO_USERNAME`, `ODOO_PASSWORD` | api | Sì (ordini/stock XML-RPC) |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | api | Sì se pagamenti live |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | shop (BUILD) | Sì se Stripe |
+| `SHIPPING_CREDENTIALS_KEY` | api | Consigliata (32+ char) |
+| `ADMIN_SEED_*` | api | Solo primo deploy |
 
-4. Modifica in `.do/app.yaml` (o nella UI, poi sincronizza):
-   ```yaml
-   github:
-     repo: tua-org/ideadiluce-pwa
-     branch: main
-   ```
+`DATABASE_URL` è già `${postgres.DATABASE_URL}` nello spec.
 
-5. **Environment variables** (Settings → la tua app → Environment) — aggiungi i secret **non** committati:
+### 3. Primo deploy
 
-   | Variabile | Componente | Note |
-   |-----------|------------|------|
-   | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | api | + `STRIPE_ENABLED=true` |
-   | `VITE_STRIPE_PUBLISHABLE_KEY` | shop | scope **BUILD_TIME** |
-   | `ODOO_*` | api | se ERP attivo |
-   | `ADMIN_API_TOKEN`, `VITE_ADMIN_TOKEN` | api + admin | admin spedizioni |
-   | `INTEGRATIONS_TOKEN`, `VITE_INTEGRATIONS_TOKEN` | api + shop | se usi token integrazioni |
-   | DHL / FedEx / bonifico | api | come in `.env.example` |
+Attendi build verde su tutti e tre i componenti + DB. Annota:
 
-   `DATABASE_URL` è già collegato a `${postgres.DATABASE_URL}` nell’app spec.
+- `https://api-….ondigitalocean.app`
+- `https://shop-….ondigitalocean.app`
+- `https://admin-….ondigitalocean.app`
 
-6. **Primo deploy** — attendi build verde. Annota gli URL `*.ondigitalocean.app` di `api`, `shop`, `admin`.
+### 4. Dati iniziali (non nel build_command)
 
-7. **Domini custom** (consigliato in produzione):
-   - `shop.tuodominio.it` → componente **shop**
-   - `api.tuodominio.it` → componente **api**
-   - `admin.tuodominio.it` → componente **admin**
-   - Aggiorna `CLIENT_ORIGIN` e `CHECKOUT_REDIRECT_BASE` con l’URL reale dello shop (non solo `${shop.PUBLIC_URL}` se usi dominio custom).
+Con tunnel verso il Postgres di produzione:
 
-8. **Dati catalogo** — da locale (con `DATABASE_URL` di produzione in VPN/tunnel) o da un job one-off:
-   ```bash
-   npm run hub:migrate
-   npm run hub:import
-   npm run hub:enrich
-   ```
-   Non eseguire import massivi nel `build_command` di App Platform.
+```bash
+# Admin BO + pagine CMS
+npm run db:seed --workspace=server
 
-9. **Stripe webhooks** — endpoint pubblico: `https://api.tuodominio.it/api/v1/...` (vedi route webhook nel server).
+# Catalogo Hub (import Woo — può richiedere ore)
+npm run hub:import
+npm run hub:enrich
+npm run hub:import-content
+```
 
-## Media / immagini
+Non eseguire import massivi nel `build_command` di App Platform.
 
-- **Catalogo attuale**: immagini in DB come URL (es. `ideadiluce.com/wp-content/uploads/...`). Non serve Spaces per andare live.
-- **Upload futuri** (PDF ordini, foto prodotto caricate dall’admin):
-  1. Crea un **Space** (es. `fra1`, CDN abilitato).
-  2. Aggiungi env su **api**: `SPACES_KEY`, `SPACES_SECRET`, `SPACES_BUCKET`, `SPACES_ENDPOINT`, `SPACES_CDN_URL`.
-  3. Implementa adapter S3-compatible nel server (non ancora nel repo).
+### 5. Stripe webhooks e wallet
 
-## Alternative CLI (`doctl`)
+Endpoint: `https://<api-….ondigitalocean.app>/api/v1/payments/webhook/stripe`
+
+Eventi: `checkout.session.completed` (obbligatorio per finalizzare ordini PWA).
+
+**Apple Pay:** in Stripe Dashboard aggiungi l’URL shop assegnato da DO.
+
+**Chiavi:** `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` su `api`; `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` su `shop` (BUILD). In locale: `npm run stripe:setup` e `npm run stripe:webhook`.
+
+### 6. Verifica post-go-live
+
+```bash
+curl -s https://<api-….ondigitalocean.app>/health
+curl -s "https://<api-….ondigitalocean.app>/api/v1/site/pages/home?locale=IT" | head
+curl -s "https://<api-….ondigitalocean.app>/api/v1/catalog/products?pageSize=2&locale=IT" | head
+```
+
+Login admin BO → verifica CORS se shop e admin sono su domini diversi (già gestito in `server/src/app.ts` con `CLIENT_ORIGIN` + `ADMIN_ORIGIN`).
+
+## Staging
+
+App separata con spec dedicata:
+
+```bash
+doctl apps create --spec .do/app.staging.yaml
+```
+
+Branch `staging`, Postgres dev (`production: false`).
+
+## CLI (`doctl`)
 
 ```bash
 doctl apps create --spec .do/app.yaml
 doctl apps update <APP_ID> --spec .do/app.yaml
+doctl apps logs <APP_ID> api --type run
 ```
 
-Utile per CI/CD senza passare dalla UI.
+## Media / Spaces (opzionale)
 
-## Produzione vs sviluppo
+Catalogo attuale: URL immagini Woo/Odoo in DB — **Spaces non obbligatorio** per go-live.
 
-Nell’app spec, `postgres.production: false` crea un DB “dev”. Per produzione:
+Per upload futuri dall’admin: crea Space `fra1` + env `SPACES_*` su `api` (vedi `.env.example`).
 
-- imposta `production: true` e un `size` adeguato nel pannello o nello spec;
-- abilita backup e connection pool se il traffico cresce;
-- valuta `instance_count` / `instance_size_slug` più alti per **api**.
+## Limitazioni
 
-## Limitazioni da tenere a mente
+- **Odoo/Arfly** restano su `tlbdb.odoo.com` — solo variabili verso l’istanza esterna
+- **Cookie sessione**: `trust proxy` già attivo su Express
+- **Re-build shop** necessario dopo cambio `NEXT_PUBLIC_*`
 
-- **CORS**: `CLIENT_ORIGIN` accetta una sola origine; con admin su dominio diverso potrebbe servire estendere `server/src/app.ts`.
-- **Cookie di sessione**: dietro il proxy DO, in produzione potrebbero servire `trust proxy` e flag `secure` sui cookie (verifica login guest/checkout).
-- **Odoo**: resta sul tuo ERP (cloud o altro hosting), non su questo deploy — solo variabili `ODOO_*` verso l’istanza esterna.
+## Riferimenti
 
-## Riferimenti nel repo
-
-- Variabili: [`.env.example`](../.env.example)
-- Deploy generico: [README.md](../README.md#deploy-es-digitalocean-app-platform)
-- API: [server/README.md](../server/README.md)
+- Variabili complete: [`.env.example`](../.env.example)
+- Import Hub: [`docs/hub-production-import.md`](hub-production-import.md)
+- README: [README.md](../README.md#deploy-es-digitalocean-app-platform)

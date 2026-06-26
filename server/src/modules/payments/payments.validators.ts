@@ -1,15 +1,15 @@
 import { z } from 'zod'
-import { testCheckoutAddressSchema } from '../integrations/integrations.validators.js'
+import { checkoutStartSchema, checkoutStartBodySchema } from '../checkout/checkout.validators.js'
+import { checkoutAddressSchema } from '../checkout/checkout-address.validators.js'
 
-export const checkoutStartSchema = z.object({
-  email: z.string().email(),
-  billingAddress: testCheckoutAddressSchema,
-  shippingAddress: testCheckoutAddressSchema,
-})
+export { checkoutStartSchema }
+
+/** Metodi accettati in checkout produzione PWA (Stripe + bonifico). */
+export const checkoutPaymentMethodSchema = z.enum(['stripe', 'bank_transfer'])
 
 export const createPaymentSessionSchema = z.object({
   orderId: z.string().min(1),
-  paymentMethod: z.enum(['card_nexi', 'bank_transfer', 'paypal', 'google_pay', 'stripe']),
+  paymentMethod: checkoutPaymentMethodSchema,
 })
 
 export const confirmPaymentSchema = z.object({
@@ -20,7 +20,16 @@ export const confirmPaymentSchema = z.object({
   mockStatus: z.enum(['captured', 'pending', 'failed', 'cancelled']).optional(),
 })
 
-export type CheckoutStartBody = z.infer<typeof checkoutStartSchema>
+export const prepareWalletCheckoutSchema = z.object({
+  email: z.string().email().optional(),
+  billingAddress: checkoutAddressSchema.optional(),
+  shippingAddress: checkoutAddressSchema.optional(),
+  productRef: z.string().min(1).optional(),
+  quantity: z.coerce.number().int().min(1).optional(),
+  variantRef: z.string().nullable().optional(),
+})
+
+export type CheckoutStartBody = z.infer<typeof checkoutStartBodySchema>
 export type CreatePaymentSessionBody = z.infer<typeof createPaymentSessionSchema>
 export type ConfirmPaymentBody = z.infer<typeof confirmPaymentSchema>
-
+export type PrepareWalletCheckoutBody = z.infer<typeof prepareWalletCheckoutSchema>

@@ -1,3 +1,4 @@
+import type { CustomerSegment } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 
 export const authRepository = {
@@ -11,6 +12,7 @@ export const authRepository = {
     firstName?: string | null
     lastName?: string | null
     phone?: string | null
+    customerSegment?: CustomerSegment
   }) {
     return prisma.user.create({
       data: {
@@ -19,6 +21,7 @@ export const authRepository = {
         firstName: data.firstName ?? null,
         lastName: data.lastName ?? null,
         phone: data.phone ?? null,
+        customerSegment: data.customerSegment ?? 'RETAIL',
       },
     })
   },

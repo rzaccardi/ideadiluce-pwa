@@ -1,0 +1,1 @@
+export { AttaccoView } from './AttaccoView'

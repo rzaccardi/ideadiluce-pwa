@@ -9,6 +9,30 @@ function sessionExpiry(): Date {
   return new Date(Date.now() + env.SESSION_DAYS * 24 * 60 * 60 * 1000)
 }
 
+/**
+ * Carica sessione dal cookie se presente e valida.
+ * Non crea sessioni guest — adatto a /api/v2 pubblico (bot, sitemap, SSR anonimo).
+ * Con cookie utente loggato (SSR Next) abilita listino B2B/pro nel proxy Arfly.
+ */
+export function loadSessionIfPresent(req: Request, _res: Response, next: NextFunction) {
+  void (async () => {
+    const raw = req.cookies?.[env.SESSION_COOKIE_NAME] as string | undefined
+    if (!raw) {
+      next()
+      return
+    }
+    const row = await prisma.session.findUnique({
+      where: { tokenHash: hashSessionToken(raw) },
+      include: { user: true },
+    })
+    if (row && row.expiresAt > new Date()) {
+      req.sessionRecord = { ...row, user: row.user }
+      req.sessionTokenRaw = raw
+    }
+    next()
+  })().catch(next)
+}
+
 /** Carica sessione dal cookie o ne crea una nuova (guest). */
 export function loadOrCreateSession(req: Request, res: Response, next: NextFunction) {
   void (async () => {

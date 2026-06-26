@@ -13,6 +13,17 @@ enum UserStatus {
   PENDING_VERIFICATION
 }
 
+enum CustomerSegment {
+  RETAIL
+  BUSINESS
+  PROFESSIONAL
+}
+
+enum AdminUserStatus {
+  ACTIVE
+  DISABLED
+}
+
 enum CartStatus {
   ACTIVE
   CONVERTED
@@ -22,6 +33,29 @@ enum CartStatus {
 enum OdooSyncStatus {
   PENDING
   SYNCED
+  FAILED
+}
+
+enum OdooSyncQueueStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  EXHAUSTED
+}
+
+enum QuoteRequestStatus {
+  DRAFT
+  REQUESTED
+  SENT
+  CHECKOUT_STARTED
+  CONVERTED
+  CANCELLED
+}
+
+enum SyncRetryJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
   FAILED
 }
 
@@ -42,10 +76,14 @@ enum CheckoutAttemptStatus {
 
 enum PwaOrderStatus {
   CART_CREATED
+  DRAFT
   CHECKOUT_STARTED
+  CHECKOUT_LOCKED
   PAYMENT_STARTED
   PAYMENT_PENDING
   PAID
+  PAID_SYNC_PENDING
+  SYNCED
   PAYMENT_FAILED
   ABANDONED
   CANCELLED
@@ -77,6 +115,7 @@ enum ShippingMethodType {
   FREE_SHIPPING
   LIVE_DHL
   LIVE_FEDEX
+  PICKUP
 }
 
 enum CarrierProvider {
@@ -84,27 +123,101 @@ enum CarrierProvider {
   FEDEX
 }
 
-model User {
-  id           String     @id @default(cuid())
-  email        String     @unique
-  passwordHash String?
-  firstName    String?
-  lastName     String?
-  phone        String?
-  status       UserStatus @default(ACTIVE)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+model AdminUser {
+  id           String          @id @default(cuid())
+  email        String          @unique
+  passwordHash String
+  displayName  String?
+  status       AdminUserStatus @default(ACTIVE)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 
-  sessions         Session[]
-  carts            Cart[]
-  wishlistItems    WishlistItem[]
-  checkoutSessions CheckoutSession[]
-  ordersCache      OrderCache[]
-  odooMaps         OdooCustomerMap[]
-  pwaOrders        PwaOrder[]
+  sessions             AdminSession[]
+  impersonatedSessions Session[]
+  impersonationTokens  ImpersonationToken[]
 
   @@index([email])
   @@index([status])
+}
+
+model AdminSession {
+  id          String   @id @default(cuid())
+  adminUserId String
+  tokenHash   String   @unique
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId])
+  @@index([expiresAt])
+}
+
+model User {
+  id                     String            @id @default(cuid())
+  email                  String            @unique
+  passwordHash           String?
+  firstName              String?
+  lastName               String?
+  phone                  String?
+  shippingAddressJson    Json?
+  preferredPaymentMethod PwaPaymentMethod?
+  /** B2C retail o B2B business — determina listino Odoo predefinito. */
+  customerSegment        CustomerSegment   @default(RETAIL)
+  /** Listino professional Odoo (flag sincronizzato da partner/listino). */
+  isProfessional         Boolean           @default(false)
+  vatNumber              String?
+  fiscalCode             String?
+  pec                    String?
+  sdiCode                String?
+  companyName            String?
+  vatCountryCode         String?
+  vatFormatValid         Boolean?
+  vatChecksumValid       Boolean?
+  fiscalCodeValid        Boolean?
+  viesValid              Boolean?
+  viesName               String?
+  viesAddress            String?
+  /** pending | valid | invalid | vies_unavailable */
+  taxValidationStatus    String?
+  taxCheckedAt           DateTime?
+  /** Override listino Odoo (`product.pricelist` id); se null usa env per segmento o partner. */
+  odooPricelistId        Int?
+  status                 UserStatus        @default(ACTIVE)
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+
+  sessions              Session[]
+  taxValidationLogs     TaxValidationLog[]
+  carts                 Cart[]
+  wishlistItems         WishlistItem[]
+  checkoutSessions      CheckoutSession[]
+  ordersCache           OrderCache[]
+  odooMaps              OdooCustomerMap[]
+  pwaOrders             PwaOrder[]
+  quoteRequests         QuoteRequest[]
+  notifications         UserNotification[]
+  passwordResetTokens   PasswordResetToken[]
+  impersonationTokens   ImpersonationToken[]
+
+  @@index([email])
+  @@index([status])
+  @@index([customerSegment])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Session {
@@ -114,13 +227,34 @@ model Session {
   expiresAt DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  /** Admin che ha avviato impersonazione (audit). */
+  impersonatedByAdminId String?
 
-  user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
-  carts         Cart[]
-  wishlistItems WishlistItem[]
-  pwaOrders     PwaOrder[]
+  user                  User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  impersonatedByAdmin   AdminUser? @relation(fields: [impersonatedByAdminId], references: [id], onDelete: SetNull)
+  carts                 Cart[]
+  wishlistItems         WishlistItem[]
+  pwaOrders             PwaOrder[]
 
   @@index([userId])
+  @@index([expiresAt])
+  @@index([impersonatedByAdminId])
+}
+
+model ImpersonationToken {
+  id          String    @id @default(cuid())
+  tokenHash   String    @unique
+  userId      String
+  adminUserId String
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([adminUserId])
   @@index([expiresAt])
 }
 
@@ -151,8 +285,14 @@ model Cart {
   estimatedShipping  Int?
   estimatedTotal     Int?
   lastPricedAt       DateTime?
+  /** Inizio riserva stock (primo articolo); usato per il contatore lato client. */
+  reservationStartedAt DateTime?
+  /** Scadenza riserva: al superamento il carrello viene svuotato lato server. */
+  reservationExpiresAt DateTime?
   abandonedAt        DateTime?
   convertedOrderId   String?
+  /** Email nota per BO (utente loggato, checkout o ordine collegato). */
+  contactEmail       String?
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
@@ -162,11 +302,76 @@ model Cart {
   checkoutSessions CheckoutSession[]
   abandonedEvents  AbandonedCartEvent[]
   pwaOrders PwaOrder[]
+  quoteRequests QuoteRequest[]
   shippingSelection CartShippingSelection?
 
   @@index([userId])
   @@index([sessionId])
   @@index([status])
+  @@index([contactEmail])
+}
+
+model UserNotification {
+  id          String    @id @default(cuid())
+  userId      String
+  type        String
+  title       String
+  body        String?
+  payloadJson Json?
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model QuoteRequest {
+  id                   String             @id @default(cuid())
+  userId               String
+  cartId               String
+  email                String
+  status               QuoteRequestStatus @default(REQUESTED)
+  notes                String?
+  billingAddressJson   Json?
+  shippingAddressJson  Json?
+  linesSnapshotJson    Json
+  currencyCode         String             @default("EUR")
+  estimatedSubtotal    Int?
+  estimatedTax         Int?
+  estimatedTotal       Int?
+  odooSaleOrderId      Int?
+  pwaOrderId           String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cart Cart @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([cartId])
+  @@index([status])
+  @@index([odooSaleOrderId])
+}
+
+model SyncRetryJob {
+  id          String             @id @default(cuid())
+  service     String
+  operation   String
+  entityType  String
+  entityId    String
+  payload     Json               @default("{}")
+  attempts    Int                @default(0)
+  maxAttempts Int                @default(4)
+  status      SyncRetryJobStatus @default(PENDING)
+  lastError   String?
+  nextRetryAt DateTime           @default(now())
+  resolvedAt  DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([status, nextRetryAt])
+  @@index([entityType, entityId])
 }
 
 model CartItem {
@@ -215,6 +420,8 @@ model CheckoutSession {
   odooPartnerId          Int?
   odooSaleOrderId        Int?
   paymentRedirectUrl     String?
+  /** Snapshot prezzi congelati all'avvio checkout (IVA esclusa, centesimi). */
+  priceSnapshotJson      Json?
   expiresAt              DateTime?
   createdAt          DateTime              @default(now())
   updatedAt          DateTime              @updatedAt
@@ -267,12 +474,24 @@ model PwaOrder {
   checkoutStartedAt          DateTime?
   paymentStartedAt           DateTime?
   paidAt                     DateTime?
+  /** Email admin inviata per ordine PAID_SYNC_PENDING oltre soglia. */
+  paidSyncAlertSentAt        DateTime?
   abandonedAt                DateTime?
   cancelledAt                DateTime?
   confirmedAt                DateTime?
   completedAt                DateTime?
   odooLastSyncAt             DateTime?
   odooLastSyncStatus         OdooSyncStatus     @default(PENDING)
+  /** Snapshot righe congelate al passaggio review → pagamento (centesimi). */
+  linesSnapshotJson          Json?
+  clientOrderRef             String?
+  orderNotes                 String?
+  courierNotes               String?
+  dropshipAddressJson        Json?
+  /** Dati fiscali checkout: VAT, fiscal position, warning forzato. */
+  fiscalJson                 Json?
+  /** Chiave idempotenza checkout/start (session + cart hash). */
+  idempotencyKey             String?            @unique
   metadataJson               Json?
   createdAt                  DateTime           @default(now())
   updatedAt                  DateTime           @updatedAt
@@ -282,6 +501,7 @@ model PwaOrder {
   user            User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
   session         Session?         @relation(fields: [sessionId], references: [id], onDelete: SetNull)
   payments        PwaPayment[]
+  odooSyncQueue   OdooSyncQueue[]
 
   @@index([cartId])
   @@index([userId])
@@ -289,6 +509,27 @@ model PwaOrder {
   @@index([orderStatus])
   @@index([paymentStatus])
   @@index([odooSaleOrderId])
+}
+
+model OdooSyncQueue {
+  id          String              @id @default(cuid())
+  pwaOrderId  String
+  operation   String
+  payload     Json                @default("{}")
+  attempts    Int                 @default(0)
+  maxAttempts Int                 @default(4)
+  nextRetryAt DateTime            @default(now())
+  lastError   String?
+  status      OdooSyncQueueStatus @default(PENDING)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  resolvedAt  DateTime?
+
+  order PwaOrder @relation(fields: [pwaOrderId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextRetryAt])
+  @@index([pwaOrderId])
+  @@index([pwaOrderId, operation, status])
 }
 
 model PwaPayment {
@@ -423,6 +664,17 @@ model CarrierCredential {
   @@unique([provider])
 }
 
+/** Supplementi corriere configurabili da BO (singleton `default`). */
+model ShippingSurchargeConfig {
+  id                    String   @id @default("default")
+  dhlBaseCents          Int      @default(500)
+  fedexBaseCents        Int      @default(400)
+  dhlLengthCents        Int      @default(1200)
+  lengthThresholdMeters Float    @default(1.0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
 model CartShippingSelection {
   id            String   @id @default(cuid())
   cartId        String   @unique
@@ -444,6 +696,10 @@ model AbandonedCartEvent {
   id          String   @id @default(cuid())
   cartId      String
   eventType   String
+  /** Snapshot email/utente al momento dell'evento (per BO e follow-up). */
+  contactEmail String?
+  userId       String?
+  itemsSnapshotJson Json?
   payloadJson Json?
   createdAt   DateTime @default(now())
 
@@ -451,4 +707,201 @@ model AbandonedCartEvent {
 
   @@index([cartId])
   @@index([eventType])
+  @@index([contactEmail])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+/** Impostazioni social proof (singleton `default`). */
+model SocialProofSettings {
+  id                  String    @id @default("default")
+  enabled             Boolean   @default(true)
+  minQuantity         Int       @default(1)
+  lookbackDays        Int       @default(30)
+  maxEvents           Int       @default(12)
+  odooImportEnabled   Boolean   @default(false)
+  odooLastSyncAt      DateTime?
+  odooLastSyncCount   Int?
+  odooLastSyncError   String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+/** Eventi social proof importati da Odoo `sale.order.line`. */
+/** Tracciamento download documenti prodotto (scheda tecnica, datasheet, ecc.). */
+model ProductDocumentDownload {
+  id           String   @id @default(cuid())
+  productSlug  String
+  productRef   String?
+  variantRef   String?
+  documentId   String
+  documentName String?
+  userId       String?
+  sessionId    String?
+  locale       String   @default("IT")
+  sourcePage   String?
+  userAgent    String?
+  success      Boolean  @default(true)
+  errorMessage String?
+  createdAt    DateTime @default(now())
+
+  @@index([productSlug])
+  @@index([documentId])
+  @@index([createdAt])
+  @@index([userId])
+}
+
+/** Richiesta email quando un prodotto torna disponibile o richiesta prodotto fuori stock. */
+model StockRestockRequest {
+  id          String    @id @default(cuid())
+  email       String
+  productRef  String
+  variantRef  String?
+  quantity    Int       @default(1)
+  locale      String    @default("IT")
+  productName String?
+  userId      String?
+  requestType String    @default("RESTOCK_NOTIFY")
+  adminStatus String    @default("NEW")
+  adminNotes  String?
+  notifiedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([email, productRef, variantRef, requestType])
+  @@index([productRef])
+  @@index([notifiedAt])
+  @@index([requestType])
+  @@index([adminStatus])
+}
+
+/// Richiesta attivazione account professionista / business dalla pagina B2B.
+model ProfessionalAccountRequest {
+  id          String   @id @default(cuid())
+  companyName String
+  vatNumber   String
+  sector      String
+  sectorOther String?
+  contactName String
+  email       String
+  phone       String?
+  pec         String?
+  sdiCode     String?
+  visuraUrl   String?
+  message     String?
+  locale      String   @default("IT")
+  country     String   @default("IT")
+  status      String   @default("NEW")
+  userId      String?
+  odooPartnerId Int?
+  vatValidated  Boolean @default(false)
+  vatForceAccepted Boolean @default(false)
+  odooSyncError String?
+  adminNotes  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([email])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model SocialProofOdooEvent {
+  id                String   @id @default(cuid())
+  odooLineId        Int      @unique
+  odooSaleOrderId   Int
+  productTemplateId Int
+  quantity          Int
+  purchasedAt       DateTime
+  buyerLabel        String
+  syncedAt          DateTime @default(now())
+
+  @@index([productTemplateId, purchasedAt])
+  @@index([purchasedAt])
+}
+
+/** Regola matrice fiscale BO — aliquota IVA per paese/segmento/VAT. */
+model TaxRule {
+  id                   String           @id @default(cuid())
+  priority             Int
+  customerSegment      CustomerSegment?
+  isProfessional       Boolean?
+  /** ISO2 o codici speciali: `*`, `EU`, `EU_EXCL_IT`, `EXTRA_EU`. */
+  billingCountry       String?
+  /** ISO2 o codici speciali — chiave principale (paese spedizione). */
+  shippingCountry      String
+  /** null=ignora; true/false=condizione obbligatoria. */
+  vatValid             Boolean?
+  taxRatePct           Decimal          @db.Decimal(5, 2)
+  taxLabel             String
+  disclaimerKey        String?
+  odooFiscalPositionId Int?
+  enabled              Boolean          @default(true)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  @@index([enabled, priority])
+}
+
+/** Contatore tentativi validazione VAT VIES per sessione checkout. */
+model VatValidationAttempt {
+  id            String   @id @default(cuid())
+  sessionId     String
+  vatNumber     String
+  attemptCount  Int      @default(0)
+  forceAccepted Boolean  @default(false)
+  lastValid     Boolean?
+  updatedAt     DateTime @updatedAt
+
+  @@unique([sessionId, vatNumber])
+  @@index([sessionId])
+}
+
+/** Cache risultati VIES — TTL 24h per evitare chiamate ripetute. */
+model VatValidationCache {
+  id          String   @id @default(cuid())
+  countryCode String
+  vatNumber   String
+  valid       Boolean
+  name        String?
+  address     String?
+  requestDate String?
+  checkedAt   DateTime @default(now())
+  expiresAt   DateTime
+
+  @@unique([countryCode, vatNumber])
+  @@index([expiresAt])
+}
+
+/** Audit validazioni fiscali — hash dei dati sensibili, no CF/P.IVA in chiaro. */
+model TaxValidationLog {
+  id               String   @id @default(cuid())
+  userId           String?
+  sessionId        String?
+  fiscalCodeHash   String?
+  vatCountryCode   String?
+  vatNumberHash    String?
+  provider         String
+  status           String
+  responseSummary  Json?
+  checkedAt        DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([checkedAt])
+}
+
+/// Contenuti editoriali storefront (home, shell, guide, …) per locale.
+model SitePage {
+  id        String   @id @default(cuid())
+  pageKey   String
+  locale    String   @default("IT")
+  content   Json
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([pageKey, locale])
+  @@index([pageKey])
 }

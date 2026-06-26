@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:#fbfbfa;font-family:'Hanken Grotesk',system-ui,sans-serif;color:#1a1c20;}
+</style>
+</helmet>
+
+<div style="width:100%;overflow:hidden;">
+
+  <!-- utility -->
+  <!-- header (mega-menu component) -->
+  <dc-import name="IdeaDiLuce Header" active="guide" hint-size="100%,124px"></dc-import>
+
+  <!-- HERO + search -->
+  <div style="background:#fff;border-bottom:1px solid #ecedef;">
+    <div style="max-width:1320px;margin:0 auto;padding:16px 48px 0;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9298a3;">Home · <span style="color:#3f4651;">Guide</span></div>
+    </div>
+    <div style="max-width:860px;margin:0 auto;padding:40px 48px 44px;text-align:center;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;color:#9298a3;margin-bottom:16px;">KNOWLEDGE CENTER</div>
+      <h1 style="font-size:42px;line-height:1.05;font-weight:800;letter-spacing:-.025em;margin:0 0 14px;">Guide e consigli per<br>scegliere la luce giusta</h1>
+      <div style="font-size:16.5px;line-height:1.55;color:#5b616b;max-width:620px;margin:0 auto 26px;">Spiegazioni semplici, guide tecniche, consigli per ambiente, manuali e tutorial per acquistare, installare e usare al meglio i prodotti di illuminazione.</div>
+      <div style="display:flex;align-items:center;gap:10px;background:#f4f5f7;border:1.5px solid #e3e6ea;border-radius:12px;padding:8px 8px 8px 22px;max-width:660px;margin:0 auto;">
+        <span style="flex:1;text-align:left;font-size:16px;color:#9298a3;">Cerca una guida, un attacco, un ambiente o un problema…</span>
+        <span style="background:#1a1c20;color:#fff;font-size:15px;font-weight:700;padding:13px 28px;border-radius:8px;">Cerca</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:15px;justify-content:center;align-items:center;">
+        <span style="font-size:12.5px;color:#9298a3;">Popolari:</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#3f4651;background:#f1f3f5;border-radius:30px;padding:5px 12px;">GU10 vs GU5.3</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#3f4651;background:#f1f3f5;border-radius:30px;padding:5px 12px;">3000K o 4000K</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#3f4651;background:#f1f3f5;border-radius:30px;padding:5px 12px;">alimentatore LED</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#3f4651;background:#f1f3f5;border-radius:30px;padding:5px 12px;">grado IP bagno</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHE PROBLEMA DEVI RISOLVERE -->
+  <div style="background:#fbfbfa;">
+    <div style="max-width:1320px;margin:0 auto;padding:48px 48px 8px;">
+      <div style="font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:4px;">Che problema devi risolvere?</div>
+      <div style="font-size:14px;color:#6c727c;margin-bottom:22px;">Parti dal tuo bisogno: ti portiamo alla guida e ai prodotti giusti.</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+        <a style="background:#fff;border:1px solid #e7eaee;border-radius:12px;padding:20px;text-decoration:none;display:block;" style-hover="border-color:#9a6a2f;box-shadow:0 8px 22px rgba(0,0,0,.05);"><div style="font-size:15px;font-weight:700;color:#1a1c20;margin-bottom:6px;">Devo sostituire una lampadina</div><div style="font-size:12.5px;color:#6c727c;">Riconosci attacco, watt e colore</div></a>
+        <a style="background:#fff;border:1px solid #e7eaee;border-radius:12px;padding:20px;text-decoration:none;display:block;" style-hover="border-color:#9a6a2f;box-shadow:0 8px 22px rgba(0,0,0,.05);"><div style="font-size:15px;font-weight:700;color:#1a1c20;margin-bottom:6px;">Non so che attacco ho</div><div style="font-size:12.5px;color:#6c727c;">Identificalo dalla forma</div></a>
+        <a style="background:#fff;border:1px solid #e7eaee;border-radius:12px;padding:20px;text-decoration:none;display:block;" style-hover="border-color:#9a6a2f;box-shadow:0 8px 22px rgba(0,0,0,.05);"><div style="font-size:15px;font-weight:700;color:#1a1c20;margin-bottom:6px;">Devo scegliere un alimentatore</div><div style="font-size:12.5px;color:#6c727c;">Calcola watt e tensione</div></a>
+        <a style="background:#fff;border:1px solid #e7eaee;border-radius:12px;padding:20px;text-decoration:none;display:block;" style-hover="border-color:#9a6a2f;box-shadow:0 8px 22px rgba(0,0,0,.05);"><div style="font-size:15px;font-weight:700;color:#1a1c20;margin-bottom:6px;">Devo illuminare un ambiente</div><div style="font-size:12.5px;color:#6c727c;">Cucina, bagno, soggiorno, esterno</div></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- LE PIÙ CERCATE -->
+  <div style="background:#fbfbfa;">
+    <div style="max-width:1320px;margin:0 auto;padding:44px 48px 8px;">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px;">
+        <div><div style="font-size:22px;font-weight:800;letter-spacing:-.02em;">Le guide più utili</div><div style="font-size:14px;color:#6c727c;margin-top:4px;">Evergreen, non news: i contenuti che risolvono i dubbi più frequenti.</div></div>
+        <a style="font-size:14px;font-weight:700;color:#9a6a2f;text-decoration:none;">Tutte le guide →</a>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;">
+        <a style="background:#fff;border:1px solid #e7eaee;border-radius:12px;overflow:hidden;text-decoration:none;display:flex;flex-direction:column;" style-hover="border-color:#cfd4db;box-shadow:0 10px 28px rgba(0,0,0,.05);">
+          <div style="height:8px;background:linear-gradient(90deg,#f4c97a,#e7b56a);"></div>
+          <div style="padding:22px 24px 24px;flex:1;display:flex;flex-direction:column;">
+            <div style="display:flex;gap:7px;margin-bottom:12px;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.06em;color:#9a6a2f;background:#faf6ef;border:1px solid #ece2d2;border-radius:5px;padding:3px 8px;">GUIDA BASE</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#9298a3;border:1px solid #e3e6ea;border-radius:5px;padding:3px 8px;">5 MIN</span></div>
+            <div style="font-family:'Newsreader',serif;font-size:21px;font-weight:500;color:#1a1c20;line-height:1.2;margin-bottom:10px;">Come scegliere la lampadina LED giusta</div>
+            <div style="font-size:13.5px;line-height:1.5;color:#6c727c;margin-bottom:16px;">Attacco, lumen, watt e temperatura colore spiegati in modo semplice, senza sigle difficili.</div>
+            <div style="margin-top:auto;font-size:12px;color:#9298a3;">Collegato a: <span style="color:#3f4651;">Lampadine · Attacchi</span></div>
+          </div>
+        </a>
+        <a style="background:#fff;border:1px solid #e7eaee;border-radius:12px;overflow:hidden;text-decoration:none;display:flex;flex-direction:column;" style-hover="border-color:#cfd4db;box-shadow:0 10px 28px rgba(0,0,0,.05);">
+          <div style="height:8px;background:linear-gradient(90deg,#f4c97a,#cfe0f0);"></div>
+          <div style="padding:22px 24px 24px;flex:1;display:flex;flex-direction:column;">
+            <div style="display:flex;gap:7px;margin-bottom:12px;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.06em;color:#9a6a2f;background:#faf6ef;border:1px solid #ece2d2;border-radius:5px;padding:3px 8px;">GUIDA BASE</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#9298a3;border:1px solid #e3e6ea;border-radius:5px;padding:3px 8px;">4 MIN</span></div>
+            <div style="font-family:'Newsreader',serif;font-size:21px;font-weight:500;color:#1a1c20;line-height:1.2;margin-bottom:10px;">Luce calda, naturale o fredda?</div>
+            <div style="font-size:13.5px;line-height:1.5;color:#6c727c;margin-bottom:16px;">La differenza tra 2700K, 3000K, 4000K e 6500K e quale scegliere per ogni stanza.</div>
+            <div style="margin-top:auto;font-size:12px;color:#9298a3;">Collegato a: <span style="color:#3f4651;">Lampadine · Ambienti</span></div>
+          </div>
+        </a>
+        <a style="background:#fff;border:1px solid #e7eaee;border-radius:12px;overflow:hidden;text-decoration:none;display:flex;flex-direction:column;" style-hover="border-color:#cfd4db;box-shadow:0 10px 28px rgba(0,0,0,.05);">
+          <div style="height:8px;background:linear-gradient(90deg,#cfd5dc,#9aa4ab);"></div>
+          <div style="padding:22px 24px 24px;flex:1;display:flex;flex-direction:column;">
+            <div style="display:flex;gap:7px;margin-bottom:12px;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.06em;color:#3f4651;background:#f1f3f5;border:1px solid #e3e6ea;border-radius:5px;padding:3px 8px;">TECNICO</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#9298a3;border:1px solid #e3e6ea;border-radius:5px;padding:3px 8px;">6 MIN</span></div>
+            <div style="font-family:'Newsreader',serif;font-size:21px;font-weight:500;color:#1a1c20;line-height:1.2;margin-bottom:10px;">Come calcolare l'alimentatore per una striscia LED</div>
+            <div style="font-size:13.5px;line-height:1.5;color:#6c727c;margin-bottom:16px;">Watt totali, margine di sicurezza e tensione corretta per non sbagliare l'acquisto.</div>
+            <div style="margin-top:auto;font-size:12px;color:#9298a3;">Collegato a: <span style="color:#3f4651;">Strisce LED · Alimentatori</span></div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- CATEGORIE -->
+  <div style="background:#fbfbfa;">
+    <div style="max-width:1320px;margin:0 auto;padding:44px 48px 8px;">
+      <div style="font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:22px;">Esplora per categoria</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+        <a style="background:#fff;border:1px solid #e7eaee;border-radius:12px;padding:22px;text-decoration:none;display:block;" style-hover="border-color:#9a6a2f;"><div style="font-size:16px;font-weight:700;color:#1a1c20;margin-bottom:5px;">Come scegliere</div><div style="font-size:12.5px;color:#6c727c;margin-bottom:12px;">Acquistare senza errori, anche da zero.</div><div style="font-size:12px;color:#9298a3;">18 guide</div></a>
+        <a style="background:#fff;border:1px solid #e7eaee;border-radius:12px;padding:22px;text-decoration:none;display:block;" style-hover="border-color:#9a6a2f;"><div style="font-size:16px;font-weight:700;color:#1a1c20;margin-bottom:5px;">Ambienti</div><div style="font-size:12.5px;color:#6c727c;margin-bottom:12px;">Come illuminare ogni stanza.</div><div style="font-size:12px;color:#9298a3;">12 guide</div></a>
+        <a style="background:#fff;border:1px solid #e7eaee;border-radius:12px;padding:22px;text-decoration:none;display:block;" style-hover="border-color:#9a6a2f;"><div style="font-size:16px;font-weight:700;color:#1a1c20;margin-bottom:5px;">Attacchi</div><div style="font-size:12.5px;color:#6c727c;margin-bottom:12px;">E27, GU10, R7s, G9 e gli altri.</div><div style="font-size:12px;color:#9298a3;">9 guide</div></a>
+        <a style="background:#fff;border:1px solid #e7eaee;border-radius:12px;padding:22px;text-decoration:none;display:block;" style-hover="border-color:#9a6a2f;"><div style="font-size:16px;font-weight:700;color:#1a1c20;margin-bottom:5px;">Tecnica LED</div><div style="font-size:12.5px;color:#6c727c;margin-bottom:12px;">Alimentatori, driver, dimmer, IP.</div><div style="font-size:12px;color:#9298a3;">15 guide</div></a>
+        <a style="background:#fff;border:1px solid #e7eaee;border-radius:12px;padding:22px;text-decoration:none;display:block;" style-hover="border-color:#9a6a2f;"><div style="font-size:16px;font-weight:700;color:#1a1c20;margin-bottom:5px;">Installazione</div><div style="font-size:12.5px;color:#6c727c;margin-bottom:12px;">Tutorial passo passo.</div><div style="font-size:12px;color:#9298a3;">11 guide</div></a>
+        <a style="background:#fff;border:1px solid #e7eaee;border-radius:12px;padding:22px;text-decoration:none;display:block;" style-hover="border-color:#9a6a2f;"><div style="font-size:16px;font-weight:700;color:#1a1c20;margin-bottom:5px;">Manuali</div><div style="font-size:12.5px;color:#6c727c;margin-bottom:12px;">Schede tecniche e PDF.</div><div style="font-size:12px;color:#9298a3;">240 documenti</div></a>
+        <a style="background:#fff;border:1px solid #e7eaee;border-radius:12px;padding:22px;text-decoration:none;display:block;" style-hover="border-color:#9a6a2f;"><div style="font-size:16px;font-weight:700;color:#1a1c20;margin-bottom:5px;">Glossario</div><div style="font-size:12.5px;color:#6c727c;margin-bottom:12px;">Watt, lumen, Kelvin, CRI, IP…</div><div style="font-size:12px;color:#9298a3;">42 termini</div></a>
+        <a style="background:#fff;border:1px solid #e7eaee;border-radius:12px;padding:22px;text-decoration:none;display:block;" style-hover="border-color:#9a6a2f;"><div style="font-size:16px;font-weight:700;color:#1a1c20;margin-bottom:5px;">Ispirazioni</div><div style="font-size:12.5px;color:#6c727c;margin-bottom:12px;">Idee luce e progetti reali.</div><div style="font-size:12px;color:#9298a3;">8 articoli</div></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- PERCORSI GUIDATI -->
+  <div style="background:#16130d;color:#f1e8d8;margin-top:44px;">
+    <div style="max-width:1320px;margin:0 auto;padding:54px 48px;">
+      <div style="text-align:center;margin-bottom:30px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.22em;color:#f0ad57;margin-bottom:12px;">PERCORSI GUIDATI</div>
+        <div style="font-family:'Newsreader',serif;font-size:30px;font-weight:500;margin-bottom:8px;">Non sai da dove partire?</div>
+        <div style="font-size:14.5px;color:#b7ab97;">Segui un percorso passo passo dall'inizio fino ai prodotti corretti.</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+        <div style="background:#1b160f;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:26px;">
+          <div style="font-family:'Newsreader',serif;font-size:19px;color:#f1e8d8;margin-bottom:16px;">Devo comprare una lampadina</div>
+          <div style="display:flex;flex-direction:column;gap:11px;">
+            <div style="display:flex;gap:12px;align-items:center;"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#f0ad57;flex-shrink:0;">01</span><span style="font-size:13.5px;color:#c9bfae;">Riconosci l'attacco</span></div>
+            <div style="display:flex;gap:12px;align-items:center;"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#f0ad57;flex-shrink:0;">02</span><span style="font-size:13.5px;color:#c9bfae;">Scegli temperatura colore</span></div>
+            <div style="display:flex;gap:12px;align-items:center;"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#f0ad57;flex-shrink:0;">03</span><span style="font-size:13.5px;color:#c9bfae;">Controlla lumen e watt</span></div>
+            <div style="display:flex;gap:12px;align-items:center;"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#f0ad57;flex-shrink:0;">04</span><span style="font-size:13.5px;color:#c9bfae;">Vai ai prodotti compatibili</span></div>
+          </div>
+          <a style="display:inline-block;margin-top:20px;font-size:13.5px;font-weight:700;color:#f0ad57;text-decoration:none;">Inizia il percorso →</a>
+        </div>
+        <div style="background:#1b160f;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:26px;">
+          <div style="font-family:'Newsreader',serif;font-size:19px;color:#f1e8d8;margin-bottom:16px;">Voglio installare strisce LED</div>
+          <div style="display:flex;flex-direction:column;gap:11px;">
+            <div style="display:flex;gap:12px;align-items:center;"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#f0ad57;flex-shrink:0;">01</span><span style="font-size:13.5px;color:#c9bfae;">Scegli 12V o 24V</span></div>
+            <div style="display:flex;gap:12px;align-items:center;"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#f0ad57;flex-shrink:0;">02</span><span style="font-size:13.5px;color:#c9bfae;">Calcola watt e alimentatore</span></div>
+            <div style="display:flex;gap:12px;align-items:center;"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#f0ad57;flex-shrink:0;">03</span><span style="font-size:13.5px;color:#c9bfae;">Scegli grado IP e profilo</span></div>
+            <div style="display:flex;gap:12px;align-items:center;"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#f0ad57;flex-shrink:0;">04</span><span style="font-size:13.5px;color:#c9bfae;">Aggiungi controller o dimmer</span></div>
+          </div>
+          <a style="display:inline-block;margin-top:20px;font-size:13.5px;font-weight:700;color:#f0ad57;text-decoration:none;">Inizia il percorso →</a>
+        </div>
+        <div style="background:#1b160f;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:26px;">
+          <div style="font-family:'Newsreader',serif;font-size:19px;color:#f1e8d8;margin-bottom:16px;">Devo illuminare il bagno</div>
+          <div style="display:flex;flex-direction:column;gap:11px;">
+            <div style="display:flex;gap:12px;align-items:center;"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#f0ad57;flex-shrink:0;">01</span><span style="font-size:13.5px;color:#c9bfae;">Capisci le zone del bagno</span></div>
+            <div style="display:flex;gap:12px;align-items:center;"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#f0ad57;flex-shrink:0;">02</span><span style="font-size:13.5px;color:#c9bfae;">Scegli il grado IP</span></div>
+            <div style="display:flex;gap:12px;align-items:center;"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#f0ad57;flex-shrink:0;">03</span><span style="font-size:13.5px;color:#c9bfae;">Scegli la luce per lo specchio</span></div>
+            <div style="display:flex;gap:12px;align-items:center;"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#f0ad57;flex-shrink:0;">04</span><span style="font-size:13.5px;color:#c9bfae;">Vedi prodotti consigliati</span></div>
+          </div>
+          <a style="display:inline-block;margin-top:20px;font-size:13.5px;font-weight:700;color:#f0ad57;text-decoration:none;">Inizia il percorso →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANUALI + GLOSSARIO -->
+  <div style="background:#fbfbfa;">
+    <div style="max-width:1320px;margin:0 auto;padding:50px 48px;display:grid;grid-template-columns:1.2fr 1fr;gap:40px;align-items:start;">
+      <!-- manuali -->
+      <div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;">
+          <div><div style="font-size:20px;font-weight:800;letter-spacing:-.02em;">Manuali e documenti</div><div style="font-size:13.5px;color:#6c727c;margin-top:3px;">Manuali, schede tecniche ed etichette energetiche.</div></div>
+          <a style="font-size:13.5px;font-weight:700;color:#9a6a2f;text-decoration:none;">Tutti →</a>
+        </div>
+        <div style="background:#fff;border:1px solid #e7eaee;border-radius:12px;overflow:hidden;">
+          <a style="display:flex;align-items:center;gap:14px;padding:15px 18px;border-bottom:1px solid #f1f3f5;text-decoration:none;" style-hover="background:#fafbfc;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:#b3261e;border:1px solid #f3ccca;border-radius:4px;padding:3px 7px;flex-shrink:0;">PDF</span><div style="flex:1;"><div style="font-size:14px;font-weight:600;color:#1a1c20;">Manuale alimentatore LED 24V 100W</div><div style="font-size:12px;color:#9298a3;">MEAN WELL · Alimentatori · IT</div></div><span style="font-size:13px;font-weight:700;color:#9a6a2f;">Scarica</span></a>
+          <a style="display:flex;align-items:center;gap:14px;padding:15px 18px;border-bottom:1px solid #f1f3f5;text-decoration:none;" style-hover="background:#fafbfc;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:#b3261e;border:1px solid #f3ccca;border-radius:4px;padding:3px 7px;flex-shrink:0;">PDF</span><div style="flex:1;"><div style="font-size:14px;font-weight:600;color:#1a1c20;">Scheda tecnica R7s 78mm 4,5W</div><div style="font-size:12px;color:#9298a3;">Philips · Lampadine · IT</div></div><span style="font-size:13px;font-weight:700;color:#9a6a2f;">Scarica</span></a>
+          <a style="display:flex;align-items:center;gap:14px;padding:15px 18px;border-bottom:1px solid #f1f3f5;text-decoration:none;" style-hover="background:#fafbfc;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:#1f9d57;border:1px solid #c5e8d4;border-radius:4px;padding:3px 7px;flex-shrink:0;">ENERGY</span><div style="flex:1;"><div style="font-size:14px;font-weight:600;color:#1a1c20;">Etichetta energetica LED E27 8W</div><div style="font-size:12px;color:#9298a3;">Philips · Lampadine · classe F</div></div><span style="font-size:13px;font-weight:700;color:#9a6a2f;">Scarica</span></a>
+          <a style="display:flex;align-items:center;gap:14px;padding:15px 18px;text-decoration:none;" style-hover="background:#fafbfc;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:#b3261e;border:1px solid #f3ccca;border-radius:4px;padding:3px 7px;flex-shrink:0;">PDF</span><div style="flex:1;"><div style="font-size:14px;font-weight:600;color:#1a1c20;">Schema collegamento dimmer TRIAC</div><div style="font-size:12px;color:#9298a3;">TLB · Dimmer · IT</div></div><span style="font-size:13px;font-weight:700;color:#9a6a2f;">Scarica</span></a>
+        </div>
+      </div>
+      <!-- glossario -->
+      <div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;">
+          <div><div style="font-size:20px;font-weight:800;letter-spacing:-.02em;">Glossario luce</div><div style="font-size:13.5px;color:#6c727c;margin-top:3px;">I termini che incontri, spiegati in breve.</div></div>
+          <a style="font-size:13.5px;font-weight:700;color:#9a6a2f;text-decoration:none;">A–Z →</a>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="background:#fff;border:1px solid #e7eaee;border-radius:10px;padding:16px 18px;"><div style="display:flex;align-items:baseline;gap:8px;margin-bottom:5px;"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#9a6a2f;">Kelvin (K)</span><span style="font-size:11.5px;color:#9298a3;">temperatura colore</span></div><div style="font-size:13px;line-height:1.5;color:#6c727c;">Quanto è calda o fredda la luce: 2700-3000K calda, 4000K naturale, 6500K fredda.</div></div>
+          <div style="background:#fff;border:1px solid #e7eaee;border-radius:10px;padding:16px 18px;"><div style="display:flex;align-items:baseline;gap:8px;margin-bottom:5px;"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#9a6a2f;">Lumen (lm)</span><span style="font-size:11.5px;color:#9298a3;">quantità di luce</span></div><div style="font-size:13px;line-height:1.5;color:#6c727c;">La luce reale emessa. Per i LED guarda i lumen, non i watt, per capire la luminosità.</div></div>
+          <div style="background:#fff;border:1px solid #e7eaee;border-radius:10px;padding:16px 18px;"><div style="display:flex;align-items:baseline;gap:8px;margin-bottom:5px;"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#9a6a2f;">IP44 / IP65</span><span style="font-size:11.5px;color:#9298a3;">protezione</span></div><div style="font-size:13px;line-height:1.5;color:#6c727c;">Resistenza ad acqua e polvere: IP44 per bagno coperto, IP65 per esterno.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIDEO -->
+  <div style="background:#fff;border-top:1px solid #ecedef;">
+    <div style="max-width:1320px;margin:0 auto;padding:50px 48px;">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px;">
+        <div><div style="font-size:20px;font-weight:800;letter-spacing:-.02em;">Video e tutorial</div><div style="font-size:13.5px;color:#6c727c;margin-top:3px;">Guarda i passaggi, poi acquista i prodotti necessari.</div></div>
+        <a style="font-size:13.5px;font-weight:700;color:#9a6a2f;text-decoration:none;">Tutti i video →</a>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;">
+        <a style="text-decoration:none;display:block;">
+          <div style="position:relative;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#1b160f;display:flex;align-items:center;justify-content:center;">
+            <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,rgba(240,173,87,.18),transparent 60%);"></div>
+            <span style="position:relative;width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;"><span style="border-left:14px solid #1a1c20;border-top:9px solid transparent;border-bottom:9px solid transparent;margin-left:4px;"></span></span>
+          </div>
+          <div style="display:flex;gap:6px;margin:12px 0 6px;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#3f4651;background:#f1f3f5;border-radius:4px;padding:3px 7px;">TUTORIAL</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#9298a3;border:1px solid #e3e6ea;border-radius:4px;padding:3px 7px;">4 MIN</span></div>
+          <div style="font-size:15px;font-weight:700;color:#1a1c20;">Come montare una striscia LED sottopensile</div>
+        </a>
+        <a style="text-decoration:none;display:block;">
+          <div style="position:relative;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#1b160f;display:flex;align-items:center;justify-content:center;">
+            <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,rgba(240,173,87,.18),transparent 60%);"></div>
+            <span style="position:relative;width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;"><span style="border-left:14px solid #1a1c20;border-top:9px solid transparent;border-bottom:9px solid transparent;margin-left:4px;"></span></span>
+          </div>
+          <div style="display:flex;gap:6px;margin:12px 0 6px;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#3f4651;background:#f1f3f5;border-radius:4px;padding:3px 7px;">TUTORIAL</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#9298a3;border:1px solid #e3e6ea;border-radius:4px;padding:3px 7px;">3 MIN</span></div>
+          <div style="font-size:15px;font-weight:700;color:#1a1c20;">Come sostituire una lampadina R7s</div>
+        </a>
+        <a style="text-decoration:none;display:block;">
+          <div style="position:relative;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#1b160f;display:flex;align-items:center;justify-content:center;">
+            <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,rgba(240,173,87,.18),transparent 60%);"></div>
+            <span style="position:relative;width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;"><span style="border-left:14px solid #1a1c20;border-top:9px solid transparent;border-bottom:9px solid transparent;margin-left:4px;"></span></span>
+          </div>
+          <div style="display:flex;gap:6px;margin:12px 0 6px;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#3f4651;background:#f1f3f5;border-radius:4px;padding:3px 7px;">TUTORIAL</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#9298a3;border:1px solid #e3e6ea;border-radius:4px;padding:3px 7px;">5 MIN</span></div>
+          <div style="font-size:15px;font-weight:700;color:#1a1c20;">Riconoscere GU10 e GU5.3</div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- supporto -->
+  <div style="background:#fbf4ea;border-top:1px solid #f0e3d0;">
+    <div style="max-width:1320px;margin:0 auto;padding:40px 48px;display:flex;align-items:center;justify-content:space-between;gap:40px;">
+      <div style="max-width:640px;">
+        <div style="font-size:22px;font-weight:800;letter-spacing:-.02em;color:#14161b;margin-bottom:7px;">Non hai trovato la risposta?</div>
+        <div style="font-size:14.5px;line-height:1.5;color:#7a6a52;">Scrivici il tuo dubbio o inviaci una foto del prodotto: un nostro esperto ti aiuta a scegliere o a installare correttamente.</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-shrink:0;">
+        <a style="background:#d9831a;color:#fff;font-size:14.5px;font-weight:700;padding:13px 22px;border-radius:6px;text-decoration:none;white-space:nowrap;" style-hover="background:#c2730f;">Contatta un esperto</a>
+        <a style="background:#fff;color:#14161b;font-size:14.5px;font-weight:700;padding:12px 22px;border-radius:6px;border:1px solid #e0d2bd;text-decoration:none;white-space:nowrap;">Invia una foto</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- trust + footer (shared) -->
+  <div style="background:#efe6d5;border-top:1px solid #e6dcc9;border-bottom:1px solid #e6dcc9;">
+    <div style="max-width:1320px;margin:0 auto;padding:26px 48px;display:flex;justify-content:space-between;gap:24px;">
+      <div><div style="font-size:14.5px;font-weight:700;color:#211c16;">Assistenza reale</div><div style="font-size:12.5px;color:#8c8273;">Ti aiutiamo a scegliere il prodotto corretto</div></div>
+      <div><div style="font-size:14.5px;font-weight:700;color:#211c16;">Showroom a Roma</div><div style="font-size:12.5px;color:#8c8273;">Sede fisica e consulenza dal vivo</div></div>
+      <div><div style="font-size:14.5px;font-weight:700;color:#211c16;">Ricambi difficili</div><div style="font-size:12.5px;color:#8c8273;">Cerca per foto, EAN o codice</div></div>
+      <div><div style="font-size:14.5px;font-weight:700;color:#211c16;">Spedizione tracciata</div><div style="font-size:12.5px;color:#8c8273;">Consegna in tutta Italia</div></div>
+    </div>
+  </div>
+  <div style="background:#16130d;color:#9a8e78;">
+    <div style="max-width:1320px;margin:0 auto;padding:54px 48px 30px;">
+      <div style="display:grid;grid-template-columns:1.1fr 1fr 1.2fr 1.3fr;gap:40px;padding-bottom:38px;border-bottom:1px solid rgba(255,255,255,.08);">
+        <!-- info aziendali -->
+        <div>
+          <div style="font-family:'Newsreader',serif;font-size:22px;color:#f1e8d8;margin-bottom:14px;">Idea<span style="font-style:italic;color:#f0ad57;">di</span>Luce</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin-bottom:10px;">INFO AZIENDALI</div>
+          <div style="font-size:13px;line-height:1.7;color:#9a8e78;">TLB ITALY Srl<br>P.IVA / VAT: IT17245551001<br>REA: RM-1705840</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin:18px 0 10px;">INDIRIZZO</div>
+          <div style="font-size:13px;line-height:1.7;color:#9a8e78;">Via Appia Pignatelli 450,<br>00178 Roma (Italy)</div>
+        </div>
+        <!-- servizio clienti -->
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin-bottom:12px;">SERVIZIO CLIENTI</div>
+          <div style="font-size:13px;line-height:1.8;color:#c9bfae;"><a href="tel:+390671671 11" style="color:#c9bfae;text-decoration:none;">Tel: (+39) 06 716 7111</a><br><a href="mailto:info@ideadiluce.com" style="color:#f0ad57;text-decoration:none;">info@ideadiluce.com</a></div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin:18px 0 10px;">ORARI</div>
+          <div style="font-size:13px;line-height:1.7;color:#9a8e78;">Lunedì – Venerdì<br>9.00 – 13.00 · 15.00 – 18.00</div>
+        </div>
+        <!-- utility / seguici -->
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin-bottom:12px;">UTILITY</div>
+          <div style="display:flex;flex-direction:column;gap:9px;font-size:13px;">
+            <a style="color:#9a8e78;text-decoration:none;" style-hover="color:#f1e8d8;">Termini d'Uso e Condizioni di Vendita</a>
+            <a style="color:#9a8e78;text-decoration:none;" style-hover="color:#f1e8d8;">Privacy Policy</a>
+            <a style="color:#9a8e78;text-decoration:none;" style-hover="color:#f1e8d8;">Spedizioni e resi</a>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin:18px 0 10px;">SEGUICI</div>
+          <div style="display:flex;gap:9px;">
+            <span style="width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#c9bfae;">Ig</span>
+            <span style="width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#c9bfae;">Fb</span>
+            <span style="width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#c9bfae;">in</span>
+            <span style="width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#c9bfae;">Pin</span>
+          </div>
+        </div>
+        <!-- non trovato -->
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin-bottom:12px;">PRODOTTO NON TROVATO</div>
+          <div style="background:#1f1a12;border:1px solid rgba(240,173,87,.22);border-radius:10px;padding:18px 20px;">
+            <div style="font-size:14px;line-height:1.55;color:#c9bfae;margin-bottom:14px;">Cerchi qualcosa che non è nel sito? Contattaci ora, siamo solo a un modulo di distanza!</div>
+            <a style="display:inline-block;background:#f0ad57;color:#16130d;font-size:13.5px;font-weight:700;padding:11px 18px;border-radius:7px;text-decoration:none;" style-hover="background:#f7bd6f;">Vai al form →</a>
+          </div>
+        </div>
+      </div>
+      <!-- bottom: payments + copyright -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:24px;padding-top:24px;flex-wrap:wrap;">
+        <div style="font-size:12px;color:#6f6450;">© 2026 TLB ITALY Srl · Tutti i diritti riservati</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <span style="font-size:11px;color:#6f6450;margin-right:4px;">Pagamenti sicuri</span>
+          <span style="background:#fff;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;color:#1a1f71;">VISA</span>
+          <span style="background:#fff;border-radius:5px;padding:6px 9px;font-size:11px;font-weight:800;color:#eb001b;">●●</span>
+          <span style="background:#fff;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;color:#0a3a82;">Maestro</span>
+          <span style="background:#fff;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;color:#003087;">Pay<span style="color:#009cde;">Pal</span></span>
+          <span style="background:#fff;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;color:#2e77bc;">AMEX</span>
+          <span style="background:#fff;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;color:#3f4651;">Bonifico</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

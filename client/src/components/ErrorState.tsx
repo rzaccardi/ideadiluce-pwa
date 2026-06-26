@@ -1,4 +1,7 @@
+'use client'
+
 import { cn } from '@/utils/cn'
+import { useI18n } from '@/hooks/use-i18n'
 
 type Props = {
   title?: string
@@ -7,12 +10,8 @@ type Props = {
   action?: React.ReactNode
 }
 
-export function ErrorState({
-  title = 'Qualcosa è andato storto',
-  message,
-  className,
-  action,
-}: Props) {
+export function ErrorState({ title, message, className, action }: Props) {
+  const { t } = useI18n()
   return (
     <div
       className={cn(
@@ -21,7 +20,7 @@ export function ErrorState({
       )}
       role="alert"
     >
-      <p className="text-sm font-medium">{title}</p>
+      <p className="text-sm font-medium">{title ?? t('error.genericTitle')}</p>
       <p className="mt-2 text-sm opacity-90">{message}</p>
       {action ? <div className="mt-4 flex justify-center">{action}</div> : null}
     </div>

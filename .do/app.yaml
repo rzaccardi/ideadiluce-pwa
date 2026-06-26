@@ -1,39 +1,52 @@
-# Idea di Luce — DigitalOcean App Platform
+# Idea di Luce — DigitalOcean App Platform (PRODUZIONE)
 #
-# Collegamento repo:
-#   1. Control Panel → Apps → Create App → GitHub → seleziona questo repo
-#   2. Se rileva .do/app.yaml, propone "Use existing app spec" — conferma
-#   3. Sostituisci YOUR_GITHUB_ORG sotto e aggiungi i secret (Stripe, Odoo, …) in Settings → Environment
+# Deploy:
+#   doctl apps create --spec .do/app.yaml
+#   doctl apps update <APP_ID> --spec .do/app.yaml
 #
-# Documentazione: docs/deploy-digitalocean.md
+# Prima del primo deploy:
+#   1. Sostituisci github.repo con org/repo corretto
+#   2. In Apps → Settings → Environment aggiungi i SECRET da .do/secrets.production.env.example
+#   3. Dopo il primo deploy verde: npm run db:seed (tunnel DATABASE_URL) + hub:import
+#
+# Staging: .do/app.staging.yaml
+# Mappa go-live completa: .do/GO-LIVE.md
+# Guida operativa: docs/deploy-digitalocean.md
+# URL pubblici: placeholder *.ondigitalocean.app (nessun dominio custom nello spec)
 
 name: ideadiluce-pwa
 region: fra1
 
-# Postgres gestito: schema `public` (BFF) + `hub` (catalogo import)
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+
 databases:
   - name: postgres
     engine: PG
     version: "16"
-    production: false
-    # production: true   # staging/prod: decommenta e usa un piano DB adeguato
+    production: true
+    cluster_name: ideadiluce-pwa-db
+    db_name: ideadiluce
+    db_user: ideadiluce
 
 services:
+  # ——— API Express (BFF, Prisma, Hub, proxy Arfly) ———
   - name: api
     environment_slug: node-js
     github:
       repo: rzaccardi/ideadiluce-pwa
       branch: main
       deploy_on_push: true
-    # Monorepo: root come cwd (workspaces + .env pattern + hub-api)
     instance_count: 1
-    instance_size_slug: apps-s-1vcpu-0.5gb
+    instance_size_slug: apps-s-1vcpu-1gb
     http_port: 8080
     health_check:
       http_path: /health
-      initial_delay_seconds: 20
+      initial_delay_seconds: 30
       period_seconds: 10
       timeout_seconds: 5
+      failure_threshold: 3
     build_command: npm ci && npm run build:server && npm run db:deploy && npm run hub:migrate
     run_command: node server/dist/server.js
     envs:
@@ -44,31 +57,190 @@ services:
       - key: DATABASE_URL
         value: ${postgres.DATABASE_URL}
         scope: RUN_AND_BUILD_TIME
-      - key: HUB_CATALOG_ENABLED
-        value: "true"
       - key: CLIENT_ORIGIN
         value: ${shop.PUBLIC_URL}
+      - key: ADMIN_ORIGIN
+        value: ${admin.PUBLIC_URL}
       - key: CHECKOUT_REDIRECT_BASE
         value: ${shop.PUBLIC_URL}
+      - key: APP_PUBLIC_URL
+        value: ${shop.PUBLIC_URL}
+      - key: PUBLIC_SITE_URL
+        value: ${shop.PUBLIC_URL}
+      - key: ARFLY_CATALOG_ENABLED
+        value: "true"
+      - key: ARFLY_API_BASE_URL
+        value: https://tlbdb.odoo.com
+      - key: ARFLY_WEBSITE_ID
+        value: "2"
+      - key: ARFLY_TIMEOUT_MS
+        value: "25000"
+      - key: ODOO_ENABLED
+        value: "true"
+      - key: ODOO_URL
+        value: https://tlbdb.odoo.com/odoo
+      - key: ODOO_XMLRPC_URL
+        value: https://tlbdb.odoo.com
+      - key: ODOO_CATALOG_LANG
+        value: it_IT
+      - key: ODOO_PRODUCT_ACTION_ID
+        value: "497"
+      # Listini Odoo (product.pricelist id) — valorizzare se segmentazione attiva
+      - key: ODOO_PRICELIST_B2C_ID
+        scope: RUN_TIME
+        type: SECRET
+      - key: ODOO_PRICELIST_B2B_ID
+        scope: RUN_TIME
+        type: SECRET
+      - key: ODOO_PRICELIST_PROFESSIONAL_ID
+        scope: RUN_TIME
+        type: SECRET
+      - key: SOCIAL_PROOF_ENABLED
+        value: "true"
+      - key: CART_RESERVATION_ENABLED
+        value: "true"
+      - key: CART_RESERVATION_MINUTES
+        value: "30"
+      - key: DEEPL_ENABLED
+        value: "false"
+      - key: DEEPL_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: SMTP_ENABLED
+        value: "false"
+      - key: SMTP_HOST
+        scope: RUN_TIME
+        type: SECRET
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        scope: RUN_TIME
+        type: SECRET
+      - key: SMTP_PASS
+        scope: RUN_TIME
+        type: SECRET
+      - key: SMTP_FROM
+        scope: RUN_TIME
+        type: SECRET
+      - key: PAID_SYNC_ALERT_MINUTES
+        value: "15"
+      - key: PAID_SYNC_ALERT_EMAIL
+        scope: RUN_TIME
+        type: SECRET
+      - key: STORE_PICKUP_LABEL
+        value: Ritiro in negozio
+      - key: STORE_PICKUP_LINE1
+        value: Via Appia Pignatelli 450
+      - key: STORE_PICKUP_POSTAL_CODE
+        value: "00178"
+      - key: STORE_PICKUP_CITY
+        value: Roma
+      - key: STORE_PICKUP_COUNTRY
+        value: IT
+      - key: BANK_TRANSFER_HOLDER
+        scope: RUN_TIME
+        type: SECRET
+      - key: BANK_TRANSFER_IBAN
+        scope: RUN_TIME
+        type: SECRET
+      - key: BANK_TRANSFER_BANK_NAME
+        scope: RUN_TIME
+        type: SECRET
+      - key: GOOGLE_MAPS_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: DHL_ENABLED
+        value: "false"
+      - key: FEDEX_ENABLED
+        value: "false"
+      - key: SPACES_REGION
+        value: fra1
+      - key: SPACES_ENDPOINT
+        value: https://fra1.digitaloceanspaces.com
+      - key: SPACES_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: SPACES_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: SPACES_BUCKET
+        scope: RUN_TIME
+        type: SECRET
+      - key: SPACES_CDN_URL
+        scope: RUN_TIME
+        type: SECRET
+      - key: STRIPE_ENABLED
+        value: "true"
+        scope: RUN_TIME
+      - key: ARFLY_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: ODOO_DB
+        scope: RUN_TIME
+        type: SECRET
+      - key: ODOO_USERNAME
+        scope: RUN_TIME
+        type: SECRET
+      - key: ODOO_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+      - key: STRIPE_SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: STRIPE_WEBHOOK_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: SHIPPING_CREDENTIALS_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: ADMIN_SEED_EMAIL
+        scope: RUN_TIME
+        type: SECRET
+      - key: ADMIN_SEED_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
 
-static_sites:
+  # ——— Shop Next.js (SSR + rewrite /api → BFF) ———
   - name: shop
     environment_slug: node-js
     github:
       repo: rzaccardi/ideadiluce-pwa
       branch: main
       deploy_on_push: true
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    http_port: 3000
+    health_check:
+      http_path: /
+      initial_delay_seconds: 45
+      period_seconds: 15
+      timeout_seconds: 5
     build_command: npm ci && npm run build --workspace=client
-    output_dir: client/dist
-    index_document: index.html
-    catchall_document: index.html
+    run_command: npm run start --workspace=client
     envs:
-      - key: VITE_API_URL
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: API_URL
         value: ${api.PUBLIC_URL}
+        scope: RUN_AND_BUILD_TIME
+      - key: NEXT_PUBLIC_API_URL
+        value: ${api.PUBLIC_URL}
+        scope: RUN_AND_BUILD_TIME
+      - key: NEXT_PUBLIC_ARFLY_MEDIA_BASE_URL
+        value: https://tlbdb.odoo.com
         scope: BUILD_TIME
+      - key: NEXT_PUBLIC_SITE_URL
+        value: ${shop.PUBLIC_URL}
+        scope: BUILD_TIME
+      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        scope: BUILD_TIME
+        type: SECRET
 
+static_sites:
+  # ——— Backoffice admin (Vite SPA) ———
   - name: admin
-    environment_slug: node-js
     github:
       repo: rzaccardi/ideadiluce-pwa
       branch: main
@@ -81,6 +253,3 @@ static_sites:
       - key: VITE_API_URL
         value: ${api.PUBLIC_URL}
         scope: BUILD_TIME
-
-# Domini custom (es. shop.ideadiluce.com, api.ideadiluce.com):
-# impostali in Apps → Settings → Domains, poi aggiorna CLIENT_ORIGIN e i CNAME.

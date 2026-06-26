@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:#fbfbfa;font-family:'Hanken Grotesk',system-ui,sans-serif;color:#1a1c20;}
+</style>
+<script src="./image-slot.js"></script>
+</helmet>
+
+<div style="width:100%;overflow:hidden;">
+
+  <!-- utility -->
+  <!-- header (mega-menu component) -->
+  <dc-import name="IdeaDiLuce Header" active="none" hint-size="100%,124px"></dc-import>
+
+  <!-- HERO -->
+  <div style="background:#16130d;color:#f1e8d8;position:relative;overflow:hidden;">
+    <div style="position:absolute;top:-40px;right:14%;width:480px;height:480px;border-radius:50%;background:radial-gradient(circle,rgba(240,173,87,.20) 0%,rgba(240,173,87,0) 68%);"></div>
+    <div style="max-width:900px;margin:0 auto;padding:54px 48px 44px;text-align:center;position:relative;z-index:2;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.22em;color:#f0ad57;margin-bottom:18px;">CONSULENZA · RICAMBI DIFFICILI</div>
+      <h1 style="font-family:'Newsreader',serif;font-size:46px;line-height:1.07;font-weight:500;margin:0 0 16px;">Non trovi il prodotto giusto?</h1>
+      <div style="font-size:17px;line-height:1.6;color:#b7ab97;max-width:660px;margin:0 auto;">Hai una lampadina vecchia, un codice poco leggibile o un prodotto fuori produzione? Inviaci una foto, l'attacco o il codice: troviamo il ricambio compatibile o un'alternativa. Anche per prodotti speciali e fuori standard.</div>
+      <div style="display:flex;gap:28px;justify-content:center;margin-top:28px;font-size:13px;color:#8a7c60;"><span>● Risposta in giornata</span><span>● Showroom a Roma</span><span>● 25+ anni di esperienza</span></div>
+    </div>
+  </div>
+
+  <!-- FORM -->
+  <div style="max-width:1100px;margin:0 auto;padding:48px;display:grid;grid-template-columns:1.4fr 1fr;gap:40px;align-items:start;">
+
+    <!-- left: form -->
+    <div style="background:#fff;border:1px solid #e7eaee;border-radius:16px;padding:32px;box-shadow:0 8px 30px rgba(0,0,0,.04);">
+      <div style="font-size:20px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px;">Raccontaci cosa cerchi</div>
+      <div style="font-size:14px;color:#6c727c;margin-bottom:24px;">Più informazioni ci dai, più velocemente troviamo il prodotto corretto.</div>
+
+      <!-- upload zone -->
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#9298a3;margin-bottom:10px;">FOTO DEL PRODOTTO O DELL'ATTACCO</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
+        <image-slot id="upload-prodotto" shape="rounded" radius="10" fit="cover" placeholder="Trascina la foto del prodotto" style="display:block;width:100%;aspect-ratio:3/2;border:1.5px dashed #d4d9df;border-radius:10px;"></image-slot>
+        <image-slot id="upload-attacco" shape="rounded" radius="10" fit="cover" placeholder="Foto dell'attacco da vicino" style="display:block;width:100%;aspect-ratio:3/2;border:1.5px dashed #d4d9df;border-radius:10px;"></image-slot>
+      </div>
+
+      <!-- fields -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div><div style="font-size:13px;font-weight:600;color:#3f4651;margin-bottom:7px;">Nome e cognome</div><div style="background:#f7f8fa;border:1px solid #e3e6ea;border-radius:8px;padding:12px 14px;font-size:14px;color:#9298a3;">Mario Rossi</div></div>
+        <div><div style="font-size:13px;font-weight:600;color:#3f4651;margin-bottom:7px;">Email</div><div style="background:#f7f8fa;border:1px solid #e3e6ea;border-radius:8px;padding:12px 14px;font-size:14px;color:#9298a3;">mario@email.it</div></div>
+        <div><div style="font-size:13px;font-weight:600;color:#3f4651;margin-bottom:7px;">Telefono / WhatsApp</div><div style="background:#f7f8fa;border:1px solid #e3e6ea;border-radius:8px;padding:12px 14px;font-size:14px;color:#9298a3;">+39 ___ ___ ____</div></div>
+        <div><div style="font-size:13px;font-weight:600;color:#3f4651;margin-bottom:7px;">Codice / EAN / MPN</div><div style="background:#f7f8fa;border:1px solid #e3e6ea;border-radius:8px;padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#9298a3;">es. 8711500411990</div></div>
+        <div><div style="font-size:13px;font-weight:600;color:#3f4651;margin-bottom:7px;">Marca (se nota)</div><div style="background:#f7f8fa;border:1px solid #e3e6ea;border-radius:8px;padding:12px 14px;font-size:14px;color:#9298a3;">Philips, Osram…</div></div>
+        <div><div style="font-size:13px;font-weight:600;color:#3f4651;margin-bottom:7px;">Quantità</div><div style="background:#f7f8fa;border:1px solid #e3e6ea;border-radius:8px;padding:12px 14px;font-size:14px;color:#9298a3;">1</div></div>
+      </div>
+
+      <!-- chips: uso + urgenza -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:600;color:#3f4651;margin-bottom:8px;">Uso</div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;">
+          <span style="font-size:12.5px;font-weight:600;color:#fff;background:#14161b;border-radius:30px;padding:7px 14px;">Casa</span>
+          <span style="font-size:12.5px;color:#3f4651;background:#fff;border:1px solid #e3e6ea;border-radius:30px;padding:7px 14px;">Negozio</span>
+          <span style="font-size:12.5px;color:#3f4651;background:#fff;border:1px solid #e3e6ea;border-radius:30px;padding:7px 14px;">Ufficio</span>
+          <span style="font-size:12.5px;color:#3f4651;background:#fff;border:1px solid #e3e6ea;border-radius:30px;padding:7px 14px;">Esterno</span>
+          <span style="font-size:12.5px;color:#3f4651;background:#fff;border:1px solid #e3e6ea;border-radius:30px;padding:7px 14px;">Impianto</span>
+        </div>
+      </div>
+      <div style="margin-bottom:20px;">
+        <div style="font-size:13px;font-weight:600;color:#3f4651;margin-bottom:8px;">Urgenza</div>
+        <div style="display:flex;gap:7px;">
+          <span style="font-size:12.5px;color:#3f4651;background:#fff;border:1px solid #e3e6ea;border-radius:30px;padding:7px 14px;">Bassa</span>
+          <span style="font-size:12.5px;font-weight:600;color:#fff;background:#d9831a;border-radius:30px;padding:7px 14px;">Media</span>
+          <span style="font-size:12.5px;color:#3f4651;background:#fff;border:1px solid #e3e6ea;border-radius:30px;padding:7px 14px;">Alta</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom:22px;"><div style="font-size:13px;font-weight:600;color:#3f4651;margin-bottom:7px;">Messaggio</div><div style="background:#f7f8fa;border:1px solid #e3e6ea;border-radius:8px;padding:12px 14px;font-size:14px;color:#9298a3;min-height:72px;">Descrivi il prodotto, dove lo usavi e cosa ti serve…</div></div>
+
+      <a style="display:block;text-align:center;background:#d9831a;color:#fff;font-size:15.5px;font-weight:700;padding:15px;border-radius:9px;text-decoration:none;" style-hover="background:#c2730f;">Invia la richiesta</a>
+      <div style="font-size:12px;color:#9298a3;text-align:center;margin-top:12px;">Inviando accetti la Privacy Policy. Ti rispondiamo via email o WhatsApp, di solito in giornata.</div>
+    </div>
+
+    <!-- right: how it works + alt channels -->
+    <div style="display:flex;flex-direction:column;gap:20px;position:sticky;top:96px;">
+      <div style="background:#fff;border:1px solid #e7eaee;border-radius:14px;padding:26px;">
+        <div style="font-size:16px;font-weight:800;letter-spacing:-.01em;margin-bottom:18px;">Come funziona</div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;gap:13px;"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#d9831a;flex-shrink:0;">01</span><div><div style="font-size:14px;font-weight:700;color:#14161b;">Invii foto o codice</div><div style="font-size:12.5px;color:#6c727c;">Anche solo una foto della vecchia lampadina basta.</div></div></div>
+          <div style="display:flex;gap:13px;"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#d9831a;flex-shrink:0;">02</span><div><div style="font-size:14px;font-weight:700;color:#14161b;">Identifichiamo il prodotto</div><div style="font-size:12.5px;color:#6c727c;">Un tecnico verifica attacco, misure e compatibilità.</div></div></div>
+          <div style="display:flex;gap:13px;"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#d9831a;flex-shrink:0;">03</span><div><div style="font-size:14px;font-weight:700;color:#14161b;">Ti proponiamo la soluzione</div><div style="font-size:12.5px;color:#6c727c;">Il ricambio esatto o un'alternativa equivalente, con prezzo.</div></div></div>
+        </div>
+      </div>
+      <div style="background:#16130d;border-radius:14px;padding:26px;color:#f1e8d8;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#f0ad57;margin-bottom:14px;">PREFERISCI PARLARNE?</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <a style="display:flex;align-items:center;gap:12px;background:#1f9d57;color:#fff;padding:12px 16px;border-radius:9px;text-decoration:none;font-size:14px;font-weight:700;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12 a8 8 0 0 1 -11.5 7.2 L4 20.5 l1.3 -5.4 A8 8 0 1 1 21 12 Z"></path></svg>Scrivici su WhatsApp</a>
+          <a style="display:flex;align-items:center;gap:12px;background:transparent;border:1px solid rgba(255,255,255,.2);color:#f1e8d8;padding:12px 16px;border-radius:9px;text-decoration:none;font-size:14px;font-weight:600;">Tel: (+39) 06 716 7111</a>
+          <a style="display:flex;align-items:center;gap:12px;background:transparent;border:1px solid rgba(255,255,255,.2);color:#f1e8d8;padding:12px 16px;border-radius:9px;text-decoration:none;font-size:14px;font-weight:600;">info@ideadiluce.com</a>
+        </div>
+      </div>
+      <div style="background:#fbf4ea;border:1px solid #f0e3d0;border-radius:14px;padding:22px;">
+        <div style="font-size:14px;font-weight:700;color:#14161b;margin-bottom:6px;">Anche per professionisti</div>
+        <div style="font-size:12.5px;line-height:1.5;color:#7a6a52;">Liste lunghe o riordini ricorrenti? Caricaci un file con i codici: ti prepariamo un preventivo unico.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- trust + footer (shared) -->
+  <div style="background:#efe6d5;border-top:1px solid #e6dcc9;border-bottom:1px solid #e6dcc9;">
+    <div style="max-width:1320px;margin:0 auto;padding:26px 48px;display:flex;justify-content:space-between;gap:24px;">
+      <div><div style="font-size:14.5px;font-weight:700;color:#211c16;">Assistenza reale</div><div style="font-size:12.5px;color:#8c8273;">Ti aiutiamo a scegliere il prodotto corretto</div></div>
+      <div><div style="font-size:14.5px;font-weight:700;color:#211c16;">Showroom a Roma</div><div style="font-size:12.5px;color:#8c8273;">Sede fisica e consulenza dal vivo</div></div>
+      <div><div style="font-size:14.5px;font-weight:700;color:#211c16;">Ricambi difficili</div><div style="font-size:12.5px;color:#8c8273;">Cerca per foto, EAN o codice</div></div>
+      <div><div style="font-size:14.5px;font-weight:700;color:#211c16;">Spedizione tracciata</div><div style="font-size:12.5px;color:#8c8273;">Consegna in tutta Italia</div></div>
+    </div>
+  </div>
+  <div style="background:#16130d;color:#9a8e78;">
+    <div style="max-width:1320px;margin:0 auto;padding:54px 48px 30px;">
+      <div style="display:grid;grid-template-columns:1.1fr 1fr 1.2fr 1.3fr;gap:40px;padding-bottom:38px;border-bottom:1px solid rgba(255,255,255,.08);">
+        <!-- info aziendali -->
+        <div>
+          <div style="font-family:'Newsreader',serif;font-size:22px;color:#f1e8d8;margin-bottom:14px;">Idea<span style="font-style:italic;color:#f0ad57;">di</span>Luce</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin-bottom:10px;">INFO AZIENDALI</div>
+          <div style="font-size:13px;line-height:1.7;color:#9a8e78;">TLB ITALY Srl<br>P.IVA / VAT: IT17245551001<br>REA: RM-1705840</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin:18px 0 10px;">INDIRIZZO</div>
+          <div style="font-size:13px;line-height:1.7;color:#9a8e78;">Via Appia Pignatelli 450,<br>00178 Roma (Italy)</div>
+        </div>
+        <!-- servizio clienti -->
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin-bottom:12px;">SERVIZIO CLIENTI</div>
+          <div style="font-size:13px;line-height:1.8;color:#c9bfae;"><a href="tel:+390671671 11" style="color:#c9bfae;text-decoration:none;">Tel: (+39) 06 716 7111</a><br><a href="mailto:info@ideadiluce.com" style="color:#f0ad57;text-decoration:none;">info@ideadiluce.com</a></div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin:18px 0 10px;">ORARI</div>
+          <div style="font-size:13px;line-height:1.7;color:#9a8e78;">Lunedì – Venerdì<br>9.00 – 13.00 · 15.00 – 18.00</div>
+        </div>
+        <!-- utility / seguici -->
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin-bottom:12px;">UTILITY</div>
+          <div style="display:flex;flex-direction:column;gap:9px;font-size:13px;">
+            <a style="color:#9a8e78;text-decoration:none;" style-hover="color:#f1e8d8;">Termini d'Uso e Condizioni di Vendita</a>
+            <a style="color:#9a8e78;text-decoration:none;" style-hover="color:#f1e8d8;">Privacy Policy</a>
+            <a style="color:#9a8e78;text-decoration:none;" style-hover="color:#f1e8d8;">Spedizioni e resi</a>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin:18px 0 10px;">SEGUICI</div>
+          <div style="display:flex;gap:9px;">
+            <span style="width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#c9bfae;">Ig</span>
+            <span style="width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#c9bfae;">Fb</span>
+            <span style="width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#c9bfae;">in</span>
+            <span style="width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#c9bfae;">Pin</span>
+          </div>
+        </div>
+        <!-- non trovato -->
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#6f6450;margin-bottom:12px;">PRODOTTO NON TROVATO</div>
+          <div style="background:#1f1a12;border:1px solid rgba(240,173,87,.22);border-radius:10px;padding:18px 20px;">
+            <div style="font-size:14px;line-height:1.55;color:#c9bfae;margin-bottom:14px;">Cerchi qualcosa che non è nel sito? Contattaci ora, siamo solo a un modulo di distanza!</div>
+            <a style="display:inline-block;background:#f0ad57;color:#16130d;font-size:13.5px;font-weight:700;padding:11px 18px;border-radius:7px;text-decoration:none;" style-hover="background:#f7bd6f;">Vai al form →</a>
+          </div>
+        </div>
+      </div>
+      <!-- bottom: payments + copyright -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:24px;padding-top:24px;flex-wrap:wrap;">
+        <div style="font-size:12px;color:#6f6450;">© 2026 TLB ITALY Srl · Tutti i diritti riservati</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <span style="font-size:11px;color:#6f6450;margin-right:4px;">Pagamenti sicuri</span>
+          <span style="background:#fff;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;color:#1a1f71;">VISA</span>
+          <span style="background:#fff;border-radius:5px;padding:6px 9px;font-size:11px;font-weight:800;color:#eb001b;">●●</span>
+          <span style="background:#fff;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;color:#0a3a82;">Maestro</span>
+          <span style="background:#fff;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;color:#003087;">Pay<span style="color:#009cde;">Pal</span></span>
+          <span style="background:#fff;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;color:#2e77bc;">AMEX</span>
+          <span style="background:#fff;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;color:#3f4651;">Bonifico</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

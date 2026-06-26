@@ -295,10 +295,16 @@ export const odooIntegrationService = {
       logger.warn('odoo.persistCustomerMap_failed', { err: String(e) }, req)
     }
 
+    const existingCheckoutSession = await prisma.checkoutSession.findFirst({
+      where: { cartId: body.cartId, state: 'DRAFT' },
+      orderBy: { createdAt: 'desc' },
+    })
+
     let order
     try {
       order = await orderAdapter.createOrUpdateSaleOrder(ctx, {
         odooPartnerId: partner.odooPartnerId,
+        odooSaleOrderId: existingCheckoutSession?.odooSaleOrderId ?? null,
         currencyCode: cart.currencyCode,
         lines: cart.items.map((i) => ({
           productRef: i.productRef,
@@ -311,10 +317,7 @@ export const odooIntegrationService = {
       throw toAppError(e, req.correlationId)
     }
 
-    let checkoutSession = await prisma.checkoutSession.findFirst({
-      where: { cartId: body.cartId, state: 'DRAFT' },
-      orderBy: { createdAt: 'desc' },
-    })
+    let checkoutSession = existingCheckoutSession
 
     if (!checkoutSession) {
       checkoutSession = await prisma.checkoutSession.create({

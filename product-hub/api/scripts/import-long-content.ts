@@ -6,6 +6,11 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { PrismaClient } from '../generated/hub-client/index.js'
 import { normalizeWooContent, normalizeWooExcerpt } from '../src/normalize-woo-content.js'
+import {
+  extractTechnicalSpecsFromDescription,
+  hasAnyTechnicalSpec,
+} from '../src/product-technical-specs.js'
+import { technicalSpecsToPrismaData } from '../src/product-technical-specs-db.js'
 import { requireHubDatabaseUrl } from './load-hub-env.js'
 import { loadPostContentFromDump } from './parse-wp-posts-content.js'
 
@@ -66,11 +71,15 @@ async function main() {
   for (const p of products) {
     const row = byId.get(p.wooPostId) ?? bySlug.get(p.slug)
     if (!row) continue
-    const long = normalizeWooContent(row.content)
+    const longRaw = normalizeWooContent(row.content)
     const short =
       normalizeWooExcerpt(row.excerpt, 300) ??
-      (long ? normalizeWooExcerpt(long, 300) : null)
-    if (!short && !long) continue
+      (longRaw ? normalizeWooExcerpt(longRaw, 300) : null)
+    if (!short && !longRaw) continue
+
+    const { specs, descriptionHtml } = extractTechnicalSpecsFromDescription(longRaw)
+    const long = descriptionHtml ?? longRaw
+
     await prisma.product.update({
       where: { id: p.id },
       data: {
@@ -78,6 +87,16 @@ async function main() {
         longDescription: long,
       },
     })
+
+    if (hasAnyTechnicalSpec(specs)) {
+      const specData = technicalSpecsToPrismaData(specs)
+      await prisma.productTechnicalSpec.upsert({
+        where: { productId: p.id },
+        create: { productId: p.id, ...specData },
+        update: specData,
+      })
+    }
+
     productsUpdated++
   }
 

@@ -1,7 +1,8 @@
 import { Router } from 'express'
 import type { z } from 'zod'
 import { CarrierProvider, ShippingMethodType } from '@prisma/client'
-import { requireAdminToken } from '../../middlewares/admin-auth.js'
+import { loadAdminSession } from '../../middlewares/admin-session.js'
+import { requireAdminAuth } from '../../middlewares/admin-auth.js'
 import { ok } from '../../lib/api-response.js'
 import { asyncHandler } from '../../utils/async-handler.js'
 import { validateRequest } from '../../middlewares/validate-request.js'
@@ -11,6 +12,7 @@ import {
   methodCreateSchema,
   methodUpdateSchema,
   simulateSchema,
+  surchargeUpdateSchema,
   zoneCreateSchema,
   zoneUpdateSchema,
 } from './shipping.admin.validators.js'
@@ -18,7 +20,7 @@ import {
 export const shippingAdminRouter = Router()
 export { seedDefaultShippingZones }
 
-shippingAdminRouter.use(requireAdminToken)
+shippingAdminRouter.use(loadAdminSession, requireAdminAuth)
 
 shippingAdminRouter.get(
   '/zones',
@@ -118,5 +120,21 @@ shippingAdminRouter.post(
   asyncHandler(async (req, res) => {
     const body = req.body as z.infer<typeof simulateSchema>
     res.json(ok(await shippingAdminService.simulate(req, body.shippingAddress)))
+  }),
+)
+
+shippingAdminRouter.get(
+  '/surcharges',
+  asyncHandler(async (_req, res) => {
+    res.json(ok(await shippingAdminService.getSurcharges()))
+  }),
+)
+
+shippingAdminRouter.patch(
+  '/surcharges',
+  validateRequest({ body: surchargeUpdateSchema }),
+  asyncHandler(async (req, res) => {
+    const body = req.body as z.infer<typeof surchargeUpdateSchema>
+    res.json(ok(await shippingAdminService.updateSurcharges(body)))
   }),
 )

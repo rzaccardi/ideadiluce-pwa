@@ -1,48 +1,124 @@
 import { proxy } from 'valtio'
 import type {
   CheckoutStartDTO,
+  CustomerSegmentDTO,
+  FreeShippingHintDTO,
   PaymentConfirmDTO,
   PaymentSessionDTO,
   PwaPaymentMethodDTO,
   ShippingQuoteDTO,
+  TaxBreakdownDTO,
+  ThankYouOrderDTO,
 } from '@/types/dto'
+import type { AddressInput } from '@/types/integrations'
 
-export type CheckoutStep = 'details' | 'shipping' | 'payment_method' | 'payment' | 'result'
+export type CheckoutStep =
+  | 'account'
+  | 'customer_type'
+  | 'billing'
+  | 'shipping'
+  | 'delivery_recipient'
+  | 'shipping_method'
+  | 'payment'
+  | 'review'
+  /** Layout checkout semplificato (CheckoutPage legacy) */
+  | 'details'
+  | 'payment_method'
+
+/** Metodi pagamento disponibili in checkout produzione. */
+export type CheckoutPaymentMethodDTO = Extract<PwaPaymentMethodDTO, 'stripe' | 'bank_transfer'>
+
+export type CheckoutMode = 'standard' | 'frozen_quote'
+
+export type CustomerSegmentChoice = Extract<CustomerSegmentDTO, 'retail' | 'business'> | null
+
+export type DeliveryRecipientMode = 'self' | 'other' | null
+
+export const CHECKOUT_STEP_ORDER: CheckoutStep[] = [
+  'account',
+  'customer_type',
+  'billing',
+  'shipping',
+  'delivery_recipient',
+  'shipping_method',
+  'payment',
+  'review',
+]
+
+export function emptyCheckoutAddress(): AddressInput {
+  return {
+    firstName: '',
+    lastName: '',
+    line1: '',
+    streetNumber: '',
+    isSnc: false,
+    line2: '',
+    city: '',
+    postalCode: '',
+    country: 'IT',
+    phone: '',
+    courierNotes: '',
+  }
+}
 
 export const checkoutStore = proxy({
+  checkoutMode: 'standard' as CheckoutMode,
+  frozenOrderSummary: null as ThankYouOrderDTO | null,
   order: null as CheckoutStartDTO | null,
   payment: null as PaymentSessionDTO | null,
   result: null as PaymentConfirmDTO | null,
-  currentStep: 'details' as CheckoutStep,
+  currentStep: 'account' as CheckoutStep,
   isLoading: false,
   isPaying: false,
+  /** true mentre si precompila e geocodifica l'indirizzo salvato (utente loggato) */
+  addressPrefillLoading: false,
   error: null as string | null,
-  selectedPaymentMethod: 'stripe' as PwaPaymentMethodDTO,
+  selectedPaymentMethod: 'stripe' as CheckoutPaymentMethodDTO,
   shippingQuotes: [] as ShippingQuoteDTO[],
+  freeShippingHint: null as FreeShippingHintDTO | null,
+  shippingQuotesFingerprint: null as string | null,
   selectedShippingMethodRef: null as string | null,
-  shippingLoading: false,
+  /** true solo dopo POST /shipping/select riuscito */
+  shippingSelectionPersisted: false,
+  shippingQuotesLoading: false,
+  shippingSelectingRef: null as string | null,
+  deliveryEstimateDays: null as number | null,
+  customerSegment: null as CustomerSegmentChoice,
+  taxBreakdown: null as TaxBreakdownDTO | null,
+  taxCalculating: false,
+  business: {
+    companyName: '',
+    vatNumber: '',
+    fiscalCode: '',
+    pec: '',
+    sdiCode: '',
+    vatValidated: false,
+    vatForceAccepted: false,
+    vatAttempts: 0,
+    vatCompanyName: null as string | null,
+    viesAddress: null as string | null,
+    viesRequestDate: null as string | null,
+    fiscalCodeValid: null as boolean | null,
+    vatFormatValid: null as boolean | null,
+    vatChecksumValid: null as boolean | null,
+    viesStatus: null as import('@/types/dto').ViesValidationStatusDTO | null,
+    taxValidating: false,
+  },
+  deliveryRecipient: {
+    mode: null as DeliveryRecipientMode,
+    firstName: '',
+    lastName: '',
+    company: '',
+    phone: '',
+  },
+  termsAccepted: false,
+  clientOrderRef: '',
+  dropshipAddress: emptyCheckoutAddress(),
   draft: {
     email: '',
-    sameAsBilling: true,
-    billing: {
-      firstName: '',
-      lastName: '',
-      line1: '',
-      line2: '',
-      city: '',
-      postalCode: '',
-      country: 'IT',
-      phone: '',
-    },
-    shipping: {
-      firstName: '',
-      lastName: '',
-      line1: '',
-      line2: '',
-      city: '',
-      postalCode: '',
-      country: 'IT',
-      phone: '',
-    },
+    orderNotes: '',
+    billingSameAsShipping: true,
+    billing: emptyCheckoutAddress(),
+    shipping: emptyCheckoutAddress(),
   },
 })

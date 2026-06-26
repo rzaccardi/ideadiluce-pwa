@@ -12,10 +12,12 @@
     "dotenv": "^16.6.1"
   },
   "scripts": {
-    "dev": "docker compose up -d --wait && concurrently -n client,server -c cyan,magenta \"npm run dev:client\" \"npm run dev:server\"",
+    "dev": "concurrently -k -n client,server,admin -c cyan,magenta,yellow \"npm run dev:client\" \"npm run dev:server\" \"npm run dev:admin\"",
+    "dev:shop": "concurrently -k -n client,server -c cyan,magenta \"npm run dev:client\" \"npm run dev:server\"",
     "dev:client": "npm run dev --workspace=client",
     "dev:server": "npm run dev --workspace=server",
     "dev:admin": "npm run dev --workspace=admin",
+    "start:shop": "npm run start --workspace=client",
     "build": "npm run build:client && npm run build:server",
     "db:deploy": "npm run db:migrate:deploy --workspace=server",
     "build:client": "npm run build --workspace=client",
@@ -23,15 +25,14 @@
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f postgres",
-    "hub:import": "npm run import:woo --workspace=@ideadiluce/hub-api",
-    "hub:patch-images": "npm run patch:og-images --workspace=@ideadiluce/hub-api",
-    "hub:enrich": "npm run import:woo:enrich --workspace=@ideadiluce/hub-api",
-    "hub:import-content": "npm run import:long-content --workspace=@ideadiluce/hub-api",
-    "hub:normalize-content": "npm run patch:normalize-content --workspace=@ideadiluce/hub-api",
-    "hub:sync-odoo": "npm run sync-odoo --workspace=server",
     "hub:migrate": "npm run db:migrate --workspace=@ideadiluce/hub-api",
     "hub:migrate:dev": "npm run db:migrate:dev --workspace=@ideadiluce/hub-api",
-    "hub:generate": "npm run db:generate --workspace=@ideadiluce/hub-api"
+    "hub:generate": "npm run db:generate --workspace=@ideadiluce/hub-api",
+    "smoke:prod": "node server/scripts/smoke-production.mjs",
+    "test:api": "node server/scripts/api-integration-test.mjs",
+    "stripe:setup": "node server/scripts/stripe-setup.mjs",
+    "stripe:webhook": "stripe listen --forward-to localhost:4000/api/v1/payments/webhook/stripe",
+    "prepare:professionisti-html": "npm run prepare:professionisti-html --workspace=client"
   },
   "engines": {
     "node": ">=20"

@@ -1,0 +1,1 @@
+export { BrandView } from './BrandView'

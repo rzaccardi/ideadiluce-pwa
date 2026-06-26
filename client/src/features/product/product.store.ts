@@ -7,4 +7,5 @@ export const productStore = proxy({
   isLoading: false,
   error: null as string | null,
   currentSlug: null as string | null,
+  currentLocale: 'IT' as string,
 })

@@ -1,7 +1,13 @@
 import type Stripe from 'stripe'
 import { env } from '../../config/env.js'
 import { getStripe, isStripeConfigured } from '../../lib/stripe.js'
+import { decodeStripeClientSecret } from '../../lib/stripe-config.js'
 import { AppError } from '../../types/errors.js'
+
+function checkoutReturnUrl(pwaOrderId: string): string {
+  const origin = env.CLIENT_ORIGIN.replace(/\/$/, '')
+  return `${origin}/checkout/return/${encodeURIComponent(pwaOrderId)}?session_id={CHECKOUT_SESSION_ID}`
+}
 
 export type StripeLineItemInput = {
   name: string
@@ -57,21 +63,40 @@ export async function createStripeCheckoutSession(
     },
   }))
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    ui_mode: 'custom' as Stripe.Checkout.SessionCreateParams.UiMode,
-    customer: input.stripeCustomerId ?? undefined,
-    customer_email: input.stripeCustomerId ? undefined : input.email,
-    line_items,
-    metadata: {
-      pwa_order_id: input.pwaOrderId,
-      pwa_payment_id: input.pwaPaymentId,
-      cart_id: input.cartId,
-      odoo_sale_order_id: input.odooSaleOrderId != null ? String(input.odooSaleOrderId) : '',
-      correlation_id: input.correlationId,
+  const sessionMetadata = {
+    pwa_order_id: input.pwaOrderId,
+    pwa_payment_id: input.pwaPaymentId,
+    cart_id: input.cartId,
+    odoo_sale_order_id: input.odooSaleOrderId != null ? String(input.odooSaleOrderId) : '',
+    correlation_id: input.correlationId,
+  }
+
+  const session = await stripe.checkout.sessions.create(
+    {
+      mode: 'payment',
+      ui_mode: 'elements' as Stripe.Checkout.SessionCreateParams.UiMode,
+      return_url: checkoutReturnUrl(input.pwaOrderId),
+      customer: input.stripeCustomerId ?? undefined,
+      customer_email: input.stripeCustomerId ? undefined : input.email,
+      payment_method_types: ['card'],
+      payment_intent_data: {
+        capture_method: 'automatic',
+        metadata: sessionMetadata,
+      },
+      saved_payment_method_options: {
+        payment_method_save: 'disabled',
+      },
+      wallet_options: {
+        link: {
+          display: 'never',
+        },
+      },
+      line_items,
+      metadata: sessionMetadata,
+      client_reference_id: input.pwaOrderId,
     },
-    client_reference_id: input.pwaOrderId,
-  })
+    { idempotencyKey: `pwa-checkout-${input.pwaPaymentId}` },
+  )
 
   if (!session.client_secret) {
     throw new AppError(
@@ -83,7 +108,7 @@ export async function createStripeCheckoutSession(
     )
   }
 
-  return { sessionId: session.id, clientSecret: session.client_secret }
+  return { sessionId: session.id, clientSecret: decodeStripeClientSecret(session.client_secret) }
 }
 
 export async function retrieveStripeCheckoutSession(

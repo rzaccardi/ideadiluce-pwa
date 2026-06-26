@@ -5,9 +5,10 @@ import { fetchFedexRates } from './fedexClient.js'
 export async function fetchFedexLiveRates(
   address: ShippingAddressInput,
   weight: CartWeightInput,
+  correlationId?: string,
 ): Promise<ShippingQuoteLine[]> {
   if (!env.FEDEX_ENABLED) return []
-  const live = await fetchFedexRates(address, weight)
+  const live = await fetchFedexRates(address, weight, correlationId)
   if (live.length > 0) return live
 
   if (!env.FEDEX_CLIENT_ID?.trim()) return []

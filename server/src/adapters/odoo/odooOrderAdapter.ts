@@ -4,6 +4,7 @@ import { isOdooConfigured } from './odooClient.js'
 import type { OdooCallContext } from './odooClient.js'
 import { createMockOdooOrderAdapter } from './odooOrderMock.js'
 import { createLiveOdooOrderAdapter } from './odooOrderLive.js'
+import type { SyncSaleOrderDraftInput } from '../../modules/checkout/checkout-order.types.js'
 
 export type SaleOrderShippingLine = {
   label: string
@@ -14,6 +15,12 @@ export type SaleOrderShippingLine = {
 
 export type SaleOrderInput = {
   odooPartnerId: number
+  odooPartnerShippingId?: number | null
+  odooSaleOrderId?: number | null
+  clientOrderRef?: string | null
+  orderNotes?: string | null
+  courierNotes?: string | null
+  fiscalPositionId?: number | null
   lines: Array<{
     productRef: string
     variantRef?: string | null
@@ -36,6 +43,10 @@ export interface OdooOrderAdapter {
   createOrUpdateSaleOrder(
     ctx: OdooCallContext,
     input: SaleOrderInput,
+  ): Promise<{ odooSaleOrderId: number }>
+  syncSaleOrderDraft(
+    ctx: OdooCallContext,
+    input: SyncSaleOrderDraftInput,
   ): Promise<{ odooSaleOrderId: number }>
   reconcileSaleOrderLines(
     ctx: OdooCallContext,

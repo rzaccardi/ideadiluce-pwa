@@ -4,6 +4,7 @@ node_modules/
 # Build
 dist/
 build/
+client/.next/
 *.tsbuildinfo
 
 # Env (solo root — non usare server/.env, client/.env, ecc.)

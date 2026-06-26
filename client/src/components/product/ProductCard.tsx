@@ -1,9 +1,22 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+'use client'
+
+import { useMemo, useState } from 'react'
+import { Link } from '@/lib/navigation'
+import { useSnapshot } from 'valtio/react'
+import { useLocale } from '@/context/locale-context'
+import { useI18n } from '@/hooks/use-i18n'
 import type { ProductCardDTO } from '@/types/dto'
-import { addItem } from '@/features/cart'
-import { addWishlistItem } from '@/features/wishlist'
+import { addItem, cartStore, getProductCartQuantity } from '@/features/cart'
+import { useProductCardStores } from '@/features/product/useProductCardStores'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { WishlistHeartButton } from '@/components/wishlist/WishlistHeartButton'
+import {
+  formatAvailabilityPrimaryLabel,
+  getProductAvailabilityStatus,
+  resolveAvailabilityData,
+} from '@/lib/product-availability'
 import { formatMoney } from '@/lib/format'
+import { formatPriceDisplayModeLabel } from '@/lib/price-display'
 import { cn } from '@/utils/cn'
 
 type Props = {
@@ -11,7 +24,7 @@ type Props = {
   className?: string
 }
 
-type QuickAction = 'cart' | 'wishlist'
+type QuickAction = 'cart'
 
 function CartIcon() {
   return (
@@ -31,39 +44,36 @@ function CartIcon() {
   )
 }
 
-function HeartIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4" fill="none">
-      <path
-        d="M12 20s-7.5-4.4-9.2-9.2C1.6 7.4 3.7 4.5 7 4.5c1.9 0 3.3 1 4.1 2.3.8-1.3 2.2-2.3 4.1-2.3 3.3 0 5.4 2.9 4.2 6.3C19.5 15.6 12 20 12 20Z"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.8"
-      />
-    </svg>
-  )
-}
-
 export function ProductCard({ product, className }: Props) {
+  useProductCardStores()
+  const { localize, locale } = useLocale()
+  const { t, tParams } = useI18n()
+  const { cart } = useSnapshot(cartStore)
+  const productHref = localize(`/prodotto/${product.slug}`)
   const [pendingAction, setPendingAction] = useState<QuickAction | null>(null)
-  const [wishlistFeedback, setWishlistFeedback] = useState<string | null>(null)
-
-  async function handleQuickAction(action: QuickAction) {
-    setPendingAction(action)
-    if (action === 'wishlist') setWishlistFeedback(null)
+  const cartQuantity = getProductCartQuantity(cart?.items, product.slug)
+  const inCart = cartQuantity > 0
+  const availability = useMemo(
+    () =>
+      getProductAvailabilityStatus({
+        availability: resolveAvailabilityData(product),
+        locale,
+      }),
+    [product, locale],
+  )
+  const availabilityLabel = formatAvailabilityPrimaryLabel(availability)
+  const outOfStock = availability.status === 'out_of_stock'
+  const canAdd = availability.canAddToCart
+  const isAddingToCart = pendingAction === 'cart'
+  const priceModeLabel = formatPriceDisplayModeLabel(product.priceDisplayMode)
+  async function handleAddToCart() {
+    if (!canAdd) return
+    setPendingAction('cart')
     try {
-      if (action === 'cart') {
-        await addItem(product.slug, 1, undefined, {
-          productName: product.name,
-          imageUrl: product.imageUrl,
-        })
-      } else {
-        await addWishlistItem(product.slug)
-        setWishlistFeedback('Aggiunto ai preferiti')
-      }
-    } catch {
-      if (action === 'wishlist') setWishlistFeedback('Azione non riuscita')
+      await addItem(product.slug, 1, undefined, {
+        productName: product.name,
+        imageUrl: product.imageUrl,
+      })
     } finally {
       setPendingAction(null)
     }
@@ -72,56 +82,108 @@ export function ProductCard({ product, className }: Props) {
   return (
     <article
       className={cn(
-        'overflow-hidden rounded-xl border border-zinc-200 bg-white transition hover:border-zinc-300',
+        'flex h-full flex-col overflow-hidden rounded-lg border border-idl-tech-border bg-white transition hover:border-idl-border-strong',
         className,
       )}
     >
-      <Link to={`/prodotto/${product.slug}`} className="block text-left">
-        <div className="aspect-[4/3] bg-zinc-100">
+      <Link to={productHref} className="block text-left">
+        <div className="relative aspect-[4/3] bg-idl-cream">
           {product.imageUrl ? (
-            <img src={product.imageUrl} alt="" className="h-full w-full object-cover" />
+            <img
+              src={product.imageUrl}
+              alt=""
+              className={cn('h-full w-full object-cover', outOfStock && 'opacity-75 saturate-50')}
+            />
           ) : (
-            <div className="flex h-full items-center justify-center text-xs text-zinc-400">Nessuna immagine</div>
+            <div className="flex h-full items-center justify-center text-xs text-idl-placeholder">
+              {t('product.card.noImage')}
+            </div>
           )}
+          {outOfStock ? (
+            <span className="absolute left-2 top-2 rounded-full bg-idl-promo-bg px-2.5 py-0.5 text-xs font-medium text-idl-promo-text ring-1 ring-idl-promo-border">
+              {t('product.availability.outOfStock')}
+            </span>
+          ) : availability.status === 'orderable' ? (
+            <span className="absolute left-2 top-2 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-900 ring-1 ring-amber-200">
+              {t('product.availability.orderable')}
+            </span>
+          ) : null}
         </div>
       </Link>
-      <div className="p-4">
-        <Link to={`/prodotto/${product.slug}`} className="block text-left">
-          <h3 className="font-medium text-zinc-900">{product.name}</h3>
-          {product.shortDescription ? (
-            <p className="mt-1 line-clamp-2 text-sm text-zinc-500">{product.shortDescription}</p>
-          ) : null}
-        </Link>
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <p className="text-base font-semibold text-zinc-900">
-            {formatMoney(product.priceCents, product.currency)}
+      <div className="flex flex-1 flex-col p-4">
+        <Link to={productHref} className="block flex-1 text-left">
+          <h3 className="line-clamp-2 min-h-[2lh] leading-snug font-medium text-idl-graphite">
+            {product.name}
+          </h3>
+          <p className="mt-1 line-clamp-2 min-h-[2lh] text-sm leading-normal text-idl-muted">
+            {product.shortDescription ?? '\u00A0'}
           </p>
+        </Link>
+        <div className="mt-4 flex shrink-0 items-center justify-between gap-3">
+          <div>
+            <p className="text-base font-semibold text-idl-graphite">
+              {formatMoney(product.priceCents, product.currency)}
+            </p>
+            {priceModeLabel ? (
+              <p className="text-xs text-idl-muted">{priceModeLabel}</p>
+            ) : null}
+            {!outOfStock && availability.status !== 'available' ? (
+              <p className="mt-0.5 text-xs text-idl-muted">{availabilityLabel}</p>
+            ) : null}
+          </div>
           <div className="flex shrink-0 items-center gap-2">
+            <WishlistHeartButton productRef={product.slug} productName={product.name} />
             <button
               type="button"
-              aria-label={`Aggiungi ${product.name} ai preferiti`}
-              title="Aggiungi ai preferiti"
-              disabled={pendingAction !== null}
-              onClick={() => void handleQuickAction('wishlist')}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-700 transition hover:border-zinc-300 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label={
+                isAddingToCart
+                  ? tParams('product.card.addingAria', { productName: product.name })
+                  : !canAdd
+                    ? tParams('product.card.outOfStockAria', { productName: product.name })
+                    : inCart
+                      ? tParams('product.card.inCartAria', {
+                          productName: product.name,
+                          count: cartQuantity,
+                        })
+                      : tParams('product.card.addAria', { productName: product.name })
+              }
+              aria-busy={isAddingToCart}
+              aria-pressed={inCart}
+              disabled={!canAdd || pendingAction !== null}
+              title={
+                !canAdd
+                  ? t('product.availability.outOfStock')
+                  : inCart
+                    ? tParams('product.card.inCartTitle', { count: cartQuantity })
+                    : t('product.addToCart')
+              }
+              onClick={() => void handleAddToCart()}
+              className={cn(
+                'relative inline-flex h-10 w-10 items-center justify-center rounded-full transition disabled:cursor-not-allowed',
+                outOfStock
+                  ? 'border border-idl-promo-border bg-idl-promo-bg text-idl-promo-text'
+                  : inCart
+                    ? 'border border-emerald-200 bg-emerald-50 text-emerald-600 hover:border-emerald-300 hover:bg-emerald-100 disabled:opacity-50'
+                    : 'bg-idl-ink text-white hover:bg-idl-ink-soft disabled:opacity-50',
+              )}
             >
-              <HeartIcon />
-              <span className="sr-only">Preferiti</span>
-            </button>
-            <button
-              type="button"
-              aria-label={`Aggiungi ${product.name} al carrello`}
-              title="Aggiungi al carrello"
-              disabled={pendingAction !== null}
-              onClick={() => void handleQuickAction('cart')}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <CartIcon />
-              <span className="sr-only">Carrello</span>
+              {isAddingToCart ? <LoadingSpinner className="opacity-80" /> : <CartIcon />}
+              {inCart && !isAddingToCart ? (
+                <span
+                  className="absolute -right-0.5 -top-0.5 z-10 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-600 px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-white"
+                  aria-hidden="true"
+                >
+                  {cartQuantity}
+                </span>
+              ) : null}
+              <span className="sr-only">
+                {inCart
+                  ? tParams('product.card.inCartTitle', { count: cartQuantity })
+                  : t('product.card.cartSr')}
+              </span>
             </button>
           </div>
         </div>
-        {wishlistFeedback ? <p className="mt-2 text-xs text-zinc-500">{wishlistFeedback}</p> : null}
       </div>
     </article>
   )

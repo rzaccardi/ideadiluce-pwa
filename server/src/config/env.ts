@@ -3,7 +3,6 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { z } from 'zod'
-import { hubDatabaseUrl } from '@ideadiluce/hub-api/hub-database-url'
 
 const serverRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 const repoRoot = path.join(serverRoot, '..')
@@ -37,11 +36,20 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().default(4000),
   CLIENT_ORIGIN: z.string().default('http://localhost:5173'),
+  /** Origine Vite del backoffice admin (:5174). */
+  ADMIN_ORIGIN: z.string().default('http://localhost:5174'),
+  ADMIN_SESSION_COOKIE_NAME: z.string().default('admin_sid'),
+  ADMIN_SESSION_DAYS: z.coerce.number().default(7),
   DATABASE_URL: z.string().min(1),
-  /** Catalogo da Product Hub (dump Woo importato). Se true e dati presenti, ha priorità su Odoo. */
-  HUB_CATALOG_ENABLED: boolish.default(true),
-  /** Default: stesso host/db del BFF, schema Postgres `hub`. */
-  HUB_DATABASE_URL: z.string().optional(),
+  /** Catalogo storefront: Odoo REST API v2 (sito Arfly su tlbdb.odoo.com, modulo tlb_idl_ecommerce). */
+  ARFLY_CATALOG_ENABLED: boolish.default(false),
+  /** Host Odoo (es. https://tlbdb.odoo.com). */
+  ARFLY_API_BASE_URL: z.string().optional(),
+  /** Bearer token API key (es. «PWA Platform»). */
+  ARFLY_API_KEY: z.string().optional(),
+  /** ID website Odoo (Arfly = 2). */
+  ARFLY_WEBSITE_ID: z.coerce.number().default(2),
+  ARFLY_TIMEOUT_MS: z.coerce.number().default(25_000),
   SESSION_COOKIE_NAME: z.string().default('sid'),
   SESSION_DAYS: z.coerce.number().default(30),
   /** Attiva chiamate reali verso Odoo via XML-RPC (Odoo 18). */
@@ -66,10 +74,28 @@ const envSchema = z.object({
    * Esempio: [["is_published","=",true]] oppure [["sale_ok","=",true]]
    */
   ODOO_PRODUCT_DOMAIN: z.string().optional(),
+  /** ID azione menu Odoo per aprire `product.template` nel client web (es. `497` → `/odoo/action-497/{id}`). */
+  ODOO_PRODUCT_ACTION_ID: z.coerce.number().default(497),
   /** Domain (JSON) per product.category/search_read */
   ODOO_CATEGORY_DOMAIN: z.string().optional(),
   /** Lingua contesto catalogo Odoo (es. it_IT). */
   ODOO_CATALOG_LANG: z.string().default('it_IT'),
+  /** ID listino Odoo B2C (`product.pricelist`). */
+  ODOO_PRICELIST_B2C_ID: z.coerce.number().optional(),
+  /** ID listino Odoo B2B (`product.pricelist`). */
+  ODOO_PRICELIST_B2B_ID: z.coerce.number().optional(),
+  /** ID listino Odoo professional (`product.pricelist`). */
+  ODOO_PRICELIST_PROFESSIONAL_ID: z.coerce.number().optional(),
+  /** SMTP per email transazionali (reset password, ecc.). */
+  SMTP_ENABLED: boolish.default(false),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().default(587),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_FROM: z.string().email().optional(),
+  /** URL base PWA per link nelle email (es. https://www.ideadiluce.it). */
+  APP_PUBLIC_URL: z.string().optional(),
+  PASSWORD_RESET_TOKEN_HOURS: z.coerce.number().default(24),
   CHECKOUT_REDIRECT_BASE: z.string().optional(),
   /** Provider PWA checkout: Nexi/PayPal sono opzionali finché non configurati. */
   NEXI_ENABLED: boolish.default(false),
@@ -88,8 +114,13 @@ const envSchema = z.object({
   STRIPE_ENABLED: boolish.default(false),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
-  /** Token per API admin spedizioni (`X-Admin-Token`). */
+  /** Chiave pubblica Stripe (pk_*) — esposta al client via /payments/stripe/config se assente nel build. */
+  STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+  /** @deprecated Usare login backoffice (`AdminUser`). Mantenuto solo per compatibilità script. */
   ADMIN_API_TOKEN: z.string().optional(),
+  /** Credenziali seed utente backoffice (solo `db:seed`). */
+  ADMIN_SEED_EMAIL: z.string().email().default('admin@ideadiluce.local'),
+  ADMIN_SEED_PASSWORD: z.string().min(8).default('admin123456'),
   DHL_ENABLED: boolish.default(false),
   DHL_SANDBOX: boolish.default(true),
   DHL_API_KEY: z.string().optional(),
@@ -114,12 +145,39 @@ const envSchema = z.object({
    * Se assente, si usano le stesse regole di `requireLogin`.
    */
   INTEGRATIONS_TOKEN: z.string().optional(),
+  /** URL pubblico PWA per preview SEO (es. https://www.ideadiluce.it). */
+  PUBLIC_SITE_URL: z.string().default('https://www.ideadiluce.it'),
+  /** Feed "Marco *** ha acquistato …" da ordini PWA/Odoo pagati. */
+  SOCIAL_PROOF_ENABLED: boolish.default(true),
+  SOCIAL_PROOF_LOOKBACK_DAYS: z.coerce.number().default(30),
+  SOCIAL_PROOF_MAX_EVENTS: z.coerce.number().default(12),
+  /** Svuota il carrello dopo N minuti dall'ultima modifica righe (allineamento stock). */
+  CART_RESERVATION_ENABLED: boolish.default(true),
+  CART_RESERVATION_MINUTES: z.coerce.number().default(30),
+  /** Salta controllo stock su add/patch carrello (solo test/CI quando Odoo staging non ha varianti acquistabili). */
+  CART_SKIP_STOCK_CHECK: boolish.default(false),
+  /** Sede ritiro in negozio (label e indirizzo unificati). */
+  STORE_PICKUP_LABEL: z.string().optional(),
+  STORE_PICKUP_LINE1: z.string().optional(),
+  STORE_PICKUP_POSTAL_CODE: z.string().optional(),
+  STORE_PICKUP_CITY: z.string().optional(),
+  STORE_PICKUP_COUNTRY: z.string().optional(),
+  /** Autocomplete indirizzi checkout — Google ha priorità su Mapbox. */
+  GOOGLE_MAPS_API_KEY: z.string().optional(),
+  MAPBOX_ACCESS_TOKEN: z.string().optional(),
+  /** DigitalOcean Spaces (S3-compatible) per media catalogo caricati dall’admin. */
+  SPACES_KEY: z.string().optional(),
+  SPACES_SECRET: z.string().optional(),
+  SPACES_BUCKET: z.string().optional(),
+  SPACES_ENDPOINT: z.string().optional(),
+  SPACES_CDN_URL: z.string().optional(),
+  SPACES_REGION: z.string().default('fra1'),
+  /** Minuti dopo paidAt prima di inviare alert email per PAID_SYNC_PENDING. */
+  PAID_SYNC_ALERT_MINUTES: z.coerce.number().default(15),
+  /** Destinatario email alert sync Odoo (se assente: solo log + banner BO). */
+  PAID_SYNC_ALERT_EMAIL: z.string().email().optional(),
 })
 
 export type Env = z.infer<typeof envSchema>
 
 export const env: Env = envSchema.parse(process.env)
-
-if (!process.env.HUB_DATABASE_URL?.trim()) {
-  process.env.HUB_DATABASE_URL = hubDatabaseUrl(env.DATABASE_URL)
-}

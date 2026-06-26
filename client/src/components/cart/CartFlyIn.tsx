@@ -3,7 +3,11 @@ import { useSnapshot } from 'valtio/react'
 import { cartFeedbackStore } from '@/features/cart/cart-feedback.store'
 import { cn } from '@/utils/cn'
 
-export function CartFlyIn() {
+type Props = {
+  anchor?: 'floating' | 'header'
+}
+
+export function CartFlyIn({ anchor = 'floating' }: Props) {
   const { flyInToken, flyInImageUrl } = useSnapshot(cartFeedbackStore)
   const [active, setActive] = useState(false)
 
@@ -20,8 +24,9 @@ export function CartFlyIn() {
     <div
       key={flyInToken}
       className={cn(
-        'pointer-events-none absolute bottom-14 right-2 z-10 h-14 w-14 overflow-hidden rounded-lg shadow-lg ring-2 ring-white',
+        'pointer-events-none absolute z-10 h-14 w-14 overflow-hidden rounded-lg shadow-lg ring-2 ring-white',
         'cart-fly-in',
+        anchor === 'header' ? 'right-0 top-full mt-1' : 'bottom-14 right-2',
       )}
       aria-hidden
     >

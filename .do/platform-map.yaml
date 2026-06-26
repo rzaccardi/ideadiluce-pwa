@@ -1,0 +1,136 @@
+# Mappa piattaforma Idea di Luce
+#
+# Solo topologia e collegamenti tra componenti.
+# NON è uno spec deploy DigitalOcean: niente servizi, database, env, build, run o secret.
+#
+# Deploy operativo → app.yaml (produzione) | app.staging.yaml (staging)
+# Checklist go-live → GO-LIVE.md
+
+meta:
+  name: ideadiluce-pwa
+  region: fra1
+  environments:
+    production:
+      spec: app.yaml
+      branch: main
+    staging:
+      spec: app.staging.yaml
+      branch: staging
+  public_urls: placeholder # *.ondigitalocean.app assegnati da DigitalOcean
+
+# ——— Componenti su App Platform ———
+
+components:
+  shop:
+    role: storefront
+    stack: Next.js
+    source: client/
+    public_url: ${shop.PUBLIC_URL}
+
+  api:
+    role: bff
+    stack: Express + Prisma + Product Hub
+    source: server/
+    public_url: ${api.PUBLIC_URL}
+    health: GET /health
+
+  admin:
+    role: backoffice
+    stack: Vite SPA
+    source: admin/
+    public_url: ${admin.PUBLIC_URL}
+
+  postgres:
+    role: database
+    engine: PostgreSQL 16
+    schemas:
+      - public # BFF: utenti, carrelli, ordini, CMS, shipping, tax
+      - hub # catalogo import / arricchimenti
+
+# ——— Collegamenti interni ———
+
+connections:
+  - from: shop
+    to: api
+    protocol: HTTPS
+    note: rewrite /api → BFF (Next.js → API_URL)
+
+  - from: admin
+    to: api
+    protocol: HTTPS
+    note: chiamate REST dal browser (VITE_API_URL)
+
+  - from: api
+    to: postgres
+    protocol: TCP
+    note: Prisma + migrazioni hub
+
+  - from: api
+    to: shop
+    protocol: HTTPS
+    note: CORS + cookie sessione shop (CLIENT_ORIGIN)
+
+  - from: api
+    to: admin
+    protocol: HTTPS
+    note: CORS + cookie sessione admin (ADMIN_ORIGIN)
+
+# ——— Sistemi esterni (non su DigitalOcean) ———
+
+external:
+  odoo_arfly:
+    host: https://tlbdb.odoo.com
+    connected_to: api
+    uses:
+      - catalogo REST /api/v2/products (Arfly)
+      - ordini, stock, partner XML-RPC
+
+  stripe:
+    connected_to: api
+    uses:
+      - pagamenti checkout
+      - webhook POST → /api/v1/payments/webhook/stripe
+
+  dhl:
+    connected_to: api
+    uses:
+      - tariffe live spedizione (credenziali da BO)
+
+  fedex:
+    connected_to: api
+    uses:
+      - tariffe live spedizione (credenziali da BO)
+
+  smtp:
+    connected_to: api
+    uses:
+      - email transazionali
+      - alert sync Odoo
+
+  deepl:
+    connected_to: api
+    optional: true
+    uses:
+      - traduzione contenuti sito dal BO
+
+  google_places:
+    connected_to: api
+    optional: true
+    uses:
+      - autocomplete indirizzi checkout
+
+  spaces:
+    connected_to: api
+    optional: true
+    uses:
+      - upload media catalogo / documenti professionali
+
+# ——— Job in-process (girano dentro api, nessun worker separato) ———
+
+background_jobs:
+  host: api
+  schedulers:
+    - odooSyncRetry
+    - paidSyncAlert
+    - abandonedCart
+    - syncRetryWorker

@@ -1,6 +1,7 @@
 import { env } from '../../config/env.js'
 import { decryptSecret } from '../../lib/secrets.js'
 import { prisma } from '../../lib/prisma.js'
+import { writeStructuredIntegrationLog } from '../../lib/integration-log-context.js'
 import { CarrierProvider } from '@prisma/client'
 import type { CartWeightInput, ShippingAddressInput, ShippingQuoteLine } from './types.js'
 import { logger } from '../../lib/logger.js'
@@ -28,6 +29,7 @@ function basicAuth(key: string, secret: string): string {
 export async function fetchDhlRates(
   address: ShippingAddressInput,
   weight: CartWeightInput,
+  correlationId?: string,
 ): Promise<ShippingQuoteLine[]> {
   if (!env.DHL_ENABLED) return []
 
@@ -80,6 +82,17 @@ export async function fetchDhlRates(
   if (!res.ok) {
     const errText = await res.text().catch(() => '')
     logger.warn('dhl.rates_failed', { status: res.status, err: errText.slice(0, 200) })
+    if (correlationId) {
+      await writeStructuredIntegrationLog({
+        service: 'dhl',
+        operation: 'rates',
+        correlationId,
+        success: false,
+        statusCode: res.status,
+        error: errText.slice(0, 500),
+        extra: { country: address.country, postalCode: address.postalCode },
+      })
+    }
     return []
   }
 
@@ -105,6 +118,15 @@ export async function fetchDhlRates(
       currencyCode: priceRow.priceCurrency ?? 'EUR',
       etaDays: product.deliveryCapabilities?.totalTransitDays ?? null,
       source: 'dhl',
+    })
+  }
+  if (correlationId && lines.length > 0) {
+    await writeStructuredIntegrationLog({
+      service: 'dhl',
+      operation: 'rates',
+      correlationId,
+      success: true,
+      extra: { quotes: lines.length, country: address.country },
     })
   }
   return lines

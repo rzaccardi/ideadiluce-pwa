@@ -5,9 +5,10 @@ import { fetchDhlRates } from './dhlClient.js'
 export async function fetchDhlLiveRates(
   address: ShippingAddressInput,
   weight: CartWeightInput,
+  correlationId?: string,
 ): Promise<ShippingQuoteLine[]> {
   if (!env.DHL_ENABLED) return []
-  const live = await fetchDhlRates(address, weight)
+  const live = await fetchDhlRates(address, weight, correlationId)
   if (live.length > 0) return live
 
   if (!env.DHL_API_KEY?.trim()) return []

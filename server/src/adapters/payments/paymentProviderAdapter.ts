@@ -52,13 +52,12 @@ function bankTransferInstructions(input: ProviderSessionInput): Record<string, u
   }
 }
 
-function providerSetupError(method: PwaPaymentMethodDTO): AppError {
-  const provider = method === 'paypal' ? 'PayPal' : 'Nexi'
+function unsupportedCheckoutMethodError(method: string): AppError {
   return new AppError(
-    'PAYMENT_PROVIDER_NOT_CONFIGURED',
-    `${provider} provider not configured`,
-    `${provider} non è ancora configurato per il checkout PWA.`,
-    409,
+    'PAYMENT_METHOD_NOT_SUPPORTED',
+    `Payment method not supported: ${method}`,
+    'Metodo di pagamento non disponibile. Usa carta (Stripe) o bonifico.',
+    400,
     false,
     { method },
   )
@@ -105,7 +104,7 @@ export async function createProviderPaymentSession(
       status: 'created',
       clientSecret: session.clientSecret,
       redirectUrl: null,
-      raw: { ui_mode: 'custom' },
+      raw: { ui_mode: 'elements' },
     }
   }
 
@@ -119,38 +118,6 @@ export async function createProviderPaymentSession(
     }
   }
 
-  if (input.method === 'paypal') {
-    if (!env.PAYPAL_ENABLED || !env.PAYPAL_CLIENT_ID || !env.PAYPAL_CLIENT_SECRET) {
-      throw providerSetupError(input.method)
-    }
-    const providerSessionId = `paypal_${randomUUID()}`
-    const base = env.PAYPAL_CHECKOUT_BASE_URL?.replace(/\/$/, '')
-    return {
-      provider: 'paypal',
-      providerSessionId,
-      status: 'created',
-      redirectUrl: base ? `${base}?token=${encodeURIComponent(providerSessionId)}` : null,
-      raw: { env: env.PAYPAL_ENV, mode: 'redirect_or_sdk_placeholder' },
-    }
-  }
-
-  if (!env.NEXI_ENABLED || !env.NEXI_API_KEY || !env.NEXI_TERMINAL_ID) {
-    throw providerSetupError(input.method)
-  }
-
-  const providerSessionId = `nexi_${randomUUID()}`
-  const base = env.NEXI_CHECKOUT_BASE_URL?.replace(/\/$/, '')
-  return {
-    provider: 'nexi',
-    providerSessionId,
-    status: 'created',
-    redirectUrl: base ? `${base}?session=${encodeURIComponent(providerSessionId)}` : null,
-    raw: {
-      env: env.NEXI_ENV,
-      terminalId: env.NEXI_TERMINAL_ID,
-      method: input.method,
-      mode: 'hosted_or_sdk_placeholder',
-    },
-  }
+  throw unsupportedCheckoutMethodError(input.method)
 }
 

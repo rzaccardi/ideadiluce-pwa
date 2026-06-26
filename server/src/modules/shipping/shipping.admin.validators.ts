@@ -13,7 +13,7 @@ export const zoneUpdateSchema = zoneCreateSchema.partial()
 
 export const methodCreateSchema = z.object({
   name: z.string().min(1),
-  type: z.enum(['FLAT_RATE', 'FREE_SHIPPING', 'LIVE_DHL', 'LIVE_FEDEX']),
+  type: z.enum(['FLAT_RATE', 'FREE_SHIPPING', 'LIVE_DHL', 'LIVE_FEDEX', 'PICKUP']),
   enabled: z.boolean().optional(),
   flatAmountCents: z.number().int().nonnegative().nullable().optional(),
   minOrderCents: z.number().int().nonnegative().nullable().optional(),
@@ -36,3 +36,12 @@ export const credentialUpsertSchema = z.object({
 export const simulateSchema = z.object({
   shippingAddress: addressSchema,
 })
+
+export const surchargeUpdateSchema = z
+  .object({
+    dhlBaseCents: z.number().int().nonnegative().optional(),
+    fedexBaseCents: z.number().int().nonnegative().optional(),
+    dhlLengthCents: z.number().int().nonnegative().optional(),
+    lengthThresholdMeters: z.number().positive().optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: 'Nessun campo da aggiornare' })

@@ -5,7 +5,12 @@ import { encryptSecret, redactSecret } from '../../lib/secrets.js'
 import { env } from '../../config/env.js'
 import type { ShippingAddressInput } from '../../adapters/shipping/types.js'
 import { shippingService } from './shipping.service.js'
+import {
+  loadShippingSurchargeRules,
+  updateShippingSurchargeRules,
+} from './shipping.surcharges.js'
 import type { Request } from 'express'
+import { getStorePickupLocation } from '../../config/store-location.js'
 
 export const shippingAdminService = {
   async listZones() {
@@ -151,14 +156,72 @@ export const shippingAdminService = {
     if (!req.sessionRecord) {
       throw new AppError('NO_SESSION', 'No session', 'Simulazione richiede sessione o endpoint dedicato.', 400, false)
     }
-    return shippingService.quotes(req, { shippingAddress })
+    return shippingService.quotes(req, {
+      shippingAddress: {
+        firstName: shippingAddress.firstName,
+        lastName: shippingAddress.lastName,
+        line1: shippingAddress.line1,
+        line2: shippingAddress.line2,
+        streetNumber: shippingAddress.streetNumber ?? '',
+        isSnc: shippingAddress.isSnc ?? false,
+        city: shippingAddress.city,
+        postalCode: shippingAddress.postalCode,
+        country: shippingAddress.country,
+        phone: shippingAddress.phone,
+        courierNotes: shippingAddress.courierNotes,
+      },
+    })
+  },
+
+  async getSurcharges() {
+    return loadShippingSurchargeRules()
+  },
+
+  async updateSurcharges(patch: {
+    dhlBaseCents?: number
+    fedexBaseCents?: number
+    dhlLengthCents?: number
+    lengthThresholdMeters?: number
+  }) {
+    return updateShippingSurchargeRules(patch)
   },
 }
 
-export async function seedDefaultShippingZones() {
-  const existing = await prisma.shippingZone.count()
-  if (existing > 0) return
+async function syncCarrierCredentialsFromEnv() {
+  for (const provider of [CarrierProvider.DHL, CarrierProvider.FEDEX]) {
+    await prisma.carrierCredential.upsert({
+      where: { provider },
+      create: { provider, enabled: false, sandbox: true },
+      update: {},
+    })
+  }
 
+  if (env.DHL_API_KEY) {
+    await shippingAdminService.upsertCredential({
+      provider: CarrierProvider.DHL,
+      enabled: env.DHL_ENABLED,
+      apiKey: env.DHL_API_KEY,
+      apiSecret: env.DHL_API_SECRET,
+      accountId: env.DHL_ACCOUNT_NUMBER,
+      sandbox: env.DHL_SANDBOX,
+    })
+  }
+  if (env.FEDEX_CLIENT_ID) {
+    await shippingAdminService.upsertCredential({
+      provider: CarrierProvider.FEDEX,
+      enabled: env.FEDEX_ENABLED,
+      apiKey: env.FEDEX_CLIENT_ID,
+      apiSecret: env.FEDEX_CLIENT_SECRET,
+      accountId: env.FEDEX_ACCOUNT_NUMBER,
+      sandbox: env.FEDEX_API_BASE_URL?.includes('sandbox') ?? true,
+    })
+  }
+}
+
+export async function seedDefaultShippingZones() {
+  const pickupLabel = getStorePickupLocation().label
+  const existing = await prisma.shippingZone.count()
+  if (existing === 0) {
   await prisma.shippingZone.create({
     data: {
       name: 'Italia',
@@ -176,8 +239,13 @@ export async function seedDefaultShippingZones() {
           {
             name: 'Spedizione gratuita',
             type: ShippingMethodType.FREE_SHIPPING,
-            freeAboveCents: 15000,
+            freeAboveCents: 20000,
             priority: 2,
+          },
+          {
+            name: pickupLabel,
+            type: ShippingMethodType.PICKUP,
+            priority: 5,
           },
           {
             name: 'DHL Express (live)',
@@ -195,31 +263,39 @@ export async function seedDefaultShippingZones() {
       },
     },
   })
-
-  for (const provider of [CarrierProvider.DHL, CarrierProvider.FEDEX]) {
-    await prisma.carrierCredential.upsert({
-      where: { provider },
-      create: { provider, enabled: false, sandbox: true },
-      update: {},
-    })
   }
 
-  if (env.DHL_API_KEY) {
-    await shippingAdminService.upsertCredential({
-      provider: CarrierProvider.DHL,
-      enabled: env.DHL_ENABLED,
-      apiKey: env.DHL_API_KEY,
-      apiSecret: env.DHL_API_SECRET,
-      accountId: env.DHL_ACCOUNT_NUMBER,
-    })
-  }
-  if (env.FEDEX_CLIENT_ID) {
-    await shippingAdminService.upsertCredential({
-      provider: CarrierProvider.FEDEX,
-      enabled: env.FEDEX_ENABLED,
-      apiKey: env.FEDEX_CLIENT_ID,
-      apiSecret: env.FEDEX_CLIENT_SECRET,
-      accountId: env.FEDEX_ACCOUNT_NUMBER,
+  await syncCarrierCredentialsFromEnv()
+  await ensurePickupMethodAndFreeThreshold()
+}
+
+async function ensurePickupMethodAndFreeThreshold() {
+  const itZone = await prisma.shippingZone.findFirst({
+    where: { countries: { has: 'IT' } },
+    include: { methods: true },
+  })
+  if (!itZone) return
+
+  const pickupLabel = getStorePickupLocation().label
+  await prisma.shippingMethod.updateMany({
+    where: { zoneId: itZone.id, type: ShippingMethodType.PICKUP },
+    data: { name: pickupLabel },
+  })
+
+  await prisma.shippingMethod.updateMany({
+    where: { zoneId: itZone.id, type: ShippingMethodType.FREE_SHIPPING, freeAboveCents: 15000 },
+    data: { freeAboveCents: 20000 },
+  })
+
+  const hasPickup = itZone.methods.some((m) => m.type === ShippingMethodType.PICKUP)
+  if (!hasPickup) {
+    await prisma.shippingMethod.create({
+      data: {
+        zoneId: itZone.id,
+        name: pickupLabel,
+        type: ShippingMethodType.PICKUP,
+        priority: 5,
+      },
     })
   }
 }

@@ -4,7 +4,10 @@ import { AppError, isAppError } from '../../types/errors.js'
 import type { CheckoutSessionDTO, PaymentUrlDTO } from '../../types/dto.js'
 import { checkoutRepository } from './checkout.repository.js'
 import { cartService } from '../cart/cart.service.js'
+import { syncCartContactEmail } from '../cart/cart-contact.service.js'
 import { createOdooCheckoutAdapter } from '../../adapters/odoo/odooCheckoutAdapter.js'
+import { buildCheckoutPriceSnapshot } from '../cart/cart-price-freeze.service.js'
+import { prisma } from '../../lib/prisma.js'
 
 const checkoutAdapter = createOdooCheckoutAdapter()
 
@@ -78,13 +81,20 @@ export const checkoutService = {
     }
     const s = assertSession(req)
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24)
+    const cartRow = await prisma.cart.findUnique({
+      where: { id: cart.id },
+      include: { items: true, shippingSelection: true },
+    })
+    const priceSnapshot = cartRow ? buildCheckoutPriceSnapshot(cartRow) : undefined
     const row = await checkoutRepository.create({
       email,
       state: 'DRAFT',
       expiresAt,
       cart: { connect: { id: cart.id } },
+      ...(priceSnapshot ? { priceSnapshotJson: priceSnapshot } : {}),
       ...(s.userId ? { user: { connect: { id: s.userId } } } : {}),
     })
+    await syncCartContactEmail(cart.id)
     return toDTO(row)
   },
 

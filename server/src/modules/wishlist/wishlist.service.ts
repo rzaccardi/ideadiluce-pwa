@@ -2,7 +2,15 @@ import { AppError } from '../../types/errors.js'
 import type { ProductDetailDTO, WishlistItemDTO } from '../../types/dto.js'
 import type { Request } from 'express'
 import { resolveCatalogProduct } from '../catalog/catalogResolver.service.js'
+import { formatOdooTemplateRef } from '../catalog/odooRef.js'
 import { wishlistRepository } from './wishlist.repository.js'
+
+function storedProductRef(product: ProductDetailDTO): string {
+  if (product.odooTemplateId != null) {
+    return formatOdooTemplateRef(product.odooTemplateId)
+  }
+  return product.slug
+}
 
 function assertSession(req: Request) {
   const s = req.sessionRecord
@@ -50,9 +58,10 @@ export const wishlistService = {
       throw new AppError('PRODUCT_NOT_FOUND', 'Unknown product', 'Prodotto non disponibile.', 404, false)
     }
     const variantRef = resolveVariantRef(product, input.variantRef)
+    const productRef = storedProductRef(product)
     const row = s.userId
-      ? await wishlistRepository.addForUser(s.userId, product.slug, variantRef)
-      : await wishlistRepository.addForSession(s.id, product.slug, variantRef)
+      ? await wishlistRepository.addForUser(s.userId, productRef, variantRef)
+      : await wishlistRepository.addForSession(s.id, productRef, variantRef)
     return { id: row.id, productRef: row.productRef, variantRef: row.variantRef }
   },
 

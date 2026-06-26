@@ -40,4 +40,18 @@ export const cartController = {
     const data = await cartService.reprice(req)
     res.json(ok(data))
   }),
+
+  syncFromClient: asyncHandler(async (req: Request, res: Response) => {
+    const body = req.body as {
+      items: Array<{ productRef: string; variantRef?: string | null; quantity: number }>
+      expiresAt?: string | null
+    }
+    const data = await cartService.syncFromClient(req, body)
+    res.json(ok(data))
+  }),
+
+  checkStock: asyncHandler(async (req: Request, res: Response) => {
+    const data = await cartService.checkStock(req)
+    res.json(ok(data))
+  }),
 }

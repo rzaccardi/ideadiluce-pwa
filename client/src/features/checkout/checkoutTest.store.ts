@@ -6,11 +6,14 @@ export function emptyAddress(): AddressInput {
     firstName: '',
     lastName: '',
     line1: '',
+    streetNumber: '',
+    isSnc: false,
     line2: '',
     city: '',
     postalCode: '',
     country: 'IT',
     phone: '',
+    courierNotes: '',
   }
 }
 

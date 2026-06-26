@@ -7,7 +7,14 @@
     "jsx": "react-jsx",
     "strict": true,
     "skipLibCheck": true,
-    "noEmit": true
+    "noEmit": true,
+    "types": ["vite/client"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@runplay/shared": ["../../runplay/packages/shared/src/index.ts"],
+      "@runplay/shared/*": ["../../runplay/packages/shared/src/*"]
+    }
   },
   "include": ["src"]
 }

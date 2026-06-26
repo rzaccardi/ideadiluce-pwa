@@ -1,5 +1,8 @@
 import { cn } from '@/utils/cn'
 
+/** Larghezza contenuto pagine storefront — allineata a SectionContainer. */
+export const SITE_CONTENT_CLASS = 'mx-auto w-full max-w-[1320px] px-4 sm:px-6 lg:px-12'
+
 export function Container({
   className,
   children,
@@ -7,5 +10,5 @@ export function Container({
   className?: string
   children: React.ReactNode
 }) {
-  return <div className={cn('mx-auto w-full max-w-6xl px-4', className)}>{children}</div>
+  return <div className={cn(SITE_CONTENT_CLASS, className)}>{children}</div>
 }

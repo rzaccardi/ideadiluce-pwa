@@ -1,0 +1,35 @@
+import type { QuoteLineDTO } from '@/types/dto'
+import { formatMoney } from '@/lib/format'
+import type { MessageKey } from '@/i18n/messages'
+
+type Props = {
+  lines: readonly QuoteLineDTO[]
+  currencyCode: string
+  tParams: (key: MessageKey, params: Record<string, string | number>) => string
+}
+
+export function AccountDcQuoteLines({ lines, currencyCode, tParams }: Props) {
+  if (lines.length === 0) return null
+
+  return (
+    <ul className="divide-y divide-[#eef0f3] rounded-xl border border-[#e7eaee]">
+      {lines.map((line) => (
+        <li
+          key={`${line.productRef}-${line.variantRef ?? ''}-${line.quantity}`}
+          className="flex flex-wrap items-center justify-between gap-3 px-[18px] py-3.5 text-sm"
+        >
+          <div className="min-w-0">
+            <div className="font-mono text-[10px] text-[#8b919b]">{line.productRef}</div>
+            <p className="font-semibold text-[#14161b]">{line.productName}</p>
+            <p className="text-[12.5px] text-[#6c727c]">
+              {tParams('orders.detail.quantity', { count: line.quantity })}
+            </p>
+          </div>
+          <p className="font-extrabold text-[#14161b]">
+            {formatMoney(line.lineTotalCents, currencyCode)}
+          </p>
+        </li>
+      ))}
+    </ul>
+  )
+}

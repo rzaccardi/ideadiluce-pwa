@@ -4,14 +4,21 @@ import { paymentsController } from '../../controllers/payments.controller.js'
 import {
   confirmPaymentSchema,
   createPaymentSessionSchema,
+  prepareWalletCheckoutSchema,
 } from './payments.validators.js'
 
 export const paymentsRouter = Router()
 
+paymentsRouter.get('/stripe/config', paymentsController.stripeConfig)
 paymentsRouter.post(
   '/create-session',
   validateRequest({ body: createPaymentSessionSchema }),
   paymentsController.createSession,
+)
+paymentsRouter.post(
+  '/prepare-wallet-checkout',
+  validateRequest({ body: prepareWalletCheckoutSchema }),
+  paymentsController.prepareWalletCheckout,
 )
 paymentsRouter.post(
   '/confirm',

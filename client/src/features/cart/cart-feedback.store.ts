@@ -14,4 +14,6 @@ export const cartFeedbackStore = proxy({
   cartPulse: 0,
   flyInImageUrl: null as string | null,
   flyInToken: 0,
+  /** Incrementato per aprire il mini-carrello dall'esterno (es. toast aggiunta). */
+  miniCartOpenRequest: 0,
 })

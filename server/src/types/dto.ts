@@ -9,13 +9,64 @@ export type ApiErrorDTO = {
   details?: unknown
 }
 
+export type UserAddressDTO = {
+  firstName: string
+  lastName: string
+  line1: string
+  streetNumber?: string
+  isSnc?: boolean
+  line2?: string
+  city: string
+  postalCode: string
+  /** ISO 3166-1 alpha-2 */
+  country: string
+  phone?: string
+  courierNotes?: string
+}
+
+export type CustomerSegmentDTO = 'retail' | 'business' | 'professional'
+
+export type PriceDisplayModeDTO = 'ex_vat'
+
 export type UserDTO = {
   id: string
   email: string
   firstName: string | null
   lastName: string | null
   phone: string | null
+  shippingAddress: UserAddressDTO | null
+  preferredPaymentMethod: PwaPaymentMethodDTO | null
   status: string
+  customerSegment: CustomerSegmentDTO
+  pricelistLabel: string
+  /** Account con condizioni listino professional (segmento PROFESSIONAL). */
+  isProfessional: boolean
+  companyName: string | null
+  vatNumber: string | null
+  fiscalCode: string | null
+  pec: string | null
+  sdiCode: string | null
+  vatCountryCode: string | null
+  vatFormatValid: boolean | null
+  vatChecksumValid: boolean | null
+  fiscalCodeValid: boolean | null
+  viesValid: boolean | null
+  viesName: string | null
+  viesAddress: string | null
+  taxValidationStatus: string | null
+  taxCheckedAt: string | null
+  odooPartnerId: number | null
+  odooPricelistId: number | null
+}
+
+export type ImpersonationInfoDTO = {
+  adminEmail: string
+  adminDisplayName: string | null
+}
+
+export type AuthMeDTO = {
+  user: UserDTO
+  impersonation: ImpersonationInfoDTO | null
 }
 
 export type CategoryDTO = {
@@ -25,14 +76,85 @@ export type CategoryDTO = {
   parentId: string | null
 }
 
-export type ProductCardDTO = {
+export type CategoryDetailDTO = CategoryDTO & {
+  locale: string
+  description: string | null
+  productCount: number
+  seo: ProductSeoDTO
+}
+
+export type ProductSeoDTO = {
+  metaTitle: string | null
+  metaDescription: string | null
+  canonical: string | null
+  noindex: boolean
+}
+
+export type ProductAlternateDTO = {
+  locale: string
+  href: string
+}
+
+export type ProductCategoryRefDTO = {
   slug: string
   name: string
+}
+
+export type ProductBrandDTO = {
+  slug: string
+  name: string
+}
+
+/** Disponibilità (input per utility, non stato UI). */
+export type ProductAvailabilityDataDTO = {
+  qtyAvailable: number
+  isOrderable: boolean
+  restockDate?: string | null
+  customerLeadTimeDays?: number | null
+  isUnrecoverable?: boolean
+}
+
+export type ProductDocumentDTO = {
+  id: string
+  name: string
+  type?: string | null
+  format?: string | null
+  sizeBytes?: number | null
+  url: string
+}
+
+export type ProductRelatedDTO = ProductCardDTO & {
+  relation: 'related' | 'accessory' | 'alternative'
+}
+
+export type ProductCardDTO = {
+  slug: string
+  /** Lingua contenuto (IT, EN, ES, FR, DE). */
+  locale: string
+  name: string
   shortDescription: string | null
+  /** Chip tecnici per card catalogo (attacco, potenza, tensione, IP…). */
+  specTags?: string[]
+  /** Prezzo unitario netto IVA esclusa (centesimi EUR). */
   priceCents: number
+  priceDisplayMode: PriceDisplayModeDTO
   currency: string
   imageUrl: string | null
   categorySlug: string | null
+  /** Disponibilità acquisto (da Hub/Odoo live). */
+  inStock?: boolean
+  availability?: ProductAvailabilityDataDTO
+}
+
+export type StockRestockRequestDTO = {
+  id: string
+  email: string
+  productRef: string
+  variantRef: string | null
+  quantity: number
+  productName: string | null
+  requestType?: 'RESTOCK_NOTIFY' | 'PRODUCT_REQUEST'
+  createdAt: string
 }
 
 export type ProductVariantAttributeDTO = {
@@ -47,6 +169,16 @@ export type ProductVariantDTO = {
   attributes: ProductVariantAttributeDTO[]
   /** ID Odoo `product.product` quando mappato da Hub. */
   odooVariantId?: number | null
+  /** Prezzo Odoo per variante (centesimi). */
+  /** Prezzo unitario netto IVA esclusa (centesimi EUR). */
+  priceCents?: number
+  priceDisplayMode?: PriceDisplayModeDTO
+  inStock?: boolean
+  /** Quantità disponibile Odoo, se nota. */
+  stockQty?: number | null
+  availability?: ProductAvailabilityDataDTO
+  ean?: string | null
+  documents?: ProductDocumentDTO[]
 }
 
 export type PaginatedDTO<T> = {
@@ -59,17 +191,68 @@ export type PaginatedDTO<T> = {
   hasPreviousPage: boolean
 }
 
-export type ProductListDTO = PaginatedDTO<ProductCardDTO>
+export type ProductListDTO = PaginatedDTO<ProductCardDTO> & {
+  /** Offset per la pagina successiva quando `inStock=1`. */
+  nextInStockSkip?: number
+}
 
 export type ProductDetailDTO = ProductCardDTO & {
   longDescription: string | null
+  /** Prima tabella compatta (Informazioni aggiuntive). */
+  additionalInfoTableHtml?: string | null
+  /** Tabella caratteristiche tecniche estratta dal contenuto. */
+  specsTableHtml?: string | null
   sku: string | null
   inStock: boolean
   images: string[]
+  categories?: ProductCategoryRefDTO[]
+  brand?: ProductBrandDTO | null
   /** ID Odoo `product.template` quando mappato da Hub. */
   odooTemplateId?: number | null
   variants: ProductVariantDTO[]
+  seo: ProductSeoDTO
+  /** hreflang per pagina prodotto */
+  alternates: ProductAlternateDTO[]
+  availability?: ProductAvailabilityDataDTO
+  documents?: ProductDocumentDTO[]
+  relatedProducts?: ProductRelatedDTO[]
+  accessories?: ProductRelatedDTO[]
+  alternatives?: ProductRelatedDTO[]
+  ean?: string | null
+  weightKg?: number | null
+  /** Lunghezza prodotto in metri (Odoo/Arfly). */
+  lengthMeters?: number | null
+  dimensions?: { lengthCm?: number; widthCm?: number; heightCm?: number }
+  priceLabel?: 'excl_vat'
 }
+
+/** Social proof da ordini PWA pagati (nome anonimizzato). */
+export type ProductSocialProofEventDTO = {
+  buyerLabel: string
+  quantity: number
+  purchasedAt: string
+  source?: 'pwa' | 'odoo'
+}
+
+export type ProductSocialProofDTO = {
+  enabled: boolean
+  productName?: string
+  events: ProductSocialProofEventDTO[]
+  buyersLast30Days: number
+  unitsSoldLast30Days: number
+  minQuantity?: number
+}
+
+export type CartLineAvailabilityDTO = {
+  state: 'available' | 'orderable' | 'out_of_stock'
+  stockQty: number | null
+  effectiveLeadDays: number | null
+  warning: string | null
+}
+
+export type CartLineAvailabilityStatusDTO = 'available' | 'blocked' | 'limited'
+
+export type CartLineBlockReasonDTO = 'out_of_stock' | 'discontinued' | 'price_unavailable'
 
 export type CartItemDTO = {
   id: string
@@ -81,6 +264,43 @@ export type CartItemDTO = {
   /** Slug Woo per link UI quando productRef è ID Odoo. */
   productSlug: string | null
   productName: string | null
+  imageUrl: string | null
+  purchasable: boolean
+  availabilityStatus: CartLineAvailabilityStatusDTO
+  blockReason?: CartLineBlockReasonDTO
+  /** True se l'ultimo reprice ha aggiornato il prezzo unitario della riga. */
+  priceChanged?: boolean
+  availability: CartLineAvailabilityDTO
+}
+
+export type CartReservationDTO = {
+  enabled: boolean
+  startedAt: string | null
+  expiresAt: string | null
+  expiresInSeconds: number | null
+  elapsedSeconds: number | null
+  /** True se questo GET ha appena svuotato il carrello per scadenza. */
+  expired: boolean
+  ttlMinutes: number
+}
+
+export type FreeShippingHintDTO = {
+  thresholdCents: number
+  remainingCents: number
+  eligible: boolean
+  label: string
+}
+
+export type TaxBreakdownDTO = {
+  netCents: number
+  taxCents: number
+  taxRatePct: number
+  taxLabel: string
+  grossCents: number
+  isEstimate: boolean
+  disclaimerKey?: string
+  ruleId?: string
+  odooFiscalPositionId?: number | null
 }
 
 export type CartDTO = {
@@ -93,6 +313,33 @@ export type CartDTO = {
   estimatedShipping: number | null
   estimatedTotal: number | null
   itemCount: number
+  purchasableItemCount: number
+  warnings: string[]
+  deliveryLeadDays: number | null
+  /** Max lead time (giorni lavorativi) tra prodotti acquistabili — alias semantico di deliveryLeadDays. */
+  deliveryEstimateDays: number | null
+  /** Timestamp ISO dell'ultimo ricalcolo prezzi Odoo. */
+  repricedAt: string | null
+  reservation: CartReservationDTO
+  freeShippingHint?: FreeShippingHintDTO | null
+  taxBreakdown?: TaxBreakdownDTO | null
+  /** Copy UX carrello: tasse ricalcolate al checkout. */
+  taxEstimateNote?: string | null
+}
+
+export type CartStockInsufficientDTO = {
+  productRef: string
+  productSlug: string | null
+  productName: string | null
+  requested: number
+  available: number
+  availabilityStatus: CartLineAvailabilityStatusDTO
+  blockReason?: CartLineBlockReasonDTO
+}
+
+export type CartStockCheckDTO = {
+  ok: boolean
+  insufficient: CartStockInsufficientDTO[]
 }
 
 export type CheckoutSessionDTO = {
@@ -110,10 +357,14 @@ export type PaymentUrlDTO = {
 
 export type PwaOrderStatusDTO =
   | 'cart_created'
+  | 'draft'
   | 'checkout_started'
+  | 'checkout_locked'
   | 'payment_started'
   | 'payment_pending'
   | 'paid'
+  | 'paid_sync_pending'
+  | 'synced'
   | 'payment_failed'
   | 'abandoned'
   | 'cancelled'
@@ -132,6 +383,12 @@ export type PwaPaymentStatusDTO =
 
 export type PwaPaymentMethodDTO = 'card_nexi' | 'bank_transfer' | 'paypal' | 'google_pay' | 'stripe'
 
+export type ShippingSurchargeAppliedDTO = {
+  code: string
+  label: string
+  amountCents: number
+}
+
 export type ShippingQuoteDTO = {
   methodRef: string
   carrierCode: string
@@ -140,7 +397,15 @@ export type ShippingQuoteDTO = {
   amountCents: number
   currencyCode: string
   etaDays: number | null
-  source: 'flat' | 'free' | 'dhl' | 'fedex'
+  source: 'flat' | 'free' | 'dhl' | 'fedex' | 'pickup'
+}
+
+export type ShippingQuotesResponseDTO = {
+  quotes: ShippingQuoteDTO[]
+  freeShippingHint: FreeShippingHintDTO | null
+  surchargesApplied: ShippingSurchargeAppliedDTO[]
+  /** Max lead time carrello (consegna unica). */
+  deliveryEstimateDays: number | null
 }
 
 export type CheckoutStartDTO = {
@@ -154,6 +419,11 @@ export type CheckoutStartDTO = {
   amountTotal: number | null
 }
 
+export type StripeClientConfigDTO = {
+  enabled: boolean
+  publishableKey: string | null
+}
+
 export type PaymentSessionDTO = {
   paymentId: string
   orderId: string
@@ -164,6 +434,7 @@ export type PaymentSessionDTO = {
   currencyCode: string
   redirectUrl: string | null
   clientSecret: string | null
+  publishableKey: string | null
   instructions: Record<string, unknown> | null
 }
 
@@ -172,6 +443,16 @@ export type PaymentConfirmDTO = {
   paymentId: string
   orderStatus: PwaOrderStatusDTO
   paymentStatus: PwaPaymentStatusDTO
+}
+
+export type BankTransferInstructionsDTO = {
+  holder: string
+  iban: string
+  bankName: string | null
+  reference: string
+  amount: number
+  currencyCode: string
+  note: string
 }
 
 export type PwaOrderStatusResponseDTO = {
@@ -184,9 +465,29 @@ export type PwaOrderStatusResponseDTO = {
   amountTotal: number | null
   currencyCode: string
   lastPaymentError: string | null
+  bankTransferInstructions: BankTransferInstructionsDTO | null
+}
+
+export type ThankYouOrderDTO = PwaOrderStatusResponseDTO & {
+  displayOrderNumber: string
+  email: string
+  customerFirstName: string | null
+  createdAt: string
+  paidAt: string | null
+  shippingAddress: UserAddressDTO | null
+  lines: OrderLineDTO[]
+  subtotalCents: number | null
+  shippingCents: number | null
+  taxCents: number | null
+  taxLabel: string | null
+  disclaimerKey?: string | null
+  shippingMethodRef: string | null
+  isStorePickup: boolean
 }
 
 /** totalAmount in centesimi (minor units). */
+export type OrderSourceDTO = 'pwa' | 'odoo_manual' | 'other_ecommerce' | 'odoo_historical'
+
 export type OrderDTO = {
   id: string
   pwaOrderId: string | null
@@ -197,10 +498,116 @@ export type OrderDTO = {
   totalAmount: number | null
   createdAt: string
   odooPortalUrl: string | null
+  source: OrderSourceDTO
+  sourceLabel: string
+}
+
+export type OrderLineDTO = {
+  productRef: string
+  variantRef: string | null
+  quantity: number
+  productSlug: string | null
+  productName: string | null
+  imageUrl: string | null
+  /** Prezzo unitario netto IVA esclusa (centesimi EUR). */
+  unitPriceCents: number | null
+  lineTotalCents: number | null
+}
+
+export type OrderDetailDTO = OrderDTO & {
+  lines: OrderLineDTO[]
+  lineCount: number
+  isSingleItem: boolean
+}
+
+export type OrderReorderResultDTO = {
+  added: number
+  skipped: Array<{ productRef: string; reason: string }>
+  cart: CartDTO
 }
 
 export type WishlistItemDTO = {
   id: string
   productRef: string
   variantRef: string | null
+}
+
+export type QuoteRequestStatusDTO =
+  | 'draft'
+  | 'requested'
+  | 'sent'
+  | 'checkout_started'
+  | 'converted'
+  | 'cancelled'
+
+export type QuoteRequestDTO = {
+  id: string
+  status: QuoteRequestStatusDTO
+  email: string
+  currencyCode: string
+  estimatedSubtotal: number | null
+  estimatedTax: number | null
+  estimatedTotal: number | null
+  odooSaleOrderId: number | null
+  pwaOrderId: string | null
+  notes: string | null
+  createdAt: string
+  updatedAt: string
+  /** Preventivo pagabile online (stato Odoo approvato/inviato). */
+  payable?: boolean
+  payableReason?: 'payable' | 'expired' | 'not_sent' | 'cancelled' | 'converted' | 'draft'
+  expired?: boolean
+  validityDate?: string | null
+  odooReference?: string | null
+  source?: 'pwa' | 'odoo'
+}
+
+export type QuoteLineDTO = {
+  productRef: string
+  variantRef: string | null
+  productName: string
+  quantity: number
+  unitPriceCents: number
+  lineTotalCents: number
+}
+
+export type QuoteDetailDTO = QuoteRequestDTO & {
+  billingAddress: UserAddressDTO | null
+  shippingAddress: UserAddressDTO | null
+  lines: QuoteLineDTO[]
+  frozen: boolean
+}
+
+export type QuoteCheckoutDTO = {
+  quoteId: string
+  orderId: string
+  checkoutSessionId: string
+  orderStatus: PwaOrderStatusDTO
+}
+
+export type InvoiceDTO = {
+  /** ID opaco lato client (es. odoo-invoice-123). */
+  id: string
+  name: string
+  state: string
+  paymentState: string | null
+  currencyCode: string | null
+  amountTotalCents: number | null
+  invoiceDate: string | null
+  /** Il BE può generare il PDF per questa fattura. */
+  pdfAvailable: boolean
+  /** Link portale Odoo con access token (fallback se PDF non scaricabile). */
+  portalUrl?: string | null
+}
+
+export type IntegrationLogDTO = {
+  id: string
+  service: string
+  operation: string
+  correlationId: string
+  success: boolean
+  statusCode: number | null
+  durationMs: number | null
+  startedAt: string
+  finishedAt: string | null
 }

@@ -3,12 +3,14 @@ import type Stripe from 'stripe'
 import { prisma } from '../../lib/prisma.js'
 import { logger } from '../../lib/logger.js'
 import { retrieveStripeCheckoutSession } from '../../adapters/payments/stripeCheckoutAdapter.js'
-import { syncSaleOrderFunnelState } from '../../adapters/odoo/odooFunnelSync.js'
+import { registerPayment } from '../../adapters/odoo/odooPaymentLive.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { orderStatusToDTO, paymentMethodToDTO, paymentStatusToDTO } from './payment.types.js'
 import { env } from '../../config/env.js'
 import { createOdooPaymentAdapter } from '../../adapters/odoo/odooPaymentAdapter.js'
 import { createOdooOrderAdapter } from '../../adapters/odoo/odooOrderAdapter.js'
+import { enqueueOdooSyncFailure } from '../odoo/odoo-sync-queue.service.js'
+import { writeStructuredIntegrationLog } from '../../lib/integration-log-context.js'
 
 const paymentUrlAdapter = createOdooPaymentAdapter()
 const orderAdapter = createOdooOrderAdapter()
@@ -35,6 +37,21 @@ export async function finalizeStripeCheckout(
   }
 
   if (session.payment_status !== 'paid') {
+    const failedStatuses = ['unpaid', 'no_payment_required']
+    if (failedStatuses.includes(session.payment_status)) {
+      await prisma.pwaOrder.update({
+        where: { id: pwaOrderId },
+        data: {
+          orderStatus: 'PAYMENT_FAILED',
+          paymentStatus: 'FAILED',
+          lastPaymentError: 'Pagamento non completato o rifiutato.',
+        },
+      })
+      await prisma.pwaPayment.updateMany({
+        where: { orderId: pwaOrderId, provider: 'stripe' },
+        data: { status: 'FAILED', failedAt: new Date() },
+      })
+    }
     return { orderId: pwaOrderId, alreadyProcessed: false }
   }
 
@@ -145,9 +162,43 @@ export async function finalizeStripeCheckout(
         await prisma.pwaOrder.update({
           where: { id: updated.id },
           data: {
+            orderStatus: 'PAID_SYNC_PENDING',
             lastPaymentError: `Pagamento ricevuto ma sync Odoo righe fallita: ${msg}`,
             odooLastSyncStatus: 'FAILED',
           },
+        })
+        await enqueueOdooSyncFailure({
+          pwaOrderId: updated.id,
+          operation: 'reconcile_lines',
+          payload: {
+            pwaOrderId: updated.id,
+            odooSaleOrderId: updated.odooSaleOrderId,
+            lines: cart.items.map((i) => ({
+              productRef: i.productRef,
+              variantRef: i.variantRef,
+              quantity: i.quantity,
+              unitPriceCents: i.clientUnitPriceEstimate ?? undefined,
+            })),
+            shippingLine: cart.shippingSelection
+              ? {
+                  label: cart.shippingSelection.label,
+                  amountCents: cart.shippingSelection.amountCents,
+                  carrierCode: cart.shippingSelection.carrierCode,
+                  serviceCode: cart.shippingSelection.serviceCode,
+                }
+              : null,
+          },
+          lastError: msg,
+        })
+        await writeStructuredIntegrationLog({
+          service: 'stripe',
+          operation: 'checkout_finalize',
+          correlationId: ctx.correlationId,
+          success: false,
+          orderId: updated.id,
+          odooSaleOrderId: updated.odooSaleOrderId ?? undefined,
+          error: msg,
+          extra: { step: 'reconcile_lines', sessionId: session.id },
         })
         await prisma.webhookEvent.create({
           data: {
@@ -163,15 +214,56 @@ export async function finalizeStripeCheckout(
         return { orderId: pwaOrderId, alreadyProcessed: false }
       }
     }
-    await syncSaleOrderFunnelState(ctx, updated.odooSaleOrderId, {
+    const funnelResult = await registerPayment(ctx, {
+      saleOrderId: updated.odooSaleOrderId,
       pwaOrderId: updated.id,
-      orderStatus: 'paid',
-      paymentStatus: 'captured',
-      paymentMethod: 'stripe',
-      cartId: updated.cartId,
-      sessionId: updated.sessionId,
-      providerTransactionId: paymentIntentId,
+      method: 'stripe',
+      amountCents: updated.amountTotal ?? stripeTotal,
+      transactionId: paymentIntentId,
+      status: 'captured',
     })
+    if (funnelResult === 'failed') {
+      await prisma.pwaOrder.update({
+        where: { id: updated.id },
+        data: { orderStatus: 'PAID_SYNC_PENDING', odooLastSyncStatus: 'FAILED' },
+      })
+      await enqueueOdooSyncFailure({
+        pwaOrderId: updated.id,
+        operation: 'funnel_sync',
+        payload: {
+          pwaOrderId: updated.id,
+          funnelState: {
+            pwaOrderId: updated.id,
+            orderStatus: 'paid',
+            paymentStatus: 'captured',
+            paymentMethod: 'stripe',
+            cartId: updated.cartId,
+            sessionId: updated.sessionId,
+            providerTransactionId: paymentIntentId,
+          },
+        },
+        lastError: 'Conferma ordine Odoo fallita dopo pagamento Stripe',
+      })
+      await writeStructuredIntegrationLog({
+        service: 'stripe',
+        operation: 'checkout_finalize',
+        correlationId: ctx.correlationId,
+        success: false,
+        orderId: updated.id,
+        odooSaleOrderId: updated.odooSaleOrderId ?? undefined,
+        error: 'Conferma ordine Odoo fallita dopo pagamento Stripe',
+        extra: { step: 'funnel_sync', sessionId: session.id },
+      })
+    } else if (funnelResult === 'synced') {
+      await prisma.pwaOrder.update({
+        where: { id: updated.id },
+        data: {
+          orderStatus: 'SYNCED',
+          odooLastSyncAt: new Date(),
+          odooLastSyncStatus: 'SYNCED',
+        },
+      })
+    }
   }
 
   if (updated.userId && updated.odooSaleOrderId) {
@@ -230,6 +322,21 @@ export async function finalizeStripeCheckout(
     orderStatus: orderStatusToDTO(updated.orderStatus),
     paymentStatus: paymentStatusToDTO(updated.paymentStatus),
     paymentMethod: paymentMethodToDTO(updated.paymentMethod!),
+  })
+
+  await writeStructuredIntegrationLog({
+    service: 'stripe',
+    operation: 'checkout_finalize',
+    correlationId: ctx.correlationId,
+    success: updated.orderStatus !== 'PAID_SYNC_PENDING',
+    orderId: updated.id,
+    odooSaleOrderId: updated.odooSaleOrderId ?? undefined,
+    extra: {
+      sessionId: session.id,
+      paymentIntentId,
+      orderStatus: updated.orderStatus,
+      odooSyncStatus: updated.odooLastSyncStatus,
+    },
   })
 
   return { orderId: pwaOrderId, alreadyProcessed: false }

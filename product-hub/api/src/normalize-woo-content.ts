@@ -44,7 +44,7 @@ export function normalizeWooContent(raw: string | null | undefined): string | nu
   // Link esterni: apri in nuova scheda (comportamento Woo)
   s = s.replace(
     /<a\s+([^>]*href="https?:\/\/[^"]+"[^>]*)>/gi,
-    (tag, attrs: string) => {
+    (_match, attrs: string) => {
       if (/\btarget=/i.test(attrs)) return `<a ${attrs}>`
       if (/\brel=/i.test(attrs)) {
         return `<a ${attrs.replace(/rel="([^"]*)"/i, 'rel="$1 noopener noreferrer"')}>`

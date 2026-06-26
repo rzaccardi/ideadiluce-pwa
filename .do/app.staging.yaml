@@ -1,0 +1,132 @@
+# Idea di Luce — STAGING (branch staging, DB dev)
+#
+#   doctl apps create --spec .do/app.staging.yaml
+# Produzione: .do/app.yaml
+
+name: ideadiluce-pwa-staging
+region: fra1
+
+alerts:
+  - rule: DEPLOYMENT_FAILED
+
+databases:
+  - name: postgres
+    engine: PG
+    version: "16"
+    production: false
+
+services:
+  - name: api
+    environment_slug: node-js
+    github:
+      repo: rzaccardi/ideadiluce-pwa
+      branch: staging
+      deploy_on_push: true
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    http_port: 8080
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 30
+      period_seconds: 10
+      timeout_seconds: 5
+    build_command: npm ci && npm run build:server && npm run db:deploy && npm run hub:migrate
+    run_command: node server/dist/server.js
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8080"
+      - key: DATABASE_URL
+        value: ${postgres.DATABASE_URL}
+        scope: RUN_AND_BUILD_TIME
+      - key: CLIENT_ORIGIN
+        value: ${shop.PUBLIC_URL}
+      - key: ADMIN_ORIGIN
+        value: ${admin.PUBLIC_URL}
+      - key: CHECKOUT_REDIRECT_BASE
+        value: ${shop.PUBLIC_URL}
+      - key: APP_PUBLIC_URL
+        value: ${shop.PUBLIC_URL}
+      - key: PUBLIC_SITE_URL
+        value: ${shop.PUBLIC_URL}
+      - key: ARFLY_CATALOG_ENABLED
+        value: "true"
+      - key: ARFLY_API_BASE_URL
+        value: https://tlbdb.odoo.com
+      - key: ARFLY_WEBSITE_ID
+        value: "2"
+      - key: ODOO_ENABLED
+        value: "true"
+      - key: ODOO_URL
+        value: https://tlbdb.odoo.com/odoo
+      - key: ODOO_XMLRPC_URL
+        value: https://tlbdb.odoo.com
+      - key: STRIPE_ENABLED
+        value: "true"
+        scope: RUN_TIME
+      - key: ARFLY_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: ODOO_DB
+        scope: RUN_TIME
+        type: SECRET
+      - key: ODOO_USERNAME
+        scope: RUN_TIME
+        type: SECRET
+      - key: ODOO_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+      - key: STRIPE_SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: STRIPE_WEBHOOK_SECRET
+        scope: RUN_TIME
+        type: SECRET
+
+  - name: shop
+    environment_slug: node-js
+    github:
+      repo: rzaccardi/ideadiluce-pwa
+      branch: staging
+      deploy_on_push: true
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    http_port: 3000
+    build_command: npm ci && npm run build --workspace=client
+    run_command: npm run start --workspace=client
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: API_URL
+        value: ${api.PUBLIC_URL}
+        scope: RUN_AND_BUILD_TIME
+      - key: NEXT_PUBLIC_API_URL
+        value: ${api.PUBLIC_URL}
+        scope: RUN_AND_BUILD_TIME
+      - key: NEXT_PUBLIC_ARFLY_MEDIA_BASE_URL
+        value: https://tlbdb.odoo.com
+        scope: BUILD_TIME
+      - key: NEXT_PUBLIC_SITE_URL
+        value: ${shop.PUBLIC_URL}
+        scope: BUILD_TIME
+      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        scope: BUILD_TIME
+        type: SECRET
+
+static_sites:
+  - name: admin
+    github:
+      repo: rzaccardi/ideadiluce-pwa
+      branch: staging
+      deploy_on_push: true
+    build_command: npm ci && npm run build --workspace=admin
+    output_dir: admin/dist
+    index_document: index.html
+    catchall_document: index.html
+    envs:
+      - key: VITE_API_URL
+        value: ${api.PUBLIC_URL}
+        scope: BUILD_TIME

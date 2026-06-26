@@ -1,7 +1,15 @@
 import { createApp } from './app.js'
 import { env } from './config/env.js'
 import { logger } from './lib/logger.js'
+import { isGoogleMapsConfigured } from './modules/address/googleConfig.js'
 import { seedDefaultShippingZones } from './modules/shipping/shipping.admin.routes.js'
+import { seedDefaultTaxRules } from './modules/tax/tax.admin.routes.js'
+import { startPaidSyncAlertScheduler } from './jobs/paidSyncAlert.scheduler.js'
+import { startOdooSyncRetryScheduler } from './jobs/odooSyncRetry.scheduler.js'
+import {
+  startAbandonedCartScheduler,
+  startSyncRetryWorkerScheduler,
+} from './jobs/abandonedCart.scheduler.js'
 
 const app = createApp()
 
@@ -9,8 +17,24 @@ void seedDefaultShippingZones().catch((e) => {
   logger.warn('shipping.seed_failed', { err: String(e) })
 })
 
+void seedDefaultTaxRules().catch((e) => {
+  logger.warn('tax.seed_failed', { err: String(e) })
+})
+
+startOdooSyncRetryScheduler()
+startPaidSyncAlertScheduler()
+startAbandonedCartScheduler()
+startSyncRetryWorkerScheduler()
+
 const server = app.listen(env.PORT, () => {
   logger.info(`API in ascolto sulla porta ${env.PORT}`, { nodeEnv: env.NODE_ENV })
+  if (isGoogleMapsConfigured()) {
+    logger.info('Google Places autocomplete attivo (checkout indirizzi)')
+  } else if (env.GOOGLE_MAPS_API_KEY?.trim()) {
+    logger.warn(
+      'GOOGLE_MAPS_API_KEY impostata ma non valida (placeholder o troppo corta). Autocomplete indirizzi disattivato.',
+    )
+  }
 })
 
 server.on('error', (err: NodeJS.ErrnoException) => {

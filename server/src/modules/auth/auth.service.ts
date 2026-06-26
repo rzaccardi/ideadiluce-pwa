@@ -1,26 +1,21 @@
 import bcrypt from 'bcryptjs'
 import { prisma } from '../../lib/prisma.js'
+import { bumpCartReservation } from '../cart/cart.reservation.js'
 import { env } from '../../config/env.js'
 import { AppError } from '../../types/errors.js'
 import type { UserDTO } from '../../types/dto.js'
+import type { CustomerSegment, User } from '@prisma/client'
 import { authRepository } from './auth.repository.js'
 import { generateSessionToken, hashSessionToken } from '../../lib/token-hash.js'
-import type { User } from '@prisma/client'
+import { toUserDTO } from '../users/user.mapper.js'
+import { loginWithOdooCredentials } from './odoo-account-sync.service.js'
 
 function sessionExpiry(): Date {
   return new Date(Date.now() + env.SESSION_DAYS * 24 * 60 * 60 * 1000)
 }
 
-function toUserDTO(u: User): UserDTO {
-  return {
-    id: u.id,
-    email: u.email,
-    firstName: u.firstName,
-    lastName: u.lastName,
-    phone: u.phone,
-    status: u.status,
-  }
-}
+export { sessionExpiry }
+
 
 async function mergeCartsForUser(sessionId: string, userId: string) {
   await prisma.cart.updateMany({
@@ -70,6 +65,33 @@ async function mergeCartsForUser(sessionId: string, userId: string) {
       }
       await tx.cart.delete({ where: { id: other.id } })
     }
+    const merged = await tx.cart.findUnique({
+      where: { id: primary.id },
+      include: { items: true },
+    })
+    if (merged) {
+      await bumpCartReservation(primary.id, merged.items.length > 0)
+    }
+  })
+}
+
+async function mergeWishlistForUser(sessionId: string, userId: string) {
+  const sessionItems = await prisma.wishlistItem.findMany({ where: { sessionId } })
+  if (sessionItems.length === 0) return
+
+  await prisma.$transaction(async (tx) => {
+    for (const item of sessionItems) {
+      const variantRef = item.variantRef ?? null
+      const existing = await tx.wishlistItem.findFirst({
+        where: { userId, productRef: item.productRef, variantRef },
+      })
+      if (!existing) {
+        await tx.wishlistItem.create({
+          data: { userId, productRef: item.productRef, variantRef },
+        })
+      }
+      await tx.wishlistItem.delete({ where: { id: item.id } })
+    }
   })
 }
 
@@ -81,6 +103,7 @@ export const authService = {
       firstName?: string
       lastName?: string
       phone?: string
+      customerSegment?: 'retail' | 'business'
     },
     sessionId: string,
   ): Promise<UserDTO> {
@@ -95,21 +118,61 @@ export const authService = {
       )
     }
     const passwordHash = bcrypt.hashSync(input.password, 10)
+    const segment: CustomerSegment =
+      input.customerSegment === 'business' ? 'BUSINESS' : 'RETAIL'
     const user = await authRepository.createUser({
       email: input.email,
       passwordHash,
       firstName: input.firstName,
       lastName: input.lastName,
       phone: input.phone,
+      customerSegment: segment,
     })
     await authRepository.linkSessionToUser(sessionId, user.id, sessionExpiry())
     await mergeCartsForUser(sessionId, user.id)
+    await mergeWishlistForUser(sessionId, user.id)
     const fresh = await prisma.user.findUniqueOrThrow({ where: { id: user.id } })
-    return toUserDTO(fresh)
+    return await toUserDTO(fresh)
   },
 
-  async login(input: { email: string; password: string }, sessionId: string): Promise<UserDTO> {
+  async login(
+    input: { email: string; password: string },
+    sessionId: string,
+    correlationId?: string,
+  ): Promise<UserDTO> {
     const user = await authRepository.findUserByEmail(input.email)
+    if (user?.passwordHash) {
+      const ok = bcrypt.compareSync(input.password, user.passwordHash)
+      if (ok) {
+        await authRepository.linkSessionToUser(sessionId, user.id, sessionExpiry())
+        await mergeCartsForUser(sessionId, user.id)
+        await mergeWishlistForUser(sessionId, user.id)
+        const fresh = await prisma.user.findUniqueOrThrow({ where: { id: user.id } })
+        return await toUserDTO(fresh)
+      }
+    }
+
+    if (correlationId && env.ODOO_ENABLED) {
+      const odooUser = await loginWithOdooCredentials(
+        { correlationId },
+        input.email,
+        input.password,
+        sessionId,
+      )
+      if (odooUser) return odooUser
+    }
+
+    throw new AppError(
+      'INVALID_CREDENTIALS',
+      'Invalid login',
+      'Email o password non corretti.',
+      401,
+      false,
+    )
+  },
+
+  async loginByVerifiedEmail(email: string, sessionId: string): Promise<UserDTO> {
+    const user = await authRepository.findUserByEmail(email)
     if (!user?.passwordHash) {
       throw new AppError(
         'INVALID_CREDENTIALS',
@@ -119,29 +182,22 @@ export const authService = {
         false,
       )
     }
-    const ok = bcrypt.compareSync(input.password, user.passwordHash)
-    if (!ok) {
-      throw new AppError(
-        'INVALID_CREDENTIALS',
-        'Invalid login',
-        'Email o password non corretti.',
-        401,
-        false,
-      )
-    }
     await authRepository.linkSessionToUser(sessionId, user.id, sessionExpiry())
     await mergeCartsForUser(sessionId, user.id)
+    await mergeWishlistForUser(sessionId, user.id)
     const fresh = await prisma.user.findUniqueOrThrow({ where: { id: user.id } })
-    return toUserDTO(fresh)
+    return await toUserDTO(fresh)
   },
 
-  async logout(rawToken: string | null | undefined) {
+  async logout(sessionId: string | undefined, rawToken: string | null | undefined) {
     if (rawToken) {
       await authRepository.deleteSessionByTokenHash(hashSessionToken(rawToken))
+    } else if (sessionId) {
+      await prisma.session.deleteMany({ where: { id: sessionId } })
     }
   },
 
-  me(user: User): UserDTO {
+  async me(user: User): Promise<UserDTO> {
     return toUserDTO(user)
   },
 
@@ -154,5 +210,30 @@ export const authService = {
       },
     })
     return { token }
+  },
+
+  /** Ruota il token di sessione e prolunga la scadenza (stesso `session.id`, carrello invariato). */
+  async refreshSession(sessionId: string): Promise<{ token: string; expiresAt: Date }> {
+    const row = await prisma.session.findUnique({ where: { id: sessionId } })
+    if (!row || row.expiresAt < new Date()) {
+      throw new AppError(
+        'UNAUTHORIZED',
+        'Session expired',
+        'Sessione scaduta. Effettua di nuovo il login.',
+        401,
+        false,
+      )
+    }
+
+    const token = generateSessionToken()
+    const expiresAt = sessionExpiry()
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: {
+        tokenHash: hashSessionToken(token),
+        expiresAt,
+      },
+    })
+    return { token, expiresAt }
   },
 }

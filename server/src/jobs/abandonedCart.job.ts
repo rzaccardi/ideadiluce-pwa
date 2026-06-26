@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma.js'
 import { syncSaleOrderFunnelState } from '../adapters/odoo/odooFunnelSync.js'
+import { recordAbandonedCartEvent } from '../modules/cart/cart-contact.service.js'
 
 export async function processAbandonedCheckoutCandidates(
   olderThanMs = 1000 * 60 * 60 * 24,
@@ -23,12 +24,9 @@ export async function processAbandonedCheckoutCandidates(
       where: { id: order.cartId },
       data: { status: 'ABANDONED', abandonedAt },
     })
-    await prisma.abandonedCartEvent.create({
-      data: {
-        cartId: order.cartId,
-        eventType: 'checkout_timeout_abandoned',
-        payloadJson: { orderId: order.id, olderThanMs },
-      },
+    await recordAbandonedCartEvent(order.cartId, 'checkout_timeout_abandoned', {
+      orderId: order.id,
+      olderThanMs,
     })
     await syncSaleOrderFunnelState(
       { correlationId: `abandoned-${order.id}` },
@@ -51,6 +49,6 @@ export async function processAbandonedCheckoutCandidates(
   return { marked }
 }
 
-export async function scheduleAbandonedCartProcessing(): Promise<void> {
-  await processAbandonedCheckoutCandidates()
+export async function scheduleAbandonedCartProcessing(): Promise<{ marked: number }> {
+  return processAbandonedCheckoutCandidates()
 }

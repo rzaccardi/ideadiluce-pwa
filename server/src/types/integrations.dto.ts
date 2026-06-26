@@ -7,11 +7,14 @@ export type TestCheckoutAddressDTO = {
   firstName: string
   lastName: string
   line1: string
+  streetNumber: string
+  isSnc: boolean
   line2?: string
   city: string
   postalCode: string
   country: string
   phone?: string
+  courierNotes?: string
 }
 
 export type TestCheckoutCartSnapshotItemDTO = {

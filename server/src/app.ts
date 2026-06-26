@@ -1,20 +1,55 @@
 import express from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
+import rateLimit from 'express-rate-limit'
 import { env } from './config/env.js'
 import { correlationMiddleware } from './lib/correlation.js'
 import { healthRouter } from './routes/health.js'
 import { v1Router } from './routes/v1/index.js'
 import { errorHandler } from './middlewares/error-handler.js'
-import { loadOrCreateSession } from './middlewares/session.js'
+import { loadOrCreateSession, loadSessionIfPresent } from './middlewares/session.js'
 import { paymentsController } from './controllers/payments.controller.js'
+import { buildProductSitemapXml } from './modules/seo/sitemap.service.js'
+import { buildLlmsTxt } from './modules/seo/llms.service.js'
+import { arflyProxyRouter } from './modules/arfly-proxy/arfly-proxy.routes.js'
+import { asyncHandler } from './utils/async-handler.js'
+
+function isDevLocalhostOrigin(origin: string): boolean {
+  try {
+    const { protocol, hostname } = new URL(origin)
+    return protocol === 'http:' && (hostname === 'localhost' || hostname === '127.0.0.1')
+  } catch {
+    return false
+  }
+}
+
 export function createApp() {
   const app = express()
+  app.set('trust proxy', 1)
 
   app.use(correlationMiddleware)
   app.use(
+    rateLimit({
+      windowMs: 60_000,
+      max: env.NODE_ENV === 'production' ? 300 : 2000,
+      standardHeaders: true,
+      legacyHeaders: false,
+    }),
+  )
+  const corsOrigins = [...new Set([env.CLIENT_ORIGIN, env.ADMIN_ORIGIN])]
+  app.use(
     cors({
-      origin: env.CLIENT_ORIGIN,
+      origin(origin, callback) {
+        if (
+          !origin ||
+          corsOrigins.includes(origin) ||
+          (env.NODE_ENV === 'development' && isDevLocalhostOrigin(origin))
+        ) {
+          callback(null, true)
+          return
+        }
+        callback(new Error(`CORS: origine non consentita (${origin})`))
+      },
       credentials: true,
     }),
   )
@@ -25,7 +60,17 @@ export function createApp() {
   app.use(express.json())
 
   app.use(healthRouter)
+  app.get(
+    '/sitemap.xml',
+    asyncHandler(async (_req, res) => {
+      res.type('application/xml').send(await buildProductSitemapXml())
+    }),
+  )
+  app.get('/llms.txt', (_req, res) => {
+    res.type('text/plain; charset=utf-8').send(buildLlmsTxt())
+  })
   app.use('/api/v1', loadOrCreateSession, v1Router)
+  app.use('/api/v2', loadSessionIfPresent, arflyProxyRouter)
 
   app.use(errorHandler)
 

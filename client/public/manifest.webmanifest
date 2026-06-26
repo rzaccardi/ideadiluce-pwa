@@ -1,0 +1,9 @@
+{
+  "name": "Idea di Luce",
+  "short_name": "Idea di Luce",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#ffffff",
+  "theme_color": "#111111",
+  "lang": "it"
+}

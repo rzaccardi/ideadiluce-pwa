@@ -7,6 +7,60 @@ import type {
   SaleOrderLineInput,
   SaleOrderShippingLine,
 } from './odooOrderAdapter.js'
+import type { SyncSaleOrderDraftInput } from '../../modules/checkout/checkout-order.types.js'
+import { createOdooCustomerAdapter } from './odooCustomerAdapter.js'
+
+let saleOrderFieldsCache: Set<string> | null = null
+
+async function saleOrderFields(ctx: OdooCallContext): Promise<Set<string>> {
+  if (saleOrderFieldsCache) return saleOrderFieldsCache
+  const fields = await odooExecuteKw<Record<string, unknown>>(
+    ctx,
+    'sale.order',
+    'fields_get',
+    [],
+    { attributes: ['string'] },
+  )
+  saleOrderFieldsCache = new Set(Object.keys(fields))
+  return saleOrderFieldsCache
+}
+
+function appendOrderNoteFields(
+  extraVals: Record<string, unknown>,
+  fields: Set<string>,
+  input: SaleOrderInput,
+) {
+  const orderNotes = input.orderNotes?.trim()
+  if (orderNotes && fields.has('note')) {
+    extraVals.note = orderNotes
+  }
+
+  const courierNotes = input.courierNotes?.trim()
+  if (!courierNotes) return
+
+  if (fields.has('delivery_note')) {
+    extraVals.delivery_note = courierNotes
+    return
+  }
+  if (fields.has('x_pwa_courier_notes')) {
+    extraVals.x_pwa_courier_notes = courierNotes
+    return
+  }
+  if (fields.has('note') && !orderNotes) {
+    extraVals.note = `Consegna: ${courierNotes}`
+  }
+}
+
+function appendFiscalPosition(
+  extraVals: Record<string, unknown>,
+  fields: Set<string>,
+  input: SaleOrderInput,
+) {
+  const fpId = input.fiscalPositionId
+  if (fpId != null && fpId > 0 && fields.has('fiscal_position_id')) {
+    extraVals.fiscal_position_id = fpId
+  }
+}
 
 type TemplateMini = {
   id: number
@@ -108,17 +162,102 @@ async function buildOrderLineCommands(
   return commands
 }
 
+const customerAdapter = createOdooCustomerAdapter()
+
+async function resolveShippingPartnerId(
+  ctx: OdooCallContext,
+  input: SyncSaleOrderDraftInput,
+): Promise<number | null> {
+  if (!input.dropshipAddress) return null
+  const addr = input.dropshipAddress
+  const profile = {
+    firstName: addr.firstName,
+    lastName: addr.lastName,
+    line1: addr.line1,
+    streetNumber: addr.streetNumber ?? '',
+    isSnc: addr.isSnc ?? false,
+    line2: addr.line2,
+    city: addr.city,
+    postalCode: addr.postalCode,
+    country: addr.country,
+    phone: addr.phone,
+  }
+  const delivery = await customerAdapter.createDeliveryPartner(ctx, input.odooPartnerId, profile)
+  return delivery.odooPartnerId
+}
+
 export function createLiveOdooOrderAdapter(): OdooOrderAdapter {
-  return {
+  const adapter: OdooOrderAdapter = {
+    async syncSaleOrderDraft(ctx, input) {
+      const partnerShippingId = await resolveShippingPartnerId(ctx, input)
+      const clientRef =
+        input.clientOrderRef?.trim() ||
+        (input.pwaOrderId && input.pwaOrderId !== 'new' ? `PWA ${input.pwaOrderId}` : undefined)
+      return adapter.createOrUpdateSaleOrder(ctx, {
+        odooPartnerId: input.odooPartnerId,
+        odooPartnerShippingId: partnerShippingId,
+        odooSaleOrderId: input.odooSaleOrderId,
+        clientOrderRef: clientRef,
+        orderNotes: input.orderNotes,
+        courierNotes: input.courierNotes,
+        fiscalPositionId: input.fiscal?.fiscalPositionId ?? null,
+        currencyCode: input.currencyCode,
+        lines: input.lines,
+        shippingLine: input.shippingLine,
+      })
+    },
+
     async createOrUpdateSaleOrder(ctx: OdooCallContext, input: SaleOrderInput) {
       const lineCommands = await buildOrderLineCommands(ctx, input.lines, input.shippingLine)
       if (lineCommands.length === 0) {
         throw new Error('Nessuna riga ordine valida')
       }
 
+      const extraVals: Record<string, unknown> = {}
+      if (input.clientOrderRef?.trim()) {
+        extraVals.client_order_ref = input.clientOrderRef.trim()
+      }
+      const fields = await saleOrderFields(ctx)
+      appendOrderNoteFields(extraVals, fields, input)
+      appendFiscalPosition(extraVals, fields, input)
+
+      const existingId = input.odooSaleOrderId
+      if (existingId != null && existingId > 0) {
+        const rows = await odooExecuteKw<Array<{ state: string }>>(
+          ctx,
+          'sale.order',
+          'read',
+          [[existingId]],
+          { fields: ['state'] },
+        )
+        const state = rows[0]?.state
+        if (state && ['draft', 'sent'].includes(state)) {
+          await odooExecuteKw<boolean>(
+            ctx,
+            'sale.order',
+            'write',
+            [
+              [existingId],
+              {
+                partner_id: input.odooPartnerId,
+                ...(input.odooPartnerShippingId
+                  ? { partner_shipping_id: input.odooPartnerShippingId }
+                  : {}),
+                ...extraVals,
+                order_line: [[5, 0, 0], ...lineCommands],
+              },
+            ],
+            {},
+          )
+          return { odooSaleOrderId: existingId }
+        }
+      }
+
       const vals = {
         partner_id: input.odooPartnerId,
+        ...(input.odooPartnerShippingId ? { partner_shipping_id: input.odooPartnerShippingId } : {}),
         order_line: lineCommands,
+        ...extraVals,
       }
       const created = await odooExecuteKw<unknown>(ctx, 'sale.order', 'create', [vals], {})
 
@@ -155,4 +294,5 @@ export function createLiveOdooOrderAdapter(): OdooOrderAdapter {
       }
     },
   }
+  return adapter
 }

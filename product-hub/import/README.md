@@ -39,6 +39,12 @@ npm run hub:import-content
 
 Se `productsUpdated` resta 0, slug/ID del dump non corrispondono a quelli in Hub (dump di un altro backup).
 
+Dopo l’import contenuti, estrai le **caratteristiche tecniche** dalle tabelle HTML nei campi strutturati del BO:
+
+```bash
+npm run hub:extract-specs
+```
+
 ## URL legacy
 
 I permalink Yoast usano **`/prodotto/{slug}/`** (non `/product/`).
@@ -50,6 +56,7 @@ npm run hub:migrate
 npm run hub:import
 npm run hub:enrich
 npm run hub:import-content
+npm run hub:extract-specs
 npm run hub:sync-odoo
 ```
 
