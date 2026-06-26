@@ -1,3 +1,5 @@
+'use client'
+
 import { useLocale } from '@/context/locale-context'
 import { t, tParams, type MessageKey } from '@/i18n/messages'
 

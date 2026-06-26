@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '@/utils/cn'
 import { Button } from './Button'
 import { useI18n } from '@/hooks/use-i18n'
@@ -42,11 +43,20 @@ export function ConfirmDialog({
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [open, confirmPending, onCancel])
 
-  if (!open) return null
+  useEffect(() => {
+    if (!open) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [open])
 
-  return (
+  if (!open || typeof document === 'undefined') return null
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-idl-backdrop p-4"
+      className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen items-center justify-center bg-idl-backdrop p-4"
       role="presentation"
       onClick={() => {
         if (!confirmPending) onCancel()
@@ -83,6 +93,7 @@ export function ConfirmDialog({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

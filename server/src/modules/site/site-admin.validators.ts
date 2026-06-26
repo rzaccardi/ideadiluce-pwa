@@ -21,6 +21,12 @@ export const sitePagePatchSchema = z.object({
 })
 
 export const sitePageTranslateSchema = z.object({
-  content: z.unknown(),
+  content: z.unknown().optional(),
   sourceLocale: z.enum(SITE_LOCALES).optional(),
+  onlyMissingLocales: z.boolean().optional(),
+})
+
+export const siteTranslateMissingSchema = z.object({
+  pageKeys: z.array(sitePageKeyParamSchema.shape.pageKey).optional(),
+  targetLocales: z.array(z.enum(SITE_LOCALES)).optional(),
 })

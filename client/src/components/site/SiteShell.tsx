@@ -1,6 +1,6 @@
 'use client'
 
-import { LayoutGroup } from 'motion/react'
+import { LayoutGroup } from '@/lib/motion-client'
 import { Link } from '@/lib/navigation'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import type { DcActiveNavId } from '@/lib/dc-static-routes'

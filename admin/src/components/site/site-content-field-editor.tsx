@@ -1,6 +1,7 @@
 import { PlusIcon, Trash2Icon } from 'lucide-react'
 import { fieldLabel, isTechnicalField, isTextareaField } from '@/features/site/site-content-labels'
-import { setAtPath } from '@/features/site/site-content-utils'
+import { contentMatchesSearch } from '@/features/site/site-content-search'
+import { cloneContent, setAtPath } from '@/features/site/site-content-utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
@@ -15,6 +16,7 @@ type SiteContentFieldEditorProps = {
   onRootChange: (next: Record<string, unknown>) => void
   label?: string
   depth?: number
+  searchQuery?: string
 }
 
 export function SiteContentFieldEditor({
@@ -24,31 +26,42 @@ export function SiteContentFieldEditor({
   onRootChange,
   label,
   depth = 0,
+  searchQuery = '',
 }: SiteContentFieldEditorProps) {
   const key = path[path.length - 1]
+  const fieldKey = typeof key === 'string' ? key : null
+
+  if (searchQuery && !contentMatchesSearch(value, searchQuery, fieldKey)) {
+    return null
+  }
 
   if (typeof value === 'string') {
-    const fieldKey = typeof key === 'string' ? key : ''
     const controlLabel = label ?? (fieldKey ? fieldLabel(fieldKey) : 'Testo')
     const technical = fieldKey ? isTechnicalField(fieldKey) : false
     const multiline = fieldKey ? isTextareaField(fieldKey) || value.length > 120 : value.length > 120
 
     return (
-      <Field>
-        <FieldLabel>
-          {controlLabel}
-          {technical ? (
-            <Badge variant="outline" className="ml-2 font-normal">
-              tecnico
-            </Badge>
+      <Field className="gap-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <FieldLabel className="mb-0">
+            {controlLabel}
+            {technical ? (
+              <Badge variant="outline" className="ml-2 font-normal">
+                tecnico
+              </Badge>
+            ) : null}
+          </FieldLabel>
+          {multiline ? (
+            <span className="text-xs tabular-nums text-muted-foreground">{value.length} car.</span>
           ) : null}
-        </FieldLabel>
+        </div>
         {multiline ? (
           <Textarea
-            className="min-h-24"
+            className="min-h-24 resize-y"
             value={value}
+            placeholder="Testo visibile sul sito…"
             onChange={(e) => {
-              const next = structuredClone(root)
+              const next = cloneContent(root)
               setAtPath(next, path, e.target.value)
               onRootChange(next)
             }}
@@ -56,8 +69,9 @@ export function SiteContentFieldEditor({
         ) : (
           <Input
             value={value}
+            placeholder="Testo breve…"
             onChange={(e) => {
-              const next = structuredClone(root)
+              const next = cloneContent(root)
               setAtPath(next, path, e.target.value)
               onRootChange(next)
             }}
@@ -78,7 +92,7 @@ export function SiteContentFieldEditor({
           type="number"
           value={value}
           onChange={(e) => {
-            const next = structuredClone(root)
+            const next = cloneContent(root)
             setAtPath(next, path, Number(e.target.value))
             onRootChange(next)
           }}
@@ -93,7 +107,7 @@ export function SiteContentFieldEditor({
         <Switch
           checked={value}
           onCheckedChange={(checked) => {
-            const next = structuredClone(root)
+            const next = cloneContent(root)
             setAtPath(next, path, checked)
             onRootChange(next)
           }}
@@ -106,9 +120,14 @@ export function SiteContentFieldEditor({
   if (Array.isArray(value)) {
     const arrayLabel = label ?? (typeof key === 'string' ? fieldLabel(key) : 'Elenco')
     const isStringArray = value.every((item) => typeof item === 'string')
+    const visibleItems = value
+      .map((item, index) => ({ item, index }))
+      .filter(({ item }) => !searchQuery || contentMatchesSearch(item, searchQuery, fieldKey))
+
+    if (visibleItems.length === 0) return null
 
     return (
-      <FieldGroup className="rounded-lg border border-border/70 p-3">
+      <FieldGroup className="rounded-lg border border-border/70 bg-muted/20 p-3">
         <div className="flex items-center justify-between gap-2">
           <FieldLabel>{arrayLabel}</FieldLabel>
           <Button
@@ -116,7 +135,7 @@ export function SiteContentFieldEditor({
             variant="outline"
             size="sm"
             onClick={() => {
-              const next = structuredClone(root)
+              const next = cloneContent(root)
               const current = getArrayAtPath(next, path)
               if (!Array.isArray(current)) return
               current.push(isStringArray ? '' : {})
@@ -128,9 +147,9 @@ export function SiteContentFieldEditor({
             Aggiungi
           </Button>
         </div>
-        <FieldGroup>
-          {value.map((item, index) => (
-            <div key={`${path.join('.')}-${index}`} className="flex flex-col gap-2 rounded-md border border-dashed p-3">
+        <FieldGroup className="gap-3">
+          {visibleItems.map(({ item, index }) => (
+            <div key={`${path.join('.')}-${index}`} className="flex flex-col gap-2 rounded-md border border-dashed bg-background p-3">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm font-medium text-muted-foreground">
                   {fieldLabel(typeof key === 'string' ? key : 'item', index)}
@@ -140,7 +159,7 @@ export function SiteContentFieldEditor({
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    const next = structuredClone(root)
+                    const next = cloneContent(root)
                     const current = getArrayAtPath(next, path)
                     if (!Array.isArray(current)) return
                     current.splice(index, 1)
@@ -158,6 +177,7 @@ export function SiteContentFieldEditor({
                 root={root}
                 onRootChange={onRootChange}
                 depth={depth + 1}
+                searchQuery={searchQuery}
               />
             </div>
           ))}
@@ -167,12 +187,16 @@ export function SiteContentFieldEditor({
   }
 
   if (value && typeof value === 'object') {
-    const entries = Object.entries(value as Record<string, unknown>)
+    const entries = Object.entries(value as Record<string, unknown>).filter(([, childValue]) =>
+      !searchQuery || contentMatchesSearch(childValue, searchQuery, null),
+    )
+    if (entries.length === 0) return null
+
     const objectLabel = label ?? (typeof key === 'string' ? fieldLabel(key) : undefined)
 
     return (
-      <FieldGroup className={depth > 0 ? 'rounded-lg border border-border/60 p-3' : undefined}>
-        {objectLabel ? <FieldLabel className="text-base">{objectLabel}</FieldLabel> : null}
+      <FieldGroup className={depth > 0 ? 'gap-3 rounded-lg border border-border/60 bg-muted/10 p-3' : 'gap-4'}>
+        {objectLabel ? <FieldLabel className="text-base font-semibold text-gray-900">{objectLabel}</FieldLabel> : null}
         {entries.map(([childKey, childValue]) => (
           <SiteContentFieldEditor
             key={[...path, childKey].join('.')}
@@ -181,6 +205,7 @@ export function SiteContentFieldEditor({
             root={root}
             onRootChange={onRootChange}
             depth={depth + 1}
+            searchQuery={searchQuery}
           />
         ))}
       </FieldGroup>

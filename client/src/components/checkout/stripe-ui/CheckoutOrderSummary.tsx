@@ -335,9 +335,9 @@ export function CheckoutSummaryHeader({
       <BrandWordmark
         className={cn(
           'min-w-0 text-lg sm:text-[21px]',
-          dark ? 'text-[#f1e8d8]' : 'text-[#14161b]',
-          dark && '[&_span]:text-[#f0ad57]',
+          dark ? 'text-white' : 'text-[#14161b]',
         )}
+        accentClassName="text-[#f0ad57]"
       />
       <span
         className={cn(

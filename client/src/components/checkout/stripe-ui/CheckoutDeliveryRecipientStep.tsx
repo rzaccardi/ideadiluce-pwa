@@ -17,7 +17,7 @@ import {
   CheckoutActionRow,
   StripeBackButton,
   StripeFieldGroup,
-  StripeInput,
+  StripeControlledInput,
   StripePayButton,
 } from './StripeFields'
 
@@ -46,37 +46,37 @@ export function CheckoutDeliveryRecipientStep() {
         <CheckoutPanel className="space-y-4 bg-[#f7f8fa]">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <StripeFieldGroup>
-              <StripeInput
+              <StripeControlledInput
                 name="recipient-firstName"
                 placeholder={t('checkout.register.firstName')}
                 value={recipient.firstName}
-                onChange={(e) => updateDeliveryRecipientField('firstName', e.target.value)}
+                onValueChange={(value) => updateDeliveryRecipientField('firstName', value)}
               />
             </StripeFieldGroup>
             <StripeFieldGroup>
-              <StripeInput
+              <StripeControlledInput
                 name="recipient-lastName"
                 placeholder={t('checkout.register.lastName')}
                 value={recipient.lastName}
-                onChange={(e) => updateDeliveryRecipientField('lastName', e.target.value)}
+                onValueChange={(value) => updateDeliveryRecipientField('lastName', value)}
               />
             </StripeFieldGroup>
           </div>
           <StripeFieldGroup>
-            <StripeInput
+            <StripeControlledInput
               name="recipient-company"
               placeholder={t('checkout.deliveryRecipient.company')}
               value={recipient.company}
-              onChange={(e) => updateDeliveryRecipientField('company', e.target.value)}
+              onValueChange={(value) => updateDeliveryRecipientField('company', value)}
             />
           </StripeFieldGroup>
           <StripeFieldGroup>
-            <StripeInput
+            <StripeControlledInput
               type="tel"
               name="recipient-phone"
               placeholder={t('checkout.address.phoneOptional')}
               value={recipient.phone}
-              onChange={(e) => updateDeliveryRecipientField('phone', e.target.value)}
+              onValueChange={(value) => updateDeliveryRecipientField('phone', value)}
             />
           </StripeFieldGroup>
           <CheckoutAddressSection

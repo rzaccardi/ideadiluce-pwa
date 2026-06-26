@@ -5,10 +5,20 @@ import { Link } from '@/lib/navigation'
 import { useSnapshot } from 'valtio/react'
 import { authStore, checkoutRegister, login } from '@/features/auth'
 import type { ClearClientSessionScope } from '@/features/auth'
+import {
+  checkoutStore,
+  isBusinessAnagraficaComplete,
+  isBusinessCheckout,
+  setCustomerSegment,
+  validateTaxFields,
+} from '@/features/checkout'
+import type { CustomerSegmentChoice } from '@/features/checkout'
 import { useLogoutConfirm } from '@/hooks/use-logout-confirm'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { ApiRequestError } from '@/types/api'
+import { CheckoutBusinessFieldsSection } from '@/components/checkout/stripe-ui/CheckoutBusinessFieldsSection'
+import { CheckoutSegmentControl } from '@/components/checkout/stripe-ui/CheckoutStepPrimitives'
 import {
   CheckoutActionRow,
   StripeErrorBanner,
@@ -24,6 +34,7 @@ export type InlineAuthSuccessInfo = {
   firstName?: string
   lastName?: string
   phone?: string
+  customerSegment?: CustomerSegmentChoice
 }
 
 type Props = {
@@ -42,6 +53,8 @@ type Props = {
   onAuthenticatedContinue?: () => void | Promise<void>
   logoutScope?: ClearClientSessionScope
   initialMode?: 'register' | 'login'
+  /** Nel checkout: tipo cliente + dati azienda allo step registrazione. */
+  collectCustomerTypeOnRegister?: boolean
 }
 
 export function InlineAccountAuthStep({
@@ -59,10 +72,12 @@ export function InlineAccountAuthStep({
   onAuthenticatedContinue,
   logoutScope,
   initialMode = 'register',
+  collectCustomerTypeOnRegister = false,
 }: Props) {
   const { t } = useI18n()
   const lp = useLocalePath()
   const auth = useSnapshot(authStore)
+  const checkout = useSnapshot(checkoutStore)
   const { requestLogout, logoutDialog } = useLogoutConfirm({ scope: logoutScope })
   const [mode, setMode] = useState<'register' | 'login'>(initialMode)
   const [error, setError] = useState<string | null>(null)
@@ -73,14 +88,40 @@ export function InlineAccountAuthStep({
   const [password, setPassword] = useState('')
   const [loginEmail, setLoginEmail] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
+  const customerSegment: CustomerSegmentChoice =
+    checkout.customerSegment ?? 'retail'
 
   useEffect(() => {
     if (email && !loginEmail) setLoginEmail(email)
   }, [email, loginEmail])
 
+  useEffect(() => {
+    if (!collectCustomerTypeOnRegister || mode !== 'register') return
+    if (checkout.customerSegment == null) {
+      setCustomerSegment('retail')
+    }
+  }, [collectCustomerTypeOnRegister, mode, checkout.customerSegment])
+
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+
+    const segment = customerSegment ?? 'retail'
+    setCustomerSegment(segment)
+
+    if (segment === 'business') {
+      try {
+        await validateTaxFields()
+      } catch {
+        setError(t('checkout.error.incompleteStep'))
+        return
+      }
+      if (!isBusinessAnagraficaComplete()) {
+        setError(t('checkout.error.incompleteStep'))
+        return
+      }
+    }
+
     setLoading(true)
     const trimmedEmail = email.trim()
     try {
@@ -90,6 +131,7 @@ export function InlineAccountAuthStep({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         phone: phone.trim() || undefined,
+        customerSegment: collectCustomerTypeOnRegister ? segment : undefined,
       })
       await onAuthSuccess?.({
         mode: 'register',
@@ -97,6 +139,7 @@ export function InlineAccountAuthStep({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         phone: phone.trim() || undefined,
+        customerSegment: collectCustomerTypeOnRegister ? segment : undefined,
       })
     } catch (err) {
       if (err instanceof ApiRequestError && err.code === 'EMAIL_TAKEN') {
@@ -216,6 +259,19 @@ export function InlineAccountAuthStep({
 
       {mode === 'register' ? (
         <form onSubmit={(e) => void handleRegister(e)} className="space-y-3">
+          {collectCustomerTypeOnRegister ? (
+            <div className="space-y-2">
+              <p className="text-sm text-zinc-500">{t('checkout.customerType.hint')}</p>
+              <CheckoutSegmentControl<'retail' | 'business'>
+                value={customerSegment ?? 'retail'}
+                options={(['retail', 'business'] as const).map((value) => ({
+                  value,
+                  label: t(`checkout.customerType.${value}.title`),
+                }))}
+                onChange={(value) => setCustomerSegment(value)}
+              />
+            </div>
+          ) : null}
           <StripeFieldGroup>
             <StripeInput
               type="email"
@@ -271,7 +327,9 @@ export function InlineAccountAuthStep({
               minLength={8}
             />
           </StripeFieldGroup>
-          <p className="text-xs text-zinc-500">{t('checkout.account.createHint')}</p>
+          {collectCustomerTypeOnRegister && isBusinessCheckout() ? (
+            <CheckoutBusinessFieldsSection disabled={loading} />
+          ) : null}
           <CheckoutActionRow>
             <StripePayButton
               className="w-full"

@@ -4,7 +4,9 @@ import { useSnapshot } from 'valtio/react'
 import { fetchCart } from '@/features/cart'
 import {
   checkoutStore,
+  markAnagraficaCollectedAtAccount,
   prepareCheckoutAfterAuth,
+  setCustomerSegment,
   updateCheckoutAddress,
   updateCheckoutEmail,
 } from '@/features/checkout'
@@ -23,12 +25,18 @@ export function CheckoutRegistrationStep() {
     firstName?: string
     lastName?: string
     phone?: string
+    customerSegment?: 'retail' | 'business' | null
   }) {
     updateCheckoutEmail(info.email)
     if (info.mode === 'register') {
+      if (info.customerSegment) setCustomerSegment(info.customerSegment)
+      markAnagraficaCollectedAtAccount()
       if (info.firstName) updateCheckoutAddress('shipping', 'firstName', info.firstName)
       if (info.lastName) updateCheckoutAddress('shipping', 'lastName', info.lastName)
       if (info.phone) updateCheckoutAddress('shipping', 'phone', info.phone)
+      if (info.firstName) updateCheckoutAddress('billing', 'firstName', info.firstName)
+      if (info.lastName) updateCheckoutAddress('billing', 'lastName', info.lastName)
+      if (info.phone) updateCheckoutAddress('billing', 'phone', info.phone)
     }
     await fetchCart({ force: true })
     await prepareCheckoutAfterAuth()
@@ -48,6 +56,7 @@ export function CheckoutRegistrationStep() {
       authenticatedContinueLoading={checkout.addressPrefillLoading}
       onAuthenticatedContinue={() => void prepareCheckoutAfterAuth()}
       logoutScope="checkout"
+      collectCustomerTypeOnRegister
     />
   )
 }

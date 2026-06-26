@@ -1,6 +1,6 @@
 'use client'
 
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from '@/lib/motion-client'
 import { usePathname } from '@/lib/navigation'
 import {
   pageTransitionTiming,

@@ -30,4 +30,5 @@ export const checkoutRegisterBodySchema = z.object({
   firstName: z.string().min(1),
   lastName: z.string().min(1),
   phone: z.string().optional(),
+  customerSegment: z.enum(['retail', 'business']).optional(),
 })

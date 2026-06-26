@@ -1,11 +1,13 @@
 import { adminApi } from '@/lib/api'
 import { dedupeAsync } from '@/lib/async-cache'
+import { cloneContent } from './site-content-utils'
 import {
   siteStore,
   type SiteLocale,
   type SitePageDetail,
   type SitePageSummary,
 } from './site.store'
+import type { SiteCatalog, SiteI18nStatus, TranslateMissingResult } from '@/types/site'
 
 function errMessage(e: unknown) {
   return e instanceof Error ? e.message : String(e)
@@ -16,8 +18,11 @@ function setDraftContent(content: unknown) {
     content && typeof content === 'object' && !Array.isArray(content)
       ? (content as Record<string, unknown>)
       : {}
-  siteStore.draftContent = structuredClone(record)
-  siteStore.draftJson = JSON.stringify(record, null, 2)
+  const cloned = cloneContent(record)
+  const json = JSON.stringify(cloned, null, 2)
+  siteStore.draftContent = cloned
+  siteStore.draftJson = json
+  siteStore.savedDraftJson = json
 }
 
 async function loadSitePagesList() {
@@ -35,6 +40,35 @@ async function loadSitePagesList() {
 
 export function fetchSitePagesList() {
   return dedupeAsync('admin:site:pages', loadSitePagesList)
+}
+
+async function loadSiteCatalog() {
+  try {
+    siteStore.catalog = await adminApi<SiteCatalog>('/admin/site/catalog')
+  } catch (e) {
+    siteStore.error = errMessage(e)
+    siteStore.catalog = null
+  }
+}
+
+export function fetchSiteCatalog() {
+  return dedupeAsync('admin:site:catalog', loadSiteCatalog)
+}
+
+async function loadSiteI18nStatus() {
+  try {
+    siteStore.i18nStatus = await adminApi<SiteI18nStatus>('/admin/site/i18n/status')
+  } catch {
+    siteStore.i18nStatus = null
+  }
+}
+
+export function fetchSiteI18nStatus() {
+  return dedupeAsync('admin:site:i18n-status', loadSiteI18nStatus)
+}
+
+export async function refreshSiteTranslationOverview() {
+  await Promise.all([fetchSiteCatalog(), fetchSiteI18nStatus()])
 }
 
 export async function fetchSitePage(pageKey: string, locale: SiteLocale) {
@@ -90,6 +124,7 @@ export async function saveSitePage(
     })
     await fetchSitePage(pageKey, locale)
     await fetchSitePagesList()
+    await refreshSiteTranslationOverview()
   } catch (e) {
     siteStore.error = errMessage(e)
     throw e
@@ -98,20 +133,30 @@ export async function saveSitePage(
   }
 }
 
-export async function translateSitePage(pageKey: string) {
-  const content = parseDraftContent()
+export async function translateSitePage(
+  pageKey: string,
+  options?: { onlyMissingLocales?: boolean; useDraft?: boolean },
+) {
+  const onlyMissingLocales = options?.onlyMissingLocales ?? false
+  const useDraft = options?.useDraft ?? !onlyMissingLocales
+  const content = useDraft ? parseDraftContent() : undefined
 
   siteStore.isTranslating = true
   siteStore.error = null
   try {
     const result = await adminApi<{
       targetLocales: string[]
-      locales: Array<{ locale: string; updatedAt: string }>
+      skippedLocales?: string[]
+      locales: Array<{ locale: string; updatedAt: string; skipped?: boolean }>
     }>(`/admin/site/pages/${encodeURIComponent(pageKey)}/translate`, {
       method: 'POST',
-      body: JSON.stringify({ content, sourceLocale: 'IT' }),
+      body: JSON.stringify({ content, sourceLocale: 'IT', onlyMissingLocales }),
     })
     await fetchSitePagesList()
+    await refreshSiteTranslationOverview()
+    if (siteStore.locale !== 'IT') {
+      await fetchSitePage(pageKey, siteStore.locale)
+    }
     return result
   } catch (e) {
     siteStore.error = errMessage(e)
@@ -121,9 +166,40 @@ export async function translateSitePage(pageKey: string) {
   }
 }
 
+export async function translateAllMissingSitePages(pageKeys?: string[]) {
+  siteStore.isBulkTranslating = true
+  siteStore.error = null
+  try {
+    const result = await adminApi<TranslateMissingResult>('/admin/site/i18n/translate-missing', {
+      method: 'POST',
+      body: JSON.stringify(pageKeys?.length ? { pageKeys } : {}),
+    })
+    await fetchSitePagesList()
+    await refreshSiteTranslationOverview()
+    if (siteStore.locale !== 'IT') {
+      await fetchSitePage(siteStore.pageKey, siteStore.locale)
+    }
+    return result
+  } catch (e) {
+    siteStore.error = errMessage(e)
+    throw e
+  } finally {
+    siteStore.isBulkTranslating = false
+  }
+}
+
+export function setSiteFieldSearch(query: string) {
+  siteStore.fieldSearch = query
+}
+
+export function isSiteDraftDirty() {
+  return siteStore.draftJson !== siteStore.savedDraftJson
+}
+
 export function updateDraftContent(next: Record<string, unknown>) {
-  siteStore.draftContent = next
-  siteStore.draftJson = JSON.stringify(next, null, 2)
+  const cloned = cloneContent(next)
+  siteStore.draftContent = cloned
+  siteStore.draftJson = JSON.stringify(cloned, null, 2)
 }
 
 export function updateDraftJson(json: string) {

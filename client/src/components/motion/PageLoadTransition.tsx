@@ -1,6 +1,6 @@
 'use client'
 
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from '@/lib/motion-client'
 import type { ReactNode } from 'react'
 import { fadeUpVariants, transitionBase } from '@/lib/motion/presets'
 import { PAGE_FLEX_LAYOUT_CLASS } from '@/components/layout/PageFlexShell'

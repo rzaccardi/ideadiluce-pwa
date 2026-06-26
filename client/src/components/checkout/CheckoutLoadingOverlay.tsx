@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { CheckoutStep } from '@/features/checkout'
 import { useI18n } from '@/hooks/use-i18n'
 import type { MessageKey } from '@/i18n/messages'
@@ -27,13 +29,17 @@ const ADDRESS_STEPS: CheckoutStep[] = [
   'delivery_recipient',
 ]
 
+/** Tempo minimo di visualizzazione per evitare flash impercettibili tra step. */
+const OVERLAY_MIN_DISPLAY_MS = 450
+const OVERLAY_HIDE_DELAY_MS = 180
+
 export function resolveCheckoutLoading(params: {
   step: CheckoutStep
   isLoading: boolean
   isPaying: boolean
   addressPrefillLoading: boolean
+  taxValidating: boolean
   shippingQuotesLoading: boolean
-  shippingSelectingRef: string | null
   cartLoading: boolean
 }): LoadingState | null {
   const {
@@ -41,8 +47,8 @@ export function resolveCheckoutLoading(params: {
     isLoading,
     isPaying,
     addressPrefillLoading,
+    taxValidating,
     shippingQuotesLoading,
-    shippingSelectingRef,
     cartLoading,
   } = params
 
@@ -50,11 +56,11 @@ export function resolveCheckoutLoading(params: {
     return { visible: true, icon: 'shield', messageKey: 'checkout.loading.payment' }
   }
 
-  if (addressPrefillLoading) {
-    return { visible: true, icon: 'pin', messageKey: 'checkout.address.resolvingPrefill' }
+  if (addressPrefillLoading || taxValidating) {
+    return { visible: true, icon: 'pin', messageKey: 'checkout.loading.address' }
   }
 
-  if (shippingSelectingRef || shippingQuotesLoading) {
+  if (shippingQuotesLoading) {
     return { visible: true, icon: 'truck', messageKey: 'checkout.loading.shipping' }
   }
 
@@ -79,6 +85,35 @@ export function resolveCheckoutLoading(params: {
   return { visible: true, icon: 'bulb', messageKey: 'checkout.processing' }
 }
 
+export function useStableCheckoutLoading(state: LoadingState | null): LoadingState | null {
+  const [stable, setStable] = useState<LoadingState | null>(state)
+  const shownAtRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (state?.visible) {
+      if (shownAtRef.current == null) {
+        shownAtRef.current = Date.now()
+      }
+      setStable(state)
+      return
+    }
+
+    if (!stable?.visible) return
+
+    const elapsed = shownAtRef.current != null ? Date.now() - shownAtRef.current : OVERLAY_MIN_DISPLAY_MS
+    const delay = Math.max(OVERLAY_HIDE_DELAY_MS, OVERLAY_MIN_DISPLAY_MS - elapsed)
+
+    const timer = setTimeout(() => {
+      setStable(null)
+      shownAtRef.current = null
+    }, delay)
+
+    return () => clearTimeout(timer)
+  }, [state?.visible, state?.icon, state?.messageKey, stable?.visible])
+
+  return stable
+}
+
 function LoadingIcon({ icon }: { icon: CheckoutLoadingIcon }) {
   switch (icon) {
     case 'pin':
@@ -100,9 +135,19 @@ type Props = {
 export function CheckoutLoadingOverlay({ icon, messageKey }: Props) {
   const { t } = useI18n()
 
-  return (
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [])
+
+  if (typeof document === 'undefined') return null
+
+  const overlay = (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-[rgba(22,19,13,0.55)] p-4"
+      className="checkout-root checkout-loading-overlay fixed inset-0 z-[9999] flex h-[100dvh] w-screen touch-none items-center justify-center bg-[rgba(22,19,13,0.62)] p-4"
       role="status"
       aria-live="polite"
       aria-busy="true"
@@ -119,4 +164,6 @@ export function CheckoutLoadingOverlay({ icon, messageKey }: Props) {
       </div>
     </div>
   )
+
+  return createPortal(overlay, document.body)
 }

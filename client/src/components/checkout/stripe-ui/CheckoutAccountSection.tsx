@@ -13,7 +13,7 @@ import {
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { ApiRequestError } from '@/types/api'
-import { StripeErrorBanner, StripeFieldGroup, StripeInput } from './StripeFields'
+import { StripeErrorBanner, StripeFieldGroup, StripeControlledInput } from './StripeFields'
 
 /** Login email/password nel checkout (sezione compatta). */
 export function CheckoutAccountSection() {
@@ -92,24 +92,24 @@ export function CheckoutAccountSection() {
         {error ? <StripeErrorBanner message={error} /> : null}
         <form onSubmit={(e) => void handleLogin(e)} className="space-y-3">
           <StripeFieldGroup>
-            <StripeInput
+            <StripeControlledInput
               type="email"
               name="login-email"
               placeholder={t('common.email')}
               autoComplete="email"
               value={loginEmail}
-              onChange={(e) => setLoginEmail(e.target.value)}
+              onValueChange={setLoginEmail}
               required
             />
           </StripeFieldGroup>
           <StripeFieldGroup>
-            <StripeInput
+            <StripeControlledInput
               type="password"
               name="login-password"
               placeholder={t('common.password')}
               autoComplete="current-password"
               value={loginPassword}
-              onChange={(e) => setLoginPassword(e.target.value)}
+              onValueChange={setLoginPassword}
               required
             />
           </StripeFieldGroup>

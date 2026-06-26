@@ -11,12 +11,15 @@ import {
   resolvePrefilledAddress,
 } from '@/lib/addressAutocomplete'
 import { isCheckoutAddressValid } from '@/lib/checkout-address.validators'
+import { checkoutStore } from '@/features/checkout'
 import { AddressAutocompleteField } from '@/components/checkout/AddressAutocompleteField'
 import { useI18n } from '@/hooks/use-i18n'
+import { CheckoutAddressCard } from './CheckoutAddressCard'
 import { CheckoutAddressFields } from './CheckoutAddressFields'
 import {
   StripeFieldGroup,
-  StripeInput,
+  StripeFieldLabel,
+  StripeControlledInput,
   StripeSectionTitle,
 } from './StripeFields'
 
@@ -35,7 +38,7 @@ export function CheckoutAddressSection({
   prefix,
   address,
   showCourierNotes = false,
-  showTitle = true,
+  showTitle = false,
   onChange,
   onAddressResolved,
 }: Props) {
@@ -46,7 +49,6 @@ export function CheckoutAddressSection({
   const [addressSelected, setAddressSelected] = useState(() => isCheckoutAddressValid(address))
   const [detailsUnlocked, setDetailsUnlocked] = useState(false)
   const [focusStreetNumber, setFocusStreetNumber] = useState(false)
-  const [resolvingPrefill, setResolvingPrefill] = useState(false)
   const prefillAttemptedRef = useRef(false)
   const addressPrefillKey = [
     address.line1,
@@ -59,6 +61,12 @@ export function CheckoutAddressSection({
 
   useEffect(() => {
     prefillAttemptedRef.current = false
+  }, [addressPrefillKey])
+
+  useEffect(() => {
+    if (isCheckoutAddressValid(address)) {
+      setAddressSelected(true)
+    }
   }, [addressPrefillKey])
 
   useEffect(() => {
@@ -103,7 +111,7 @@ export function CheckoutAddressSection({
     if (!hasPrefilledAddress(address)) return
 
     prefillAttemptedRef.current = true
-    setResolvingPrefill(true)
+    checkoutStore.addressPrefillLoading = true
 
     void (async () => {
       try {
@@ -115,7 +123,7 @@ export function CheckoutAddressSection({
           setFocusStreetNumber(!address.streetNumber?.trim() && !address.isSnc)
         }
       } finally {
-        setResolvingPrefill(false)
+        checkoutStore.addressPrefillLoading = false
       }
     })()
   }, [autocompleteEnabled, addressSelected, addressPrefillKey])
@@ -133,75 +141,67 @@ export function CheckoutAddressSection({
   }
 
   return (
-    <section>
+    <section className="space-y-4">
       {showTitle ? <StripeSectionTitle>{title}</StripeSectionTitle> : null}
 
-      <StripeFieldGroup>
-        <StripeInput
-          name={`${prefix}-firstName`}
-          placeholder={t('common.firstName')}
-          value={address.firstName}
-          autoComplete="given-name"
-          onChange={(e) => onChange('firstName', e.target.value)}
-        />
-        <StripeInput
-          name={`${prefix}-lastName`}
-          placeholder={t('common.lastName')}
-          value={address.lastName}
-          autoComplete="family-name"
-          onChange={(e) => onChange('lastName', e.target.value)}
-        />
-        <StripeInput
-          name={`${prefix}-phone`}
-          type="tel"
-          placeholder={t('checkout.address.phoneOptional')}
-          value={address.phone ?? ''}
-          autoComplete="tel"
-          onChange={(e) => onChange('phone', e.target.value)}
-        />
-      </StripeFieldGroup>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <StripeFieldLabel htmlFor={`${prefix}-firstName`}>{t('common.firstName')}</StripeFieldLabel>
+          <StripeFieldGroup>
+            <StripeControlledInput
+              id={`${prefix}-firstName`}
+              name={`${prefix}-firstName`}
+              placeholder={t('common.firstName')}
+              value={address.firstName}
+              autoComplete="given-name"
+              onValueChange={(value) => onChange('firstName', value)}
+            />
+          </StripeFieldGroup>
+        </div>
+        <div>
+          <StripeFieldLabel htmlFor={`${prefix}-lastName`}>{t('common.lastName')}</StripeFieldLabel>
+          <StripeFieldGroup>
+            <StripeControlledInput
+              id={`${prefix}-lastName`}
+              name={`${prefix}-lastName`}
+              placeholder={t('common.lastName')}
+              value={address.lastName}
+              autoComplete="family-name"
+              onValueChange={(value) => onChange('lastName', value)}
+            />
+          </StripeFieldGroup>
+        </div>
+      </div>
 
-      <div className="mt-3">
+      <div>
+        <StripeFieldLabel htmlFor={`${prefix}-phone`}>{t('checkout.address.phoneOptional')}</StripeFieldLabel>
+        <StripeFieldGroup>
+          <StripeControlledInput
+            id={`${prefix}-phone`}
+            name={`${prefix}-phone`}
+            type="tel"
+            placeholder="+39 333 1234567"
+            value={address.phone ?? ''}
+            autoComplete="tel"
+            onValueChange={(value) => onChange('phone', value)}
+          />
+        </StripeFieldGroup>
+      </div>
+
+      <div>
+        <StripeFieldLabel htmlFor={`${prefix}-search`}>{t('checkout.address.label')}</StripeFieldLabel>
         {autocompleteEnabled ? (
           addressSelected ? (
-            <div>
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
-                {t('checkout.address.detailsTitle')}
-              </p>
-              <StripeFieldGroup>
-                <CheckoutAddressFields
-                  prefix={prefix}
-                  address={address}
-                  locked={!detailsUnlocked}
-                  showCourierNotes={showCourierNotes}
-                  focusStreetNumber={focusStreetNumber}
-                  onChange={onChange}
-                />
-              </StripeFieldGroup>
-              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-                <button
-                  type="button"
-                  onClick={() => setDetailsUnlocked((v) => !v)}
-                  className="text-sm text-zinc-900 underline decoration-zinc-300 underline-offset-2 hover:decoration-zinc-900"
-                >
-                  {detailsUnlocked
-                    ? t('checkout.address.lockEdits')
-                    : t('checkout.address.unlockEdits')}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleChangeAddress}
-                  className="text-sm text-zinc-900 underline decoration-zinc-300 underline-offset-2 hover:decoration-zinc-900"
-                >
-                  {t('checkout.address.changeAddress')}
-                </button>
-              </div>
-            </div>
-          ) : resolvingPrefill ? (
-            <div className="flex items-center gap-2 px-1 py-2">
-              <div className="size-4 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-600" />
-              <p className="text-sm text-zinc-500">{t('checkout.address.resolvingPrefill')}</p>
-            </div>
+            <CheckoutAddressCard
+              prefix={prefix}
+              address={address}
+              detailsUnlocked={detailsUnlocked}
+              showCourierNotes={showCourierNotes}
+              focusStreetNumber={focusStreetNumber}
+              onChange={onChange}
+              onToggleDetails={() => setDetailsUnlocked((v) => !v)}
+              onChangeAddress={handleChangeAddress}
+            />
           ) : (
             <StripeFieldGroup allowOverflow>
               <AddressAutocompleteField
@@ -219,22 +219,22 @@ export function CheckoutAddressSection({
             </StripeFieldGroup>
           )
         ) : (
-          <StripeFieldGroup>
+          <div className="overflow-hidden rounded-[14px] border border-[#e2e6eb] bg-white p-4 shadow-[0_1px_2px_rgba(20,22,27,0.04)] sm:p-5">
             <CheckoutAddressFields
+              layout="card"
               prefix={prefix}
               address={address}
               locked={false}
               showCourierNotes={showCourierNotes}
               onChange={onChange}
             />
-          </StripeFieldGroup>
+          </div>
         )}
+        {autocompleteEnabled && !addressSelected && addressProvider === 'google' ? (
+          <p className="mt-1.5 text-xs text-[#9298a3]">{t('checkout.address.googleHint')}</p>
+        ) : null}
+        {setupHint ? <p className="mt-1.5 text-xs text-amber-700">{setupHint}</p> : null}
       </div>
-
-      {autocompleteEnabled && !addressSelected && !resolvingPrefill && addressProvider === 'google' ? (
-        <p className="mt-1 text-xs text-zinc-500">{t('checkout.address.googleHint')}</p>
-      ) : null}
-      {setupHint ? <p className="mt-1 text-xs text-amber-700">{setupHint}</p> : null}
     </section>
   )
 }

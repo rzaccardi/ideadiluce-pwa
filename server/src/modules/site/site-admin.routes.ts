@@ -10,6 +10,7 @@ import {
   sitePageKeyParamSchema,
   sitePagePatchSchema,
   sitePageTranslateSchema,
+  siteTranslateMissingSchema,
 } from './site-admin.validators.js'
 
 export const siteAdminRouter = Router()
@@ -65,15 +66,31 @@ siteAdminRouter.put(
 )
 
 siteAdminRouter.post(
+  '/i18n/translate-missing',
+  validateRequest({ body: siteTranslateMissingSchema }),
+  asyncHandler(async (req, res) => {
+    const { pageKeys, targetLocales } = req.body
+    res.json(ok(await siteService.translateAllMissingPages(pageKeys, targetLocales)))
+  }),
+)
+
+siteAdminRouter.post(
   '/pages/:pageKey/translate',
   validateRequest({
     params: sitePageKeyParamSchema,
     body: sitePageTranslateSchema,
   }),
   asyncHandler(async (req, res) => {
-    const { content, sourceLocale = 'IT' } = req.body
+    const { content, sourceLocale = 'IT', onlyMissingLocales = false } = req.body
     res.json(
-      ok(await siteService.translateAdminPageToLocales(req.params.pageKey, content, sourceLocale)),
+      ok(
+        await siteService.translateAdminPageToLocales(
+          req.params.pageKey,
+          content,
+          sourceLocale,
+          { onlyMissingLocales },
+        ),
+      ),
     )
   }),
 )

@@ -33,13 +33,13 @@ export const checkoutFormColumnClass = 'mx-auto w-full max-w-[540px]'
 export const checkoutShellClass = [
   'checkout-root checkout-shell',
   'flex min-h-dvh w-full flex-col overflow-x-hidden',
-  'lg:grid lg:grid-cols-[minmax(300px,38%)_minmax(0,1fr)]',
+  'lg:grid lg:h-dvh lg:max-h-dvh lg:grid-cols-[minmax(300px,38%)_minmax(0,1fr)] lg:overflow-hidden',
 ].join(' ')
 
 /** Main checkout: colonna form bianca, scroll indipendente su desktop. */
 export const checkoutMainClass = [
   'flex w-full min-w-0 flex-1 flex-col bg-white',
-  'lg:col-start-2 lg:row-start-1 lg:min-h-dvh lg:overflow-y-auto',
+  'lg:col-start-2 lg:row-start-1 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain',
 ].join(' ')
 
 /** Contenuto colonna destra (form). */
@@ -61,7 +61,7 @@ export const checkoutSummaryInnerClass = [
 /** Sidebar checkout desktop — occupa la prima colonna della grid. */
 export const checkoutSummaryAsideClass = [
   'hidden min-h-0 min-w-0 bg-[var(--checkout-bg-dark,#16130d)]',
-  'lg:col-start-1 lg:row-start-1 lg:flex lg:min-h-dvh lg:flex-col lg:overflow-y-auto',
+  'lg:col-start-1 lg:row-start-1 lg:flex lg:h-full lg:min-h-0 lg:flex-col lg:overflow-y-auto lg:overscroll-contain',
 ].join(' ')
 
 /** Barra riepilogo mobile collassabile, sticky in cima. */

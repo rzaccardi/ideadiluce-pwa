@@ -50,6 +50,7 @@ import { BankTransferAwaitingNote } from '@/components/checkout/BankTransferInst
 import {
   CheckoutLoadingOverlay,
   resolveCheckoutLoading,
+  useStableCheckoutLoading,
 } from '@/components/checkout/CheckoutLoadingOverlay'
 import {
   checkoutColumnGutterClass,
@@ -153,15 +154,17 @@ export function CheckoutPage() {
     void fetchCart({ force: true })
   }
 
-  const loadingState = resolveCheckoutLoading({
-    step,
-    isLoading: checkout.isLoading,
-    isPaying: checkout.isPaying,
-    addressPrefillLoading: checkout.addressPrefillLoading,
-    shippingQuotesLoading: checkout.shippingQuotesLoading,
-    shippingSelectingRef: checkout.shippingSelectingRef,
-    cartLoading: cart.isLoading && !c,
-  })
+  const loadingState = useStableCheckoutLoading(
+    resolveCheckoutLoading({
+      step,
+      isLoading: checkout.isLoading,
+      isPaying: checkout.isPaying,
+      addressPrefillLoading: checkout.addressPrefillLoading,
+      taxValidating: checkout.business.taxValidating,
+      shippingQuotesLoading: checkout.shippingQuotesLoading,
+      cartLoading: cart.isLoading && !c,
+    }),
+  )
 
   useEffect(() => {
     if (isFrozenQuoteCheckout()) return
@@ -336,11 +339,11 @@ export function CheckoutPage() {
         <div
           className={cn(
             checkoutFormColumnClass,
-            'w-full border-b border-[#e2e6eb] py-3 sm:py-3.5 lg:hidden',
+            'w-full border-b border-white/10 bg-[#16130d] py-3 sm:py-3.5 lg:hidden',
             checkoutColumnGutterClass,
           )}
         >
-          <CheckoutSummaryHeader />
+          <CheckoutSummaryHeader theme="dark" />
         </div>
 
         <div className={checkoutFormContentClass}>

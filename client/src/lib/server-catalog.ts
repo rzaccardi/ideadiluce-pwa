@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { serverApiClient } from '@/api/server'
 import { toArflyLang } from '@/lib/arfly/locale'
 import { mapArflyListResponse, mapArflyProductDetail } from '@/lib/arfly/mapper'
@@ -15,7 +16,21 @@ export async function fetchFeaturedProducts(locale: PwaLocale, pageSize = 3): Pr
  * PDP SSR: stessa pipeline del CSR (by-slug → map → enrich-detail).
  * Cookie sessione inoltrati → proxy Arfly applica listino da sessione se assente in query.
  */
-export async function fetchProductDetailServer(
+async function findProductIdBySlugServer(slug: string, locale: PwaLocale): Promise<number | null> {
+  const lang = toArflyLang(locale)
+  let page = 1
+  while (page <= 20) {
+    const search = new URLSearchParams({ lang, page: String(page), per_page: '100' })
+    const list = await serverApiClient.get<ArflyProductListResponse>(`/api/v2/products?${search}`)
+    const hit = list.items.find((item) => item.slug === slug)
+    if (hit) return hit.id
+    if (page >= list.total_pages) break
+    page += 1
+  }
+  return null
+}
+
+export const fetchProductDetailServer = cache(async function fetchProductDetailServer(
   slug: string,
   locale: PwaLocale,
 ): Promise<{ product: ProductDetailDTO; relatedProducts: ProductCardDTO[] } | null> {
@@ -28,8 +43,20 @@ export async function fetchProductDetailServer(
       `/api/v2/product/by-slug?${bySlugSearch}`,
     )
   } catch {
-    // 404 o proxy non configurato: prodotto non trovato
-    return null
+    // by-slug non disponibile su Odoo: fallback slug → id (come CSR)
+  }
+
+  if (!res?.product) {
+    const productId = await findProductIdBySlugServer(slug, locale)
+    if (productId == null) return null
+    try {
+      const detailSearch = new URLSearchParams({ lang })
+      res = await serverApiClient.get<ArflyProductDetailResponse>(
+        `/api/v2/product/${productId}?${detailSearch}`,
+      )
+    } catch {
+      return null
+    }
   }
 
   if (!res?.product) return null
@@ -56,7 +83,7 @@ export async function fetchProductDetailServer(
   }
 
   return { product, relatedProducts }
-}
+})
 
 export async function fetchCatalogProductsServer(
   locale: PwaLocale,

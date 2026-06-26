@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, useReducedMotion } from 'motion/react'
+import { motion, useReducedMotion } from '@/lib/motion-client'
 import { Link } from '@/lib/navigation'
 import { useTheme } from '@/context/theme-context'
 import { useLocalePath } from '@/hooks/use-locale-path'

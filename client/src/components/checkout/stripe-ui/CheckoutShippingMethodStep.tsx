@@ -59,10 +59,11 @@ export function CheckoutShippingMethodStep() {
             checkout.isLoading ||
             checkout.shippingQuotesLoading
           }
-          loading={checkout.isLoading || checkout.shippingQuotesLoading}
           onClick={() => void advanceCheckoutStep()}
         >
-          {t('checkout.continueToPayment')}
+          {checkout.isLoading || checkout.shippingQuotesLoading
+            ? t('checkout.processing')
+            : t('checkout.continueToPayment')}
         </StripePayButton>
       </CheckoutActionRow>
     </section>

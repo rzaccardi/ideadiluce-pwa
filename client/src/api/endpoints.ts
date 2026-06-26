@@ -75,6 +75,7 @@ export const api = {
       firstName: string
       lastName: string
       phone?: string
+      customerSegment?: 'retail' | 'business'
     }) {
       return apiClient.post<{ user: UserDTO }>('/api/v1/auth/checkout-register', body)
     },

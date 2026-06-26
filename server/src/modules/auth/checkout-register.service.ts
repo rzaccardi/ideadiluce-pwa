@@ -47,6 +47,7 @@ export const checkoutRegisterService = {
       firstName: string
       lastName: string
       phone?: string
+      customerSegment?: 'retail' | 'business'
     },
     sessionId: string,
     correlationId: string,
@@ -65,6 +66,8 @@ export const checkoutRegisterService = {
 
     const ctx: OdooCallContext = { correlationId }
     const passwordHash = bcrypt.hashSync(input.password, 10)
+    const segment =
+      input.customerSegment === 'business' ? ('BUSINESS' as const) : ('RETAIL' as const)
     const displayName =
       [input.firstName, input.lastName].filter(Boolean).join(' ').trim() || normalized
 
@@ -101,6 +104,9 @@ export const checkoutRegisterService = {
           firstName: input.firstName.trim() || existing.firstName,
           lastName: input.lastName.trim() || existing.lastName,
           phone: input.phone?.trim() || existing.phone,
+          ...(input.customerSegment
+            ? { customerSegment: input.customerSegment === 'business' ? 'BUSINESS' : 'RETAIL' }
+            : {}),
         },
       })
     } else {
@@ -110,7 +116,7 @@ export const checkoutRegisterService = {
         firstName: input.firstName.trim(),
         lastName: input.lastName.trim(),
         phone: input.phone?.trim(),
-        customerSegment: 'RETAIL',
+        customerSegment: segment,
       })
     }
 

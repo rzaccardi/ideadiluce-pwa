@@ -9,6 +9,8 @@ import { useLogout } from '@/hooks/use-logout'
 
 type UseLogoutConfirmOptions = {
   scope?: ClearClientSessionScope
+  /** Default: home; `false` resta sulla pagina corrente (checkout). */
+  redirectTo?: string | false
 }
 
 export function useLogoutConfirm(options?: UseLogoutConfirmOptions) {
@@ -17,6 +19,8 @@ export function useLogoutConfirm(options?: UseLogoutConfirmOptions) {
   const performLogout = useLogout()
   const [open, setOpen] = useState(false)
   const [pending, setPending] = useState(false)
+
+  const isCheckoutScope = options?.scope === 'checkout'
 
   const requestLogout = useCallback(() => {
     setOpen(true)
@@ -29,7 +33,14 @@ export function useLogoutConfirm(options?: UseLogoutConfirmOptions) {
   async function confirmLogout() {
     setPending(true)
     try {
-      await performLogout({ scope: options?.scope, redirectTo: lp('/') })
+      const redirectTo =
+        options?.redirectTo ?? (isCheckoutScope ? false : lp('/'))
+
+      await performLogout({
+        scope: options?.scope,
+        redirectTo,
+        toast: true,
+      })
       setOpen(false)
     } finally {
       setPending(false)
@@ -40,7 +51,11 @@ export function useLogoutConfirm(options?: UseLogoutConfirmOptions) {
     <ConfirmDialog
       open={open}
       title={t('account.shell.logoutConfirmTitle')}
-      description={t('account.shell.logoutConfirmDescription')}
+      description={
+        isCheckoutScope
+          ? t('checkout.account.logoutConfirmDescription')
+          : t('account.shell.logoutConfirmDescription')
+      }
       confirmLabel={t('account.shell.logoutShort')}
       cancelLabel={t('common.cancel')}
       confirmPending={pending}

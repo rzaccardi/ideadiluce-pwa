@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { useLocalControlledField } from '@/hooks/use-local-controlled-field'
 import { ToastOnError } from '@/components/ToastFeedback'
 import { useI18n } from '@/hooks/use-i18n'
 import { cn } from '@/utils/cn'
@@ -59,6 +60,41 @@ export function StripeInput({ className, noBorder, ...props }: InputProps) {
         className,
       )}
       {...props}
+    />
+  )
+}
+
+type ControlledInputProps = Omit<InputProps, 'value' | 'defaultValue' | 'onChange'> & {
+  value: string
+  onValueChange: (value: string) => void
+  /** Normalizza al blur (es. maiuscole) senza spostare il cursore durante la digitazione. */
+  normalize?: (value: string) => string
+}
+
+/** Input checkout collegato a store globali — mantiene il cursore durante l'editing. */
+export function StripeControlledInput({
+  value,
+  onValueChange,
+  normalize,
+  onFocus,
+  onBlur,
+  ...props
+}: ControlledInputProps) {
+  const field = useLocalControlledField(value, onValueChange, { normalize })
+
+  return (
+    <StripeInput
+      {...props}
+      value={field.value}
+      onChange={field.onChange}
+      onFocus={(e) => {
+        field.onFocus(e)
+        onFocus?.(e)
+      }}
+      onBlur={(e) => {
+        field.onBlur(e)
+        onBlur?.(e)
+      }}
     />
   )
 }
@@ -170,11 +206,13 @@ export function StripeBackButton({
   children,
   onClick,
   className,
+  disabled,
   'aria-label': ariaLabel,
 }: {
   children?: ReactNode
   onClick?: () => void
   className?: string
+  disabled?: boolean
   'aria-label'?: string
 }) {
   const { t } = useI18n()
@@ -183,11 +221,13 @@ export function StripeBackButton({
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       aria-label={label}
       className={cn(
         'inline-flex w-12 shrink-0 items-center justify-center rounded-xl border border-[#e2e6eb] bg-white text-lg text-[#6c727c] transition sm:w-[54px] sm:text-xl',
         checkoutActionControlClass,
         'hover:border-[#14161b] hover:text-[#14161b]',
+        'disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}
     >

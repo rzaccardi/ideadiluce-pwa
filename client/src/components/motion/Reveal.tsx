@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, useReducedMotion } from 'motion/react'
+import { motion, useReducedMotion } from '@/lib/motion-client'
 import type { ReactNode } from 'react'
 import { defaultViewport, fadeUpVariants, transitionBase } from '@/lib/motion/presets'
 import { cn } from '@/utils/cn'

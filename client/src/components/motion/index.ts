@@ -1,3 +1,5 @@
+'use client'
+
 export { FadeIn } from './FadeIn'
 export { HoverLift } from './HoverLift'
 export { PageLoadTransition } from './PageLoadTransition'

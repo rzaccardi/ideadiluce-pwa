@@ -42,12 +42,12 @@ const catalogVariants = pageVariants(
   0.16,
 )
 
-/** Prodotto: scale + fade — focus sul dettaglio. */
+/** Prodotto: transizione rapida — focus sul contenuto. */
 const productVariants = pageVariants(
-  { opacity: 0, scale: 0.985, y: 8 },
-  { opacity: 0, scale: 0.99 },
-  0.3,
+  { opacity: 0, y: 10 },
+  { opacity: 0 },
   0.18,
+  0.1,
 )
 
 /** Checkout/account: rapido e discreto. */
@@ -76,7 +76,7 @@ export const pageTransitionVariants: Record<PageTransitionKind, Variants> = {
 export const pageTransitionTiming: Record<PageTransitionKind, Transition> = {
   editorial: { duration: 0.32, ease: EASE_OUT },
   catalog: { duration: 0.28, ease: EASE_OUT },
-  product: { duration: 0.3, ease: EASE_OUT },
+  product: { duration: 0.18, ease: EASE_OUT },
   checkout: transitionFast,
   default: transitionBase,
 }

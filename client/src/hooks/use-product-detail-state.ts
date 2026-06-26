@@ -28,7 +28,12 @@ export function useProductDetailState({
   const { locale } = useLocale()
   const { locale: i18nLocale, t } = useI18n()
   const snap = useSnapshot(productStore)
-  const product = snap.product?.slug === slug ? snap.product : null
+  const product =
+    snap.product?.slug === slug
+      ? snap.product
+      : initialProduct?.slug === slug
+        ? initialProduct
+        : null
   const relatedProducts =
     snap.product?.slug === slug ? snap.relatedProducts : (initialRelatedProducts ?? [])
 

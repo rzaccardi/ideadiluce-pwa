@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useLocalControlledField } from '@/hooks/use-local-controlled-field'
 import { useI18n } from '@/hooks/use-i18n'
 import { cn } from '@/utils/cn'
 import {
@@ -61,6 +62,7 @@ export function AddressAutocompleteField({
   const sessionTokenRef = useRef(newSessionToken())
   const provider = getAddressAutocompleteProvider()
   const isStripe = variant === 'stripe'
+  const field = useLocalControlledField(value, onChange)
 
   useEffect(() => {
     setAddressAutocompleteSessionTokenFactory(() => sessionTokenRef.current)
@@ -159,6 +161,7 @@ export function AddressAutocompleteField({
 
     if (!resolved) return
     sessionTokenRef.current = newSessionToken()
+    inputRef.current?.blur()
     onChange(resolved.line1)
     onResolved(resolved)
   }
@@ -216,7 +219,7 @@ export function AddressAutocompleteField({
         aria-expanded={provider ? open : undefined}
         aria-controls={provider ? listId : undefined}
         aria-autocomplete={provider ? 'list' : undefined}
-        value={value}
+        value={field.value}
         disabled={disabled || resolving}
         autoComplete={autoComplete}
         placeholder={
@@ -230,12 +233,14 @@ export function AddressAutocompleteField({
               : t('checkout.address.label'))
         }
         onChange={(e) => {
-          onChange(e.target.value)
+          field.onChange(e)
           if (provider) scheduleSearch(e.target.value)
         }}
-        onFocus={() => {
+        onFocus={(e) => {
+          field.onFocus(e)
           if (provider && suggestions.length > 0) setOpen(true)
         }}
+        onBlur={field.onBlur}
         onKeyDown={(e) => {
           if (!provider || !open || suggestions.length === 0) return
           if (e.key === 'ArrowDown') {

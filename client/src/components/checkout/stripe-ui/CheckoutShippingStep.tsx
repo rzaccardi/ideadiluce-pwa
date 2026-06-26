@@ -56,10 +56,9 @@ export function CheckoutShippingStep() {
         <StripePayButton
           className="min-w-0 flex-1"
           disabled={!canAdvanceFromStep('shipping') || checkout.isLoading}
-          loading={checkout.isLoading}
           onClick={() => void advanceCheckoutStep()}
         >
-          {t('checkout.continue')}
+          {checkout.isLoading ? t('checkout.processing') : t('checkout.continue')}
         </StripePayButton>
       </CheckoutActionRow>
     </section>

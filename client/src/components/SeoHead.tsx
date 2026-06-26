@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect } from 'react'
 import type { ProductAlternateDTO, ProductDetailDTO, ProductSeoDTO } from '@/types/dto'
 import { buildProductJsonLd } from '@/lib/seo'

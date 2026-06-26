@@ -331,6 +331,8 @@ export type MessageKey =
   | 'checkout.address.unlockEdits'
   | 'checkout.address.changeAddress'
   | 'checkout.address.label'
+  | 'checkout.address.country'
+  | 'checkout.address.selectedTitle'
   | 'checkout.address.searchPlaceholder'
   | 'checkout.address.googleHint'
   | 'checkout.address.resolvingPrefill'
@@ -385,9 +387,9 @@ export type MessageKey =
   | 'checkout.payment.bankTransfer'
   | 'checkout.payment.card'
   | 'checkout.account.loginPrompt'
-  | 'checkout.account.createHint'
   | 'checkout.account.loginError'
   | 'checkout.account.notYou'
+  | 'checkout.account.logoutConfirmDescription'
   | 'bankTransfer.title'
   | 'bankTransfer.description'
   | 'bankTransfer.copy'
@@ -1027,7 +1029,7 @@ const IT: Record<MessageKey, string> = {
   'checkout.summary.crossSellTitle': 'Aggiungi al tuo ordine',
   'checkout.summary.crossSellCompat': 'Compatibili',
   'checkout.summary.crossSellAdd': 'Aggiungi al carrello',
-  'checkout.summary.secureBadge': 'SICURO',
+  'checkout.summary.secureBadge': 'Pagamento sicuro',
   'checkout.summary.securePayment': 'Pagamento sicuro',
   'checkout.summary.returns': 'Reso 50 giorni',
   'checkout.loading.dontClose': 'Non chiudere questa pagina',
@@ -1053,6 +1055,8 @@ const IT: Record<MessageKey, string> = {
   'checkout.address.unlockEdits': 'Modifica dettagli manualmente',
   'checkout.address.changeAddress': 'Cambia indirizzo',
   'checkout.address.label': 'Indirizzo',
+  'checkout.address.country': 'Paese',
+  'checkout.address.selectedTitle': 'Indirizzo selezionato',
   'checkout.address.searchPlaceholder': 'Cerca indirizzo…',
   'checkout.address.googleHint':
     'Cerca e seleziona l’indirizzo dalla lista: potrai verificare e modificare i dettagli subito dopo.',
@@ -1110,9 +1114,10 @@ const IT: Record<MessageKey, string> = {
   'checkout.payment.bankTransfer': 'Bonifico bancario',
   'checkout.payment.card': 'Carta / wallet',
   'checkout.account.loginPrompt': 'Hai già un account? Accedi',
-  'checkout.account.createHint': 'L’account viene creato anche su Odoo con le credenziali che scegli.',
   'checkout.account.loginError': 'Email o password non corretti.',
   'checkout.account.notYou': 'Non sei tu?',
+  'checkout.account.logoutConfirmDescription':
+    'Dovrai accedere di nuovo per ordini e profilo. I prezzi del carrello verranno ricalcolati senza il tuo listino personalizzato.',
   'bankTransfer.title': 'Coordinate per il bonifico',
   'bankTransfer.description':
     'Usa la causale indicata così possiamo associare il pagamento al tuo ordine.',
@@ -1765,7 +1770,7 @@ const EN: Record<MessageKey, string> = {
   'checkout.summary.crossSellTitle': 'Add to your order',
   'checkout.summary.crossSellCompat': 'Compatible',
   'checkout.summary.crossSellAdd': 'Add to cart',
-  'checkout.summary.secureBadge': 'SECURE',
+  'checkout.summary.secureBadge': 'Secure payment',
   'checkout.summary.securePayment': 'Secure payment',
   'checkout.summary.returns': '50-day returns',
   'checkout.loading.dontClose': 'Do not close this page',
@@ -1791,6 +1796,8 @@ const EN: Record<MessageKey, string> = {
   'checkout.address.unlockEdits': 'Edit details manually',
   'checkout.address.changeAddress': 'Change address',
   'checkout.address.label': 'Address',
+  'checkout.address.country': 'Country',
+  'checkout.address.selectedTitle': 'Selected address',
   'checkout.address.searchPlaceholder': 'Search address…',
   'checkout.address.googleHint':
     'Search and select an address from the list — you can verify and edit details right after.',
@@ -1848,9 +1855,10 @@ const EN: Record<MessageKey, string> = {
   'checkout.payment.bankTransfer': 'Bank transfer',
   'checkout.payment.card': 'Card / wallet',
   'checkout.account.loginPrompt': 'Already have an account? Sign in',
-  'checkout.account.createHint': 'Your account is also created in Odoo with the password you choose.',
   'checkout.account.loginError': 'Incorrect email or password.',
   'checkout.account.notYou': 'Not you?',
+  'checkout.account.logoutConfirmDescription':
+    'You will need to sign in again for orders and profile. Cart prices will be recalculated without your custom price list.',
   'bankTransfer.title': 'Bank transfer details',
   'bankTransfer.description': 'Use the payment reference so we can match your payment to your order.',
   'bankTransfer.copy': 'Copy',

@@ -112,6 +112,8 @@ export const checkoutStore = proxy({
     phone: '',
   },
   termsAccepted: false,
+  /** Dati fiscali/azienda raccolti allo step account (registrazione checkout). */
+  anagraficaCollectedAtAccount: false,
   clientOrderRef: '',
   dropshipAddress: emptyCheckoutAddress(),
   draft: {

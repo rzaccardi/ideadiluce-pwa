@@ -13,6 +13,8 @@ const apiUrl =
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
+  // zod esterno evita vendor-chunks stale in dev/HMR; motion va bundlato (useContext SSR).
+  serverExternalPackages: ['zod'],
   eslint: {
     ignoreDuringBuilds: true,
   },

@@ -251,6 +251,24 @@ button:disabled,
   animation: idl-slide 1.1s ease-in-out infinite;
 }
 
+/* Overlay portato su document.body — stesse animazioni fuori da .checkout-shell */
+.checkout-loading-overlay .idl-ring {
+  animation: idl-spin 0.9s linear infinite;
+  transform-origin: center;
+}
+
+.checkout-loading-overlay .idl-bulb {
+  animation: idl-glow 1.25s ease-in-out infinite;
+}
+
+.checkout-loading-overlay .idl-pin {
+  animation: idl-bounce 1s ease-in-out infinite;
+}
+
+.checkout-loading-overlay .idl-truck {
+  animation: idl-slide 1.1s ease-in-out infinite;
+}
+
 .checkout-shell .idl-step-body {
   animation: idl-rise 0.32s ease-out both;
 }

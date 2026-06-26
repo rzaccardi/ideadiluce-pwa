@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, useReducedMotion } from 'motion/react'
+import { motion, useReducedMotion } from '@/lib/motion-client'
 import { Link } from '@/lib/navigation'
 import { AttaccoSocketIcon } from '@/components/site/attacco/AttaccoIcons'
 import { ATTACCO_SOCKETS } from '@/lib/attacco.defaults'

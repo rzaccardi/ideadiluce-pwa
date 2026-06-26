@@ -8,8 +8,12 @@ function errMessage(e: unknown) {
 }
 
 export async function fetchProduct(slug: string, locale = 'IT') {
-  productStore.isLoading = true
-  productStore.error = null
+  const hasCurrent =
+    productStore.product?.slug === slug && productStore.currentLocale === locale
+  if (!hasCurrent) {
+    productStore.isLoading = true
+    productStore.error = null
+  }
   productStore.currentSlug = slug
   productStore.currentLocale = locale
   try {

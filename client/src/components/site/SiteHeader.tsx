@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from '@/lib/motion-client'
 import { Link } from '@/lib/navigation'
 import { useTheme } from '@/context/theme-context'
 import { useI18n } from '@/hooks/use-i18n'

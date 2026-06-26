@@ -1,4 +1,5 @@
 import { proxy } from 'valtio'
+import type { SiteCatalog, SiteI18nStatus } from '@/types/site'
 
 export const SITE_LOCALES = ['IT', 'EN', 'ES', 'FR', 'DE'] as const
 export type SiteLocale = (typeof SITE_LOCALES)[number]
@@ -17,6 +18,7 @@ export type SitePageDetail = {
   published: boolean
   content: unknown
   updatedAt: string | null
+  hasCustomContent?: boolean
 }
 
 export const SITE_PAGE_OPTIONS = [
@@ -49,14 +51,19 @@ export const SITE_PAGE_OPTIONS = [
 
 export const siteStore = proxy({
   pages: [] as SitePageSummary[],
+  catalog: null as SiteCatalog | null,
+  i18nStatus: null as SiteI18nStatus | null,
   current: null as SitePageDetail | null,
   pageKey: 'shell',
   locale: 'IT' as SiteLocale,
   draftContent: {} as Record<string, unknown>,
   draftJson: '{}',
+  savedDraftJson: '{}',
+  fieldSearch: '',
   showAdvancedJson: false,
   isLoading: false,
   isSaving: false,
   isTranslating: false,
+  isBulkTranslating: false,
   error: null as string | null,
 })

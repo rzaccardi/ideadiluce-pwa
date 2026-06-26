@@ -47,10 +47,16 @@ export function Eyebrow({
   )
 }
 
-export function BrandWordmark({ className }: { className?: string }) {
+export function BrandWordmark({
+  className,
+  accentClassName,
+}: {
+  className?: string
+  accentClassName?: string
+}) {
   return (
     <span className={cn('font-serif text-[25px] font-semibold tracking-[0.005em] text-idl-ink', className)}>
-      Idea<span className="italic text-idl-brass">di</span>Luce
+      Idea<span className={cn('italic text-idl-brass', accentClassName)}>di</span>Luce
     </span>
   )
 }

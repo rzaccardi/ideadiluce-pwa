@@ -58,6 +58,44 @@ function toAdminPageDto(
   }
 }
 
+function assertDeepLReady() {
+  if (!deeplConfig.enabled || !deeplConfig.apiKey) {
+    throw new AppError(
+      'DEEPL_NOT_CONFIGURED',
+      'DeepL not configured',
+      'DeepL non configurato — imposta DEEPL_ENABLED e DEEPL_API_KEY sul server.',
+      503,
+      false,
+    )
+  }
+}
+
+async function getAdminItSourceContent(pageKey: SitePageKey) {
+  const row = await siteRepository.findByKeyLocale(pageKey, 'IT')
+  return prepareContent(pageKey, row?.content ?? defaultSiteContent(pageKey))
+}
+
+function catalogLocaleStatus(
+  _pageKey: SitePageKey,
+  locale: SiteLocale,
+  row: { published: boolean; updatedAt: Date } | undefined,
+) {
+  if (locale === 'IT') {
+    return {
+      exists: Boolean(row),
+      published: row?.published ?? false,
+      updatedAt: row?.updatedAt.toISOString() ?? null,
+      status: row ? ('saved' as const) : ('default' as const),
+    }
+  }
+
+  return {
+    exists: Boolean(row),
+    published: row?.published ?? false,
+    updatedAt: row?.updatedAt.toISOString() ?? null,
+    status: row ? ('saved' as const) : ('missing' as const),
+  }
+}
 export const siteService = {
   getI18nStatus() {
     return {
@@ -124,28 +162,43 @@ export const siteService = {
       byPage.set(row.pageKey, locales)
     }
 
+    const targetLocales = SITE_LOCALES.filter((locale) => locale !== 'IT')
+    const pages = SITE_PAGE_KEYS.map((pageKey) => {
+      const localeRows = byPage.get(pageKey)
+      const localeMap = Object.fromEntries(
+        SITE_LOCALES.map((locale) => {
+          const row = localeRows?.get(locale)
+          return [locale, catalogLocaleStatus(pageKey, locale, row)]
+        }),
+      )
+      const missingLocales = targetLocales.filter((locale) => localeMap[locale]?.status === 'missing')
+      return {
+        pageKey,
+        label: SITE_PAGE_LABELS[pageKey],
+        missingLocales,
+        missingCount: missingLocales.length,
+        locales: localeMap,
+      }
+    })
+
+    const missingTranslations = pages.reduce((sum, page) => sum + page.missingCount, 0)
+    const byLocale = Object.fromEntries(
+      targetLocales.map((locale) => [
+        locale,
+        pages.filter((page) => page.missingLocales.includes(locale)).length,
+      ]),
+    )
+
     return {
       locales: [...SITE_LOCALES],
-      pages: SITE_PAGE_KEYS.map((pageKey) => {
-        const localeRows = byPage.get(pageKey)
-        return {
-          pageKey,
-          label: SITE_PAGE_LABELS[pageKey],
-          locales: Object.fromEntries(
-            SITE_LOCALES.map((locale) => {
-              const row = localeRows?.get(locale)
-              return [
-                locale,
-                {
-                  exists: Boolean(row),
-                  published: row?.published ?? false,
-                  updatedAt: row?.updatedAt.toISOString() ?? null,
-                },
-              ]
-            }),
-          ),
-        }
-      }),
+      targetLocales,
+      summary: {
+        totalPages: pages.length,
+        missingTranslations,
+        completePages: pages.filter((page) => page.missingCount === 0).length,
+        byLocale,
+      },
+      pages,
     }
   },
 
@@ -167,7 +220,12 @@ export const siteService = {
     }
   },
 
-  async translateAdminPageToLocales(pageKey: string, content: unknown, sourceLocale = 'IT') {
+  async translateAdminPageToLocales(
+    pageKey: string,
+    content: unknown | undefined,
+    sourceLocale = 'IT',
+    options?: { onlyMissingLocales?: boolean },
+  ) {
     const key = assertPageKey(pageKey)
     const source = normalizeSiteLocale(sourceLocale)
     if (source !== 'IT') {
@@ -179,17 +237,10 @@ export const siteService = {
         false,
       )
     }
-    if (!deeplConfig.enabled || !deeplConfig.apiKey) {
-      throw new AppError(
-        'DEEPL_NOT_CONFIGURED',
-        'DeepL not configured',
-        'DeepL non configurato — imposta DEEPL_ENABLED e DEEPL_API_KEY sul server.',
-        503,
-        false,
-      )
-    }
+    assertDeepLReady()
 
-    const normalized = prepareContent(key, content)
+    const normalized =
+      content !== undefined ? prepareContent(key, content) : await getAdminItSourceContent(key)
     const translatableStringCount = countTranslatableStrings(normalized)
     const targetLocales = SITE_LOCALES.filter((loc) => loc !== source)
     const saved: Array<{
@@ -197,12 +248,26 @@ export const siteService = {
       updatedAt: string
       published: boolean
       translatableStringCount: number
+      skipped?: boolean
     }> = []
 
     for (const targetLocale of targetLocales) {
+      const existing = await siteRepository.findByKeyLocale(key, targetLocale)
+      if (options?.onlyMissingLocales && existing) {
+        saved.push({
+          locale: targetLocale,
+          published: existing.published,
+          updatedAt: existing.updatedAt.toISOString(),
+          translatableStringCount: countTranslatableStrings(
+            prepareContent(key, existing.content),
+          ),
+          skipped: true,
+        })
+        continue
+      }
+
       const translated = await translateSiteContentTree(normalized, targetLocale, source)
       const prepared = prepareContent(key, translated)
-      const existing = await siteRepository.findByKeyLocale(key, targetLocale)
       const published = existing?.published ?? true
       const row = await siteRepository.upsert(key, targetLocale, prepared, published)
       saved.push({
@@ -217,8 +282,51 @@ export const siteService = {
       pageKey: key,
       sourceLocale: source,
       translatableStringCount,
-      targetLocales: saved.map((row) => row.locale),
+      onlyMissingLocales: options?.onlyMissingLocales ?? false,
+      targetLocales: saved.filter((row) => !row.skipped).map((row) => row.locale),
+      skippedLocales: saved.filter((row) => row.skipped).map((row) => row.locale),
       locales: saved,
+    }
+  },
+
+  async translateAllMissingPages(pageKeys?: string[], targetLocales?: string[]) {
+    assertDeepLReady()
+
+    const keys = (pageKeys?.length ? pageKeys : [...SITE_PAGE_KEYS]).map((pageKey) =>
+      assertPageKey(pageKey),
+    )
+    const targets = (targetLocales?.length ? targetLocales : SITE_LOCALES.filter((loc) => loc !== 'IT'))
+      .map((locale) => normalizeSiteLocale(locale))
+      .filter((locale) => locale !== 'IT')
+
+    const results: Array<{ pageKey: SitePageKey; locale: SiteLocale; status: 'created' | 'skipped' }> = []
+
+    for (const pageKey of keys) {
+      const itContent = await getAdminItSourceContent(pageKey)
+      for (const targetLocale of targets) {
+        const existing = await siteRepository.findByKeyLocale(pageKey, targetLocale)
+        if (existing) {
+          results.push({ pageKey, locale: targetLocale, status: 'skipped' })
+          continue
+        }
+
+        const translated = await translateSiteContentTree(itContent, targetLocale, 'IT')
+        const prepared = prepareContent(pageKey, translated)
+        await siteRepository.upsert(pageKey, targetLocale, prepared, true)
+        results.push({ pageKey, locale: targetLocale, status: 'created' })
+      }
+    }
+
+    const created = results.filter((row) => row.status === 'created')
+    const skipped = results.filter((row) => row.status === 'skipped')
+
+    return {
+      pageKeys: keys,
+      targetLocales: targets,
+      translatedCount: created.length,
+      skippedCount: skipped.length,
+      created,
+      skipped,
     }
   },
 

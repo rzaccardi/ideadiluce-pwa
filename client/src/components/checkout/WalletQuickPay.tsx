@@ -12,6 +12,7 @@ import { ApiRequestError } from '@/types/api'
 import type { PaymentSessionDTO, UserAddressDTO } from '@/types/dto'
 import { getStripePublishableKey } from '@/lib/env'
 import { normalizeStripeClientSecret } from '@/lib/stripe-client-secret'
+import { isCheckoutAddressValid } from '@/lib/checkout-address.validators'
 import { checkoutStripeAppearance } from '@/components/checkout/stripe-ui/constants'
 import { WalletExpressCheckout } from '@/components/checkout/WalletExpressCheckout'
 import { useLocale } from '@/context/locale-context'
@@ -44,6 +45,17 @@ function addressPayload(address: UserAddressDTO) {
     country: address.country,
     phone: address.phone,
   }
+}
+
+function walletShippingReady(address: UserAddressDTO | null | undefined) {
+  if (!address) return false
+  return isCheckoutAddressValid({
+    ...address,
+    streetNumber: address.streetNumber ?? '',
+    isSnc: address.isSnc ?? false,
+    line2: address.line2 ?? '',
+    phone: address.phone ?? '',
+  })
 }
 
 function shippingFingerprint(address: UserAddressDTO | null | undefined) {
@@ -111,7 +123,15 @@ export function WalletQuickPay({ disabled, className, productLine, cartFingerpri
       setWalletAvailable(null)
 
       try {
-        const config = envPublishableKey ? { enabled: true, publishableKey: envPublishableKey } : await api.payments.stripeConfig()
+        const shippingAddress = auth.me?.shippingAddress
+        if (!walletShippingReady(shippingAddress)) {
+          setNeedsCheckout(true)
+          return
+        }
+
+        const config = envPublishableKey
+          ? { enabled: true, publishableKey: envPublishableKey }
+          : await api.payments.stripeConfig()
         if (cancelled) return
         if (!config.enabled) {
           setStripeEnabled(false)
@@ -122,7 +142,6 @@ export function WalletQuickPay({ disabled, className, productLine, cartFingerpri
           setRemotePublishableKey(config.publishableKey)
         }
 
-        const shippingAddress = auth.me?.shippingAddress
         const data = await api.payments.prepareWalletCheckout({
           productRef: productLine?.productRef,
           quantity: productLine?.quantity,
@@ -150,7 +169,7 @@ export function WalletQuickPay({ disabled, className, productLine, cartFingerpri
     return () => {
       cancelled = true
     }
-  }, [disabled, prepareKey, envPublishableKey, locale])
+  }, [disabled, prepareKey, envPublishableKey, locale, auth.me?.shippingAddress])
 
   const publishableKey = envPublishableKey ?? session?.publishableKey ?? remotePublishableKey
 
