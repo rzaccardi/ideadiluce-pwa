@@ -4,28 +4,14 @@ import {
   fetchArflyProductList,
   isArflyConfigured,
 } from '../../adapters/arfly/arflyClient.js'
+import { findArflyProductIdBySlug } from '../../adapters/arfly/arflySlugIndex.js'
 import { mapArflyProductDetail } from '../../adapters/arfly/arflyMapper.js'
 import type { HubLocale } from '../../lib/hub-locale.js'
 import type { ProductDetailDTO } from '../../types/dto.js'
 import { enrichProductDetailWithStock } from './catalog-stock.enrich.js'
 import { enrichProductDetailWithOdooPricing } from './catalog-pricing.enrich.js'
 import { resolvePricingContext } from '../pricing/pricelist.service.js'
-import { parseOdooTemplateId } from './odooRef.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
-
-async function findProductIdBySlug(slug: string, locale: HubLocale): Promise<number | null> {
-  const numeric = parseOdooTemplateId(slug)
-  if (numeric != null) return numeric
-  let page = 1
-  while (page <= 20) {
-    const list = await fetchArflyProductList({ locale, page, perPage: 100 })
-    const hit = list.items.find((i) => i.slug === slug)
-    if (hit) return hit.id
-    if (page >= list.total_pages) break
-    page += 1
-  }
-  return null
-}
 
 export async function resolveCatalogProduct(
   _ctx: OdooCallContext,
@@ -41,7 +27,7 @@ export async function resolveCatalogProduct(
     // fallback sotto
   }
 
-  const id = await findProductIdBySlug(productRef, locale)
+  const id = await findArflyProductIdBySlug(productRef, locale)
   if (id == null) return null
   try {
     const res = await fetchArflyProductDetail(id, locale)

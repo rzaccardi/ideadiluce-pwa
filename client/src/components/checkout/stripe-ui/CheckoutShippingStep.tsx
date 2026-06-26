@@ -6,14 +6,14 @@ import {
   applyResolvedAddress,
   canAdvanceFromStep,
   checkoutStore,
-  goBackCheckoutStep,
   setBillingSameAsShipping,
   updateCheckoutAddress,
 } from '@/features/checkout'
 import { CheckoutAddressSection } from './CheckoutAddressSection'
-import { CheckoutStepHeader, CheckoutToggleCheckbox } from './CheckoutStepPrimitives'
+import { CheckoutToggleCheckbox } from './CheckoutStepPrimitives'
 import { useI18n } from '@/hooks/use-i18n'
-import { CheckoutActionRow, StripeBackButton, StripePayButton } from './StripeFields'
+import { CheckoutActionRow, StripePayButton } from './StripeFields'
+import { CheckoutStepBackButton } from './CheckoutStepBackButton'
 
 export function CheckoutShippingStep() {
   const { t } = useI18n()
@@ -23,15 +23,6 @@ export function CheckoutShippingStep() {
 
   return (
     <section className="space-y-5">
-      <CheckoutStepHeader
-        title={t('checkout.shippingAddress')}
-        subtitle={
-          billingDiffers
-            ? t('checkout.shipping.diffAddressSubtitle')
-            : t('checkout.shipping.addressSubtitle')
-        }
-      />
-
       <CheckoutAddressSection
         title={t('checkout.shippingAddress')}
         prefix="ship"
@@ -52,7 +43,7 @@ export function CheckoutShippingStep() {
       />
 
       <CheckoutActionRow>
-        <StripeBackButton onClick={goBackCheckoutStep} />
+        <CheckoutStepBackButton />
         <StripePayButton
           className="min-w-0 flex-1"
           disabled={!canAdvanceFromStep('shipping') || checkout.isLoading}

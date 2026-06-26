@@ -5,6 +5,7 @@ import { useParam } from '@/lib/navigation'
 import { useLocale } from '@/context/locale-context'
 import { useI18n } from '@/hooks/use-i18n'
 import { useSnapshot } from 'valtio/react'
+import { api } from '@/api/endpoints'
 import { productStore, fetchProduct } from '@/features/product'
 import {
   getProductAvailabilityStatus,
@@ -49,6 +50,17 @@ export function useProductDetailState({
       productStore.currentLocale = locale
       productStore.isLoading = false
       productStore.error = null
+
+      void api.catalog
+        .enrichProductDetail(initialProduct)
+        .then((enriched) => {
+          if (productStore.currentSlug === slug && productStore.currentLocale === locale) {
+            productStore.product = enriched
+          }
+        })
+        .catch(() => {
+          /* mantieni dati Arfly se arricchimento non disponibile */
+        })
       return
     }
     if (slug) void fetchProduct(slug, locale)

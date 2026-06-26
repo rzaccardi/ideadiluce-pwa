@@ -6,14 +6,14 @@ import {
   canAdvanceFromStep,
   checkoutStore,
   freeShippingSelectionLocked,
-  goBackCheckoutStep,
   isRomePickupEligible,
   selectShippingMethod,
 } from '@/features/checkout'
 import { CheckoutShippingOptions } from './CheckoutShippingOptions'
-import { CheckoutInfoNote, CheckoutStepHeader } from './CheckoutStepPrimitives'
+import { CheckoutInfoNote } from './CheckoutStepPrimitives'
 import { useI18n } from '@/hooks/use-i18n'
-import { CheckoutActionRow, StripeBackButton, StripePayButton } from './StripeFields'
+import { CheckoutActionRow, StripePayButton } from './StripeFields'
+import { CheckoutStepBackButton } from './CheckoutStepBackButton'
 
 export function CheckoutShippingMethodStep() {
   const { t, tParams } = useI18n()
@@ -21,11 +21,6 @@ export function CheckoutShippingMethodStep() {
 
   return (
     <section className="space-y-5">
-      <CheckoutStepHeader
-        title={t('checkout.shipping.title')}
-        subtitle={t('checkout.shipping.methodSubtitle')}
-      />
-
       <CheckoutShippingOptions
         quotes={checkout.shippingQuotes}
         selectedRef={checkout.selectedShippingMethodRef}
@@ -51,7 +46,7 @@ export function CheckoutShippingMethodStep() {
       ) : null}
 
       <CheckoutActionRow>
-        <StripeBackButton onClick={goBackCheckoutStep} />
+        <CheckoutStepBackButton />
         <StripePayButton
           className="min-w-0 flex-1"
           disabled={

@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { useSnapshot } from 'valtio/react'
 import {
   checkoutStore,
@@ -16,31 +17,22 @@ import {
   StripeFieldGroup,
   StripeFieldLabel,
 } from './StripeFields'
-
-function TaxValidationMessage({
-  valid,
-  validLabel,
-  invalidLabel,
-}: {
-  valid: boolean | null
-  validLabel: string
-  invalidLabel: string
-}) {
-  if (valid == null) return null
-  return (
-    <p className={`px-1 text-xs ${valid ? 'text-emerald-700' : 'text-red-700'}`}>
-      {valid ? validLabel : invalidLabel}
-    </p>
-  )
-}
+import { TaxVerifyButton } from './TaxVerifyButton'
+import { TaxValidationMessage } from './TaxValidationMessage'
 
 type Props = {
   /** Mostra riferimento ordine cliente (solo step fatturazione). */
   showClientOrderRef?: boolean
   disabled?: boolean
+  /** Senza pannello/titolo: stessi input del form registrazione. */
+  embedded?: boolean
 }
 
-export function CheckoutBusinessFieldsSection({ showClientOrderRef = false, disabled = false }: Props) {
+export function CheckoutBusinessFieldsSection({
+  showClientOrderRef = false,
+  disabled = false,
+  embedded = false,
+}: Props) {
   const { t, tParams } = useI18n()
   const checkout = useSnapshot(checkoutStore)
   const business = isBusinessCheckout()
@@ -50,7 +42,8 @@ export function CheckoutBusinessFieldsSection({ showClientOrderRef = false, disa
   const isItaly = billingCountry === 'IT'
   const isEuVat = !isItaly && /^[A-Z]{2}$/.test(billingCountry)
   const b = checkout.business
-  const stepBusy = disabled || checkout.isLoading || b.taxValidating || checkout.addressPrefillLoading
+  const stepBusy = disabled || checkout.isLoading || checkout.addressPrefillLoading
+  const vatFieldBusy = stepBusy || b.taxValidating
 
   async function handleValidateVat() {
     try {
@@ -70,11 +63,21 @@ export function CheckoutBusinessFieldsSection({ showClientOrderRef = false, disa
     }
   }
 
-  return (
-    <CheckoutPanel className="space-y-3 bg-[#f7f8fa]">
-      <p className="text-sm font-bold text-[#14161b]">{t('checkout.billing.businessTitle')}</p>
+  function fieldLabel(id: string, label: string, input: ReactNode) {
+    if (embedded) return input
+    return (
       <div>
-        <StripeFieldLabel htmlFor="companyName">{t('checkout.billing.companyName')}</StripeFieldLabel>
+        <StripeFieldLabel htmlFor={id}>{label}</StripeFieldLabel>
+        {input}
+      </div>
+    )
+  }
+
+  const fields = (
+    <>
+      {fieldLabel(
+        'companyName',
+        t('checkout.billing.companyName'),
         <StripeFieldGroup>
           <StripeControlledInput
             id="companyName"
@@ -84,46 +87,47 @@ export function CheckoutBusinessFieldsSection({ showClientOrderRef = false, disa
             disabled={stepBusy}
             onValueChange={(value) => updateBusinessField('companyName', value)}
           />
-        </StripeFieldGroup>
-      </div>
-      <div>
-        <StripeFieldLabel htmlFor="vatNumber">{t('checkout.billing.vatNumber')}</StripeFieldLabel>
-        <StripeFieldGroup>
-          <StripeControlledInput
-            id="vatNumber"
-            name="vatNumber"
-            placeholder="IT12345678901"
-            value={checkout.business.vatNumber}
-            disabled={stepBusy}
-            normalize={(v) => v.toUpperCase()}
-            onValueChange={(value) => updateBusinessField('vatNumber', value)}
-            onBlur={() => void handleTaxBlur()}
+        </StripeFieldGroup>,
+      )}
+      {fieldLabel(
+        'vatNumber',
+        t('checkout.billing.vatNumber'),
+        <>
+          <div className="flex items-stretch gap-2">
+            <StripeFieldGroup className="min-w-0 flex-1">
+              <StripeControlledInput
+                id="vatNumber"
+                name="vatNumber"
+                placeholder="IT12345678901"
+                value={checkout.business.vatNumber}
+                disabled={vatFieldBusy}
+                normalize={(v) => v.toUpperCase()}
+                onValueChange={(value) => updateBusinessField('vatNumber', value)}
+                onBlur={() => void handleTaxBlur()}
+              />
+            </StripeFieldGroup>
+            <TaxVerifyButton
+              onClick={() => void (isEuVat ? handleValidateVat() : handleTaxBlur())}
+              disabled={!checkout.business.vatNumber.trim() || vatFieldBusy}
+              loading={b.taxValidating}
+            />
+          </div>
+          <TaxValidationMessage
+            valid={
+              isItaly && b.vatNumber.trim()
+                ? b.vatChecksumValid
+                : isEuVat && b.vatNumber.trim()
+                  ? b.vatFormatValid && b.vatChecksumValid
+                  : null
+            }
+            validLabel={t('checkout.billing.vatFormatValid')}
+            invalidLabel={t('checkout.billing.vatFormatInvalid')}
+            errorMessage={b.vatNumber.trim() ? b.vatError : null}
           />
-        </StripeFieldGroup>
-        <TaxValidationMessage
-          valid={
-            isItaly && b.vatNumber.trim()
-              ? b.vatChecksumValid
-              : isEuVat && b.vatNumber.trim()
-                ? b.vatFormatValid && b.vatChecksumValid
-                : null
-          }
-          validLabel={t('checkout.billing.vatFormatValid')}
-          invalidLabel={t('checkout.billing.vatFormatInvalid')}
-        />
-      </div>
+        </>,
+      )}
       {(isEuVat || isItaly) && b.vatNumber.trim() ? (
-        <div className="space-y-2 px-1">
-          {isEuVat ? (
-            <button
-              type="button"
-              className="text-sm font-bold text-[#9a6a2f] underline underline-offset-2 disabled:opacity-50"
-              onClick={() => void handleValidateVat()}
-              disabled={!checkout.business.vatNumber.trim() || stepBusy}
-            >
-              {t('checkout.billing.verifyVatVies')}
-            </button>
-          ) : null}
+        <div className={embedded ? 'space-y-2' : 'space-y-2 px-1'}>
           {b.viesStatus === 'valid' || b.vatValidated ? (
             <p className="text-xs text-emerald-700">
               {t('checkout.billing.vatViesValid')}
@@ -134,7 +138,9 @@ export function CheckoutBusinessFieldsSection({ showClientOrderRef = false, disa
           ) : b.viesStatus === 'service_unavailable' ? (
             <p className="text-xs text-amber-800">{t('checkout.billing.viesUnavailable')}</p>
           ) : b.viesStatus === 'invalid' && !isItaly ? (
-            <p className="text-xs text-red-700">{t('checkout.billing.vatViesInvalid')}</p>
+            <p className="text-xs text-red-700">
+              {b.vatError ?? t('checkout.billing.vatViesInvalid')}
+            </p>
           ) : isEuVat && checkout.business.vatAttempts > 0 ? (
             <p className="text-xs text-red-700">
               {tParams('checkout.billing.vatAttempt', {
@@ -147,8 +153,9 @@ export function CheckoutBusinessFieldsSection({ showClientOrderRef = false, disa
       ) : null}
       {isItaly ? (
         <>
-          <div>
-            <StripeFieldLabel htmlFor="pec">{t('checkout.billing.pec')}</StripeFieldLabel>
+          {fieldLabel(
+            'pec',
+            t('checkout.billing.pec'),
             <StripeFieldGroup>
               <StripeControlledInput
                 id="pec"
@@ -159,10 +166,11 @@ export function CheckoutBusinessFieldsSection({ showClientOrderRef = false, disa
                 disabled={stepBusy}
                 onValueChange={(value) => updateBusinessField('pec', value)}
               />
-            </StripeFieldGroup>
-          </div>
-          <div>
-            <StripeFieldLabel htmlFor="sdiCode">{t('checkout.billing.sdiCode')}</StripeFieldLabel>
+            </StripeFieldGroup>,
+          )}
+          {fieldLabel(
+            'sdiCode',
+            t('checkout.billing.sdiCode'),
             <StripeFieldGroup>
               <StripeControlledInput
                 id="sdiCode"
@@ -173,26 +181,38 @@ export function CheckoutBusinessFieldsSection({ showClientOrderRef = false, disa
                 normalize={(v) => v.toUpperCase()}
                 onValueChange={(value) => updateBusinessField('sdiCode', value)}
               />
-            </StripeFieldGroup>
-          </div>
-          <CheckoutInfoNote>{t('checkout.billing.pecOrSdiHint')}</CheckoutInfoNote>
+            </StripeFieldGroup>,
+          )}
+          {!embedded ? <CheckoutInfoNote>{t('checkout.billing.pecOrSdiHint')}</CheckoutInfoNote> : null}
         </>
       ) : null}
-      {showClientOrderRef ? (
-        <div>
-          <StripeFieldLabel htmlFor="clientOrderRef">{t('checkout.billing.clientOrderRefOptional')}</StripeFieldLabel>
-          <StripeFieldGroup>
-            <StripeControlledInput
-              id="clientOrderRef"
-              name="clientOrderRef"
-              placeholder={t('checkout.billing.clientOrderRefOptional')}
-              value={checkout.clientOrderRef}
-              disabled={stepBusy}
-              onValueChange={(value) => updateClientOrderRef(value)}
-            />
-          </StripeFieldGroup>
-        </div>
-      ) : null}
+      {showClientOrderRef
+        ? fieldLabel(
+            'clientOrderRef',
+            t('checkout.billing.clientOrderRefOptional'),
+            <StripeFieldGroup>
+              <StripeControlledInput
+                id="clientOrderRef"
+                name="clientOrderRef"
+                placeholder={t('checkout.billing.clientOrderRefOptional')}
+                value={checkout.clientOrderRef}
+                disabled={stepBusy}
+                onValueChange={(value) => updateClientOrderRef(value)}
+              />
+            </StripeFieldGroup>,
+          )
+        : null}
+    </>
+  )
+
+  if (embedded) {
+    return <>{fields}</>
+  }
+
+  return (
+    <CheckoutPanel className="space-y-3 bg-[#f7f8fa]">
+      <p className="text-sm font-bold text-[#14161b]">{t('checkout.billing.businessTitle')}</p>
+      {fields}
     </CheckoutPanel>
   )
 }

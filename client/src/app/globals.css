@@ -441,13 +441,43 @@ button:disabled,
 }
 
 .idl-toast--success {
-  --idl-toast-border: #bbf7d0;
-  background: linear-gradient(180deg, #f0fdf4 0%, #fff 100%);
+  --idl-toast-border: #1a8a4a;
+  background: #1f9d57;
+  border-color: #1a8a4a;
+  color: #fff;
+}
+
+.idl-toast--success .idl-toast__description {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.idl-toast--success .idl-toast__close {
+  color: #fff;
+  opacity: 0.72;
+}
+
+.idl-toast--success .idl-toast__close:hover {
+  opacity: 1;
 }
 
 .idl-toast--error {
-  --idl-toast-border: #fecaca;
-  background: linear-gradient(180deg, #fef2f2 0%, #fff 100%);
+  --idl-toast-border: #c81e1e;
+  background: #dc2626;
+  border-color: #c81e1e;
+  color: #fff;
+}
+
+.idl-toast--error .idl-toast__description {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.idl-toast--error .idl-toast__close {
+  color: #fff;
+  opacity: 0.72;
+}
+
+.idl-toast--error .idl-toast__close:hover {
+  opacity: 1;
 }
 
 .idl-toast--info {

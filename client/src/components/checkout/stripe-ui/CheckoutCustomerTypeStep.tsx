@@ -5,13 +5,12 @@ import {
   advanceCheckoutStep,
   canAdvanceFromStep,
   checkoutStore,
-  goBackCheckoutStep,
   setCustomerSegment,
 } from '@/features/checkout'
 import { CheckoutCustomerTypeCards } from './CheckoutCustomerTypeCards'
-import { CheckoutStepHeader } from './CheckoutStepPrimitives'
 import { useI18n } from '@/hooks/use-i18n'
-import { CheckoutActionRow, StripeBackButton, StripePayButton } from './StripeFields'
+import { CheckoutActionRow, StripePayButton } from './StripeFields'
+import { CheckoutStepBackButton } from './CheckoutStepBackButton'
 
 export function CheckoutCustomerTypeStep() {
   const { t } = useI18n()
@@ -19,18 +18,13 @@ export function CheckoutCustomerTypeStep() {
 
   return (
     <section className="space-y-5">
-      <CheckoutStepHeader
-        title={t('checkout.steps.customerType')}
-        subtitle={t('checkout.customerType.hint')}
-      />
-
       <CheckoutCustomerTypeCards
         value={checkout.customerSegment ?? 'retail'}
         onChange={setCustomerSegment}
       />
 
       <CheckoutActionRow>
-        <StripeBackButton onClick={goBackCheckoutStep} />
+        <CheckoutStepBackButton />
         <StripePayButton
           className="min-w-0 flex-1"
           disabled={!canAdvanceFromStep('customer_type')}

@@ -36,6 +36,7 @@ export function ProductCategoryLandingPage({ pageKey }: Props) {
           page: nextPage,
           pageSize: content.pageSize,
           q: content.searchQuery,
+          enrichSpecTags: !isDesign,
         })
         const mapped = mapArflyListResponse(raw, pwaLocale)
         setProducts((prev) => (append ? [...prev, ...mapped.items] : mapped.items))

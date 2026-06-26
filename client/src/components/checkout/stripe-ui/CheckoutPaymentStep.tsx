@@ -5,14 +5,13 @@ import {
   advanceCheckoutStep,
   canAdvanceFromStep,
   checkoutStore,
-  goBackCheckoutStep,
   prepareCheckoutPayment,
   setPaymentMethod,
 } from '@/features/checkout'
 import { CheckoutPaymentOptions } from './CheckoutPaymentOptions'
-import { CheckoutStepHeader } from './CheckoutStepPrimitives'
 import { useI18n } from '@/hooks/use-i18n'
-import { CheckoutActionRow, StripeBackButton, StripePayButton } from './StripeFields'
+import { CheckoutActionRow, StripePayButton } from './StripeFields'
+import { CheckoutStepBackButton } from './CheckoutStepBackButton'
 
 export function CheckoutPaymentStep() {
   const { t } = useI18n()
@@ -20,8 +19,6 @@ export function CheckoutPaymentStep() {
 
   return (
     <section className="space-y-5">
-      <CheckoutStepHeader title={t('checkout.payment')} subtitle={t('checkout.paymentNote')} />
-
       <CheckoutPaymentOptions
         selected={checkout.selectedPaymentMethod}
         disabled={checkout.isLoading || checkout.isPaying}
@@ -29,7 +26,7 @@ export function CheckoutPaymentStep() {
       />
 
       <CheckoutActionRow>
-        <StripeBackButton onClick={goBackCheckoutStep} />
+        <CheckoutStepBackButton />
         <StripePayButton
           className="min-w-0 flex-1"
           disabled={!canAdvanceFromStep('payment') || checkout.isLoading}

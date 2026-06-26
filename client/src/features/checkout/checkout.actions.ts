@@ -149,8 +149,12 @@ function applyViesAutofill(res: TaxValidationResultDTO) {
 function applyTaxValidationResult(res: TaxValidationResultDTO) {
   if (res.fiscalCode) {
     checkoutStore.business.fiscalCodeValid = res.fiscalCode.valid
+    checkoutStore.business.fiscalCodeError = res.fiscalCode.valid
+      ? null
+      : (res.fiscalCode.errors[0] ?? null)
   } else if (!checkoutStore.business.fiscalCode.trim()) {
     checkoutStore.business.fiscalCodeValid = null
+    checkoutStore.business.fiscalCodeError = null
   }
 
   if (res.vat) {
@@ -159,6 +163,9 @@ function applyTaxValidationResult(res: TaxValidationResultDTO) {
     checkoutStore.business.viesStatus = res.vat.vies.status
     checkoutStore.business.viesAddress = res.vat.vies.address
     checkoutStore.business.viesRequestDate = res.vat.vies.requestDate
+
+    const formatOk = res.vat.formatValid && res.vat.checksumValid
+    checkoutStore.business.vatError = formatOk ? null : (res.vat.errors[0] ?? null)
 
     const viesCompanyName = res.vat.autofill?.companyName ?? res.vat.vies.name
     if (viesCompanyName?.trim()) {
@@ -182,6 +189,7 @@ function applyTaxValidationResult(res: TaxValidationResultDTO) {
   } else if (!checkoutStore.business.vatNumber.trim()) {
     checkoutStore.business.vatFormatValid = null
     checkoutStore.business.vatChecksumValid = null
+    checkoutStore.business.vatError = null
     checkoutStore.business.viesStatus = null
     checkoutStore.business.viesAddress = null
     checkoutStore.business.viesRequestDate = null
@@ -196,14 +204,17 @@ export async function validateTaxFields() {
 
   if (!fiscalCode && !vatNumber) {
     checkoutStore.business.fiscalCodeValid = null
+    checkoutStore.business.fiscalCodeError = null
     checkoutStore.business.vatFormatValid = null
     checkoutStore.business.vatChecksumValid = null
+    checkoutStore.business.vatError = null
     checkoutStore.business.viesStatus = null
     return null
   }
 
   checkoutStore.business.taxValidating = true
-  checkoutStore.error = null
+  if (fiscalCode) checkoutStore.business.fiscalCodeError = null
+  if (vatNumber) checkoutStore.business.vatError = null
   try {
     const res = await api.tax.validate({
       countryCode: country,
@@ -214,7 +225,9 @@ export async function validateTaxFields() {
     applyTaxValidationResult(res)
     return res
   } catch (e) {
-    checkoutStore.error = errMessage(e)
+    const msg = errMessage(e)
+    if (fiscalCode) checkoutStore.business.fiscalCodeError = msg
+    if (vatNumber) checkoutStore.business.vatError = msg
     throw e
   } finally {
     checkoutStore.business.taxValidating = false
@@ -222,7 +235,7 @@ export async function validateTaxFields() {
 }
 
 export async function validateCheckoutVat() {
-  checkoutStore.error = null
+  checkoutStore.business.vatError = null
   try {
     const res = await api.vat.validate({
       vatNumber: checkoutStore.business.vatNumber.trim(),
@@ -237,6 +250,9 @@ export async function validateCheckoutVat() {
       : res.vatForceAccepted
         ? checkoutStore.business.viesStatus
         : 'invalid'
+    if (res.valid) {
+      checkoutStore.business.vatError = null
+    }
     scheduleTaxRecalculate(0)
     return res
   } catch (e) {
@@ -245,7 +261,7 @@ export async function validateCheckoutVat() {
       if (details?.attempts != null) checkoutStore.business.vatAttempts = details.attempts
       checkoutStore.business.vatValidated = false
     }
-    checkoutStore.error = errMessage(e)
+    checkoutStore.business.vatError = errMessage(e)
     throw e
   }
 }
@@ -257,6 +273,7 @@ export function updateBusinessVatNumber(value: string) {
   checkoutStore.business.vatCompanyName = null
   checkoutStore.business.vatFormatValid = null
   checkoutStore.business.vatChecksumValid = null
+  checkoutStore.business.vatError = null
   checkoutStore.business.viesStatus = null
   scheduleTaxRecalculate()
 }
@@ -317,6 +334,40 @@ async function refreshShippingQuotesIfNeeded() {
 
 function addressComplete(address: AddressInput) {
   return isCheckoutAddressValid(address)
+}
+
+function isCheckoutEmailValid(email: string): boolean {
+  const trimmed = email.trim()
+  if (!trimmed) return false
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)
+}
+
+export function resolveCheckoutEmail(): string {
+  const fromDraft = checkoutStore.draft.email.trim()
+  if (fromDraft) return fromDraft
+  return authStore.me?.email?.trim() ?? ''
+}
+
+function ensureCheckoutEmailInDraft(): string {
+  const email = resolveCheckoutEmail()
+  if (email && !checkoutStore.draft.email.trim()) {
+    checkoutStore.draft.email = email
+  }
+  return email
+}
+
+export function isAnagraficaCompartmentComplete(): boolean {
+  if (!authStore.isAuthenticated) return false
+  if (effectiveCustomerSegment() == null) return false
+  if (!isCheckoutEmailValid(resolveCheckoutEmail())) return false
+  if (!addressComplete(checkoutStore.draft.billing) || !businessBillingComplete()) return false
+  return addressComplete(checkoutStore.draft.shipping)
+}
+
+export function isSpedizioneCompartmentComplete(): boolean {
+  if (!isAnagraficaCompartmentComplete()) return false
+  if (!canAdvanceFromStep('delivery_recipient')) return false
+  return Boolean(checkoutStore.selectedShippingMethodRef && checkoutStore.shippingSelectionPersisted)
 }
 
 function segmentFromAuth(): CustomerSegmentChoice {
@@ -661,8 +712,10 @@ export function resetCheckout(options?: { legacyLayout?: boolean }) {
     viesAddress: null,
     viesRequestDate: null,
     fiscalCodeValid: null,
+    fiscalCodeError: null,
     vatFormatValid: null,
     vatChecksumValid: null,
+    vatError: null,
     viesStatus: null,
     taxValidating: false,
   }
@@ -723,8 +776,10 @@ export function clearCheckoutAfterLogout() {
     viesAddress: null,
     viesRequestDate: null,
     fiscalCodeValid: null,
+    fiscalCodeError: null,
     vatFormatValid: null,
     vatChecksumValid: null,
+    vatError: null,
     viesStatus: null,
     taxValidating: false,
   }
@@ -775,11 +830,13 @@ export function updateBusinessField(
     checkoutStore.business.viesRequestDate = null
     checkoutStore.business.vatFormatValid = null
     checkoutStore.business.vatChecksumValid = null
+    checkoutStore.business.vatError = null
     checkoutStore.business.viesStatus = null
     scheduleTaxRecalculate()
   }
   if (key === 'fiscalCode') {
     checkoutStore.business.fiscalCodeValid = null
+    checkoutStore.business.fiscalCodeError = null
   }
 }
 
@@ -889,7 +946,7 @@ export function canFetchShippingQuotes() {
 export function canAdvanceFromStep(step: CheckoutStep): boolean {
   switch (step) {
     case 'account':
-      return authStore.isAuthenticated
+      return authStore.isAuthenticated && isCheckoutEmailValid(resolveCheckoutEmail())
     case 'customer_type':
       return effectiveCustomerSegment() != null
     case 'billing':
@@ -923,7 +980,7 @@ export function canStartCheckout() {
   }
   return (
     authStore.isAuthenticated &&
-    checkoutStore.draft.email.includes('@') &&
+    isCheckoutEmailValid(resolveCheckoutEmail()) &&
     addressComplete(checkoutStore.draft.shipping) &&
     addressComplete(billingAddressPayload()) &&
     Boolean(checkoutStore.selectedShippingMethodRef) &&
@@ -985,20 +1042,35 @@ export async function advanceCheckoutStep() {
     const next = getNextCheckoutStep(step)
     if (!next) return
 
+    if (step === 'shipping') {
+      if (!isAnagraficaCompartmentComplete()) {
+        checkoutStore.error = localeMessage('checkout.error.incompleteStep')
+        return
+      }
+      ensureCheckoutEmailInDraft()
+      await syncCheckoutDraft('details', { silent: true })
+    }
+
+    if (step === 'shipping_method') {
+      if (!isSpedizioneCompartmentComplete()) {
+        checkoutStore.error = localeMessage('checkout.error.incompleteStep')
+        return
+      }
+      await syncCheckoutDraft('shipping', { silent: true })
+    }
+
+    if (next === 'review') {
+      if (!isSpedizioneCompartmentComplete() || !canAdvanceFromStep('payment')) {
+        checkoutStore.error = localeMessage('checkout.error.incompleteStep')
+        return
+      }
+      await syncCheckoutDraft('lock', { silent: true })
+    }
+
     checkoutStore.currentStep = next
 
     if (step === 'billing' && next === 'shipping') {
       await resolveShippingAddressPrefillIfNeeded()
-    }
-
-    if (step === 'shipping' || step === 'delivery_recipient') {
-      void syncCheckoutDraft('details', { silent: true }).catch(() => {})
-    }
-    if (step === 'shipping_method') {
-      void syncCheckoutDraft('shipping', { silent: true }).catch(() => {})
-    }
-    if (next === 'review') {
-      void syncCheckoutDraft('lock', { silent: true }).catch(() => {})
     }
 
     if (next === 'shipping_method' && checkoutStore.shippingQuotes.length === 0 && canFetchShippingQuotes()) {
@@ -1022,6 +1094,10 @@ export function goBackCheckoutStep() {
 
   const prev = getPreviousCheckoutStep(step)
   if (prev) checkoutStore.currentStep = prev
+}
+
+export function canGoBackCheckoutStep(step: CheckoutStep = checkoutStore.currentStep): boolean {
+  return getPreviousCheckoutStep(step) != null
 }
 
 export async function fetchShippingQuotes() {
@@ -1075,7 +1151,9 @@ export async function selectShippingMethod(methodRef: string, options?: { silent
     checkoutStore.selectedShippingMethodRef = methodRef
     checkoutStore.shippingSelectionPersisted = true
     await fetchCart()
-    void syncCheckoutDraft('shipping', { silent: true }).catch(() => {})
+    if (isSpedizioneCompartmentComplete()) {
+      await syncCheckoutDraft('shipping', { silent: true })
+    }
     scheduleTaxRecalculate(0)
   } catch (e) {
     if (checkoutStore.selectedShippingMethodRef === methodRef) {
@@ -1118,11 +1196,27 @@ function checkoutBusinessPayload() {
 
 type CheckoutDraftStep = 'details' | 'shipping' | 'payment_method' | 'lock'
 
+function canSyncCheckoutDraft(step: CheckoutDraftStep): boolean {
+  if (!authStore.isAuthenticated) return false
+  switch (step) {
+    case 'details':
+      return isAnagraficaCompartmentComplete()
+    case 'shipping':
+      return isSpedizioneCompartmentComplete()
+    case 'payment_method':
+    case 'lock':
+      return isSpedizioneCompartmentComplete() && Boolean(checkoutStore.selectedPaymentMethod)
+    default:
+      return false
+  }
+}
+
 function checkoutDraftBody(step: CheckoutDraftStep) {
+  const email = ensureCheckoutEmailInDraft()
   return {
     step,
     orderId: checkoutStore.order?.orderId,
-    email: checkoutStore.draft.email.trim(),
+    ...(isCheckoutEmailValid(email) ? { email } : {}),
     customerSegment: effectiveCustomerSegment() ?? undefined,
     isProfessional:
       authStore.me?.isProfessional || authStore.me?.customerSegment === 'professional',
@@ -1139,7 +1233,7 @@ function checkoutDraftBody(step: CheckoutDraftStep) {
 }
 
 export async function syncCheckoutDraft(step: CheckoutDraftStep, options?: { silent?: boolean }) {
-  if (!authStore.isAuthenticated) return
+  if (!canSyncCheckoutDraft(step)) return
   if (!options?.silent) checkoutStore.isLoading = true
   checkoutStore.error = null
   try {
@@ -1161,7 +1255,7 @@ export async function startCheckout(options?: { silent?: boolean }) {
   checkoutStore.error = null
   try {
     checkoutStore.order = await api.checkout.start({
-      email: checkoutStore.draft.email.trim(),
+      email: ensureCheckoutEmailInDraft(),
       customerSegment: effectiveCustomerSegment() ?? undefined,
       isProfessional:
         authStore.me?.isProfessional || authStore.me?.customerSegment === 'professional',
@@ -1327,7 +1421,7 @@ export function selectedShippingQuote() {
 
 /** @deprecated usa canAdvanceFromStep('billing') + canAdvanceFromStep('shipping') */
 export function canProceedFromDetails() {
-  return canAdvanceFromStep('billing') && canAdvanceFromStep('shipping') && checkoutStore.draft.email.includes('@')
+  return canAdvanceFromStep('billing') && canAdvanceFromStep('shipping') && isCheckoutEmailValid(resolveCheckoutEmail())
 }
 
 /** @deprecated usa advanceCheckoutStep */

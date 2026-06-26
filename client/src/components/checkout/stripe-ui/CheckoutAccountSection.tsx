@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Link } from '@/lib/navigation'
 import { useSnapshot } from 'valtio/react'
 import { authStore, login } from '@/features/auth'
+import { useForgotPasswordModal } from '@/hooks/use-forgot-password-modal'
 import { useLogoutConfirm } from '@/hooks/use-logout-confirm'
 import { fetchCart } from '@/features/cart'
 import {
@@ -11,17 +11,16 @@ import {
   prepareCheckoutAfterAuth,
 } from '@/features/checkout'
 import { useI18n } from '@/hooks/use-i18n'
-import { useLocalePath } from '@/hooks/use-locale-path'
 import { ApiRequestError } from '@/types/api'
 import { StripeErrorBanner, StripeFieldGroup, StripeControlledInput } from './StripeFields'
 
 /** Login email/password nel checkout (sezione compatta). */
 export function CheckoutAccountSection() {
   const { t } = useI18n()
-  const lp = useLocalePath()
   const auth = useSnapshot(authStore)
   const checkout = useSnapshot(checkoutStore)
   const { requestLogout, logoutDialog } = useLogoutConfirm({ scope: 'checkout' })
+  const { openForgotPassword, forgotPasswordModal } = useForgotPasswordModal()
   const [showLogin, setShowLogin] = useState(false)
   const [loginEmail, setLoginEmail] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
@@ -86,8 +85,8 @@ export function CheckoutAccountSection() {
   }
 
   if (showLogin) {
-    const forgotHref = `${lp('/forgot-password')}?from=${encodeURIComponent(lp('/checkout'))}`
     return (
+      <>
       <div className="space-y-3 rounded-md border border-zinc-200 bg-zinc-50 p-3">
         {error ? <StripeErrorBanner message={error} /> : null}
         <form onSubmit={(e) => void handleLogin(e)} className="space-y-3">
@@ -114,12 +113,13 @@ export function CheckoutAccountSection() {
             />
           </StripeFieldGroup>
           <p className="text-right text-sm">
-            <Link
-              to={forgotHref}
+            <button
+              type="button"
+              onClick={() => openForgotPassword(loginEmail)}
               className="text-zinc-900 underline decoration-zinc-300 underline-offset-2 hover:decoration-zinc-900"
             >
               {t('login.forgot')}
-            </Link>
+            </button>
           </p>
           <button
             type="submit"
@@ -130,6 +130,8 @@ export function CheckoutAccountSection() {
           </button>
         </form>
       </div>
+      {forgotPasswordModal}
+      </>
     )
   }
 

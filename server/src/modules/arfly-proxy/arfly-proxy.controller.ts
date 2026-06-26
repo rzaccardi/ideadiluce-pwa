@@ -54,6 +54,8 @@ export const arflyProxyController = {
         partner_id: typeof req.query.partner_id === 'string' ? req.query.partner_id : undefined,
         pricelist_id: typeof req.query.pricelist_id === 'string' ? req.query.pricelist_id : undefined,
         website: typeof req.query.website === 'string' ? req.query.website : undefined,
+        enrich_spec_tags:
+          typeof req.query.enrich_spec_tags === 'string' ? req.query.enrich_spec_tags : undefined,
       })
       const data = await proxyArflyProductList(q)
       res.json(ok(data))

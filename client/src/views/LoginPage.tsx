@@ -6,11 +6,11 @@ import { useSnapshot } from 'valtio/react'
 import { authStore, login } from '@/features/auth'
 import { TextInput } from '@/components/TextInput'
 import { Button } from '@/components/Button'
-import { ToastOnError } from '@/components/ToastFeedback'
 import { PageHeader } from '@/components/PageHeader'
 import { FadeIn } from '@/components/motion'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
+import { notify } from '@/lib/notify'
 
 export function LoginPage() {
   const { t } = useI18n()
@@ -26,9 +26,10 @@ export function LoginPage() {
     e.preventDefault()
     try {
       await login(email, password)
+      notify.success(t('auth.loggedIn'))
       navigate(from, { replace: true })
     } catch {
-      /* errore in authStore.error */
+      notify.error(authStore.error ?? t('auth.loginError'))
     }
   }
 
@@ -37,7 +38,6 @@ export function LoginPage() {
     <div className="flex flex-1 flex-col justify-center py-8">
     <div className="mx-auto w-full max-w-md">
       <PageHeader title={t('login.title')} />
-      <ToastOnError message={auth.error} />
       <form onSubmit={(e) => void onSubmit(e)} className="space-y-4">
         <TextInput
           label={t('common.email')}

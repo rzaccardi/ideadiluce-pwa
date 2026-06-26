@@ -12,24 +12,24 @@ export async function fetchFeaturedProducts(locale: PwaLocale, pageSize = 3): Pr
   return mapArflyListResponse(raw, locale).items
 }
 
-/**
- * PDP SSR: stessa pipeline del CSR (by-slug → map → enrich-detail).
- * Cookie sessione inoltrati → proxy Arfly applica listino da sessione se assente in query.
- */
-async function findProductIdBySlugServer(slug: string, locale: PwaLocale): Promise<number | null> {
-  const lang = toArflyLang(locale)
-  let page = 1
-  while (page <= 20) {
-    const search = new URLSearchParams({ lang, page: String(page), per_page: '100' })
-    const list = await serverApiClient.get<ArflyProductListResponse>(`/api/v2/products?${search}`)
-    const hit = list.items.find((item) => item.slug === slug)
-    if (hit) return hit.id
-    if (page >= list.total_pages) break
-    page += 1
+async function loadRelatedProducts(
+  slug: string,
+  locale: PwaLocale,
+  relatedFromProduct: ProductCardDTO[],
+): Promise<ProductCardDTO[]> {
+  if (relatedFromProduct.length > 0) {
+    return relatedFromProduct.slice(0, 4)
   }
-  return null
+  const lang = toArflyLang(locale)
+  const listSearch = new URLSearchParams({ lang, page: '1', per_page: '5' })
+  const list = await serverApiClient.get<ArflyProductListResponse>(`/api/v2/products?${listSearch}`)
+  return mapArflyListResponse(list, locale).items.filter((item) => item.slug !== slug).slice(0, 4)
 }
 
+/**
+ * PDP SSR: by-slug (con fallback slug→id nel BFF) → map DTO.
+ * L'arricchimento stock/prezzi Odoo avviene lato client per non bloccare il TTFB.
+ */
 export const fetchProductDetailServer = cache(async function fetchProductDetailServer(
   slug: string,
   locale: PwaLocale,
@@ -43,44 +43,13 @@ export const fetchProductDetailServer = cache(async function fetchProductDetailS
       `/api/v2/product/by-slug?${bySlugSearch}`,
     )
   } catch {
-    // by-slug non disponibile su Odoo: fallback slug → id (come CSR)
-  }
-
-  if (!res?.product) {
-    const productId = await findProductIdBySlugServer(slug, locale)
-    if (productId == null) return null
-    try {
-      const detailSearch = new URLSearchParams({ lang })
-      res = await serverApiClient.get<ArflyProductDetailResponse>(
-        `/api/v2/product/${productId}?${detailSearch}`,
-      )
-    } catch {
-      return null
-    }
+    return null
   }
 
   if (!res?.product) return null
 
-  let product = mapArflyProductDetail(res.product, locale)
-  try {
-    product = await serverApiClient.post<ProductDetailDTO>(
-      '/api/v1/catalog/availability/enrich-detail',
-      product,
-    )
-  } catch {
-    // SSR: mantieni dati Arfly se arricchimento non disponibile
-  }
-
-  const relatedFromOdoo = product.relatedProducts ?? []
-  let relatedProducts: ProductCardDTO[] = relatedFromOdoo.slice(0, 4)
-
-  if (relatedProducts.length === 0) {
-    const listSearch = new URLSearchParams({ lang, page: '1', per_page: '5' })
-    const list = await serverApiClient.get<ArflyProductListResponse>(`/api/v2/products?${listSearch}`)
-    relatedProducts = mapArflyListResponse(list, locale).items
-      .filter((item) => item.slug !== slug)
-      .slice(0, 4)
-  }
+  const product = mapArflyProductDetail(res.product, locale)
+  const relatedProducts = await loadRelatedProducts(slug, locale, product.relatedProducts ?? [])
 
   return { product, relatedProducts }
 })

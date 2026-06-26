@@ -6,7 +6,6 @@ import { formatStreetLine } from '@/lib/checkout-address.validators'
 import {
   canStartCheckout,
   checkoutStore,
-  goBackCheckoutStep,
   prepareCheckoutPayment,
   selectedShippingQuote,
   setTermsAccepted,
@@ -17,15 +16,14 @@ import { checkoutTotalCents } from './CheckoutOrderSummary'
 import {
   CheckoutReviewCard,
   CheckoutReviewRow,
-  CheckoutStepHeader,
 } from './CheckoutStepPrimitives'
 import { useI18n } from '@/hooks/use-i18n'
 import {
   CheckoutActionRow,
-  StripeBackButton,
   StripeCheckbox,
   StripePayButton,
 } from './StripeFields'
+import { CheckoutStepBackButton } from './CheckoutStepBackButton'
 
 type Props = {
   cart: Readonly<CartDTO>
@@ -71,8 +69,6 @@ export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Pro
 
   return (
     <section className="space-y-5">
-      <CheckoutStepHeader title={t('checkout.payment')} subtitle={t('checkout.review.hint')} />
-
       <CheckoutReviewCard title={t('checkout.review.summaryTitle')}>
         {shippingQuote ? (
           <CheckoutReviewRow label={t('checkout.summary.shipping')} value={shippingQuote.label} />
@@ -159,7 +155,7 @@ export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Pro
       <p className="text-center text-xs text-[#9298a3]">{t('checkout.review.secureFooter')}</p>
 
       <CheckoutActionRow>
-        <StripeBackButton onClick={goBackCheckoutStep} />
+        <CheckoutStepBackButton />
         <StripePayButton
           className="min-w-0 flex-1"
           disabled={!canPay || !checkout.termsAccepted || !canStartCheckout()}

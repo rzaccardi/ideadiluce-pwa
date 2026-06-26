@@ -35,7 +35,6 @@ import { ProductDetailGallery } from './ProductDetailGallery'
 import { DesignHeroVariantPicker } from './DesignHeroVariantPicker'
 import { DesignRelatedProducts } from './DesignRelatedProducts'
 import { ProductQuantityStepper } from './ProductQuantityStepper'
-import { WalletQuickPay } from '@/components/checkout/WalletQuickPay'
 import { ProductDetailStickyBar,
   createAddToCartHandler,
 } from './ProductDetailStickyBar'
@@ -195,37 +194,24 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
               onChange={setSelectedVariantRef}
             />
 
-            <div className="mb-3.5 flex flex-col gap-3 sm:flex-row sm:items-stretch">
-              <div className="flex min-w-0 flex-1 items-stretch gap-3">
-                {availability?.canAddToCart ? (
-                  <ProductQuantityStepper
-                    value={quantity}
-                    min={1}
-                    max={maxQuantity}
-                    onChange={setQuantity}
-                    variant="design"
-                  />
-                ) : null}
-                <button
-                  type="button"
-                  disabled={!availability?.canAddToCart || isAddingToCart}
-                  onClick={handleAddToCart}
-                  className="flex-1 rounded-lg bg-idl-glow px-4 py-[15px] text-center text-[15.5px] font-bold text-idl-design transition hover:bg-[#f7bd6f] disabled:opacity-60"
-                >
-                  {isAddingToCart ? t('product.addingToCart') : t('product.addToCart')}
-                </button>
-              </div>
+            <div className="mb-3.5 flex min-w-0 items-stretch gap-3">
               {availability?.canAddToCart ? (
-                <WalletQuickPay
-                  disabled={isAddingToCart}
-                  className="w-full sm:w-auto sm:min-w-[160px]"
-                  productLine={{
-                    productRef: product.slug,
-                    quantity,
-                    variantRef,
-                  }}
+                <ProductQuantityStepper
+                  value={quantity}
+                  min={1}
+                  max={maxQuantity}
+                  onChange={setQuantity}
+                  variant="design"
                 />
               ) : null}
+              <button
+                type="button"
+                disabled={!availability?.canAddToCart || isAddingToCart}
+                onClick={handleAddToCart}
+                className="flex-1 rounded-lg bg-idl-glow px-4 py-[15px] text-center text-[15.5px] font-bold text-idl-design transition hover:bg-[#f7bd6f] disabled:opacity-60"
+              >
+                {isAddingToCart ? t('product.addingToCart') : t('product.addToCart')}
+              </button>
             </div>
 
             {!availability?.canAddToCart &&

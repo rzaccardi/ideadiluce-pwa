@@ -13,6 +13,7 @@ import {
 } from '@/components/checkout/stripe-ui/StripeFields'
 import { useI18n } from '@/hooks/use-i18n'
 import { AccountSaveFeedback } from '@/components/account/AccountSaveFeedback'
+import { TaxVerifyButton } from '@/components/checkout/stripe-ui/TaxVerifyButton'
 import { AccountDcPanel } from '@/components/account/dc/AccountDcPanel'
 import { accountDcPrimaryBtnClass } from '@/components/account/dc/account-dc-styles'
 import { FadeIn } from '@/components/motion'
@@ -178,18 +179,25 @@ export function AccountPage() {
           </div>
           <div>
             <StripeFieldLabel htmlFor="profile-vat">P.IVA</StripeFieldLabel>
-            <StripeFieldGroup className="mt-1.5">
-              <StripeInput
-                id="profile-vat"
-                value={vatNumber}
-                onChange={(e) => {
-                  setVatNumber(e.target.value)
-                  setTaxValidation(null)
-                }}
-                onBlur={() => void validateBusinessTaxFields()}
-                className="uppercase"
+            <div className="mt-1.5 flex items-stretch gap-2">
+              <StripeFieldGroup className="min-w-0 flex-1">
+                <StripeInput
+                  id="profile-vat"
+                  value={vatNumber}
+                  onChange={(e) => {
+                    setVatNumber(e.target.value)
+                    setTaxValidation(null)
+                  }}
+                  onBlur={() => void validateBusinessTaxFields()}
+                  className="uppercase"
+                />
+              </StripeFieldGroup>
+              <TaxVerifyButton
+                onClick={() => void validateBusinessTaxFields()}
+                disabled={!vatNumber.trim() || taxValidating}
+                loading={taxValidating}
               />
-            </StripeFieldGroup>
+            </div>
             {taxValidation?.vat && vatNumber.trim() ? (
               <div className="mt-1 space-y-1">
                 <p
@@ -212,18 +220,25 @@ export function AccountPage() {
           </div>
           <div>
             <StripeFieldLabel htmlFor="profile-fiscal">Codice fiscale</StripeFieldLabel>
-            <StripeFieldGroup className="mt-1.5">
-              <StripeInput
-                id="profile-fiscal"
-                value={fiscalCode}
-                onChange={(e) => {
-                  setFiscalCode(e.target.value)
-                  setTaxValidation(null)
-                }}
-                onBlur={() => void validateBusinessTaxFields()}
-                className="uppercase"
+            <div className="mt-1.5 flex items-stretch gap-2">
+              <StripeFieldGroup className="min-w-0 flex-1">
+                <StripeInput
+                  id="profile-fiscal"
+                  value={fiscalCode}
+                  onChange={(e) => {
+                    setFiscalCode(e.target.value)
+                    setTaxValidation(null)
+                  }}
+                  onBlur={() => void validateBusinessTaxFields()}
+                  className="uppercase"
+                />
+              </StripeFieldGroup>
+              <TaxVerifyButton
+                onClick={() => void validateBusinessTaxFields()}
+                disabled={!fiscalCode.trim() || taxValidating}
+                loading={taxValidating}
               />
-            </StripeFieldGroup>
+            </div>
             {taxValidation?.fiscalCode && fiscalCode.trim() ? (
               <p
                 className={`mt-1 text-xs ${taxValidation.fiscalCode.valid ? 'text-emerald-700' : 'text-red-700'}`}

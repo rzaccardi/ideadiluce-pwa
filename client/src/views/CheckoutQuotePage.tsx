@@ -16,13 +16,11 @@ import { cartHasBlockedLines, cartPurchasableItemCount } from '@/lib/cartTotals'
 import { emptyAddress, shippingAddressFromUser, addressInputToDto, isAddressComplete } from '@/lib/address'
 import type { AddressInput } from '@/types/integrations'
 import { useI18n } from '@/hooks/use-i18n'
-import { useLocalePath } from '@/hooks/use-locale-path'
 
 type QuoteStep = 'account' | 'details'
 
 export function CheckoutQuotePage() {
   const { t } = useI18n()
-  const lp = useLocalePath()
   const auth = useSnapshot(authStore)
   const cart = useSnapshot(cartStore)
   const quotes = useSnapshot(quotesStore)
@@ -142,7 +140,6 @@ export function CheckoutQuotePage() {
             <InlineAccountAuthStep
               email={quoteEmail}
               onEmailChange={setQuoteEmail}
-              forgotPasswordFrom={lp('/checkout/quote')}
               title={t('cart.quote.accountTitle')}
               hint={t('cart.quote.accountHint')}
               registerContinueLabel={t('cart.quote.accountContinue')}

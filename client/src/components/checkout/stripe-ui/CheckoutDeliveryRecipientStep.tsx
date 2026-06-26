@@ -5,21 +5,18 @@ import {
   advanceCheckoutStep,
   canAdvanceFromStep,
   checkoutStore,
-  goBackCheckoutStep,
   setDeliveryRecipientMode,
   updateDeliveryRecipientField,
   updateDropshipAddress,
 } from '@/features/checkout'
 import { CheckoutAddressSection } from './CheckoutAddressSection'
-import { CheckoutPanel, CheckoutSegmentControl, CheckoutStepHeader } from './CheckoutStepPrimitives'
+import { CheckoutPanel, CheckoutSegmentControl } from './CheckoutStepPrimitives'
 import { useI18n } from '@/hooks/use-i18n'
 import {
   CheckoutActionRow,
-  StripeBackButton,
-  StripeFieldGroup,
-  StripeControlledInput,
   StripePayButton,
 } from './StripeFields'
+import { CheckoutStepBackButton } from './CheckoutStepBackButton'
 
 export function CheckoutDeliveryRecipientStep() {
   const { t } = useI18n()
@@ -28,11 +25,6 @@ export function CheckoutDeliveryRecipientStep() {
 
   return (
     <section className="space-y-5">
-      <CheckoutStepHeader
-        title={t('checkout.steps.deliveryRecipient')}
-        subtitle={t('checkout.deliveryRecipient.hint')}
-      />
-
       <CheckoutSegmentControl<'self' | 'other'>
         value={recipient.mode ?? 'self'}
         options={(['self', 'other'] as const).map((mode) => ({
@@ -98,7 +90,7 @@ export function CheckoutDeliveryRecipientStep() {
       ) : null}
 
       <CheckoutActionRow>
-        <StripeBackButton onClick={goBackCheckoutStep} />
+        <CheckoutStepBackButton />
         <StripePayButton
           className="min-w-0 flex-1"
           disabled={!canAdvanceFromStep('delivery_recipient') || checkout.isLoading}

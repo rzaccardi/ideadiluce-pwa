@@ -34,6 +34,7 @@ export type MessageKey =
   | 'auth.sessionChecking'
   | 'auth.redirectingToLogin'
   | 'auth.loggingIn'
+  | 'auth.loggedIn'
   | 'auth.loggedOut'
   | 'auth.loggedOutLocalOnly'
   | 'auth.loginSubmit'
@@ -272,13 +273,15 @@ export type MessageKey =
   | 'walletQuickPay.checkoutFallback'
   | 'walletQuickPay.openCheckout'
   | 'checkout.steps.title'
+  | 'checkout.steps.pageTitle.account'
+  | 'checkout.steps.pageTitle.accountConfirm'
   | 'checkout.steps.details'
   | 'checkout.steps.account'
   | 'checkout.steps.customerType'
   | 'checkout.steps.deliveryRecipient'
   | 'checkout.steps.review'
   | 'checkout.steps.group.account'
-  | 'checkout.steps.group.addresses'
+  | 'checkout.steps.group.anagrafica'
   | 'checkout.steps.group.shipping'
   | 'checkout.steps.group.payment'
   | 'checkout.steps.payment'
@@ -349,9 +352,7 @@ export type MessageKey =
   | 'checkout.register.changeCustomerType'
   | 'checkout.customerType.hint'
   | 'checkout.customerType.retail.title'
-  | 'checkout.customerType.retail.description'
   | 'checkout.customerType.business.title'
-  | 'checkout.customerType.business.description'
   | 'checkout.deliveryRecipient.hint'
   | 'checkout.deliveryRecipient.self.title'
   | 'checkout.deliveryRecipient.self.description'
@@ -375,6 +376,8 @@ export type MessageKey =
   | 'checkout.billing.fiscalCodeInvalid'
   | 'checkout.billing.vatFormatValid'
   | 'checkout.billing.vatFormatInvalid'
+  | 'checkout.billing.verify'
+  | 'checkout.billing.verifying'
   | 'checkout.billing.verifyVatVies'
   | 'checkout.billing.vatViesValid'
   | 'checkout.billing.vatViesInvalid'
@@ -752,6 +755,7 @@ const IT: Record<MessageKey, string> = {
   'auth.sessionChecking': 'Verifica sessione…',
   'auth.redirectingToLogin': 'Reindirizzamento al login…',
   'auth.loggingIn': 'Accesso…',
+  'auth.loggedIn': 'Accesso effettuato.',
   'auth.loggedOut': 'Sei uscito dall’account.',
   'auth.loggedOutLocalOnly':
     'Sessione locale chiusa. Se noti anomalie, ricarica la pagina o riprova.',
@@ -995,13 +999,15 @@ const IT: Record<MessageKey, string> = {
   'walletQuickPay.checkoutFallback': 'Apple Pay · Google Pay al checkout',
   'walletQuickPay.openCheckout': 'Vai al checkout',
   'checkout.steps.title': 'Completa il tuo ordine',
+  'checkout.steps.pageTitle.account': 'Accedi o registrati',
+  'checkout.steps.pageTitle.accountConfirm': 'Il tuo account',
   'checkout.steps.details': 'Dettagli',
   'checkout.steps.account': 'Account',
   'checkout.steps.customerType': 'Tipo cliente',
   'checkout.steps.deliveryRecipient': 'Destinatario',
   'checkout.steps.review': 'Riepilogo',
   'checkout.steps.group.account': 'Account',
-  'checkout.steps.group.addresses': 'Indirizzi',
+  'checkout.steps.group.anagrafica': 'Anagrafica',
   'checkout.steps.group.shipping': 'Spedizione',
   'checkout.steps.group.payment': 'Pagamento',
   'checkout.steps.payment': 'Pagamento',
@@ -1077,9 +1083,7 @@ const IT: Record<MessageKey, string> = {
   'checkout.customerType.hint': 'Seleziona se acquisti come privato o azienda.',
   'checkout.register.changeCustomerType': 'Modifica tipo cliente',
   'checkout.customerType.retail.title': 'Privato',
-  'checkout.customerType.retail.description': 'Acquisto personale con listino retail.',
   'checkout.customerType.business.title': 'Azienda',
-  'checkout.customerType.business.description': 'Acquisto professionale con listino dedicato.',
   'checkout.deliveryRecipient.hint': 'Indica se la spedizione va al tuo indirizzo o a un destinatario diverso.',
   'checkout.deliveryRecipient.self.title': 'Spedisci a me',
   'checkout.deliveryRecipient.self.description': 'La merce arriva all’indirizzo di spedizione indicato.',
@@ -1103,6 +1107,8 @@ const IT: Record<MessageKey, string> = {
   'checkout.billing.fiscalCodeInvalid': 'Codice fiscale non valido',
   'checkout.billing.vatFormatValid': 'Partita IVA formalmente valida',
   'checkout.billing.vatFormatInvalid': 'Partita IVA non valida',
+  'checkout.billing.verify': 'Verifica',
+  'checkout.billing.verifying': 'Verifica…',
   'checkout.billing.verifyVatVies': 'Verifica partita IVA (VIES)',
   'checkout.billing.vatViesValid': 'Partita IVA verificata su VIES',
   'checkout.billing.vatViesInvalid': 'Partita IVA non presente su VIES',
@@ -1499,6 +1505,7 @@ const EN: Record<MessageKey, string> = {
   'auth.sessionChecking': 'Checking session…',
   'auth.redirectingToLogin': 'Redirecting to sign in…',
   'auth.loggingIn': 'Signing in…',
+  'auth.loggedIn': 'Signed in successfully.',
   'auth.loggedOut': 'You have been signed out.',
   'auth.loggedOutLocalOnly':
     'Local session cleared. If something looks wrong, refresh the page or try again.',
@@ -1742,13 +1749,15 @@ const EN: Record<MessageKey, string> = {
   'walletQuickPay.checkoutFallback': 'Apple Pay · Google Pay at checkout',
   'walletQuickPay.openCheckout': 'Go to checkout',
   'checkout.steps.title': 'Complete your order',
+  'checkout.steps.pageTitle.account': 'Sign in or register',
+  'checkout.steps.pageTitle.accountConfirm': 'Your account',
   'checkout.steps.details': 'Details',
   'checkout.steps.account': 'Account',
   'checkout.steps.customerType': 'Customer type',
   'checkout.steps.deliveryRecipient': 'Recipient',
   'checkout.steps.review': 'Review',
   'checkout.steps.group.account': 'Account',
-  'checkout.steps.group.addresses': 'Addresses',
+  'checkout.steps.group.anagrafica': 'Personal details',
   'checkout.steps.group.shipping': 'Shipping',
   'checkout.steps.group.payment': 'Payment',
   'checkout.steps.payment': 'Payment',
@@ -1821,9 +1830,7 @@ const EN: Record<MessageKey, string> = {
   'checkout.customerType.hint': 'Choose whether you are buying as a private customer or a business.',
   'checkout.register.changeCustomerType': 'Change customer type',
   'checkout.customerType.retail.title': 'Private',
-  'checkout.customerType.retail.description': 'Personal purchase with retail pricing.',
   'checkout.customerType.business.title': 'Business',
-  'checkout.customerType.business.description': 'Professional purchase with dedicated pricing.',
   'checkout.deliveryRecipient.hint': 'Choose whether the order ships to you or to another recipient.',
   'checkout.deliveryRecipient.self.title': 'Ship to me',
   'checkout.deliveryRecipient.self.description': 'Goods arrive at the shipping address you entered.',
@@ -1847,6 +1854,8 @@ const EN: Record<MessageKey, string> = {
   'checkout.billing.fiscalCodeInvalid': 'Invalid tax ID',
   'checkout.billing.vatFormatValid': 'VAT number formally valid',
   'checkout.billing.vatFormatInvalid': 'Invalid VAT number',
+  'checkout.billing.verify': 'Verify',
+  'checkout.billing.verifying': 'Verifying…',
   'checkout.billing.verifyVatVies': 'Verify VAT number (VIES)',
   'checkout.billing.vatViesValid': 'VAT verified on VIES',
   'checkout.billing.vatViesInvalid': 'VAT not found on VIES',
@@ -2237,6 +2246,7 @@ const ES: Record<MessageKey, string> = {
   'auth.sessionChecking': 'Verificando sesión…',
   'auth.redirectingToLogin': 'Redirigiendo al inicio de sesión…',
   'auth.loggingIn': 'Iniciando sesión…',
+  'auth.loggedIn': 'Sesión iniciada.',
   'auth.loggedOut': 'Has cerrado sesión.',
   'auth.loggedOutLocalOnly':
     'Sesión local cerrada. Si algo no cuadra, recarga la página o inténtalo de nuevo.',
@@ -2442,6 +2452,8 @@ const ES: Record<MessageKey, string> = {
   'walletQuickPay.checkoutFallback': 'Apple Pay · Google Pay en el checkout',
   'walletQuickPay.openCheckout': 'Ir al checkout',
   'checkout.steps.title': 'Completa tu pedido',
+  'checkout.steps.pageTitle.account': 'Inicia sesión o regístrate',
+  'checkout.steps.pageTitle.accountConfirm': 'Tu cuenta',
   'checkout.steps.details': 'Detalles',
   'checkout.steps.payment': 'Pago',
   'checkout.steps.shipping': 'Envío',
@@ -2801,6 +2813,7 @@ const FR: Record<MessageKey, string> = {
   'auth.sessionChecking': 'Vérification de la session…',
   'auth.redirectingToLogin': 'Redirection vers la connexion…',
   'auth.loggingIn': 'Connexion…',
+  'auth.loggedIn': 'Connexion réussie.',
   'auth.loggedOut': 'Vous êtes déconnecté.',
   'auth.loggedOutLocalOnly':
     'Session locale fermée. En cas de problème, actualisez la page ou réessayez.',
@@ -3006,6 +3019,8 @@ const FR: Record<MessageKey, string> = {
   'walletQuickPay.checkoutFallback': 'Apple Pay · Google Pay au checkout',
   'walletQuickPay.openCheckout': 'Aller au checkout',
   'checkout.steps.title': 'Finalisez votre commande',
+  'checkout.steps.pageTitle.account': 'Connectez-vous ou inscrivez-vous',
+  'checkout.steps.pageTitle.accountConfirm': 'Votre compte',
   'checkout.steps.details': 'Détails',
   'checkout.steps.payment': 'Paiement',
   'checkout.steps.shipping': 'Livraison',
@@ -3367,6 +3382,7 @@ const DE: Record<MessageKey, string> = {
   'auth.sessionChecking': 'Sitzung wird geprüft…',
   'auth.redirectingToLogin': 'Weiterleitung zur Anmeldung…',
   'auth.loggingIn': 'Anmeldung…',
+  'auth.loggedIn': 'Anmeldung erfolgreich.',
   'auth.loggedOut': 'Sie wurden abgemeldet.',
   'auth.loggedOutLocalOnly':
     'Lokale Sitzung beendet. Bei Auffälligkeiten Seite neu laden oder erneut versuchen.',
@@ -3572,6 +3588,8 @@ const DE: Record<MessageKey, string> = {
   'walletQuickPay.checkoutFallback': 'Apple Pay · Google Pay im Checkout',
   'walletQuickPay.openCheckout': 'Zum Checkout',
   'checkout.steps.title': 'Bestellung abschließen',
+  'checkout.steps.pageTitle.account': 'Anmelden oder registrieren',
+  'checkout.steps.pageTitle.accountConfirm': 'Ihr Konto',
   'checkout.steps.details': 'Details',
   'checkout.steps.payment': 'Zahlung',
   'checkout.steps.shipping': 'Versand',

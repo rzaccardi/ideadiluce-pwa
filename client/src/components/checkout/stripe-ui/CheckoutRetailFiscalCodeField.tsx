@@ -8,23 +8,8 @@ import {
   StripeFieldGroup,
   StripeFieldLabel,
 } from './StripeFields'
-
-function TaxValidationMessage({
-  valid,
-  validLabel,
-  invalidLabel,
-}: {
-  valid: boolean | null
-  validLabel: string
-  invalidLabel: string
-}) {
-  if (valid == null) return null
-  return (
-    <p className={`px-1 text-xs ${valid ? 'text-emerald-700' : 'text-red-700'}`}>
-      {valid ? validLabel : invalidLabel}
-    </p>
-  )
-}
+import { TaxVerifyButton } from './TaxVerifyButton'
+import { TaxValidationMessage } from './TaxValidationMessage'
 
 type Props = {
   disabled?: boolean
@@ -37,7 +22,8 @@ export function CheckoutRetailFiscalCodeField({ disabled = false }: Props) {
   const billingCountry = checkout.draft.billing.country.toUpperCase() || 'IT'
   if (billingCountry !== 'IT') return null
 
-  const stepBusy = disabled || checkout.isLoading || b.taxValidating || checkout.addressPrefillLoading
+  const stepBusy = disabled || checkout.isLoading || checkout.addressPrefillLoading
+  const fiscalFieldBusy = stepBusy || b.taxValidating
 
   async function handleTaxBlur() {
     if (checkout.business.taxValidating || disabled) return
@@ -51,24 +37,33 @@ export function CheckoutRetailFiscalCodeField({ disabled = false }: Props) {
   return (
     <div>
       <StripeFieldLabel htmlFor="fiscalCode">{t('checkout.billing.fiscalCode')}</StripeFieldLabel>
-      <StripeFieldGroup>
-        <StripeControlledInput
-          id="fiscalCode"
-          name="fiscalCode"
-          placeholder="RSSMRA80A01H501U"
-          autoComplete="off"
-          value={checkout.business.fiscalCode}
-          disabled={stepBusy}
-          normalize={(v) => v.toUpperCase()}
-          onValueChange={(value) => updateBusinessField('fiscalCode', value)}
-          onBlur={() => void handleTaxBlur()}
-          required
+      <div className="flex items-stretch gap-2">
+        <StripeFieldGroup className="min-w-0 flex-1">
+          <StripeControlledInput
+            id="fiscalCode"
+            name="fiscalCode"
+            placeholder="RSSMRA80A01H501U"
+            autoComplete="off"
+            value={checkout.business.fiscalCode}
+            disabled={fiscalFieldBusy}
+            normalize={(v) => v.toUpperCase()}
+            onValueChange={(value) => updateBusinessField('fiscalCode', value)}
+            onBlur={() => void handleTaxBlur()}
+            required
+          />
+        </StripeFieldGroup>
+        <TaxVerifyButton
+          onClick={() => void handleTaxBlur()}
+          disabled={!b.fiscalCode.trim() || fiscalFieldBusy}
+          loading={b.taxValidating}
+          verified={b.fiscalCodeValid === true}
         />
-      </StripeFieldGroup>
+      </div>
       <TaxValidationMessage
         valid={b.fiscalCode.trim() ? b.fiscalCodeValid : null}
         validLabel={t('checkout.billing.fiscalCodeValid')}
         invalidLabel={t('checkout.billing.fiscalCodeInvalid')}
+        errorMessage={b.fiscalCode.trim() ? b.fiscalCodeError : null}
       />
     </div>
   )

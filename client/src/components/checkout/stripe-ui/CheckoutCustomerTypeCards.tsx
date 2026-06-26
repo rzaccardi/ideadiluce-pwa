@@ -106,7 +106,7 @@ export function CheckoutCustomerTypeCards({
             disabled={disabled}
             onClick={() => onChange(option)}
             className={cn(
-              'flex min-h-[148px] w-full flex-col items-start gap-4 rounded-2xl border-[1.5px] p-5 text-left transition sm:min-h-[160px] sm:p-6',
+              'flex w-full flex-col items-start gap-3 rounded-2xl border-[1.5px] p-5 text-left transition sm:p-6',
               selected
                 ? 'border-[#14161b] bg-[#faf6ef] shadow-[0_0_0_3px_rgba(240,173,87,0.2)]'
                 : 'border-[#e7eaee] bg-[#f7f8fa] hover:border-[#c0c5cc] hover:bg-white',
@@ -121,13 +121,8 @@ export function CheckoutCustomerTypeCards({
             >
               <Icon className="size-6 sm:size-7" />
             </span>
-            <span className="min-w-0">
-              <span className="block text-base font-extrabold tracking-[-0.01em] text-[#14161b] sm:text-[17px]">
-                {t(`checkout.customerType.${option}.title`)}
-              </span>
-              <span className="mt-1.5 block text-sm leading-relaxed text-[#6c727c]">
-                {t(`checkout.customerType.${option}.description`)}
-              </span>
+            <span className="text-base font-extrabold tracking-[-0.01em] text-[#14161b] sm:text-[17px]">
+              {t(`checkout.customerType.${option}.title`)}
             </span>
           </button>
         )

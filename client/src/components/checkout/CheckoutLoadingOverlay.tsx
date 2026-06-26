@@ -38,7 +38,6 @@ export function resolveCheckoutLoading(params: {
   isLoading: boolean
   isPaying: boolean
   addressPrefillLoading: boolean
-  taxValidating: boolean
   shippingQuotesLoading: boolean
   cartLoading: boolean
 }): LoadingState | null {
@@ -47,7 +46,6 @@ export function resolveCheckoutLoading(params: {
     isLoading,
     isPaying,
     addressPrefillLoading,
-    taxValidating,
     shippingQuotesLoading,
     cartLoading,
   } = params
@@ -56,7 +54,7 @@ export function resolveCheckoutLoading(params: {
     return { visible: true, icon: 'shield', messageKey: 'checkout.loading.payment' }
   }
 
-  if (addressPrefillLoading || taxValidating) {
+  if (addressPrefillLoading) {
     return { visible: true, icon: 'pin', messageKey: 'checkout.loading.address' }
   }
 

@@ -11,12 +11,10 @@ import {
   updateCheckoutEmail,
 } from '@/features/checkout'
 import { useI18n } from '@/hooks/use-i18n'
-import { useLocalePath } from '@/hooks/use-locale-path'
 import { InlineAccountAuthStep } from '@/components/auth/InlineAccountAuthStep'
 
 export function CheckoutRegistrationStep() {
   const { t } = useI18n()
-  const lp = useLocalePath()
   const checkout = useSnapshot(checkoutStore)
 
   async function handleAuthSuccess(info: {
@@ -46,9 +44,6 @@ export function CheckoutRegistrationStep() {
     <InlineAccountAuthStep
       email={checkout.draft.email}
       onEmailChange={updateCheckoutEmail}
-      forgotPasswordFrom={lp('/checkout')}
-      title={t('checkout.steps.account')}
-      hint={t('checkout.account.requiredHint')}
       registerContinueLabel={t('checkout.account.createAndContinue')}
       onAuthSuccess={handleAuthSuccess}
       showAuthenticatedContinue

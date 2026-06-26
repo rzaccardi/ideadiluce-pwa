@@ -4,6 +4,7 @@ import {
   fetchArflyProductDetail,
   fetchArflyProductList,
 } from '../../adapters/arfly/arflyClient.js'
+import { findArflyProductIdBySlug } from '../../adapters/arfly/arflySlugIndex.js'
 import { parseHubLocale, type HubLocale } from '../../lib/hub-locale.js'
 import { buildTechnicalCardSpecTagsFromSpecs } from '../../lib/technical-card-spec-tags.js'
 
@@ -26,6 +27,10 @@ function pricingFromQuery(query: Record<string, string | undefined>) {
   }
 }
 
+function shouldEnrichSpecTags(value: string | undefined): boolean {
+  return value === '1' || value === 'true'
+}
+
 export async function proxyArflyProductList(query: {
   locale?: string
   lang?: string
@@ -38,6 +43,7 @@ export async function proxyArflyProductList(query: {
   partner_id?: string
   pricelist_id?: string
   website?: string
+  enrich_spec_tags?: string
 }) {
   const locale = langFromQuery(query.locale, query.lang)
   const page = Math.max(1, Number(query.page) || 1)
@@ -54,6 +60,10 @@ export async function proxyArflyProductList(query: {
     partnerId: pricing.partnerId,
     pricelistId: pricing.pricelistId,
   })
+
+  if (!shouldEnrichSpecTags(query.enrich_spec_tags)) {
+    return list
+  }
 
   const items = await Promise.all(
     list.items.map(async (item) => {
@@ -100,7 +110,12 @@ export async function proxyArflyProductBySlug(
   const pricing = pricingFromQuery(query)
   const bySlug = await fetchArflyProductBySlug(slug, locale, pricing)
   if (bySlug) return bySlug
-  throw new ArflyClientError(`Prodotto non trovato per slug ${slug}`, 404)
+
+  const productId = await findArflyProductIdBySlug(slug, locale, pricing)
+  if (productId == null) {
+    throw new ArflyClientError(`Prodotto non trovato per slug ${slug}`, 404)
+  }
+  return fetchArflyProductDetail(productId, locale, pricing)
 }
 
 export { ArflyClientError }

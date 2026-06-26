@@ -109,6 +109,7 @@ export const api = {
         brand?: string
         partnerId?: number
         pricelistId?: number
+        enrichSpecTags?: boolean
       } = {},
     ) {
       const search = new URLSearchParams()
@@ -120,6 +121,7 @@ export const api = {
       if (params.brand) search.set('brand', params.brand)
       if (params.partnerId != null) search.set('partner_id', String(params.partnerId))
       if (params.pricelistId != null) search.set('pricelist_id', String(params.pricelistId))
+      if (params.enrichSpecTags) search.set('enrich_spec_tags', '1')
       const q = search.toString() ? `?${search.toString()}` : ''
       return apiClient.get<ArflyProductListResponse>(`/api/v2/products${q}`)
     },

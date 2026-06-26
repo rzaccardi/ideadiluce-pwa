@@ -6,7 +6,6 @@ import {
   applyResolvedAddress,
   canAdvanceFromStep,
   checkoutStore,
-  goBackCheckoutStep,
   isBusinessCheckout,
   updateCheckoutAddress,
   updateClientOrderRef,
@@ -16,19 +15,16 @@ import { CheckoutAccountSection } from './CheckoutAccountSection'
 import { CheckoutAddressSection } from './CheckoutAddressSection'
 import { CheckoutBusinessFieldsSection } from './CheckoutBusinessFieldsSection'
 import { CheckoutRetailFiscalCodeField } from './CheckoutRetailFiscalCodeField'
-import {
-  CheckoutInfoNote,
-  CheckoutStepHeader,
-} from './CheckoutStepPrimitives'
+import { CheckoutInfoNote } from './CheckoutStepPrimitives'
 import { useI18n } from '@/hooks/use-i18n'
 import {
   CheckoutActionRow,
-  StripeBackButton,
   StripeControlledInput,
   StripeFieldGroup,
   StripeFieldLabel,
   StripePayButton,
 } from './StripeFields'
+import { CheckoutStepBackButton } from './CheckoutStepBackButton'
 
 export function CheckoutBillingStep() {
   const { t } = useI18n()
@@ -41,15 +37,10 @@ export function CheckoutBillingStep() {
     !business &&
     checkout.anagraficaCollectedAtAccount &&
     Boolean(b.fiscalCode.trim())
-  const stepBusy = checkout.isLoading || b.taxValidating || checkout.addressPrefillLoading
+  const stepBusy = checkout.isLoading || checkout.addressPrefillLoading
 
   return (
     <section className="space-y-5">
-      <CheckoutStepHeader
-        title={t('checkout.billingAddress')}
-        subtitle={t('checkout.billing.subtitle')}
-      />
-
       {auth.me ? <CheckoutAccountSection /> : null}
 
       {auth.me?.isProfessional ? (
@@ -87,7 +78,7 @@ export function CheckoutBillingStep() {
       />
 
       <CheckoutActionRow>
-        <StripeBackButton onClick={goBackCheckoutStep} disabled={stepBusy} />
+        <CheckoutStepBackButton disabled={stepBusy} />
         <StripePayButton
           className="min-w-0 flex-1"
           disabled={!canAdvanceFromStep('billing') || stepBusy}

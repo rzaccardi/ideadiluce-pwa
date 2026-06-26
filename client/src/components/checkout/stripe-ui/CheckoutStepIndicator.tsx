@@ -1,8 +1,12 @@
 'use client'
 
 import type { CheckoutStep } from '@/features/checkout'
-import { CHECKOUT_STEP_ORDER, shouldSkipCheckoutStep } from '@/features/checkout'
+import { CHECKOUT_STEP_ORDER, checkoutStore, shouldSkipCheckoutStep } from '@/features/checkout'
+import { authStore } from '@/features/auth'
+import { useSnapshot } from 'valtio/react'
 import { checkoutFormTitleClass } from '@/components/checkout/stripe-ui/constants'
+import { checkoutStepPageTitleKey } from '@/components/checkout/stripe-ui/checkout-step-page-title'
+import { checkoutStepPageSubtitleKey } from '@/components/checkout/stripe-ui/checkout-step-page-subtitle'
 import { useI18n } from '@/hooks/use-i18n'
 import type { MessageKey } from '@/i18n/messages'
 import { cn } from '@/utils/cn'
@@ -13,11 +17,11 @@ type StepGroup = {
   steps: CheckoutStep[]
 }
 
-/** Tre macro-step come nel mock HTML: Indirizzi · Spedizione · Pagamento */
+/** Tre macro-step: Anagrafica · Spedizione · Pagamento */
 const STEP_GROUPS: StepGroup[] = [
   {
     id: 'addresses',
-    labelKey: 'checkout.steps.group.addresses',
+    labelKey: 'checkout.steps.group.anagrafica',
     steps: ['account', 'customer_type', 'billing', 'shipping'],
   },
   {
@@ -59,20 +63,25 @@ function groupIndex(currentStep: CheckoutStep) {
   return STEP_GROUPS.length - 1
 }
 
-function currentGroup(currentStep: CheckoutStep) {
-  const active = groupIndex(currentStep)
-  return STEP_GROUPS.filter((g) => g.steps.some((s) => visibleSteps().includes(s)))[active]
-}
-
 type Props = {
   currentStep: CheckoutStep
 }
 
 export function CheckoutStepIndicator({ currentStep }: Props) {
-  const { t, tParams } = useI18n()
+  const { t } = useI18n()
+  const auth = useSnapshot(authStore)
+  const checkout = useSnapshot(checkoutStore)
   const activeGroup = groupIndex(currentStep)
   const groups = STEP_GROUPS.filter((g) => g.steps.some((s) => visibleSteps().includes(s)))
-  const current = currentGroup(currentStep) ?? groups[0]!
+  const accountConfirmed = currentStep === 'account' && auth.isAuthenticated
+  const pageTitle = t(
+    checkoutStepPageTitleKey(currentStep, { accountConfirmed }),
+  )
+  const subtitleKey = checkoutStepPageSubtitleKey(currentStep, {
+    accountConfirmed,
+    billingSameAsShipping: checkout.draft.billingSameAsShipping,
+  })
+  const pageSubtitle = subtitleKey ? t(subtitleKey) : null
 
   return (
     <div className="mb-6 sm:mb-8">
@@ -83,12 +92,11 @@ export function CheckoutStepIndicator({ currentStep }: Props) {
             'font-extrabold tracking-[-0.01em] text-[#14161b]',
           )}
         >
-          {t('checkout.steps.title')}
+          {pageTitle}
         </h1>
-        <p className="mt-1.5 text-xs leading-relaxed text-[#6c727c] sm:text-sm">
-          {tParams('checkout.stepProgress', { current: activeGroup + 1, total: groups.length })} ·{' '}
-          {t(current.labelKey)}
-        </p>
+        {pageSubtitle ? (
+          <p className="mt-1.5 text-sm leading-relaxed text-[#6c727c]">{pageSubtitle}</p>
+        ) : null}
       </header>
 
       <nav aria-label={t('checkout.steps.navLabel')}>

@@ -1,27 +1,26 @@
 'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
-import { Link } from '@/lib/navigation'
 import { useSnapshot } from 'valtio/react'
 import { authStore, checkoutRegister, login } from '@/features/auth'
 import type { ClearClientSessionScope } from '@/features/auth'
 import {
   checkoutStore,
   isBusinessAnagraficaComplete,
-  isBusinessCheckout,
   setCustomerSegment,
   validateTaxFields,
 } from '@/features/checkout'
 import type { CustomerSegmentChoice } from '@/features/checkout'
+import { useForgotPasswordModal } from '@/hooks/use-forgot-password-modal'
 import { useLogoutConfirm } from '@/hooks/use-logout-confirm'
 import { useI18n } from '@/hooks/use-i18n'
-import { useLocalePath } from '@/hooks/use-locale-path'
 import { ApiRequestError } from '@/types/api'
 import { CheckoutBusinessFieldsSection } from '@/components/checkout/stripe-ui/CheckoutBusinessFieldsSection'
 import { CheckoutRetailFiscalCodeField } from '@/components/checkout/stripe-ui/CheckoutRetailFiscalCodeField'
 import { CheckoutCustomerTypeCards } from '@/components/checkout/stripe-ui/CheckoutCustomerTypeCards'
 import {
   CheckoutActionRow,
+  StripeControlledInput,
   StripeErrorBanner,
   StripeFieldGroup,
   StripeInput,
@@ -41,8 +40,7 @@ export type InlineAuthSuccessInfo = {
 type Props = {
   email: string
   onEmailChange: (email: string) => void
-  forgotPasswordFrom: string
-  title: ReactNode
+  title?: ReactNode
   hint?: ReactNode
   registerContinueLabel?: string
   loginContinueLabel?: string
@@ -54,14 +52,32 @@ type Props = {
   onAuthenticatedContinue?: () => void | Promise<void>
   logoutScope?: ClearClientSessionScope
   initialMode?: 'register' | 'login'
-  /** Nel checkout: tipo cliente + dati azienda allo step registrazione. */
+  /** Checkout: login in alto + registrazione sotto con tab privato/azienda. */
   collectCustomerTypeOnRegister?: boolean
+}
+
+function AuthSubheading({ children }: { children: ReactNode }) {
+  return (
+    <h3 className="text-sm font-extrabold tracking-[-0.01em] text-[#14161b]">{children}</h3>
+  )
+}
+
+function AuthDivider({ label }: { label: string }) {
+  return (
+    <div className="relative py-1">
+      <div className="absolute inset-0 flex items-center" aria-hidden>
+        <div className="w-full border-t border-[#e7eaee]" />
+      </div>
+      <p className="relative mx-auto w-fit bg-white px-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#9298a3]">
+        {label}
+      </p>
+    </div>
+  )
 }
 
 export function InlineAccountAuthStep({
   email,
   onEmailChange,
-  forgotPasswordFrom,
   title,
   hint,
   registerContinueLabel,
@@ -76,83 +92,77 @@ export function InlineAccountAuthStep({
   collectCustomerTypeOnRegister = false,
 }: Props) {
   const { t } = useI18n()
-  const lp = useLocalePath()
   const auth = useSnapshot(authStore)
-  const checkout = useSnapshot(checkoutStore)
   const { requestLogout, logoutDialog } = useLogoutConfirm({ scope: logoutScope })
+  const { openForgotPassword, forgotPasswordModal } = useForgotPasswordModal()
   const [mode, setMode] = useState<'register' | 'login'>(initialMode)
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loginError, setLoginError] = useState<string | null>(null)
+  const [registerError, setRegisterError] = useState<string | null>(null)
+  const [loginLoading, setLoginLoading] = useState(false)
+  const [registerLoading, setRegisterLoading] = useState(false)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [loginEmail, setLoginEmail] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
-  const [registerPhase, setRegisterPhase] = useState<'type' | 'form'>(
-    collectCustomerTypeOnRegister ? 'type' : 'form',
-  )
   const [typeChoice, setTypeChoice] = useState<'retail' | 'business'>('retail')
-  const customerSegment: CustomerSegmentChoice =
-    checkout.customerSegment ?? typeChoice
 
   useEffect(() => {
     if (email && !loginEmail) setLoginEmail(email)
   }, [email, loginEmail])
 
-  function resetRegisterPhase() {
-    if (collectCustomerTypeOnRegister) {
-      const seg = checkoutStore.customerSegment
-      if (seg === 'retail' || seg === 'business') setTypeChoice(seg)
-      setRegisterPhase('type')
-      setError(null)
+  useEffect(() => {
+    if (!collectCustomerTypeOnRegister) return
+    if (checkoutStore.customerSegment == null) {
+      setCustomerSegment('retail')
     }
-  }
+  }, [collectCustomerTypeOnRegister])
 
-  function confirmCustomerType() {
-    setCustomerSegment(typeChoice)
-    setRegisterPhase('form')
-    setError(null)
+  function handleTypeChange(value: 'retail' | 'business') {
+    setTypeChoice(value)
+    setCustomerSegment(value)
+    setRegisterError(null)
   }
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
-    setError(null)
+    setRegisterError(null)
 
-    const segment = customerSegment ?? 'retail'
+    const segment = typeChoice
     setCustomerSegment(segment)
 
     if (segment === 'business') {
       try {
         await validateTaxFields()
       } catch {
-        setError(t('checkout.error.incompleteStep'))
+        setRegisterError(t('checkout.error.incompleteStep'))
         return
       }
       if (!isBusinessAnagraficaComplete()) {
-        setError(t('checkout.error.incompleteStep'))
+        setRegisterError(t('checkout.error.incompleteStep'))
         return
       }
     }
 
     if (collectCustomerTypeOnRegister && segment === 'retail') {
       if (!checkoutStore.business.fiscalCode.trim()) {
-        setError(t('checkout.error.incompleteStep'))
+        setRegisterError(t('checkout.error.incompleteStep'))
         return
       }
       try {
         await validateTaxFields()
       } catch {
-        setError(t('checkout.error.incompleteStep'))
+        setRegisterError(t('checkout.error.incompleteStep'))
         return
       }
       if (!isBusinessAnagraficaComplete()) {
-        setError(t('checkout.error.incompleteStep'))
+        setRegisterError(t('checkout.error.incompleteStep'))
         return
       }
     }
 
-    setLoading(true)
+    setRegisterLoading(true)
     const trimmedEmail = email.trim()
     try {
       await checkoutRegister({
@@ -173,24 +183,24 @@ export function InlineAccountAuthStep({
       })
     } catch (err) {
       if (err instanceof ApiRequestError && err.code === 'EMAIL_TAKEN') {
-        setMode('login')
         setLoginEmail(trimmedEmail)
         onEmailChange(trimmedEmail)
-        setError(err.userMessage ?? err.message)
+        setLoginError(err.userMessage ?? err.message)
+        setRegisterError(null)
       } else {
-        setError(
+        setRegisterError(
           err instanceof ApiRequestError ? (err.userMessage ?? err.message) : t('checkout.account.registerError'),
         )
       }
     } finally {
-      setLoading(false)
+      setRegisterLoading(false)
     }
   }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
-    setError(null)
-    setLoading(true)
+    setLoginError(null)
+    setLoginLoading(true)
     const trimmedEmail = loginEmail.trim()
     try {
       await login(trimmedEmail, loginPassword)
@@ -199,11 +209,11 @@ export function InlineAccountAuthStep({
         email: trimmedEmail,
       })
     } catch (err) {
-      setError(
+      setLoginError(
         err instanceof ApiRequestError ? (err.userMessage ?? err.message) : t('checkout.account.loginError'),
       )
     } finally {
-      setLoading(false)
+      setLoginLoading(false)
     }
   }
 
@@ -217,7 +227,7 @@ export function InlineAccountAuthStep({
 
     return (
       <section className="space-y-4">
-        <StripeSectionTitle>{title}</StripeSectionTitle>
+        {title ? <StripeSectionTitle>{title}</StripeSectionTitle> : null}
         <div className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -227,7 +237,8 @@ export function InlineAccountAuthStep({
             <button
               type="button"
               onClick={() => {
-                setError(null)
+                setLoginError(null)
+                setRegisterError(null)
                 requestLogout()
               }}
               className="shrink-0 text-zinc-900 underline decoration-zinc-300 underline-offset-2 hover:decoration-zinc-900"
@@ -247,15 +258,167 @@ export function InlineAccountAuthStep({
           </StripePayButton>
         </CheckoutActionRow>
         {logoutDialog}
+        {forgotPasswordModal}
       </section>
     )
   }
 
-  const forgotHref = `${lp('/forgot-password')}?from=${encodeURIComponent(forgotPasswordFrom)}`
+  const loginForm = (
+    <form onSubmit={(e) => void handleLogin(e)} className="space-y-3">
+      <StripeFieldGroup>
+        <StripeInput
+          type="email"
+          name="login-email"
+          placeholder={t('common.email')}
+          autoComplete="email"
+          value={loginEmail}
+          onChange={(e) => setLoginEmail(e.target.value)}
+          required
+        />
+      </StripeFieldGroup>
+      <StripeFieldGroup>
+        <StripeInput
+          type="password"
+          name="login-password"
+          placeholder={t('common.password')}
+          autoComplete="current-password"
+          value={loginPassword}
+          onChange={(e) => setLoginPassword(e.target.value)}
+          required
+        />
+      </StripeFieldGroup>
+      <p className="text-right text-sm">
+        <button
+          type="button"
+          onClick={() => openForgotPassword(loginEmail)}
+          className="text-zinc-900 underline decoration-zinc-300 underline-offset-2 hover:decoration-zinc-900"
+        >
+          {t('login.forgot')}
+        </button>
+      </p>
+      <CheckoutActionRow>
+        <StripePayButton
+          className="w-full"
+          disabled={loginLoading}
+          loading={loginLoading}
+          onClick={() => void handleLogin({ preventDefault: () => {} } as React.FormEvent)}
+        >
+          {loginLoading ? t('auth.loggingIn') : (loginContinueLabel ?? t('auth.loginSubmit'))}
+        </StripePayButton>
+      </CheckoutActionRow>
+    </form>
+  )
+
+  const registerForm = (
+    <form onSubmit={(e) => void handleRegister(e)} className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <StripeFieldGroup>
+          <StripeInput
+            name="firstName"
+            placeholder={t('checkout.register.firstName')}
+            autoComplete="given-name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+          />
+        </StripeFieldGroup>
+        <StripeFieldGroup>
+          <StripeInput
+            name="lastName"
+            placeholder={t('checkout.register.lastName')}
+            autoComplete="family-name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+          />
+        </StripeFieldGroup>
+      </div>
+      {collectCustomerTypeOnRegister && typeChoice === 'business' ? (
+        <CheckoutBusinessFieldsSection disabled={registerLoading} embedded />
+      ) : null}
+      {collectCustomerTypeOnRegister && typeChoice === 'retail' ? (
+        <CheckoutRetailFiscalCodeField disabled={registerLoading} />
+      ) : null}
+      <StripeFieldGroup>
+        <StripeControlledInput
+          type="email"
+          name="email"
+          placeholder={t('checkout.emailPlaceholder')}
+          autoComplete="email"
+          value={email}
+          onValueChange={onEmailChange}
+          required
+        />
+      </StripeFieldGroup>
+      <StripeFieldGroup>
+        <StripeInput
+          type="tel"
+          name="phone"
+          placeholder={t('checkout.address.phoneOptional')}
+          autoComplete="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+        />
+      </StripeFieldGroup>
+      <StripeFieldGroup>
+        <StripeInput
+          type="password"
+          name="password"
+          placeholder={t('register.passwordHint')}
+          autoComplete="new-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          minLength={8}
+        />
+      </StripeFieldGroup>
+      <CheckoutActionRow>
+        <StripePayButton
+          className="w-full"
+          disabled={registerLoading || !email.includes('@') || password.length < 8}
+          loading={registerLoading}
+          onClick={() => void handleRegister({ preventDefault: () => {} } as React.FormEvent)}
+        >
+          {registerContinueLabel ?? t('checkout.account.createAndContinue')}
+        </StripePayButton>
+      </CheckoutActionRow>
+    </form>
+  )
+
+  if (collectCustomerTypeOnRegister) {
+    return (
+      <section className="space-y-6">
+        <div className="space-y-3">
+          <AuthSubheading>{t('checkout.account.loginTab')}</AuthSubheading>
+          {loginError ? <StripeErrorBanner message={loginError} /> : null}
+          {loginForm}
+        </div>
+
+        <AuthDivider label={t('checkout.account.orDivider')} />
+
+        <div className="space-y-4">
+          <AuthSubheading>{t('checkout.account.registerTab')}</AuthSubheading>
+          <CheckoutCustomerTypeCards
+            variant="tabs"
+            value={typeChoice}
+            onChange={handleTypeChange}
+            disabled={registerLoading}
+          />
+          {registerError ? <StripeErrorBanner message={registerError} /> : null}
+          {registerForm}
+        </div>
+
+        {logoutDialog}
+        {forgotPasswordModal}
+      </section>
+    )
+  }
+
+  const error = mode === 'login' ? loginError : registerError
 
   return (
     <section className="space-y-4">
-      <StripeSectionTitle>{title}</StripeSectionTitle>
+      {title ? <StripeSectionTitle>{title}</StripeSectionTitle> : null}
       {hint ? <p className="text-sm text-zinc-500">{hint}</p> : null}
 
       {error ? <StripeErrorBanner message={error} /> : null}
@@ -265,8 +428,8 @@ export function InlineAccountAuthStep({
           type="button"
           onClick={() => {
             setMode('register')
-            setError(null)
-            resetRegisterPhase()
+            setLoginError(null)
+            setRegisterError(null)
           }}
           className={`rounded-full px-3 py-1.5 text-sm font-medium ${
             mode === 'register' ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600'
@@ -278,7 +441,8 @@ export function InlineAccountAuthStep({
           type="button"
           onClick={() => {
             setMode('login')
-            setError(null)
+            setLoginError(null)
+            setRegisterError(null)
           }}
           className={`rounded-full px-3 py-1.5 text-sm font-medium ${
             mode === 'login' ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600'
@@ -288,151 +452,9 @@ export function InlineAccountAuthStep({
         </button>
       </div>
 
-      {mode === 'register' ? (
-        collectCustomerTypeOnRegister && registerPhase === 'type' ? (
-          <div className="space-y-5">
-            <p className="text-sm leading-relaxed text-[#6c727c]">{t('checkout.customerType.hint')}</p>
-            <CheckoutCustomerTypeCards value={typeChoice} onChange={setTypeChoice} />
-            <CheckoutActionRow>
-              <StripePayButton className="w-full" onClick={confirmCustomerType}>
-                {t('checkout.continue')}
-              </StripePayButton>
-            </CheckoutActionRow>
-          </div>
-        ) : (
-        <form onSubmit={(e) => void handleRegister(e)} className="space-y-3">
-          {collectCustomerTypeOnRegister ? (
-            <div className="flex items-center justify-between gap-3 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm">
-              <span className="font-medium text-zinc-900">
-                {t(`checkout.customerType.${customerSegment ?? typeChoice}.title`)}
-              </span>
-              <button
-                type="button"
-                onClick={resetRegisterPhase}
-                className="shrink-0 text-zinc-900 underline decoration-zinc-300 underline-offset-2 hover:decoration-zinc-900"
-              >
-                {t('checkout.register.changeCustomerType')}
-              </button>
-            </div>
-          ) : null}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <StripeFieldGroup>
-              <StripeInput
-                name="firstName"
-                placeholder={t('checkout.register.firstName')}
-                autoComplete="given-name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                required
-              />
-            </StripeFieldGroup>
-            <StripeFieldGroup>
-              <StripeInput
-                name="lastName"
-                placeholder={t('checkout.register.lastName')}
-                autoComplete="family-name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                required
-              />
-            </StripeFieldGroup>
-          </div>
-          {collectCustomerTypeOnRegister && isBusinessCheckout() ? (
-            <CheckoutBusinessFieldsSection disabled={loading} />
-          ) : null}
-          {collectCustomerTypeOnRegister && !isBusinessCheckout() ? (
-            <CheckoutRetailFiscalCodeField disabled={loading} />
-          ) : null}
-          <StripeFieldGroup>
-            <StripeInput
-              type="email"
-              name="email"
-              placeholder={t('checkout.emailPlaceholder')}
-              autoComplete="email"
-              value={email}
-              onChange={(e) => onEmailChange(e.target.value)}
-              required
-            />
-          </StripeFieldGroup>
-          <StripeFieldGroup>
-            <StripeInput
-              type="tel"
-              name="phone"
-              placeholder={t('checkout.address.phoneOptional')}
-              autoComplete="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
-          </StripeFieldGroup>
-          <StripeFieldGroup>
-            <StripeInput
-              type="password"
-              name="password"
-              placeholder={t('register.passwordHint')}
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-            />
-          </StripeFieldGroup>
-          <CheckoutActionRow>
-            <StripePayButton
-              className="w-full"
-              disabled={loading || !email.includes('@') || password.length < 8}
-              loading={loading}
-              onClick={() => void handleRegister({ preventDefault: () => {} } as React.FormEvent)}
-            >
-              {registerContinueLabel ?? t('checkout.account.createAndContinue')}
-            </StripePayButton>
-          </CheckoutActionRow>
-        </form>
-        )
-      ) : (
-        <form onSubmit={(e) => void handleLogin(e)} className="space-y-3">
-          <StripeFieldGroup>
-            <StripeInput
-              type="email"
-              name="login-email"
-              placeholder={t('common.email')}
-              autoComplete="email"
-              value={loginEmail}
-              onChange={(e) => setLoginEmail(e.target.value)}
-              required
-            />
-          </StripeFieldGroup>
-          <StripeFieldGroup>
-            <StripeInput
-              type="password"
-              name="login-password"
-              placeholder={t('common.password')}
-              autoComplete="current-password"
-              value={loginPassword}
-              onChange={(e) => setLoginPassword(e.target.value)}
-              required
-            />
-          </StripeFieldGroup>
-          <p className="text-right text-sm">
-            <Link
-              to={forgotHref}
-              className="text-zinc-900 underline decoration-zinc-300 underline-offset-2 hover:decoration-zinc-900"
-            >
-              {t('login.forgot')}
-            </Link>
-          </p>
-          <CheckoutActionRow>
-            <StripePayButton
-              className="w-full"
-              disabled={loading}
-              loading={loading}
-              onClick={() => void handleLogin({ preventDefault: () => {} } as React.FormEvent)}
-            >
-              {loading ? t('auth.loggingIn') : (loginContinueLabel ?? t('auth.loginSubmit'))}
-            </StripePayButton>
-          </CheckoutActionRow>
-        </form>
-      )}
+      {mode === 'register' ? registerForm : loginForm}
       {logoutDialog}
+      {forgotPasswordModal}
     </section>
   )
 }

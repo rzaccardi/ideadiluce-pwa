@@ -160,7 +160,6 @@ export function CheckoutPage() {
       isLoading: checkout.isLoading,
       isPaying: checkout.isPaying,
       addressPrefillLoading: checkout.addressPrefillLoading,
-      taxValidating: checkout.business.taxValidating,
       shippingQuotesLoading: checkout.shippingQuotesLoading,
       cartLoading: cart.isLoading && !c,
     }),

@@ -9,16 +9,24 @@ export function CheckoutStepHeader({
   subtitle,
   className,
 }: {
-  title: string
+  title?: string
   subtitle?: string
   className?: string
 }) {
+  if (!title && !subtitle) return null
+
   return (
     <header className={cn('mb-5', className)}>
-      <h2 className="text-lg font-extrabold tracking-[-0.01em] text-[#14161b] sm:text-[20px]">
-        {title}
-      </h2>
-      {subtitle ? <p className="mt-1 text-sm leading-relaxed text-[#6c727c]">{subtitle}</p> : null}
+      {title ? (
+        <h2 className="text-lg font-extrabold tracking-[-0.01em] text-[#14161b] sm:text-[20px]">
+          {title}
+        </h2>
+      ) : null}
+      {subtitle ? (
+        <p className={cn('text-sm leading-relaxed text-[#6c727c]', title ? 'mt-1' : undefined)}>
+          {subtitle}
+        </p>
+      ) : null}
     </header>
   )
 }

@@ -1,8 +1,8 @@
 import {
   fetchArflyProductDetail,
-  fetchArflyProductList,
   isArflyConfigured,
 } from '../../adapters/arfly/arflyClient.js'
+import { findArflyProductIdBySlug } from '../../adapters/arfly/arflySlugIndex.js'
 import { env } from '../../config/env.js'
 import type { HubLocale } from '../../lib/hub-locale.js'
 import { parseOdooTemplateId } from './odooRef.js'
@@ -18,20 +18,6 @@ export type ArflyProductLabel = {
   slug: string
   name: string
   imageUrl: string | null
-}
-
-async function findProductIdBySlug(slug: string, locale: HubLocale): Promise<number | null> {
-  const numeric = parseOdooTemplateId(slug)
-  if (numeric != null) return numeric
-  let page = 1
-  while (page <= 20) {
-    const list = await fetchArflyProductList({ locale, page, perPage: 100 })
-    const hit = list.items.find((i) => i.slug === slug)
-    if (hit) return hit.id
-    if (page >= list.total_pages) break
-    page += 1
-  }
-  return null
 }
 
 async function labelFromArflyId(
@@ -74,7 +60,7 @@ export async function resolveArflyProductLabels(
   await Promise.all([
     ...templateIds.map((id) => labelFromArflyId(id, locale, String(id), map)),
     ...slugRefs.map(async (slug) => {
-      const id = await findProductIdBySlug(slug, locale)
+      const id = await findArflyProductIdBySlug(slug, locale)
       if (id != null) await labelFromArflyId(id, locale, slug, map)
     }),
   ])
