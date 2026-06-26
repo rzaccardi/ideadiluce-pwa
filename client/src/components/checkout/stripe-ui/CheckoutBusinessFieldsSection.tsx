@@ -110,6 +110,13 @@ export function CheckoutBusinessFieldsSection({
               onClick={() => void (isEuVat ? handleValidateVat() : handleTaxBlur())}
               disabled={!checkout.business.vatNumber.trim() || vatFieldBusy}
               loading={b.taxValidating}
+              verified={
+                isItaly
+                  ? b.vatChecksumValid === true
+                  : isEuVat
+                    ? b.vatFormatValid === true && b.vatChecksumValid === true
+                    : false
+              }
             />
           </div>
           <TaxValidationMessage

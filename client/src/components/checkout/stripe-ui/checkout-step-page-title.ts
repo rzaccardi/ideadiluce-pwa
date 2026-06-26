@@ -13,9 +13,10 @@ export function checkoutStepPageTitleKey(
         : 'checkout.steps.pageTitle.account'
     case 'customer_type':
       return 'checkout.steps.customerType'
+    case 'addresses':
     case 'billing':
     case 'details':
-      return 'checkout.billingAddress'
+      return 'checkout.steps.addresses'
     case 'shipping':
       return 'checkout.shippingAddress'
     case 'delivery_recipient':

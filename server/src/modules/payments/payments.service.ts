@@ -19,7 +19,10 @@ import { registerPayment } from '../../adapters/odoo/odooPaymentLive.js'
 import { createProviderPaymentSession } from '../../adapters/payments/paymentProviderAdapter.js'
 import { getStripePublishableKey, getStripeClientConfig, decodeStripeClientSecret } from '../../lib/stripe-config.js'
 import { parseBankTransferInstructionsJson } from './bankTransferInstructions.js'
-import type { StripeLineItemInput } from '../../adapters/payments/stripeCheckoutAdapter.js'
+import {
+  isStripeCheckoutSessionOpen,
+  type StripeLineItemInput,
+} from '../../adapters/payments/stripeCheckoutAdapter.js'
 import { shippingService } from '../shipping/shipping.service.js'
 import { resolveCatalogProduct } from '../catalog/catalogResolver.service.js'
 import { repriceCartFromOdoo } from '../catalog/odooPricing.service.js'
@@ -712,7 +715,7 @@ export const paymentsService = {
     }
 
     const method = paymentMethodToPrisma(body.paymentMethod)
-    const active = await prisma.pwaPayment.findFirst({
+    let active = await prisma.pwaPayment.findFirst({
       where: {
         orderId: order.id,
         method,
@@ -720,7 +723,24 @@ export const paymentsService = {
       },
       orderBy: { createdAt: 'desc' },
     })
-    if (active && isPaymentSessionComplete(active)) return mapPaymentSession(active)
+    if (active && isPaymentSessionComplete(active)) {
+      if (active.provider === 'stripe' && active.providerSessionId) {
+        let sessionOpen = false
+        try {
+          sessionOpen = await isStripeCheckoutSessionOpen(active.providerSessionId)
+        } catch {
+          sessionOpen = false
+        }
+        if (sessionOpen) return mapPaymentSession(active)
+        await prisma.pwaPayment.update({
+          where: { id: active.id },
+          data: { status: 'CANCELLED', failedAt: new Date() },
+        })
+        active = null
+      } else {
+        return mapPaymentSession(active)
+      }
+    }
 
     const amount = order.amountTotal ?? pricedTotal
     if (amount <= 0) {

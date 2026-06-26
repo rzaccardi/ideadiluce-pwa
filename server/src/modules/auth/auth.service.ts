@@ -75,6 +75,23 @@ async function mergeCartsForUser(sessionId: string, userId: string) {
   })
 }
 
+/** Al logout: il carrello dell'utente resta sulla nuova sessione guest (stesso id, senza userId). */
+async function detachUserCartToGuestSession(userId: string, guestSessionId: string) {
+  const cart = await prisma.cart.findFirst({
+    where: { userId, status: 'ACTIVE' },
+    select: { id: true },
+  })
+  if (!cart) return
+
+  await prisma.cart.update({
+    where: { id: cart.id },
+    data: {
+      sessionId: guestSessionId,
+      userId: null,
+    },
+  })
+}
+
 async function mergeWishlistForUser(sessionId: string, userId: string) {
   const sessionItems = await prisma.wishlistItem.findMany({ where: { sessionId } })
   if (sessionItems.length === 0) return
@@ -190,26 +207,41 @@ export const authService = {
   },
 
   async logout(sessionId: string | undefined, rawToken: string | null | undefined) {
+    let userId: string | null = null
+    if (sessionId) {
+      const session = await prisma.session.findUnique({
+        where: { id: sessionId },
+        select: { userId: true },
+      })
+      userId = session?.userId ?? null
+    }
+
     if (rawToken) {
       await authRepository.deleteSessionByTokenHash(hashSessionToken(rawToken))
     } else if (sessionId) {
       await prisma.session.deleteMany({ where: { id: sessionId } })
     }
+
+    const guest = await this.issueNewGuestSession()
+    if (userId) {
+      await detachUserCartToGuestSession(userId, guest.sessionId)
+    }
+    return guest
   },
 
   async me(user: User): Promise<UserDTO> {
     return toUserDTO(user)
   },
 
-  async issueNewGuestSession(): Promise<{ token: string }> {
+  async issueNewGuestSession(): Promise<{ token: string; sessionId: string }> {
     const token = generateSessionToken()
-    await prisma.session.create({
+    const session = await prisma.session.create({
       data: {
         tokenHash: hashSessionToken(token),
         expiresAt: sessionExpiry(),
       },
     })
-    return { token }
+    return { token, sessionId: session.id }
   },
 
   /** Ruota il token di sessione e prolunga la scadenza (stesso `session.id`, carrello invariato). */

@@ -15,7 +15,10 @@ import type { AddressInput } from '@/types/integrations'
 export type CheckoutStep =
   | 'account'
   | 'customer_type'
+  | 'addresses'
+  /** @deprecated alias di `addresses` */
   | 'billing'
+  /** @deprecated alias di `addresses` */
   | 'shipping'
   | 'delivery_recipient'
   | 'shipping_method'
@@ -37,8 +40,7 @@ export type DeliveryRecipientMode = 'self' | 'other' | null
 export const CHECKOUT_STEP_ORDER: CheckoutStep[] = [
   'account',
   'customer_type',
-  'billing',
-  'shipping',
+  'addresses',
   'delivery_recipient',
   'shipping_method',
   'payment',

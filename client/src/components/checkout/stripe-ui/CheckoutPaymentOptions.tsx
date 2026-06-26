@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import type { CheckoutPaymentMethodDTO } from '@/features/checkout'
 import { PaymentMethodOption } from '@/components/checkout/PaymentMethodOption'
 import { useI18n } from '@/hooks/use-i18n'
@@ -25,10 +26,11 @@ const PAYMENT_OPTION_KEYS: Array<{
 type Props = {
   selected: CheckoutPaymentMethodDTO
   disabled?: boolean
+  stripeCardDetails?: ReactNode
   onSelect: (method: CheckoutPaymentMethodDTO) => void
 }
 
-export function CheckoutPaymentOptions({ selected, disabled, onSelect }: Props) {
+export function CheckoutPaymentOptions({ selected, disabled, stripeCardDetails, onSelect }: Props) {
   const { t } = useI18n()
 
   return (
@@ -43,7 +45,9 @@ export function CheckoutPaymentOptions({ selected, disabled, onSelect }: Props) 
             selected={selected === option.id}
             disabled={disabled}
             onSelect={() => onSelect(option.id)}
-          />
+          >
+            {option.id === 'stripe' ? stripeCardDetails : null}
+          </PaymentMethodOption>
         ))}
       </div>
     </section>

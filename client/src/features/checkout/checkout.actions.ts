@@ -12,7 +12,14 @@ import {
   type DeliveryRecipientMode,
 } from './checkout.store'
 import { authStore } from '@/features/auth'
-import type { CartDTO, CustomerSegmentDTO, ShippingQuoteDTO, TaxValidationResultDTO, ThankYouOrderDTO } from '@/types/dto'
+import type {
+  CartDTO,
+  CustomerSegmentDTO,
+  ShippingQuoteDTO,
+  TaxValidationResultDTO,
+  ThankYouOrderDTO,
+  UserDTO,
+} from '@/types/dto'
 import type { AddressInput } from '@/types/integrations'
 import type { ResolvedAddress } from '@/lib/addressAutocomplete'
 import {
@@ -491,6 +498,7 @@ export function cartFromFrozenQuoteSummary(detail: ThankYouOrderDTO): CartDTO {
 }
 
 export function shouldSkipCheckoutStep(step: CheckoutStep): boolean {
+  if (step === 'billing' || step === 'shipping') return true
   if (isFrozenQuoteCheckout()) {
     return step !== 'payment' && step !== 'review'
   }
@@ -530,7 +538,35 @@ export function resolveInitialCheckoutStep(): CheckoutStep {
   if (!authStore.isAuthenticated) return 'account'
   const segment = segmentFromAuth()
   if (segment) checkoutStore.customerSegment = segment
-  return getNextCheckoutStep('account') ?? 'billing'
+  return getNextCheckoutStep('account') ?? 'addresses'
+}
+
+/** Dati fiscali dal profilo BE: già verificati, niente pulsante «Verifica» manuale. */
+function applyUserTaxProfileToCheckout(user: UserDTO) {
+  if (user.fiscalCode?.trim()) {
+    checkoutStore.business.fiscalCode = user.fiscalCode
+    checkoutStore.business.fiscalCodeValid = user.fiscalCodeValid ?? true
+    checkoutStore.business.fiscalCodeError = null
+  }
+
+  if (user.vatNumber?.trim()) {
+    checkoutStore.business.vatNumber = user.vatNumber
+    checkoutStore.business.vatFormatValid = user.vatFormatValid ?? true
+    checkoutStore.business.vatChecksumValid = user.vatChecksumValid ?? true
+    checkoutStore.business.vatError = null
+
+    if (user.viesValid === true) {
+      checkoutStore.business.vatValidated = true
+      checkoutStore.business.viesStatus = 'valid'
+    } else if (user.viesValid === false) {
+      checkoutStore.business.vatValidated = false
+      checkoutStore.business.viesStatus = 'invalid'
+    }
+
+    if (user.viesName) checkoutStore.business.vatCompanyName = user.viesName
+    if (user.viesAddress) checkoutStore.business.viesAddress = user.viesAddress
+    if (user.taxCheckedAt) checkoutStore.business.viesRequestDate = user.taxCheckedAt
+  }
 }
 
 export function prefillCheckoutFromAuthUser() {
@@ -543,12 +579,7 @@ export function prefillCheckoutFromAuthUser() {
   const segment = segmentFromAuth()
   if (segment) checkoutStore.customerSegment = segment
   if (user.companyName) checkoutStore.business.companyName = user.companyName
-  if (user.vatNumber) checkoutStore.business.vatNumber = user.vatNumber
-  if (user.viesName) checkoutStore.business.vatCompanyName = user.viesName
-  if (user.viesAddress) checkoutStore.business.viesAddress = user.viesAddress
-  if (user.viesValid != null) checkoutStore.business.vatValidated = user.viesValid
-  if (user.taxCheckedAt) checkoutStore.business.viesRequestDate = user.taxCheckedAt
-  if (user.fiscalCode) checkoutStore.business.fiscalCode = user.fiscalCode
+  applyUserTaxProfileToCheckout(user)
   if (user.pec) checkoutStore.business.pec = user.pec
   if (user.sdiCode) checkoutStore.business.sdiCode = user.sdiCode
   const addr = user.shippingAddress
@@ -570,26 +601,16 @@ export function prefillCheckoutFromAuthUser() {
 }
 
 export function setCheckoutStep(step: CheckoutStep) {
-  checkoutStore.currentStep = step
+  checkoutStore.currentStep = normalizeCheckoutStep(step)
+}
+
+function normalizeCheckoutStep(step: CheckoutStep): CheckoutStep {
+  if (step === 'billing' || step === 'shipping' || step === 'details') return 'addresses'
+  if (step === 'payment_method') return 'payment'
+  return step
 }
 
 let addressPrefillPromise: Promise<void> | null = null
-
-async function resolveShippingAddressPrefillIfNeeded() {
-  const shipping = checkoutStore.draft.shipping
-  if (!hasPrefilledAddress(shipping)) return
-
-  checkoutStore.addressPrefillLoading = true
-  try {
-    await refreshAddressAutocompleteStatus()
-    const resolved = await resolvePrefilledAddress(shipping)
-    if (resolved) {
-      await applyResolvedAddress('shipping', resolved)
-    }
-  } finally {
-    checkoutStore.addressPrefillLoading = false
-  }
-}
 
 async function resolvePrefilledCheckoutAddressesFromAuth() {
   const shipping = checkoutStore.draft.shipping
@@ -668,6 +689,7 @@ export function invalidateCheckoutAfterCartChange() {
   checkoutStore.taxBreakdown = null
   if (
     checkoutStore.currentStep !== 'account' &&
+    checkoutStore.currentStep !== 'addresses' &&
     checkoutStore.currentStep !== 'billing' &&
     checkoutStore.currentStep !== 'shipping' &&
     destinationComplete(shippingAddressPayload())
@@ -755,14 +777,27 @@ export function clearCheckoutAfterLogout() {
   checkoutStore.result = null
   checkoutStore.error = null
   checkoutStore.isPaying = false
+  checkoutStore.isLoading = false
+  checkoutStore.addressPrefillLoading = false
   checkoutStore.shippingSelectionPersisted = false
   checkoutStore.selectedShippingMethodRef = null
   checkoutStore.shippingQuotes = []
   checkoutStore.shippingQuotesFingerprint = null
+  checkoutStore.shippingQuotesLoading = false
+  checkoutStore.shippingSelectingRef = null
   checkoutStore.freeShippingHint = null
   checkoutStore.taxBreakdown = null
+  checkoutStore.taxCalculating = false
   checkoutStore.clientOrderRef = ''
   checkoutStore.anagraficaCollectedAtAccount = false
+  checkoutStore.termsAccepted = false
+  checkoutStore.deliveryRecipient = {
+    mode: null,
+    firstName: '',
+    lastName: '',
+    company: '',
+    phone: '',
+  }
   checkoutStore.business = {
     companyName: '',
     vatNumber: '',
@@ -787,10 +822,6 @@ export function clearCheckoutAfterLogout() {
 }
 
 export function setPaymentMethod(method: CheckoutPaymentMethodDTO) {
-  if (checkoutStore.selectedPaymentMethod !== method) {
-    checkoutStore.payment = null
-    checkoutStore.order = null
-  }
   checkoutStore.selectedPaymentMethod = method
 }
 
@@ -949,10 +980,14 @@ export function canAdvanceFromStep(step: CheckoutStep): boolean {
       return authStore.isAuthenticated && isCheckoutEmailValid(resolveCheckoutEmail())
     case 'customer_type':
       return effectiveCustomerSegment() != null
+    case 'addresses':
     case 'billing':
-      return addressComplete(checkoutStore.draft.billing) && businessBillingComplete()
-    case 'shipping':
-      return addressComplete(checkoutStore.draft.shipping)
+    case 'shipping': {
+      const same = checkoutStore.draft.billingSameAsShipping
+      const shippingOk = addressComplete(checkoutStore.draft.shipping)
+      const billingOk = same || addressComplete(checkoutStore.draft.billing)
+      return shippingOk && billingOk && businessBillingComplete()
+    }
     case 'delivery_recipient': {
       if (!isBusinessCheckout()) return true
       const r = checkoutStore.deliveryRecipient
@@ -1015,7 +1050,7 @@ async function autoSelectShippingQuote(quotes: ShippingQuoteDTO[]) {
 export async function advanceCheckoutStep() {
   const step = checkoutStore.currentStep
 
-  if (step !== 'billing' && !canAdvanceFromStep(step)) {
+  if (step !== 'addresses' && step !== 'billing' && !canAdvanceFromStep(step)) {
     checkoutStore.error = localeMessage('checkout.error.incompleteStep')
     return
   }
@@ -1024,32 +1059,30 @@ export async function advanceCheckoutStep() {
   checkoutStore.isLoading = true
 
   try {
-    if (step === 'billing') {
+    if (step === 'addresses' || step === 'billing') {
       await validateTaxFields()
-      if (!canAdvanceFromStep(step)) {
+      if (!canAdvanceFromStep(step === 'billing' ? 'addresses' : step)) {
         checkoutStore.error = localeMessage('checkout.error.incompleteStep')
         return
       }
       if (checkoutStore.draft.billingSameAsShipping) {
-        checkoutStore.draft.shipping = { ...checkoutStore.draft.billing }
+        checkoutStore.draft.billing = { ...checkoutStore.draft.shipping }
       }
-    }
-
-    if (step === 'shipping' || step === 'delivery_recipient') {
-      await fetchShippingQuotes()
-    }
-
-    const next = getNextCheckoutStep(step)
-    if (!next) return
-
-    if (step === 'shipping') {
       if (!isAnagraficaCompartmentComplete()) {
         checkoutStore.error = localeMessage('checkout.error.incompleteStep')
         return
       }
       ensureCheckoutEmailInDraft()
       await syncCheckoutDraft('details', { silent: true })
+      await fetchShippingQuotes()
     }
+
+    if (step === 'delivery_recipient') {
+      await fetchShippingQuotes()
+    }
+
+    const next = getNextCheckoutStep(step === 'billing' ? 'addresses' : step)
+    if (!next) return
 
     if (step === 'shipping_method') {
       if (!isSpedizioneCompartmentComplete()) {
@@ -1068,10 +1101,6 @@ export async function advanceCheckoutStep() {
     }
 
     checkoutStore.currentStep = next
-
-    if (step === 'billing' && next === 'shipping') {
-      await resolveShippingAddressPrefillIfNeeded()
-    }
 
     if (next === 'shipping_method' && checkoutStore.shippingQuotes.length === 0 && canFetchShippingQuotes()) {
       await fetchShippingQuotes()
@@ -1121,6 +1150,10 @@ export async function fetchShippingQuotes() {
 }
 
 export async function selectShippingMethod(methodRef: string, options?: { silent?: boolean }) {
+  if (checkoutStore.shippingSelectingRef != null) {
+    return
+  }
+
   if (freeShippingSelectionLocked()) {
     const freeRef = checkoutStore.shippingQuotes.find(isFreeShippingQuote)?.methodRef
     if (freeRef && methodRef !== freeRef) {
@@ -1130,8 +1163,7 @@ export async function selectShippingMethod(methodRef: string, options?: { silent
 
   if (
     checkoutStore.selectedShippingMethodRef === methodRef &&
-    checkoutStore.shippingSelectionPersisted &&
-    checkoutStore.shippingSelectingRef == null
+    checkoutStore.shippingSelectionPersisted
   ) {
     return
   }
@@ -1303,11 +1335,20 @@ export async function createPaymentSession(options?: { silent?: boolean }) {
   }
 }
 
+/** Rigenera la sessione Stripe quando il client_secret in memoria non è più attivo su Stripe. */
+export async function refreshStaleStripePaymentSession(options?: { silent?: boolean }) {
+  checkoutStore.payment = null
+  await createPaymentSession(options)
+}
+
 export async function prepareCheckoutPayment(options?: { silent?: boolean }) {
   if (!checkoutStore.order && !isFrozenQuoteCheckout()) {
     await startCheckout(options)
   }
-  if (!checkoutStore.payment) await createPaymentSession(options)
+  const payment = checkoutStore.payment
+  if (!payment || payment.method !== checkoutStore.selectedPaymentMethod) {
+    await createPaymentSession(options)
+  }
 }
 
 export async function confirmPayment(mockStatus?: 'captured' | 'pending' | 'failed' | 'cancelled') {
@@ -1419,9 +1460,9 @@ export function selectedShippingQuote() {
   return checkoutStore.shippingQuotes.find((q) => q.methodRef === ref) ?? null
 }
 
-/** @deprecated usa canAdvanceFromStep('billing') + canAdvanceFromStep('shipping') */
+/** @deprecated usa canAdvanceFromStep('addresses') */
 export function canProceedFromDetails() {
-  return canAdvanceFromStep('billing') && canAdvanceFromStep('shipping') && isCheckoutEmailValid(resolveCheckoutEmail())
+  return canAdvanceFromStep('addresses') && isCheckoutEmailValid(resolveCheckoutEmail())
 }
 
 /** @deprecated usa advanceCheckoutStep */
@@ -1430,7 +1471,7 @@ export async function advanceToShippingStep() {
     checkoutStore.error = localeMessage('checkout.error.incompleteAddress')
     return
   }
-  checkoutStore.currentStep = 'shipping'
+  checkoutStore.currentStep = 'delivery_recipient'
   await fetchShippingQuotes()
 }
 

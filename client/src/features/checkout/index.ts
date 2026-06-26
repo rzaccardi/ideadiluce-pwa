@@ -18,6 +18,7 @@ export {
   completeBankTransferCheckout,
   confirmPayment,
   createPaymentSession,
+  refreshStaleStripePaymentSession,
   effectiveCustomerSegment,
   fetchShippingQuotes,
   freeShippingSelectionLocked,

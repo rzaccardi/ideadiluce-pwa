@@ -34,8 +34,7 @@ import {
 } from '@/components/checkout/stripe-ui/CheckoutOrderSummary'
 import { CheckoutRegistrationStep } from '@/components/checkout/stripe-ui/CheckoutRegistrationStep'
 import { CheckoutCustomerTypeStep } from '@/components/checkout/stripe-ui/CheckoutCustomerTypeStep'
-import { CheckoutBillingStep } from '@/components/checkout/stripe-ui/CheckoutBillingStep'
-import { CheckoutShippingStep } from '@/components/checkout/stripe-ui/CheckoutShippingStep'
+import { CheckoutAddressesStep } from '@/components/checkout/stripe-ui/CheckoutAddressesStep'
 import { CheckoutDeliveryRecipientStep } from '@/components/checkout/stripe-ui/CheckoutDeliveryRecipientStep'
 import { CheckoutShippingMethodStep } from '@/components/checkout/stripe-ui/CheckoutShippingMethodStep'
 import { CheckoutPaymentStep } from '@/components/checkout/stripe-ui/CheckoutPaymentStep'
@@ -72,8 +71,19 @@ export function CheckoutPage() {
   const auth = useSnapshot(authStore)
   const stripeFormRef = useRef<StripePaymentFormHandle>(null)
   const [stripeReady, setStripeReady] = useState(false)
+  const [stripeMount, setStripeMount] = useState<{
+    clientSecret: string
+    publishableKey?: string
+    orderId: string
+  } | null>(null)
   const checkoutPrepareKeyRef = useRef<string | null>(null)
   const checkoutPrepareBlockedRef = useRef(false)
+
+  useEffect(() => {
+    if (checkoutStore.currentStep === 'billing' || checkoutStore.currentStep === 'shipping') {
+      checkoutStore.currentStep = 'addresses'
+    }
+  }, [])
 
   useEffect(() => {
     preloadStripe()
@@ -161,6 +171,7 @@ export function CheckoutPage() {
       isPaying: checkout.isPaying,
       addressPrefillLoading: checkout.addressPrefillLoading,
       shippingQuotesLoading: checkout.shippingQuotesLoading,
+      shippingSelecting: Boolean(checkout.shippingSelectingRef),
       cartLoading: cart.isLoading && !c,
     }),
   )
@@ -181,13 +192,41 @@ export function CheckoutPage() {
   ])
 
   useEffect(() => {
+    if (!checkout.payment) {
+      setStripeMount(null)
+    }
+  }, [checkout.payment])
+
+  useEffect(() => {
+    if (checkout.payment?.method === 'stripe' && checkout.payment.clientSecret) {
+      setStripeMount((prev) => {
+        const next = {
+          clientSecret: checkout.payment!.clientSecret!,
+          publishableKey: checkout.payment!.publishableKey,
+          orderId: checkout.payment!.orderId,
+        }
+        if (
+          prev?.clientSecret === next.clientSecret &&
+          prev?.publishableKey === next.publishableKey &&
+          prev?.orderId === next.orderId
+        ) {
+          return prev
+        }
+        return next
+      })
+    } else if (checkout.payment?.method !== 'stripe') {
+      setStripeMount(null)
+    }
+  }, [checkout.payment])
+
+  useEffect(() => {
     checkoutPrepareBlockedRef.current = false
     checkoutPrepareKeyRef.current = null
-    setStripeReady(false)
   }, [checkout.selectedPaymentMethod])
 
   useEffect(() => {
-    if (step !== 'review' || checkout.selectedPaymentMethod !== 'stripe') return
+    if (step !== 'payment' && step !== 'review') return
+    if (checkout.selectedPaymentMethod !== 'stripe') return
     if (
       !canStartCheckout() ||
       checkout.isLoading ||
@@ -304,6 +343,35 @@ export function CheckoutPage() {
     await fetchCart({ force: true })
   }
 
+  const shouldMountPaymentStep = step === 'payment' || step === 'review' || stripeMount !== null
+
+  const activeStripeSession =
+    stripeMount ??
+    (checkout.payment?.method === 'stripe' && checkout.payment.clientSecret
+      ? {
+          clientSecret: checkout.payment.clientSecret,
+          publishableKey: checkout.payment.publishableKey,
+          orderId: checkout.payment.orderId,
+        }
+      : null)
+
+  const stripeCardDetails = activeStripeSession ? (
+    <StripePaymentShell
+      clientSecret={activeStripeSession.clientSecret}
+      publishableKey={activeStripeSession.publishableKey}
+      orderId={activeStripeSession.orderId}
+      formRef={stripeFormRef}
+      onReadyChange={setStripeReady}
+      onBeforeConfirm={prepareCheckoutPayment}
+      onPaymentSuccess={handleStripePaymentSuccess}
+      onError={(msg) => {
+        if (msg) checkoutStore.error = msg
+      }}
+    />
+  ) : canStartCheckout() && checkout.selectedPaymentMethod === 'stripe' ? (
+    <CheckoutPaymentSkeleton />
+  ) : null
+
   return (
     <div className={checkoutShellClass}>
       {displayCart ? (
@@ -366,14 +434,9 @@ export function CheckoutPage() {
               <CheckoutCustomerTypeStep />
             </CheckoutStepBody>
           ) : null}
-          {step === 'billing' ? (
+          {step === 'addresses' ? (
             <CheckoutStepBody>
-              <CheckoutBillingStep />
-            </CheckoutStepBody>
-          ) : null}
-          {step === 'shipping' ? (
-            <CheckoutStepBody>
-              <CheckoutShippingStep />
+              <CheckoutAddressesStep />
             </CheckoutStepBody>
           ) : null}
           {step === 'delivery_recipient' ? (
@@ -386,10 +449,16 @@ export function CheckoutPage() {
               <CheckoutShippingMethodStep />
             </CheckoutStepBody>
           ) : null}
-          {step === 'payment' ? (
-            <CheckoutStepBody>
-              <CheckoutPaymentStep />
-            </CheckoutStepBody>
+          {shouldMountPaymentStep ? (
+            <div
+              className={cn(
+                step !== 'payment' && 'pointer-events-none hidden h-0 overflow-hidden opacity-0',
+              )}
+            >
+              <CheckoutStepBody>
+                <CheckoutPaymentStep stripeCardDetails={stripeCardDetails} />
+              </CheckoutStepBody>
+            </div>
           ) : null}
           {step === 'review' ? (
             <CheckoutStepBody>
@@ -400,33 +469,14 @@ export function CheckoutPage() {
                 canPay={
                   canPay &&
                   (checkout.selectedPaymentMethod !== 'stripe' ||
-                    Boolean(checkout.payment?.clientSecret && stripeReady))
+                    Boolean(activeStripeSession?.clientSecret && stripeReady))
                 }
               />
-              {checkout.selectedPaymentMethod === 'stripe' ? (
-                <section className="mt-6">
-                  {checkout.payment?.method === 'stripe' && checkout.payment.clientSecret ? (
-                    <StripePaymentShell
-                      clientSecret={checkout.payment.clientSecret}
-                      publishableKey={checkout.payment.publishableKey}
-                      orderId={checkout.payment.orderId}
-                      formRef={stripeFormRef}
-                      onReadyChange={setStripeReady}
-                      onBeforeConfirm={prepareCheckoutPayment}
-                      onPaymentSuccess={handleStripePaymentSuccess}
-                      onError={(msg) => {
-                        if (msg) checkoutStore.error = msg
-                      }}
-                    />
-                  ) : canStartCheckout() ? (
-                    <CheckoutPaymentSkeleton />
-                  ) : null}
-                </section>
-              ) : (
+              {checkout.selectedPaymentMethod === 'bank_transfer' ? (
                 <section className="mt-6 rounded-xl border border-[#e2e6eb] bg-[#f7f8fa] p-4">
                   <BankTransferAwaitingNote />
                 </section>
-              )}
+              ) : null}
             </CheckoutStepBody>
           ) : null}
 

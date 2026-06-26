@@ -118,6 +118,12 @@ export async function retrieveStripeCheckoutSession(
   return stripe.checkout.sessions.retrieve(sessionId, { expand: ['line_items'] })
 }
 
+/** Sessioni Elements riusabili solo finché Stripe le tiene in stato `open`. */
+export async function isStripeCheckoutSessionOpen(sessionId: string): Promise<boolean> {
+  const session = await retrieveStripeCheckoutSession(sessionId)
+  return session.status === 'open'
+}
+
 export function constructStripeWebhookEvent(rawBody: Buffer, signature: string): Stripe.Event {
   if (!env.STRIPE_WEBHOOK_SECRET?.trim()) {
     throw new AppError('STRIPE_WEBHOOK_NOT_CONFIGURED', 'No webhook secret', 'Webhook Stripe non configurato.', 500, false)

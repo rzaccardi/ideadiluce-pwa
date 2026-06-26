@@ -16,9 +16,10 @@ export function checkoutStepPageSubtitleKey(
       return options?.accountConfirmed ? null : 'checkout.account.requiredHint'
     case 'customer_type':
       return 'checkout.customerType.hint'
+    case 'addresses':
     case 'billing':
     case 'details':
-      return 'checkout.billing.subtitle'
+      return 'checkout.addresses.subtitle'
     case 'shipping':
       return options?.billingSameAsShipping
         ? 'checkout.shipping.addressSubtitle'

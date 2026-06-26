@@ -8,7 +8,6 @@ import {
 } from '@/lib/auth-local-storage'
 import { ApiRequestError } from '@/types/api'
 import { fetchCart } from '@/features/cart'
-import { invalidateCheckoutAfterCartChange } from '@/features/checkout'
 import { fetchWishlist } from '@/features/wishlist'
 import { authStore, setAuthUser } from './auth.store'
 import { clearClientSessionState, type ClearClientSessionScope } from './clear-client-session'
@@ -206,9 +205,6 @@ export async function logout(options?: LogoutOptions): Promise<LogoutResult> {
     clearClientSessionState({ scope: options?.scope })
     try {
       await refreshSessionStores()
-      if (options?.scope === 'checkout') {
-        invalidateCheckoutAfterCartChange()
-      }
     } catch {
       /* carrello guest opzionale dopo logout */
     }

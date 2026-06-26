@@ -22,6 +22,8 @@ export function ThankYouPage() {
   const [recommendations, setRecommendations] = useState<ProductCardDTO[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const sessionId = searchParams.get('session_id')
+  const paymentIntent = searchParams.get('payment_intent')
 
   useEffect(() => {
     if (!orderId) return
@@ -31,23 +33,30 @@ export function ThankYouPage() {
       setLoading(true)
       setError(null)
       try {
-        const sessionId = searchParams.get('session_id')
-        const paymentIntent = searchParams.get('payment_intent')
         if (sessionId || paymentIntent) {
           await api.payments.stripeReturn({
             sessionId: sessionId ?? undefined,
             orderId: sessionId ? undefined : orderId,
           })
         } else {
-          await api.payments.stripeReturn({ orderId: orderId! })
+          await api.payments.stripeReturn({ orderId })
         }
 
-        const detail = await api.orders.thankYou(orderId!)
-        if (!cancelled) setOrder(detail)
+        const detail = await api.orders.thankYou(orderId)
+        if (cancelled) return
+        setOrder(detail)
 
-        if (authStore.isAuthenticated) {
+        const paymentSucceeded =
+          detail.paymentStatus === 'paid' ||
+          detail.orderStatus === 'paid' ||
+          detail.orderStatus === 'confirmed' ||
+          detail.orderStatus === 'completed' ||
+          detail.orderStatus === 'paid_sync_pending' ||
+          detail.orderStatus === 'synced'
+
+        if (authStore.isAuthenticated && paymentSucceeded) {
           try {
-            const recs = await api.orders.recommendations(orderId!)
+            const recs = await api.orders.recommendations(orderId)
             if (!cancelled) setRecommendations(recs)
           } catch {
             /* opzionale */
@@ -64,7 +73,7 @@ export function ThankYouPage() {
     return () => {
       cancelled = true
     }
-  }, [orderId, searchParams, t])
+  }, [orderId, sessionId, paymentIntent])
 
   const isFailed =
     order?.paymentStatus === 'failed' || order?.orderStatus === 'payment_failed'

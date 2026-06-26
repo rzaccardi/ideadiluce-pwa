@@ -50,8 +50,10 @@ export function CheckoutShippingOptions({
   const showLoading = loading && !showQuotes
   const showBlockedPlaceholders = blocked && !showQuotes && !showLoading
 
+  const selectionBusy = Boolean(selectingRef)
+
   return (
-    <section className={cn(blocked && 'pointer-events-none')}>
+    <section className={cn((blocked || selectionBusy) && 'pointer-events-none')}>
       {blocked ? (
         <p className="mb-3 text-sm text-[#6c727c]">{t('checkout.shipping.addressIncomplete')}</p>
       ) : null}
@@ -66,7 +68,7 @@ export function CheckoutShippingOptions({
           ))}
         </div>
       ) : showQuotes ? (
-        <div className={cn('flex flex-col gap-3', blocked && 'opacity-60')}>
+        <div className={cn('flex flex-col gap-3', (blocked || selectionBusy) && 'opacity-60')}>
           {quotes.map((q) => {
             const selectable = isShippingQuoteSelectable(q, selectionLocked)
             return (
@@ -75,9 +77,9 @@ export function CheckoutShippingOptions({
                 quote={q}
                 selected={selectedRef === q.methodRef || selectingRef === q.methodRef}
                 selecting={selectingRef === q.methodRef}
-                disabled={blocked || loading || Boolean(selectingRef) || !selectable}
+                disabled={blocked || loading || selectionBusy || !selectable}
                 onSelect={() => {
-                  if (!selectable) return
+                  if (!selectable || selectionBusy) return
                   onSelect(q.methodRef)
                 }}
               />

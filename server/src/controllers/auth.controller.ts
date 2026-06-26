@@ -43,9 +43,8 @@ export const authController = {
   }),
 
   logout: asyncHandler(async (req: Request, res: Response) => {
-    await authService.logout(req.sessionRecord?.id, req.sessionTokenRaw)
+    const { token } = await authService.logout(req.sessionRecord?.id, req.sessionTokenRaw)
     clearSessionCookie(res)
-    const { token } = await authService.issueNewGuestSession()
     setSessionCookie(res, token)
     res.json(ok({ loggedOut: true }))
   }),

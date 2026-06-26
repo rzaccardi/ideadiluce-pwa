@@ -278,10 +278,12 @@ export type MessageKey =
   | 'checkout.steps.details'
   | 'checkout.steps.account'
   | 'checkout.steps.customerType'
+  | 'checkout.steps.addresses'
   | 'checkout.steps.deliveryRecipient'
   | 'checkout.steps.review'
   | 'checkout.steps.group.account'
   | 'checkout.steps.group.anagrafica'
+  | 'checkout.steps.group.indirizzi'
   | 'checkout.steps.group.shipping'
   | 'checkout.steps.group.payment'
   | 'checkout.steps.payment'
@@ -363,6 +365,7 @@ export type MessageKey =
   | 'checkout.deliveryRecipient.notSavedHint'
   | 'checkout.billing.professionalActive'
   | 'checkout.billing.subtitle'
+  | 'checkout.addresses.subtitle'
   | 'checkout.billing.businessTitle'
   | 'checkout.billing.companyName'
   | 'checkout.billing.vatNumber'
@@ -1004,10 +1007,12 @@ const IT: Record<MessageKey, string> = {
   'checkout.steps.details': 'Dettagli',
   'checkout.steps.account': 'Account',
   'checkout.steps.customerType': 'Tipo cliente',
+  'checkout.steps.addresses': 'Indirizzi',
   'checkout.steps.deliveryRecipient': 'Destinatario',
   'checkout.steps.review': 'Riepilogo',
   'checkout.steps.group.account': 'Account',
   'checkout.steps.group.anagrafica': 'Anagrafica',
+  'checkout.steps.group.indirizzi': 'Indirizzi',
   'checkout.steps.group.shipping': 'Spedizione',
   'checkout.steps.group.payment': 'Pagamento',
   'checkout.steps.payment': 'Pagamento',
@@ -1094,6 +1099,7 @@ const IT: Record<MessageKey, string> = {
   'checkout.deliveryRecipient.notSavedHint': 'L’indirizzo non viene salvato in rubrica: vale solo per questo ordine.',
   'checkout.billing.professionalActive': 'Condizioni professional attive',
   'checkout.billing.subtitle': 'Inserisci i dati per fatturazione e consegna.',
+  'checkout.addresses.subtitle': 'Indirizzo di spedizione e, se diverso, di fatturazione.',
   'checkout.billing.businessTitle': 'Dati fatturazione azienda',
   'checkout.billing.companyName': 'Ragione sociale',
   'checkout.billing.vatNumber': 'Partita IVA / VAT',
@@ -1754,10 +1760,12 @@ const EN: Record<MessageKey, string> = {
   'checkout.steps.details': 'Details',
   'checkout.steps.account': 'Account',
   'checkout.steps.customerType': 'Customer type',
+  'checkout.steps.addresses': 'Addresses',
   'checkout.steps.deliveryRecipient': 'Recipient',
   'checkout.steps.review': 'Review',
   'checkout.steps.group.account': 'Account',
   'checkout.steps.group.anagrafica': 'Personal details',
+  'checkout.steps.group.indirizzi': 'Addresses',
   'checkout.steps.group.shipping': 'Shipping',
   'checkout.steps.group.payment': 'Payment',
   'checkout.steps.payment': 'Payment',
@@ -1841,6 +1849,7 @@ const EN: Record<MessageKey, string> = {
   'checkout.deliveryRecipient.notSavedHint': 'This address is not saved to your address book — it applies to this order only.',
   'checkout.billing.professionalActive': 'Professional pricing active',
   'checkout.billing.subtitle': 'Enter details for billing and delivery.',
+  'checkout.addresses.subtitle': 'Shipping address and, if different, billing address.',
   'checkout.billing.businessTitle': 'Business billing details',
   'checkout.billing.companyName': 'Company name',
   'checkout.billing.vatNumber': 'VAT number',

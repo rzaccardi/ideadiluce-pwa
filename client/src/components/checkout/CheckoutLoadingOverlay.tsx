@@ -24,6 +24,7 @@ type LoadingState = {
 const ADDRESS_STEPS: CheckoutStep[] = [
   'account',
   'customer_type',
+  'addresses',
   'billing',
   'shipping',
   'delivery_recipient',
@@ -39,6 +40,7 @@ export function resolveCheckoutLoading(params: {
   isPaying: boolean
   addressPrefillLoading: boolean
   shippingQuotesLoading: boolean
+  shippingSelecting: boolean
   cartLoading: boolean
 }): LoadingState | null {
   const {
@@ -47,6 +49,7 @@ export function resolveCheckoutLoading(params: {
     isPaying,
     addressPrefillLoading,
     shippingQuotesLoading,
+    shippingSelecting,
     cartLoading,
   } = params
 
@@ -59,6 +62,10 @@ export function resolveCheckoutLoading(params: {
   }
 
   if (shippingQuotesLoading) {
+    return { visible: true, icon: 'truck', messageKey: 'checkout.loading.shipping' }
+  }
+
+  if (shippingSelecting) {
     return { visible: true, icon: 'truck', messageKey: 'checkout.loading.shipping' }
   }
 

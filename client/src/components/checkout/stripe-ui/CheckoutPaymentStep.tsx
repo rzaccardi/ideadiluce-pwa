@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { useSnapshot } from 'valtio/react'
 import {
   advanceCheckoutStep,
@@ -13,7 +14,11 @@ import { useI18n } from '@/hooks/use-i18n'
 import { CheckoutActionRow, StripePayButton } from './StripeFields'
 import { CheckoutStepBackButton } from './CheckoutStepBackButton'
 
-export function CheckoutPaymentStep() {
+type Props = {
+  stripeCardDetails?: ReactNode
+}
+
+export function CheckoutPaymentStep({ stripeCardDetails }: Props) {
   const { t } = useI18n()
   const checkout = useSnapshot(checkoutStore)
 
@@ -22,6 +27,7 @@ export function CheckoutPaymentStep() {
       <CheckoutPaymentOptions
         selected={checkout.selectedPaymentMethod}
         disabled={checkout.isLoading || checkout.isPaying}
+        stripeCardDetails={stripeCardDetails}
         onSelect={(method) => setPaymentMethod(method as import('@/features/checkout').CheckoutPaymentMethodDTO)}
       />
 

@@ -17,12 +17,17 @@ type StepGroup = {
   steps: CheckoutStep[]
 }
 
-/** Tre macro-step: Anagrafica · Spedizione · Pagamento */
+/** Quattro macro-step: Account · Indirizzi · Spedizione · Pagamento */
 const STEP_GROUPS: StepGroup[] = [
   {
+    id: 'account',
+    labelKey: 'checkout.steps.group.account',
+    steps: ['account', 'customer_type'],
+  },
+  {
     id: 'addresses',
-    labelKey: 'checkout.steps.group.anagrafica',
-    steps: ['account', 'customer_type', 'billing', 'shipping'],
+    labelKey: 'checkout.steps.group.indirizzi',
+    steps: ['addresses'],
   },
   {
     id: 'shipping',
@@ -41,7 +46,7 @@ function visibleSteps(): CheckoutStep[] {
 }
 
 function normalizeStep(step: CheckoutStep): CheckoutStep {
-  if (step === 'details') return 'billing'
+  if (step === 'details' || step === 'billing' || step === 'shipping') return 'addresses'
   if (step === 'payment_method') return 'payment'
   return step
 }
@@ -100,7 +105,7 @@ export function CheckoutStepIndicator({ currentStep }: Props) {
       </header>
 
       <nav aria-label={t('checkout.steps.navLabel')}>
-        <ol className="grid grid-cols-3 gap-2 sm:gap-3.5 md:gap-4">
+        <ol className="grid grid-cols-4 gap-2 sm:gap-3.5 md:gap-4">
           {groups.map((group, index) => {
             const done = index < activeGroup
             const isCurrent = index === activeGroup

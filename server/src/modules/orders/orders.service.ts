@@ -112,6 +112,21 @@ async function findOwnedPwaOrder(userId: string, id: string) {
   })
 }
 
+function normalizePwaOrderId(id: string) {
+  return id.startsWith('pwa-') ? id.replace(/^pwa-/, '') : id
+}
+
+async function findAccessiblePwaOrder(req: Request, userId: string, id: string) {
+  const pwaId = normalizePwaOrderId(id)
+  const sessionId = req.sessionRecord?.id
+  return prisma.pwaOrder.findFirst({
+    where: {
+      id: pwaId,
+      OR: [{ userId }, ...(sessionId ? [{ sessionId }] : [])],
+    },
+  })
+}
+
 export const ordersService = {
   async list(userId: string, correlationId = 'orders-list'): Promise<OrderDTO[]> {
     const rows = await ordersRepository.listByUser(userId)
@@ -214,7 +229,7 @@ export const ordersService = {
   },
 
   async recommendations(req: Request, userId: string, id: string): Promise<ProductCardDTO[]> {
-    const po = await findOwnedPwaOrder(userId, id)
+    const po = await findAccessiblePwaOrder(req, userId, id)
     if (!po) {
       throw new AppError('ORDER_NOT_FOUND', 'Order not found', 'Ordine non trovato.', 404, false)
     }

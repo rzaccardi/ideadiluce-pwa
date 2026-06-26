@@ -1,6 +1,6 @@
 'use client'
 
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import {
   ExpressCheckoutElement,
   PaymentElement,
@@ -11,7 +11,7 @@ import type {
   StripeExpressCheckoutElementConfirmEvent,
 } from '@stripe/stripe-js'
 import { useSnapshot } from 'valtio/react'
-import { checkoutStore } from '@/features/checkout'
+import { checkoutStore, refreshStaleStripePaymentSession } from '@/features/checkout'
 import { StripeDivider, StripeFieldGroup, StripeFieldLabel, StripeInput } from './stripe-ui/StripeFields'
 import { useI18n } from '@/hooks/use-i18n'
 
@@ -20,14 +20,12 @@ function formatCardholderName(firstName: string, lastName: string) {
 }
 
 function buildConfirmBillingDetails(cardholderName: string): {
-  email?: string
   phoneNumber?: string
   billingAddress: StripeCheckoutContact
 } {
   const draft = checkoutStore.draft
   const addr = draft.billingSameAsShipping ? draft.shipping : draft.billing
   return {
-    email: draft.email.trim() || undefined,
     phoneNumber: addr.phone?.trim() || undefined,
     billingAddress: {
       name: cardholderName.trim(),
@@ -67,6 +65,7 @@ export const StripePaymentForm = forwardRef<StripePaymentFormHandle, Props>(func
   const [paymentReady, setPaymentReady] = useState(false)
   const [paymentComplete, setPaymentComplete] = useState(false)
   const [cardholderName, setCardholderName] = useState('')
+  const staleSessionRetriedRef = useRef(false)
 
   const billingAddr = checkout.draft.billingSameAsShipping
     ? checkout.draft.shipping
@@ -88,7 +87,27 @@ export const StripePaymentForm = forwardRef<StripePaymentFormHandle, Props>(func
   }, [ready, onReadyChange])
 
   useEffect(() => {
+    staleSessionRetriedRef.current = false
+  }, [orderId])
+
+  useEffect(() => {
     if (checkoutState.type === 'error') {
+      const message = checkoutState.error.message ?? ''
+      const code =
+        typeof checkoutState.error === 'object' &&
+        checkoutState.error &&
+        'code' in checkoutState.error
+          ? String((checkoutState.error as { code?: string }).code ?? '')
+          : ''
+      const isStaleSession =
+        code === 'checkout_not_active_session' ||
+        message.toLowerCase().includes('no longer active')
+      if (isStaleSession && !staleSessionRetriedRef.current) {
+        staleSessionRetriedRef.current = true
+        onError('')
+        void refreshStaleStripePaymentSession({ silent: true })
+        return
+      }
       onError(checkoutState.error.message)
     }
   }, [checkoutState, onError])

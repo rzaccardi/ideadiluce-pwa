@@ -52,11 +52,12 @@ export function CheckoutShippingMethodStep() {
           disabled={
             !canAdvanceFromStep('shipping_method') ||
             checkout.isLoading ||
-            checkout.shippingQuotesLoading
+            checkout.shippingQuotesLoading ||
+            Boolean(checkout.shippingSelectingRef)
           }
           onClick={() => void advanceCheckoutStep()}
         >
-          {checkout.isLoading || checkout.shippingQuotesLoading
+          {checkout.isLoading || checkout.shippingQuotesLoading || checkout.shippingSelectingRef
             ? t('checkout.processing')
             : t('checkout.continueToPayment')}
         </StripePayButton>
