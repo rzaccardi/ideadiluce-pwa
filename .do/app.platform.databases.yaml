@@ -1,0 +1,7 @@
+# DEPRECATO — il DB è integrato in app.platform.yaml
+#
+# Dopo aver creato/collegato il Postgres da UI DO:
+#   1. Settings → App Spec → Download
+#   2. Confronta il blocco "databases:" con app.platform.yaml
+#   3. Se "name" o "cluster_name" differiscono, copia i valori dallo spec scaricato
+#   4. Su api, DATABASE_URL deve essere ${<name>.DATABASE_URL}

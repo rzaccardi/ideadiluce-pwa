@@ -33,7 +33,6 @@
     }
   },
   "scripts": {
-    "postinstall": "tsx scripts/prisma-cli.ts generate",
     "build": "tsc -p tsconfig.build.json",
     "db:generate": "tsx scripts/prisma-cli.ts generate",
     "db:migrate": "tsx scripts/prisma-cli.ts migrate deploy",

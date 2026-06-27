@@ -28,6 +28,7 @@ function fixAssetPaths(html) {
 function fixDocLinks(html) {
   const DOC_ROUTE_MAP = {
     'IdeaDiLuce - Home.dc.html': '/',
+    'IdeaDiLuce - Catalogo.dc.html': '/catalog',
     'IdeaDiLuce - Categoria Arredo.dc.html': '/categoria-prodotto/illuminazione-arredo/',
     'IdeaDiLuce - Categoria Tecnica.dc.html': '/categoria-prodotto/illuminazione-tecnica/',
     'IdeaDiLuce - Scegli per ambiente.dc.html': '/ambienti',

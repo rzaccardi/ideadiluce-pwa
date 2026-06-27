@@ -31,6 +31,21 @@ export type MessageKey =
   | 'nav.logout'
   | 'footer.tagline'
   | 'error.genericTitle'
+  | 'notFound.metaTitle'
+  | 'notFound.eyebrow'
+  | 'notFound.title'
+  | 'notFound.description'
+  | 'notFound.backHome'
+  | 'notFound.exploreCatalog'
+  | 'notFound.searchPlaceholder'
+  | 'notFound.searchCta'
+  | 'notFound.assistenza'
+  | 'notFound.linkDesign'
+  | 'notFound.linkTechnical'
+  | 'notFound.linkAttacco'
+  | 'notFound.linkGuide'
+  | 'notFound.linkProductNotFound'
+  | 'notFound.footer'
   | 'auth.sessionChecking'
   | 'auth.redirectingToLogin'
   | 'auth.loggingIn'
@@ -755,6 +770,22 @@ const IT: Record<MessageKey, string> = {
   'nav.logout': 'Esci',
   'footer.tagline': 'Idea di Luce · illuminazione per casa e professionisti',
   'error.genericTitle': 'Qualcosa è andato storto',
+  'notFound.metaTitle': 'Pagina non trovata',
+  'notFound.eyebrow': 'ERRORE 404',
+  'notFound.title': 'Qui la luce si è spenta.',
+  'notFound.description':
+    'La pagina che cerchi è stata spostata, rimossa o non è mai esistita. Ma non resti al buio: ripartiamo da qui.',
+  'notFound.backHome': 'Torna alla home',
+  'notFound.exploreCatalog': 'Esplora il catalogo',
+  'notFound.searchPlaceholder': 'Cerca per prodotto, attacco, codice o marca',
+  'notFound.searchCta': 'Cerca',
+  'notFound.assistenza': 'Assistenza',
+  'notFound.linkDesign': "Illuminazione d'arredo",
+  'notFound.linkTechnical': 'Prodotti tecnici',
+  'notFound.linkAttacco': 'Scegli per attacco',
+  'notFound.linkGuide': 'Guide',
+  'notFound.linkProductNotFound': 'Prodotto non trovato?',
+  'notFound.footer': 'TLB Italy Srl · Via Appia Pignatelli 450, Roma · info@ideadiluce.com',
   'auth.sessionChecking': 'Verifica sessione…',
   'auth.redirectingToLogin': 'Reindirizzamento al login…',
   'auth.loggingIn': 'Accesso…',
@@ -1508,6 +1539,22 @@ const EN: Record<MessageKey, string> = {
   'nav.logout': 'Sign out',
   'footer.tagline': 'Idea di Luce · lighting for home and professionals',
   'error.genericTitle': 'Something went wrong',
+  'notFound.metaTitle': 'Page not found',
+  'notFound.eyebrow': 'ERROR 404',
+  'notFound.title': 'The light went out here.',
+  'notFound.description':
+    'The page you are looking for has been moved, removed, or never existed. But you are not in the dark: let us start again from here.',
+  'notFound.backHome': 'Back to home',
+  'notFound.exploreCatalog': 'Explore the catalog',
+  'notFound.searchPlaceholder': 'Search by product, socket, code, or brand',
+  'notFound.searchCta': 'Search',
+  'notFound.assistenza': 'Support',
+  'notFound.linkDesign': 'Design lighting',
+  'notFound.linkTechnical': 'Technical products',
+  'notFound.linkAttacco': 'Browse by socket',
+  'notFound.linkGuide': 'Guides',
+  'notFound.linkProductNotFound': 'Product not found?',
+  'notFound.footer': 'TLB Italy Srl · Via Appia Pignatelli 450, Rome · info@ideadiluce.com',
   'auth.sessionChecking': 'Checking session…',
   'auth.redirectingToLogin': 'Redirecting to sign in…',
   'auth.loggingIn': 'Signing in…',
@@ -2252,6 +2299,22 @@ const ES: Record<MessageKey, string> = {
   'nav.logout': 'Cerrar sesión',
   'footer.tagline': 'Idea di Luce · iluminación para el hogar y profesionales',
   'error.genericTitle': 'Algo salió mal',
+  'notFound.metaTitle': 'Página no encontrada',
+  'notFound.eyebrow': 'ERROR 404',
+  'notFound.title': 'Aquí la luz se apagó.',
+  'notFound.description':
+    'La página que buscas se ha movido, eliminado o nunca existió. Pero no te quedes a oscuras: retomemos desde aquí.',
+  'notFound.backHome': 'Volver al inicio',
+  'notFound.exploreCatalog': 'Explorar el catálogo',
+  'notFound.searchPlaceholder': 'Buscar por producto, casquillo, código o marca',
+  'notFound.searchCta': 'Buscar',
+  'notFound.assistenza': 'Asistencia',
+  'notFound.linkDesign': 'Iluminación decorativa',
+  'notFound.linkTechnical': 'Productos técnicos',
+  'notFound.linkAttacco': 'Elegir por casquillo',
+  'notFound.linkGuide': 'Guías',
+  'notFound.linkProductNotFound': '¿Producto no encontrado?',
+  'notFound.footer': 'TLB Italy Srl · Via Appia Pignatelli 450, Roma · info@ideadiluce.com',
   'auth.sessionChecking': 'Verificando sesión…',
   'auth.redirectingToLogin': 'Redirigiendo al inicio de sesión…',
   'auth.loggingIn': 'Iniciando sesión…',
@@ -2819,6 +2882,22 @@ const FR: Record<MessageKey, string> = {
   'nav.logout': 'Déconnexion',
   'footer.tagline': 'Idea di Luce · éclairage pour la maison et les professionnels',
   'error.genericTitle': 'Une erreur est survenue',
+  'notFound.metaTitle': 'Page introuvable',
+  'notFound.eyebrow': 'ERREUR 404',
+  'notFound.title': 'Ici, la lumière s’est éteinte.',
+  'notFound.description':
+    'La page que vous cherchez a été déplacée, supprimée ou n’a jamais existé. Mais ne restez pas dans le noir : reprenons à partir d’ici.',
+  'notFound.backHome': 'Retour à l’accueil',
+  'notFound.exploreCatalog': 'Explorer le catalogue',
+  'notFound.searchPlaceholder': 'Rechercher par produit, culot, code ou marque',
+  'notFound.searchCta': 'Rechercher',
+  'notFound.assistenza': 'Assistance',
+  'notFound.linkDesign': 'Éclairage décoratif',
+  'notFound.linkTechnical': 'Produits techniques',
+  'notFound.linkAttacco': 'Choisir par culot',
+  'notFound.linkGuide': 'Guides',
+  'notFound.linkProductNotFound': 'Produit introuvable ?',
+  'notFound.footer': 'TLB Italy Srl · Via Appia Pignatelli 450, Rome · info@ideadiluce.com',
   'auth.sessionChecking': 'Vérification de la session…',
   'auth.redirectingToLogin': 'Redirection vers la connexion…',
   'auth.loggingIn': 'Connexion…',
@@ -3388,6 +3467,22 @@ const DE: Record<MessageKey, string> = {
   'nav.logout': 'Abmelden',
   'footer.tagline': 'Idea di Luce · Beleuchtung für Zuhause und Profis',
   'error.genericTitle': 'Etwas ist schiefgelaufen',
+  'notFound.metaTitle': 'Seite nicht gefunden',
+  'notFound.eyebrow': 'FEHLER 404',
+  'notFound.title': 'Hier ist das Licht erloschen.',
+  'notFound.description':
+    'Die gesuchte Seite wurde verschoben, entfernt oder hat nie existiert. Aber bleiben Sie nicht im Dunkeln: wir starten von hier neu.',
+  'notFound.backHome': 'Zur Startseite',
+  'notFound.exploreCatalog': 'Katalog entdecken',
+  'notFound.searchPlaceholder': 'Suche nach Produkt, Sockel, Code oder Marke',
+  'notFound.searchCta': 'Suchen',
+  'notFound.assistenza': 'Support',
+  'notFound.linkDesign': 'Designbeleuchtung',
+  'notFound.linkTechnical': 'Technische Produkte',
+  'notFound.linkAttacco': 'Nach Sockel wählen',
+  'notFound.linkGuide': 'Ratgeber',
+  'notFound.linkProductNotFound': 'Produkt nicht gefunden?',
+  'notFound.footer': 'TLB Italy Srl · Via Appia Pignatelli 450, Rom · info@ideadiluce.com',
   'auth.sessionChecking': 'Sitzung wird geprüft…',
   'auth.redirectingToLogin': 'Weiterleitung zur Anmeldung…',
   'auth.loggingIn': 'Anmeldung…',
