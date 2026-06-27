@@ -90,6 +90,8 @@ async function main() {
 
   const { seedSitePages } = await import('../src/modules/site/site.service.js')
   await seedSitePages()
+  const { siteGuideService } = await import('../src/modules/site-guides/site-guides.service.js')
+  await siteGuideService.seedSiteGuides()
   console.info('Site pages seeded')
 }
 

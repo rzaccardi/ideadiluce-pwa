@@ -10,7 +10,7 @@ export function buildLlmsTxt(): string {
 ## Pagine principali
 
 - Home: ${site}/
-- Catalogo: ${site}/catalog
+- Catalogo: ${site}/catalogo
 - Brand: ${site}/brand
 - Professionisti: ${site}/professionisti
 - Contatti: ${site}/contatti

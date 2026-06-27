@@ -202,14 +202,14 @@ export const BRAND_THEMATIC = {
     title: "Per lampade d'autore",
     subtitle: 'Marchi iconici per arredare con la luce.',
     slugs: ['artemide', 'flos', 'fontanaarte', 'davide-groppi', 'ideal-lux'],
-    allHref: '/catalog?world=design',
+    allHref: '/catalogo?world=design',
   },
   technical: {
     eyebrow: 'TECNICI & LAMPADINE',
     title: 'Per prodotti e ricambi',
     subtitle: 'Sorgenti, alimentatori e componenti professionali.',
     slugs: ['philips', 'osram', 'ledvance', 'mean-well', 'vossloh'],
-    allHref: '/catalog?world=technical',
+    allHref: '/catalogo?world=technical',
   },
 }
 
@@ -242,7 +242,7 @@ export function brandSlugFromDisplayName(name: string): string | null {
 }
 
 export function brandCatalogHref(slug: string): string {
-  return `/catalog?brand=${encodeURIComponent(slug)}`
+  return `/catalogo?brand=${encodeURIComponent(slug)}`
 }
 
 function categoryLabel(category: BrandCategory): string {

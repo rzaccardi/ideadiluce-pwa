@@ -21,6 +21,25 @@ export type SitePageDetail = {
   hasCustomContent?: boolean
 }
 
+export type SiteLocaleDraft = {
+  content: Record<string, unknown>
+  draftJson: string
+  savedDraftJson: string
+  published: boolean
+  updatedAt: string | null
+  hasCustomContent?: boolean
+}
+
+function emptyLocaleDraft(): SiteLocaleDraft {
+  return {
+    content: {},
+    draftJson: '{}',
+    savedDraftJson: '{}',
+    published: true,
+    updatedAt: null,
+  }
+}
+
 export const SITE_PAGE_OPTIONS = [
   { key: 'shell', label: 'Shell (header, footer, trust bar)' },
   { key: 'home', label: 'Homepage' },
@@ -40,13 +59,6 @@ export const SITE_PAGE_OPTIONS = [
   { key: 'privacy', label: 'Privacy' },
   { key: 'cookie', label: 'Cookie' },
   { key: 'prodotto-non-trovato', label: 'Prodotto non trovato' },
-  { key: 'guide-luce-calda-naturale-fredda', label: 'Guida: luce calda/naturale/fredda' },
-  { key: 'guide-gu10-gu53', label: 'Guida: GU10 vs GU5.3' },
-  { key: 'guide-lampadina-r7s', label: 'Guida: lampadina R7s' },
-  { key: 'guide-illuminare-soggiorno', label: 'Guida: illuminare soggiorno' },
-  { key: 'guide-glossario', label: 'Guida: glossario' },
-  { key: 'guide-scegliere-lampadina-led', label: 'Guida: scegliere LED' },
-  { key: 'guide-alimentatore-striscia-led', label: 'Guida: alimentatore striscia LED' },
 ] as const
 
 export const siteStore = proxy({
@@ -56,6 +68,13 @@ export const siteStore = proxy({
   current: null as SitePageDetail | null,
   pageKey: 'shell',
   locale: 'IT' as SiteLocale,
+  localeDrafts: {
+    IT: emptyLocaleDraft(),
+    EN: emptyLocaleDraft(),
+    ES: emptyLocaleDraft(),
+    FR: emptyLocaleDraft(),
+    DE: emptyLocaleDraft(),
+  } as Record<SiteLocale, SiteLocaleDraft>,
   draftContent: {} as Record<string, unknown>,
   draftJson: '{}',
   savedDraftJson: '{}',
@@ -67,3 +86,11 @@ export const siteStore = proxy({
   isBulkTranslating: false,
   error: null as string | null,
 })
+
+export function getSitePageLabel(pageKey: string) {
+  return SITE_PAGE_OPTIONS.find((page) => page.key === pageKey)?.label ?? pageKey
+}
+
+export function isValidSitePageKey(pageKey: string) {
+  return SITE_PAGE_OPTIONS.some((page) => page.key === pageKey)
+}

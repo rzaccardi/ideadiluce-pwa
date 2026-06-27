@@ -66,7 +66,7 @@ export function CategoryPage() {
               <>
                 <Breadcrumb
                   items={[
-                    { label: t('catalog.title'), to: lp('/catalog') },
+                    { label: t('catalog.title'), to: lp('/catalogo') },
                     { label: title },
                   ]}
                 />
@@ -78,14 +78,14 @@ export function CategoryPage() {
               <SeoHead title={`${title} | ${t('brand.name')}`} description={description} />
               <Breadcrumb
                 items={[
-                  { label: t('catalog.title'), to: lp('/catalog') },
+                  { label: t('catalog.title'), to: lp('/catalogo') },
                   { label: title },
                 ]}
               />
               <PageHeader title={title} />
               <ProductGrid products={products} emptyMessage={t('category.empty')} />
               <p className="mt-6">
-                <Link to={lp('/catalog')} className="text-sm font-bold text-idl-brass hover:underline">
+                <Link to={lp('/catalogo')} className="text-sm font-bold text-idl-brass hover:underline">
                   {tParams('category.backToCatalog', { catalog: t('catalog.title') })}
                 </Link>
               </p>

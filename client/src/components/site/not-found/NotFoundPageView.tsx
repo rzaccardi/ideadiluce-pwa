@@ -198,7 +198,7 @@ export function NotFoundPageView() {
             <HoverLinkButton href={lp('/')} variant="primary">
               {t('notFound.backHome')}
             </HoverLinkButton>
-            <HoverLinkButton href={lp('/catalog')} variant="secondary">
+            <HoverLinkButton href={lp('/catalogo')} variant="secondary">
               {t('notFound.exploreCatalog')}
             </HoverLinkButton>
           </div>

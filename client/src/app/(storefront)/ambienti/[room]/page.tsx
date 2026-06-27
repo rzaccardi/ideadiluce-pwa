@@ -6,5 +6,5 @@ type PageProps = {
 
 export default async function AmbienteRoomPage({ params }: PageProps) {
   const { room } = await params
-  redirect(`/catalog?world=design&category=${encodeURIComponent(room)}`)
+  redirect(`/catalogo?world=design&category=${encodeURIComponent(room)}`)
 }

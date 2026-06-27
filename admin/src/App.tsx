@@ -12,7 +12,10 @@ import { RestockDetailPage } from '@/pages/restock/restock-detail-page'
 import { RestockPage } from '@/pages/restock/restock-page'
 import { AbandonedCartsPage } from '@/pages/abandoned-carts/abandoned-carts-page'
 import { AbandonedCartDetailPage } from '@/pages/abandoned-carts/abandoned-cart-detail-page'
-import { SitePagesPage } from '@/pages/site/site-pages-page'
+import { GuidesListPage } from '@/pages/guides/guides-list-page'
+import { GuideDetailPage } from '@/pages/guides/guide-detail-page'
+import { SitePagesListPage } from '@/pages/site/site-pages-list-page'
+import { SitePageDetailPage } from '@/pages/site/site-page-detail-page'
 import { ProfessionalRequestsPage } from '@/pages/professional-requests/professional-requests-page'
 import { ProfessionalRequestDetailPage } from '@/pages/professional-requests/professional-request-detail-page'
 import { TaxRulesPage } from '@/pages/tax-rules/tax-rules-page'
@@ -48,7 +51,10 @@ export function App() {
               <Route path="odoo/pricelists" element={<OdooPricelistsPage />} />
               <Route path="sync-queue" element={<SyncQueuePage />} />
               <Route path="social-proof" element={<SocialProofPage />} />
-              <Route path="site" element={<SitePagesPage />} />
+              <Route path="site" element={<SitePagesListPage />} />
+              <Route path="site/:pageKey" element={<SitePageDetailPage />} />
+              <Route path="guides" element={<GuidesListPage />} />
+              <Route path="guides/:slug" element={<GuideDetailPage />} />
               <Route path="professional-requests" element={<ProfessionalRequestsPage />} />
               <Route path="professional-requests/:id" element={<ProfessionalRequestDetailPage />} />
             </Route>

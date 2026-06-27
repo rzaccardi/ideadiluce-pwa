@@ -905,3 +905,20 @@ model SitePage {
   @@unique([pageKey, locale])
   @@index([pageKey])
 }
+
+/// Metadati guide editoriali (slug, indicizzazione, ordine) — contenuti per locale in SitePage.
+model SiteGuide {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  category    String   @default("")
+  readingMeta String   @default("")
+  sortOrder   Int      @default(0)
+  indexed     Boolean  @default(true)
+  featured    Boolean  @default(false)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sortOrder])
+  @@index([published, indexed])
+}

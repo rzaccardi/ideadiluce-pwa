@@ -1,6 +1,7 @@
 import { LanguagesIcon, SparklesIcon } from 'lucide-react'
 import type { SiteCatalog, SiteI18nStatus } from '@/types/site'
 import { SITE_LOCALES, type SiteLocale } from '@/features/site/site.store'
+import { ClickableTableRow } from '@/components/shared'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -25,11 +26,11 @@ const LOCALE_LABELS: Record<SiteLocale, string> = {
 type SiteI18nCoveragePanelProps = {
   catalog: SiteCatalog | null
   i18nStatus: SiteI18nStatus | null
-  currentPageKey: string
+  currentPageKey?: string
   busy?: boolean
   onTranslateAllMissing: () => void
-  onTranslateCurrentPageMissing: () => void
-  onSelectPage: (pageKey: string) => void
+  onTranslateCurrentPageMissing?: () => void
+  onSelectPage?: (pageKey: string) => void
 }
 
 function LocaleStatusDot({
@@ -94,8 +95,13 @@ export function SiteI18nCoveragePanel({
           </CardDescription>
         </div>
         <div className="flex flex-wrap gap-2">
-          {currentMissing > 0 ? (
-            <Button variant="outline" size="sm" disabled={busy || !deeplReady} onClick={onTranslateCurrentPageMissing}>
+          {currentMissing > 0 && onTranslateCurrentPageMissing ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={busy || !deeplReady}
+              onClick={onTranslateCurrentPageMissing}
+            >
               <LanguagesIcon className="size-4" />
               Traduci mancanti ({currentMissing})
             </Button>
@@ -144,47 +150,65 @@ export function SiteI18nCoveragePanel({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {catalog.pages.map((page) => (
-                    <TableRow
-                      key={page.pageKey}
-                      className={cn(
-                        'cursor-pointer',
-                        page.pageKey === currentPageKey && 'bg-sky-50/80',
-                      )}
-                      onClick={() => onSelectPage(page.pageKey)}
-                    >
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          <span className="truncate">{page.label}</span>
-                          {page.missingCount > 0 ? (
-                            <Badge variant="outline" className="font-normal text-amber-700">
-                              {page.missingCount}
-                            </Badge>
-                          ) : null}
-                        </div>
-                      </TableCell>
-                      {SITE_LOCALES.map((locale) => {
-                        const localeStatus = page.locales[locale]
-                        return (
-                          <TableCell key={locale} className="text-center">
-                            <div className="flex justify-center">
-                              <LocaleStatusDot
-                                status={localeStatus.status}
-                                published={localeStatus.published}
-                              />
-                            </div>
-                          </TableCell>
-                        )
-                      })}
-                    </TableRow>
-                  ))}
+                  {catalog.pages.map((page) => {
+                    const rowClassName = cn(page.pageKey === currentPageKey && 'bg-sky-50/80')
+                    const cells = (
+                      <>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate">{page.label}</span>
+                            {page.missingCount > 0 ? (
+                              <Badge variant="outline" className="font-normal text-amber-700">
+                                {page.missingCount}
+                              </Badge>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                        {SITE_LOCALES.map((locale) => {
+                          const localeStatus = page.locales[locale]
+                          return (
+                            <TableCell key={locale} className="text-center">
+                              <div className="flex justify-center">
+                                <LocaleStatusDot
+                                  status={localeStatus.status}
+                                  published={localeStatus.published}
+                                />
+                              </div>
+                            </TableCell>
+                          )
+                        })}
+                      </>
+                    )
+
+                    if (onSelectPage) {
+                      return (
+                        <TableRow
+                          key={page.pageKey}
+                          className={cn('cursor-pointer', rowClassName)}
+                          onClick={() => onSelectPage(page.pageKey)}
+                        >
+                          {cells}
+                        </TableRow>
+                      )
+                    }
+
+                    return (
+                      <ClickableTableRow
+                        key={page.pageKey}
+                        to={`/site/${encodeURIComponent(page.pageKey)}`}
+                        className={rowClassName}
+                      >
+                        {cells}
+                      </ClickableTableRow>
+                    )
+                  })}
                 </TableBody>
               </Table>
             </div>
 
             <p className="text-xs text-muted-foreground">
               Verde = salvata · Ambra = mancante · Grigio = IT non ancora salvato (usa i default) ·
-              Clicca una riga per aprire la pagina.
+              {onSelectPage ? ' Clicca una riga per aprire la pagina.' : ' Clicca una riga per aprire il dettaglio.'}
             </p>
           </>
         ) : (

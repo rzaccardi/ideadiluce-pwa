@@ -512,7 +512,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
               </ProductDetailPlaceholder>
             </p>
             <Link
-              to={lp('/catalog')}
+              to={lp('/catalogo')}
               className="mt-6 inline-flex items-center gap-2 rounded-lg border border-white/20 px-5 py-3 text-sm font-semibold transition hover:border-idl-glow hover:text-idl-glow"
             >
               Tutti i progetti del designer →

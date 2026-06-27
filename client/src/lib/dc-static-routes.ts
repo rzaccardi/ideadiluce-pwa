@@ -34,7 +34,7 @@ const NAV_DROPDOWN_HREFS: Record<string, string> = {
 }
 
 export function resolveNavDropdownHref(id: string, href?: string): string {
-  return href ?? NAV_DROPDOWN_HREFS[id] ?? '/catalog'
+  return href ?? NAV_DROPDOWN_HREFS[id] ?? '/catalogo'
 }
 
 export function resolveDcActiveNavId(pathname: string): DcActiveNavId | null {

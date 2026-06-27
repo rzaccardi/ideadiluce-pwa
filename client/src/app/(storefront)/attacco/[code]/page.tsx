@@ -19,5 +19,5 @@ export default async function AttaccoCodePage({ params }: PageProps) {
   const { code } = await params
   const key = code.trim().toLowerCase()
   const query = CODE_ALIASES[key] ?? code.toUpperCase()
-  redirect(`/catalog?world=technical&q=${encodeURIComponent(query)}`)
+  redirect(`/catalogo?world=technical&q=${encodeURIComponent(query)}`)
 }

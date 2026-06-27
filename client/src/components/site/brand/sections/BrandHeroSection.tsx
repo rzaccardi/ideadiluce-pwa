@@ -25,7 +25,7 @@ export function BrandHeroSection({ lp, activeFilter, onFilterChange, onSearchQue
     const trimmed = query.trim()
     onSearchQuery(trimmed)
     if (trimmed) {
-      navigate(`${lp('/catalog')}?q=${encodeURIComponent(trimmed)}`)
+      navigate(`${lp('/catalogo')}?q=${encodeURIComponent(trimmed)}`)
     }
   }
 

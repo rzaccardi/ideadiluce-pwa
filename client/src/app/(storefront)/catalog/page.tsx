@@ -1,30 +1,21 @@
-import type { Metadata } from 'next'
-import { t } from '@/i18n/messages'
-import { getSiteUrl } from '@/lib/env'
-import { getRequestLocale } from '@/lib/locale-server'
-import { localizePath } from '@/lib/locale'
-import { buildMetadata } from '@/lib/seo'
-import { catalogHasFilterQuery } from '@/lib/seo-paths'
-import { CatalogPage } from '@/views/CatalogPage'
+import { redirect } from 'next/navigation'
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
-export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
-  const locale = await getRequestLocale()
+/** Redirect legacy /catalog → /catalogo (301 via Next redirect). */
+export default async function CatalogLegacyRedirectPage({ searchParams }: PageProps) {
   const params = await searchParams
-  const hasFilters = catalogHasFilterQuery(params)
-  const site = getSiteUrl().replace(/\/$/, '')
-  const catalogPath = localizePath('/catalog', locale)
-  return buildMetadata({
-    title: `${t(locale, 'catalog.title')} | Idea di Luce`,
-    description: t(locale, 'catalog.metaDescription'),
-    canonical: hasFilters ? null : `${site}${catalogPath}`,
-    noindex: hasFilters,
-  })
-}
-
-export default function Page() {
-  return <CatalogPage />
+  const qs = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined) continue
+    if (Array.isArray(value)) {
+      for (const item of value) qs.append(key, item)
+    } else {
+      qs.set(key, value)
+    }
+  }
+  const query = qs.toString()
+  redirect(query ? `/catalogo?${query}` : '/catalogo')
 }

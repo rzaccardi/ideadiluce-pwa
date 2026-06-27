@@ -671,7 +671,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                 Invia una foto →
               </ProductDetailContactLink>
               <ProductDetailContactLink
-                href={lp('/catalog')}
+                href={lp('/catalogo')}
                 className="flex items-center gap-3 rounded-[10px] border border-idl-tech-chip-border px-4 py-3 text-sm font-bold text-idl-graphite"
               >
                 Cerca per EAN o codice →

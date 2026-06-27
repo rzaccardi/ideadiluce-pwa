@@ -96,7 +96,7 @@ export function resolvePageTransitionKind(pathname: string): PageTransitionKind 
   }
   if (normalized.startsWith('/prodotto/') || normalized.startsWith('/product/')) return 'product'
   if (
-    normalized.startsWith('/catalog') ||
+    normalized.startsWith('/catalogo') ||
     normalized.startsWith('/categoria') ||
     normalized.startsWith('/category') ||
     normalized.startsWith('/brand') ||

@@ -163,6 +163,21 @@ export const api = {
     },
   },
   site: {
+    guides(locale: PwaLocale = 'IT', options?: { featured?: boolean }) {
+      const q = new URLSearchParams({ locale })
+      if (options?.featured) q.set('featured', 'true')
+      return apiClient.get<
+        Array<{
+          slug: string
+          category: string
+          meta: string
+          title: string
+          href: string
+          featured: boolean
+          sortOrder: number
+        }>
+      >(`/api/v1/site/guides?${q.toString()}`)
+    },
     getPage(pageKey: string, locale: string) {
       const q = new URLSearchParams({ locale })
       return apiClient.get<{ pageKey: string; locale: string; content: unknown; updatedAt: string | null }>(

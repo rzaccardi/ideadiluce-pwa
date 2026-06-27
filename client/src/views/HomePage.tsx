@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSnapshot } from 'valtio/react'
 import { fetchSitePage, siteStore } from '@/features/site'
 import { fetchProductsByQuery } from '@/features/catalog'
+import { api } from '@/api/endpoints'
 import { HomeView } from '@/components/site/home/HomeView'
 import { useLocale } from '@/context/locale-context'
 import { ToastOnError } from '@/components/ToastFeedback'
@@ -32,6 +33,27 @@ export function HomePage({ initialContent = null }: Props) {
     return raw as HomePageContent
   }, [raw])
 
+  const [featuredGuides, setFeaturedGuides] = useState<
+    Array<{ category: string; title: string; meta: string; href: string }>
+  >([])
+
+  const viewContent = useMemo(() => {
+    if (!content) return null
+    if (featuredGuides.length === 0) return content
+    return {
+      ...content,
+      guides: {
+        ...content.guides,
+        items: featuredGuides.map((guide) => ({
+          category: guide.category,
+          title: guide.title,
+          meta: guide.meta,
+          href: guide.href,
+        })),
+      },
+    }
+  }, [content, featuredGuides])
+
   useEffect(() => {
     if (initialContent && !siteStore.pages.home) {
       siteStore.pages.home = initialContent
@@ -40,6 +62,22 @@ export function HomePage({ initialContent = null }: Props) {
 
   useEffect(() => {
     void fetchSitePage('home', locale)
+  }, [locale])
+
+  useEffect(() => {
+    void api.site
+      .guides(locale, { featured: true })
+      .then((items) =>
+        setFeaturedGuides(
+          items.map((guide) => ({
+            category: guide.category,
+            title: guide.title,
+            meta: guide.meta,
+            href: guide.href,
+          })),
+        ),
+      )
+      .catch(() => setFeaturedGuides([]))
   }, [locale])
 
   useEffect(() => {
@@ -67,7 +105,7 @@ export function HomePage({ initialContent = null }: Props) {
     })
   }, [content, locale])
 
-  if (snap.error && !content) {
+  if (snap.error && !viewContent) {
     return (
       <>
         <ToastOnError message={snap.error} />
@@ -77,11 +115,11 @@ export function HomePage({ initialContent = null }: Props) {
   }
 
   return (
-    <PageLoadTransition isLoading={!content} skeleton={<HomePageSkeleton />}>
-      {content ? (
+    <PageLoadTransition isLoading={!viewContent} skeleton={<HomePageSkeleton />}>
+      {viewContent ? (
         <>
           <SeoHead title={`${t('home.title')} — ${t('home.subtitle')}`} description={t('home.subtitle')} />
-          <HomeView content={content} designProducts={designProducts} technicalProducts={technicalProducts} />
+          <HomeView content={viewContent} designProducts={designProducts} technicalProducts={technicalProducts} />
         </>
       ) : null}
     </PageLoadTransition>

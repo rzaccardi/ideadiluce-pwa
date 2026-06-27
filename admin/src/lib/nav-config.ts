@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   BellRingIcon,
+  BookOpenIcon,
   BriefcaseBusinessIcon,
   FileTextIcon,
   HomeIcon,
@@ -15,6 +16,11 @@ import {
   RefreshCwIcon,
   FileDownIcon,
 } from 'lucide-react'
+import { getSitePageLabel } from '@/features/site'
+
+function getSitePageLabelFromPath(pageKey: string) {
+  return getSitePageLabel(pageKey)
+}
 
 export type NavItem = {
   to: string
@@ -34,6 +40,14 @@ export const navSections: NavSection[] = [
   {
     label: 'CONTENUTI',
     items: [
+      {
+        to: '/guides',
+        label: 'Guide editoriali',
+        icon: BookOpenIcon,
+        accentClass: 'text-amber-700',
+        accentBgClass: 'bg-amber-50',
+        match: (p) => p.startsWith('/guides'),
+      },
       {
         to: '/site',
         label: 'Contenuti sito',
@@ -216,6 +230,26 @@ export function getBreadcrumbs(pathname: string, _search = ''): BreadcrumbItem[]
       { label: 'Richieste attivazione B2B dalla PWA' },
     ]
   }
+  if (pathname.startsWith('/guides/') && pathname !== '/guides') {
+    const slug = decodeURIComponent(pathname.slice('/guides/'.length).split('/')[0] ?? '')
+    return [
+      { label: 'Guide editoriali', href: '/guides' },
+      { label: slug.replace(/-/g, ' ') },
+    ]
+  }
+  if (pathname.startsWith('/guides')) {
+    return [
+      { label: 'Guide editoriali', href: '/guides' },
+      { label: 'Elenco guide' },
+    ]
+  }
+  if (pathname.startsWith('/site/') && pathname !== '/site') {
+    const pageKey = decodeURIComponent(pathname.slice('/site/'.length).split('/')[0] ?? '')
+    return [
+      { label: 'Contenuti sito', href: '/site' },
+      { label: getSitePageLabelFromPath(pageKey) },
+    ]
+  }
   if (pathname.startsWith('/site')) {
     return [
       { label: 'Contenuti sito', href: '/site' },
@@ -365,6 +399,35 @@ export function getPageMeta(pathname: string, _search = ''): {
       icon: BriefcaseBusinessIcon,
       iconClassName: 'text-violet-600',
       iconBgClassName: 'bg-violet-50',
+    }
+  }
+  if (pathname.startsWith('/guides/') && pathname !== '/guides') {
+    const slug = decodeURIComponent(pathname.slice('/guides/'.length).split('/')[0] ?? '')
+    return {
+      title: slug.replace(/-/g, ' '),
+      description: 'Contenuto, traduzioni e indicizzazione della guida',
+      icon: BookOpenIcon,
+      iconClassName: 'text-amber-700',
+      iconBgClassName: 'bg-amber-50',
+    }
+  }
+  if (pathname.startsWith('/guides')) {
+    return {
+      title: 'Guide editoriali',
+      description: 'Pubblicazione, traduzioni e ordine nel catalogo guide',
+      icon: BookOpenIcon,
+      iconClassName: 'text-amber-700',
+      iconBgClassName: 'bg-amber-50',
+    }
+  }
+  if (pathname.startsWith('/site/') && pathname !== '/site') {
+    const pageKey = decodeURIComponent(pathname.slice('/site/'.length).split('/')[0] ?? '')
+    return {
+      title: getSitePageLabelFromPath(pageKey),
+      description: 'Testi editoriali in IT, EN, ES, FR e DE',
+      icon: LayoutTemplateIcon,
+      iconClassName: 'text-sky-600',
+      iconBgClassName: 'bg-sky-50',
     }
   }
   if (pathname.startsWith('/site')) {

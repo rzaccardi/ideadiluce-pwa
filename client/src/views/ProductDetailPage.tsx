@@ -42,7 +42,7 @@ export function ProductDetailPage({
       <ErrorState
         message={error ?? t('product.notAvailable')}
         action={
-          <Link to={localize('/catalog')}>
+          <Link to={localize('/catalogo')}>
             <Button variant="secondary">{t('product.backToCatalog')}</Button>
           </Link>
         }

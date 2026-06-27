@@ -42,7 +42,7 @@ export function resolveBootstrapRoute(pathname: string): BootstrapRoute {
   const normalized = path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path
 
   if (normalized === '/' || normalized === '') return 'home'
-  if (normalized === '/catalog') return 'catalog'
+  if (normalized === '/catalogo' || normalized === '/catalog') return 'catalog'
   if (/^\/(product|prodotto)\/[^/]+/.test(normalized)) return 'product'
   if (normalized === '/wishlist') return 'wishlist'
   if (normalized === '/cart') return 'cart'

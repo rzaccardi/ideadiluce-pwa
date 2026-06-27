@@ -18,6 +18,22 @@ import { getPageHeaderFallbackTitle } from '@/lib/page-header-fallbacks'
 
 type EditorialKey = Extract<SitePageKey, 'attacco' | 'ambienti' | 'brand' | 'guide'>
 
+function mergeGuideHubContent(
+  cms: EditorialPageContent,
+  indexed: Array<{ title: string; href: string; meta: string; category: string }>,
+): EditorialPageContent {
+  if (indexed.length === 0) return { ...cms, items: [...cms.items] }
+  return {
+    ...cms,
+    items: indexed.map((guide) => ({
+      title: guide.title,
+      href: guide.href,
+      meta: guide.meta,
+      category: guide.category,
+    })),
+  }
+}
+
 function mergeBrandContent(
   cms: EditorialPageContent | Readonly<EditorialPageContent>,
   hubBrands: BrandListItemDTO[],
@@ -27,7 +43,7 @@ function mergeBrandContent(
   const seen = new Set<string>()
   const hubItems = hubBrands.map((brand) => ({
     title: brand.name,
-    href: `/catalog?brand=${encodeURIComponent(brand.slug)}`,
+    href: `/catalogo?brand=${encodeURIComponent(brand.slug)}`,
     meta: (brand.productCount ?? 0) > 0 ? `${brand.productCount} prodotti` : undefined,
   }))
   const cmsItems = [...base.items].filter((item) => {
@@ -48,6 +64,9 @@ export function EditorialPage({ pageKey }: { pageKey: EditorialKey }) {
   const snap = useSnapshot(siteStore)
   const raw = snap.pages[pageKey]
   const [hubBrands, setHubBrands] = useState<BrandListItemDTO[]>([])
+  const [indexedGuides, setIndexedGuides] = useState<
+    Array<{ title: string; href: string; meta: string; category: string }>
+  >([])
 
   useEffect(() => {
     void fetchSitePage(pageKey, locale)
@@ -61,12 +80,21 @@ export function EditorialPage({ pageKey }: { pageKey: EditorialKey }) {
       .catch(() => setHubBrands([]))
   }, [pageKey])
 
+  useEffect(() => {
+    if (pageKey !== 'guide') return
+    void api.site
+      .guides(locale)
+      .then((items) => setIndexedGuides(items))
+      .catch(() => setIndexedGuides([]))
+  }, [pageKey, locale])
+
   const viewContent = useMemo(() => {
     if (!raw || !isEditorialPage(raw)) return null
     const content = raw as EditorialPageContent
     if (pageKey === 'brand') return mergeBrandContent(content, hubBrands)
+    if (pageKey === 'guide') return mergeGuideHubContent(content, indexedGuides)
     return content
-  }, [raw, hubBrands, pageKey])
+  }, [raw, hubBrands, indexedGuides, pageKey])
 
   if (snap.error && !viewContent) {
     return (

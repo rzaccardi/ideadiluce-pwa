@@ -19,7 +19,7 @@ function resolveBrandHref(name: string, href: string | undefined, lp: LocalePath
   if (href) return lp(href)
   const slug = brandSlugFromDisplayName(name)
   if (slug) return lp(brandHref(slug))
-  return lp(`/catalog?q=${encodeURIComponent(name)}`)
+  return lp(`/catalogo?q=${encodeURIComponent(name)}`)
 }
 
 function resolveBrand(item: BrandGridItem, lp: LocalePathFn) {

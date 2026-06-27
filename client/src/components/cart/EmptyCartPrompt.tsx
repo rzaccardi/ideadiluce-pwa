@@ -56,7 +56,7 @@ export function EmptyCartPrompt({ className, compact = false, showSuggestions = 
 
   const actions = (
     <div className={cn('flex flex-wrap justify-center gap-3', compact ? 'mt-4' : 'mt-6')}>
-      <Link to="/catalog" onClick={onNavigate}>
+      <Link to="/catalogo" onClick={onNavigate}>
         <Button>{t('cart.empty.browseCatalog')}</Button>
       </Link>
       {!compact ? (
@@ -86,7 +86,7 @@ export function EmptyCartPrompt({ className, compact = false, showSuggestions = 
             {cat.categories.slice(0, 6).map((c) => (
               <li key={c.id}>
                 <Link
-                  to={`/catalog?category=${encodeURIComponent(c.slug)}`}
+                  to={`/catalogo?category=${encodeURIComponent(c.slug)}`}
                   onClick={onNavigate}
                   className="inline-block rounded-full border border-idl-border bg-white px-3 py-1 text-sm text-idl-ink-soft hover:border-idl-border-strong"
                 >

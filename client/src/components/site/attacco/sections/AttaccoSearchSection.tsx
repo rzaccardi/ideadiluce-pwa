@@ -18,7 +18,7 @@ export function AttaccoSearchSection({ lp }: Props) {
 
   function goToCatalog(q: string) {
     const trimmed = q.trim()
-    const base = lp('/catalog?world=technical')
+    const base = lp('/catalogo?world=technical')
     navigate(trimmed ? `${base}&q=${encodeURIComponent(trimmed)}` : base)
   }
 

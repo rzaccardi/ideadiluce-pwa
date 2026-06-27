@@ -6,8 +6,20 @@ import { siteService } from './site.service.js'
 import { siteInquiryService } from './site-inquiry.service.js'
 import { siteInquirySchema } from './site-inquiry.validators.js'
 import { siteLocaleQuerySchema, sitePageKeyParamSchema } from './site-admin.validators.js'
+import { siteGuidesPublicQuerySchema } from '../site-guides/site-guides.validators.js'
 
 export const siteRouter = Router()
+
+siteRouter.get(
+  '/guides',
+  validateRequest({ query: siteGuidesPublicQuerySchema }),
+  asyncHandler(async (req, res) => {
+    const locale = typeof req.query.locale === 'string' ? req.query.locale : 'IT'
+    const featured = req.query.featured === 'true'
+    const { siteGuideService } = await import('../site-guides/site-guides.service.js')
+    res.json(ok(await siteGuideService.listPublicGuides(locale, { featuredOnly: featured })))
+  }),
+)
 
 siteRouter.get(
   '/pages/:pageKey',

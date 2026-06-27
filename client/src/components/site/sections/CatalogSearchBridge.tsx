@@ -32,7 +32,7 @@ export function CatalogSearchBridge({
 
   function goToCatalog(q: string) {
     const trimmed = q.trim()
-    navigate(trimmed ? `${lp('/catalog')}?q=${encodeURIComponent(trimmed)}` : lp('/catalog'))
+    navigate(trimmed ? `${lp('/catalogo')}?q=${encodeURIComponent(trimmed)}` : lp('/catalogo'))
   }
 
   function onSearch(e: FormEvent) {

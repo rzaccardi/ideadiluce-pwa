@@ -163,7 +163,7 @@ export const siteService = {
     }
 
     const targetLocales = SITE_LOCALES.filter((locale) => locale !== 'IT')
-    const pages = SITE_PAGE_KEYS.map((pageKey) => {
+    const pages = SITE_PAGE_KEYS.filter((pageKey) => !pageKey.startsWith('guide-') || pageKey === 'guide').map((pageKey) => {
       const localeRows = byPage.get(pageKey)
       const localeMap = Object.fromEntries(
         SITE_LOCALES.map((locale) => {
@@ -353,7 +353,11 @@ export async function seedSitePages() {
   await patchShellNavEditorialLinks()
   await patchHomeHeroCategoryLinks()
   await patchAmbientiPageLinks()
+  await patchLegacyCatalogPaths()
   await patchProfessionistiPageContent()
+
+  const { siteGuideService } = await import('../site-guides/site-guides.service.js')
+  await siteGuideService.seedSiteGuides()
 }
 
 /** Hero home: catalogo generico → landing categoria prodotto. */
@@ -555,6 +559,53 @@ async function patchProfessionistiPageContent() {
       DEFAULT_PROFESSIONISTI_IT,
       row.published,
     )
+  }
+}
+
+/** Migra href /catalog → /catalogo in tutti i contenuti CMS pubblicati. */
+function migrateCatalogPathsInTree(value: unknown): { value: unknown; changed: boolean } {
+  if (typeof value === 'string') {
+    if (!value.includes('/catalog') || value.includes('/api/v1/catalog')) {
+      return { value, changed: false }
+    }
+    const next = value
+      .replaceAll('/catalog?', '/catalogo?')
+      .replace(/\/catalog(?!o)(?=$|[?#'"`])/g, '/catalogo')
+    return { value: next, changed: next !== value }
+  }
+  if (Array.isArray(value)) {
+    let changed = false
+    const next = value.map((item) => {
+      const migrated = migrateCatalogPathsInTree(item)
+      if (migrated.changed) changed = true
+      return migrated.value
+    })
+    return { value: next, changed }
+  }
+  if (value && typeof value === 'object') {
+    let changed = false
+    const next: Record<string, unknown> = {}
+    for (const [key, item] of Object.entries(value)) {
+      const migrated = migrateCatalogPathsInTree(item)
+      if (migrated.changed) changed = true
+      next[key] = migrated.value
+    }
+    return { value: next, changed }
+  }
+  return { value, changed: false }
+}
+
+async function patchLegacyCatalogPaths() {
+  for (const pageKey of SITE_PAGE_KEYS) {
+    for (const locale of SITE_LOCALES) {
+      const row = await siteRepository.findByKeyLocale(pageKey, locale)
+      if (!row?.published) continue
+      const json = JSON.stringify(row.content)
+      if (!/\/catalog(?!o)/.test(json)) continue
+      const migrated = migrateCatalogPathsInTree(row.content)
+      if (!migrated.changed) continue
+      await siteRepository.upsert(pageKey, locale, migrated.value, row.published)
+    }
   }
 }
 

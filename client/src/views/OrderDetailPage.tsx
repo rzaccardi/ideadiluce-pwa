@@ -207,7 +207,7 @@ export function OrderDetailPage() {
           {t('orders.detail.back')}
         </Link>
         {!order.odooPortalUrl ? (
-          <Link to="/catalog" className={accountDcOutlineBtnClass}>
+          <Link to="/catalogo" className={accountDcOutlineBtnClass}>
             {t('paymentResult.catalog')}
           </Link>
         ) : null}

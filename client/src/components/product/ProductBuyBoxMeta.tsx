@@ -55,7 +55,7 @@ export function ProductBuyBoxMeta({
               <span key={cat.slug}>
                 {i > 0 ? <span className="text-idl-placeholder">, </span> : null}
                 <Link
-                  to={localize(`/catalog?category=${encodeURIComponent(cat.slug)}`)}
+                  to={localize(`/catalogo?category=${encodeURIComponent(cat.slug)}`)}
                   className="text-idl-graphite underline-offset-2 hover:underline"
                 >
                   {cat.name}

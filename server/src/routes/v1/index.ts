@@ -18,6 +18,7 @@ import { addressRouter } from '../../modules/address/address.routes.js'
 import { seoRouter } from '../../modules/seo/seo.routes.js'
 import { siteRouter } from '../../modules/site/site.routes.js'
 import { siteAdminRouter } from '../../modules/site/site-admin.routes.js'
+import { siteGuidesAdminRouter } from '../../modules/site-guides/site-guides-admin.routes.js'
 import { professionalAccountRouter } from '../../modules/professional-account/professional-account.routes.js'
 import { professionalRequestsAdminRouter } from '../../modules/professional-requests-admin/professional-requests-admin.routes.js'
 import { odooAdminRouter } from '../../modules/odoo/odoo-admin.routes.js'
@@ -39,6 +40,7 @@ v1Router.use('/seo', seoRouter)
 v1Router.use('/site', siteRouter)
 v1Router.use('/site/professional-requests', professionalAccountRouter)
 v1Router.use('/admin/site', siteAdminRouter)
+v1Router.use('/admin/guides', siteGuidesAdminRouter)
 v1Router.use('/wishlist', wishlistRouter)
 v1Router.use('/cart', cartRouter)
 v1Router.use('/tax', taxRouter)

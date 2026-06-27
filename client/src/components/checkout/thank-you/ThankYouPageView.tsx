@@ -372,7 +372,7 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
                   {t('thankYou.crossSell.title')}
                 </h2>
               </div>
-              <Link to={lp('/catalog')} className="text-sm font-bold text-idl-amber">
+              <Link to={lp('/catalogo')} className="text-sm font-bold text-idl-amber">
                 {t('thankYou.crossSell.catalog')} →
               </Link>
             </div>

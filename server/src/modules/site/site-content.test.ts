@@ -30,7 +30,7 @@ describe('site-content-i18n', () => {
   it('esclude href e url dalla traduzione', () => {
     const slots = collectTranslatableStringSlots({
       title: 'Titolo da tradurre',
-      href: '/catalog',
+      href: '/catalogo',
       ctaHref: 'https://example.com',
       code: 'GU10',
     })

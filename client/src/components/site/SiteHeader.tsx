@@ -305,7 +305,7 @@ export function SiteHeader({
                   ),
                 )}
                 <Link
-                  to={lp('/catalog')}
+                  to={lp('/catalogo')}
                   className={cn('transition-colors', isDark ? 'hover:text-idl-design-fg' : 'hover:text-idl-ink')}
                   onClick={() => setMobileOpen(false)}
                 >

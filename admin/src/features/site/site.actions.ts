@@ -4,6 +4,7 @@ import { cloneContent } from './site-content-utils'
 import {
   siteStore,
   type SiteLocale,
+  type SiteLocaleDraft,
   type SitePageDetail,
   type SitePageSummary,
 } from './site.store'
@@ -23,6 +24,30 @@ function setDraftContent(content: unknown) {
   siteStore.draftContent = cloned
   siteStore.draftJson = json
   siteStore.savedDraftJson = json
+}
+
+function setLocaleDraft(locale: SiteLocale, detail: SitePageDetail) {
+  const record =
+    detail.content && typeof detail.content === 'object' && !Array.isArray(detail.content)
+      ? (detail.content as Record<string, unknown>)
+      : {}
+  const cloned = cloneContent(record)
+  const json = JSON.stringify(cloned, null, 2)
+  const draft: SiteLocaleDraft = {
+    content: cloned,
+    draftJson: json,
+    savedDraftJson: json,
+    published: detail.published,
+    updatedAt: detail.updatedAt,
+    hasCustomContent: detail.hasCustomContent,
+  }
+  siteStore.localeDrafts[locale] = draft
+  if (locale === siteStore.locale) {
+    siteStore.current = detail
+    siteStore.draftContent = cloned
+    siteStore.draftJson = json
+    siteStore.savedDraftJson = json
+  }
 }
 
 async function loadSitePagesList() {
@@ -82,6 +107,7 @@ export async function fetchSitePage(pageKey: string, locale: SiteLocale) {
     )
     siteStore.current = detail
     setDraftContent(detail.content)
+    setLocaleDraft(locale, detail)
     return detail
   } catch (e) {
     siteStore.error = errMessage(e)
@@ -92,15 +118,47 @@ export async function fetchSitePage(pageKey: string, locale: SiteLocale) {
   }
 }
 
-function parseDraftContent() {
-  if (siteStore.showAdvancedJson) {
+export async function fetchSitePageAllLocales(pageKey: string) {
+  siteStore.isLoading = true
+  siteStore.error = null
+  siteStore.pageKey = pageKey
+  siteStore.locale = 'IT'
+  try {
+    const details = await Promise.all(
+      (['IT', 'EN', 'ES', 'FR', 'DE'] as SiteLocale[]).map(async (locale) => {
+        const detail = await adminApi<SitePageDetail>(
+          `/admin/site/pages/${encodeURIComponent(pageKey)}?locale=${encodeURIComponent(locale)}`,
+        )
+        return { locale, detail }
+      }),
+    )
+    for (const { locale, detail } of details) {
+      setLocaleDraft(locale, detail)
+    }
+    const italian = details.find((entry) => entry.locale === 'IT')?.detail
+    if (italian) {
+      siteStore.current = italian
+    }
+    return details.map((entry) => entry.detail)
+  } catch (e) {
+    siteStore.error = errMessage(e)
+    siteStore.current = null
+    throw e
+  } finally {
+    siteStore.isLoading = false
+  }
+}
+
+function parseDraftContent(locale: SiteLocale = siteStore.locale) {
+  const draft = siteStore.localeDrafts[locale]
+  if (siteStore.showAdvancedJson && locale === siteStore.locale) {
     try {
       return JSON.parse(siteStore.draftJson) as unknown
     } catch {
       throw new Error('JSON non valido — correggi la sintassi prima di salvare.')
     }
   }
-  return siteStore.draftContent
+  return draft?.content ?? siteStore.draftContent
 }
 
 export async function saveSitePage(
@@ -109,7 +167,9 @@ export async function saveSitePage(
   published = true,
   options?: { translateAllLocales?: boolean },
 ) {
-  const content = parseDraftContent()
+  const content = parseDraftContent(locale)
+  const draft = siteStore.localeDrafts[locale]
+  const publishedValue = draft?.published ?? published
 
   siteStore.isSaving = true
   siteStore.error = null
@@ -118,11 +178,47 @@ export async function saveSitePage(
       method: 'PUT',
       body: JSON.stringify({
         content,
-        published,
+        published: publishedValue,
         translateAllLocales: options?.translateAllLocales ?? false,
       }),
     })
-    await fetchSitePage(pageKey, locale)
+    if (options?.translateAllLocales && locale === 'IT') {
+      await fetchSitePageAllLocales(pageKey)
+    } else {
+      await fetchSitePage(pageKey, locale)
+    }
+    await fetchSitePagesList()
+    await refreshSiteTranslationOverview()
+  } catch (e) {
+    siteStore.error = errMessage(e)
+    throw e
+  } finally {
+    siteStore.isSaving = false
+  }
+}
+
+export async function saveSitePageAllDirtyLocales(pageKey: string) {
+  const dirtyLocales = (['IT', 'EN', 'ES', 'FR', 'DE'] as SiteLocale[]).filter((locale) =>
+    isSiteLocaleDraftDirty(locale),
+  )
+  if (dirtyLocales.length === 0) return
+
+  siteStore.isSaving = true
+  siteStore.error = null
+  try {
+    for (const locale of dirtyLocales) {
+      const content = parseDraftContent(locale)
+      const draft = siteStore.localeDrafts[locale]
+      await adminApi(`/admin/site/pages/${encodeURIComponent(pageKey)}?locale=${encodeURIComponent(locale)}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          content,
+          published: draft?.published ?? true,
+          translateAllLocales: false,
+        }),
+      })
+    }
+    await fetchSitePageAllLocales(pageKey)
     await fetchSitePagesList()
     await refreshSiteTranslationOverview()
   } catch (e) {
@@ -139,7 +235,7 @@ export async function translateSitePage(
 ) {
   const onlyMissingLocales = options?.onlyMissingLocales ?? false
   const useDraft = options?.useDraft ?? !onlyMissingLocales
-  const content = useDraft ? parseDraftContent() : undefined
+  const content = useDraft ? parseDraftContent('IT') : undefined
 
   siteStore.isTranslating = true
   siteStore.error = null
@@ -154,8 +250,8 @@ export async function translateSitePage(
     })
     await fetchSitePagesList()
     await refreshSiteTranslationOverview()
-    if (siteStore.locale !== 'IT') {
-      await fetchSitePage(pageKey, siteStore.locale)
+    if (siteStore.pageKey === pageKey) {
+      await fetchSitePageAllLocales(pageKey)
     }
     return result
   } catch (e) {
@@ -176,8 +272,8 @@ export async function translateAllMissingSitePages(pageKeys?: string[]) {
     })
     await fetchSitePagesList()
     await refreshSiteTranslationOverview()
-    if (siteStore.locale !== 'IT') {
-      await fetchSitePage(siteStore.pageKey, siteStore.locale)
+    if (siteStore.pageKey) {
+      await fetchSitePageAllLocales(siteStore.pageKey)
     }
     return result
   } catch (e) {
@@ -193,13 +289,35 @@ export function setSiteFieldSearch(query: string) {
 }
 
 export function isSiteDraftDirty() {
-  return siteStore.draftJson !== siteStore.savedDraftJson
+  return (['IT', 'EN', 'ES', 'FR', 'DE'] as SiteLocale[]).some((locale) => isSiteLocaleDraftDirty(locale))
+}
+
+export function isSiteLocaleDraftDirty(locale: SiteLocale) {
+  const draft = siteStore.localeDrafts[locale]
+  return draft ? draft.draftJson !== draft.savedDraftJson : false
+}
+
+export function updateLocaleDraftContent(locale: SiteLocale, next: Record<string, unknown>) {
+  const cloned = cloneContent(next)
+  const json = JSON.stringify(cloned, null, 2)
+  const draft = siteStore.localeDrafts[locale]
+  if (draft) {
+    draft.content = cloned
+    draft.draftJson = json
+  }
+  if (locale === 'IT') {
+    siteStore.draftContent = cloned
+    siteStore.draftJson = json
+  }
+}
+
+export function setSiteLocalePublished(locale: SiteLocale, published: boolean) {
+  const draft = siteStore.localeDrafts[locale]
+  if (draft) draft.published = published
 }
 
 export function updateDraftContent(next: Record<string, unknown>) {
-  const cloned = cloneContent(next)
-  siteStore.draftContent = cloned
-  siteStore.draftJson = JSON.stringify(cloned, null, 2)
+  updateLocaleDraftContent('IT', next)
 }
 
 export function updateDraftJson(json: string) {
