@@ -261,7 +261,7 @@ static_sites:
       repo: rzaccardi/ideadiluce-pwa
       branch: main
       deploy_on_push: true
-    build_command: npm ci --ignore-scripts && npm run build --workspace=admin
+    build_command: npm ci --include=dev --ignore-scripts && npm run build --workspace=admin
     output_dir: admin/dist
     index_document: index.html
     catchall_document: index.html
