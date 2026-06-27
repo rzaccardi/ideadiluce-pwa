@@ -26,7 +26,7 @@ export function ContentPage({ pageKey, breadcrumb }: Props) {
   const raw = snap.pages[pageKey]
 
   useEffect(() => {
-    void fetchSitePage(pageKey, locale)
+    void fetchSitePage(pageKey, locale, { skipIfFresh: true })
   }, [pageKey, locale])
 
   const content =

@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/utils/cn'
 
+/** Padding orizzontale pagine storefront: 16px mobile, 32px tablet, 48px desktop. */
+export const SITE_PAGE_X_CLASS = 'px-4 md:px-8 lg:px-12'
+
 export function SectionContainer({
   children,
   className,
@@ -13,7 +16,8 @@ export function SectionContainer({
   return (
     <div
       className={cn(
-        'mx-auto w-full px-4 sm:px-6 lg:px-12',
+        'mx-auto w-full',
+        SITE_PAGE_X_CLASS,
         narrow ? 'max-w-[1000px]' : 'max-w-[1320px]',
         className,
       )}

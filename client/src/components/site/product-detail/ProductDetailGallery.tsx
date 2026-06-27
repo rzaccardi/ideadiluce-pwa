@@ -99,7 +99,7 @@ export function ProductDetailGallery({ images, alt, activeUrl, variant = 'design
           onClick={() => openLightbox(current)}
           aria-label="Ingrandisci immagine prodotto"
         >
-          <SiteImage src={current} alt={alt} fill className="object-cover" sizes="50vw" />
+          <SiteImage src={current} alt={alt} fill className="object-cover" sizes="50vw" priority />
         </button>
 
         <div className={cn('grid grid-cols-4', isDesign ? 'gap-3' : 'gap-2.5')}>

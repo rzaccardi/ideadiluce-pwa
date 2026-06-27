@@ -231,16 +231,36 @@ export const api = {
     },
   },
   catalog: {
+    bootstrap(locale?: string) {
+      const search = locale ? `?locale=${encodeURIComponent(locale)}` : ''
+      return apiClient.get<{
+        categories: import('@/types/dto').CategoryDTO[]
+        brands: import('@/types/site-content').BrandListItemDTO[]
+        cms: import('@/types/site-content').CatalogPageContent
+      }>(`/api/v1/catalog/bootstrap${search}`)
+    },
     categories(locale?: string) {
       const search = locale ? `?locale=${encodeURIComponent(locale)}` : ''
       return apiClient.get<{ items: import('@/types/dto').CategoryDTO[] }>(
         `/api/v1/catalog/categories${search}`,
       )
     },
+    categoryBySlug(slug: string, locale?: string) {
+      const search = locale ? `?locale=${encodeURIComponent(locale)}` : ''
+      return apiClient.get<{ item: import('@/types/dto').CategoryDTO | null }>(
+        `/api/v1/catalog/categories/${encodeURIComponent(slug)}${search}`,
+      )
+    },
     brands(locale?: string) {
       const search = locale ? `?locale=${encodeURIComponent(locale)}` : ''
       return apiClient.get<{ items: import('@/types/site-content').BrandListItemDTO[] }>(
         `/api/v1/catalog/brands${search}`,
+      )
+    },
+    brandBySlug(slug: string, locale?: string) {
+      const search = locale ? `?locale=${encodeURIComponent(locale)}` : ''
+      return apiClient.get<{ item: import('@/types/site-content').BrandListItemDTO | null }>(
+        `/api/v1/catalog/brands/${encodeURIComponent(slug)}${search}`,
       )
     },
     products(params: {

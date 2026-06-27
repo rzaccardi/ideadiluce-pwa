@@ -2,12 +2,13 @@ import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useSnapshot } from 'valtio/react'
 import { BookOpenIcon } from 'lucide-react'
-import { fetchGuidesList, guidesStore } from '@/features/guides'
+import { fetchGuidesList, guidesStore, setGuidePublished } from '@/features/guides'
 import { RoutePageHeader } from '@/components/route-page-header'
 import { ClickableTableRow, RouteSkeleton } from '@/components/shared'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Switch } from '@/components/ui/switch'
 import {
   Table,
   TableBody,
@@ -17,6 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { SITE_LOCALES } from '@/features/site/site.store'
+import { toast } from 'sonner'
 
 export function GuidesListPage() {
   const store = useSnapshot(guidesStore)
@@ -25,9 +27,20 @@ export function GuidesListPage() {
     void fetchGuidesList()
   }, [])
 
+  async function onTogglePublished(slug: string, published: boolean) {
+    try {
+      await setGuidePublished(slug, published)
+      toast.success(published ? 'Guida pubblicata' : 'Guida rimossa dalla pubblicazione')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Aggiornamento fallito')
+    }
+  }
+
+  const publishedCount = store.items.filter((g) => g.published).length
+
   return (
     <div className="space-y-6">
-      <RoutePageHeader description="Gestisci le guide editoriali come entità singole: pubblicazione, traduzioni IT/EN/ES/FR/DE e indicizzazione nel catalogo guide e in homepage." />
+      <RoutePageHeader description="Pubblica le guide sul sito con l'interruttore in elenco, oppure apri il dettaglio per contenuti, traduzioni e indicizzazione." />
 
       {store.error ? (
         <Alert variant="destructive">
@@ -38,9 +51,15 @@ export function GuidesListPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Guide pubblicate</CardTitle>
+          <div className="flex flex-wrap items-center gap-2">
+            <CardTitle>Elenco guide</CardTitle>
+            <Badge variant="outline">
+              {publishedCount}/{store.items.length} online
+            </Badge>
+          </div>
           <CardDescription>
-            Ordine, categoria e visibilità controllano l&apos;hub /guide e le card in homepage.
+            L&apos;interruttore <strong>Pubblicata</strong> rende la guida visibile sul sito. Per
+            salvare testi e traduzioni apri il dettaglio.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -56,7 +75,7 @@ export function GuidesListPage() {
                     <TableHead className="w-16 text-center">Ordine</TableHead>
                     <TableHead className="text-center">Indice</TableHead>
                     <TableHead className="text-center">Home</TableHead>
-                    <TableHead className="text-center">Pubblicata</TableHead>
+                    <TableHead className="min-w-[100px] text-center">Pubblicata</TableHead>
                     {SITE_LOCALES.map((locale) => (
                       <TableHead key={locale} className="w-12 text-center">
                         {locale}
@@ -70,7 +89,16 @@ export function GuidesListPage() {
                     <ClickableTableRow key={guide.slug} to={`/guides/${encodeURIComponent(guide.slug)}`}>
                       <TableCell className="font-medium">
                         <div className="min-w-0">
-                          <p className="truncate">{guide.title}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="truncate">{guide.title}</p>
+                            {guide.published ? (
+                              <Badge className="shrink-0">Online</Badge>
+                            ) : (
+                              <Badge variant="outline" className="shrink-0">
+                                Bozza
+                              </Badge>
+                            )}
+                          </div>
                           <p className="truncate text-xs text-muted-foreground">/guide/{guide.slug}</p>
                         </div>
                       </TableCell>
@@ -93,20 +121,33 @@ export function GuidesListPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-center">
-                        {guide.published ? (
-                          <Badge variant="default">Sì</Badge>
-                        ) : (
-                          <Badge variant="outline">No</Badge>
-                        )}
+                        <div
+                          className="flex justify-center"
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                        >
+                          <Switch
+                            checked={guide.published}
+                            disabled={store.isSaving}
+                            aria-label={guide.published ? 'Rimuovi dalla pubblicazione' : 'Pubblica guida'}
+                            onCheckedChange={(checked) => void onTogglePublished(guide.slug, checked)}
+                          />
+                        </div>
                       </TableCell>
                       {SITE_LOCALES.map((locale) => {
-                        const status = guide.locales[locale]?.status
+                        const localeInfo = guide.locales[locale]
                         return (
                           <TableCell key={locale} className="text-center">
-                            {status === 'missing' ? (
+                            {localeInfo?.status === 'missing' ? (
                               <span className="text-xs text-amber-700">—</span>
+                            ) : localeInfo?.published ? (
+                              <span className="text-xs text-emerald-700" title="Pubblicata">
+                                ✓
+                              </span>
                             ) : (
-                              <span className="text-xs text-emerald-700">✓</span>
+                              <span className="text-xs text-muted-foreground" title="Bozza">
+                                ○
+                              </span>
                             )}
                           </TableCell>
                         )

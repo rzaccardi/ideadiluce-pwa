@@ -6,6 +6,7 @@ import type { ProductCardDTO } from '@/types/dto'
 import type { CatalogSort } from './catalog.store'
 import { ApiRequestError } from '@/types/api'
 import { catalogStore } from './catalog.store'
+import { seedSitePageContent } from '@/features/site'
 
 function errMessage(e: unknown) {
   return e instanceof ApiRequestError ? (e.userMessage ?? e.message) : 'Errore catalogo'
@@ -65,6 +66,23 @@ function productsRequestKey(filters: {
     filters.pageSize,
     filters.locale,
   ].join('|')
+}
+
+export function fetchCatalogBootstrap(options?: { locale?: string }) {
+  const locale = options?.locale ?? catalogStore.filters.locale
+  return dedupeAsync(`catalog:bootstrap:${locale}`, async () => {
+    try {
+      const data = await api.catalog.bootstrap(locale)
+      catalogStore.categories = data.categories
+      catalogStore.brands = data.brands
+      if (data.cms) {
+        seedSitePageContent('catalog', locale, data.cms)
+      }
+    } catch {
+      catalogStore.categories = []
+      catalogStore.brands = []
+    }
+  })
 }
 
 export function fetchCategories(options?: { force?: boolean; locale?: string }) {

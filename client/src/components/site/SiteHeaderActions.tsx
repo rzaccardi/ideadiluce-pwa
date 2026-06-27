@@ -7,8 +7,10 @@ import { HeaderMiniCart } from '@/components/site/HeaderMiniCart'
 
 export function SiteHeaderActions() {
   return (
-    <div className="flex items-center gap-2 sm:gap-3">
-      <LanguageSwitcher variant="header" />
+    <div className="flex shrink-0 items-center gap-1 sm:gap-1.5 lg:gap-3">
+      <div className="hidden lg:block">
+        <LanguageSwitcher variant="header" />
+      </div>
       <HeaderThemeToggle />
       <HeaderAccountMenu />
       <HeaderMiniCart />

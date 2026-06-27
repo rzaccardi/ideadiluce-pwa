@@ -35,6 +35,7 @@ export function RoomCardGrid({ items, lp, variant = 'home', stagger = 0.08 }: Pr
                       alt={room.title}
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
                       fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     />
                   </div>
                 ) : null}

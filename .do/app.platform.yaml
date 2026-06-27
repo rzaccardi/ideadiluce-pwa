@@ -1,26 +1,7 @@
-# Spec produzione ideadiluce-platform
-#
-# Domini:
-#   www.ideadiluce.it (+ ideadiluce.it) → shop (storefront)
-#   api.ideadiluce.it                   → api
-#   manage.ideadiluce.it                → admin (backoffice)
-#
-# DNS: se NON usi DigitalOcean DNS, rimuovi "zone:" da ogni dominio e crea CNAME manuali
-#      (Networking → DO mostra i target). Poi verifica certificati SSL in Networking.
-#
-# Upload: Settings → App Spec → Download prima, poi merge con questo file
-# CLI:    doctl apps update <APP_ID> --spec .do/app.platform.yaml
-#
-# DATABASE (creato a mano su DO):
-#   Nel repo: DATABASE_URL = SECRET (valore solo in UI DO, mai committato).
-#   Lo spec scaricato da DO mostra EV[...] — è normale, DO decripta a build/run.
-#   Alternativa: blocco databases + value: ${postgres.DATABASE_URL} (vedi commento sotto).
-#   NON serve HUB_DATABASE_URL: hub:generate/migrate la derivano da DATABASE_URL.
-#
-#   Verifica: api → Environment → DATABASE_URL deve essere la connection string completa
-#   (Databases → ideadiluce → Connection details → URI).
+# Idea di Luce — App Platform produzione (solo URL DO, no domini, no ingress)
+# Creare come nuova app `ideadiluce-pwa`. Env: importa dopo da .do/env.production.compiled.env
 
-name: ideadiluce-platform
+name: ideadiluce-pwa
 region: fra
 
 features:
@@ -28,116 +9,17 @@ features:
 
 alerts:
   - rule: DEPLOYMENT_FAILED
-  - rule: DOMAIN_FAILED
 
-domains:
-  - domain: www.ideadiluce.it
-    type: PRIMARY
-    zone: ideadiluce.it
-  - domain: ideadiluce.it
-    type: ALIAS
-    zone: ideadiluce.it
-  - domain: api.ideadiluce.it
-    type: ALIAS
-    zone: ideadiluce.it
-  - domain: manage.ideadiluce.it
-    type: ALIAS
-    zone: ideadiluce.it
-
-# path "/" su host diversi — nessun conflitto (authority.exact)
-ingress:
-  rules:
-    - component:
-        name: api
-      match:
-        authority:
-          exact: api.ideadiluce.it
-        path:
-          prefix: /
-    - component:
-        name: admin
-      match:
-        authority:
-          exact: manage.ideadiluce.it
-        path:
-          prefix: /
-    - component:
-        name: shop
-      match:
-        authority:
-          exact: www.ideadiluce.it
-        path:
-          prefix: /
-    - match:
-        authority:
-          exact: ideadiluce.it
-        path:
-          prefix: /
-      redirect:
-        authority: www.ideadiluce.it
-        redirect_code: 302
-    - match:
-        authority:
-          exact: ${STARTER_DOMAIN}
-        path:
-          prefix: /
-      redirect:
-        authority: www.ideadiluce.it
-        redirect_code: 302
-
-# Se il DB è nello spec DO (Settings → Download), decommenta e usa ${postgres.DATABASE_URL} su api:
-# databases:
-#   - name: postgres
-#     engine: PG
-#     version: "16"
-#     production: true
-#     cluster_name: <nome-cluster-da-DO>
-#     db_name: ideadiluce
-#     db_user: ideadiluce
+databases:
+  - name: db-ideadiluce-pwa
+    engine: PG
+    version: "18"
+    production: true
+    cluster_name: db-ideadiluce-pwa
+    db_name: defaultdb
+    db_user: doadmin
 
 services:
-  - name: shop
-    source_dir: /
-    environment_slug: node-js
-    github:
-      repo: rzaccardi/ideadiluce-pwa
-      branch: main
-      deploy_on_push: true
-    instance_count: 1
-    instance_size_slug: apps-s-1vcpu-0.5gb
-    http_port: 3000
-    health_check:
-      http_path: /
-      initial_delay_seconds: 45
-      period_seconds: 15
-      timeout_seconds: 5
-      failure_threshold: 3
-    build_command: npm ci --ignore-scripts && npm run build --workspace=client
-    run_command: npm run start --workspace=client
-    envs:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: "3000"
-      - key: API_URL
-        value: ${api.PRIVATE_URL}
-        scope: RUN_TIME
-      - key: API_URL
-        value: https://api.ideadiluce.it
-        scope: BUILD_TIME
-      - key: NEXT_PUBLIC_API_URL
-        value: https://api.ideadiluce.it
-        scope: BUILD_TIME
-      - key: NEXT_PUBLIC_ARFLY_MEDIA_BASE_URL
-        value: https://tlbdb.odoo.com
-        scope: BUILD_TIME
-      - key: NEXT_PUBLIC_SITE_URL
-        value: https://www.ideadiluce.it
-        scope: BUILD_TIME
-      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-        scope: BUILD_TIME
-        type: SECRET
-
   - name: api
     source_dir: /
     environment_slug: node-js
@@ -156,190 +38,25 @@ services:
       failure_threshold: 3
     build_command: npm ci --include=dev && npm run db:generate --workspace=server && npm run hub:generate && npm run build:server && npm run db:deploy && npm run hub:migrate
     run_command: node server/dist/server.js
-    envs:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: "8080"
-      - key: DATABASE_URL
-        scope: RUN_AND_BUILD_TIME
-        type: SECRET
-      - key: CLIENT_ORIGIN
-        value: https://www.ideadiluce.it
-      - key: ADMIN_ORIGIN
-        value: https://manage.ideadiluce.it
-      - key: CHECKOUT_REDIRECT_BASE
-        value: https://www.ideadiluce.it
-      - key: APP_PUBLIC_URL
-        value: https://www.ideadiluce.it
-      - key: PUBLIC_SITE_URL
-        value: https://www.ideadiluce.it
-      - key: SESSION_COOKIE_NAME
-        value: sid
-      - key: SESSION_DAYS
-        value: "30"
-      - key: ARFLY_CATALOG_ENABLED
-        value: "true"
-      - key: ARFLY_API_BASE_URL
-        value: https://tlbdb.odoo.com
-      - key: ARFLY_WEBSITE_ID
-        value: "2"
-      - key: ARFLY_TIMEOUT_MS
-        value: "25000"
-      - key: HUB_CATALOG_ENABLED
-        value: "false"
-      - key: ODOO_ENABLED
-        value: "true"
-      - key: ODOO_URL
-        value: https://tlbdb.odoo.com/odoo
-      - key: ODOO_XMLRPC_URL
-        value: https://tlbdb.odoo.com
-      - key: ODOO_CATALOG_LANG
-        value: it_IT
-      - key: ODOO_PRODUCT_ACTION_ID
-        value: "497"
-      - key: ODOO_TIMEOUT_MS
-        value: "25000"
-      - key: ODOO_PRICELIST_B2C_ID
-        scope: RUN_TIME
-        type: SECRET
-      - key: ODOO_PRICELIST_B2B_ID
-        scope: RUN_TIME
-        type: SECRET
-      - key: ODOO_PRICELIST_PROFESSIONAL_ID
-        scope: RUN_TIME
-        type: SECRET
-      - key: SOCIAL_PROOF_ENABLED
-        value: "true"
-      - key: CART_RESERVATION_ENABLED
-        value: "true"
-      - key: CART_RESERVATION_MINUTES
-        value: "30"
-      - key: DEEPL_ENABLED
-        value: "true"
-      - key: DEEPL_API_KEY
-        scope: RUN_TIME
-        type: SECRET
-      - key: SMTP_ENABLED
-        value: "false"
-      - key: SMTP_HOST
-        scope: RUN_TIME
-        type: SECRET
-      - key: SMTP_PORT
-        value: "587"
-      - key: SMTP_USER
-        scope: RUN_TIME
-        type: SECRET
-      - key: SMTP_PASS
-        scope: RUN_TIME
-        type: SECRET
-      - key: SMTP_FROM
-        scope: RUN_TIME
-        type: SECRET
-      - key: PAID_SYNC_ALERT_MINUTES
-        value: "15"
-      - key: PAID_SYNC_ALERT_EMAIL
-        value: hello@robertozaccardi.dev
-      - key: STORE_PICKUP_LABEL
-        value: Ritiro in negozio
-      - key: STORE_PICKUP_LINE1
-        value: Via Appia Pignatelli 450
-      - key: STORE_PICKUP_POSTAL_CODE
-        value: "00178"
-      - key: STORE_PICKUP_CITY
-        value: Roma
-      - key: STORE_PICKUP_COUNTRY
-        value: IT
-      - key: BANK_TRANSFER_HOLDER
-        value: TLB ITALY Srl
-      - key: BANK_TRANSFER_IBAN
-        value: IT60X0542811101000000123456
-      - key: BANK_TRANSFER_BANK_NAME
-        value: Intesa Sanpaolo
-      - key: GOOGLE_MAPS_API_KEY
-        scope: RUN_TIME
-        type: SECRET
-      - key: DHL_ENABLED
-        value: "true"
-      - key: DHL_SANDBOX
-        value: "false"
-      - key: DHL_API_KEY
-        scope: RUN_TIME
-        type: SECRET
-      - key: DHL_API_SECRET
-        scope: RUN_TIME
-        type: SECRET
-      - key: DHL_ACCOUNT_NUMBER
-        value: "111938227"
-      - key: DHL_SHIPPER_POSTAL_CODE
-        value: "20100"
-      - key: DHL_SHIPPER_CITY
-        value: Milano
-      - key: DHL_SHIPPER_COUNTRY
-        value: IT
-      - key: FEDEX_ENABLED
-        value: "true"
-      - key: FEDEX_CLIENT_ID
-        value: "801405622"
-      - key: FEDEX_CLIENT_SECRET
-        scope: RUN_TIME
-        type: SECRET
-      - key: FEDEX_ACCOUNT_NUMBER
-        value: "801405622"
-      - key: FEDEX_API_BASE_URL
-        value: https://apis-sandbox.fedex.com
-      - key: FEDEX_SHIPPER_POSTAL_CODE
-        value: "20100"
-      - key: FEDEX_SHIPPER_CITY
-        value: Milano
-      - key: FEDEX_SHIPPER_COUNTRY
-        value: IT
-      - key: SPACES_REGION
-        value: fra1
-      - key: SPACES_ENDPOINT
-        value: https://fra1.digitaloceanspaces.com
-      - key: SPACES_KEY
-        scope: RUN_TIME
-        type: SECRET
-      - key: SPACES_SECRET
-        scope: RUN_TIME
-        type: SECRET
-      - key: SPACES_BUCKET
-        scope: RUN_TIME
-        type: SECRET
-      - key: SPACES_CDN_URL
-        scope: RUN_TIME
-        type: SECRET
-      - key: STRIPE_ENABLED
-        value: "true"
-        scope: RUN_TIME
-      - key: ARFLY_API_KEY
-        scope: RUN_TIME
-        type: SECRET
-      - key: ODOO_DB
-        scope: RUN_TIME
-        type: SECRET
-      - key: ODOO_USERNAME
-        scope: RUN_TIME
-        type: SECRET
-      - key: ODOO_PASSWORD
-        scope: RUN_TIME
-        type: SECRET
-      - key: STRIPE_SECRET_KEY
-        scope: RUN_TIME
-        type: SECRET
-      - key: STRIPE_WEBHOOK_SECRET
-        scope: RUN_TIME
-        type: SECRET
-      - key: SHIPPING_CREDENTIALS_KEY
-        scope: RUN_TIME
-        type: SECRET
-      - key: ADMIN_SEED_EMAIL
-        scope: RUN_TIME
-        type: SECRET
-      - key: ADMIN_SEED_PASSWORD
-        scope: RUN_TIME
-        type: SECRET
+
+  - name: shop
+    source_dir: /
+    environment_slug: node-js
+    github:
+      repo: rzaccardi/ideadiluce-pwa
+      branch: main
+      deploy_on_push: true
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    http_port: 3000
+    health_check:
+      http_path: /
+      initial_delay_seconds: 45
+      period_seconds: 15
+      timeout_seconds: 5
+      failure_threshold: 3
+    build_command: npm ci --ignore-scripts && npm run build --workspace=client
+    run_command: npm run start --workspace=client
 
 static_sites:
   - name: admin
@@ -353,9 +70,3 @@ static_sites:
     output_dir: admin/dist
     index_document: index.html
     catchall_document: index.html
-    envs:
-      - key: VITE_API_URL
-        value: https://api.ideadiluce.it
-        scope: BUILD_TIME
-
-# Nessun blocco "envs:" a livello app — le env dev (localhost) vanno rimosse dalla UI.

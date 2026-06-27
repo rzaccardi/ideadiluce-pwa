@@ -70,16 +70,16 @@ export async function fetchCatalogProductsServer(
 
 export async function fetchCategoryMetaServer(slug: string, locale: PwaLocale) {
   const search = new URLSearchParams({ locale })
-  const res = await serverApiClient.get<{ items: import('@/types/dto').CategoryDTO[] }>(
-    `/api/v1/catalog/categories?${search}`,
+  const res = await serverApiClient.get<{ item: import('@/types/dto').CategoryDTO | null }>(
+    `/api/v1/catalog/categories/${encodeURIComponent(slug)}?${search}`,
   )
-  return res.items.find((c) => c.slug === slug) ?? null
+  return res.item
 }
 
 export async function fetchBrandMetaServer(slug: string, locale: PwaLocale) {
   const search = new URLSearchParams({ locale })
-  const res = await serverApiClient.get<{ items: import('@/types/site-content').BrandListItemDTO[] }>(
-    `/api/v1/catalog/brands?${search}`,
+  const res = await serverApiClient.get<{ item: import('@/types/site-content').BrandListItemDTO | null }>(
+    `/api/v1/catalog/brands/${encodeURIComponent(slug)}?${search}`,
   )
-  return res.items.find((b) => b.slug === slug) ?? null
+  return res.item
 }

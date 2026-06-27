@@ -5,16 +5,27 @@ import { fetchWishlist } from '@/features/wishlist'
 
 let bootstrapPromise: Promise<void> | null = null
 
+function deferWishlistFetch() {
+  const run = () => void fetchWishlist()
+  if (typeof requestIdleCallback !== 'undefined') {
+    requestIdleCallback(run, { timeout: 3000 })
+  } else {
+    window.setTimeout(run, 100)
+  }
+}
+
 /** Sessione, carrello e preferiti iniziali: una sola esecuzione anche con React StrictMode. */
 export function bootstrapSession(): Promise<void> {
   if (!bootstrapPromise) {
+    appStore.isBootstrapped = true
     bootstrapPromise = fetchMe()
-      .then(() => Promise.all([fetchCart({ force: true }), fetchWishlist()]))
+      .then(() => fetchCart({ force: false }))
       .then(() => {
-        appStore.isBootstrapped = true
+        deferWishlistFetch()
       })
       .catch(() => {
-        appStore.isBootstrapped = true
+        void fetchCart({ force: false })
+        deferWishlistFetch()
       })
   }
   return bootstrapPromise

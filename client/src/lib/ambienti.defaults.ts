@@ -137,7 +137,7 @@ export const AMBIENTI_SHOP_THE_LOOK = {
   title: 'Cucina moderna con isola',
   subtitle:
     'Tocca i punti luce per scoprire i prodotti usati nella scena — e i componenti necessari per installarli.',
-  imageUrl: '/site/images/look-cucina.png',
+  imageUrl: '/site/images/look-cucina.webp',
   tip: 'Usa 4000K sul piano lavoro per vedere bene i colori dei cibi e 3000K su tavolo e isola per un\'atmosfera più accogliente.',
   total: '€ 232',
   products: [
@@ -230,7 +230,7 @@ export const AMBIENTI_POPULAR_LOOKS: AmbientiPopularLook[] = [
   {
     title: 'Soggiorno caldo e rilassante',
     subtitle: 'Atmosfera · Lettura · Luce indiretta',
-    imageUrl: '/site/images/lk-1.png',
+    imageUrl: '/site/images/lk-1.webp',
     productCount: 5,
     fromPrice: '€ 249',
     href: '/ambienti/soggiorno',
@@ -238,7 +238,7 @@ export const AMBIENTI_POPULAR_LOOKS: AmbientiPopularLook[] = [
   {
     title: 'Bagno con specchio illuminato',
     subtitle: 'Specchio · IP44 · Anti-abbagliamento',
-    imageUrl: '/site/images/lk-2.png',
+    imageUrl: '/site/images/lk-2.webp',
     productCount: 4,
     fromPrice: '€ 179',
     href: '/ambienti/bagno',
@@ -246,7 +246,7 @@ export const AMBIENTI_POPULAR_LOOKS: AmbientiPopularLook[] = [
   {
     title: 'Camera soft con LED testata',
     subtitle: 'Relax · 2700K · Dimmerabile',
-    imageUrl: '/site/images/lk-3.png',
+    imageUrl: '/site/images/lk-3.webp',
     productCount: 4,
     fromPrice: '€ 159',
     href: '/ambienti/camera',
@@ -254,7 +254,7 @@ export const AMBIENTI_POPULAR_LOOKS: AmbientiPopularLook[] = [
   {
     title: 'Vialetto con segnapasso',
     subtitle: 'Esterno · IP65 · Sensore',
-    imageUrl: '/site/images/lk-4.png',
+    imageUrl: '/site/images/lk-4.webp',
     productCount: 6,
     fromPrice: '€ 320',
     href: '/ambienti/esterno',

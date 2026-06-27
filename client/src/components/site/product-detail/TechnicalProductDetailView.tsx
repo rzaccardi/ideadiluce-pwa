@@ -156,7 +156,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
       <ProductDetailBreadcrumb items={breadcrumbItems} lp={lp} variant="technical" />
 
       {/* HERO */}
-      <SectionContainer className="grid items-start gap-12 pb-10 pt-1 sm:px-12 lg:grid-cols-2 lg:gap-12 lg:pb-10">
+        <SectionContainer className="grid items-start gap-12 pb-10 pt-1 lg:grid-cols-2 lg:gap-12 lg:pb-10">
         <ProductDetailGallery
           images={galleryImages}
           alt={product.name}
@@ -317,7 +317,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
 
       {/* Compatibilità */}
       <section className="border-y border-[#eef0f3] bg-[#f7f8fa]">
-        <SectionContainer className="grid gap-6 px-6 py-[34px] sm:px-12 sm:grid-cols-2">
+        <SectionContainer className="grid gap-6 py-[34px] sm:grid-cols-2">
           <ProductDetailCard variant="technical" className="p-[26px]">
             <h2 className="mb-4 text-base font-extrabold tracking-[-0.01em]">Compatibilità rapida</h2>
             <div>

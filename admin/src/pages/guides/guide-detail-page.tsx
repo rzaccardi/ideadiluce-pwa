@@ -1,19 +1,21 @@
 import { useEffect } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useSnapshot } from 'valtio/react'
-import { ArrowLeftIcon, ExternalLinkIcon, LanguagesIcon, SaveIcon, SparklesIcon } from 'lucide-react'
+import { ArrowLeftIcon, ExternalLinkIcon, EyeOffIcon, EyeIcon, LanguagesIcon, SaveIcon, SparklesIcon } from 'lucide-react'
 import {
   fetchGuideDetail,
   getGuideLabel,
   guidesStore,
   isSiteDraftDirty,
+  publishGuide,
   saveGuideAllDirtyLocales,
   saveGuideContent,
+  saveGuideLocalePublished,
   setGuideFieldSearch,
-  setSiteLocalePublished,
   SITE_LOCALES,
   siteStore,
   translateGuide,
+  unpublishGuide,
   updateGuideMeta,
   updateLocaleDraftContent,
   type SiteLocale,
@@ -105,6 +107,33 @@ export function GuideDetailPage() {
     }
   }
 
+  async function onPublish() {
+    try {
+      await publishGuide(slug)
+      toast.success('Guida pubblicata sul sito')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Pubblicazione fallita')
+    }
+  }
+
+  async function onUnpublish() {
+    try {
+      await unpublishGuide(slug)
+      toast.success('Guida rimossa dalla pubblicazione')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Operazione fallita')
+    }
+  }
+
+  async function onLocalePublishedChange(locale: SiteLocale, published: boolean) {
+    try {
+      await saveGuideLocalePublished(slug, locale, published)
+      toast.success(published ? `${LOCALE_LABELS[locale]} pubblicato` : `${LOCALE_LABELS[locale]} in bozza`)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Salvataggio fallito')
+    }
+  }
+
   async function onTranslateAll(onlyMissingLocales = false) {
     try {
       const result = await translateGuide(slug, onlyMissingLocales)
@@ -131,7 +160,7 @@ export function GuideDetailPage() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <SitePageHeader
           title={guide?.locales.find((l) => l.locale === 'IT')?.title ?? getGuideLabel(slug)}
-          description={`Slug: /guide/${slug} · Modifica contenuti e traduzioni.`}
+          description={`Slug: /guide/${slug} · ${guide?.published ? 'Online sul sito' : 'Bozza — non visibile ai visitatori'}.`}
         />
         <DetailPageActionBar
           stickyOnMobile
@@ -153,6 +182,17 @@ export function GuideDetailPage() {
           }
           primary={
             <>
+              {guide?.published ? (
+                <Button variant="outline" onClick={() => void onUnpublish()} disabled={busy}>
+                  <EyeOffIcon className="size-4" />
+                  Metti offline
+                </Button>
+              ) : (
+                <Button variant="success" onClick={() => void onPublish()} disabled={busy}>
+                  <EyeIcon className="size-4" />
+                  Pubblica sul sito
+                </Button>
+              )}
               {missingLocales.length > 0 ? (
                 <Button variant="outline" onClick={() => void onTranslateAll(true)} disabled={busy}>
                   <SparklesIcon className="size-4" />
@@ -229,12 +269,19 @@ export function GuideDetailPage() {
                   onBlur={(e) => void onMetaChange({ sortOrder: Number(e.target.value) })}
                 />
               </div>
-              <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
+              <div className="flex items-center gap-2 rounded-lg border px-3 py-2 sm:col-span-2 lg:col-span-3">
                 <Switch
                   checked={guide.published}
                   onCheckedChange={(checked) => void onMetaChange({ published: checked })}
                 />
-                <Label>Guida pubblicata</Label>
+                <div>
+                  <Label>Guida pubblicata sul sito</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {guide.published
+                      ? 'Visibile in /guide (se indicizzata) e raggiungibile per URL diretto'
+                      : 'Non visibile ai visitatori'}
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
                 <Switch
@@ -256,19 +303,25 @@ export function GuideDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle>Pubblicazione per lingua</CardTitle>
+              <CardDescription>
+                Ogni lingua può essere pubblicata in modo indipendente. Le modifiche vengono salvate
+                subito.
+              </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-4">
               {SITE_LOCALES.map((locale: SiteLocale) => {
                 const draft = sp.localeDrafts[locale]
                 const localeInfo = guide.locales.find((entry) => entry.locale === locale)
+                const isPublished = draft?.published ?? localeInfo?.published ?? false
                 return (
                   <div
                     key={locale}
                     className="flex min-w-[140px] items-center gap-2 rounded-lg border px-3 py-2"
                   >
                     <Switch
-                      checked={draft?.published ?? true}
-                      onCheckedChange={(checked) => setSiteLocalePublished(locale, checked)}
+                      checked={isPublished}
+                      disabled={busy}
+                      onCheckedChange={(checked) => void onLocalePublishedChange(locale, checked)}
                     />
                     <div className="min-w-0">
                       <Label className="text-sm">{LOCALE_LABELS[locale]}</Label>

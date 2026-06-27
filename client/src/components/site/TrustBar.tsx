@@ -7,7 +7,7 @@ import { SectionContainer } from './primitives'
 export function TrustBar({ items }: { items: SiteShellContent['trustBar'] }) {
   return (
     <div className="border-t border-idl-border bg-idl-cream">
-      <SectionContainer className="px-[22px] py-5 sm:px-6 lg:px-12">
+      <SectionContainer className="py-5">
         <Stagger className="grid grid-cols-2 gap-4 lg:grid-cols-4" stagger={0.06}>
           {items.map((item) => (
             <StaggerItem key={item.title}>

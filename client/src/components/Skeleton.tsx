@@ -1,5 +1,6 @@
 'use client'
 
+import { AUTH_FORM_CONTAINER_CLASS, SITE_CONTENT_CLASS } from '@/components/Container'
 import { checkoutMainClass, checkoutShellClass } from '@/components/checkout/stripe-ui/constants'
 import { useI18n } from '@/hooks/use-i18n'
 import type { MessageKey } from '@/i18n/messages'
@@ -424,7 +425,7 @@ export function ImpersonatePageSkeleton() {
   return (
     <PageFlexShell tone="paper">
       <PageFlexBody tone="paper" className="flex items-center justify-center py-16">
-        <div className="mx-auto max-w-md text-center" role="status" aria-label={t('impersonate.loading')}>
+        <div className={cn(AUTH_FORM_CONTAINER_CLASS, 'text-center')} role="status" aria-label={t('impersonate.loading')}>
           <Skeleton className="mx-auto size-12 rounded-full" />
           <Skeleton className="mx-auto mt-6 h-5 w-48" />
           <Skeleton className="mx-auto mt-3 h-4 w-64" />
@@ -603,7 +604,7 @@ export function AccountBootstrapSkeleton({ children }: { children: React.ReactNo
   return (
     <div className="bg-[#f4f5f7]" role="status" aria-label={t('skeleton.loadingAccount')}>
       <div className="border-b border-[#eef0f3] bg-white">
-        <div className="mx-auto flex max-w-[1320px] items-center gap-4 px-4 py-8 sm:px-6 lg:px-12">
+        <div className={cn(SITE_CONTENT_CLASS, 'flex items-center gap-4 py-8')}>
           <Skeleton className="size-[58px] rounded-full" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-7 w-48" />
@@ -611,7 +612,7 @@ export function AccountBootstrapSkeleton({ children }: { children: React.ReactNo
           </div>
         </div>
       </div>
-      <div className="mx-auto max-w-[1320px] px-4 py-8 sm:px-6 lg:px-12">
+      <div className={cn(SITE_CONTENT_CLASS, 'py-8')}>
         <div className="grid gap-7 lg:grid-cols-[236px_1fr]">
           <Skeleton className="h-80 rounded-[14px]" />
           <div className="space-y-4">{children}</div>

@@ -1,0 +1,79 @@
+# Reset routing su app ESISTENTE ideadiluce-platform — solo via doctl (non UI)
+#
+#   DO_APP_NAME=ideadiluce-platform DIGITALOCEAN_ACCESS_TOKEN=dop_v1_... \
+#     ./scripts/do-update-platform-spec.sh .do/app.platform.reset.yaml
+
+name: ideadiluce-platform
+region: fra
+
+features:
+  - buildpack-stack=ubuntu-22
+
+alerts:
+  - rule: DEPLOYMENT_FAILED
+
+domains: []
+
+ingress:
+  rules: []
+
+databases:
+  - name: db-ideadiluce-pwa
+    engine: PG
+    version: "18"
+    production: true
+    cluster_name: db-ideadiluce-pwa
+    db_name: defaultdb
+    db_user: doadmin
+
+services:
+  - name: api
+    source_dir: /
+    environment_slug: node-js
+    github:
+      repo: rzaccardi/ideadiluce-pwa
+      branch: main
+      deploy_on_push: true
+    instance_count: 2
+    instance_size_slug: apps-s-1vcpu-1gb
+    http_port: 8080
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 30
+      period_seconds: 10
+      timeout_seconds: 5
+      failure_threshold: 3
+    build_command: npm ci --include=dev && npm run db:generate --workspace=server && npm run hub:generate && npm run build:server && npm run db:deploy && npm run hub:migrate
+    run_command: node server/dist/server.js
+
+  - name: shop
+    source_dir: /
+    environment_slug: node-js
+    github:
+      repo: rzaccardi/ideadiluce-pwa
+      branch: main
+      deploy_on_push: true
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    http_port: 3000
+    health_check:
+      http_path: /
+      initial_delay_seconds: 45
+      period_seconds: 15
+      timeout_seconds: 5
+      failure_threshold: 3
+    build_command: npm ci --ignore-scripts && npm run build --workspace=client
+    run_command: npm run start --workspace=client
+
+static_sites:
+  - name: admin
+    source_dir: /
+    environment_slug: node-js
+    github:
+      repo: rzaccardi/ideadiluce-pwa
+      branch: main
+      deploy_on_push: true
+    build_command: npm ci --include=dev --ignore-scripts && npm run build --workspace=admin
+    output_dir: admin/dist
+    index_document: index.html
+    catchall_document: index.html

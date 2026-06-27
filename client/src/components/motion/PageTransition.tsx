@@ -37,7 +37,7 @@ export function PageTransitionPage({ children }: { children: React.ReactNode }) 
   const variants = pageTransitionVariants[kind]
   const transition = pageTransitionTiming[kind]
 
-  if (reduceMotion) {
+  if (reduceMotion || kind === 'catalog' || kind === 'checkout') {
     return <div className="flex min-h-full flex-1 flex-col">{children}</div>
   }
 

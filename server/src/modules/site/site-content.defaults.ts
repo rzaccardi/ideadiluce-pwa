@@ -321,12 +321,12 @@ export const DEFAULT_HOME_IT: HomePageContent = {
     title: 'Esplora per ambiente',
     subtitle: "La luce giusta per ogni stanza, dal soggiorno all'esterno.",
     items: [
-      { title: 'Soggiorno', imageUrl: '/site/images/room-soggiorno.png', href: '/ambienti/soggiorno' },
-      { title: 'Cucina', imageUrl: '/site/images/room-cucina.png', href: '/ambienti/cucina' },
-      { title: 'Camera', imageUrl: '/site/images/room-camera.png', href: '/ambienti/camera' },
-      { title: 'Bagno', imageUrl: '/site/images/room-bagno.png', href: '/ambienti/bagno' },
-      { title: 'Studio', imageUrl: '/site/images/room-studio.png', href: '/ambienti/studio' },
-      { title: 'Esterno', imageUrl: '/site/images/room-esterno.png', href: '/ambienti/esterno' },
+      { title: 'Soggiorno', imageUrl: '/site/images/room-soggiorno.webp', href: '/ambienti/soggiorno' },
+      { title: 'Cucina', imageUrl: '/site/images/room-cucina.webp', href: '/ambienti/cucina' },
+      { title: 'Camera', imageUrl: '/site/images/room-camera.webp', href: '/ambienti/camera' },
+      { title: 'Bagno', imageUrl: '/site/images/room-bagno.webp', href: '/ambienti/bagno' },
+      { title: 'Studio', imageUrl: '/site/images/room-studio.webp', href: '/ambienti/studio' },
+      { title: 'Esterno', imageUrl: '/site/images/room-esterno.webp', href: '/ambienti/esterno' },
     ],
   },
   designShowcase: {
@@ -444,12 +444,12 @@ export const DEFAULT_AMBIENTI_IT: EditorialPageContent = {
   subtitle: "La luce giusta per ogni stanza, dal soggiorno all'esterno.",
   intro: 'Scegli uno spazio, lasciati ispirare da ambienti reali e scopri i prodotti per ricreare lo stesso effetto luminoso.',
   items: [
-    { title: 'Soggiorno', imageUrl: '/site/images/room-soggiorno.png', href: '/ambienti/soggiorno' },
-    { title: 'Cucina', imageUrl: '/site/images/room-cucina.png', href: '/ambienti/cucina' },
-    { title: 'Camera', imageUrl: '/site/images/room-camera.png', href: '/ambienti/camera' },
-    { title: 'Bagno', imageUrl: '/site/images/room-bagno.png', href: '/ambienti/bagno' },
-    { title: 'Studio', imageUrl: '/site/images/room-studio.png', href: '/ambienti/studio' },
-    { title: 'Esterno', imageUrl: '/site/images/room-esterno.png', href: '/ambienti/esterno' },
+    { title: 'Soggiorno', imageUrl: '/site/images/room-soggiorno.webp', href: '/ambienti/soggiorno' },
+    { title: 'Cucina', imageUrl: '/site/images/room-cucina.webp', href: '/ambienti/cucina' },
+    { title: 'Camera', imageUrl: '/site/images/room-camera.webp', href: '/ambienti/camera' },
+    { title: 'Bagno', imageUrl: '/site/images/room-bagno.webp', href: '/ambienti/bagno' },
+    { title: 'Studio', imageUrl: '/site/images/room-studio.webp', href: '/ambienti/studio' },
+    { title: 'Esterno', imageUrl: '/site/images/room-esterno.webp', href: '/ambienti/esterno' },
   ],
 }
 

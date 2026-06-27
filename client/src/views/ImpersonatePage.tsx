@@ -6,7 +6,9 @@ import { exchangeImpersonationToken } from '@/features/auth'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { useI18n } from '@/hooks/use-i18n'
 import { ImpersonatePageSkeleton } from '@/components/Skeleton'
+import { AUTH_FORM_CONTAINER_CLASS } from '@/components/Container'
 import { PageLoadTransition } from '@/components/motion'
+import { cn } from '@/utils/cn'
 
 export function ImpersonatePage() {
   const { t } = useI18n()
@@ -37,7 +39,7 @@ export function ImpersonatePage() {
 
   if (error) {
     return (
-      <div className="mx-auto max-w-md py-16 text-center">
+      <div className={cn(AUTH_FORM_CONTAINER_CLASS, 'py-16 text-center')}>
         <p className="text-red-700">{error}</p>
       </div>
     )

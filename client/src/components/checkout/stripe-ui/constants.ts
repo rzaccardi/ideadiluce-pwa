@@ -1,3 +1,5 @@
+import { SITE_PAGE_X_CLASS } from '@/components/site/primitives'
+
 /** Paesi supportati nel selettore checkout (ISO 3166-1 alpha-2). */
 export const CHECKOUT_COUNTRIES: Array<{ code: string; label: string }> = [
   { code: 'IT', label: 'Italia' },
@@ -23,8 +25,8 @@ export const checkoutTitleTypographyClass =
 export const checkoutFormTitleClass =
   'text-lg font-semibold leading-tight tracking-tight sm:text-xl md:text-2xl lg:text-[1.75rem] xl:text-3xl'
 
-/** Gutter orizzontale condiviso tra colonne checkout. */
-export const checkoutColumnGutterClass = 'px-4 sm:px-5 md:px-6 lg:px-8 xl:px-12'
+/** Gutter orizzontale condiviso tra colonne checkout — allineato alle pagine storefront. */
+export const checkoutColumnGutterClass = SITE_PAGE_X_CLASS
 
 /** Larghezza massima del blocco form nel main. */
 export const checkoutFormColumnClass = 'mx-auto w-full max-w-[540px]'

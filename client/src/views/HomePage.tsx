@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useSnapshot } from 'valtio/react'
-import { fetchSitePage, siteStore } from '@/features/site'
+import { fetchSitePage, seedSitePageContent, siteStore } from '@/features/site'
 import { fetchProductsByQuery } from '@/features/catalog'
 import { api } from '@/api/endpoints'
 import { HomeView } from '@/components/site/home/HomeView'
@@ -24,18 +24,19 @@ export function HomePage({ initialContent = null }: Props) {
   const { locale } = useLocale()
   const { t } = useI18n()
   const snap = useSnapshot(siteStore)
-  const raw = snap.pages.home ?? initialContent
   const [designProducts, setDesignProducts] = useState<ProductCardDTO[]>([])
   const [technicalProducts, setTechnicalProducts] = useState<ProductCardDTO[]>([])
-
-  const content = useMemo(() => {
-    if (!raw || !isHomePageContent(raw)) return null
-    return raw as HomePageContent
-  }, [raw])
-
   const [featuredGuides, setFeaturedGuides] = useState<
     Array<{ category: string; title: string; meta: string; href: string }>
   >([])
+
+  const showcaseSource = useMemo((): HomePageContent | null => {
+    const raw = snap.pages.home ?? initialContent
+    if (!raw || !isHomePageContent(raw)) return null
+    return raw as HomePageContent
+  }, [snap.pages.home, initialContent])
+
+  const content = showcaseSource
 
   const viewContent = useMemo(() => {
     if (!content) return null
@@ -55,16 +56,13 @@ export function HomePage({ initialContent = null }: Props) {
   }, [content, featuredGuides])
 
   useEffect(() => {
-    if (initialContent && !siteStore.pages.home) {
-      siteStore.pages.home = initialContent
+    if (initialContent) {
+      seedSitePageContent('home', locale, initialContent)
     }
-  }, [initialContent])
+  }, [initialContent, locale])
 
   useEffect(() => {
-    void fetchSitePage('home', locale)
-  }, [locale])
-
-  useEffect(() => {
+    void fetchSitePage('home', locale, { skipIfFresh: true })
     void api.site
       .guides(locale, { featured: true })
       .then((items) =>
@@ -81,21 +79,21 @@ export function HomePage({ initialContent = null }: Props) {
   }, [locale])
 
   useEffect(() => {
-    if (!content) return
+    if (!showcaseSource) return
 
-    const designQuery = content.designShowcase.searchQuery?.trim()
-    const technicalQuery = content.technicalShowcase.searchQuery?.trim()
+    const designQuery = showcaseSource.designShowcase.searchQuery?.trim()
+    const technicalQuery = showcaseSource.technicalShowcase.searchQuery?.trim()
 
     void Promise.all([
       designQuery
         ? fetchProductsByQuery(designQuery, {
-            pageSize: content.designShowcase.productCount,
+            pageSize: showcaseSource.designShowcase.productCount,
             locale,
           })
         : Promise.resolve([]),
       technicalQuery
         ? fetchProductsByQuery(technicalQuery, {
-            pageSize: content.technicalShowcase.productCount,
+            pageSize: showcaseSource.technicalShowcase.productCount,
             locale,
           })
         : Promise.resolve([]),
@@ -103,7 +101,7 @@ export function HomePage({ initialContent = null }: Props) {
       setDesignProducts(design)
       setTechnicalProducts(technical)
     })
-  }, [content, locale])
+  }, [showcaseSource, locale])
 
   if (snap.error && !viewContent) {
     return (

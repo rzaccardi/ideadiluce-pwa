@@ -1,6 +1,7 @@
 'use client'
 
 import { Link } from '@/lib/navigation'
+import { AUTH_FORM_CONTAINER_CLASS } from '@/components/Container'
 import { PageHeader } from '@/components/PageHeader'
 import { FadeIn } from '@/components/motion'
 import { useI18n } from '@/hooks/use-i18n'
@@ -12,7 +13,7 @@ export function ResetPasswordPage() {
 
   return (
     <FadeIn>
-      <div className="mx-auto max-w-md">
+      <div className={AUTH_FORM_CONTAINER_CLASS}>
         <PageHeader title={t('reset.title')} />
         <p className="text-stone-700">{t('reset.odooDelegated')}</p>
         <p className="mt-4 text-sm">

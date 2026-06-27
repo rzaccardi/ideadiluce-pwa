@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Link } from '@/lib/navigation'
 import { api } from '@/api/endpoints'
 import { Button } from '@/components/Button'
+import { AUTH_FORM_CONTAINER_CLASS } from '@/components/Container'
 import { ToastOnError } from '@/components/ToastFeedback'
 import { PageHeader } from '@/components/PageHeader'
 import { FadeIn } from '@/components/motion'
@@ -35,7 +36,7 @@ export function ForgotPasswordPage() {
 
   return (
     <FadeIn>
-    <div className="mx-auto max-w-md">
+    <div className={AUTH_FORM_CONTAINER_CLASS}>
       <PageHeader title={t('forgot.title')} />
       <ToastOnError message={error} />
       {sent ? (

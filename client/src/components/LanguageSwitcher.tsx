@@ -35,11 +35,13 @@ function LocaleFlag({
 
 type Props = {
   theme?: 'light' | 'dark'
-  variant?: 'icon' | 'header'
+  variant?: 'icon' | 'header' | 'mobileNav'
   onOpenChange?: (open: boolean) => void
+  /** Chiamato dopo la selezione di una lingua (es. chiudere il menu mobile). */
+  onLocaleChange?: () => void
 }
 
-export function LanguageSwitcher({ theme, variant = 'icon', onOpenChange }: Props) {
+export function LanguageSwitcher({ theme, variant = 'icon', onOpenChange, onLocaleChange }: Props) {
   const { locale, switchLocale } = useLocale()
   const { isDark: themeDark } = useTheme()
   const { t, tParams } = useI18n()
@@ -76,9 +78,73 @@ export function LanguageSwitcher({ theme, variant = 'icon', onOpenChange }: Prop
   const selectLocale = (next: PwaLocale) => {
     switchLocale(next)
     setMenuOpen(false)
+    onLocaleChange?.()
   }
 
   const isHeader = variant === 'header'
+  const isMobileNav = variant === 'mobileNav'
+
+  if (isMobileNav) {
+    return (
+      <div ref={rootRef} className={cn('border-t pt-4', dark ? 'border-white/10' : 'border-idl-border/60')}>
+        <button
+          type="button"
+          onClick={() => setMenuOpen(!open)}
+          aria-expanded={open}
+          aria-haspopup="listbox"
+          aria-controls={listId}
+          aria-label={tParams('language.switcher.current', { locale: LOCALE_NAME[locale] })}
+          className={cn(
+            ui.interactive,
+            'flex w-full items-center gap-3 rounded-md py-1 text-left transition-colors',
+            dark ? 'text-idl-design-muted hover:text-idl-design-fg' : 'text-idl-ink-soft hover:text-idl-ink',
+          )}
+        >
+          <LocaleFlag locale={locale} size={22} />
+          <span className="flex-1">{LOCALE_NAME[locale]}</span>
+          <span className="text-[10px] opacity-60" aria-hidden>
+            {open ? '▴' : '▾'}
+          </span>
+        </button>
+
+        {open ? (
+          <div
+            id={listId}
+            role="listbox"
+            aria-label={t('language.switcher.other')}
+            className="mt-2 flex flex-col gap-1"
+          >
+            {PWA_LOCALES.map((loc) => {
+              const selected = loc === locale
+              return (
+                <button
+                  key={loc}
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  onClick={() => selectLocale(loc)}
+                  className={cn(
+                    ui.navButton,
+                    'flex w-full items-center gap-3 rounded-md px-1 py-2 text-left text-[15px] font-medium transition-colors',
+                    selected
+                      ? dark
+                        ? 'text-idl-glow'
+                        : 'text-idl-brass'
+                      : dark
+                        ? 'text-idl-design-muted hover:text-idl-design-fg'
+                        : 'text-idl-ink-soft hover:text-idl-ink',
+                  )}
+                >
+                  <LocaleFlag locale={loc} size={22} />
+                  <span>{LOCALE_NAME[loc]}</span>
+                </button>
+              )
+            })}
+          </div>
+        ) : null}
+      </div>
+    )
+  }
 
   return (
     <div ref={rootRef} className="relative">
@@ -91,10 +157,9 @@ export function LanguageSwitcher({ theme, variant = 'icon', onOpenChange }: Prop
         aria-label={tParams('language.switcher.current', { locale: LOCALE_NAME[locale] })}
         className={cn(
           ui.interactive,
-          'inline-flex shrink-0 items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
+          ui.headerAction,
           isHeader
             ? cn(
-                'gap-2 rounded-full border px-3 py-2 text-sm font-bold',
                 dark
                   ? 'border-white/16 bg-white/6 text-idl-design-fg hover:border-idl-glow/50 hover:text-idl-glow'
                   : 'border-idl-border-strong bg-white text-idl-ink-soft hover:border-idl-brass hover:text-idl-ink',
@@ -111,8 +176,10 @@ export function LanguageSwitcher({ theme, variant = 'icon', onOpenChange }: Prop
         <LocaleFlag locale={locale} size={isHeader ? 22 : FLAG_SIZE_TRIGGER} />
         {isHeader ? (
           <>
-            <span className="text-[12.5px] tracking-wide">{LOCALE_LABEL[locale]}</span>
-            <span className="text-[9px] opacity-60" aria-hidden>
+            <span className={cn(ui.headerActionText, 'text-[12.5px] tracking-wide')}>
+              {LOCALE_LABEL[locale]}
+            </span>
+            <span className={cn(ui.headerActionText, 'text-[9px] opacity-60')} aria-hidden>
               ▾
             </span>
           </>

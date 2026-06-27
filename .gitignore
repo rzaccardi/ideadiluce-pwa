@@ -42,3 +42,8 @@ product-hub/import/*.sql
 product-hub/import/*.sql.gz
 product-hub/import/*.csv
 product-hub/import/*.zip
+
+# DO App Spec con secret EV[...] (solo paste locale)
+.do/app.platform.paste.yaml
+# Env compilate per copy-paste in DO (contiene secret reali)
+.do/env.production.compiled.env

@@ -6,6 +6,7 @@ import { useSnapshot } from 'valtio/react'
 import { authStore, login } from '@/features/auth'
 import { TextInput } from '@/components/TextInput'
 import { Button } from '@/components/Button'
+import { AUTH_FORM_CONTAINER_CLASS } from '@/components/Container'
 import { PageHeader } from '@/components/PageHeader'
 import { FadeIn } from '@/components/motion'
 import { useI18n } from '@/hooks/use-i18n'
@@ -36,7 +37,7 @@ export function LoginPage() {
   return (
     <FadeIn>
     <div className="flex flex-1 flex-col justify-center py-8">
-    <div className="mx-auto w-full max-w-md">
+    <div className={AUTH_FORM_CONTAINER_CLASS}>
       <PageHeader title={t('login.title')} />
       <form onSubmit={(e) => void onSubmit(e)} className="space-y-4">
         <TextInput

@@ -27,4 +27,8 @@ export const ui = {
   mutedSm: 'text-sm text-idl-muted',
   divider: 'border-idl-border',
   dividerSubtle: 'border-idl-border/60',
+  /** Pulsanti header: solo icona sotto lg, testo da desktop. */
+  headerAction:
+    'inline-flex size-[38px] shrink-0 items-center justify-center gap-2 rounded-full border p-0 text-sm font-bold lg:size-auto lg:px-4 lg:py-2',
+  headerActionText: 'hidden lg:inline',
 } as const

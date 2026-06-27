@@ -323,7 +323,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
 
       {/* CARATTERISTICHE TECNICHE */}
       <section className="bg-idl-paper">
-        <SectionContainer className="grid items-start gap-14 px-6 py-14 sm:px-12 lg:grid-cols-2 lg:py-14">
+        <SectionContainer className="grid items-start gap-14 py-14 lg:grid-cols-2 lg:py-14">
           <div>
             <ProductDetailSectionLabel variant="design" className="mb-4 text-idl-brass tracking-[0.18em]">
               CARATTERISTICHE TECNICHE

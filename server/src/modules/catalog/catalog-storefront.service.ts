@@ -64,6 +64,27 @@ async function brandsFromProductList(locale: HubLocale): Promise<BrandListItemDT
   return [...bySlug.values()].sort((a, b) => a.name.localeCompare(b.name, 'it'))
 }
 
+const TAXONOMY_CACHE_TTL_MS = 10 * 60 * 1000
+
+type TaxonomyCacheEntry<T> = { expiresAt: number; value: T }
+
+const categoriesCache = new Map<HubLocale, TaxonomyCacheEntry<CategoryDTO[]>>()
+const brandsCache = new Map<HubLocale, TaxonomyCacheEntry<BrandListItemDTO[]>>()
+
+function readTaxonomyCache<T>(map: Map<HubLocale, TaxonomyCacheEntry<T>>, locale: HubLocale): T | null {
+  const entry = map.get(locale)
+  if (!entry || entry.expiresAt <= Date.now()) return null
+  return entry.value
+}
+
+function writeTaxonomyCache<T>(
+  map: Map<HubLocale, TaxonomyCacheEntry<T>>,
+  locale: HubLocale,
+  value: T,
+) {
+  map.set(locale, { expiresAt: Date.now() + TAXONOMY_CACHE_TTL_MS, value })
+}
+
 export const catalogStorefrontService = {
   parseLocale(input: unknown): HubLocale {
     return parseHubLocale(input)
@@ -72,6 +93,10 @@ export const catalogStorefrontService = {
   async listCategories(localeInput?: string): Promise<CategoryDTO[]> {
     if (!isArflyConfigured()) return []
     const locale = parseHubLocale(localeInput)
+    const cached = readTaxonomyCache(categoriesCache, locale)
+    if (cached) return cached
+
+    let items: CategoryDTO[]
     try {
       const res = await fetchArflyCategories(locale)
       const fromApi = res.items
@@ -82,16 +107,27 @@ export const catalogStorefrontService = {
           name: c.name ?? c.slug!,
           parentId: c.parent_id != null ? String(c.parent_id) : null,
         }))
-      if (fromApi.length) return fromApi
-      return categoriesFromProductList(locale)
+      items = fromApi.length ? fromApi : await categoriesFromProductList(locale)
     } catch {
-      return categoriesFromProductList(locale)
+      items = await categoriesFromProductList(locale)
     }
+
+    writeTaxonomyCache(categoriesCache, locale, items)
+    return items
+  },
+
+  async getCategoryBySlug(slug: string, localeInput?: string): Promise<CategoryDTO | null> {
+    const items = await this.listCategories(localeInput)
+    return items.find((c) => c.slug === slug) ?? null
   },
 
   async listBrands(localeInput?: string): Promise<BrandListItemDTO[]> {
     if (!isArflyConfigured()) return []
     const locale = parseHubLocale(localeInput)
+    const cached = readTaxonomyCache(brandsCache, locale)
+    if (cached) return cached
+
+    let items: BrandListItemDTO[]
     try {
       const res = await fetchArflyBrands(locale)
       const fromApi = res.items
@@ -100,11 +136,18 @@ export const catalogStorefrontService = {
           slug: b.slug!,
           name: b.name ?? b.slug!,
         }))
-      if (fromApi.length) return fromApi
-      return brandsFromProductList(locale)
+      items = fromApi.length ? fromApi : await brandsFromProductList(locale)
     } catch {
-      return brandsFromProductList(locale)
+      items = await brandsFromProductList(locale)
     }
+
+    writeTaxonomyCache(brandsCache, locale, items)
+    return items
+  },
+
+  async getBrandBySlug(slug: string, localeInput?: string): Promise<BrandListItemDTO | null> {
+    const items = await this.listBrands(localeInput)
+    return items.find((b) => b.slug === slug) ?? null
   },
 
   async listProducts(

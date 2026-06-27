@@ -66,6 +66,7 @@ export async function updateGuideMeta(
     featured: boolean
     published: boolean
   }>,
+  options?: { refreshDetail?: boolean },
 ) {
   guidesStore.isSaving = true
   guidesStore.error = null
@@ -74,7 +75,9 @@ export async function updateGuideMeta(
       method: 'PATCH',
       body: JSON.stringify(patch),
     })
-    await fetchGuideDetail(slug)
+    if (options?.refreshDetail !== false && guidesStore.current?.slug === slug) {
+      await fetchGuideDetail(slug)
+    }
     await fetchGuidesList()
   } catch (e) {
     guidesStore.error = errMessage(e)
@@ -82,6 +85,78 @@ export async function updateGuideMeta(
   } finally {
     guidesStore.isSaving = false
   }
+}
+
+export async function setGuidePublished(slug: string, published: boolean) {
+  await updateGuideMeta(slug, { published }, { refreshDetail: guidesStore.current?.slug === slug })
+}
+
+export async function saveGuideLocalePublished(slug: string, locale: SiteLocale, published: boolean) {
+  setSiteLocalePublished(locale, published)
+  const draft = siteStore.localeDrafts[locale]
+  guidesStore.isSaving = true
+  guidesStore.error = null
+  try {
+    await adminApi(
+      `/admin/guides/${encodeURIComponent(slug)}/content?locale=${encodeURIComponent(locale)}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          content: draft?.content ?? {},
+          published,
+        }),
+      },
+    )
+    if (guidesStore.current?.slug === slug) {
+      await fetchGuideDetail(slug)
+    }
+    await fetchGuidesList()
+  } catch (e) {
+    guidesStore.error = errMessage(e)
+    throw e
+  } finally {
+    guidesStore.isSaving = false
+  }
+}
+
+/** Salva bozze pendenti, pubblica la guida e il contenuto IT sul sito. */
+export async function publishGuide(slug: string) {
+  guidesStore.isSaving = true
+  guidesStore.error = null
+  try {
+    if (isSiteDraftDirty()) {
+      await saveSitePageAllDirtyLocales(guidePageKey(slug))
+    }
+    setSiteLocalePublished('IT', true)
+    const draft = siteStore.localeDrafts.IT
+    await adminApi(
+      `/admin/guides/${encodeURIComponent(slug)}/content?locale=IT`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          content: draft?.content ?? {},
+          published: true,
+        }),
+      },
+    )
+    await adminApi(`/admin/guides/${encodeURIComponent(slug)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ published: true, indexed: true }),
+    })
+    if (guidesStore.current?.slug === slug) {
+      await fetchGuideDetail(slug)
+    }
+    await fetchGuidesList()
+  } catch (e) {
+    guidesStore.error = errMessage(e)
+    throw e
+  } finally {
+    guidesStore.isSaving = false
+  }
+}
+
+export async function unpublishGuide(slug: string) {
+  await updateGuideMeta(slug, { published: false })
 }
 
 export async function saveGuideContent(

@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/Button'
 import { ProfessionalCartBanner } from '@/components/cart/PricelistBadge'
 import { useI18n } from '@/hooks/use-i18n'
+import { preloadStripe } from '@/lib/stripe-loader'
 import { cn } from '@/utils/cn'
 
 type Props = {
@@ -129,7 +130,12 @@ export function CartSummary({
               </p>
             ) : (
               <>
-                <Link to="/checkout" className="block">
+                <Link
+                  to="/checkout"
+                  className="block"
+                  onMouseEnter={() => preloadStripe()}
+                  onFocus={() => preloadStripe()}
+                >
                   <Button
                     variant="technical"
                     className="h-auto w-full rounded-[10px] py-4 text-base font-extrabold"

@@ -96,6 +96,20 @@ function catalogLocaleStatus(
     status: row ? ('saved' as const) : ('missing' as const),
   }
 }
+async function notifyStorefrontCmsRevalidation() {
+  const baseUrl = process.env.STOREFRONT_URL ?? process.env.NEXT_PUBLIC_SITE_URL
+  const secret = process.env.REVALIDATE_SECRET
+  if (!baseUrl || !secret) return
+  try {
+    await fetch(
+      `${baseUrl.replace(/\/$/, '')}/api/revalidate-site?secret=${encodeURIComponent(secret)}`,
+      { method: 'POST' },
+    )
+  } catch {
+    // Best-effort: la cache scade comunque entro il TTL configurato lato Next.
+  }
+}
+
 export const siteService = {
   getI18nStatus() {
     return {
@@ -214,6 +228,7 @@ export const siteService = {
     const loc = normalizeSiteLocale(locale)
     const normalized = prepareContent(key, content)
     const row = await siteRepository.upsert(key, loc, normalized, published)
+    void notifyStorefrontCmsRevalidation()
     return {
       ...toAdminPageDto(key, loc, row),
       translatableStringCount: countTranslatableStrings(normalized),

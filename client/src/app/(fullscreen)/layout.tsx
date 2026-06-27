@@ -1,5 +1,10 @@
 import { FullscreenLayout } from '@/layouts/FullscreenLayout'
+import { jetbrains, newsreader } from '@/lib/fonts'
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <FullscreenLayout>{children}</FullscreenLayout>
+  return (
+    <div className={`${newsreader.variable} ${jetbrains.variable}`}>
+      <FullscreenLayout>{children}</FullscreenLayout>
+    </div>
+  )
 }

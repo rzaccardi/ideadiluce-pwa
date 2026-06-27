@@ -78,15 +78,19 @@ export function HeaderAccountMenu({ onOpenChange }: Props) {
     return (
       <Link
         to={lp('/login')}
+        aria-label={t('nav.login')}
+        title={t('nav.login')}
         className={cn(
-          'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold no-underline transition hover:border-idl-brass',
+          ui.interactive,
+          ui.headerAction,
+          'no-underline',
           isDark
-            ? 'border-white/16 bg-white/6 text-idl-design-fg hover:text-idl-glow'
+            ? 'border-white/16 bg-white/6 text-idl-design-fg hover:border-idl-brass hover:text-idl-glow'
             : 'border-idl-border-strong bg-white text-idl-ink-soft hover:text-idl-ink',
         )}
       >
         <UserIcon className="size-[17px] shrink-0" />
-        {t('nav.login')}
+        <span className={ui.headerActionText}>{t('nav.login')}</span>
       </Link>
     )
   }

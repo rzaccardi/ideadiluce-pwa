@@ -9,8 +9,11 @@ import { stockRestockRequestSchema } from '../restock-notify/restock-notify.vali
 /** Catalogo storefront: lista prodotti da Odoo (Arfly), categorie/brand non gestiti nel BFF. */
 export const catalogRouter = Router()
 
+catalogRouter.get('/bootstrap', catalogPublicController.bootstrap)
 catalogRouter.get('/categories', catalogPublicController.categories)
+catalogRouter.get('/categories/:slug', catalogPublicController.categoryBySlug)
 catalogRouter.get('/brands', catalogPublicController.brands)
+catalogRouter.get('/brands/:slug', catalogPublicController.brandBySlug)
 catalogRouter.get('/products', catalogPublicController.products)
 catalogRouter.post('/availability/enrich-detail', catalogPublicController.enrichProductDetail)
 catalogRouter.get('/products/:slug/social-proof', storefrontController.productSocialProof)

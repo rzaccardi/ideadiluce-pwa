@@ -4,20 +4,49 @@ import { catalogStorefrontService } from '../modules/catalog/catalog-storefront.
 import { enrichProductDetailWithStock } from '../modules/catalog/catalog-stock.enrich.js'
 import { enrichProductDetailWithOdooPricing } from '../modules/catalog/catalog-pricing.enrich.js'
 import { resolvePricingContext } from '../modules/pricing/pricelist.service.js'
+import { siteService } from '../modules/site/site.service.js'
 import type { ProductDetailDTO } from '../types/dto.js'
 import { asyncHandler } from '../utils/async-handler.js'
 
 export const catalogPublicController = {
+  bootstrap: asyncHandler(async (req: Request, res: Response) => {
+    const locale = typeof req.query.locale === 'string' ? req.query.locale : undefined
+    const [categories, brands, cmsPage] = await Promise.all([
+      catalogStorefrontService.listCategories(locale),
+      catalogStorefrontService.listBrands(locale),
+      siteService.getPublicPage('catalog', locale ?? 'IT'),
+    ])
+    res.json(
+      ok({
+        categories,
+        brands,
+        cms: cmsPage.content,
+      }),
+    )
+  }),
+
   categories: asyncHandler(async (req: Request, res: Response) => {
     const locale = typeof req.query.locale === 'string' ? req.query.locale : undefined
     const items = await catalogStorefrontService.listCategories(locale)
     res.json(ok({ items }))
   }),
 
+  categoryBySlug: asyncHandler(async (req: Request, res: Response) => {
+    const locale = typeof req.query.locale === 'string' ? req.query.locale : undefined
+    const item = await catalogStorefrontService.getCategoryBySlug(req.params.slug, locale)
+    res.json(ok({ item }))
+  }),
+
   brands: asyncHandler(async (req: Request, res: Response) => {
     const locale = typeof req.query.locale === 'string' ? req.query.locale : undefined
     const items = await catalogStorefrontService.listBrands(locale)
     res.json(ok({ items }))
+  }),
+
+  brandBySlug: asyncHandler(async (req: Request, res: Response) => {
+    const locale = typeof req.query.locale === 'string' ? req.query.locale : undefined
+    const item = await catalogStorefrontService.getBrandBySlug(req.params.slug, locale)
+    res.json(ok({ item }))
   }),
 
   products: asyncHandler(async (req: Request, res: Response) => {

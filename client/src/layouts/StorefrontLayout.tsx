@@ -7,7 +7,7 @@ import { ImpersonationBanner } from '@/components/ImpersonationBanner'
 import { CartFeedbackLayer } from '@/components/cart/CartFeedbackLayer'
 import { PageTransitionShell } from '@/components/motion'
 import { SiteShell } from '@/components/site/SiteShell'
-import { fetchSitePage, siteStore } from '@/features/site'
+import { fetchSitePage, seedSitePageContent, siteStore } from '@/features/site'
 import { useLocale } from '@/context/locale-context'
 import { resolveDcActiveNavId } from '@/lib/dc-static-routes'
 import type { SiteShellContent } from '@/types/site-content'
@@ -25,13 +25,13 @@ export function StorefrontLayout({ children, initialShell = null }: Props) {
   const activeNavId = resolveDcActiveNavId(pathname)
 
   useEffect(() => {
-    if (initialShell && !siteStore.pages.shell) {
-      siteStore.pages.shell = initialShell
+    if (initialShell) {
+      seedSitePageContent('shell', locale, initialShell)
     }
-  }, [initialShell])
+  }, [initialShell, locale])
 
   useEffect(() => {
-    void fetchSitePage('shell', locale)
+    void fetchSitePage('shell', locale, { skipIfFresh: true })
   }, [locale])
 
   return (

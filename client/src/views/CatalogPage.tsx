@@ -8,8 +8,8 @@ import { SeoHead } from '@/components/SeoHead'
 import { useI18n } from '@/hooks/use-i18n'
 import type { CatalogSort } from '@/features/catalog/catalog.store'
 import { useSnapshot } from 'valtio/react'
-import { catalogStore, fetchBrands, fetchCategories, fetchNextProductsPage, fetchProducts } from '@/features/catalog'
-import { fetchSitePage, siteStore } from '@/features/site'
+import { catalogStore, fetchCatalogBootstrap, fetchNextProductsPage, fetchProducts } from '@/features/catalog'
+import { siteStore } from '@/features/site'
 import type { CatalogPageContent } from '@/types/site-content'
 import { CatalogPageView } from '@/components/site/catalog/CatalogPageView'
 import { useInfiniteScrollSentinel } from '@/hooks/use-infinite-scroll-sentinel'
@@ -135,9 +135,7 @@ export function CatalogPage({ forcedBrandSlug }: { forcedBrandSlug?: string } = 
   })
 
   useEffect(() => {
-    void fetchCategories({ locale })
-    void fetchBrands({ locale })
-    void fetchSitePage('catalog', locale)
+    void fetchCatalogBootstrap({ locale })
   }, [locale])
 
   useEffect(() => {

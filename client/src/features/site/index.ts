@@ -5,6 +5,7 @@ export {
   getShellContent,
   getSitePageContent,
   isSitePageLoading,
+  seedSitePageContent,
   siteStore,
   submitSiteInquiry,
   type SiteInquiryKind,

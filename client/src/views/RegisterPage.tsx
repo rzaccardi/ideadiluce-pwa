@@ -6,6 +6,7 @@ import { useSnapshot } from 'valtio/react'
 import { authStore, register } from '@/features/auth'
 import { TextInput } from '@/components/TextInput'
 import { Button } from '@/components/Button'
+import { AUTH_FORM_CONTAINER_CLASS } from '@/components/Container'
 import { ToastOnError } from '@/components/ToastFeedback'
 import { PageHeader } from '@/components/PageHeader'
 import { FadeIn } from '@/components/motion'
@@ -41,7 +42,7 @@ export function RegisterPage() {
 
   return (
     <FadeIn>
-    <div className="mx-auto max-w-md">
+    <div className={AUTH_FORM_CONTAINER_CLASS}>
       <PageHeader title={t('register.title')} />
       <ToastOnError message={auth.error} />
       <form onSubmit={(e) => void onSubmit(e)} className="space-y-4">

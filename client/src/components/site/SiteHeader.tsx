@@ -10,10 +10,25 @@ import type { DcActiveNavId } from '@/lib/dc-static-routes'
 import { resolveNavDropdownHref } from '@/lib/dc-static-routes'
 import type { SiteMegaMenuPanel, SiteShellContent } from '@/types/site-content'
 import { cn } from '@/utils/cn'
+import { ui } from '@/lib/ui-classes'
 import { slideDownVariants, transitionBase } from '@/lib/motion/presets'
 import { AttaccoMegaPanel } from './AttaccoMegaPanel'
 import { SiteHeaderActions } from './SiteHeaderActions'
-import { BrandWordmark, SectionContainer } from './primitives'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { BrandWordmark, SectionContainer, SITE_PAGE_X_CLASS } from './primitives'
+
+function MobileMenuCloseIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className={className} fill="none">
+      <path
+        d="M6 6l12 12M18 6L6 18"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="2"
+      />
+    </svg>
+  )
+}
 
 function NavActiveBar({ tone }: { tone: 'design' | 'technical' | 'neutral' }) {
   return (
@@ -157,6 +172,30 @@ export function SiteHeader({
     return () => document.removeEventListener('keydown', onKey)
   }, [openMenu])
 
+  useEffect(() => {
+    if (!mobileOpen) return
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileOpen(false)
+    }
+    document.addEventListener('keydown', onKey)
+
+    const mq = window.matchMedia('(min-width: 1024px)')
+    const onWide = () => {
+      if (mq.matches) setMobileOpen(false)
+    }
+    mq.addEventListener('change', onWide)
+
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      mq.removeEventListener('change', onWide)
+      document.body.style.overflow = prevOverflow
+    }
+  }, [mobileOpen])
+
   const isDropdownActive = (id: string) => openMenu === id || (openMenu === null && activeNavId === id)
 
   const activeDropdown = nav.items.find(
@@ -183,7 +222,7 @@ export function SiteHeader({
       </AnimatePresence>
       <motion.header
         className={cn(
-          'sticky top-0 z-30 border-b',
+          'sticky top-0 z-50 border-b',
           isDark ? 'border-white/8 bg-idl-design text-idl-design-muted' : 'border-idl-border bg-idl-paper',
         )}
         initial={reduceMotion ? false : 'hidden'}
@@ -191,21 +230,26 @@ export function SiteHeader({
         variants={slideDownVariants}
         transition={transitionBase}
       >
-        <SectionContainer className="relative flex items-center justify-between gap-3 px-[18px] py-[11px] sm:px-6 sm:py-4 lg:gap-4 lg:px-12 lg:py-[18px]">
-          <div className="flex items-center gap-6 lg:gap-10">
+        <SectionContainer className="relative flex items-center justify-between gap-2 py-3 md:gap-3 md:py-4 lg:gap-4 lg:py-[18px]">
+          <div className="flex min-w-0 items-center gap-3 md:gap-6 lg:gap-10">
             <button
               type="button"
               className="flex flex-col gap-1 lg:hidden"
               aria-label="Menu"
-              onClick={() => setMobileOpen((v) => !v)}
+              aria-expanded={mobileOpen}
+              onClick={() => {
+                setOpenMenu(null)
+                setMobileOpen((v) => !v)
+              }}
             >
-              <span className={cn('h-0.5 w-5', isDark ? 'bg-idl-design-muted' : 'bg-idl-ink-soft')} />
-              <span className={cn('h-0.5 w-5', isDark ? 'bg-idl-design-muted' : 'bg-idl-ink-soft')} />
-              <span className={cn('h-0.5 w-3', isDark ? 'bg-idl-design-muted' : 'bg-idl-ink-soft')} />
+              <span className={cn('h-0.5 w-5', isDark ? 'bg-white' : 'bg-idl-ink-soft')} />
+              <span className={cn('h-0.5 w-5', isDark ? 'bg-white' : 'bg-idl-ink-soft')} />
+              <span className={cn('h-0.5 w-3', isDark ? 'bg-white' : 'bg-idl-ink-soft')} />
             </button>
             <Link to={lp('/')} className="rounded-sm transition-opacity hover:opacity-80">
               <BrandWordmark
-                className={cn('text-[22px] lg:text-[25px]', isDark && 'text-idl-design-fg')}
+                className={cn('text-[20px] md:text-[22px] lg:text-[25px]', isDark && 'text-white')}
+                accentClassName={isDark ? 'text-white' : undefined}
               />
             </Link>
             <nav className="hidden items-center gap-5 text-[14.5px] font-medium lg:flex">
@@ -264,72 +308,113 @@ export function SiteHeader({
             ) : null}
           </AnimatePresence>
         </SectionContainer>
-        <AnimatePresence>
-          {mobileOpen ? (
-            <motion.div
-              key="mobile-nav"
-              className={cn(
-                'overflow-hidden border-t lg:hidden',
-                isDark ? 'border-white/8 bg-idl-design' : 'border-idl-border bg-idl-paper',
-              )}
-              initial={reduceMotion ? false : { height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={transitionBase}
-            >
-              <nav
-                className={cn(
-                  'flex flex-col gap-3 px-4 py-4 text-[15px] font-medium',
-                  isDark ? 'text-idl-design-muted' : 'text-idl-ink-soft',
-                )}
-              >
-                {nav.items.map((item) =>
-                  item.kind === 'link' ? (
-                    <Link
-                      key={item.id}
-                      to={lp(item.href)}
-                      className={cn('transition-colors', isDark ? 'hover:text-idl-design-fg' : 'hover:text-idl-ink')}
-                      onClick={() => setMobileOpen(false)}
-                    >
-                      {item.label}
-                    </Link>
-                  ) : (
-                    <Link
-                      key={item.id}
-                      to={lp(resolveNavDropdownHref(item.id, item.href))}
-                      className={cn('transition-colors', isDark ? 'hover:text-idl-design-fg' : 'hover:text-idl-ink')}
-                      onClick={() => setMobileOpen(false)}
-                    >
-                      {item.label}
-                    </Link>
-                  ),
-                )}
-                <Link
-                  to={lp('/catalogo')}
-                  className={cn('transition-colors', isDark ? 'hover:text-idl-design-fg' : 'hover:text-idl-ink')}
-                  onClick={() => setMobileOpen(false)}
-                >
-                  {t('nav.catalog')}
-                </Link>
-                <Link
-                  to={lp('/wishlist')}
-                  className={cn('transition-colors', isDark ? 'hover:text-idl-design-fg' : 'hover:text-idl-ink')}
-                  onClick={() => setMobileOpen(false)}
-                >
-                  {t('nav.wishlist')}
-                </Link>
-                <Link
-                  to={lp('/login')}
-                  className={cn('transition-colors', isDark ? 'hover:text-idl-design-fg' : 'hover:text-idl-ink')}
-                  onClick={() => setMobileOpen(false)}
-                >
-                  {t('nav.login')}
-                </Link>
-              </nav>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
       </motion.header>
+      <AnimatePresence>
+        {mobileOpen ? (
+          <motion.div
+            key="mobile-nav"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu"
+            className={cn(
+              'fixed inset-0 z-[60] flex min-h-dvh flex-col lg:hidden',
+              isDark ? 'bg-idl-design text-idl-design-muted' : 'bg-idl-paper text-idl-ink-soft',
+            )}
+            initial={reduceMotion ? false : { opacity: 0, x: '100%' }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: '100%' }}
+            transition={transitionBase}
+          >
+            <div
+              className={cn(
+                'flex shrink-0 items-center justify-between border-b py-4',
+                SITE_PAGE_X_CLASS,
+                isDark ? 'border-white/8' : 'border-idl-border',
+              )}
+            >
+              <Link
+                to={lp('/')}
+                className="rounded-sm transition-opacity hover:opacity-80"
+                onClick={() => setMobileOpen(false)}
+              >
+                <BrandWordmark
+                  className={cn('text-[20px] md:text-[22px]', isDark ? 'text-white' : undefined)}
+                  accentClassName={isDark ? 'text-white' : undefined}
+                />
+              </Link>
+              <button
+                type="button"
+                aria-label="Chiudi menu"
+                className={cn(
+                  ui.interactive,
+                  'inline-flex size-10 shrink-0 items-center justify-center rounded-full border',
+                  isDark
+                    ? 'border-white/16 bg-white/6 text-white hover:border-idl-brass hover:text-white'
+                    : 'border-idl-border-strong bg-white text-idl-ink-soft hover:text-idl-ink',
+                )}
+                onClick={() => setMobileOpen(false)}
+              >
+                <MobileMenuCloseIcon className="size-5" />
+              </button>
+            </div>
+            <nav
+              className={cn(
+                'flex flex-1 flex-col gap-3 overflow-y-auto py-6 text-[15px] font-medium',
+                SITE_PAGE_X_CLASS,
+                isDark ? 'text-idl-design-muted' : 'text-idl-ink-soft',
+              )}
+            >
+              {nav.items.map((item) =>
+                item.kind === 'link' ? (
+                  <Link
+                    key={item.id}
+                    to={lp(item.href)}
+                    className={cn('transition-colors', isDark ? 'hover:text-idl-design-fg' : 'hover:text-idl-ink')}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <Link
+                    key={item.id}
+                    to={lp(resolveNavDropdownHref(item.id, item.href))}
+                    className={cn('transition-colors', isDark ? 'hover:text-idl-design-fg' : 'hover:text-idl-ink')}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ),
+              )}
+              <Link
+                to={lp('/catalogo')}
+                className={cn('transition-colors', isDark ? 'hover:text-idl-design-fg' : 'hover:text-idl-ink')}
+                onClick={() => setMobileOpen(false)}
+              >
+                {t('nav.catalog')}
+              </Link>
+              <Link
+                to={lp('/wishlist')}
+                className={cn('transition-colors', isDark ? 'hover:text-idl-design-fg' : 'hover:text-idl-ink')}
+                onClick={() => setMobileOpen(false)}
+              >
+                {t('nav.wishlist')}
+              </Link>
+              <Link
+                to={lp('/login')}
+                className={cn('transition-colors', isDark ? 'hover:text-idl-design-fg' : 'hover:text-idl-ink')}
+                onClick={() => setMobileOpen(false)}
+              >
+                {t('nav.login')}
+              </Link>
+              <LanguageSwitcher
+                variant="mobileNav"
+                theme={isDark ? 'dark' : 'light'}
+                onLocaleChange={() => setMobileOpen(false)}
+              />
+            </nav>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </>
   )
 }

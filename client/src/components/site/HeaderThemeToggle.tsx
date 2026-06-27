@@ -47,12 +47,12 @@ export function HeaderThemeToggle() {
         ui.interactive,
         'inline-flex size-[38px] shrink-0 items-center justify-center rounded-full border p-0',
         isDark
-          ? 'border-white/16 bg-white/6 hover:border-idl-glow/50 hover:text-idl-glow'
+          ? 'border-white/16 bg-white/6 text-white hover:border-white/40 hover:text-white'
           : 'border-idl-border-strong bg-white text-idl-brass hover:border-idl-brass',
       )}
     >
       {isDark ? (
-        <MoonIcon className="size-[18px] text-idl-glow" />
+        <MoonIcon className="size-[18px]" />
       ) : (
         <SunIcon className="size-[18px] text-idl-brass" />
       )}

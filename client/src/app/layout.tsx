@@ -1,26 +1,8 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
-import { Hanken_Grotesk, JetBrains_Mono, Newsreader } from 'next/font/google'
 import { Providers } from '@/providers'
+import { hanken } from '@/lib/fonts'
 import './globals.css'
-
-const newsreader = Newsreader({
-  subsets: ['latin'],
-  variable: '--font-newsreader',
-  display: 'swap',
-})
-
-const hanken = Hanken_Grotesk({
-  subsets: ['latin'],
-  variable: '--font-hanken',
-  display: 'swap',
-})
-
-const jetbrains = JetBrains_Mono({
-  subsets: ['latin'],
-  variable: '--font-jetbrains',
-  display: 'swap',
-})
 
 export const metadata: Metadata = {
   title: 'Idea di Luce',
@@ -35,7 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="it"
-      className={`${newsreader.variable} ${hanken.variable} ${jetbrains.variable}`}
+      className={hanken.variable}
       suppressHydrationWarning
     >
       <body className="flex min-h-screen flex-col" suppressHydrationWarning>

@@ -183,52 +183,68 @@ export async function buildCartAvailabilityLookup(
 ): Promise<Map<string, CartLineAvailabilityDTO & { purchasable: boolean }>> {
   const lookup = new Map<string, CartLineAvailabilityDTO & { purchasable: boolean }>()
 
-  for (const line of lines) {
-    const key = `${line.productRef}:${line.variantRef ?? ''}`
-    if (lookup.has(key)) continue
+  const uniqueRefs = [...new Set(lines.map((line) => line.productRef))]
+  const resolvedProducts = await Promise.all(uniqueRefs.map((ref) => productResolver(ref)))
+  const productByRef = new Map(
+    uniqueRefs.map((ref, index) => [ref, resolvedProducts[index] ?? null]),
+  )
 
-    const product = await productResolver(line.productRef)
-    if (!product) {
-      lookup.set(key, {
-        state: 'out_of_stock',
-        stockQty: null,
-        effectiveLeadDays: null,
-        warning: 'Prodotto non più disponibile.',
-        purchasable: false,
-      })
-      continue
-    }
+  const lineKeys = lines.map((line) => ({
+    line,
+    key: `${line.productRef}:${line.variantRef ?? ''}`,
+  }))
 
-    const enriched = await enrichProductDetailWithStock(ctx, product, line.quantity)
-    const variant =
-      enriched.variants.find((v) => v.ref === line.variantRef) ??
-      enriched.variants.find((v) => String(v.odooVariantId) === line.variantRef) ??
-      enriched.variants[0]
-    const availabilityData = variant?.availability ?? enriched.availability
+  const uniqueLineKeys = lineKeys.filter(
+    ({ key }, index, arr) => arr.findIndex((x) => x.key === key) === index,
+  )
 
-    if (!availabilityData) {
-      lookup.set(key, {
-        state: 'available',
-        stockQty: variant?.stockQty ?? null,
-        effectiveLeadDays: null,
-        warning: null,
-        purchasable: true,
-      })
-      continue
-    }
+  await Promise.all(
+    uniqueLineKeys.map(async ({ line, key }) => {
+      if (lookup.has(key)) return
 
-    const resolved = resolveVariantAvailability(
-      {
-        stockQty: availabilityData.qtyAvailable,
-        restockDate: availabilityData.restockDate,
-        leadTimeDays: availabilityData.customerLeadTimeDays,
-        saleOk: !availabilityData.isUnrecoverable,
-        orderable: availabilityData.isOrderable,
-      },
-      line.quantity,
-    )
-    lookup.set(key, variantAvailabilityToCartLine(resolved))
-  }
+      const product = productByRef.get(line.productRef)
+      if (!product) {
+        lookup.set(key, {
+          state: 'out_of_stock',
+          stockQty: null,
+          effectiveLeadDays: null,
+          warning: 'Prodotto non più disponibile.',
+          purchasable: false,
+        })
+        return
+      }
+
+      const enriched = await enrichProductDetailWithStock(ctx, product, line.quantity)
+      const variant =
+        enriched.variants.find((v) => v.ref === line.variantRef) ??
+        enriched.variants.find((v) => String(v.odooVariantId) === line.variantRef) ??
+        enriched.variants[0]
+      const availabilityData = variant?.availability ?? enriched.availability
+
+      if (!availabilityData) {
+        lookup.set(key, {
+          state: 'available',
+          stockQty: variant?.stockQty ?? null,
+          effectiveLeadDays: null,
+          warning: null,
+          purchasable: true,
+        })
+        return
+      }
+
+      const resolved = resolveVariantAvailability(
+        {
+          stockQty: availabilityData.qtyAvailable,
+          restockDate: availabilityData.restockDate,
+          leadTimeDays: availabilityData.customerLeadTimeDays,
+          saleOk: !availabilityData.isUnrecoverable,
+          orderable: availabilityData.isOrderable,
+        },
+        line.quantity,
+      )
+      lookup.set(key, variantAvailabilityToCartLine(resolved))
+    }),
+  )
 
   return lookup
 }
