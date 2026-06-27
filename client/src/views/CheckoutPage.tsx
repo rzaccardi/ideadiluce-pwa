@@ -202,7 +202,7 @@ export function CheckoutPage() {
       setStripeMount((prev) => {
         const next = {
           clientSecret: checkout.payment!.clientSecret!,
-          publishableKey: checkout.payment!.publishableKey,
+          publishableKey: checkout.payment!.publishableKey ?? undefined,
           orderId: checkout.payment!.orderId,
         }
         if (

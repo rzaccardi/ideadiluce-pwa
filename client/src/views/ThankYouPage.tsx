@@ -47,7 +47,8 @@ export function ThankYouPage() {
         setOrder(detail)
 
         const paymentSucceeded =
-          detail.paymentStatus === 'paid' ||
+          detail.paymentStatus === 'captured' ||
+          detail.paymentStatus === 'authorized' ||
           detail.orderStatus === 'paid' ||
           detail.orderStatus === 'confirmed' ||
           detail.orderStatus === 'completed' ||

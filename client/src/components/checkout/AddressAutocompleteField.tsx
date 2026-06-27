@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useIsClient } from '@/hooks/use-is-client'
 import { useLocalControlledField } from '@/hooks/use-local-controlled-field'
 import { useI18n } from '@/hooks/use-i18n'
 import { cn } from '@/utils/cn'
@@ -48,6 +49,7 @@ export function AddressAutocompleteField({
   onSetupHint,
 }: Props) {
   const { t } = useI18n()
+  const isClient = useIsClient()
   const listId = useId()
   const rootRef = useRef<HTMLDivElement>(null)
   const dropdownRef = useRef<HTMLUListElement>(null)
@@ -167,7 +169,7 @@ export function AddressAutocompleteField({
   }
 
   const dropdown =
-    open && suggestions.length > 0 && dropdownRect
+    isClient && open && suggestions.length > 0 && dropdownRect
       ? createPortal(
           <ul
             ref={dropdownRef}

@@ -17,15 +17,13 @@ import { BrandWordmark, SectionContainer } from './primitives'
 
 function NavActiveBar({ tone }: { tone: 'design' | 'technical' | 'neutral' }) {
   return (
-    <motion.span
-      layoutId="site-nav-active"
+    <span
       className={cn(
         'absolute inset-x-0 -bottom-px h-0.5',
         tone === 'design' && 'bg-idl-brass',
         tone === 'technical' && 'bg-idl-amber',
         tone === 'neutral' && 'bg-idl-ink-soft',
       )}
-      transition={transitionBase}
     />
   )
 }

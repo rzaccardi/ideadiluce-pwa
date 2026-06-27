@@ -2,9 +2,10 @@
 
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { useI18n } from '@/hooks/use-i18n'
+import { useIsClient } from '@/hooks/use-is-client'
 import { cn } from '@/utils/cn'
 import { Button } from './Button'
-import { useI18n } from '@/hooks/use-i18n'
 import { ui } from '@/lib/ui-classes'
 
 type Props = {
@@ -31,6 +32,7 @@ export function ConfirmDialog({
   className,
 }: Props) {
   const { t } = useI18n()
+  const isClient = useIsClient()
 
   useEffect(() => {
     if (!open) return
@@ -52,7 +54,7 @@ export function ConfirmDialog({
     }
   }, [open])
 
-  if (!open || typeof document === 'undefined') return null
+  if (!open || !isClient) return null
 
   return createPortal(
     <div

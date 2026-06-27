@@ -20,7 +20,7 @@ export function PageTransitionShell({ children }: { children: React.ReactNode })
   }
 
   return (
-    <AnimatePresence initial={false} mode="sync">
+    <AnimatePresence initial={false} mode="wait">
       {children}
     </AnimatePresence>
   )

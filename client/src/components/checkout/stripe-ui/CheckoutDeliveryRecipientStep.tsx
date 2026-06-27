@@ -14,6 +14,8 @@ import { CheckoutPanel, CheckoutSegmentControl } from './CheckoutStepPrimitives'
 import { useI18n } from '@/hooks/use-i18n'
 import {
   CheckoutActionRow,
+  StripeControlledInput,
+  StripeFieldGroup,
   StripePayButton,
 } from './StripeFields'
 import { CheckoutStepBackButton } from './CheckoutStepBackButton'

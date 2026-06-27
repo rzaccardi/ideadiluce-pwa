@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { api } from '@/api/endpoints'
+import { useIsClient } from '@/hooks/use-is-client'
 import {
   CheckoutActionRow,
   StripeErrorBanner,
@@ -21,6 +22,7 @@ type Props = {
 
 export function ForgotPasswordModal({ open, initialEmail = '', onClose }: Props) {
   const { t } = useI18n()
+  const isClient = useIsClient()
   const [email, setEmail] = useState(initialEmail)
   const [error, setError] = useState<string | null>(null)
   const [sent, setSent] = useState(false)
@@ -68,7 +70,7 @@ export function ForgotPasswordModal({ open, initialEmail = '', onClose }: Props)
     }
   }
 
-  if (!open || typeof document === 'undefined') return null
+  if (!open || !isClient) return null
 
   return createPortal(
     <div

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { CheckoutStep } from '@/features/checkout'
 import { useI18n } from '@/hooks/use-i18n'
+import { useIsClient } from '@/hooks/use-is-client'
 import type { MessageKey } from '@/i18n/messages'
 import {
   CheckoutLoadingBulb,
@@ -139,6 +140,7 @@ type Props = {
 
 export function CheckoutLoadingOverlay({ icon, messageKey }: Props) {
   const { t } = useI18n()
+  const isClient = useIsClient()
 
   useEffect(() => {
     const prev = document.body.style.overflow
@@ -148,7 +150,7 @@ export function CheckoutLoadingOverlay({ icon, messageKey }: Props) {
     }
   }, [])
 
-  if (typeof document === 'undefined') return null
+  if (!isClient) return null
 
   const overlay = (
     <div
