@@ -67,7 +67,15 @@ function BootstrapPageContent({ route }: { route: BootstrapRoute }) {
       return <HubBootstrapSkeleton count={8} />
 
     case 'guide':
-      return <EditorialPageSkeleton />
+      return (
+        <PageFlexShell tone="paper">
+          <PageFlexBody tone="paper">
+            <SectionContainer className="py-8 sm:py-10">
+              <EditorialPageSkeleton />
+            </SectionContainer>
+          </PageFlexBody>
+        </PageFlexShell>
+      )
 
     case 'category-landing':
       return (
@@ -81,7 +89,15 @@ function BootstrapPageContent({ route }: { route: BootstrapRoute }) {
       )
 
     case 'content':
-      return <ContentPageSkeleton />
+      return (
+        <PageFlexShell tone="paper">
+          <PageFlexBody tone="paper">
+            <SectionContainer className="py-8 sm:py-10">
+              <ContentPageSkeleton />
+            </SectionContainer>
+          </PageFlexBody>
+        </PageFlexShell>
+      )
 
     case 'catalog':
       return <CatalogPageSkeleton />

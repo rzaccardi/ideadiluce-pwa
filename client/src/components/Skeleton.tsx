@@ -177,9 +177,9 @@ export function ProductDetailSkeleton() {
       <div className="space-y-12" role="status">
         <span className="sr-only">{t('skeleton.loadingProduct')}</span>
         <SectionContainer className="py-6 sm:py-8">
-          <div className="grid gap-10 md:grid-cols-2">
+          <div className="grid min-w-0 gap-8 sm:gap-10 lg:grid-cols-2">
             <Skeleton className="aspect-square rounded-xl" />
-            <div className="text-left">
+            <div className="min-w-0 text-left">
               <Skeleton className="h-8 w-3/4" />
               <Skeleton className="mt-4 h-8 w-32" />
               <Skeleton className="mt-3 h-4 w-24" />
@@ -363,40 +363,30 @@ export function CatalogFiltersSkeleton() {
 export function ContentPageSkeleton() {
   const { t } = useI18n()
   return (
-    <PageFlexShell tone="paper">
-      <PageFlexBody tone="paper">
-        <SectionContainer className="space-y-8 py-8 sm:py-10">
-          <div className="space-y-4" role="status" aria-label={t('skeleton.loadingPageHeader')}>
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-            <Skeleton className="h-4 w-4/5" />
-          </div>
-          <Skeleton className="h-56 w-full rounded-xl" />
-        </SectionContainer>
-      </PageFlexBody>
-    </PageFlexShell>
+    <div className="space-y-8" role="status" aria-label={t('skeleton.loadingPageHeader')}>
+      <div className="space-y-4">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-5/6" />
+        <Skeleton className="h-4 w-4/5" />
+      </div>
+      <Skeleton className="h-56 w-full rounded-xl" />
+    </div>
   )
 }
 
 export function EditorialPageSkeleton() {
   const { t } = useI18n()
   return (
-    <PageFlexShell tone="paper">
-      <PageFlexBody tone="paper">
-        <SectionContainer className="space-y-10 py-8 sm:py-10">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="status" aria-label={t('skeleton.loadingProducts')}>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="space-y-3 rounded-xl border border-idl-border bg-white p-5">
-                <Skeleton className="aspect-[4/3] w-full rounded-lg" />
-                <Skeleton className="h-5 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-              </div>
-            ))}
-          </div>
-        </SectionContainer>
-      </PageFlexBody>
-    </PageFlexShell>
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="status" aria-label={t('skeleton.loadingProducts')}>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="space-y-3 rounded-xl border border-idl-border bg-white p-5">
+          <Skeleton className="aspect-[4/3] w-full rounded-lg" />
+          <Skeleton className="h-5 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+      ))}
+    </div>
   )
 }
 

@@ -4,14 +4,18 @@ import { useEffect } from 'react'
 import { useSnapshot } from 'valtio/react'
 import { fetchSitePage, siteStore } from '@/features/site'
 import type { ContentPageContent, SitePageKey } from '@/types/site-content'
-import { isContentPage } from '@/lib/site-page-keys'
+import { isContentPage, isGuidePageKey } from '@/lib/site-page-keys'
 import { ContentPageView } from '@/components/site/content/ContentPageView'
+import { ContattiPageView } from '@/components/site/content/ContattiPageView'
+import { GuideArticlePageView } from '@/components/site/content/GuideArticlePageView'
 import { useLocale } from '@/context/locale-context'
 import { ErrorState } from '@/components/ErrorState'
 import { ToastOnError } from '@/components/ToastFeedback'
 import { SeoHead } from '@/components/SeoHead'
+import { PageFlexBody, PageFlexShell } from '@/components/layout/PageFlexShell'
 import { ContentPageSkeleton } from '@/components/Skeleton'
 import { PageHeader } from '@/components/PageHeader'
+import { SectionContainer } from '@/components/site/primitives'
 import { PageLoadTransition } from '@/components/motion'
 import { getPageHeaderFallbackTitle } from '@/lib/page-header-fallbacks'
 
@@ -46,25 +50,59 @@ export function ContentPage({ pageKey, breadcrumb }: Props) {
   }
 
   const fallbackTitle = getPageHeaderFallbackTitle(pageKey)
+  const isGuideArticle = isGuidePageKey(pageKey)
+
+  if (pageKey === 'contatti') {
+    return (
+      <PageLoadTransition
+        isLoading={!content}
+        skeleton={<ContentPageSkeleton />}
+        loadingHeader={
+          fallbackTitle ? <PageHeader title={fallbackTitle} /> : null
+        }
+      >
+        {content ? (
+          <>
+            <SeoHead
+              title={`${content.title} | Idea di Luce`}
+              description={content.subtitle ?? content.intro}
+              noindex={content.seo?.noindex}
+            />
+            <ContattiPageView content={content} />
+          </>
+        ) : null}
+      </PageLoadTransition>
+    )
+  }
 
   return (
-    <PageLoadTransition
-      isLoading={!content}
-      skeleton={<ContentPageSkeleton />}
-      loadingHeader={
-        fallbackTitle ? <PageHeader title={fallbackTitle} /> : null
-      }
-    >
-      {content ? (
-        <>
-          <SeoHead
-            title={`${content.title} | Idea di Luce`}
-            description={content.subtitle ?? content.intro}
-            noindex={content.seo?.noindex}
-          />
-          <ContentPageView content={content} breadcrumb={breadcrumb} />
-        </>
-      ) : null}
-    </PageLoadTransition>
+    <PageFlexShell tone="paper">
+      <PageFlexBody tone="paper">
+        <SectionContainer className="py-8 sm:py-10">
+          <PageLoadTransition
+            isLoading={!content}
+            skeleton={<ContentPageSkeleton />}
+            loadingHeader={
+              fallbackTitle ? <PageHeader title={fallbackTitle} /> : null
+            }
+          >
+            {content ? (
+              <>
+                <SeoHead
+                  title={`${content.title} | Idea di Luce`}
+                  description={content.subtitle ?? content.intro}
+                  noindex={content.seo?.noindex}
+                />
+                {isGuideArticle ? (
+                  <GuideArticlePageView content={content} />
+                ) : (
+                  <ContentPageView content={content} breadcrumb={breadcrumb} />
+                )}
+              </>
+            ) : null}
+          </PageLoadTransition>
+        </SectionContainer>
+      </PageFlexBody>
+    </PageFlexShell>
   )
 }

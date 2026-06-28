@@ -87,7 +87,7 @@ export function ProductDetailGallery({ images, alt, activeUrl, variant = 'design
 
   return (
     <>
-      <div className="flex flex-col gap-3.5 lg:sticky lg:top-[96px]">
+      <div className="flex min-w-0 w-full flex-col gap-3.5 lg:sticky lg:top-[96px]">
         <button
           type="button"
           className={cn(

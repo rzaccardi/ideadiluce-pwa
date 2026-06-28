@@ -1,15 +1,36 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
-import { api } from '@/api/endpoints'
-import { mapArflyListResponse } from '@/lib/arfly/mapper'
-import { toPwaLocale } from '@/lib/arfly/lookup'
-import { getCategoryLandingContent } from '@/lib/category-landing.defaults'
-import { DesignCategoryView, TechnicalCategoryView } from '@/components/site/category'
-import { SeoHead } from '@/components/SeoHead'
+import { useCallback, useEffect, useMemo } from 'react'
+import { useQueryParams } from '@/lib/navigation'
 import { useLocale } from '@/context/locale-context'
+import { useLocalePath } from '@/hooks/use-locale-path'
+import { SeoHead } from '@/components/SeoHead'
+import type { CatalogSort } from '@/features/catalog/catalog.store'
+import { useSnapshot } from 'valtio/react'
+import {
+  catalogStore,
+  fetchCatalogBootstrap,
+  fetchNextProductsPage,
+  fetchProducts,
+} from '@/features/catalog'
+import { getCategoryLandingContent } from '@/lib/category-landing.defaults'
+import {
+  buildCategoryLandingActiveFilters,
+  buildCategoryLandingSearchQuery,
+  categoryLandingSortLabel,
+  parseCategoryLandingFilters,
+  patchCategoryLandingFilterParams,
+  removeCategoryLandingFilter,
+  resetCategoryLandingFilterParams,
+  resolveCategoryLandingBrandSlug,
+  resolveCategoryLandingInStock,
+  resolveCategoryLandingPriceCents,
+  toggleCategoryLandingFilter,
+  CATEGORY_LANDING_CATALOG_CONFIG,
+} from '@/lib/category-landing-filters'
+import type { CatalogPriceBucket } from '@/lib/catalog-filters'
+import { DesignCategoryView, TechnicalCategoryView } from '@/components/site/category'
 import type { CategoryLandingKey } from '@/types/category-landing'
-import type { ProductCardDTO } from '@/types/dto'
 
 type Props = {
   pageKey: CategoryLandingKey
@@ -17,73 +38,135 @@ type Props = {
 
 export function ProductCategoryLandingPage({ pageKey }: Props) {
   const { locale } = useLocale()
+  const lp = useLocalePath()
+  const [params, setParams] = useQueryParams()
   const content = getCategoryLandingContent(pageKey)
+  const catalogConfig = CATEGORY_LANDING_CATALOG_CONFIG[pageKey]
   const isDesign = pageKey === 'design'
 
-  const [products, setProducts] = useState<ProductCardDTO[]>([])
-  const [totalCount, setTotalCount] = useState<number | undefined>()
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const cat = useSnapshot(catalogStore)
+  const selectedFilterValues = useMemo(() => parseCategoryLandingFilters(params), [params])
+  const brandParam = params.get('brand') ?? undefined
+  const inStockFromUrl = params.get('inStock') === '1' || params.get('inStock') === 'true'
+  const sortParam = (params.get('sort') as CatalogSort | null) ?? 'relevance'
+  const priceBucketParam = (params.get('priceBucket') as CatalogPriceBucket | null) ?? undefined
+  const minPriceFromUrl = params.get('minPrice') ? Number(params.get('minPrice')) * 100 : undefined
+  const maxPriceFromUrl = params.get('maxPrice') ? Number(params.get('maxPrice')) * 100 : undefined
 
-  const loadProducts = useCallback(
-    async (nextPage: number, append: boolean) => {
-      setLoading(true)
-      try {
-        const pwaLocale = toPwaLocale(locale)
-        const raw = await api.arfly.products({
-          locale: pwaLocale,
-          page: nextPage,
-          pageSize: content.pageSize,
-          q: content.searchQuery,
-          enrichSpecTags: !isDesign,
-        })
-        const mapped = mapArflyListResponse(raw, pwaLocale)
-        setProducts((prev) => (append ? [...prev, ...mapped.items] : mapped.items))
-        setTotalCount(mapped.total)
-        setHasMore(mapped.hasNextPage)
-        setPage(mapped.page)
-      } catch {
-        if (!append) {
-          setProducts([])
-          setTotalCount(undefined)
-          setHasMore(false)
-        }
-      } finally {
-        setLoading(false)
-      }
-    },
-    [content.pageSize, content.searchQuery, locale],
+  const inStockOnly = resolveCategoryLandingInStock(selectedFilterValues, inStockFromUrl)
+  const { minPriceCents, maxPriceCents } = resolveCategoryLandingPriceCents(
+    pageKey,
+    selectedFilterValues,
+    priceBucketParam,
+    minPriceFromUrl,
+    maxPriceFromUrl,
+  )
+  const brandSlug = resolveCategoryLandingBrandSlug(selectedFilterValues, cat.brands, brandParam)
+  const effectiveQuery = buildCategoryLandingSearchQuery({
+    pageKey,
+    baseQuery: content.searchQuery ?? catalogConfig.baseQuery,
+    selected: selectedFilterValues,
+    groups: content.filterGroups,
+    brandSlug,
+  })
+
+  const activeFilters = useMemo(
+    () =>
+      buildCategoryLandingActiveFilters({
+        groups: content.filterGroups,
+        selected: selectedFilterValues,
+      }),
+    [content.filterGroups, selectedFilterValues],
   )
 
-  useEffect(() => {
-    void loadProducts(1, false)
-  }, [loadProducts])
+  const sortLabel = categoryLandingSortLabel(sortParam)
 
-  const onLoadMore = useCallback(() => {
-    if (!hasMore || loading) return
-    void loadProducts(page + 1, true)
-  }, [hasMore, loadProducts, loading, page])
+  const loadMore = useCallback(() => {
+    void fetchNextProductsPage()
+  }, [])
+
+  useEffect(() => {
+    void fetchCatalogBootstrap({ locale })
+  }, [locale])
+
+  useEffect(() => {
+    void fetchProducts({
+      categorySlug: catalogConfig.categorySlug,
+      brandSlug,
+      q: effectiveQuery,
+      page: 1,
+      pageSize: content.pageSize,
+      locale,
+      inStockOnly,
+      sort: sortParam,
+      minPriceCents,
+      maxPriceCents,
+    })
+  }, [
+    brandSlug,
+    catalogConfig.categorySlug,
+    content.pageSize,
+    effectiveQuery,
+    inStockOnly,
+    locale,
+    maxPriceCents,
+    minPriceCents,
+    sortParam,
+  ])
+
+  function setFilterParams(nextValues: Set<string>) {
+    setParams(patchCategoryLandingFilterParams(params, nextValues))
+  }
+
+  function toggleFilter(value: string) {
+    setFilterParams(toggleCategoryLandingFilter(selectedFilterValues, value))
+  }
+
+  function resetFilters() {
+    setParams(resetCategoryLandingFilterParams(params))
+  }
+
+  function removeFilter(key: string) {
+    setFilterParams(removeCategoryLandingFilter(selectedFilterValues, key))
+  }
+
+  function selectSort(sort: CatalogSort) {
+    const next = new URLSearchParams(params)
+    next.delete('page')
+    next.delete('pagination')
+    if (sort === 'relevance') next.delete('sort')
+    else next.set('sort', sort)
+    setParams(next)
+  }
+
+  const catalogSectionProps = {
+    content: {
+      ...content,
+      sortValue: sortLabel,
+    },
+    products: cat.products,
+    totalCount: cat.pagination.total,
+    loading: cat.isLoading,
+    isLoadingMore: cat.isLoadingMore,
+    hasMore: cat.pagination.hasNextPage,
+    onLoadMore: loadMore,
+    selectedFilterValues,
+    activeFilters,
+    sort: sortParam,
+    onToggleFilter: toggleFilter,
+    onResetFilters: resetFilters,
+    onRemoveFilter: removeFilter,
+    onSelectSort: selectSort,
+    lp,
+  }
 
   return (
     <>
       <SeoHead title={`${content.title} — Idea di Luce`} description={content.description} />
       {isDesign ? (
-        <DesignCategoryView
-          content={content}
-          products={products}
-          totalCount={totalCount}
-          loading={loading}
-          hasMore={hasMore}
-          onLoadMore={onLoadMore}
-        />
+        <DesignCategoryView {...catalogSectionProps} />
       ) : (
-        <TechnicalCategoryView
-          content={content}
-          products={products}
-          totalCount={totalCount}
-          loading={loading}
-        />
+        <TechnicalCategoryView {...catalogSectionProps} />
       )}
     </>
   )

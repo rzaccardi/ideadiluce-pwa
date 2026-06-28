@@ -1,6 +1,8 @@
+import type { CatalogSort } from '@/features/catalog/catalog.store'
 import { cn } from '@/utils/cn'
 
 type ActiveFilter = {
+  key: string
   label: string
 }
 
@@ -10,9 +12,19 @@ type Props = {
   activeFilters?: ReadonlyArray<ActiveFilter>
   sortLabel: string
   sortValue: string
+  sort?: CatalogSort
+  onSelectSort?: (sort: CatalogSort) => void
+  onRemoveFilter?: (key: string) => void
   variant?: 'design' | 'technical'
   compareEnabled?: boolean
 }
+
+const SORT_OPTIONS: Array<{ value: CatalogSort; label: string }> = [
+  { value: 'relevance', label: 'Rilevanza' },
+  { value: 'price_asc', label: 'Prezzo crescente' },
+  { value: 'price_desc', label: 'Prezzo decrescente' },
+  { value: 'name_asc', label: 'Nome A–Z' },
+]
 
 export function CategoryResultsToolbar({
   shownCount,
@@ -20,6 +32,9 @@ export function CategoryResultsToolbar({
   activeFilters = [],
   sortLabel,
   sortValue,
+  sort,
+  onSelectSort,
+  onRemoveFilter,
   variant = 'design',
   compareEnabled,
 }: Props) {
@@ -38,21 +53,24 @@ export function CategoryResultsToolbar({
             </>
           ) : (
             <>
-              <span className={cn('font-extrabold', isDesign ? 'text-idl-ink' : 'text-idl-ink')}>{shownCount}</span> prodotti
+              <span className={cn('font-extrabold', isDesign ? 'text-idl-ink' : 'text-idl-ink')}>{shownCount}</span>{' '}
+              prodotti
             </>
           )}
         </span>
         {activeFilters.map((filter) => (
-          <span
-            key={filter.label}
+          <button
+            key={filter.key}
+            type="button"
+            onClick={() => onRemoveFilter?.(filter.key)}
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs',
+              'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition hover:opacity-80',
               isDesign ? 'bg-idl-cream text-idl-ink-soft' : 'bg-idl-tech-panel text-idl-graphite-2',
             )}
           >
             {filter.label}
             <span className="text-idl-amber">✕</span>
-          </span>
+          </button>
         ))}
       </div>
 
@@ -67,14 +85,31 @@ export function CategoryResultsToolbar({
         ) : null}
         <div className="flex items-center gap-2">
           <span className={cn('text-[13.5px]', isDesign ? 'text-idl-ink-muted' : 'text-idl-muted')}>{sortLabel}</span>
-          <span
-            className={cn(
-              'rounded-md border px-3.5 py-2 text-[13.5px] font-semibold',
-              isDesign ? 'border-idl-path-design-border text-idl-ink' : 'border-idl-tech-border text-idl-ink',
-            )}
-          >
-            {sortValue} ▾
-          </span>
+          {onSelectSort && sort ? (
+            <select
+              value={sort}
+              onChange={(event) => onSelectSort(event.target.value as CatalogSort)}
+              className={cn(
+                'rounded-md border px-3.5 py-2 text-[13.5px] font-semibold',
+                isDesign ? 'border-idl-path-design-border text-idl-ink' : 'border-idl-tech-border text-idl-ink',
+              )}
+            >
+              {SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <span
+              className={cn(
+                'rounded-md border px-3.5 py-2 text-[13.5px] font-semibold',
+                isDesign ? 'border-idl-path-design-border text-idl-ink' : 'border-idl-tech-border text-idl-ink',
+              )}
+            >
+              {sortValue} ▾
+            </span>
+          )}
         </div>
       </div>
     </div>

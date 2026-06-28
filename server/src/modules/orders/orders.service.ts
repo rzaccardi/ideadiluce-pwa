@@ -9,6 +9,8 @@ import { logger } from '../../lib/logger.js'
 import { loadPwaOrderLines } from './pwa-order-lines.js'
 import { cartService } from '../cart/cart.service.js'
 import type { Request } from 'express'
+import type { PwaOrder } from '@prisma/client'
+import { ACCOUNT_VISIBLE_PWA_ORDER_STATUSES } from './orders.constants.js'
 
 function portalFromSnapshot(snapshotJson: unknown): string | null {
   if (!snapshotJson || typeof snapshotJson !== 'object') return null
@@ -77,17 +79,65 @@ async function listOdooOrdersForUser(
   if (!user) return []
 
   const map = await prisma.odooCustomerMap.findUnique({ where: { userId } })
-  const query =
-    map != null
-      ? { page: 1, pageSize: 50, partnerId: map.odooPartnerId }
-      : { page: 1, pageSize: 50, email: user.email }
 
   try {
-    const result = await odooSalesService.listConfirmedOrders(ctx, query)
-    return result.items.map(mapOdooOrder)
+    if (map != null) {
+      const byPartner = await odooSalesService.listConfirmedOrders(ctx, {
+        page: 1,
+        pageSize: 50,
+        partnerId: map.odooPartnerId,
+      })
+      if (byPartner.items.length > 0) {
+        return byPartner.items.map(mapOdooOrder)
+      }
+    }
+
+    const byEmail = await odooSalesService.listConfirmedOrders(ctx, {
+      page: 1,
+      pageSize: 50,
+      email: user.email,
+    })
+    return byEmail.items.map(mapOdooOrder)
   } catch (e) {
     logger.warn('orders.odoo_history_failed', { userId, err: String(e) })
     return []
+  }
+}
+
+function mapPwaOrderRow(po: PwaOrder): OrderDTO | null {
+  if (!po.odooSaleOrderId) return null
+
+  return {
+    id: `pwa-${po.id}`,
+    pwaOrderId: po.id,
+    odooSaleOrderId: po.odooSaleOrderId,
+    status: po.orderStatus.toLowerCase(),
+    paymentStatus: po.paymentStatus.toLowerCase(),
+    currencyCode: po.currencyCode,
+    totalAmount: po.amountTotal,
+    createdAt: (po.paidAt ?? po.createdAt).toISOString(),
+    odooPortalUrl: null,
+    source: 'pwa',
+    sourceLabel: 'E-commerce',
+  }
+}
+
+function mergePwaOrdersIntoList(fromCache: OrderDTO[], pwaOrders: PwaOrder[]) {
+  const cachePwaIds = new Set(
+    fromCache.map((o) => o.pwaOrderId).filter((id): id is string => Boolean(id)),
+  )
+  const cacheOdooIds = new Set(fromCache.map((o) => o.odooSaleOrderId))
+
+  for (const po of pwaOrders) {
+    if (cachePwaIds.has(po.id)) continue
+    if (po.odooSaleOrderId && cacheOdooIds.has(po.odooSaleOrderId)) continue
+
+    const mapped = mapPwaOrderRow(po)
+    if (!mapped) continue
+
+    fromCache.push(mapped)
+    cachePwaIds.add(po.id)
+    if (po.odooSaleOrderId) cacheOdooIds.add(po.odooSaleOrderId)
   }
 }
 
@@ -107,7 +157,7 @@ async function findOwnedPwaOrder(userId: string, id: string) {
     where: {
       id: pwaId,
       userId,
-      orderStatus: { in: ['PAID', 'CONFIRMED', 'COMPLETED'] },
+      orderStatus: { in: ACCOUNT_VISIBLE_PWA_ORDER_STATUSES },
     },
   })
 }
@@ -129,33 +179,28 @@ async function findAccessiblePwaOrder(req: Request, userId: string, id: string) 
 
 export const ordersService = {
   async list(userId: string, correlationId = 'orders-list'): Promise<OrderDTO[]> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    })
+    const emailLower = user?.email.toLowerCase().trim()
+
     const rows = await ordersRepository.listByUser(userId)
     const fromCache = rows.map(mapRow)
 
     const pwaOrders = await prisma.pwaOrder.findMany({
-      where: { userId, orderStatus: { in: ['PAID', 'CONFIRMED', 'COMPLETED'] } },
+      where: {
+        orderStatus: { in: ACCOUNT_VISIBLE_PWA_ORDER_STATUSES },
+        OR: [
+          { userId },
+          ...(emailLower ? [{ email: emailLower, userId: null }] : []),
+        ],
+      },
       orderBy: { paidAt: 'desc' },
       take: 50,
     })
 
-    const cacheOdooIds = new Set(fromCache.map((o) => o.odooSaleOrderId))
-    for (const po of pwaOrders) {
-      if (po.odooSaleOrderId && !cacheOdooIds.has(po.odooSaleOrderId)) {
-        fromCache.push({
-          id: `pwa-${po.id}`,
-          pwaOrderId: po.id,
-          odooSaleOrderId: po.odooSaleOrderId,
-          status: po.orderStatus.toLowerCase(),
-          paymentStatus: po.paymentStatus.toLowerCase(),
-          currencyCode: po.currencyCode,
-          totalAmount: po.amountTotal,
-          createdAt: (po.paidAt ?? po.createdAt).toISOString(),
-          odooPortalUrl: null,
-          source: 'pwa',
-          sourceLabel: 'E-commerce',
-        })
-      }
-    }
+    mergePwaOrdersIntoList(fromCache, pwaOrders)
 
     const seenOdooIds = new Set(fromCache.map((o) => o.odooSaleOrderId))
     const liveOdoo = await listOdooOrdersForUser(userId, { correlationId })

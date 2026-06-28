@@ -9,6 +9,7 @@ import { authRepository } from './auth.repository.js'
 import { generateSessionToken, hashSessionToken } from '../../lib/token-hash.js'
 import { toUserDTO } from '../users/user.mapper.js'
 import { loginWithOdooCredentials } from './odoo-account-sync.service.js'
+import { linkOrdersToUser } from '../orders/orders-user-link.service.js'
 
 function sessionExpiry(): Date {
   return new Date(Date.now() + env.SESSION_DAYS * 24 * 60 * 60 * 1000)
@@ -92,6 +93,10 @@ async function detachUserCartToGuestSession(userId: string, guestSessionId: stri
   })
 }
 
+async function mergeOrdersForUser(sessionId: string, userId: string, email: string) {
+  await linkOrdersToUser({ userId, email, sessionId })
+}
+
 async function mergeWishlistForUser(sessionId: string, userId: string) {
   const sessionItems = await prisma.wishlistItem.findMany({ where: { sessionId } })
   if (sessionItems.length === 0) return
@@ -148,6 +153,7 @@ export const authService = {
     await authRepository.linkSessionToUser(sessionId, user.id, sessionExpiry())
     await mergeCartsForUser(sessionId, user.id)
     await mergeWishlistForUser(sessionId, user.id)
+    await mergeOrdersForUser(sessionId, user.id, user.email)
     const fresh = await prisma.user.findUniqueOrThrow({ where: { id: user.id } })
     return await toUserDTO(fresh)
   },
@@ -164,6 +170,7 @@ export const authService = {
         await authRepository.linkSessionToUser(sessionId, user.id, sessionExpiry())
         await mergeCartsForUser(sessionId, user.id)
         await mergeWishlistForUser(sessionId, user.id)
+        await mergeOrdersForUser(sessionId, user.id, user.email)
         const fresh = await prisma.user.findUniqueOrThrow({ where: { id: user.id } })
         return await toUserDTO(fresh)
       }
@@ -202,6 +209,7 @@ export const authService = {
     await authRepository.linkSessionToUser(sessionId, user.id, sessionExpiry())
     await mergeCartsForUser(sessionId, user.id)
     await mergeWishlistForUser(sessionId, user.id)
+    await mergeOrdersForUser(sessionId, user.id, user.email)
     const fresh = await prisma.user.findUniqueOrThrow({ where: { id: user.id } })
     return await toUserDTO(fresh)
   },

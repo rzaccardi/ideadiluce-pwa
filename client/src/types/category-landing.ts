@@ -32,11 +32,15 @@ export type CategorySubtypeChip = {
 
 export type CategoryFilterOption = {
   label: string
+  value: string
+  queryToken?: string
   checked?: boolean
 }
 
 export type CategoryFilterChipOption = {
   label: string
+  value: string
+  queryToken?: string
   active?: boolean
 }
 

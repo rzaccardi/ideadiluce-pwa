@@ -11,7 +11,7 @@ import { slideDownVariants, transitionBase } from '@/lib/motion/presets'
 const MEGA_SOCKETS = ATTACCO_SOCKETS.filter((socket) => !socket.dashed).slice(0, 5)
 const ALL_SOCKETS = ATTACCO_SOCKETS.find((socket) => socket.dashed)!
 
-export function AttaccoMegaPanel() {
+export function AttaccoMegaPanel({ onLinkClick }: { onLinkClick?: () => void } = {}) {
   const lp = useLocalePath()
   const reduceMotion = useReducedMotion()
 
@@ -25,6 +25,7 @@ export function AttaccoMegaPanel() {
           <Link
             key={socket.key}
             to={lp(socket.href)}
+            onClick={onLinkClick}
             className="flex items-center gap-3 rounded-lg border border-idl-tech-border p-3.5 transition hover:border-idl-amber"
           >
             <AttaccoSocketIcon icon={socket.icon} size={28} />
@@ -36,6 +37,7 @@ export function AttaccoMegaPanel() {
         ))}
         <Link
           to={lp(ALL_SOCKETS.href)}
+          onClick={onLinkClick}
           className="flex items-center justify-center rounded-lg border border-dashed border-idl-tech-border bg-idl-tech-panel p-3.5 text-center transition hover:border-idl-amber"
         >
           <span className="text-[13px] font-bold text-idl-graphite-2">Tutti gli attacchi →</span>

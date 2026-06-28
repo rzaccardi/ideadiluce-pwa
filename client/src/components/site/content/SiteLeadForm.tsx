@@ -14,9 +14,12 @@ type Props = {
   kind: FormKind
   title?: string
   description?: string
+  /** Layout a tutta larghezza nella griglia contatti. */
+  embedded?: boolean
+  className?: string
 }
 
-export function SiteLeadForm({ kind, title, description }: Props) {
+export function SiteLeadForm({ kind, title, description, embedded = false, className }: Props) {
   const { locale } = useLocale()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -54,7 +57,14 @@ export function SiteLeadForm({ kind, title, description }: Props) {
   }
 
   return (
-    <div className={cn(ui.panel, 'max-w-2xl')}>
+    <div
+      className={cn(
+        embedded
+          ? 'rounded-2xl border border-idl-tech-border bg-white p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:p-7'
+          : cn(ui.panel, 'max-w-2xl'),
+        className,
+      )}
+    >
       {title ? <h2 className="text-xl font-bold tracking-tight text-idl-ink">{title}</h2> : null}
       {description ? <p className="mt-1 text-sm text-idl-muted">{description}</p> : null}
       <form className="mt-6 space-y-4" onSubmit={(e) => void onSubmit(e)}>

@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { cn } from '@/utils/cn'
 
 type Props = {
   html: string
@@ -20,7 +21,7 @@ export function ProductDescriptionHtml({ html, className }: Props) {
 
   return (
     <div
-      className={className}
+      className={cn('product-description', className)}
       dangerouslySetInnerHTML={{ __html: safeHtml }}
       onClick={(e) => {
         const anchor = (e.target as HTMLElement).closest('a')

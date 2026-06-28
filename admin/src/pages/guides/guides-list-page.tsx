@@ -58,13 +58,19 @@ export function GuidesListPage() {
             </Badge>
           </div>
           <CardDescription>
-            L&apos;interruttore <strong>Pubblicata</strong> rende la guida visibile sul sito. Per
-            salvare testi e traduzioni apri il dettaglio.
+            Le singole guide si gestiscono qui (non in &quot;Contenuti sito&quot;, dove c&apos;è solo
+            la landing /guide). L&apos;interruttore <strong>Pubblicata</strong> rende la guida
+            visibile sul sito. Per salvare testi e traduzioni apri il dettaglio.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {store.isLoading && store.items.length === 0 ? (
             <RouteSkeleton />
+          ) : store.items.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nessuna guida in anagrafica. Riavvia l&apos;API o ricarica: le guide di default
+              vengono create automaticamente al primo accesso.
+            </p>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-gray-200">
               <Table>

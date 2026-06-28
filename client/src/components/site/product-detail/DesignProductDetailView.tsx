@@ -120,7 +120,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
   })
 
   return (
-    <div className="-mx-0 w-full bg-idl-design text-idl-design-fg">
+    <div className="min-w-0 w-full overflow-x-clip bg-idl-design pb-20 text-idl-design-fg sm:pb-0">
       {/* HERO */}
       <section className="relative overflow-hidden bg-idl-design">
         <div
@@ -129,7 +129,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
         />
         <ProductDetailBreadcrumb items={breadcrumbItems} lp={lp} variant="design" inHero />
 
-        <SectionContainer className="relative z-[2] grid items-start gap-10 pb-14 pt-7 sm:gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14 lg:pb-14">
+        <SectionContainer className="relative z-[2] grid min-w-0 items-start gap-8 pb-10 pt-5 sm:gap-14 sm:pb-14 sm:pt-7 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14 lg:pb-14">
           <ProductDetailGallery
             images={galleryImages}
             alt={product.name}
@@ -137,12 +137,12 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
             variant="design"
           />
 
-          <div>
-            <Eyebrow variant="design" className="mb-[18px] tracking-[0.18em] text-idl-glow">
+          <div className="min-w-0">
+            <Eyebrow variant="design" className="mb-4 tracking-[0.18em] text-idl-glow sm:mb-[18px]">
               {brandLabel}
               {product.brand ? ' · ICONA DEL DESIGN' : ''}
             </Eyebrow>
-            <h1 className="font-serif text-[42px] leading-none font-medium tracking-[-0.01em] sm:text-5xl lg:text-[54px]">
+            <h1 className="font-serif text-[clamp(2rem,8vw,3.375rem)] leading-none font-medium tracking-[-0.01em]">
               {displayTitle}
             </h1>
             <div className="mt-3 text-base text-idl-design-muted">
@@ -160,8 +160,8 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
               </div>
             )}
 
-            <div className="flex items-baseline gap-3.5">
-              <span className="font-serif text-[30px] font-medium sm:text-[34px]">
+            <div className="flex flex-wrap items-baseline gap-2 sm:gap-3.5">
+              <span className="font-serif text-[26px] font-medium sm:text-[34px]">
                 {formatMoney(displayPriceCents, product.currency)}
               </span>
               {priceModeLabel ? (
@@ -194,7 +194,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
               onChange={setSelectedVariantRef}
             />
 
-            <div className="mb-3.5 flex min-w-0 items-stretch gap-3">
+            <div className="mb-3.5 flex min-w-0 flex-col gap-3 min-[480px]:flex-row min-[480px]:items-stretch">
               {availability?.canAddToCart ? (
                 <ProductQuantityStepper
                   value={quantity}
@@ -238,7 +238,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
               Richiedi una consulenza sul progetto luce
             </ProductDetailContactLink>
 
-            <div className="flex flex-wrap gap-5 border-t border-white/10 pt-[18px] text-[12.5px] text-idl-design-dim">
+            <div className="flex flex-wrap gap-3 border-t border-white/10 pt-4 text-[12px] text-idl-design-dim sm:gap-5 sm:pt-[18px] sm:text-[12.5px]">
               <span>✓ Reso entro 50 giorni</span>
               <span>✓ Garanzia ufficiale</span>
               <span>
@@ -252,11 +252,11 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
 
       {/* STORIA */}
       <section className="border-t border-white/6 bg-[#1b160f]">
-        <SectionContainer narrow className="px-6 py-16 text-center sm:px-12 sm:py-16">
+        <SectionContainer narrow className="py-12 text-center sm:py-16">
           <ProductDetailSectionLabel variant="design" className="mb-6 tracking-[0.22em]">
             LA STORIA
           </ProductDetailSectionLabel>
-          <blockquote className="font-serif text-[26px] leading-[1.32] font-normal italic text-idl-design-fg sm:text-[32px]">
+          <blockquote className="font-serif text-[clamp(1.375rem,5vw,2rem)] leading-[1.32] font-normal italic text-idl-design-fg">
             {storyQuote ? `"${storyQuote}"` : <ProductDetailPlaceholder>Citazione editoriale — in arrivo</ProductDetailPlaceholder>}
           </blockquote>
           <div className="mx-auto mt-7 max-w-3xl text-base leading-[1.7] text-idl-design-muted">
@@ -286,7 +286,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
 
       {/* DESCRIZIONE */}
       <section className="border-t border-idl-border bg-idl-path-design">
-        <SectionContainer narrow className="px-6 py-16 sm:px-12">
+        <SectionContainer narrow className="py-12 sm:py-16">
           <ProductDetailSectionLabel variant="design" className="mb-[18px] text-idl-brass tracking-[0.18em]">
             DESCRIZIONE
           </ProductDetailSectionLabel>
@@ -306,11 +306,11 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
               <ProductDetailPlaceholder>Descrizione completa — in arrivo</ProductDetailPlaceholder>
             </p>
           )}
-          <div className="mt-7 flex flex-wrap items-center gap-3 border-t border-idl-border pt-[22px]">
+          <div className="mt-7 flex flex-col gap-3 border-t border-idl-border pt-[22px] sm:flex-row sm:flex-wrap sm:items-center">
             <span className="font-mono text-[11px] tracking-wide text-idl-placeholder uppercase">
               SCHEDA A CURA DI IDEADILUCE
             </span>
-            <span className="flex-1" />
+            <span className="hidden flex-1 sm:block" />
             <ProductDetailContactLink
               href={lp('/contatti')}
               className="text-sm font-bold text-idl-brass hover:text-idl-brass-light"
@@ -323,7 +323,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
 
       {/* CARATTERISTICHE TECNICHE */}
       <section className="bg-idl-paper">
-        <SectionContainer className="grid items-start gap-14 py-14 lg:grid-cols-2 lg:py-14">
+        <SectionContainer className="grid min-w-0 items-start gap-8 py-10 sm:gap-14 sm:py-14 lg:grid-cols-2 lg:py-14">
           <div>
             <ProductDetailSectionLabel variant="design" className="mb-4 text-idl-brass tracking-[0.18em]">
               CARATTERISTICHE TECNICHE
@@ -538,6 +538,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
         isAddingToCart={isAddingToCart}
         onAdd={handleAddToCart}
         addLabel={t('product.addToCart')}
+        addLabelShort={t('product.addToCartShort')}
         addingLabel={t('product.addingToCart')}
         variant="design"
       />

@@ -3,6 +3,7 @@ import { createOdooCustomerAdapter } from '../../adapters/odoo/odooCustomerAdapt
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import type { TestCheckoutAddressInput } from '../integrations/integrations.validators.js'
 import { provisionOdooAccountAfterOrder } from './odoo-account-sync.service.js'
+import { ensureOrderCacheForPwaOrder } from '../orders/orders-user-link.service.js'
 
 const customerAdapter = createOdooCustomerAdapter()
 
@@ -55,11 +56,15 @@ export async function finalizeGuestAccountForOrder(orderId: string): Promise<voi
   })
 
   const user = await prisma.user.findUnique({ where: { email: order.email.toLowerCase().trim() } })
-  await prisma.pwaOrder.update({
+  const updated = await prisma.pwaOrder.update({
     where: { id: order.id },
     data: {
       userId: user?.id ?? order.userId,
       metadataJson: { ...meta, guestAccountCreated: true },
     },
   })
+
+  if (updated.userId) {
+    await ensureOrderCacheForPwaOrder(updated.userId, updated)
+  }
 }

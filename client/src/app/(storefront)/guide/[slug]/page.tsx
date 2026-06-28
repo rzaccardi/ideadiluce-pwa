@@ -14,13 +14,5 @@ export default function GuideArticlePage({ params }: PageProps) {
   const pageKey = guidePageKeyFromSlug(slug)
   if (!pageKey) notFound()
 
-  return (
-    <ContentPage
-      pageKey={pageKey}
-      breadcrumb={[
-        { label: 'Guide', to: '/guide' },
-        { label: slug.replace(/-/g, ' ') },
-      ]}
-    />
-  )
+  return <ContentPage pageKey={pageKey} />
 }

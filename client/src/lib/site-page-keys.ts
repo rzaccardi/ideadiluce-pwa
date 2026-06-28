@@ -14,6 +14,10 @@ export function guidePageKeyFromSlug(slug: string): ContentPageKey | null {
   return GUIDE_SLUG_TO_PAGE_KEY[slug] ?? null
 }
 
+export function isGuidePageKey(pageKey: string): pageKey is ContentPageKey {
+  return pageKey.startsWith('guide-')
+}
+
 export function isContentPage(content: unknown): content is { blocks: unknown[]; title: string } {
   return typeof content === 'object' && content !== null && 'blocks' in content && 'title' in content
 }

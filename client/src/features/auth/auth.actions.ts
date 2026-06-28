@@ -8,12 +8,17 @@ import {
 } from '@/lib/auth-local-storage'
 import { ApiRequestError } from '@/types/api'
 import { fetchCart } from '@/features/cart'
+import { fetchOrdersList } from '@/features/orders'
 import { fetchWishlist } from '@/features/wishlist'
 import { authStore, setAuthUser } from './auth.store'
 import { clearClientSessionState, type ClearClientSessionScope } from './clear-client-session'
 
 function refreshSessionStores() {
-  return Promise.all([fetchCart({ force: true }), fetchWishlist({ force: true })])
+  return Promise.all([
+    fetchCart({ force: true }),
+    fetchWishlist({ force: true }),
+    fetchOrdersList({ force: true }),
+  ])
 }
 
 function errMessage(e: unknown) {

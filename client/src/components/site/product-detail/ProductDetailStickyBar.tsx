@@ -22,6 +22,7 @@ type Props = {
   isAddingToCart: boolean
   onAdd: () => void
   addLabel: string
+  addLabelShort?: string
   addingLabel: string
   variant?: 'design' | 'technical'
 }
@@ -37,6 +38,7 @@ export function ProductDetailStickyBar({
   isAddingToCart,
   onAdd,
   addLabel,
+  addLabelShort,
   addingLabel,
   variant = 'design',
 }: Props) {
@@ -47,14 +49,14 @@ export function ProductDetailStickyBar({
   return (
     <div
       className={cn(
-        'sticky bottom-0 z-40 border-t',
+        'sticky bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom,0px)]',
         isDesign
           ? 'border-idl-glow/20 bg-[#1b160f]'
           : 'border-idl-tech-border bg-white shadow-[0_-4px_16px_rgba(0,0,0,0.05)]',
       )}
     >
-      <SectionContainer className="flex items-center justify-between gap-4 py-3 sm:gap-6">
-        <div className="flex min-w-0 items-center gap-3">
+      <SectionContainer className="flex items-center justify-between gap-2 py-2.5 sm:gap-6 sm:py-3">
+        <div className="hidden min-w-0 items-center gap-3 sm:flex">
           <div
             className={cn(
               'relative size-10 shrink-0 overflow-hidden rounded-lg border',
@@ -83,7 +85,7 @@ export function ProductDetailStickyBar({
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-3 sm:gap-5">
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none sm:shrink-0 sm:gap-5">
           {!isDesign && availabilityLabel ? (
             <div className="hidden flex-col items-end sm:flex">
               <span
@@ -105,7 +107,7 @@ export function ProductDetailStickyBar({
           ) : null}
           <span
             className={cn(
-              'text-xl font-bold sm:text-[22px]',
+              'shrink-0 text-lg font-bold sm:text-[22px]',
               isDesign ? 'font-serif text-idl-design-fg' : 'text-idl-graphite',
             )}
           >
@@ -116,13 +118,20 @@ export function ProductDetailStickyBar({
             disabled={!canAddToCart || isAddingToCart}
             onClick={onAdd}
             className={cn(
-              'rounded-lg px-5 py-3 text-sm font-bold transition disabled:opacity-60 sm:px-6',
+              'min-w-0 shrink rounded-lg px-3 py-2.5 text-xs font-bold transition disabled:opacity-60 sm:px-6 sm:py-3 sm:text-sm',
               isDesign
                 ? 'bg-idl-glow text-idl-design hover:bg-[#f7bd6f]'
                 : 'bg-idl-amber text-white hover:bg-[#c2730f]',
             )}
           >
-            {isAddingToCart ? addingLabel : addLabel}
+            {isAddingToCart ? (
+              addingLabel
+            ) : (
+              <>
+                <span className="sm:hidden">{addLabelShort ?? addLabel}</span>
+                <span className="hidden sm:inline">{addLabel}</span>
+              </>
+            )}
           </button>
         </div>
       </SectionContainer>

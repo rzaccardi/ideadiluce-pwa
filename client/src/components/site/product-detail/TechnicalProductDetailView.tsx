@@ -152,11 +152,11 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
   })
 
   return (
-    <div className="-mx-0 w-full bg-white">
+    <div className="min-w-0 w-full overflow-x-clip bg-white pb-20 sm:pb-0">
       <ProductDetailBreadcrumb items={breadcrumbItems} lp={lp} variant="technical" />
 
       {/* HERO */}
-        <SectionContainer className="grid items-start gap-12 pb-10 pt-1 lg:grid-cols-2 lg:gap-12 lg:pb-10">
+        <SectionContainer className="grid min-w-0 items-start gap-8 pb-8 pt-1 sm:gap-12 sm:pb-10 lg:grid-cols-2 lg:gap-12 lg:pb-10">
         <ProductDetailGallery
           images={galleryImages}
           alt={product.name}
@@ -164,12 +164,12 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
           variant="technical"
         />
 
-        <div>
+        <div className="min-w-0">
           <div className="mb-2 font-mono text-[11px] tracking-[0.1em] text-idl-muted uppercase">
             {brandEyebrow}
             {product.brand ? '' : ' · COMPONENTISTICA'}
           </div>
-          <h1 className="text-[30px] leading-[1.1] font-extrabold tracking-[-0.02em] text-idl-graphite">
+          <h1 className="text-[clamp(1.5rem,6vw,1.875rem)] leading-[1.1] font-extrabold tracking-[-0.02em] text-idl-graphite">
             {displayTitle}
           </h1>
           <div className="mt-2 font-mono text-[15px] text-idl-graphite-2">
@@ -219,9 +219,9 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
           ) : null}
 
           {/* Buy box card */}
-          <div className="rounded-xl border border-idl-tech-border bg-white p-[22px] shadow-[0_4px_16px_rgba(0,0,0,0.04)]">
-            <div className="mb-1.5 flex items-baseline gap-2.5">
-              <span className="text-[30px] font-extrabold tracking-[-0.02em]">
+          <div className="rounded-xl border border-idl-tech-border bg-white p-4 shadow-[0_4px_16px_rgba(0,0,0,0.04)] sm:p-[22px]">
+            <div className="mb-1.5 flex flex-wrap items-baseline gap-2">
+              <span className="text-[26px] font-extrabold tracking-[-0.02em] sm:text-[30px]">
                 {formatMoney(displayPriceCents, product.currency)}
               </span>
               {priceModeLabel ? (
@@ -254,7 +254,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
               ) : null}
             </div>
 
-            <div className="flex min-w-0 items-stretch gap-3">
+            <div className="flex min-w-0 flex-col gap-3 min-[480px]:flex-row min-[480px]:items-stretch">
               {availability?.canAddToCart ? (
                 <ProductQuantityStepper
                   value={quantity}
@@ -292,7 +292,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
             ) : null}
 
             <div className="mt-3.5 flex flex-col gap-3 border-t border-[#eef0f3] pt-3.5 sm:flex-row sm:items-center sm:justify-between">
-              <div>
+              <div className="min-w-0">
                 <div className="text-[13.5px] font-bold text-idl-graphite">Non sei sicuro che sia quello giusto?</div>
                 <div className="text-[12.5px] text-[#7a6a52]">
                   Inviaci una foto della vecchia lampadina o del portalampada.
@@ -300,7 +300,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
               </div>
               <ProductDetailContactLink
                 href={lp('/contatti')}
-                className="shrink-0 rounded-[7px] border border-[#f0ddc0] bg-[#fbf4ea] px-4 py-[11px] text-center text-[13px] font-bold text-[#b5701a] whitespace-nowrap"
+                className="w-full shrink-0 rounded-[7px] border border-[#f0ddc0] bg-[#fbf4ea] px-4 py-[11px] text-center text-[13px] font-bold text-[#b5701a] sm:w-auto sm:whitespace-nowrap"
               >
                 Verifica compatibilità
               </ProductDetailContactLink>
@@ -317,8 +317,8 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
 
       {/* Compatibilità */}
       <section className="border-y border-[#eef0f3] bg-[#f7f8fa]">
-        <SectionContainer className="grid gap-6 py-[34px] sm:grid-cols-2">
-          <ProductDetailCard variant="technical" className="p-[26px]">
+        <SectionContainer className="grid gap-5 py-7 sm:grid-cols-2 sm:gap-6 sm:py-[34px]">
+          <ProductDetailCard variant="technical" className="p-4 sm:p-[26px]">
             <h2 className="mb-4 text-base font-extrabold tracking-[-0.01em]">Compatibilità rapida</h2>
             <div>
               {compatRows.map((row) => (
@@ -383,7 +383,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
         </div>
         <div>
           <h2 className="mb-3.5 text-lg font-extrabold tracking-tight">Specifiche principali</h2>
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 gap-2.5 min-[420px]:grid-cols-2">
             {highlightSpecs.map(({ label, value }) => (
               <div
                 key={label}
@@ -417,10 +417,10 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                       {group.rows.map((row, index) => (
                         <div
                           key={`${row.label}-${index}`}
-                          className="flex justify-between gap-4 border-b border-idl-tech-chip px-4 py-2.5 last:border-b-0"
+                          className="flex flex-col gap-1 border-b border-idl-tech-chip px-4 py-2.5 last:border-b-0 min-[480px]:flex-row min-[480px]:items-start min-[480px]:justify-between min-[480px]:gap-4"
                         >
-                          <span className="text-[13px] text-idl-muted">{row.label}</span>
-                          <span className="text-right text-[13.5px] font-semibold text-idl-graphite">
+                          <span className="shrink-0 text-[13px] text-idl-muted">{row.label}</span>
+                          <span className="text-left text-[13.5px] font-semibold break-words text-idl-graphite min-[480px]:max-w-[60%] min-[480px]:text-right">
                             {row.href ? (
                               <a href={row.href} target="_blank" rel="noopener noreferrer" className="text-idl-amber underline-offset-2 hover:underline">
                                 {row.value}
@@ -708,6 +708,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
         isAddingToCart={isAddingToCart}
         onAdd={handleAddToCart}
         addLabel={t('product.addToCart')}
+        addLabelShort={t('product.addToCartShort')}
         addingLabel={t('product.addingToCart')}
         variant="technical"
       />

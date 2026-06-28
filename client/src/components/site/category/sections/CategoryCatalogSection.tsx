@@ -1,11 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
+import type { CatalogSort } from '@/features/catalog/catalog.store'
 import type { ProductCardDTO } from '@/types/dto'
 import type { CategoryLandingContent } from '@/types/category-landing'
 import { cn } from '@/utils/cn'
 import { CategoryLandingCatalogSkeleton } from '@/components/Skeleton'
 import { PageLoadTransition } from '@/components/motion'
+import { useInfiniteScrollSentinel } from '@/hooks/use-infinite-scroll-sentinel'
+import { CatalogLoadMoreFooter } from '@/components/site/catalog/CatalogLoadMoreFooter'
 import { SectionContainer } from '../../primitives'
 import { CategoryFilterSidebar } from '../CategoryFilterSidebar'
 import { CategoryResultsToolbar } from '../CategoryResultsToolbar'
@@ -18,30 +21,21 @@ type Props = {
     CategoryLandingContent,
     'filtersTitle' | 'filtersResetLabel' | 'filterGroups' | 'sortLabel' | 'sortValue' | 'loadMoreLabel'
   >
-  products: ProductCardDTO[]
+  products: ReadonlyArray<ProductCardDTO>
   totalCount?: number
   lp: LocalePathFn
   variant: 'design' | 'technical'
   loading?: boolean
+  isLoadingMore?: boolean
   hasMore?: boolean
   onLoadMore?: () => void
-}
-
-function activeFiltersFromContent(content: Props['content'], variant: 'design' | 'technical') {
-  const filters: { label: string }[] = []
-  for (const group of content.filterGroups) {
-    for (const option of group.options) {
-      if ('checked' in option && option.checked) filters.push({ label: option.label })
-      if ('active' in option && option.active) filters.push({ label: option.label })
-    }
-  }
-  if (variant === 'technical' && filters.length === 0) {
-    return [{ label: 'LED' }, { label: '12V' }]
-  }
-  if (variant === 'design' && filters.length === 0) {
-    return [{ label: 'Sospensione' }]
-  }
-  return filters.slice(0, 2)
+  selectedFilterValues: ReadonlySet<string>
+  activeFilters: ReadonlyArray<{ key: string; label: string }>
+  sort: CatalogSort
+  onToggleFilter: (value: string) => void
+  onResetFilters: () => void
+  onRemoveFilter: (key: string) => void
+  onSelectSort: (sort: CatalogSort) => void
 }
 
 export function CategoryCatalogSection({
@@ -51,18 +45,37 @@ export function CategoryCatalogSection({
   lp,
   variant,
   loading,
-  hasMore,
+  isLoadingMore = false,
+  hasMore = false,
   onLoadMore,
+  selectedFilterValues,
+  activeFilters,
+  sort,
+  onToggleFilter,
+  onResetFilters,
+  onRemoveFilter,
+  onSelectSort,
 }: Props) {
-  const [page, setPage] = useState(1)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const isDesign = variant === 'design'
-  const activeFilters = activeFiltersFromContent(content, variant)
+
+  const loadMore = useCallback(() => {
+    onLoadMore?.()
+  }, [onLoadMore])
+
+  const loadMoreRef = useInfiniteScrollSentinel({
+    hasMore,
+    loading: Boolean(loading) || isLoadingMore,
+    onLoadMore: loadMore,
+  })
 
   const filterSidebarProps = {
     title: content.filtersTitle,
     resetLabel: content.filtersResetLabel,
     groups: content.filterGroups,
+    selectedValues: selectedFilterValues,
+    onToggleValue: onToggleFilter,
+    onReset: onResetFilters,
     variant,
   } as const
 
@@ -104,6 +117,9 @@ export function CategoryCatalogSection({
           activeFilters={activeFilters}
           sortLabel={content.sortLabel}
           sortValue={content.sortValue}
+          sort={sort}
+          onSelectSort={onSelectSort}
+          onRemoveFilter={onRemoveFilter}
           variant={variant}
           compareEnabled={!isDesign}
         />
@@ -121,41 +137,23 @@ export function CategoryCatalogSection({
           <TechnicalCatalogProductGrid products={products} lp={lp} />
         )}
 
-        {isDesign && content.loadMoreLabel && hasMore ? (
-          <div className="mt-7 text-center sm:mt-9">
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => {
-                setPage((p) => p + 1)
-                onLoadMore?.()
-              }}
-              className="inline-block w-full rounded border border-idl-path-design-border px-8 py-3.5 text-[14.5px] font-semibold text-idl-ink transition hover:border-idl-brass hover:text-idl-brass disabled:opacity-60 sm:w-auto"
-            >
-              {content.loadMoreLabel}
-            </button>
+        {isLoadingMore ? (
+          <div className="mt-4">
+            <CategoryLandingCatalogSkeleton variant={variant} />
           </div>
         ) : null}
 
-        {!isDesign && page >= 1 ? (
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 sm:mt-8">
-            {[1, 2, 3].map((n) => (
-              <span
-                key={n}
-                className={
-                  n === 1
-                    ? 'flex size-9 items-center justify-center rounded-md bg-idl-ink text-[13.5px] font-bold text-white'
-                    : 'flex size-9 items-center justify-center rounded-md border border-idl-tech-border text-[13.5px] font-semibold text-idl-graphite-2'
-                }
-              >
-                {n}
-              </span>
-            ))}
-            <span className="flex h-9 items-center rounded-md border border-idl-tech-border px-3 text-[13px] font-semibold text-idl-graphite-2 sm:px-3.5 sm:text-[13.5px]">
-              <span className="sm:hidden">→</span>
-              <span className="hidden sm:inline">Successivo →</span>
-            </span>
-          </div>
+        {!loading || products.length > 0 ? (
+          <CatalogLoadMoreFooter
+            shownProducts={products.length}
+            totalProducts={totalCount ?? products.length}
+            hasMore={hasMore}
+            isLoadingMore={isLoadingMore}
+            loadMoreRef={loadMoreRef}
+            onLoadMore={loadMore}
+            loadMoreLabel={content.loadMoreLabel}
+            variant={variant}
+          />
         ) : null}
       </div>
     </SectionContainer>

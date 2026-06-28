@@ -53,13 +53,13 @@ export function ProductSpecRowItem({
   return (
     <div
       className={cn(
-        'flex justify-between gap-6',
+        'flex justify-between gap-4',
         isDesign
           ? 'border-b border-idl-border py-3'
           : cn('border-b border-[#f0f2f5]', compact ? 'py-2.5' : 'px-4 py-2.5'),
       )}
     >
-      <span className={cn('text-[14px]', isDesign ? 'text-[#8c8273]' : 'text-idl-muted')}>{label}</span>
+      <span className={cn('shrink-0 text-[14px]', isDesign ? 'text-[#8c8273]' : 'text-idl-muted')}>{label}</span>
       {href && value?.trim() ? (
         <a
           href={href}
@@ -77,8 +77,8 @@ export function ProductSpecRowItem({
           value={value}
           mono={monoValue}
           className={cn(
-            'max-w-[60%] text-right font-semibold',
-            isDesign ? 'text-[14.5px] text-idl-ink' : 'text-sm text-idl-graphite',
+            'min-w-0 break-words text-right font-semibold',
+            isDesign ? 'max-w-[65%] text-[14.5px] text-idl-ink' : 'max-w-[60%] text-sm text-idl-graphite',
             monoValue && 'font-mono text-[14px]',
           )}
         />

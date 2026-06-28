@@ -79,7 +79,7 @@ export function TechnicalHeroVariantPicker({ variants, selectedRef, onChange }: 
 
         return (
           <div key={group.name}>
-            <div className="mb-2 flex items-baseline justify-between gap-3">
+            <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
               <span className="text-[13.5px] font-bold text-idl-graphite">{group.name}</span>
               {group.hint ? <span className="text-xs text-idl-muted">{group.hint}</span> : null}
             </div>

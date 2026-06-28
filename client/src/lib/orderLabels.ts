@@ -7,6 +7,8 @@ const ORDER_STATUS_KEYS: Record<string, MessageKey> = {
   payment_started: 'orderStatus.payment_started',
   payment_pending: 'orderStatus.payment_pending',
   paid: 'orderStatus.paid',
+  paid_sync_pending: 'orderStatus.paid_sync_pending',
+  synced: 'orderStatus.synced',
   payment_failed: 'orderStatus.payment_failed',
   abandoned: 'orderStatus.abandoned',
   cancelled: 'orderStatus.cancelled',
@@ -56,7 +58,7 @@ export type OrderStatusTone = 'success' | 'warning' | 'danger' | 'neutral'
 
 export function orderStatusTone(status: string): OrderStatusTone {
   const key = status.toLowerCase()
-  if (['paid', 'confirmed', 'completed'].includes(key)) return 'success'
+  if (['paid', 'paid_sync_pending', 'synced', 'confirmed', 'completed'].includes(key)) return 'success'
   if (['payment_pending', 'payment_started', 'checkout_started'].includes(key)) return 'warning'
   if (['payment_failed', 'cancelled', 'abandoned'].includes(key)) return 'danger'
   return 'neutral'

@@ -1,9 +1,9 @@
 'use client'
 
 import { Reveal } from '@/components/motion'
+import type { CatalogSort } from '@/features/catalog/catalog.store'
 import type { CategoryLandingContent } from '@/types/category-landing'
 import type { ProductCardDTO } from '@/types/dto'
-import { useLocalePath } from '@/hooks/use-locale-path'
 import { CategoryCtaBanner } from './CategoryCtaBanner'
 import { CategoryGuideSection } from './CategoryGuideSection'
 import {
@@ -11,19 +11,43 @@ import {
   DesignCategoryTypeGridSection,
 } from './sections/DesignCategoryHeroSection'
 import { CategoryCatalogSection } from './sections/CategoryCatalogSection'
+import type { LocalePathFn } from '../sections/types'
 
-type Props = {
+type CatalogSectionProps = {
   content: CategoryLandingContent
-  products: ProductCardDTO[]
+  products: ReadonlyArray<ProductCardDTO>
   totalCount?: number
   loading?: boolean
+  isLoadingMore?: boolean
   hasMore?: boolean
   onLoadMore?: () => void
+  selectedFilterValues: ReadonlySet<string>
+  activeFilters: ReadonlyArray<{ key: string; label: string }>
+  sort: CatalogSort
+  onToggleFilter: (value: string) => void
+  onResetFilters: () => void
+  onRemoveFilter: (key: string) => void
+  onSelectSort: (sort: CatalogSort) => void
+  lp: LocalePathFn
 }
 
-export function DesignCategoryView({ content, products, totalCount, loading, hasMore, onLoadMore }: Props) {
-  const lp = useLocalePath()
-
+export function DesignCategoryView({
+  content,
+  products,
+  totalCount,
+  loading,
+  isLoadingMore,
+  hasMore,
+  onLoadMore,
+  selectedFilterValues,
+  activeFilters,
+  sort,
+  onToggleFilter,
+  onResetFilters,
+  onRemoveFilter,
+  onSelectSort,
+  lp,
+}: CatalogSectionProps) {
   return (
     <div className="bg-white">
       <Reveal immediate>
@@ -42,8 +66,16 @@ export function DesignCategoryView({ content, products, totalCount, loading, has
           lp={lp}
           variant="design"
           loading={loading}
+          isLoadingMore={isLoadingMore}
           hasMore={hasMore}
           onLoadMore={onLoadMore}
+          selectedFilterValues={selectedFilterValues}
+          activeFilters={activeFilters}
+          sort={sort}
+          onToggleFilter={onToggleFilter}
+          onResetFilters={onResetFilters}
+          onRemoveFilter={onRemoveFilter}
+          onSelectSort={onSelectSort}
         />
       </Reveal>
       {content.guide ? (

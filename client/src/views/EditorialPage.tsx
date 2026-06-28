@@ -11,8 +11,10 @@ import { useLocale } from '@/context/locale-context'
 import { ErrorState } from '@/components/ErrorState'
 import { ToastOnError } from '@/components/ToastFeedback'
 import { SeoHead } from '@/components/SeoHead'
+import { PageFlexBody, PageFlexShell } from '@/components/layout/PageFlexShell'
 import { EditorialPageSkeleton } from '@/components/Skeleton'
 import { PageHeader } from '@/components/PageHeader'
+import { SectionContainer } from '@/components/site/primitives'
 import { PageLoadTransition } from '@/components/motion'
 import { getPageHeaderFallbackTitle } from '@/lib/page-header-fallbacks'
 
@@ -112,22 +114,28 @@ export function EditorialPage({ pageKey }: { pageKey: EditorialKey }) {
   const fallbackTitle = getPageHeaderFallbackTitle(pageKey)
 
   return (
-    <PageLoadTransition
-      isLoading={!viewContent}
-      skeleton={<EditorialPageSkeleton />}
-      loadingHeader={
-        fallbackTitle ? <PageHeader title={fallbackTitle} /> : null
-      }
-    >
-      {viewContent ? (
-        <>
-          <SeoHead
-            title={`${viewContent.title} | Idea di Luce`}
-            description={viewContent.subtitle ?? viewContent.intro}
-          />
-          <EditorialPageView pageKey={pageKey} content={viewContent} />
-        </>
-      ) : null}
-    </PageLoadTransition>
+    <PageFlexShell tone="paper">
+      <PageFlexBody tone="paper">
+        <SectionContainer className="py-8 sm:py-10">
+          <PageLoadTransition
+            isLoading={!viewContent}
+            skeleton={<EditorialPageSkeleton />}
+            loadingHeader={
+              fallbackTitle ? <PageHeader title={fallbackTitle} /> : null
+            }
+          >
+            {viewContent ? (
+              <>
+                <SeoHead
+                  title={`${viewContent.title} | Idea di Luce`}
+                  description={viewContent.subtitle ?? viewContent.intro}
+                />
+                <EditorialPageView pageKey={pageKey} content={viewContent} />
+              </>
+            ) : null}
+          </PageLoadTransition>
+        </SectionContainer>
+      </PageFlexBody>
+    </PageFlexShell>
   )
 }

@@ -105,6 +105,7 @@ export type MessageKey =
   | 'product.sectionActivity'
   | 'product.additionalInfo'
   | 'product.addToCart'
+  | 'product.addToCartShort'
   | 'product.addingToCart'
   | 'product.availability.available'
   | 'product.availability.orderable'
@@ -259,6 +260,15 @@ export type MessageKey =
   | 'cart.quote.proceedCheckout'
   | 'cart.quote.checkoutStarted'
   | 'cart.quote.checkoutFailed'
+  | 'cart.quote.steps.navLabel'
+  | 'cart.quote.steps.group.account'
+  | 'cart.quote.steps.group.details'
+  | 'cart.quote.steps.pageTitle.account'
+  | 'cart.quote.steps.pageTitle.accountConfirm'
+  | 'cart.quote.steps.pageTitle.details'
+  | 'cart.quote.steps.pageSubtitle.account'
+  | 'cart.quote.steps.pageSubtitle.details'
+  | 'cart.quote.estimateNotice'
   | 'wishlist.title'
   | 'wishlist.descriptionGuest'
   | 'wishlist.descriptionAccount'
@@ -679,6 +689,8 @@ export type MessageKey =
   | 'orderStatus.payment_started'
   | 'orderStatus.payment_pending'
   | 'orderStatus.paid'
+  | 'orderStatus.paid_sync_pending'
+  | 'orderStatus.synced'
   | 'orderStatus.payment_failed'
   | 'orderStatus.abandoned'
   | 'orderStatus.cancelled'
@@ -846,6 +858,7 @@ const IT: Record<MessageKey, string> = {
   'product.sectionActivity': 'Attività recente',
   'product.additionalInfo': 'Informazioni aggiuntive',
   'product.addToCart': 'Aggiungi al carrello',
+  'product.addToCartShort': 'Aggiungi',
   'product.addingToCart': 'Aggiunta in corso…',
   'product.availability.available': 'Disponibile',
   'product.availability.orderable': 'Ordinabile',
@@ -1004,6 +1017,15 @@ const IT: Record<MessageKey, string> = {
   'cart.quote.proceedCheckout': 'Procedi al checkout',
   'cart.quote.checkoutStarted': 'Checkout avviato con prezzi congelati.',
   'cart.quote.checkoutFailed': 'Impossibile avviare il checkout.',
+  'cart.quote.steps.navLabel': 'Passaggi richiesta preventivo',
+  'cart.quote.steps.group.account': 'Account',
+  'cart.quote.steps.group.details': 'Dettagli',
+  'cart.quote.steps.pageTitle.account': 'Accedi per richiedere il preventivo',
+  'cart.quote.steps.pageTitle.accountConfirm': 'Conferma il tuo account',
+  'cart.quote.steps.pageTitle.details': 'Completa la richiesta',
+  'cart.quote.steps.pageSubtitle.account': 'Crea un account o accedi: il carrello resta collegato al tuo profilo.',
+  'cart.quote.steps.pageSubtitle.details': 'Indica i dati di fatturazione e, se vuoi, aggiungi note per il team commerciale.',
+  'cart.quote.estimateNotice': 'I totali nel riepilogo sono stime indicative. Riceverai un preventivo personalizzato via email.',
   'wishlist.title': 'Preferiti',
   'wishlist.descriptionGuest': 'Salva i prodotti che ti interessano. Accedi per sincronizzarli su tutti i dispositivi.',
   'wishlist.descriptionAccount': 'I tuoi prodotti preferiti, pronti per l’acquisto.',
@@ -1445,6 +1467,8 @@ const IT: Record<MessageKey, string> = {
   'orderStatus.payment_started': 'Pagamento avviato',
   'orderStatus.payment_pending': 'Pagamento in attesa',
   'orderStatus.paid': 'Pagato',
+  'orderStatus.paid_sync_pending': 'Pagato, sincronizzazione in corso',
+  'orderStatus.synced': 'Confermato',
   'orderStatus.payment_failed': 'Pagamento non riuscito',
   'orderStatus.abandoned': 'Abbandonato',
   'orderStatus.cancelled': 'Annullato',
@@ -1615,6 +1639,7 @@ const EN: Record<MessageKey, string> = {
   'product.sectionActivity': 'Recent activity',
   'product.additionalInfo': 'Additional information',
   'product.addToCart': 'Add to cart',
+  'product.addToCartShort': 'Add',
   'product.addingToCart': 'Adding…',
   'product.availability.available': 'Available',
   'product.availability.orderable': 'Orderable',
@@ -1773,6 +1798,15 @@ const EN: Record<MessageKey, string> = {
   'cart.quote.proceedCheckout': 'Proceed to checkout',
   'cart.quote.checkoutStarted': 'Checkout started with frozen prices.',
   'cart.quote.checkoutFailed': 'Unable to start checkout.',
+  'cart.quote.steps.navLabel': 'Quote request steps',
+  'cart.quote.steps.group.account': 'Account',
+  'cart.quote.steps.group.details': 'Details',
+  'cart.quote.steps.pageTitle.account': 'Sign in to request a quote',
+  'cart.quote.steps.pageTitle.accountConfirm': 'Confirm your account',
+  'cart.quote.steps.pageTitle.details': 'Complete your request',
+  'cart.quote.steps.pageSubtitle.account': 'Create an account or sign in — your cart stays linked to your profile.',
+  'cart.quote.steps.pageSubtitle.details': 'Enter billing details and optionally add notes for our sales team.',
+  'cart.quote.estimateNotice': 'Totals in the summary are indicative estimates. You will receive a personalised quote by email.',
   'wishlist.title': 'Wishlist',
   'wishlist.descriptionGuest': 'Save products you like. Sign in to sync them across all your devices.',
   'wishlist.descriptionAccount': 'Your favorite products, ready to purchase.',
@@ -2205,6 +2239,8 @@ const EN: Record<MessageKey, string> = {
   'orderStatus.payment_started': 'Payment started',
   'orderStatus.payment_pending': 'Payment pending',
   'orderStatus.paid': 'Paid',
+  'orderStatus.paid_sync_pending': 'Paid, sync pending',
+  'orderStatus.synced': 'Confirmed',
   'orderStatus.payment_failed': 'Payment failed',
   'orderStatus.abandoned': 'Abandoned',
   'orderStatus.cancelled': 'Cancelled',
@@ -2374,6 +2410,7 @@ const ES: Record<MessageKey, string> = {
   'product.sectionActivity': 'Actividad reciente',
   'product.additionalInfo': 'Información adicional',
   'product.addToCart': 'Añadir al carrito',
+  'product.addToCartShort': 'Añadir',
   'product.addingToCart': 'Añadiendo…',
   'product.requestProduct': 'Solicitar producto',
   'product.availability.available': 'Disponible',
@@ -2471,6 +2508,15 @@ const ES: Record<MessageKey, string> = {
   'cart.quote.proceedCheckout': 'Ir al checkout',
   'cart.quote.checkoutStarted': 'Checkout iniciado con precios congelados.',
   'cart.quote.checkoutFailed': 'No se pudo iniciar el checkout.',
+  'cart.quote.steps.navLabel': 'Pasos de solicitud de presupuesto',
+  'cart.quote.steps.group.account': 'Cuenta',
+  'cart.quote.steps.group.details': 'Detalles',
+  'cart.quote.steps.pageTitle.account': 'Inicia sesión para solicitar presupuesto',
+  'cart.quote.steps.pageTitle.accountConfirm': 'Confirma tu cuenta',
+  'cart.quote.steps.pageTitle.details': 'Completa la solicitud',
+  'cart.quote.steps.pageSubtitle.account': 'Crea una cuenta o inicia sesión: el carrito permanece vinculado a tu perfil.',
+  'cart.quote.steps.pageSubtitle.details': 'Indica los datos de facturación y, si quieres, añade notas para el equipo comercial.',
+  'cart.quote.estimateNotice': 'Los totales del resumen son estimaciones orientativas. Recibirás un presupuesto personalizado por email.',
   'cart.remove': 'Eliminar',
   'cart.empty.title': 'Tu carrito está vacío',
   'cart.empty.description': 'Añade productos del catálogo o vuelve a la página de inicio.',
@@ -2802,6 +2848,8 @@ const ES: Record<MessageKey, string> = {
   'orderStatus.payment_started': 'Pago iniciado',
   'orderStatus.payment_pending': 'Pago pendiente',
   'orderStatus.paid': 'Pagado',
+  'orderStatus.paid_sync_pending': 'Pagado, sincronización pendiente',
+  'orderStatus.synced': 'Confirmado',
   'orderStatus.payment_failed': 'Pago fallido',
   'orderStatus.abandoned': 'Abandonado',
   'orderStatus.cancelled': 'Cancelado',
@@ -2957,6 +3005,7 @@ const FR: Record<MessageKey, string> = {
   'product.sectionActivity': 'Activité récente',
   'product.additionalInfo': 'Informations complémentaires',
   'product.addToCart': 'Ajouter au panier',
+  'product.addToCartShort': 'Ajouter',
   'product.addingToCart': 'Ajout en cours…',
   'product.requestProduct': 'Demander le produit',
   'product.availability.available': 'Disponible',
@@ -3054,6 +3103,15 @@ const FR: Record<MessageKey, string> = {
   'cart.quote.proceedCheckout': 'Passer au checkout',
   'cart.quote.checkoutStarted': 'Checkout démarré avec prix gelés.',
   'cart.quote.checkoutFailed': 'Impossible de démarrer le checkout.',
+  'cart.quote.steps.navLabel': 'Étapes de demande de devis',
+  'cart.quote.steps.group.account': 'Compte',
+  'cart.quote.steps.group.details': 'Détails',
+  'cart.quote.steps.pageTitle.account': 'Connectez-vous pour demander un devis',
+  'cart.quote.steps.pageTitle.accountConfirm': 'Confirmez votre compte',
+  'cart.quote.steps.pageTitle.details': 'Finalisez votre demande',
+  'cart.quote.steps.pageSubtitle.account': 'Créez un compte ou connectez-vous — votre panier reste lié à votre profil.',
+  'cart.quote.steps.pageSubtitle.details': 'Indiquez vos coordonnées de facturation et, si besoin, des notes pour l’équipe commerciale.',
+  'cart.quote.estimateNotice': 'Les totaux du récapitulatif sont des estimations indicatives. Vous recevrez un devis personnalisé par e-mail.',
   'cart.remove': 'Supprimer',
   'cart.empty.title': 'Votre panier est vide',
   'cart.empty.description': 'Ajoutez des produits depuis le catalogue ou retournez à l\'accueil.',
@@ -3387,6 +3445,8 @@ const FR: Record<MessageKey, string> = {
   'orderStatus.payment_started': 'Paiement démarré',
   'orderStatus.payment_pending': 'Paiement en attente',
   'orderStatus.paid': 'Payé',
+  'orderStatus.paid_sync_pending': 'Payé, synchronisation en cours',
+  'orderStatus.synced': 'Confirmé',
   'orderStatus.payment_failed': 'Paiement échoué',
   'orderStatus.abandoned': 'Abandonné',
   'orderStatus.cancelled': 'Annulé',
@@ -3542,6 +3602,7 @@ const DE: Record<MessageKey, string> = {
   'product.sectionActivity': 'Letzte Aktivität',
   'product.additionalInfo': 'Zusätzliche Informationen',
   'product.addToCart': 'In den Warenkorb',
+  'product.addToCartShort': 'Hinzufügen',
   'product.addingToCart': 'Wird hinzugefügt…',
   'product.requestProduct': 'Produkt anfragen',
   'product.availability.available': 'Verfügbar',
@@ -3665,6 +3726,15 @@ const DE: Record<MessageKey, string> = {
   'cart.quote.proceedCheckout': 'Zur Kasse',
   'cart.quote.checkoutStarted': 'Checkout mit eingefrorenen Preisen gestartet.',
   'cart.quote.checkoutFailed': 'Checkout konnte nicht gestartet werden.',
+  'cart.quote.steps.navLabel': 'Schritte der Angebotsanfrage',
+  'cart.quote.steps.group.account': 'Konto',
+  'cart.quote.steps.group.details': 'Details',
+  'cart.quote.steps.pageTitle.account': 'Anmelden, um ein Angebot anzufragen',
+  'cart.quote.steps.pageTitle.accountConfirm': 'Konto bestätigen',
+  'cart.quote.steps.pageTitle.details': 'Anfrage abschließen',
+  'cart.quote.steps.pageSubtitle.account': 'Konto erstellen oder anmelden — der Warenkorb bleibt mit Ihrem Profil verknüpft.',
+  'cart.quote.steps.pageSubtitle.details': 'Rechnungsdaten angeben und optional Notizen für das Vertriebsteam hinzufügen.',
+  'cart.quote.estimateNotice': 'Die Summen in der Übersicht sind Richtwerte. Sie erhalten ein personalisiertes Angebot per E-Mail.',
   'wishlist.title': 'Merkliste',
   'wishlist.descriptionGuest': 'Speichern Sie interessante Produkte. Melden Sie sich an, um sie auf allen Geräten zu synchronisieren.',
   'wishlist.descriptionAccount': 'Ihre Lieblingsprodukte, bereit zum Kauf.',
@@ -3970,6 +4040,8 @@ const DE: Record<MessageKey, string> = {
   'orderStatus.payment_started': 'Zahlung gestartet',
   'orderStatus.payment_pending': 'Zahlung ausstehend',
   'orderStatus.paid': 'Bezahlt',
+  'orderStatus.paid_sync_pending': 'Bezahlt, Synchronisierung ausstehend',
+  'orderStatus.synced': 'Bestätigt',
   'orderStatus.payment_failed': 'Zahlung fehlgeschlagen',
   'orderStatus.abandoned': 'Abgebrochen',
   'orderStatus.cancelled': 'Storniert',

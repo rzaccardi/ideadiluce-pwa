@@ -12,8 +12,9 @@ export function AccountLayout({ children }: { children: React.ReactNode }) {
   const user = auth.me
 
   useEffect(() => {
-    void fetchOrdersList()
-  }, [])
+    if (!user?.id) return
+    void fetchOrdersList({ force: true })
+  }, [user?.id])
 
   if (!user) {
     return null

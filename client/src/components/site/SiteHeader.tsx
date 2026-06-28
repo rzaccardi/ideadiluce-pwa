@@ -46,9 +46,11 @@ function NavActiveBar({ tone }: { tone: 'design' | 'technical' | 'neutral' }) {
 function MegaPanel({
   panel,
   variant,
+  onLinkClick,
 }: {
   panel: SiteMegaMenuPanel
   variant: 'design' | 'technical'
+  onLinkClick?: () => void
 }) {
   const lp = useLocalePath()
   const reduceMotion = useReducedMotion()
@@ -73,6 +75,7 @@ function MegaPanel({
                 <Link
                   key={link.href + link.label}
                   to={lp(link.href)}
+                  onClick={onLinkClick}
                   className={cn(
                     'transition-colors hover:underline',
                     dark ? 'text-idl-design-muted hover:text-idl-glow' : 'text-idl-graphite-2 hover:text-idl-amber',
@@ -112,6 +115,7 @@ function MegaPanel({
           </p>
           <Link
             to={lp(panel.promo.ctaHref)}
+            onClick={onLinkClick}
             className={cn(
               'inline-block rounded-md px-4 py-2.5 text-[13px] font-bold whitespace-nowrap transition-colors',
               panel.promo.variant === 'design'
@@ -203,6 +207,8 @@ export function SiteHeader({
       item.kind === 'dropdown' && item.id === openMenu,
   )
 
+  const closeMenu = () => setOpenMenu(null)
+
   return (
     <>
       <AnimatePresence>
@@ -216,7 +222,7 @@ export function SiteHeader({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={transitionBase}
-            onClick={() => setOpenMenu(null)}
+            onClick={closeMenu}
           />
         ) : null}
       </AnimatePresence>
@@ -246,7 +252,7 @@ export function SiteHeader({
               <span className={cn('h-0.5 w-5', isDark ? 'bg-white' : 'bg-idl-ink-soft')} />
               <span className={cn('h-0.5 w-3', isDark ? 'bg-white' : 'bg-idl-ink-soft')} />
             </button>
-            <Link to={lp('/')} className="rounded-sm transition-opacity hover:opacity-80">
+            <Link to={lp('/')} className="rounded-sm transition-opacity hover:opacity-80" onClick={closeMenu}>
               <BrandWordmark
                 className={cn('text-[20px] md:text-[22px] lg:text-[25px]', isDark && 'text-white')}
                 accentClassName={isDark ? 'text-white' : undefined}
@@ -258,6 +264,7 @@ export function SiteHeader({
                   <Link
                     key={item.id}
                     to={lp(item.href)}
+                    onClick={closeMenu}
                     className={cn(
                       'relative py-1.5 transition-colors',
                       activeNavId === item.id
@@ -298,12 +305,13 @@ export function SiteHeader({
           <SiteHeaderActions />
           <AnimatePresence>
             {activeDropdown?.id === 'attacco' ? (
-              <AttaccoMegaPanel key="attacco" />
+              <AttaccoMegaPanel key="attacco" onLinkClick={closeMenu} />
             ) : activeDropdown && activeDropdown.panel.columns.length > 0 ? (
               <MegaPanel
                 key={activeDropdown.id}
                 panel={activeDropdown.panel}
                 variant={activeDropdown.id === 'arredo' ? 'design' : 'technical'}
+                onLinkClick={closeMenu}
               />
             ) : null}
           </AnimatePresence>

@@ -1,23 +1,34 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from '@/lib/navigation'
 import { useSnapshot } from 'valtio/react'
-import { PageHeader } from '@/components/PageHeader'
-import { Button } from '@/components/Button'
-import { InlineAccountAuthStep } from '@/components/auth/InlineAccountAuthStep'
+import { EmptyCartPrompt } from '@/components/cart/EmptyCartPrompt'
+import {
+  CheckoutOrderSummary,
+  CheckoutSummaryHeader,
+} from '@/components/checkout/stripe-ui/CheckoutOrderSummary'
+import { CheckoutStepBody } from '@/components/checkout/stripe-ui/CheckoutStepBody'
 import { StripeErrorBanner } from '@/components/checkout/stripe-ui/StripeFields'
-import { CheckoutAddressSection } from '@/components/checkout/stripe-ui/CheckoutAddressSection'
+import {
+  checkoutColumnGutterClass,
+  checkoutFormColumnClass,
+  checkoutFormContentClass,
+  checkoutMainClass,
+  checkoutShellClass,
+} from '@/components/checkout/stripe-ui/constants'
+import { QuoteDetailsStep } from '@/components/checkout/quote-ui/QuoteDetailsStep'
+import { QuoteRegistrationStep } from '@/components/checkout/quote-ui/QuoteRegistrationStep'
+import { QuoteStepIndicator, type QuoteStep } from '@/components/checkout/quote-ui/QuoteStepIndicator'
+import { QuoteSuccessStep } from '@/components/checkout/quote-ui/QuoteSuccessStep'
 import { authStore, fetchMe } from '@/features/auth'
 import { submitQuoteRequest, quotesStore } from '@/features/quotes'
-import { cartStore, fetchCart } from '@/features/cart'
-import { formatMoney } from '@/lib/format'
+import { cartStore, fetchCart, fetchRecommendations, removeItem } from '@/features/cart'
 import { cartHasBlockedLines, cartPurchasableItemCount } from '@/lib/cartTotals'
 import { emptyAddress, shippingAddressFromUser, addressInputToDto, isAddressComplete } from '@/lib/address'
 import type { AddressInput } from '@/types/integrations'
 import { useI18n } from '@/hooks/use-i18n'
-
-type QuoteStep = 'account' | 'details'
+import { cn } from '@/utils/cn'
 
 export function CheckoutQuotePage() {
   const { t } = useI18n()
@@ -29,6 +40,7 @@ export function CheckoutQuotePage() {
   const [notes, setNotes] = useState('')
   const [billingAddress, setBillingAddress] = useState<AddressInput>(emptyAddress)
   const [successId, setSuccessId] = useState<string | null>(null)
+  const initialNavDoneRef = useRef(false)
 
   useEffect(() => {
     void fetchCart({ force: true })
@@ -36,13 +48,29 @@ export function CheckoutQuotePage() {
   }, [])
 
   useEffect(() => {
+    if (successId) {
+      setStep('success')
+      return
+    }
     if (auth.me) {
       setBillingAddress(shippingAddressFromUser(auth.me))
-      setStep('details')
+      if (!initialNavDoneRef.current) {
+        initialNavDoneRef.current = true
+        setStep('details')
+      }
     } else if (!auth.isLoading) {
+      initialNavDoneRef.current = false
       setStep('account')
     }
-  }, [auth.me, auth.isLoading])
+  }, [auth.me, auth.isLoading, successId])
+
+  const c = cart.cart
+  const recommendationKey =
+    c?.items.map((line) => `${line.productRef}:${line.quantity}`).sort().join('|') ?? ''
+
+  useEffect(() => {
+    if (recommendationKey) void fetchRecommendations()
+  }, [recommendationKey])
 
   function updateBilling<K extends keyof AddressInput>(key: K, value: AddressInput[K]) {
     setBillingAddress((current) => ({ ...current, [key]: value }))
@@ -67,8 +95,8 @@ export function CheckoutQuotePage() {
     setStep('details')
   }
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  async function onSubmit() {
+    quotesStore.submitError = null
     if (!auth.me) {
       setStep('account')
       return
@@ -90,149 +118,115 @@ export function CheckoutQuotePage() {
     }
   }
 
-  const c = cart.cart
+  async function handleRemoveFromQuote(itemId: string) {
+    await removeItem(itemId)
+    await fetchCart({ force: true })
+  }
+
   const hasBlockedLines = c ? cartHasBlockedLines(c) : false
   const purchasableCount = c ? cartPurchasableItemCount(c) : 0
   const quoteBlocked = !c?.items.length || hasBlockedLines || purchasableCount === 0
 
-  if (successId) {
+  if (c && c.items.length === 0 && !cart.isLoading && !successId) {
     return (
-      <div>
-        <PageHeader title={t('cart.quote.title')} description={t('cart.quote.success')} />
-        <div className="mx-auto max-w-lg rounded-lg border border-emerald-200 bg-emerald-50 p-6 text-center shadow-sm">
-          <p className="text-sm text-emerald-950">{t('cart.quote.success')}</p>
-          <p className="mt-3 text-sm text-emerald-900/80">{t('cart.quote.successPending')}</p>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Link to="/account/quotes">
-              <Button>{t('account.quotes.title')}</Button>
-            </Link>
-            <Link to="/cart">
-              <Button variant="secondary">{t('cart.quote.backToCart')}</Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (c && c.items.length === 0 && !cart.isLoading) {
-    return (
-      <div>
-        <PageHeader title={t('cart.quote.title')} description={t('cart.quote.description')} />
-        <div className="mx-auto max-w-lg rounded-lg border border-idl-border bg-white p-6 text-center shadow-sm">
-          <p className="text-sm text-idl-muted">{t('cart.quote.emptyCart')}</p>
-          <div className="mt-6">
-            <Link to="/cart">
-              <Button>{t('cart.quote.backToCart')}</Button>
-            </Link>
-          </div>
-        </div>
+      <div className="checkout-root flex min-h-dvh items-center justify-center bg-white px-4 py-12">
+        <EmptyCartPrompt compact className="w-full max-w-md" />
       </div>
     )
   }
 
   return (
-    <div>
-      <PageHeader title={t('cart.quote.title')} description={t('cart.quote.description')} />
-      <div className="mx-auto max-w-2xl space-y-6">
-        {step === 'account' && !auth.me ? (
-          <div className="rounded-lg border border-idl-border bg-white p-6 shadow-sm shadow-idl-ink/5">
-            <InlineAccountAuthStep
-              email={quoteEmail}
-              onEmailChange={setQuoteEmail}
-              title={t('cart.quote.accountTitle')}
-              hint={t('cart.quote.accountHint')}
-              registerContinueLabel={t('cart.quote.accountContinue')}
-              loginContinueLabel={t('cart.quote.accountContinue')}
-              onAuthSuccess={onAuthSuccess}
-            />
-            <div className="mt-6 border-t border-idl-border pt-4">
-              <Link to="/cart">
-                <Button variant="secondary" className="w-full justify-center">
-                  {t('cart.quote.backToCart')}
-                </Button>
-              </Link>
-            </div>
+    <div className={checkoutShellClass}>
+      {c && step !== 'success' ? (
+        <>
+          <CheckoutOrderSummary
+            cart={c}
+            selectedShipping={null}
+            mobileOnly
+            recommendations={cart.recommendations}
+            recommendationsLoading={cart.isRecommendationsLoading}
+            onRemoveItem={(id) => void handleRemoveFromQuote(id)}
+            removeDisabled={cart.isLoading || quotes.isSubmitting}
+          />
+          <CheckoutOrderSummary
+            cart={c}
+            selectedShipping={null}
+            recommendations={cart.recommendations}
+            recommendationsLoading={cart.isRecommendationsLoading}
+            onRemoveItem={(id) => void handleRemoveFromQuote(id)}
+            removeDisabled={cart.isLoading || quotes.isSubmitting}
+          />
+        </>
+      ) : null}
+
+      <main className={checkoutMainClass}>
+        {c && step !== 'success' ? (
+          <div
+            className={cn(
+              checkoutFormColumnClass,
+              'w-full border-b border-white/10 bg-[#16130d] py-3 sm:py-3.5 lg:hidden',
+              checkoutColumnGutterClass,
+            )}
+          >
+            <CheckoutSummaryHeader theme="dark" />
           </div>
-        ) : (
-          <>
-            {hasBlockedLines ? (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-                {t('cart.unpurchasable.blockedCheckout')}
-              </div>
-            ) : null}
-            {purchasableCount === 0 && c && c.items.length > 0 ? (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-                {t('cart.unpurchasable.noPurchasableLines')}
-              </div>
-            ) : null}
+        ) : null}
 
-            <section className="rounded-lg border border-idl-border bg-white p-6 shadow-sm shadow-idl-ink/5">
-              <h2 className="text-sm font-semibold text-idl-graphite">{t('cart.quote.reviewLines')}</h2>
-              {!c || c.items.length === 0 ? (
-                <p className="mt-4 text-sm text-idl-muted">{t('cart.quote.emptyCart')}</p>
-              ) : (
-                <ul className="mt-4 divide-y divide-idl-border text-sm">
-                  {c.items.map((line) => (
-                    <li key={line.id} className="flex justify-between gap-4 py-3">
-                      <span>
-                        {line.productName ?? line.productRef} × {line.quantity}
-                        {line.availabilityStatus === 'blocked' ? (
-                          <span className="ml-2 text-xs text-amber-700">({t('cart.unpurchasable.badge')})</span>
-                        ) : null}
-                      </span>
-                      <span className="shrink-0 text-idl-muted">
-                        {formatMoney(line.lineTotalEstimateCents ?? 0, c.currencyCode)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+        <div className={checkoutFormContentClass}>
+          <QuoteStepIndicator
+            currentStep={step}
+            accountConfirmed={step === 'account' && auth.isAuthenticated}
+          />
 
-            <form
-              onSubmit={(e) => void onSubmit(e)}
-              className="space-y-6 rounded-lg border border-idl-border bg-white p-6 shadow-sm shadow-idl-ink/5"
-            >
-              <CheckoutAddressSection
-                title={t('checkout.billingAddress')}
-                prefix="quote-billing"
-                address={billingAddress}
-                onChange={updateBilling}
+          {quotes.submitError ? <StripeErrorBanner message={quotes.submitError} /> : null}
+
+          {step === 'account' ? (
+            <CheckoutStepBody>
+              <QuoteRegistrationStep
+                email={quoteEmail}
+                onEmailChange={setQuoteEmail}
+                onAuthSuccess={onAuthSuccess}
+                onContinue={() => setStep('details')}
               />
+            </CheckoutStepBody>
+          ) : null}
 
-              <label className="block text-sm">
-                <span className="font-medium text-idl-graphite">{t('cart.quote.notesLabel')}</span>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={4}
-                  className="mt-1.5 w-full rounded-lg border border-idl-border px-3 py-2 text-sm"
-                  placeholder={t('cart.quote.notesPlaceholder')}
-                />
-              </label>
+          {step === 'details' ? (
+            <CheckoutStepBody>
+              <QuoteDetailsStep
+                billingAddress={billingAddress}
+                notes={notes}
+                onNotesChange={setNotes}
+                onBillingChange={updateBilling}
+                onBack={() => setStep('account')}
+                onSubmit={onSubmit}
+                submitting={quotes.isSubmitting}
+                submitDisabled={quoteBlocked}
+                hasBlockedLines={hasBlockedLines}
+                noPurchasableLines={Boolean(c && c.items.length > 0 && purchasableCount === 0)}
+              />
+            </CheckoutStepBody>
+          ) : null}
 
-              {quotes.submitError ? <StripeErrorBanner message={quotes.submitError} /> : null}
+          {step === 'success' ? (
+            <CheckoutStepBody>
+              <QuoteSuccessStep />
+            </CheckoutStepBody>
+          ) : null}
 
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Button
-                  type="submit"
-                  loading={quotes.isSubmitting}
-                  disabled={quoteBlocked}
-                  className="flex-1 justify-center"
-                >
-                  {t('cart.quote.submit')}
-                </Button>
-                <Link to="/cart" className="flex-1">
-                  <Button variant="secondary" className="w-full justify-center">
-                    {t('cart.quote.backToCart')}
-                  </Button>
-                </Link>
-              </div>
-            </form>
-          </>
-        )}
-      </div>
+          <footer className="mt-10 flex flex-wrap items-center justify-center gap-x-2 text-xs text-[#9298a3] lg:hidden">
+            <span>{t('checkout.poweredByStripe')}</span>
+            <span aria-hidden>·</span>
+            <Link to="/" className="hover:text-[#14161b]">
+              {t('legal.terms')}
+            </Link>
+            <span aria-hidden>·</span>
+            <Link to="/" className="hover:text-[#14161b]">
+              {t('legal.privacy')}
+            </Link>
+          </footer>
+        </div>
+      </main>
     </div>
   )
 }

@@ -78,7 +78,13 @@ export const siteGuideService = {
     }
   },
 
+  /** Garantisce che le guide di default esistano in DB (idempotente). */
+  async ensureSiteGuidesSeeded() {
+    await this.seedSiteGuides()
+  },
+
   async listAdminGuides() {
+    await this.ensureSiteGuidesSeeded()
     const guides = await siteGuideRepository.listAll()
     const targetLocales = SITE_LOCALES.filter((locale) => locale !== 'IT')
 
@@ -114,6 +120,7 @@ export const siteGuideService = {
 
   async getAdminGuide(slug: string) {
     assertGuideSlug(slug)
+    await this.ensureSiteGuidesSeeded()
     const guide = await siteGuideRepository.findBySlug(slug)
     if (!guide) {
       throw new AppError('SITE_GUIDE_NOT_FOUND', 'Guide not found', 'Guida non trovata.', 404, false)
@@ -174,6 +181,7 @@ export const siteGuideService = {
   },
 
   async listPublicGuides(localeInput: string, options?: { featuredOnly?: boolean }) {
+    await this.ensureSiteGuidesSeeded()
     const locale = normalizeSiteLocale(localeInput)
     const guides = await siteGuideRepository.listAll()
     const items = []

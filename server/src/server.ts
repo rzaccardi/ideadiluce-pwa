@@ -21,6 +21,12 @@ void seedDefaultTaxRules().catch((e) => {
   logger.warn('tax.seed_failed', { err: String(e) })
 })
 
+void import('./modules/site-guides/site-guides.service.js')
+  .then(({ siteGuideService }) => siteGuideService.ensureSiteGuidesSeeded())
+  .catch((e) => {
+    logger.warn('site_guides.seed_failed', { err: String(e) })
+  })
+
 startOdooSyncRetryScheduler()
 startPaidSyncAlertScheduler()
 startAbandonedCartScheduler()

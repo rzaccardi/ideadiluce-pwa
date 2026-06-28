@@ -16,6 +16,7 @@ import type { LocalePathFn } from '../sections/types'
 import { cn } from '@/utils/cn'
 import { CatalogFiltersSkeleton, ProductGridSkeleton } from '@/components/Skeleton'
 import { PageLoadTransition } from '@/components/motion'
+import { CatalogLoadMoreFooter } from './CatalogLoadMoreFooter'
 
 type Props = {
   lp: LocalePathFn
@@ -217,26 +218,15 @@ export function CatalogPageView({
                   </div>
                 ) : null}
 
-                {hasMore ? (
-                  <div className="pt-8 text-center">
-                    <button
-                      type="button"
-                      disabled={isLoadingMore}
-                      onClick={onLoadMore}
-                      className="rounded-lg border border-idl-tech-chip-border bg-white px-8 py-3.5 text-[14px] font-bold text-idl-ink transition hover:border-idl-ink disabled:opacity-60"
-                    >
-                      Carica altri prodotti
-                    </button>
-                    <p className="mt-2.5 text-xs text-idl-muted">
-                      {shownProducts} di {totalProducts}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="pt-8 text-center text-[13.5px] text-idl-muted">
-                    Hai visto tutti i prodotti di questa selezione.
-                  </p>
-                )}
-                <div ref={loadMoreRef} className="h-px" aria-hidden />
+                <CatalogLoadMoreFooter
+                  shownProducts={shownProducts}
+                  totalProducts={totalProducts}
+                  hasMore={hasMore}
+                  isLoadingMore={isLoadingMore}
+                  loadMoreRef={loadMoreRef}
+                  onLoadMore={onLoadMore}
+                  variant="catalog"
+                />
               </>
             )}
           </div>

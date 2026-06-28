@@ -8,7 +8,6 @@ import { useSnapshot } from 'valtio/react'
 import { authStore } from '@/features/auth'
 import type { ProfessionistiPageContent } from '@/types/site-content'
 import { ProfessionalAccountForm } from './ProfessionalAccountForm'
-import { ProfessionalQuoteForm } from './ProfessionalQuoteForm'
 import { SectionContainer } from '../primitives'
 import { Reveal, Stagger, StaggerItem } from '@/components/motion'
 import { cn } from '@/utils/cn'
@@ -159,12 +158,7 @@ export function ProfessionistiPageView({ content }: Props) {
           </Reveal>
 
           <Reveal>
-            <ProfessionalQuoteForm />
-          </Reveal>
-
-          <Reveal>
             <div
-              id="registrazione"
               className={cn(
                 'rounded-2xl border border-idl-tech-border bg-white p-7 shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:p-8',
               )}

@@ -190,6 +190,15 @@ export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> =
     title: 'Contatti',
     subtitle: 'Siamo qui per aiutarti a scegliere la luce giusta.',
     blocks: [
+      {
+        kind: 'features',
+        items: [
+          { title: 'Assistenza reale', description: 'Ti aiutiamo a scegliere' },
+          { title: 'Showroom Roma', description: 'Vieni a trovarci dal vivo' },
+          { title: 'Ricambi difficili', description: 'Foto, EAN o codice prodotto' },
+          { title: 'Spedizione tracciata', description: 'In tutta Italia' },
+        ],
+      },
       { kind: 'contact', ...COMPANY_CONTACT },
       {
         kind: 'lead-form',

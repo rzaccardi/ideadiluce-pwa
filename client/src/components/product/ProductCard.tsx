@@ -82,7 +82,7 @@ export function ProductCard({ product, className }: Props) {
   return (
     <article
       className={cn(
-        'flex h-full flex-col overflow-hidden rounded-lg border border-idl-tech-border bg-white transition hover:border-idl-border-strong',
+        'relative flex h-full flex-col overflow-hidden rounded-lg border border-idl-tech-border bg-white transition hover:border-idl-border-strong',
         className,
       )}
     >
@@ -170,7 +170,7 @@ export function ProductCard({ product, className }: Props) {
               {isAddingToCart ? <LoadingSpinner className="opacity-80" /> : <CartIcon />}
               {inCart && !isAddingToCart ? (
                 <span
-                  className="absolute -right-0.5 -top-0.5 z-10 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-600 px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-white"
+                  className="absolute -right-0.5 -top-0.5 z-10 hidden h-4 min-w-4 items-center justify-center rounded-full bg-emerald-600 px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-white md:flex"
                   aria-hidden="true"
                 >
                   {cartQuantity}
@@ -185,6 +185,14 @@ export function ProductCard({ product, className }: Props) {
           </div>
         </div>
       </div>
+      {inCart && !isAddingToCart ? (
+        <span
+          className="pointer-events-none absolute bottom-4 right-4 z-10 flex h-4 min-w-4 translate-x-1/2 translate-y-1/2 items-center justify-center rounded-full bg-emerald-600 px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-white md:hidden"
+          aria-hidden="true"
+        >
+          {cartQuantity}
+        </span>
+      ) : null}
     </article>
   )
 }
