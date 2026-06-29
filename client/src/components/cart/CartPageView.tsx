@@ -103,7 +103,7 @@ export function CartPageView({ state }: Props) {
             />
 
             <Link
-              to={lp('/catalogo')}
+              to={lp('/negozio')}
               className="inline-flex items-center gap-2 text-sm font-bold text-idl-muted transition hover:text-idl-graphite"
             >
               ← {t('cart.continueShopping')}

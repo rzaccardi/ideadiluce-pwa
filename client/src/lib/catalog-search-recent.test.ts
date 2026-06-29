@@ -52,7 +52,7 @@ describe('catalog-search-recent', () => {
     const group = recentQueriesToSuggestionGroup(['GU10', 'E27'])
     expect(group?.kind).toBe('query')
     expect(group?.items).toHaveLength(2)
-    expect(group?.items[0]?.path).toBe('/catalogo?q=GU10')
+    expect(group?.items[0]?.path).toBe('/negozio?q=GU10')
   })
 
   it('pulisce lo storage', () => {

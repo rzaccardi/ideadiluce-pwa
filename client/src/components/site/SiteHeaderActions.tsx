@@ -13,8 +13,10 @@ export function SiteHeaderActions() {
       <div className="hidden lg:block">
         <LanguageSwitcher variant="header" />
       </div>
-      <HeaderThemeToggle />
-      <HeaderAccountMenu />
+      <div className="hidden lg:contents">
+        <HeaderThemeToggle />
+        <HeaderAccountMenu />
+      </div>
       <HeaderMiniCart />
     </div>
   )

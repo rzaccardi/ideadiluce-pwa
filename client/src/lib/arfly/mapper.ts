@@ -10,6 +10,7 @@ import type {
   ProductVariantDTO,
 } from '@/types/dto'
 import { buildTechnicalCardSpecTags } from '@/lib/technical-card-spec-tags'
+import { inferTechnicalProductBrandFromName } from '@/lib/technical-product-ref'
 import {
   deriveInStockFromAvailability,
   parseArflyAvailability,
@@ -77,9 +78,21 @@ function mapCategories(
     .map((c) => ({ slug: c.slug!, name: c.name! }))
 }
 
+function resolveListSku(product: ArflyProductListItem): string | null {
+  for (const value of [product.sku, product.manufacturer_code, product.default_code, product.ced]) {
+    const trimmed = value?.trim()
+    if (trimmed) return trimmed
+  }
+  return null
+}
+
 function mapBrand(brand: ArflyProductListItem['brand']): ProductBrandDTO | null {
   if (!brand?.slug || !brand?.name) return null
   return { slug: brand.slug, name: brand.name }
+}
+
+function resolveCardBrand(product: ArflyProductListItem): ProductBrandDTO | null {
+  return mapBrand(product.brand) ?? inferTechnicalProductBrandFromName(product.title)
 }
 
 function normalizeRelation(
@@ -162,6 +175,8 @@ export function mapArflyListItem(product: ArflyProductListItem, locale: PwaLocal
     currency: product.currency || 'EUR',
     imageUrl: resolveArflyMediaUrl(product.image?.url),
     categorySlug: categories[0]?.slug ?? product.category_slug ?? null,
+    brand: resolveCardBrand(product),
+    sku: resolveListSku(product),
     availability,
     inStock: deriveInStockFromAvailability(availability),
   }
@@ -204,7 +219,10 @@ export function mapArflyProductDetail(
     }
   })
 
-  const primarySku = product.variants[0]?.ced ?? product.variants[0]?.manufacturer_code ?? null
+  const primarySku =
+    product.variants[0]?.manufacturer_code ??
+    product.variants[0]?.ced ??
+    resolveListSku(product)
   const related = product.related_products ?? []
   const relatedProducts = related
     .filter((r) => normalizeRelation(r.relation, 'related') === 'related')

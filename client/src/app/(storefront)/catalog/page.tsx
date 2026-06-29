@@ -4,7 +4,7 @@ type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
-/** Redirect legacy /catalog → /catalogo (301 via Next redirect). */
+/** Redirect legacy /catalog → /negozio (301 via Next redirect). */
 export default async function CatalogLegacyRedirectPage({ searchParams }: PageProps) {
   const params = await searchParams
   const qs = new URLSearchParams()
@@ -17,5 +17,5 @@ export default async function CatalogLegacyRedirectPage({ searchParams }: PagePr
     }
   }
   const query = qs.toString()
-  redirect(query ? `/catalogo?${query}` : '/catalogo')
+  redirect(query ? `/negozio?${query}` : '/negozio')
 }

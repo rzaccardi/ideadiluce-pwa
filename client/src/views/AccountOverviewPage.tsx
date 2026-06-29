@@ -293,7 +293,7 @@ export function AccountOverviewPage() {
           <AccountDcPanel title={t('account.overview.recentOrders')}>
             <div className="py-6 text-center">
               <p className="text-sm font-medium text-idl-graphite">{t('account.overview.noOrders')}</p>
-              <Link to="/catalogo" className={`mt-6 inline-flex ${accountDcPrimaryBtnClass}`}>
+              <Link to="/negozio" className={`mt-6 inline-flex ${accountDcPrimaryBtnClass}`}>
                 {t('account.overview.browseCatalog')}
               </Link>
             </div>

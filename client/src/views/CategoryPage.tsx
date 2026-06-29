@@ -70,7 +70,7 @@ export function CategoryPage({ initialProducts, initialCategoryName = null }: Pr
               <>
                 <Breadcrumb
                   items={[
-                    { label: t('catalog.title'), to: lp('/catalogo') },
+                    { label: t('catalog.title'), to: lp('/negozio') },
                     { label: title },
                   ]}
                 />
@@ -81,7 +81,7 @@ export function CategoryPage({ initialProducts, initialCategoryName = null }: Pr
             <>
               <Breadcrumb
                 items={[
-                  { label: t('catalog.title'), to: lp('/catalogo') },
+                  { label: t('catalog.title'), to: lp('/negozio') },
                   { label: title },
                 ]}
               />

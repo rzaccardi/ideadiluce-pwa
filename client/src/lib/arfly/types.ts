@@ -108,6 +108,10 @@ export type ArflyProductListItem = {
   categories?: ArflyCategoryRef[]
   category_slug?: string | null
   brand?: ArflyBrand | null
+  sku?: string | null
+  default_code?: string | null
+  manufacturer_code?: string | null
+  ced?: string | null
 }
 
 export type ArflyProductDetail = ArflyProductListItem & {

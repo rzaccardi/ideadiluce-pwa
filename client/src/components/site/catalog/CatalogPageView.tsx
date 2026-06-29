@@ -17,6 +17,7 @@ import { cn } from '@/utils/cn'
 import { CatalogFiltersSkeleton, ProductGridSkeleton } from '@/components/Skeleton'
 import { PageLoadTransition } from '@/components/motion'
 import { CatalogLoadMoreFooter } from './CatalogLoadMoreFooter'
+import { CatalogLoadMoreIndicator } from './CatalogLoadMoreIndicator'
 
 type Props = {
   lp: LocalePathFn
@@ -202,19 +203,22 @@ export function CatalogPageView({
               <EmptyState title={emptyTitle} description={emptyDescription} />
             ) : (
               <>
-                <CatalogProductGrid
-                  products={products}
-                  categories={categories}
-                  lp={lp}
-                  worldTab={worldTab}
-                  filtersOpen={filtersOpen}
-                />
+                <div
+                  className={cn(
+                    'transition-opacity duration-200',
+                    isLoading && products.length > 0 && 'pointer-events-none opacity-60',
+                  )}
+                >
+                  <CatalogProductGrid
+                    products={products}
+                    categories={categories}
+                    lp={lp}
+                    worldTab={worldTab}
+                    filtersOpen={filtersOpen}
+                  />
+                </div>
 
-                {isLoadingMore ? (
-                  <div className="mt-4">
-                    <CatalogGridSkeleton filtersOpen={filtersOpen} worldTab={worldTab} />
-                  </div>
-                ) : null}
+                {isLoadingMore ? <CatalogLoadMoreIndicator /> : null}
 
                 <CatalogLoadMoreFooter
                   shownProducts={shownProducts}

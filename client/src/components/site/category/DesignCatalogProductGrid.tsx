@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Link } from '@/lib/navigation'
 import type { ProductCardDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
@@ -12,7 +13,12 @@ type Props = {
   brandLabel?: string
 }
 
-export function DesignCatalogProductCard({ product, lp, discoverLabel = 'Scopri →', brandLabel }: Props) {
+export const DesignCatalogProductCard = memo(function DesignCatalogProductCard({
+  product,
+  lp,
+  discoverLabel = 'Scopri →',
+  brandLabel,
+}: Props) {
   const brand = brandLabel ?? product.categorySlug?.toUpperCase() ?? '—'
 
   return (
@@ -49,7 +55,7 @@ export function DesignCatalogProductCard({ product, lp, discoverLabel = 'Scopri 
       </Link>
     </HoverLift>
   )
-}
+})
 
 type GridProps = {
   products: ReadonlyArray<ProductCardDTO>

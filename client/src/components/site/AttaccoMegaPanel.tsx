@@ -14,16 +14,9 @@ import { slideDownVariants, transitionBase } from '@/lib/motion/presets'
 
 const MEGA_SOCKETS = ATTACCO_SOCKETS.filter((socket) => !socket.dashed).slice(0, 5)
 
-const DEFAULT_ATTACCO_PANEL: Pick<SiteMegaMenuPanel, 'eyebrow' | 'allSocketsCta' | 'promo'> = {
+const DEFAULT_ATTACCO_PANEL: Pick<SiteMegaMenuPanel, 'eyebrow' | 'allSocketsCta'> = {
   eyebrow: 'Lampadine per attacco · ordinati per diffusione',
   allSocketsCta: 'Tutti gli attacchi →',
-  promo: {
-    title: "Non trovi l'attacco?",
-    description: 'Invia una foto o il codice prodotto: ti aiutiamo a trovare il ricambio.',
-    ctaLabel: 'Richiedi supporto →',
-    ctaHref: '/prodotto-non-trovato',
-    variant: 'technical',
-  },
 }
 
 function resolveAttaccoPanel(shell: SiteShellContent | undefined): SiteMegaMenuPanel {

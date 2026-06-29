@@ -5,7 +5,7 @@
 ## Pagine principali
 
 - Home: /
-- Catalogo: /catalogo
+- Negozio: /negozio
 - Brand: /brand
 - Guide: /guide
 - Ambienti: /ambienti

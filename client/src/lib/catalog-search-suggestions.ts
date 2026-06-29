@@ -24,7 +24,7 @@ export type CatalogSearchSuggestion = {
   kind: CatalogSearchSuggestionKind
   label: string
   sublabel?: string
-  /** Path senza prefisso locale, es. /catalogo?attacco=E27 */
+  /** Path senza prefisso locale, es. /negozio?attacco=E27 */
   path: string
   product?: CatalogSearchProductMeta
 }
@@ -57,7 +57,7 @@ function matchesQuery(haystack: string, query: string): boolean {
 
 function attaccoCatalogPath(code: string): string {
   const normalized = code.replace(' · T8', '').trim()
-  return `/catalogo?world=technical&attacco=${encodeURIComponent(normalized)}`
+  return `/negozio?world=technical&attacco=${encodeURIComponent(normalized)}`
 }
 
 function searchAttacchi(query: string, max: number): CatalogSearchSuggestion[] {
@@ -119,7 +119,7 @@ function searchBrands(
       kind: 'brand' as const,
       label: brand.name,
       sublabel: brand.productCount ? `${brand.productCount} prodotti` : undefined,
-      path: `/catalogo?brand=${encodeURIComponent(brand.slug)}`,
+      path: `/negozio?brand=${encodeURIComponent(brand.slug)}`,
     }))
 }
 
@@ -138,7 +138,7 @@ function searchCategories(
       id: `category:${category.slug}`,
       kind: 'category' as const,
       label: category.name,
-      path: `/catalogo?category=${encodeURIComponent(category.slug)}`,
+      path: `/negozio?category=${encodeURIComponent(category.slug)}`,
     }))
 }
 
@@ -153,7 +153,7 @@ function searchHints(query: string, hints: ReadonlyArray<string>, max: number): 
       id: `hint:${hint}`,
       kind: 'hint' as const,
       label: hint,
-      path: `/catalogo?q=${encodeURIComponent(hint)}`,
+      path: `/negozio?q=${encodeURIComponent(hint)}`,
     }))
 }
 
@@ -226,5 +226,5 @@ export function buildCatalogSubmitPath(
   if (options?.world === 'design') params.set('world', 'design')
   if (trimmed) params.set('q', trimmed)
   const qs = params.toString()
-  return qs ? `/catalogo?${qs}` : '/catalogo'
+  return qs ? `/negozio?${qs}` : '/negozio'
 }

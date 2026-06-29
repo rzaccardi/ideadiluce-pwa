@@ -170,6 +170,7 @@ export async function enrichProductCardsWithStock(
     )
     return {
       ...item,
+      sku: item.sku ?? snapshot.defaultCode ?? null,
       availability,
       inStock: deriveInStockFromAvailability(availability),
     }

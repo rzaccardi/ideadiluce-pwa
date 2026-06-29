@@ -31,7 +31,7 @@ export function Header() {
           {t('brand.name')}
         </Link>
         <nav className="flex flex-wrap items-center gap-4 md:justify-center">
-          <NavLink to={localize('/catalogo')} className={navClass}>
+          <NavLink to={localize('/negozio')} className={navClass}>
             {t('nav.catalog')}
           </NavLink>
           <NavLink to={localize('/wishlist')} className={navClass}>

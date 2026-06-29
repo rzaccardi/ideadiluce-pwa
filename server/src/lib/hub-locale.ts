@@ -35,7 +35,7 @@ export function productPath(slug: string, locale: HubLocale): string {
 
 export function catalogPath(locale: HubLocale): string {
   const prefix = LOCALE_PATH[locale]
-  return `${prefix}/catalogo`
+  return `${prefix}/negozio`
 }
 
 export function categoryPath(slug: string, locale: HubLocale): string {

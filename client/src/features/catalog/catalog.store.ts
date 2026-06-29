@@ -17,7 +17,11 @@ export type CatalogFilters = {
 }
 
 export const catalogStore = proxy({
+  /** Prodotti grezzi dall'API, prima dei filtri client-side. */
+  rawProducts: [] as ProductCardDTO[],
   products: [] as ProductCardDTO[],
+  /** Chiave dell'ultimo fetch server (q, categoria, brand, pagina, locale). */
+  serverFetchKey: null as string | null,
   categories: [] as CategoryDTO[],
   brands: [] as BrandListItemDTO[],
   filters: {

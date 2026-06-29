@@ -56,16 +56,16 @@ export function CatalogHeroSection({
             Home
           </Link>
           {' · '}
-          <span className="text-idl-graphite-2">Catalogo completo</span>
+          <span className="text-idl-graphite-2">Negozio</span>
         </div>
 
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
             <h1 className="text-[clamp(1.75rem,3vw,2rem)] font-extrabold tracking-tight text-idl-ink">
-              Catalogo completo
+              Negozio
             </h1>
             <p className="mt-1.5 text-[14.5px] text-idl-muted">
-              Arredo e tecnica in un unico catalogo.{' '}
+              Arredo e tecnica in un unico negozio.{' '}
               <span className="font-bold text-idl-ink">{totalProducts.toLocaleString('it-IT')}</span> prodotti.
             </p>
           </div>

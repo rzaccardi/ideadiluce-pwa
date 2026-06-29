@@ -1,9 +1,11 @@
 'use client'
 
+import { memo, useMemo } from 'react'
 import { Link } from '@/lib/navigation'
 import { useLocale } from '@/context/locale-context'
 import type { ProductCardDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
+import { formatTechnicalProductRefLine } from '@/lib/technical-product-ref'
 import { buildTechnicalCardSpecTags } from '@/lib/technical-card-spec-tags'
 import {
   formatAvailabilityPrimaryLabel,
@@ -36,15 +38,23 @@ type Props = {
   addLabel?: string
 }
 
-export function TechnicalCatalogProductCard({ product, lp, addLabel = 'Aggiungi' }: Props) {
+export const TechnicalCatalogProductCard = memo(function TechnicalCatalogProductCard({
+  product,
+  lp,
+  addLabel = 'Aggiungi',
+}: Props) {
   const { locale } = useLocale()
   const stock = stockLabel(product, locale)
-  const tags =
-    product.specTags ??
-    buildTechnicalCardSpecTags({
-      name: product.name,
-      shortDescription: product.shortDescription,
-    })
+  const refLine = formatTechnicalProductRefLine(product)
+  const tags = useMemo(
+    () =>
+      product.specTags ??
+      buildTechnicalCardSpecTags({
+        name: product.name,
+        shortDescription: product.shortDescription,
+      }),
+    [product.name, product.shortDescription, product.specTags],
+  )
 
   return (
     <HoverLift className="h-full">
@@ -59,14 +69,16 @@ export function TechnicalCatalogProductCard({ product, lp, addLabel = 'Aggiungi'
               <SiteImage src={product.imageUrl} alt="" fill className="object-cover" sizes="25vw" />
             ) : null}
           </div>
-          <div className="font-mono text-[10.5px] text-idl-muted">{product.slug}</div>
+          {refLine ? (
+            <div className="font-mono text-[10.5px] text-idl-muted">{refLine}</div>
+          ) : null}
           <div className="mt-1 line-clamp-2 min-h-[2lh] text-[13.5px] leading-snug font-semibold">{product.name}</div>
           {tags.length > 0 ? (
             <div className="mt-2.5 mb-3 flex flex-wrap gap-1.5">
               {tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded bg-idl-tech-panel px-1.5 py-0.5 font-mono text-[10.5px] text-idl-graphite-2"
+                  className="rounded border border-idl-tech-chip-border bg-idl-tech-chip px-1.5 py-0.5 font-mono text-[10.5px] text-idl-graphite-2"
                 >
                   {tag}
                 </span>
@@ -83,7 +95,7 @@ export function TechnicalCatalogProductCard({ product, lp, addLabel = 'Aggiungi'
       </div>
     </HoverLift>
   )
-}
+})
 
 type GridProps = {
   products: ReadonlyArray<ProductCardDTO>

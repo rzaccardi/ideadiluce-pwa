@@ -60,7 +60,7 @@ export async function CategoryListRoute({ params }: PageProps) {
           }),
           buildBreadcrumbJsonLd([
             { name: 'Home', url: site },
-            { name: 'Catalogo', url: `${site}/catalogo` },
+            { name: 'Negozio', url: `${site}/negozio` },
             { name, url: canonical },
           ]),
         ]}

@@ -78,7 +78,7 @@ export function recentQueriesToSuggestionGroup(
       id: `recent:${query}`,
       kind: 'query' as const,
       label: query,
-      path: `/catalogo?q=${encodeURIComponent(query)}`,
+      path: `/negozio?q=${encodeURIComponent(query)}`,
     })),
   }
 }

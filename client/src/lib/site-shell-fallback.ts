@@ -51,12 +51,12 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
             {
               title: 'PER TIPOLOGIA',
               links: [
-                { label: 'Sospensione', href: '/catalogo?world=design&q=sospensione' },
-                { label: 'Parete', href: '/catalogo?world=design&q=parete' },
-                { label: 'Tavolo', href: '/catalogo?world=design&q=tavolo' },
-                { label: 'Terra', href: '/catalogo?world=design&q=terra' },
-                { label: 'Plafoniere', href: '/catalogo?world=design&q=plafoniere' },
-                { label: 'Faretti e incassi', href: '/catalogo?world=design&q=faretto' },
+                { label: 'Sospensione', href: '/negozio?world=design&q=sospensione' },
+                { label: 'Parete', href: '/negozio?world=design&q=parete' },
+                { label: 'Tavolo', href: '/negozio?world=design&q=tavolo' },
+                { label: 'Terra', href: '/negozio?world=design&q=terra' },
+                { label: 'Plafoniere', href: '/negozio?world=design&q=plafoniere' },
+                { label: 'Faretti e incassi', href: '/negozio?world=design&q=faretto' },
               ],
             },
             {
@@ -73,12 +73,12 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
             {
               title: 'PER STILE',
               links: [
-                { label: 'Moderno', href: '/catalogo?world=design&q=moderno' },
-                { label: 'Classico', href: '/catalogo?world=design&q=classico' },
-                { label: 'Minimal', href: '/catalogo?world=design&q=minimal' },
-                { label: 'Decorativo', href: '/catalogo?world=design&q=decorativo' },
-                { label: 'Industrial', href: '/catalogo?world=design&q=industrial' },
-                { label: 'Outdoor', href: '/catalogo?world=design&q=outdoor' },
+                { label: 'Moderno', href: '/negozio?world=design&q=moderno' },
+                { label: 'Classico', href: '/negozio?world=design&q=classico' },
+                { label: 'Minimal', href: '/negozio?world=design&q=minimal' },
+                { label: 'Decorativo', href: '/negozio?world=design&q=decorativo' },
+                { label: 'Industrial', href: '/negozio?world=design&q=industrial' },
+                { label: 'Outdoor', href: '/negozio?world=design&q=outdoor' },
               ],
             },
             {
@@ -95,10 +95,10 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
             {
               title: 'IN EVIDENZA',
               links: [
-                { label: 'Novità', href: '/catalogo?world=design&sort=new' },
-                { label: 'Pronta consegna', href: '/catalogo?world=design&inStock=1' },
-                { label: 'Icone di design', href: '/catalogo?world=design&q=design' },
-                { label: 'Offerte', href: '/catalogo?world=design&q=offerta' },
+                { label: 'Novità', href: '/negozio?world=design&sort=new' },
+                { label: 'Pronta consegna', href: '/negozio?world=design&inStock=1' },
+                { label: 'Icone di design', href: '/negozio?world=design&q=design' },
+                { label: 'Offerte', href: '/negozio?world=design&q=offerta' },
               ],
             },
           ],
@@ -121,11 +121,11 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
             {
               title: 'TECNOLOGIA',
               links: [
-                { label: 'LED', href: '/catalogo?world=technical&q=LED' },
-                { label: 'Alogena', href: '/catalogo?world=technical&q=alogena' },
-                { label: 'Fluorescenza', href: '/catalogo?world=technical&q=fluorescenza' },
-                { label: 'Incandescenza', href: '/catalogo?world=technical&q=incandescenza' },
-                { label: 'Scarica', href: '/catalogo?world=technical&q=scarica' },
+                { label: 'LED', href: '/negozio?world=technical&q=LED' },
+                { label: 'Alogena', href: '/negozio?world=technical&q=alogena' },
+                { label: 'Fluorescenza', href: '/negozio?world=technical&q=fluorescenza' },
+                { label: 'Incandescenza', href: '/negozio?world=technical&q=incandescenza' },
+                { label: 'Scarica', href: '/negozio?world=technical&q=scarica' },
               ],
             },
             {
@@ -142,20 +142,20 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
               title: 'PRODOTTI TECNICI',
               links: [
                 { label: 'Alimentatori', href: '/categoria-prodotto/illuminazione-tecnica/prodotti-tecnici' },
-                { label: 'Driver LED', href: '/catalogo?world=technical&q=driver' },
-                { label: 'Trasformatori', href: '/catalogo?world=technical&q=trasformatore' },
-                { label: 'Portalampade', href: '/catalogo?world=technical&q=portalampade' },
-                { label: 'Dimmer', href: '/catalogo?world=technical&q=dimmer' },
+                { label: 'Driver LED', href: '/negozio?world=technical&q=driver' },
+                { label: 'Trasformatori', href: '/negozio?world=technical&q=trasformatore' },
+                { label: 'Portalampade', href: '/negozio?world=technical&q=portalampade' },
+                { label: 'Dimmer', href: '/negozio?world=technical&q=dimmer' },
               ],
             },
             {
               title: 'APPLICAZIONI',
               links: [
-                { label: 'Strisce LED', href: '/catalogo?world=technical&q=striscia+led' },
-                { label: 'Profili LED', href: '/catalogo?world=technical&q=profilo+led' },
-                { label: 'Automotive', href: '/catalogo?world=technical&q=automotive' },
-                { label: 'Proiettori', href: '/catalogo?world=technical&q=proiettore' },
-                { label: 'Outdoor IP65', href: '/catalogo?world=technical&q=IP65' },
+                { label: 'Strisce LED', href: '/negozio?world=technical&q=striscia+led' },
+                { label: 'Profili LED', href: '/negozio?world=technical&q=profilo+led' },
+                { label: 'Automotive', href: '/negozio?world=technical&q=automotive' },
+                { label: 'Proiettori', href: '/negozio?world=technical&q=proiettore' },
+                { label: 'Outdoor IP65', href: '/negozio?world=technical&q=IP65' },
               ],
             },
             {
@@ -187,13 +187,6 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
           columns: attaccoMegaMenuColumns(),
           eyebrow: 'Lampadine per attacco · ordinati per diffusione',
           allSocketsCta: 'Tutti gli attacchi →',
-          promo: {
-            title: "Non trovi l'attacco?",
-            description: 'Invia una foto o il codice prodotto: ti aiutiamo a trovare il ricambio.',
-            ctaLabel: 'Richiedi supporto →',
-            ctaHref: '/prodotto-non-trovato',
-            variant: 'technical',
-          },
         },
       },
       { kind: 'link', id: 'ambienti', label: 'Ambienti', href: '/ambienti' },
@@ -230,7 +223,7 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
       {
         title: 'Utilità',
         links: [
-          { label: 'Catalogo', href: '/negozio' },
+          { label: 'Negozio', href: '/negozio' },
           { label: 'Guide alla luce', href: '/blog' },
           { label: 'Scegli per attacco', href: '/attacco' },
           { label: 'Brand', href: '/brand' },

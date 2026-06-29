@@ -3,6 +3,7 @@
 import { Link } from '@/lib/navigation'
 import type { ProductCardDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
+import { formatTechnicalProductRefLine } from '@/lib/technical-product-ref'
 import { SectionContainer } from '../primitives'
 import { SiteImage } from '../SiteImage'
 import { HoverLift, Stagger, StaggerItem } from '@/components/motion'
@@ -26,6 +27,8 @@ function TechnicalShowcaseProductCard({
   lp: LocalePathFn
   addToCartLabel: string
 }) {
+  const refLine = formatTechnicalProductRefLine(product)
+
   return (
     <HoverLift>
       <div className="rounded-lg border border-idl-tech-border p-4 transition hover:border-idl-muted hover:shadow-md">
@@ -35,7 +38,9 @@ function TechnicalShowcaseProductCard({
               <SiteImage src={product.imageUrl} alt="" fill className="object-cover" sizes="25vw" />
             ) : null}
           </div>
-          <div className="font-mono text-[10.5px] text-idl-muted">{product.slug}</div>
+          {refLine ? (
+            <div className="font-mono text-[10.5px] text-idl-muted">{refLine}</div>
+          ) : null}
           <div className="mt-1 line-clamp-2 min-h-[2lh] text-[13.5px] leading-snug font-semibold">{product.name}</div>
         </Link>
         <div className="mt-3 flex items-center justify-between">

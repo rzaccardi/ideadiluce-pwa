@@ -1,6 +1,7 @@
 import {
   fetchArflyBrands,
   fetchArflyCategories,
+  fetchArflyProductDetail,
   fetchArflyProductList,
   isArflyConfigured,
 } from '../../adapters/arfly/arflyClient.js'
@@ -9,13 +10,33 @@ import type { HubLocale } from '../../lib/hub-locale.js'
 import { parseHubLocale } from '../../lib/hub-locale.js'
 import type { CategoryDTO, ProductListDTO } from '../../types/dto.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
-import { enrichProductCardsWithStock } from './catalog-stock.enrich.js'
+import { enrichProductCardsWithStock, type ProductCardStockHint } from './catalog-stock.enrich.js'
 import { sanitizeCatalogSearchQuery } from './catalog-search-guard.js'
 
 export type BrandListItemDTO = {
   slug: string
   name: string
   productCount?: number
+}
+
+async function enrichProductCardsWithSkuFromArfly(
+  items: ProductCardStockHint[],
+  locale: HubLocale,
+  pricing: { partnerId?: number; pricelistId?: number },
+): Promise<ProductCardStockHint[]> {
+  return Promise.all(
+    items.map(async (item) => {
+      if (item.sku?.trim() || item.odooTemplateId == null) return item
+      try {
+        const detail = await fetchArflyProductDetail(item.odooTemplateId, locale, pricing)
+        const variant = detail.product.variants?.[0]
+        const sku = variant?.manufacturer_code?.trim() || variant?.ced?.trim() || null
+        return sku ? { ...item, sku } : item
+      } catch {
+        return item
+      }
+    }),
+  )
 }
 
 async function categoriesFromProductList(locale: HubLocale): Promise<CategoryDTO[]> {
@@ -191,13 +212,15 @@ export const catalogStorefrontService = {
       pricelistId: options.pricelistId,
     })
     const mapped = mapArflyListResponse(raw, locale)
-    const enrichedItems = await enrichProductCardsWithStock(
-      ctx,
-      mapped.items.map((item, index) => ({
-        ...item,
-        odooTemplateId: raw.items[index]?.id ?? null,
-      })),
-    )
+    const withTemplateIds: ProductCardStockHint[] = mapped.items.map((item, index) => ({
+      ...item,
+      odooTemplateId: raw.items[index]?.id ?? null,
+    }))
+    const withSku = await enrichProductCardsWithSkuFromArfly(withTemplateIds, locale, {
+      partnerId: options.partnerId,
+      pricelistId: options.pricelistId,
+    })
+    const enrichedItems = await enrichProductCardsWithStock(ctx, withSku)
     return { ...mapped, items: enrichedItems }
   },
 }

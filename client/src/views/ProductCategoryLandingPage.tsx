@@ -11,6 +11,7 @@ import {
   fetchCatalogBootstrap,
   fetchNextProductsPage,
   fetchProducts,
+  reapplyCatalogClientFilters,
 } from '@/features/catalog'
 import { getCategoryLandingContent } from '@/lib/category-landing.defaults'
 import {
@@ -96,22 +97,22 @@ export function ProductCategoryLandingPage({ pageKey }: Props) {
       page: 1,
       pageSize: content.pageSize,
       locale,
-      inStockOnly,
-      sort: sortParam,
-      minPriceCents,
-      maxPriceCents,
     })
   }, [
     brandSlug,
     catalogConfig.categorySlug,
     content.pageSize,
     effectiveQuery,
-    inStockOnly,
     locale,
-    maxPriceCents,
-    minPriceCents,
-    sortParam,
   ])
+
+  useEffect(() => {
+    catalogStore.filters.inStockOnly = inStockOnly
+    catalogStore.filters.sort = sortParam
+    catalogStore.filters.minPriceCents = minPriceCents
+    catalogStore.filters.maxPriceCents = maxPriceCents
+    reapplyCatalogClientFilters()
+  }, [inStockOnly, sortParam, minPriceCents, maxPriceCents])
 
   function setFilterParams(nextValues: Set<string>) {
     setParams(patchCategoryLandingFilterParams(params, nextValues))

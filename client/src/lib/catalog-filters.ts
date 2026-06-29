@@ -7,7 +7,7 @@ import { resolveProductCardCatalogKind } from '@/lib/product-catalog-kind'
 export type CatalogWorldTab = 'all' | 'design' | 'technical'
 
 export const CATALOG_WORLD_TAB_HREFS: Record<CatalogWorldTab, string> = {
-  all: '/catalogo',
+  all: '/negozio',
   design: '/categoria-prodotto/illuminazione-arredo',
   technical: '/categoria-prodotto/illuminazione-tecnica',
 }

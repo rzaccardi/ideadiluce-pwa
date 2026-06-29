@@ -9,6 +9,7 @@ import { CategoryLandingCatalogSkeleton } from '@/components/Skeleton'
 import { PageLoadTransition } from '@/components/motion'
 import { useInfiniteScrollSentinel } from '@/hooks/use-infinite-scroll-sentinel'
 import { CatalogLoadMoreFooter } from '@/components/site/catalog/CatalogLoadMoreFooter'
+import { CatalogLoadMoreIndicator } from '@/components/site/catalog/CatalogLoadMoreIndicator'
 import { SectionContainer } from '../../primitives'
 import { CategoryFilterSidebar } from '../CategoryFilterSidebar'
 import { CategoryResultsToolbar } from '../CategoryResultsToolbar'
@@ -132,16 +133,26 @@ export function CategoryCatalogSection({
             {null}
           </PageLoadTransition>
         ) : isDesign ? (
-          <DesignCatalogProductGrid products={products} lp={lp} />
+          <div
+            className={cn(
+              'transition-opacity duration-200',
+              loading && products.length > 0 && 'pointer-events-none opacity-60',
+            )}
+          >
+            <DesignCatalogProductGrid products={products} lp={lp} />
+          </div>
         ) : (
-          <TechnicalCatalogProductGrid products={products} lp={lp} />
+          <div
+            className={cn(
+              'transition-opacity duration-200',
+              loading && products.length > 0 && 'pointer-events-none opacity-60',
+            )}
+          >
+            <TechnicalCatalogProductGrid products={products} lp={lp} />
+          </div>
         )}
 
-        {isLoadingMore ? (
-          <div className="mt-4">
-            <CategoryLandingCatalogSkeleton variant={variant} />
-          </div>
-        ) : null}
+        {isLoadingMore ? <CatalogLoadMoreIndicator /> : null}
 
         {!loading || products.length > 0 ? (
           <CatalogLoadMoreFooter

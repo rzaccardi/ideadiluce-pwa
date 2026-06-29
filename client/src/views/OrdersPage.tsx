@@ -31,7 +31,7 @@ export function OrdersPage() {
             <p className="text-sm font-medium text-idl-graphite">{t('account.orders.emptyTitle')}</p>
             <p className="mt-1 text-sm text-idl-muted">{t('account.orders.emptyDescription')}</p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <Link to="/catalogo" className={accountDcPrimaryBtnClass}>
+              <Link to="/negozio" className={accountDcPrimaryBtnClass}>
                 {t('nav.catalog')}
               </Link>
               <Link

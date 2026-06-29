@@ -23,6 +23,7 @@ export type VariantStockSnapshot = {
   restockDate: string | null
   saleOk: boolean
   orderable: boolean
+  defaultCode?: string | null
 }
 
 function pickQtyField(fields: Record<string, unknown>): string | null {
@@ -76,6 +77,7 @@ export async function fetchVariantStockByIds(
   })
   const qtyField = pickQtyField(fields)
   const readFields = ['sale_ok', 'product_tmpl_id']
+  if ('default_code' in fields) readFields.push('default_code')
   if (qtyField) readFields.push(qtyField)
   if ('sale_delay' in fields) readFields.push('sale_delay')
   for (const key of ['x_restock_date', 'restock_date', 'date_planned']) {
@@ -140,6 +142,9 @@ export async function fetchVariantStockByIds(
     const restockDate = readRestockDate(row)
     const templateAllowsOrder = templateId != null ? (templateOrderable.get(templateId) ?? saleOk) : saleOk
     const orderable = saleOk && templateAllowsOrder
+    const defaultCodeRaw = row.default_code
+    const defaultCode =
+      typeof defaultCodeRaw === 'string' && defaultCodeRaw.trim() ? defaultCodeRaw.trim() : null
 
     result.set(variantId, {
       variantId,
@@ -148,6 +153,7 @@ export async function fetchVariantStockByIds(
       restockDate,
       saleOk,
       orderable,
+      defaultCode,
     })
   }
 

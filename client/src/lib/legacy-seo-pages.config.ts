@@ -50,10 +50,10 @@ export const LEGACY_SEO_PAGES: Record<LegacySeoPageId, LegacySeoPageConfig> = {
   },
   negozio: {
     canonicalPath: '/negozio',
-    title: 'Shop',
+    title: 'Negozio',
     description:
-      "Catalogo illuminazione online: lampade d'arredo, prodotti tecnici, lampadine e accessori per casa e professionisti.",
-    h1: 'Shop',
+      "Negozio illuminazione online: lampade d'arredo, prodotti tecnici, lampadine e accessori per casa e professionisti.",
+    h1: 'Negozio',
     ogType: 'article',
   },
   blog: {

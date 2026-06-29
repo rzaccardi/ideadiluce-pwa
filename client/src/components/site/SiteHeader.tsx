@@ -3,40 +3,16 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from '@/lib/motion-client'
 import { Link } from '@/lib/navigation'
-import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import type { DcActiveNavId } from '@/lib/dc-static-routes'
-import { resolveNavDropdownHref } from '@/lib/dc-static-routes'
 import type { SiteMegaMenuPanel, SiteShellContent } from '@/types/site-content'
 import { cn } from '@/utils/cn'
 import { ui } from '@/lib/ui-classes'
 import { slideDownVariants, transitionBase } from '@/lib/motion/presets'
 import { AttaccoMegaPanel } from './AttaccoMegaPanel'
-
-const ATTACCO_MOBILE_SOCKETS = [
-  { label: 'E27', href: '/attacco/e27' },
-  { label: 'E14', href: '/attacco/e14' },
-  { label: 'GU10', href: '/attacco/gu10' },
-  { label: 'GU5.3', href: '/attacco/gu5-3' },
-  { label: 'R7s', href: '/attacco/r7s' },
-  { label: 'Tutti gli attacchi →', href: '/attacco' },
-]
+import { MobileSiteMenu } from './MobileSiteMenu'
 import { SiteHeaderActions } from './SiteHeaderActions'
-import { LanguageSwitcher } from '@/components/LanguageSwitcher'
-import { BrandWordmark, SectionContainer, SITE_PAGE_X_CLASS } from './primitives'
-
-function MobileMenuCloseIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden className={className} fill="none">
-      <path
-        d="M6 6l12 12M18 6L6 18"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-    </svg>
-  )
-}
+import { BrandWordmark, SectionContainer } from './primitives'
 
 function NavActiveBar({ tone }: { tone: 'design' | 'technical' | 'neutral' }) {
   return (
@@ -172,7 +148,6 @@ export function SiteHeader({
   activeNavId?: DcActiveNavId | null
 }) {
   const lp = useLocalePath()
-  const { t } = useI18n()
   const reduceMotion = useReducedMotion()
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -321,124 +296,17 @@ export function SiteHeader({
         {mobileOpen ? (
           <motion.div
             key="mobile-nav"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Menu"
-            className={ui.mobileMenu}
             initial={reduceMotion ? false : { opacity: 0, x: '100%' }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={transitionBase}
+            className="fixed inset-0 z-[60] lg:hidden"
           >
-            <div className={cn(ui.mobileMenuBar, SITE_PAGE_X_CLASS)}>
-              <Link
-                to={lp('/')}
-                className="rounded-sm transition-opacity hover:opacity-80"
-                onClick={() => setMobileOpen(false)}
-              >
-                <BrandWordmark className="text-[20px] md:text-[22px]" />
-              </Link>
-              <button
-                type="button"
-                aria-label="Chiudi menu"
-                className={cn(ui.interactive, ui.mobileMenuClose)}
-                onClick={() => setMobileOpen(false)}
-              >
-                <MobileMenuCloseIcon className="size-5" />
-              </button>
-            </div>
-            <nav
-              className={cn(
-                'flex flex-1 flex-col gap-3 overflow-y-auto py-6 text-[15px] font-medium',
-                SITE_PAGE_X_CLASS,
-              )}
-            >
-              {nav.items.map((item) =>
-                item.kind === 'link' ? (
-                  <Link
-                    key={item.id}
-                    to={lp(item.href)}
-                    className={ui.headerNavLink}
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    {item.label}
-                  </Link>
-                ) : (
-                  <div key={item.id} className="space-y-2">
-                    <Link
-                      to={lp(resolveNavDropdownHref(item.id, item.href))}
-                      className="block font-semibold text-idl-ink transition-colors hover:text-idl-brass"
-                      onClick={() => setMobileOpen(false)}
-                    >
-                      {item.label}
-                    </Link>
-                    {item.id === 'attacco' ? (
-                      <div className="flex flex-col gap-1.5 pl-3 text-[14px] font-normal">
-                        {ATTACCO_MOBILE_SOCKETS.map((socket) => (
-                          <Link
-                            key={socket.href}
-                            to={lp(socket.href)}
-                            className={ui.headerNavLink}
-                            onClick={() => setMobileOpen(false)}
-                          >
-                            {socket.label}
-                          </Link>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-3 pl-3 text-[14px] font-normal">
-                        {item.panel.columns.map((column) => (
-                          <div key={column.title} className="space-y-1.5">
-                            <div
-                              className={cn(
-                                'font-mono text-[10px] tracking-[0.12em] uppercase text-idl-brass',
-                              )}
-                            >
-                              {column.title}
-                            </div>
-                            {column.links.map((link) => (
-                              <Link
-                                key={link.href + link.label}
-                                to={lp(link.href)}
-                                className={cn('block', ui.headerNavLink)}
-                                onClick={() => setMobileOpen(false)}
-                              >
-                                {link.label}
-                              </Link>
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ),
-              )}
-              <Link
-                to={lp('/catalogo')}
-                className={ui.headerNavLink}
-                onClick={() => setMobileOpen(false)}
-              >
-                {t('nav.catalog')}
-              </Link>
-              <Link
-                to={lp('/wishlist')}
-                className={ui.headerNavLink}
-                onClick={() => setMobileOpen(false)}
-              >
-                {t('nav.wishlist')}
-              </Link>
-              <Link
-                to={lp('/login')}
-                className={ui.headerNavLink}
-                onClick={() => setMobileOpen(false)}
-              >
-                {t('nav.login')}
-              </Link>
-              <LanguageSwitcher
-                variant="mobileNav"
-                onLocaleChange={() => setMobileOpen(false)}
-              />
-            </nav>
+            <MobileSiteMenu
+              nav={nav}
+              activeNavId={activeNavId}
+              onClose={() => setMobileOpen(false)}
+            />
           </motion.div>
         ) : null}
       </AnimatePresence>

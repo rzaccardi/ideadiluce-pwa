@@ -96,7 +96,7 @@ export function buildWebSiteJsonLd(siteUrl: string) {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: `${site}/catalogo?q={search_term_string}`,
+        urlTemplate: `${site}/negozio?q={search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
     },

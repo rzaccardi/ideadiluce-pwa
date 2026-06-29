@@ -159,6 +159,8 @@ export type ProductCardDTO = {
   currency: string
   imageUrl: string | null
   categorySlug: string | null
+  brand?: ProductBrandDTO | null
+  sku?: string | null
   inStock?: boolean
   availability?: ProductAvailabilityDataDTO
 }

@@ -7,7 +7,7 @@ import { useLocalePath } from '@/hooks/use-locale-path'
 import { useI18n } from '@/hooks/use-i18n'
 import type { CatalogSort } from '@/features/catalog/catalog.store'
 import { useSnapshot } from 'valtio/react'
-import { catalogStore, fetchCatalogBootstrap, fetchNextProductsPage, fetchProducts } from '@/features/catalog'
+import { catalogStore, fetchCatalogBootstrap, fetchNextProductsPage, fetchProducts, reapplyCatalogClientFilters, seedCatalogProducts, catalogServerFetchKey } from '@/features/catalog'
 import { siteStore } from '@/features/site'
 import type { CatalogPageContent } from '@/types/site-content'
 import { CatalogPageView } from '@/components/site/catalog/CatalogPageView'
@@ -141,16 +141,20 @@ export function CatalogPage({
   })
 
   useEffect(() => {
-    if (initialProducts?.length) {
-      catalogStore.products = initialProducts
-      catalogStore.pagination = {
-        ...catalogStore.pagination,
+    if (!initialProducts?.length) return
+    seedCatalogProducts(
+      initialProducts,
+      catalogServerFetchKey({
+        page: 1,
+        pageSize: 24,
+        locale,
+      }),
+      {
         total: initialProducts.length,
-        hasNextPage: initialProducts.length >= catalogStore.pagination.pageSize,
-      }
-      catalogStore.isLoading = false
-    }
-  }, [initialProducts])
+        hasNextPage: initialProducts.length >= 24,
+      },
+    )
+  }, [initialProducts, locale])
 
   useEffect(() => {
     void fetchCatalogBootstrap({ locale })
@@ -164,21 +168,16 @@ export function CatalogPage({
       page: 1,
       pageSize: 24,
       locale,
-      inStockOnly,
-      sort: sortParam,
-      minPriceCents: minPrice,
-      maxPriceCents: maxPrice,
     })
-  }, [
-    brandParam,
-    effectiveCategory,
-    effectiveQuery,
-    inStockOnly,
-    locale,
-    maxPrice,
-    minPrice,
-    sortParam,
-  ])
+  }, [brandParam, effectiveCategory, effectiveQuery, locale])
+
+  useEffect(() => {
+    catalogStore.filters.inStockOnly = inStockOnly
+    catalogStore.filters.sort = sortParam
+    catalogStore.filters.minPriceCents = minPrice
+    catalogStore.filters.maxPriceCents = maxPrice
+    reapplyCatalogClientFilters()
+  }, [inStockOnly, sortParam, minPrice, maxPrice])
 
   function patchParams(mutate: (next: URLSearchParams) => void) {
     const next = new URLSearchParams(params)

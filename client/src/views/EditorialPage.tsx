@@ -44,7 +44,7 @@ function mergeBrandContent(
   const seen = new Set<string>()
   const hubItems = hubBrands.map((brand) => ({
     title: brand.name,
-    href: `/catalogo?brand=${encodeURIComponent(brand.slug)}`,
+    href: `/negozio?brand=${encodeURIComponent(brand.slug)}`,
     meta: (brand.productCount ?? 0) > 0 ? `${brand.productCount} prodotti` : undefined,
   }))
   const cmsItems = [...base.items].filter((item) => {

@@ -141,6 +141,8 @@ export type ProductCardDTO = {
   currency: string
   imageUrl: string | null
   categorySlug: string | null
+  brand?: ProductBrandDTO | null
+  sku?: string | null
   /** Disponibilità acquisto (da Hub/Odoo live). */
   inStock?: boolean
   availability?: ProductAvailabilityDataDTO

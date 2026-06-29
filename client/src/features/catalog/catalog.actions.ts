@@ -50,7 +50,7 @@ function applyClientFilters(
   return list
 }
 
-function productsRequestKey(filters: {
+export function catalogServerFetchKey(filters: {
   q?: string
   categorySlug?: string
   brandSlug?: string
@@ -66,6 +66,71 @@ function productsRequestKey(filters: {
     filters.pageSize,
     filters.locale,
   ].join('|')
+}
+
+function syncFilterStore(partialFilters?: {
+  categorySlug?: string
+  brandSlug?: string
+  q?: string
+  locale?: string
+  inStockOnly?: boolean
+  minPriceCents?: number
+  maxPriceCents?: number
+  sort?: CatalogSort
+}) {
+  if (partialFilters && 'categorySlug' in partialFilters) {
+    catalogStore.filters.categorySlug = partialFilters.categorySlug
+  }
+  if (partialFilters && 'brandSlug' in partialFilters) {
+    catalogStore.filters.brandSlug = partialFilters.brandSlug
+  }
+  if (partialFilters && 'q' in partialFilters) {
+    catalogStore.filters.q = partialFilters.q
+  }
+  if (partialFilters?.locale) {
+    catalogStore.filters.locale = partialFilters.locale
+  }
+  if (partialFilters && 'inStockOnly' in partialFilters) {
+    catalogStore.filters.inStockOnly = partialFilters.inStockOnly
+  }
+  if (partialFilters && 'minPriceCents' in partialFilters) {
+    catalogStore.filters.minPriceCents = partialFilters.minPriceCents
+  }
+  if (partialFilters && 'maxPriceCents' in partialFilters) {
+    catalogStore.filters.maxPriceCents = partialFilters.maxPriceCents
+  }
+  if (partialFilters?.sort) {
+    catalogStore.filters.sort = partialFilters.sort
+  }
+}
+
+function currentClientFilters() {
+  return {
+    inStockOnly: catalogStore.filters.inStockOnly,
+    minPriceCents: catalogStore.filters.minPriceCents,
+    maxPriceCents: catalogStore.filters.maxPriceCents,
+    sort: catalogStore.filters.sort,
+    locale: catalogStore.filters.locale,
+  }
+}
+
+export function reapplyCatalogClientFilters() {
+  if (!catalogStore.rawProducts.length) return
+  catalogStore.products = applyClientFilters(catalogStore.rawProducts, currentClientFilters())
+}
+
+export function seedCatalogProducts(
+  items: ProductCardDTO[],
+  serverKey: string,
+  pagination?: Partial<typeof catalogStore.pagination>,
+) {
+  catalogStore.rawProducts = items
+  catalogStore.serverFetchKey = serverKey
+  catalogStore.products = applyClientFilters(items, currentClientFilters())
+  if (pagination) {
+    catalogStore.pagination = { ...catalogStore.pagination, ...pagination }
+  }
+  catalogStore.isLoading = false
 }
 
 export function fetchCatalogBootstrap(options?: { locale?: string }) {
@@ -132,6 +197,8 @@ async function loadProducts(filters: {
       pageSize: filters.pageSize,
       locale: filters.locale,
     })
+    catalogStore.rawProducts = result.items
+    catalogStore.serverFetchKey = catalogServerFetchKey(filters)
     catalogStore.products = applyClientFilters(result.items, filters)
     catalogStore.pagination = {
       page: result.page,
@@ -160,33 +227,28 @@ export function fetchProducts(partialFilters?: {
   maxPriceCents?: number
   sort?: CatalogSort
 }) {
-  if (partialFilters && 'categorySlug' in partialFilters) {
-    catalogStore.filters.categorySlug = partialFilters.categorySlug
-  }
-  if (partialFilters && 'brandSlug' in partialFilters) {
-    catalogStore.filters.brandSlug = partialFilters.brandSlug
-  }
-  if (partialFilters && 'q' in partialFilters) {
-    catalogStore.filters.q = partialFilters.q
-  }
-  if (partialFilters?.locale) {
-    catalogStore.filters.locale = partialFilters.locale
-  }
-  if (partialFilters && 'inStockOnly' in partialFilters) {
-    catalogStore.filters.inStockOnly = partialFilters.inStockOnly
-  }
-  if (partialFilters && 'minPriceCents' in partialFilters) {
-    catalogStore.filters.minPriceCents = partialFilters.minPriceCents
-  }
-  if (partialFilters && 'maxPriceCents' in partialFilters) {
-    catalogStore.filters.maxPriceCents = partialFilters.maxPriceCents
-  }
-  if (partialFilters?.sort) {
-    catalogStore.filters.sort = partialFilters.sort
-  }
+  syncFilterStore(partialFilters)
 
   const page = partialFilters?.page ?? 1
   const pageSize = partialFilters?.pageSize ?? catalogStore.pagination.pageSize
+  const serverKey = catalogServerFetchKey({
+    q: catalogStore.filters.q,
+    categorySlug: catalogStore.filters.categorySlug,
+    brandSlug: catalogStore.filters.brandSlug,
+    page,
+    pageSize,
+    locale: catalogStore.filters.locale,
+  })
+
+  if (
+    page === 1 &&
+    serverKey === catalogStore.serverFetchKey &&
+    catalogStore.rawProducts.length > 0
+  ) {
+    reapplyCatalogClientFilters()
+    return Promise.resolve()
+  }
+
   const filters = {
     q: catalogStore.filters.q,
     categorySlug: catalogStore.filters.categorySlug,
@@ -200,7 +262,7 @@ export function fetchProducts(partialFilters?: {
     sort: catalogStore.filters.sort,
   }
 
-  return dedupeAsync(`catalog:products:${productsRequestKey(filters)}`, () => loadProducts(filters))
+  return dedupeAsync(`catalog:products:${serverKey}`, () => loadProducts(filters))
 }
 
 export async function fetchNextProductsPage() {
@@ -218,11 +280,8 @@ export async function fetchNextProductsPage() {
       pageSize: catalogStore.pagination.pageSize,
       locale: catalogStore.filters.locale,
     })
-    const merged = applyClientFilters(
-      [...catalogStore.products, ...result.items],
-      catalogStore.filters,
-    )
-    catalogStore.products = merged
+    catalogStore.rawProducts = [...catalogStore.rawProducts, ...result.items]
+    catalogStore.products = applyClientFilters(catalogStore.rawProducts, currentClientFilters())
     catalogStore.pagination = {
       page: result.page,
       pageSize: result.pageSize,

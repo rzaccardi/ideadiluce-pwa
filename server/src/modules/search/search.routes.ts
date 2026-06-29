@@ -6,7 +6,6 @@ import { requireAdminAuth } from '../../middlewares/admin-auth.js'
 import { ok } from '../../lib/api-response.js'
 import { asyncHandler } from '../../utils/async-handler.js'
 import { validateRequest } from '../../middlewares/validate-request.js'
-import { getAlgoliaServerConfig } from './algolia.config.js'
 import {
   catalogSearchEventBodySchema,
   searchAnalyticsListQuerySchema,
@@ -33,19 +32,6 @@ const ingestLimiter = rateLimit({
 })
 
 export const searchRouter = Router()
-
-searchRouter.get('/algolia/status', (_req, res) => {
-  const config = getAlgoliaServerConfig()
-  res.json({
-    enabled: config.enabled,
-    configured: config.configured,
-    appId: config.appId,
-    productsIndex: config.productsIndex,
-    mode: config.enabled ? 'autocomplete-only' : 'arfly',
-    notes:
-      'Spike Fase 2: indexer e InstantSearch client-side da attivare con ALGOLIA_ENABLED=true e chiavi valide.',
-  })
-})
 
 searchRouter.post(
   '/events',

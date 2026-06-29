@@ -18,7 +18,7 @@ export async function buildLlmsTxt(): Promise<string> {
 ## Pagine principali
 
 - Home: ${site}/
-- Catalogo: ${site}/catalogo
+- Negozio: ${site}/negozio
 - Brand: ${site}/brand
 - Guide: ${site}/guide
 - Ambienti: ${site}/ambienti

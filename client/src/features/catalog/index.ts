@@ -7,4 +7,7 @@ export {
   fetchNextProductsPage,
   fetchProducts,
   fetchProductsByQuery,
+  reapplyCatalogClientFilters,
+  seedCatalogProducts,
+  catalogServerFetchKey,
 } from './catalog.actions'

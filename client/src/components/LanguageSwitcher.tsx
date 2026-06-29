@@ -82,7 +82,7 @@ export function LanguageSwitcher({ variant = 'icon', onOpenChange, onLocaleChang
 
   if (isMobileNav) {
     return (
-      <div ref={rootRef} className="border-t border-idl-border/60 pt-4">
+      <div ref={rootRef}>
         <button
           type="button"
           onClick={() => setMenuOpen(!open)}

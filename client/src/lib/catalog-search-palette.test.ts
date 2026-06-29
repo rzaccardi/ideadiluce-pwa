@@ -9,13 +9,13 @@ import {
 const groups = [
   {
     kind: 'brand' as const,
-    items: [{ id: 'brand:osram', kind: 'brand' as const, label: 'OSRAM', path: '/catalogo?brand=osram' }],
+    items: [{ id: 'brand:osram', kind: 'brand' as const, label: 'OSRAM', path: '/negozio?brand=osram' }],
   },
 ]
 
 const recentGroup = {
   kind: 'query' as const,
-  items: [{ id: 'recent:GU10', kind: 'query' as const, label: 'GU10', path: '/catalogo?q=GU10' }],
+  items: [{ id: 'recent:GU10', kind: 'query' as const, label: 'GU10', path: '/negozio?q=GU10' }],
 }
 
 describe('buildPaletteDisplayGroups', () => {

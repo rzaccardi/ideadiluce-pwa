@@ -15,6 +15,8 @@ import {
   parseArflyAvailability,
   parseArflyDocuments,
 } from './arflyParsers.js'
+import { buildTechnicalCardSpecTags } from '../../lib/technical-card-spec-tags.js'
+import { resolveTechnicalProductCardMeta } from '../../lib/technical-product-ref.js'
 import type {
   ArflyDimensions,
   ArflyProductDetail,
@@ -126,17 +128,27 @@ export function mapArflyListItem(product: ArflyProductListItem, locale: HubLocal
     availabilityFlat(product),
   )
   const categories = mapCategories(product.categories)
+  const specTags = buildTechnicalCardSpecTags({
+    name: product.title,
+    shortDescription: product.short_description || null,
+    specs: product.specs,
+    specTags: product.spec_tags,
+  })
+  const { brand, sku } = resolveTechnicalProductCardMeta(product)
 
   return {
     slug: product.slug,
     locale,
     name: product.title,
     shortDescription: product.short_description || null,
+    specTags: specTags.length ? specTags : undefined,
     priceCents: eurosToCents(product.price_from),
     priceDisplayMode: 'ex_vat',
     currency: product.currency || 'EUR',
     imageUrl: mediaUrl(product.image?.url),
     categorySlug: categories[0]?.slug ?? product.category_slug ?? null,
+    brand,
+    sku,
     availability,
     inStock: deriveInStockFromAvailability(availability),
   }
@@ -193,11 +205,15 @@ export function mapArflyProductDetail(
   return {
     ...card,
     longDescription: product.description || null,
-    sku: product.variants[0]?.ced ?? null,
+    sku:
+      product.variants[0]?.manufacturer_code ??
+      product.variants[0]?.ced ??
+      card.sku ??
+      null,
     inStock: deriveInStockFromAvailability(templateAvailability),
     images,
     categories: mapCategories(product.categories),
-    brand: mapBrand(product.brand),
+    brand: mapBrand(product.brand) ?? card.brand ?? null,
     odooTemplateId: product.id,
     variants,
     availability: templateAvailability,

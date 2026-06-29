@@ -150,12 +150,11 @@ async function main() {
     avgElapsedMs: successful.length
       ? Math.round(successful.reduce((sum, row) => sum + row.elapsedMs, 0) / successful.length)
       : 0,
-    algoliaGoNoGo: {
-      recommendAlgolia:
-        zeroResults.length / Math.max(successful.length, 1) > 0.2 ||
-        typoZero.length / Math.max(typoResults.length, 1) > 0.5,
+    qualityFlags: {
+      highZeroResultRate: zeroResults.length / Math.max(successful.length, 1) > 0.2,
+      highTypoZeroRate: typoZero.length / Math.max(typoResults.length, 1) > 0.5,
       rationale:
-        'Se zeroResultRate > 20% o typoZeroRate > 50%, valutare Fase 2 Algolia autocomplete-only.',
+        'Se zeroResultRate > 20% o typoZeroRate > 50%, rivedere query parser, sinonimi o indicizzazione catalogo Arfly.',
     },
     results,
   }

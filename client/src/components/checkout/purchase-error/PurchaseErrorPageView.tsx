@@ -283,7 +283,7 @@ export function PurchaseErrorPageView({ order }: Props) {
                 {t('purchaseError.hero.retryPayment')}
               </Link>
               <Link
-                to={lp('/catalogo')}
+                to={lp('/negozio')}
                 className="mt-3 block text-center text-[13px] font-bold text-[#6c727c] no-underline hover:text-idl-graphite"
               >
                 {t('purchaseError.cart.backToShop')}

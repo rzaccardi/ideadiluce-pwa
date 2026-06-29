@@ -20,12 +20,12 @@ export function getCatalogSubtypeChips(searchQuery?: string): CategorySubtypeChi
   return chips.map((chip) => {
     if (!chip.href) {
       if (chip.label === 'Tutti') {
-        return { ...chip, href: '/catalogo?world=technical', active: !q }
+        return { ...chip, href: '/negozio?world=technical', active: !q }
       }
       return chip
     }
 
-    if (!chip.href.startsWith('/catalogo')) {
+    if (!chip.href.startsWith('/negozio')) {
       return { ...chip, active: false }
     }
 

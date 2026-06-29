@@ -35,10 +35,13 @@ function userInitial(user: UserDTO): string {
 }
 
 type Props = {
+  variant?: 'header' | 'mobileNav'
   onOpenChange?: (open: boolean) => void
+  /** Chiamato dopo navigazione (es. chiudere il menu mobile). */
+  onNavigate?: () => void
 }
 
-export function HeaderAccountMenu({ onOpenChange }: Props) {
+export function HeaderAccountMenu({ variant = 'header', onOpenChange, onNavigate }: Props) {
   const lp = useLocalePath()
   const { t } = useI18n()
   const auth = useSnapshot(authStore)
@@ -73,6 +76,25 @@ export function HeaderAccountMenu({ onOpenChange }: Props) {
   }, [open])
 
   if (!auth.isAuthenticated || !auth.me) {
+    if (variant === 'mobileNav') {
+      return (
+        <Link
+          to={lp('/login')}
+          aria-label={t('nav.login')}
+          title={t('nav.login')}
+          onClick={onNavigate}
+          className={cn(
+            ui.interactive,
+            'flex w-full items-center gap-3 rounded-md py-1 no-underline',
+            ui.headerNavLink,
+          )}
+        >
+          <UserIcon className="size-[22px] shrink-0" />
+          <span>{t('nav.login')}</span>
+        </Link>
+      )
+    }
+
     return (
       <Link
         to={lp('/login')}
@@ -88,6 +110,89 @@ export function HeaderAccountMenu({ onOpenChange }: Props) {
 
   const user = auth.me
   const displayName = accountDisplayName(user)
+
+  if (variant === 'mobileNav') {
+    return (
+      <>
+        <div ref={rootRef}>
+          <button
+            type="button"
+            onClick={() => setMenuOpen(!open)}
+            aria-expanded={open}
+            aria-haspopup="menu"
+            aria-controls={menuId}
+            aria-label={t('nav.account')}
+            className={cn(
+              ui.interactive,
+              'flex w-full items-center gap-3 rounded-md py-1 text-left',
+              ui.headerNavLink,
+            )}
+          >
+            <span
+              className="flex size-[22px] shrink-0 items-center justify-center rounded-full border border-idl-border-strong bg-idl-design font-serif text-[11px] font-semibold text-idl-glow"
+              aria-hidden
+            >
+              {userInitial(user)}
+            </span>
+            <span className="min-w-0 flex-1 truncate">{displayName}</span>
+            <span className="text-[10px] opacity-60" aria-hidden>
+              {open ? '▴' : '▾'}
+            </span>
+          </button>
+
+          {open ? (
+            <div id={menuId} role="menu" className="mt-2 flex flex-col gap-1 pl-1">
+              {ACCOUNT_PRIMARY_NAV.map((item) => (
+                <Link
+                  key={item.to}
+                  to={lp(item.to)}
+                  role="menuitem"
+                  onClick={() => {
+                    setMenuOpen(false)
+                    onNavigate?.()
+                  }}
+                  className={cn('block rounded-md px-1 py-2 text-[15px] font-medium', ui.headerNavLink)}
+                >
+                  {t(item.labelKey)}
+                </Link>
+              ))}
+
+              {ACCOUNT_SECONDARY_NAV.map((item) => (
+                <Link
+                  key={item.to}
+                  to={lp(item.to)}
+                  role="menuitem"
+                  onClick={() => {
+                    setMenuOpen(false)
+                    onNavigate?.()
+                  }}
+                  className={cn('block rounded-md px-1 py-2 text-[15px] font-medium', ui.headerNavLink)}
+                >
+                  {t(item.labelKey)}
+                </Link>
+              ))}
+
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false)
+                  requestLogout()
+                }}
+                className={cn(
+                  ui.navButton,
+                  'rounded-md px-1 py-2 text-left text-[15px] font-bold text-idl-brass',
+                )}
+              >
+                {t('nav.logout')}
+              </button>
+            </div>
+          ) : null}
+        </div>
+        {logoutDialog}
+      </>
+    )
+  }
 
   return (
     <>

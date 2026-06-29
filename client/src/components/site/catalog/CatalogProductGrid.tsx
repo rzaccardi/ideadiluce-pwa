@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import type { CategoryDTO, ProductCardDTO } from '@/types/dto'
 import type { CatalogWorldTab } from '@/lib/catalog-filters'
 import { designCardBrandLabel } from '@/lib/catalog-filters'
@@ -17,7 +18,7 @@ type Props = {
   filtersOpen: boolean
 }
 
-function MixedCatalogCard({
+const MixedCatalogCard = memo(function MixedCatalogCard({
   product,
   categories,
   lp,
@@ -39,7 +40,7 @@ function MixedCatalogCard({
       lp={lp}
     />
   )
-}
+})
 
 export function CatalogProductGrid({ products, categories, lp, worldTab, filtersOpen }: Props) {
   if (worldTab === 'design') {

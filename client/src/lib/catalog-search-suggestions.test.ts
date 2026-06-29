@@ -22,14 +22,14 @@ describe('searchLocalCatalogSuggestions', () => {
     })
     const brands = groups.find((g) => g.kind === 'brand')?.items ?? []
     expect(brands).toHaveLength(1)
-    expect(brands[0]?.path).toBe('/catalogo?brand=osram')
+    expect(brands[0]?.path).toBe('/negozio?brand=osram')
   })
 })
 
 describe('buildCatalogSubmitPath', () => {
   it('costruisce URL catalogo tecnico con query', () => {
     expect(buildCatalogSubmitPath('GU10', { world: 'technical' })).toBe(
-      '/catalogo?world=technical&q=GU10',
+      '/negozio?world=technical&q=GU10',
     )
   })
 

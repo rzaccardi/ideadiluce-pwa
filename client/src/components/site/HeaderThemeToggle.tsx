@@ -53,10 +53,44 @@ const NEXT_THEME_LABEL: Record<SiteTheme, MessageKey> = {
   dark: 'theme.switcher.toClassic',
 }
 
-export function HeaderThemeToggle() {
+type Props = {
+  variant?: 'header' | 'mobileNav'
+}
+
+export function HeaderThemeToggle({ variant = 'header' }: Props) {
   const { theme, isDark, isClassic, toggleTheme } = useTheme()
   const { t } = useI18n()
   const nextLabel = t(NEXT_THEME_LABEL[theme])
+
+  const icon =
+    theme === 'dark' ? (
+      <MoonIcon className="size-[18px]" />
+    ) : theme === 'classic' ? (
+      <ClassicIcon className="size-[18px]" />
+    ) : (
+      <SunIcon className="size-[18px] text-idl-brass" />
+    )
+
+  if (variant === 'mobileNav') {
+    return (
+      <button
+        type="button"
+        onClick={toggleTheme}
+        title={nextLabel}
+        aria-label={nextLabel}
+        className={cn(
+          ui.interactive,
+          'flex w-full items-center gap-3 rounded-md py-1 text-left',
+          ui.headerNavLink,
+          isDark && 'text-idl-glow',
+          isClassic && 'text-idl-amber',
+        )}
+      >
+        {icon}
+        <span className="flex-1">{nextLabel}</span>
+      </button>
+    )
+  }
 
   return (
     <button
@@ -72,13 +106,7 @@ export function HeaderThemeToggle() {
         isClassic && 'text-idl-amber',
       )}
     >
-      {theme === 'dark' ? (
-        <MoonIcon className="size-[18px]" />
-      ) : theme === 'classic' ? (
-        <ClassicIcon className="size-[18px]" />
-      ) : (
-        <SunIcon className="size-[18px] text-idl-brass" />
-      )}
+      {icon}
     </button>
   )
 }

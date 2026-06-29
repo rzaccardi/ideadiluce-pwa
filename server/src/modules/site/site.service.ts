@@ -639,15 +639,20 @@ async function patchProfessionistiPageContent() {
   }
 }
 
-/** Migra href /catalog → /catalogo in tutti i contenuti CMS pubblicati. */
+/** Migra href legacy (/catalog, /catalogo) → /negozio in tutti i contenuti CMS pubblicati. */
 function migrateCatalogPathsInTree(value: unknown): { value: unknown; changed: boolean } {
   if (typeof value === 'string') {
-    if (!value.includes('/catalog') || value.includes('/api/v1/catalog')) {
+    if (value.includes('/api/v1/catalog')) {
+      return { value, changed: false }
+    }
+    if (!value.includes('/catalog') && !value.includes('/catalogo')) {
       return { value, changed: false }
     }
     const next = value
-      .replaceAll('/catalog?', '/catalogo?')
-      .replace(/\/catalog(?!o)(?=$|[?#'"`])/g, '/catalogo')
+      .replaceAll('/catalog?', '/negozio?')
+      .replaceAll('/catalogo?', '/negozio?')
+      .replace(/\/catalog(?!o)(?=$|[?#'"`])/g, '/negozio')
+      .replace(/\/catalogo(?=$|[?#'"`])/g, '/negozio')
     return { value: next, changed: next !== value }
   }
   if (Array.isArray(value)) {

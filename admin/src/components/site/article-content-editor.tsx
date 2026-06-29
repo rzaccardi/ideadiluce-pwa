@@ -44,7 +44,7 @@ const BLOCK_TEMPLATES: Record<string, Record<string, unknown>> = {
     kind: 'cards',
     title: '',
     subtitle: '',
-    items: [{ title: '', description: '', href: '/catalogo?world=design&q=', imageUrl: '' }],
+    items: [{ title: '', description: '', href: '/negozio?world=design&q=', imageUrl: '' }],
   },
   features: { kind: 'features', title: '', items: [{ title: '', description: '' }] },
   cta: { kind: 'cta', title: '', primaryLabel: '', primaryHref: '', variant: 'accent' },
