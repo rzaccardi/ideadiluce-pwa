@@ -60,7 +60,7 @@ export function SiteLeadForm({ kind, title, description, embedded = false, class
     <div
       className={cn(
         embedded
-          ? 'rounded-2xl border border-idl-tech-border bg-white p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:p-7'
+          ? 'rounded-2xl border border-idl-tech-border bg-idl-tech-panel p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:p-7'
           : cn(ui.panel, 'max-w-2xl'),
         className,
       )}

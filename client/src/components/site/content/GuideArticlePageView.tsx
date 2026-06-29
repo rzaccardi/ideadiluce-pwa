@@ -3,6 +3,7 @@
 import { Link } from '@/lib/navigation'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import type { ContentPageContent } from '@/types/site-content'
+import { ArticleImage } from '@/components/site/content/ArticleImage'
 import { ContentBlockList } from '@/components/site/content/ContentBlockList'
 import { Breadcrumb } from '@/components/Breadcrumb'
 import { Reveal } from '@/components/motion'
@@ -28,7 +29,7 @@ function GuideBadge({ children, variant }: { children: React.ReactNode; variant:
       className={cn(
         'inline-flex rounded-[5px] border px-2 py-0.5 font-mono text-[10px] font-bold tracking-[0.06em] uppercase',
         variant === 'category'
-          ? 'border-[#ece2d2] bg-[#faf6ef] text-idl-brass'
+          ? 'border-[#ece2d2] bg-[#f8f8f6] text-idl-brass'
           : 'border-idl-border font-normal tracking-normal text-idl-muted normal-case',
       )}
     >
@@ -54,7 +55,7 @@ export function GuideArticlePageView({ content, breadcrumb }: Props) {
           ← Tutte le guide
         </Link>
 
-        <div className="overflow-hidden rounded-xl border border-idl-tech-border bg-white">
+        <div className="overflow-hidden rounded-xl border border-idl-tech-border bg-idl-tech-panel">
           <div className="h-2 bg-gradient-to-r from-[#f4c97a] to-[#e7b56a]" aria-hidden />
           <div className="px-6 py-8 sm:px-8 sm:py-10">
             {category || meta ? (
@@ -80,6 +81,17 @@ export function GuideArticlePageView({ content, breadcrumb }: Props) {
           </div>
         </div>
       </Reveal>
+
+      {content.coverImage?.imageUrl ? (
+        <Reveal className="py-8">
+          <ArticleImage
+            imageUrl={content.coverImage.imageUrl}
+            alt={content.coverImage.alt ?? content.title}
+            caption={content.coverImage.caption}
+            layout="full"
+          />
+        </Reveal>
+      ) : null}
 
       <div className="space-y-10 py-10">
         {content.blocks.map((block, i) => (

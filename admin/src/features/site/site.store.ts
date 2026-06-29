@@ -58,6 +58,7 @@ export const SITE_PAGE_OPTIONS = [
   { key: 'contatti', label: 'Contatti' },
   { key: 'privacy', label: 'Privacy' },
   { key: 'cookie', label: 'Cookie' },
+  { key: 'termini', label: 'Termini e condizioni' },
   { key: 'prodotto-non-trovato', label: 'Prodotto non trovato' },
 ] as const
 

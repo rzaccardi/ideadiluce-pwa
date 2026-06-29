@@ -19,7 +19,6 @@ const PAGE_SIZE = 8
 type Props = {
   brands: BrandCard[]
   activeFilter: BrandCategory | 'all'
-  searchQuery: string
   onFilterChange: (filter: BrandCategory | 'all') => void
   onReset: () => void
   lp: LocalePathFn
@@ -28,7 +27,6 @@ type Props = {
 export function BrandDirectorySection({
   brands,
   activeFilter,
-  searchQuery,
   onFilterChange,
   onReset,
   lp,
@@ -36,27 +34,20 @@ export function BrandDirectorySection({
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   const filtered = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
     return brands.filter((brand) => {
       if (brand.featured) return false
       const matchesFilter = activeFilter === 'all' || brand.categories.includes(activeFilter)
-      if (!matchesFilter) return false
-      if (!q) return true
-      return (
-        brand.name.toLowerCase().includes(q) ||
-        brand.description.toLowerCase().includes(q) ||
-        brand.tags.some((tag) => tag.toLowerCase().includes(q))
-      )
+      return matchesFilter
     })
-  }, [activeFilter, brands, searchQuery])
+  }, [activeFilter, brands])
 
   const visible = filtered.slice(0, visibleCount)
   const hasMore = visibleCount < filtered.length
 
   return (
-    <section className="bg-[#fbfbfa]">
+    <section className="bg-[#f3f2ee]">
       <SectionContainer className="pb-12 pt-8 sm:pb-14">
-        <div className="mb-7 rounded-2xl border border-idl-tech-border bg-white p-4 shadow-[0_6px_22px_rgba(0,0,0,0.04)] sm:p-5">
+        <div className="mb-7 rounded-2xl border border-idl-tech-border bg-idl-tech-panel p-4 shadow-[0_6px_22px_rgba(0,0,0,0.04)] sm:p-5">
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <span className="shrink-0 font-mono text-[10.5px] tracking-[0.12em] text-idl-muted uppercase">
               Tipologia
@@ -82,7 +73,7 @@ export function BrandDirectorySection({
                       'inline-flex items-center gap-2 rounded-[30px] border px-3.5 py-2 text-[13px] font-semibold transition',
                       active
                         ? 'border-idl-graphite bg-idl-graphite font-bold text-white'
-                        : 'border-idl-tech-chip-border bg-white text-idl-graphite-2 hover:border-idl-brass hover:text-idl-graphite',
+                        : 'border-idl-tech-chip-border bg-idl-tech-panel text-idl-graphite-2 hover:border-idl-brass hover:text-idl-graphite',
                     )}
                   >
                     {filter.dot ? (
@@ -90,7 +81,7 @@ export function BrandDirectorySection({
                     ) : null}
                     {filter.label}
                     {filter.id === 'all' ? (
-                      <span className="rounded-[20px] bg-white/20 px-1.5 py-0.5 font-mono text-[11px]">{count}</span>
+                      <span className="rounded-[20px] bg-idl-tech-panel/20 px-1.5 py-0.5 font-mono text-[11px]">{count}</span>
                     ) : null}
                   </button>
                 )
@@ -118,7 +109,7 @@ export function BrandDirectorySection({
         </div>
 
         {visible.length === 0 ? (
-          <div className="rounded-xl border border-idl-tech-border bg-white px-6 py-12 text-center text-[15px] text-idl-graphite-2">
+          <div className="rounded-xl border border-idl-tech-border bg-idl-tech-panel px-6 py-12 text-center text-[15px] text-idl-graphite-2">
             Nessun brand corrisponde ai filtri selezionati.
           </div>
         ) : (
@@ -130,7 +121,7 @@ export function BrandDirectorySection({
                 <Link
                   key={brand.slug}
                   to={lp(brand.href)}
-                  className="flex flex-col rounded-xl border border-idl-tech-border bg-white p-5 transition hover:border-[#cfd4db] hover:shadow-[0_8px_22px_rgba(0,0,0,0.05)] sm:p-6"
+                  className="flex flex-col rounded-xl border border-idl-tech-border bg-idl-tech-panel p-5 transition hover:border-[#cfd4db] hover:shadow-[0_8px_22px_rgba(0,0,0,0.05)] sm:p-6"
                 >
                   <div className="mb-3.5 flex h-[46px] items-center justify-center border-b border-idl-tech-panel pb-3.5">
                     <BrandNameDisplay name={brand.name} style={brand.displayStyle} size="sm" />

@@ -15,6 +15,7 @@ import { useForgotPasswordModal } from '@/hooks/use-forgot-password-modal'
 import { useLogoutConfirm } from '@/hooks/use-logout-confirm'
 import { useI18n } from '@/hooks/use-i18n'
 import { ApiRequestError } from '@/types/api'
+import { getRecaptchaToken, RECAPTCHA_ACTIONS } from '@/lib/recaptcha'
 import { CheckoutBusinessFieldsSection } from '@/components/checkout/stripe-ui/CheckoutBusinessFieldsSection'
 import { CheckoutRetailFiscalCodeField } from '@/components/checkout/stripe-ui/CheckoutRetailFiscalCodeField'
 import { CheckoutCustomerTypeCards } from '@/components/checkout/stripe-ui/CheckoutCustomerTypeCards'
@@ -58,7 +59,7 @@ type Props = {
 
 function AuthSubheading({ children }: { children: ReactNode }) {
   return (
-    <h3 className="text-sm font-extrabold tracking-[-0.01em] text-[#14161b]">{children}</h3>
+    <h3 className="text-sm font-extrabold tracking-[-0.01em] text-idl-graphite">{children}</h3>
   )
 }
 
@@ -66,9 +67,9 @@ function AuthDivider({ label }: { label: string }) {
   return (
     <div className="relative py-1">
       <div className="absolute inset-0 flex items-center" aria-hidden>
-        <div className="w-full border-t border-[#e7eaee]" />
+        <div className="w-full border-t border-idl-tech-border" />
       </div>
-      <p className="relative mx-auto w-fit bg-white px-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#9298a3]">
+      <p className="relative mx-auto w-fit bg-idl-tech-panel px-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#9298a3]">
         {label}
       </p>
     </div>
@@ -165,6 +166,7 @@ export function InlineAccountAuthStep({
     setRegisterLoading(true)
     const trimmedEmail = email.trim()
     try {
+      const recaptchaToken = await getRecaptchaToken(RECAPTCHA_ACTIONS.register)
       await checkoutRegister({
         email: trimmedEmail,
         password,
@@ -172,6 +174,7 @@ export function InlineAccountAuthStep({
         lastName: lastName.trim(),
         phone: phone.trim() || undefined,
         customerSegment: collectCustomerTypeOnRegister ? segment : undefined,
+        recaptchaToken,
       })
       await onAuthSuccess?.({
         mode: 'register',
@@ -182,6 +185,10 @@ export function InlineAccountAuthStep({
         customerSegment: collectCustomerTypeOnRegister ? segment : undefined,
       })
     } catch (err) {
+      if (err instanceof Error && err.message.startsWith('RECAPTCHA_')) {
+        setRegisterError(t('auth.recaptchaFailed'))
+        return
+      }
       if (err instanceof ApiRequestError && err.code === 'EMAIL_TAKEN') {
         setLoginEmail(trimmedEmail)
         onEmailChange(trimmedEmail)
@@ -203,12 +210,17 @@ export function InlineAccountAuthStep({
     setLoginLoading(true)
     const trimmedEmail = loginEmail.trim()
     try {
-      await login(trimmedEmail, loginPassword)
+      const recaptchaToken = await getRecaptchaToken(RECAPTCHA_ACTIONS.login)
+      await login(trimmedEmail, loginPassword, recaptchaToken)
       await onAuthSuccess?.({
         mode: 'login',
         email: trimmedEmail,
       })
     } catch (err) {
+      if (err instanceof Error && err.message.startsWith('RECAPTCHA_')) {
+        setLoginError(t('auth.recaptchaFailed'))
+        return
+      }
       setLoginError(
         err instanceof ApiRequestError ? (err.userMessage ?? err.message) : t('checkout.account.loginError'),
       )

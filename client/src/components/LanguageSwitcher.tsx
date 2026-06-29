@@ -4,7 +4,6 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { PWA_LOCALES, LOCALE_LABEL, LOCALE_NAME, type PwaLocale } from '@/lib/locale'
 import { localeFlagUrl } from '@/lib/locale-flags'
 import { useLocale } from '@/context/locale-context'
-import { useTheme } from '@/context/theme-context'
 import { useI18n } from '@/hooks/use-i18n'
 import { cn } from '@/utils/cn'
 import { ui } from '@/lib/ui-classes'
@@ -34,18 +33,15 @@ function LocaleFlag({
 }
 
 type Props = {
-  theme?: 'light' | 'dark'
   variant?: 'icon' | 'header' | 'mobileNav'
   onOpenChange?: (open: boolean) => void
   /** Chiamato dopo la selezione di una lingua (es. chiudere il menu mobile). */
   onLocaleChange?: () => void
 }
 
-export function LanguageSwitcher({ theme, variant = 'icon', onOpenChange, onLocaleChange }: Props) {
+export function LanguageSwitcher({ variant = 'icon', onOpenChange, onLocaleChange }: Props) {
   const { locale, switchLocale } = useLocale()
-  const { isDark: themeDark } = useTheme()
   const { t, tParams } = useI18n()
-  const dark = theme === 'dark' || (theme == null && themeDark)
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const listId = useId()
@@ -86,7 +82,7 @@ export function LanguageSwitcher({ theme, variant = 'icon', onOpenChange, onLoca
 
   if (isMobileNav) {
     return (
-      <div ref={rootRef} className={cn('border-t pt-4', dark ? 'border-white/10' : 'border-idl-border/60')}>
+      <div ref={rootRef} className="border-t border-idl-border/60 pt-4">
         <button
           type="button"
           onClick={() => setMenuOpen(!open)}
@@ -96,8 +92,8 @@ export function LanguageSwitcher({ theme, variant = 'icon', onOpenChange, onLoca
           aria-label={tParams('language.switcher.current', { locale: LOCALE_NAME[locale] })}
           className={cn(
             ui.interactive,
-            'flex w-full items-center gap-3 rounded-md py-1 text-left transition-colors',
-            dark ? 'text-idl-design-muted hover:text-idl-design-fg' : 'text-idl-ink-soft hover:text-idl-ink',
+            'flex w-full items-center gap-3 rounded-md py-1 text-left',
+            ui.headerNavLink,
           )}
         >
           <LocaleFlag locale={locale} size={22} />
@@ -126,13 +122,7 @@ export function LanguageSwitcher({ theme, variant = 'icon', onOpenChange, onLoca
                   className={cn(
                     ui.navButton,
                     'flex w-full items-center gap-3 rounded-md px-1 py-2 text-left text-[15px] font-medium transition-colors',
-                    selected
-                      ? dark
-                        ? 'text-idl-glow'
-                        : 'text-idl-brass'
-                      : dark
-                        ? 'text-idl-design-muted hover:text-idl-design-fg'
-                        : 'text-idl-ink-soft hover:text-idl-ink',
+                    selected ? 'text-idl-brass' : ui.headerNavLink,
                   )}
                 >
                   <LocaleFlag locale={loc} size={22} />
@@ -159,17 +149,10 @@ export function LanguageSwitcher({ theme, variant = 'icon', onOpenChange, onLoca
           ui.interactive,
           ui.headerAction,
           isHeader
-            ? cn(
-                dark
-                  ? 'border-white/16 bg-white/6 text-idl-design-fg hover:border-idl-glow/50 hover:text-idl-glow'
-                  : 'border-idl-border-strong bg-white text-idl-ink-soft hover:border-idl-brass hover:text-idl-ink',
-              )
+            ? ui.headerActionBtn
             : cn(
-                'size-6 rounded-full p-0 ring-2 ring-offset-2',
-                dark
-                  ? 'ring-white/25 ring-offset-black focus-visible:outline-white'
-                  : 'ring-idl-ink ring-offset-idl-paper focus-visible:outline-idl-brass',
-                open && (dark ? 'ring-white/50' : 'ring-idl-brass'),
+                'size-6 rounded-full p-0 ring-2 ring-idl-ink ring-offset-2 ring-offset-idl-paper focus-visible:outline-idl-brass',
+                open && 'ring-idl-brass',
               ),
         )}
       >
@@ -192,12 +175,9 @@ export function LanguageSwitcher({ theme, variant = 'icon', onOpenChange, onLoca
           role="listbox"
           aria-label={t('language.switcher.other')}
           className={cn(
-            'absolute right-0 top-full z-50 mt-2 w-[188px] rounded-[14px] border p-2 shadow-[0_20px_54px_rgba(0,0,0,0.2)]',
             isHeader
-              ? dark
-                ? 'border-white/12 bg-idl-design-elevated'
-                : 'border-idl-border bg-white'
-              : 'flex w-max flex-col gap-1.5 rounded-xl border-idl-border bg-idl-paper/95 p-1 shadow-lg shadow-idl-ink/10 backdrop-blur-sm',
+              ? cn(ui.headerDropdown, 'w-[188px]')
+              : 'absolute right-0 top-full z-50 mt-2 flex w-max flex-col gap-1.5 rounded-xl border border-idl-border bg-idl-tech-panel/95 p-1 shadow-lg shadow-idl-ink/10 backdrop-blur-sm',
           )}
         >
           {PWA_LOCALES.map((loc) => {
@@ -212,15 +192,12 @@ export function LanguageSwitcher({ theme, variant = 'icon', onOpenChange, onLoca
                 onClick={() => selectLocale(loc)}
                 className={cn(
                   ui.navButton,
-                  'flex w-full items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-left text-[13.5px] font-semibold',
                   isHeader
-                    ? selected
-                      ? dark
-                        ? 'bg-white/10 text-idl-glow'
-                        : 'bg-[#faf6ef] text-idl-brass'
-                      : dark
-                        ? 'text-idl-design-muted hover:bg-white/6 hover:text-idl-glow'
-                        : 'text-idl-graphite-2 hover:bg-[#faf6ef] hover:text-idl-brass'
+                    ? cn(
+                        ui.headerDropdownItem,
+                        'px-2.5',
+                        selected && 'bg-idl-path-design text-idl-brass',
+                      )
                     : cn(
                         ui.interactive,
                         'inline-flex size-5 shrink-0 items-center justify-center rounded-full p-0 opacity-90',

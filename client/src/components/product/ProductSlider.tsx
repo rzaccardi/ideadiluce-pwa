@@ -91,7 +91,7 @@ export function ProductSlider({
                 aria-label={t('product.slider.prev')}
                 disabled={!canScrollPrev}
                 onClick={() => scrollBy(-1)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-idl-border bg-white text-idl-ink-soft transition hover:border-idl-border-strong hover:bg-idl-cream disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-idl-border bg-idl-tech-panel text-idl-ink-soft transition hover:border-idl-border-strong hover:bg-idl-cream disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ChevronIcon direction="left" />
               </button>
@@ -100,7 +100,7 @@ export function ProductSlider({
                 aria-label={t('product.slider.next')}
                 disabled={!canScrollNext}
                 onClick={() => scrollBy(1)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-idl-border bg-white text-idl-ink-soft transition hover:border-idl-border-strong hover:bg-idl-cream disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-idl-border bg-idl-tech-panel text-idl-ink-soft transition hover:border-idl-border-strong hover:bg-idl-cream disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ChevronIcon direction="right" />
               </button>

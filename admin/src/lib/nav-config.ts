@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import {
+  BarChart3Icon,
   BellRingIcon,
   BookOpenIcon,
   BriefcaseBusinessIcon,
@@ -143,6 +144,14 @@ export const navSections: NavSection[] = [
         match: (p) => p.startsWith('/integration-logs'),
       },
       {
+        to: '/search-analytics',
+        label: 'Analytics ricerca',
+        icon: BarChart3Icon,
+        accentClass: 'text-violet-600',
+        accentBgClass: 'bg-violet-50',
+        match: (p) => p.startsWith('/search-analytics'),
+      },
+      {
         to: '/document-downloads',
         label: 'Download documenti',
         icon: FileDownIcon,
@@ -252,6 +261,19 @@ export function getBreadcrumbs(pathname: string, _search = ''): BreadcrumbItem[]
       { label: 'Elenco guide' },
     ]
   }
+  if (pathname.startsWith('/seo/migration/') && pathname !== '/seo/migration') {
+    return [
+      { label: 'SEO e feed', href: '/seo' },
+      { label: 'Migrazione WordPress', href: '/seo/migration' },
+      { label: 'Dettaglio export' },
+    ]
+  }
+  if (pathname.startsWith('/seo/migration')) {
+    return [
+      { label: 'SEO e feed', href: '/seo' },
+      { label: 'Migrazione WordPress' },
+    ]
+  }
   if (pathname.startsWith('/seo')) {
     return [
       { label: 'SEO e feed', href: '/seo' },
@@ -293,6 +315,12 @@ export function getBreadcrumbs(pathname: string, _search = ''): BreadcrumbItem[]
     return [
       { label: 'Log integrazioni', href: '/integration-logs' },
       { label: 'Chiamate verso Odoo e servizi esterni' },
+    ]
+  }
+  if (pathname.startsWith('/search-analytics')) {
+    return [
+      { label: 'Analytics ricerca', href: '/search-analytics' },
+      { label: 'Query catalogo e trend di mercato' },
     ]
   }
   if (pathname.startsWith('/document-downloads')) {
@@ -497,6 +525,15 @@ export function getPageMeta(pathname: string, _search = ''): {
       icon: ScrollTextIcon,
       iconClassName: 'text-slate-600',
       iconBgClassName: 'bg-slate-50',
+    }
+  }
+  if (pathname.startsWith('/search-analytics')) {
+    return {
+      title: 'Analytics ricerca',
+      description: 'Metriche aggregate e log delle ricerche catalogo storefront',
+      icon: BarChart3Icon,
+      iconClassName: 'text-violet-600',
+      iconBgClassName: 'bg-violet-50',
     }
   }
   if (pathname.startsWith('/document-downloads')) {

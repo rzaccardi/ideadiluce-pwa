@@ -55,7 +55,7 @@ function RecommendationCard({ product }: { product: ProductCardDTO }) {
         type="button"
         disabled={isAdding}
         onClick={() => void onAdd()}
-        className="flex size-7 shrink-0 items-center justify-center rounded-[7px] bg-idl-amber text-[17px] font-bold text-white transition hover:bg-[#c2730f] disabled:cursor-not-allowed disabled:opacity-60"
+        className="flex size-7 shrink-0 items-center justify-center rounded-[7px] bg-idl-amber text-[17px] font-bold text-white transition hover:bg-[#b08e3e] disabled:cursor-not-allowed disabled:opacity-60"
         aria-label="Aggiungi al carrello"
       >
         +
@@ -72,7 +72,7 @@ export function CartRecommendationsSection({ products, isLoading, error, classNa
   return (
     <section
       className={cn(
-        'rounded-[14px] border border-idl-tech-border bg-white p-[22px]',
+        'rounded-[14px] border border-idl-tech-border bg-idl-tech-panel p-[22px]',
         className,
       )}
     >

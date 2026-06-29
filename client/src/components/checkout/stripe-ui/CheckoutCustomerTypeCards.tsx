@@ -55,7 +55,7 @@ export function CheckoutCustomerTypeCards({
   if (variant === 'tabs') {
     return (
       <div
-        className={cn('grid grid-cols-2 gap-2 rounded-xl border border-[#e2e6eb] bg-[#f7f8fa] p-1.5', className)}
+        className={cn('grid grid-cols-2 gap-2 rounded-xl border border-idl-tech-border bg-idl-tech-panel p-1.5', className)}
         role="tablist"
         aria-label={t('checkout.customerType.hint')}
       >
@@ -73,8 +73,8 @@ export function CheckoutCustomerTypeCards({
               className={cn(
                 'flex items-center justify-center gap-2 rounded-[10px] px-3 py-3.5 text-sm font-bold transition sm:py-4',
                 selected
-                  ? 'bg-white text-[#14161b] shadow-sm'
-                  : 'text-[#6c727c] hover:text-[#14161b]',
+                  ? 'bg-idl-tech-panel text-idl-graphite shadow-sm'
+                  : 'text-idl-muted hover:text-idl-graphite',
                 disabled && 'pointer-events-none opacity-60',
               )}
             >
@@ -108,20 +108,20 @@ export function CheckoutCustomerTypeCards({
             className={cn(
               'flex w-full flex-col items-start gap-3 rounded-2xl border-[1.5px] p-5 text-left transition sm:p-6',
               selected
-                ? 'border-[#14161b] bg-[#faf6ef] shadow-[0_0_0_3px_rgba(240,173,87,0.2)]'
-                : 'border-[#e7eaee] bg-[#f7f8fa] hover:border-[#c0c5cc] hover:bg-white',
+                ? 'border-[#14161b] bg-[#f8f8f6] shadow-[0_0_0_3px_rgba(201, 162, 75,0.2)]'
+                : 'border-[#e7eaee] bg-idl-tech-panel hover:border-[#c0c5cc] hover:bg-idl-tech-panel',
               disabled && 'pointer-events-none opacity-60',
             )}
           >
             <span
               className={cn(
                 'flex size-12 shrink-0 items-center justify-center rounded-xl sm:size-14',
-                selected ? 'bg-[#14161b] text-white' : 'bg-white text-[#9a6a2f] shadow-sm ring-1 ring-[#e7eaee]',
+                selected ? 'bg-[#14161b] text-white' : 'bg-idl-tech-panel text-[#9a7b33] shadow-sm ring-1 ring-[#e7eaee]',
               )}
             >
               <Icon className="size-6 sm:size-7" />
             </span>
-            <span className="text-base font-extrabold tracking-[-0.01em] text-[#14161b] sm:text-[17px]">
+            <span className="text-base font-extrabold tracking-[-0.01em] text-idl-graphite sm:text-[17px]">
               {t(`checkout.customerType.${option}.title`)}
             </span>
           </button>

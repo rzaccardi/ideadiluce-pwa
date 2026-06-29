@@ -3,8 +3,9 @@ import { buildMetadata } from '@/lib/seo'
 import { EditorialPage } from '@/views/EditorialPage'
 
 export const metadata: Metadata = buildMetadata({
-  title: 'Guide alla luce',
-  description: 'Guide pratiche su attacchi, temperatura colore e scelta delle lampadine.',
+  title: 'Blog',
+  description:
+    'Guide e articoli su luce calda e fredda, trend illuminazione 2024 e design lampade di autore.',
 })
 
 export default function Page() {

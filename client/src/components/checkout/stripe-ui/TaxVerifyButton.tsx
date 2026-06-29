@@ -49,7 +49,7 @@ export function TaxVerifyButton({ onClick, disabled, loading, verified, classNam
         'flex shrink-0 items-center justify-center self-stretch rounded-[11px] border px-3 text-[13px] font-bold transition',
         showVerified
           ? 'min-w-[46px] border-emerald-600 bg-emerald-50 text-emerald-700'
-          : 'border-[#e2e6eb] bg-[#f4f5f7] text-[#14161b] hover:border-[#14161b] hover:bg-white',
+          : 'border-idl-tech-border bg-[#f4f5f7] text-idl-graphite hover:border-[#14161b] hover:bg-idl-tech-panel',
         'disabled:cursor-not-allowed',
         !showVerified && 'disabled:opacity-50',
         className,

@@ -97,7 +97,7 @@ function ChipButton({
         mono && 'font-mono',
         active
           ? 'bg-idl-ink font-mono text-white'
-          : 'border border-idl-tech-border bg-white text-idl-graphite-2 hover:border-idl-muted',
+          : 'border border-idl-tech-border bg-idl-tech-panel text-idl-graphite-2 hover:border-idl-muted',
       )}
     >
       {children}

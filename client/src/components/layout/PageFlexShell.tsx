@@ -6,7 +6,7 @@ export type PageFlexTone = 'paper' | 'tech-panel' | 'white'
 const TONE_BG: Record<PageFlexTone, string> = {
   paper: 'bg-idl-paper',
   'tech-panel': 'bg-idl-tech-panel',
-  white: 'bg-white',
+  white: 'bg-idl-tech-panel',
 }
 
 /** Classe flex condivisa per pagine e transizioni di caricamento. */

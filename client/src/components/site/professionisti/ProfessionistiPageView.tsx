@@ -1,11 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Link } from '@/lib/navigation'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { useSnapshot } from 'valtio/react'
 import { authStore } from '@/features/auth'
+import { api } from '@/api/endpoints'
+import { fetchCart } from '@/features/cart'
+import { ApiRequestError } from '@/types/api'
 import type { ProfessionistiPageContent } from '@/types/site-content'
 import { ProfessionalAccountForm } from './ProfessionalAccountForm'
 import { SectionContainer } from '../primitives'
@@ -23,23 +26,97 @@ function scrollToRegistration() {
 export function ProfessionistiPageView({ content }: Props) {
   const lp = useLocalePath()
   const auth = useSnapshot(authStore)
-  const [reorderText, setReorderText] = useState(
-    content.quickReorder.exampleLines.join('\n'),
-  )
+  const [reorderText, setReorderText] = useState('')
+  const [previewMatched, setPreviewMatched] = useState<number | null>(null)
+  const [previewUnmatched, setPreviewUnmatched] = useState<number | null>(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [submitLoading, setSubmitLoading] = useState(false)
 
   const accountHref = auth.me ? '/account' : content.hero.secondaryCta.href
+  const canUseQuickReorder = auth.me != null
 
-  function onQuickReorder() {
+  const previewFootnote = useMemo(() => {
+    if (!canUseQuickReorder) return content.quickReorder.footnote
+    if (previewLoading) return 'Verifica codici in corso…'
+    if (previewMatched == null) return content.quickReorder.footnote
+    if (previewMatched === 0 && (previewUnmatched ?? 0) > 0) {
+      return `Nessun codice riconosciuto · ${previewUnmatched} non trovati`
+    }
+    if ((previewUnmatched ?? 0) > 0) {
+      return `${previewMatched} prodotti riconosciuti · ${previewUnmatched} non trovati`
+    }
+    return `${previewMatched} prodotti riconosciuti`
+  }, [
+    canUseQuickReorder,
+    content.quickReorder.footnote,
+    previewLoading,
+    previewMatched,
+    previewUnmatched,
+  ])
+
+  useEffect(() => {
+    if (!canUseQuickReorder || !reorderText.trim()) {
+      setPreviewMatched(null)
+      setPreviewUnmatched(null)
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      setPreviewLoading(true)
+      void api.catalog
+        .resolveCodes({ text: reorderText })
+        .then((result) => {
+          setPreviewMatched(result.matched.length)
+          setPreviewUnmatched(result.unmatched.length)
+        })
+        .catch(() => {
+          setPreviewMatched(null)
+          setPreviewUnmatched(null)
+        })
+        .finally(() => setPreviewLoading(false))
+    }, 500)
+
+    return () => window.clearTimeout(timer)
+  }, [canUseQuickReorder, reorderText])
+
+  async function onQuickReorder() {
     if (!auth.me) {
       toast.message(content.quickReorder.loginHint)
       scrollToRegistration()
       return
     }
-    toast.message('Il riordino rapido da codice sarà disponibile a breve con account business attivo.')
+
+    if (!reorderText.trim()) {
+      toast.message('Incolla almeno un codice prodotto.')
+      return
+    }
+
+    setSubmitLoading(true)
+    try {
+      const result = await api.cart.quickReorder({ text: reorderText })
+      await fetchCart({ force: true, skipMirrorCheck: true })
+
+      const parts = [`${result.added} prodotti aggiunti al carrello`]
+      if (result.unmatched.length > 0) {
+        parts.push(`${result.unmatched.length} codici non riconosciuti`)
+      }
+      if (result.skipped.length > 0) {
+        parts.push(`${result.skipped.length} righe non aggiunte`)
+      }
+      toast.success(parts.join(' · '))
+    } catch (e) {
+      const message =
+        e instanceof ApiRequestError
+          ? (e.userMessage ?? e.message)
+          : 'Impossibile completare il riordino rapido.'
+      toast.error(message)
+    } finally {
+      setSubmitLoading(false)
+    }
   }
 
   return (
-    <div className="bg-white">
+    <div className="bg-idl-tech-panel">
       <Reveal immediate className="relative overflow-hidden bg-idl-graphite text-[#eef1f4]">
         <div
           className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_70%_40%,rgba(217,131,26,0.16),transparent_60%)]"
@@ -60,7 +137,7 @@ export function ProfessionistiPageView({ content }: Props) {
               <button
                 type="button"
                 onClick={scrollToRegistration}
-                className="rounded-lg bg-idl-amber px-6 py-3.5 text-[15px] font-bold text-white transition hover:bg-[#c2730f]"
+                className="rounded-lg bg-idl-amber px-6 py-3.5 text-[15px] font-bold text-white transition hover:bg-[#b08e3e]"
               >
                 {content.hero.primaryCta.label}
               </button>
@@ -86,14 +163,13 @@ export function ProfessionistiPageView({ content }: Props) {
             />
             <button
               type="button"
-              onClick={onQuickReorder}
-              className="mt-3 w-full rounded-lg bg-[#eef1f4] py-3 text-center text-sm font-bold text-idl-graphite transition hover:bg-white"
+              onClick={() => void onQuickReorder()}
+              disabled={submitLoading || previewLoading}
+              className="mt-3 w-full rounded-lg bg-[#eef1f4] py-3 text-center text-sm font-bold text-idl-graphite transition hover:bg-idl-tech-panel disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {content.quickReorder.ctaLabel}
+              {submitLoading ? 'Aggiunta in corso…' : content.quickReorder.ctaLabel}
             </button>
-            <p className="mt-2.5 text-center text-[11.5px] text-idl-muted">
-              {content.quickReorder.footnote}
-            </p>
+            <p className="mt-2.5 text-center text-[11.5px] text-idl-muted">{previewFootnote}</p>
           </div>
         </SectionContainer>
       </Reveal>
@@ -102,7 +178,7 @@ export function ProfessionistiPageView({ content }: Props) {
         <Stagger immediate className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" stagger={0.05}>
           {content.features.map((item) => (
             <StaggerItem key={item.num}>
-              <div className="h-full rounded-xl border border-idl-tech-border bg-white p-6">
+              <div className="h-full rounded-xl border border-idl-tech-border bg-idl-tech-panel p-6">
                 <div className="font-mono text-[11px] text-idl-amber">{item.num}</div>
                 <div className="mt-2 text-base font-bold text-idl-graphite">{item.title}</div>
                 <p className="mt-1.5 text-sm leading-relaxed text-idl-muted">{item.description}</p>
@@ -121,7 +197,7 @@ export function ProfessionistiPageView({ content }: Props) {
             {content.audiences.items.map((item) => (
               <div
                 key={item.title}
-                className="rounded-xl border border-idl-path-design-border bg-white p-6"
+                className="rounded-xl border border-idl-path-design-border bg-idl-tech-panel p-6"
               >
                 <div className="text-[17px] font-bold text-idl-ink">{item.title}</div>
                 <p className="mt-2 text-sm leading-relaxed text-[#6b6157]">
@@ -160,7 +236,7 @@ export function ProfessionistiPageView({ content }: Props) {
           <Reveal>
             <div
               className={cn(
-                'rounded-2xl border border-idl-tech-border bg-white p-7 shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:p-8',
+                'rounded-2xl border border-idl-tech-border bg-idl-tech-panel p-7 shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:p-8',
               )}
             >
               <ProfessionalAccountForm registration={content.registration} />

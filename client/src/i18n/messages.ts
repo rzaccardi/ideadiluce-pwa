@@ -46,6 +46,48 @@ export type MessageKey =
   | 'notFound.linkGuide'
   | 'notFound.linkProductNotFound'
   | 'notFound.footer'
+  | 'productNotFound.formTitle'
+  | 'productNotFound.formDescription'
+  | 'productNotFound.photoProduct'
+  | 'productNotFound.photoProductHint'
+  | 'productNotFound.photoSocket'
+  | 'productNotFound.photoSocketHint'
+  | 'productNotFound.nameLabel'
+  | 'productNotFound.namePlaceholder'
+  | 'productNotFound.emailPlaceholder'
+  | 'productNotFound.phoneLabel'
+  | 'productNotFound.phonePlaceholder'
+  | 'productNotFound.codeLabel'
+  | 'productNotFound.codePlaceholder'
+  | 'productNotFound.brandLabel'
+  | 'productNotFound.brandPlaceholder'
+  | 'productNotFound.usage'
+  | 'productNotFound.usageHome'
+  | 'productNotFound.usageShop'
+  | 'productNotFound.usageOffice'
+  | 'productNotFound.usageOutdoor'
+  | 'productNotFound.usageInstall'
+  | 'productNotFound.urgency'
+  | 'productNotFound.urgencyLow'
+  | 'productNotFound.urgencyMedium'
+  | 'productNotFound.urgencyHigh'
+  | 'productNotFound.messageLabel'
+  | 'productNotFound.messagePlaceholder'
+  | 'productNotFound.submit'
+  | 'productNotFound.privacyNote'
+  | 'productNotFound.privacyLink'
+  | 'productNotFound.responseNote'
+  | 'productNotFound.success'
+  | 'productNotFound.error'
+  | 'productNotFound.stepsTitle'
+  | 'productNotFound.preferTalk'
+  | 'productNotFound.whatsapp'
+  | 'productNotFound.professionalsTitle'
+  | 'productNotFound.professionalsBody'
+  | 'productNotFound.professionalsCta'
+  | 'productNotFound.showroomTitle'
+  | 'productNotFound.showroomBody'
+  | 'productNotFound.showroomCta'
   | 'auth.sessionChecking'
   | 'auth.redirectingToLogin'
   | 'auth.loggingIn'
@@ -57,9 +99,18 @@ export type MessageKey =
   | 'auth.registering'
   | 'auth.noAccount'
   | 'auth.hasAccount'
+  | 'auth.firstNamePlaceholder'
+  | 'auth.lastNamePlaceholder'
+  | 'auth.emailPlaceholder'
   | 'auth.loginError'
+  | 'auth.recaptchaRequired'
+  | 'auth.recaptchaFailed'
+  | 'auth.recaptchaBanner'
+  | 'auth.recaptchaPrivacy'
+  | 'auth.recaptchaTerms'
   | 'home.title'
   | 'home.subtitle'
+  | 'home.metaDescription'
   | 'home.featuredTitle'
   | 'home.featuredDescription'
   | 'home.goToCatalog'
@@ -73,6 +124,24 @@ export type MessageKey =
   | 'catalog.searchPlaceholder'
   | 'catalog.clearSearch'
   | 'catalog.noSuggestions'
+  | 'catalog.suggestGroupAttacchi'
+  | 'catalog.suggestGroupBrands'
+  | 'catalog.suggestGroupCategories'
+  | 'catalog.suggestGroupProducts'
+  | 'catalog.suggestGroupHints'
+  | 'catalog.suggestGroupQueries'
+  | 'catalog.searchRecentLabel'
+  | 'catalog.searchEmptyTitle'
+  | 'catalog.searchEmptyDescription'
+  | 'catalog.searchViewAllResults'
+  | 'catalog.searchViewAllResultsNoCount'
+  | 'catalog.searchKeyboardNavigate'
+  | 'catalog.searchKeyboardSelect'
+  | 'catalog.searchKeyboardClose'
+  | 'catalog.searchShortcutHint'
+  | 'catalog.searchPopularLabel'
+  | 'catalog.searchClearRecent'
+  | 'header.openSearch'
   | 'catalog.inStock'
   | 'catalog.inStockHint'
   | 'catalog.sort'
@@ -160,11 +229,22 @@ export type MessageKey =
   | 'product.slider.prev'
   | 'product.slider.next'
   | 'login.title'
+  | 'login.welcomeTitle'
+  | 'login.subtitle'
   | 'login.forgot'
+  | 'login.rememberMe'
+  | 'login.passwordPlaceholder'
+  | 'login.showPassword'
+  | 'login.hidePassword'
+  | 'login.professionalPrompt'
+  | 'login.professionalCta'
   | 'register.title'
+  | 'register.subtitle'
   | 'register.business'
   | 'register.passwordHint'
+  | 'register.passwordPlaceholder'
   | 'forgot.title'
+  | 'forgot.subtitle'
   | 'forgot.submit'
   | 'forgot.error'
   | 'forgot.sentMessage'
@@ -739,6 +819,9 @@ export type MessageKey =
   | 'language.switcher.current'
   | 'language.switcher.other'
   | 'theme.switcher.title'
+  | 'theme.switcher.toLight'
+  | 'theme.switcher.toDark'
+  | 'theme.switcher.toClassic'
   | 'skeleton.loadingProducts'
   | 'skeleton.loadingCart'
   | 'skeleton.loadingCartSummary'
@@ -798,6 +881,51 @@ const IT: Record<MessageKey, string> = {
   'notFound.linkGuide': 'Guide',
   'notFound.linkProductNotFound': 'Prodotto non trovato?',
   'notFound.footer': 'TLB Italy Srl · Via Appia Pignatelli 450, Roma · info@ideadiluce.com',
+  'productNotFound.formTitle': 'Raccontaci cosa cerchi',
+  'productNotFound.formDescription':
+    'Più informazioni ci dai, più velocemente troviamo il prodotto corretto.',
+  'productNotFound.photoProduct': 'Foto del prodotto o dell\'attacco',
+  'productNotFound.photoProductHint': 'Trascina la foto del prodotto',
+  'productNotFound.photoSocket': 'Foto dell\'attacco',
+  'productNotFound.photoSocketHint': 'Foto dell\'attacco da vicino',
+  'productNotFound.nameLabel': 'Nome e cognome',
+  'productNotFound.namePlaceholder': 'Mario Rossi',
+  'productNotFound.emailPlaceholder': 'mario@email.it',
+  'productNotFound.phoneLabel': 'Telefono / WhatsApp',
+  'productNotFound.phonePlaceholder': '+39 ___ ___ ____',
+  'productNotFound.codeLabel': 'Codice / EAN / MPN',
+  'productNotFound.codePlaceholder': 'es. 8711500411990',
+  'productNotFound.brandLabel': 'Marca (se nota)',
+  'productNotFound.brandPlaceholder': 'Philips, Osram…',
+  'productNotFound.usage': 'Uso',
+  'productNotFound.usageHome': 'Casa',
+  'productNotFound.usageShop': 'Negozio',
+  'productNotFound.usageOffice': 'Ufficio',
+  'productNotFound.usageOutdoor': 'Esterno',
+  'productNotFound.usageInstall': 'Impianto',
+  'productNotFound.urgency': 'Urgenza',
+  'productNotFound.urgencyLow': 'Bassa',
+  'productNotFound.urgencyMedium': 'Media',
+  'productNotFound.urgencyHigh': 'Alta',
+  'productNotFound.messageLabel': 'Messaggio',
+  'productNotFound.messagePlaceholder': 'Descrivi il prodotto, dove lo usavi e cosa ti serve…',
+  'productNotFound.submit': 'Invia la richiesta',
+  'productNotFound.privacyNote': 'Inviando accetti la',
+  'productNotFound.privacyLink': 'Privacy Policy',
+  'productNotFound.responseNote': 'Ti rispondiamo via email o WhatsApp, di solito in giornata.',
+  'productNotFound.success': 'Richiesta inviata. Ti risponderemo al più presto.',
+  'productNotFound.error': 'Invio non riuscito',
+  'productNotFound.stepsTitle': 'Come funziona',
+  'productNotFound.preferTalk': 'PREFERISCI PARLARNE?',
+  'productNotFound.whatsapp': 'Scrivici su WhatsApp',
+  'productNotFound.professionalsTitle': 'Anche per professionisti',
+  'productNotFound.professionalsBody':
+    'Liste lunghe o riordini ricorrenti? Caricaci un file con i codici: ti prepariamo un preventivo unico.',
+  'productNotFound.professionalsCta': 'Area professionisti',
+  'productNotFound.showroomTitle': 'Showroom di Roma',
+  'productNotFound.showroomBody':
+    'Via Appia Pignatelli 450 · Lun–Ven 9–13 / 15–18. Porta il pezzo: lo identifichiamo al volo.',
+  'productNotFound.showroomCta': 'Scopri lo showroom',
   'auth.sessionChecking': 'Verifica sessione…',
   'auth.redirectingToLogin': 'Reindirizzamento al login…',
   'auth.loggingIn': 'Accesso…',
@@ -810,9 +938,18 @@ const IT: Record<MessageKey, string> = {
   'auth.registering': 'Registrazione…',
   'auth.noAccount': 'Non hai un account?',
   'auth.hasAccount': 'Hai già un account?',
+  'auth.firstNamePlaceholder': 'Mario',
+  'auth.lastNamePlaceholder': 'Rossi',
+  'auth.emailPlaceholder': 'nome@email.com',
   'auth.loginError': 'Errore di accesso',
+  'auth.recaptchaRequired': 'Completa la verifica anti-bot prima di continuare.',
+  'auth.recaptchaFailed': 'Verifica anti-bot non superata. Riprova.',
+  'auth.recaptchaBanner': 'Protezione Google reCAPTCHA attiva.',
+  'auth.recaptchaPrivacy': 'Privacy',
+  'auth.recaptchaTerms': 'Termini',
   'home.title': 'Idea di Luce',
   'home.subtitle': 'Illuminazione per casa e professionisti',
+  'home.metaDescription': 'La luce pensata. Illuminazione per casa e professionisti.',
   'home.featuredTitle': 'Prodotti in evidenza',
   'home.featuredDescription': 'Una selezione dal catalogo disponibile.',
   'home.goToCatalog': 'Vai al catalogo',
@@ -823,9 +960,27 @@ const IT: Record<MessageKey, string> = {
   'catalog.metaDescription': 'Catalogo illuminazione — lampade, applique e soluzioni per casa e professionisti.',
   'catalog.search': 'Cerca prodotti',
   'catalog.searchLabel': 'Cerca nel catalogo',
-  'catalog.searchPlaceholder': 'Scrivi almeno 3 caratteri…',
+  'catalog.searchPlaceholder': 'Cerca prodotto, attacco, codice o marca…',
   'catalog.clearSearch': 'Cancella ricerca',
   'catalog.noSuggestions': 'Nessun suggerimento nei prodotti caricati.',
+  'catalog.suggestGroupAttacchi': 'Attacchi',
+  'catalog.suggestGroupBrands': 'Marchi',
+  'catalog.suggestGroupCategories': 'Categorie',
+  'catalog.suggestGroupProducts': 'Prodotti',
+  'catalog.suggestGroupHints': 'Suggerimenti',
+  'catalog.suggestGroupQueries': 'Ricerche',
+  'catalog.searchRecentLabel': 'Ricerche recenti',
+  'catalog.searchEmptyTitle': 'Nessun risultato',
+  'catalog.searchEmptyDescription': 'Prova con altri termini, un codice attacco o una marca.',
+  'catalog.searchViewAllResults': 'Vedi tutti i {count} risultati',
+  'catalog.searchViewAllResultsNoCount': 'Vedi tutti i risultati',
+  'catalog.searchKeyboardNavigate': 'Naviga',
+  'catalog.searchKeyboardSelect': 'Seleziona',
+  'catalog.searchKeyboardClose': 'Chiudi',
+  'catalog.searchShortcutHint': 'Premi {shortcut} per aprire la ricerca',
+  'catalog.searchPopularLabel': 'Ricerche popolari',
+  'catalog.searchClearRecent': 'Cancella',
+  'header.openSearch': 'Apri ricerca catalogo',
   'catalog.inStock': 'Solo disponibili',
   'catalog.inStockHint': 'Mostra solo prodotti con giacenza in magazzino.',
   'catalog.sort': 'Ordina',
@@ -914,11 +1069,22 @@ const IT: Record<MessageKey, string> = {
   'product.slider.prev': 'Prodotti precedenti',
   'product.slider.next': 'Prodotti successivi',
   'login.title': 'Accedi',
+  'login.welcomeTitle': 'Bentornato',
+  'login.subtitle': 'Accedi al tuo account IdeaDiLuce.',
   'login.forgot': 'Password dimenticata?',
+  'login.rememberMe': 'Ricordami su questo dispositivo',
+  'login.passwordPlaceholder': '••••••••',
+  'login.showPassword': 'Mostra password',
+  'login.hidePassword': 'Nascondi password',
+  'login.professionalPrompt': 'Sei un professionista?',
+  'login.professionalCta': "Accedi all'area B2B",
   'register.title': 'Crea account',
+  'register.subtitle': 'Crea il tuo account IdeaDiLuce.',
   'register.business': 'Account business (listino B2B)',
   'register.passwordHint': 'Password (min 8 caratteri)',
+  'register.passwordPlaceholder': 'Min. 8 caratteri',
   'forgot.title': 'Recupero password',
+  'forgot.subtitle': 'Ti invieremo un link per reimpostare la password.',
   'forgot.submit': 'Invia link',
   'forgot.error': 'Impossibile inviare il link. Riprova.',
   'forgot.sentMessage':
@@ -1517,7 +1683,10 @@ const IT: Record<MessageKey, string> = {
   'breadcrumb.nav': 'Percorso di navigazione',
   'language.switcher.current': 'Lingua: {locale}. Cambia lingua',
   'language.switcher.other': 'Altre lingue',
-  'theme.switcher.title': 'Tema chiaro / scuro',
+  'theme.switcher.title': 'Tema classico, nero o scuro',
+  'theme.switcher.toLight': 'Passa al tema nero',
+  'theme.switcher.toDark': 'Passa al tema scuro',
+  'theme.switcher.toClassic': 'Passa al tema classico (marrone)',
   'skeleton.loadingProducts': 'Caricamento prodotti…',
   'skeleton.loadingCart': 'Caricamento carrello…',
   'skeleton.loadingCartSummary': 'Caricamento riepilogo carrello…',
@@ -1579,6 +1748,51 @@ const EN: Record<MessageKey, string> = {
   'notFound.linkGuide': 'Guides',
   'notFound.linkProductNotFound': 'Product not found?',
   'notFound.footer': 'TLB Italy Srl · Via Appia Pignatelli 450, Rome · info@ideadiluce.com',
+  'productNotFound.formTitle': 'Tell us what you are looking for',
+  'productNotFound.formDescription':
+    'The more details you share, the faster we can find the right product.',
+  'productNotFound.photoProduct': 'Product or socket photo',
+  'productNotFound.photoProductHint': 'Drop the product photo here',
+  'productNotFound.photoSocket': 'Socket photo',
+  'productNotFound.photoSocketHint': 'Close-up of the socket',
+  'productNotFound.nameLabel': 'Full name',
+  'productNotFound.namePlaceholder': 'John Smith',
+  'productNotFound.emailPlaceholder': 'john@email.com',
+  'productNotFound.phoneLabel': 'Phone / WhatsApp',
+  'productNotFound.phonePlaceholder': '+39 ___ ___ ____',
+  'productNotFound.codeLabel': 'Code / EAN / MPN',
+  'productNotFound.codePlaceholder': 'e.g. 8711500411990',
+  'productNotFound.brandLabel': 'Brand (if known)',
+  'productNotFound.brandPlaceholder': 'Philips, Osram…',
+  'productNotFound.usage': 'Usage',
+  'productNotFound.usageHome': 'Home',
+  'productNotFound.usageShop': 'Shop',
+  'productNotFound.usageOffice': 'Office',
+  'productNotFound.usageOutdoor': 'Outdoor',
+  'productNotFound.usageInstall': 'Installation',
+  'productNotFound.urgency': 'Urgency',
+  'productNotFound.urgencyLow': 'Low',
+  'productNotFound.urgencyMedium': 'Medium',
+  'productNotFound.urgencyHigh': 'High',
+  'productNotFound.messageLabel': 'Message',
+  'productNotFound.messagePlaceholder': 'Describe the product, where you used it, and what you need…',
+  'productNotFound.submit': 'Send request',
+  'productNotFound.privacyNote': 'By submitting you accept the',
+  'productNotFound.privacyLink': 'Privacy Policy',
+  'productNotFound.responseNote': 'We usually reply by email or WhatsApp within one business day.',
+  'productNotFound.success': 'Request sent. We will get back to you soon.',
+  'productNotFound.error': 'Could not send request',
+  'productNotFound.stepsTitle': 'How it works',
+  'productNotFound.preferTalk': 'PREFER TO TALK?',
+  'productNotFound.whatsapp': 'Message us on WhatsApp',
+  'productNotFound.professionalsTitle': 'For professionals too',
+  'productNotFound.professionalsBody':
+    'Long lists or recurring reorders? Upload a file with product codes and we will prepare a single quote.',
+  'productNotFound.professionalsCta': 'Professional area',
+  'productNotFound.showroomTitle': 'Rome showroom',
+  'productNotFound.showroomBody':
+    'Via Appia Pignatelli 450 · Mon–Fri 9–13 / 15–18. Bring the part: we identify it on the spot.',
+  'productNotFound.showroomCta': 'Discover the showroom',
   'auth.sessionChecking': 'Checking session…',
   'auth.redirectingToLogin': 'Redirecting to sign in…',
   'auth.loggingIn': 'Signing in…',
@@ -1591,9 +1805,18 @@ const EN: Record<MessageKey, string> = {
   'auth.registering': 'Registering…',
   'auth.noAccount': "Don't have an account?",
   'auth.hasAccount': 'Already have an account?',
+  'auth.firstNamePlaceholder': 'John',
+  'auth.lastNamePlaceholder': 'Smith',
+  'auth.emailPlaceholder': 'name@email.com',
   'auth.loginError': 'Sign-in error',
+  'auth.recaptchaRequired': 'Complete the anti-bot check before continuing.',
+  'auth.recaptchaFailed': 'Anti-bot verification failed. Please try again.',
+  'auth.recaptchaBanner': 'Google reCAPTCHA protection is active.',
+  'auth.recaptchaPrivacy': 'Privacy',
+  'auth.recaptchaTerms': 'Terms',
   'home.title': 'Idea di Luce',
   'home.subtitle': 'Lighting for home and professionals',
+  'home.metaDescription': 'La luce pensata. Lighting for home and professionals.',
   'home.featuredTitle': 'Featured products',
   'home.featuredDescription': 'A selection from our available catalog.',
   'home.goToCatalog': 'Go to catalog',
@@ -1607,6 +1830,24 @@ const EN: Record<MessageKey, string> = {
   'catalog.searchPlaceholder': 'Type at least 3 characters…',
   'catalog.clearSearch': 'Clear search',
   'catalog.noSuggestions': 'No suggestions in loaded products.',
+  'catalog.suggestGroupAttacchi': 'Sockets',
+  'catalog.suggestGroupBrands': 'Brands',
+  'catalog.suggestGroupCategories': 'Categories',
+  'catalog.suggestGroupProducts': 'Products',
+  'catalog.suggestGroupHints': 'Suggestions',
+  'catalog.suggestGroupQueries': 'Searches',
+  'catalog.searchRecentLabel': 'Recent searches',
+  'catalog.searchEmptyTitle': 'No results',
+  'catalog.searchEmptyDescription': 'Try another term, socket code, or brand.',
+  'catalog.searchViewAllResults': 'View all {count} results',
+  'catalog.searchViewAllResultsNoCount': 'View all results',
+  'catalog.searchKeyboardNavigate': 'Navigate',
+  'catalog.searchKeyboardSelect': 'Select',
+  'catalog.searchKeyboardClose': 'Close',
+  'catalog.searchShortcutHint': 'Press {shortcut} to open search',
+  'catalog.searchPopularLabel': 'Popular searches',
+  'catalog.searchClearRecent': 'Clear',
+  'header.openSearch': 'Open catalog search',
   'catalog.inStock': 'In stock only',
   'catalog.inStockHint': 'Show only products available in warehouse.',
   'catalog.sort': 'Sort',
@@ -1695,11 +1936,22 @@ const EN: Record<MessageKey, string> = {
   'product.slider.prev': 'Previous products',
   'product.slider.next': 'Next products',
   'login.title': 'Sign in',
+  'login.welcomeTitle': 'Welcome back',
+  'login.subtitle': 'Sign in to your IdeaDiLuce account.',
   'login.forgot': 'Forgot password?',
+  'login.rememberMe': 'Remember me on this device',
+  'login.passwordPlaceholder': '••••••••',
+  'login.showPassword': 'Show password',
+  'login.hidePassword': 'Hide password',
+  'login.professionalPrompt': 'Are you a professional?',
+  'login.professionalCta': 'Go to the B2B area',
   'register.title': 'Create account',
+  'register.subtitle': 'Create your IdeaDiLuce account.',
   'register.business': 'Business account (B2B pricing)',
   'register.passwordHint': 'Password (min 8 characters)',
+  'register.passwordPlaceholder': 'Min. 8 characters',
   'forgot.title': 'Password recovery',
+  'forgot.subtitle': 'We will send you a link to reset your password.',
   'forgot.submit': 'Send link',
   'forgot.error': 'Unable to send the link. Please try again.',
   'forgot.sentMessage':
@@ -2289,7 +2541,10 @@ const EN: Record<MessageKey, string> = {
   'breadcrumb.nav': 'Breadcrumb',
   'language.switcher.current': 'Language: {locale}. Change language',
   'language.switcher.other': 'Other languages',
-  'theme.switcher.title': 'Light / dark theme',
+  'theme.switcher.title': 'Classic, black or dark theme',
+  'theme.switcher.toLight': 'Switch to black theme',
+  'theme.switcher.toDark': 'Switch to dark theme',
+  'theme.switcher.toClassic': 'Switch to classic (brown) theme',
   'skeleton.loadingProducts': 'Loading products…',
   'skeleton.loadingCart': 'Loading cart…',
   'skeleton.loadingCartSummary': 'Loading cart summary…',
@@ -2351,6 +2606,51 @@ const ES: Record<MessageKey, string> = {
   'notFound.linkGuide': 'Guías',
   'notFound.linkProductNotFound': '¿Producto no encontrado?',
   'notFound.footer': 'TLB Italy Srl · Via Appia Pignatelli 450, Roma · info@ideadiluce.com',
+  'productNotFound.formTitle': 'Cuéntanos qué buscas',
+  'productNotFound.formDescription':
+    'Cuanta más información nos des, más rápido encontraremos el producto correcto.',
+  'productNotFound.photoProduct': 'Foto del producto o del casquillo',
+  'productNotFound.photoProductHint': 'Arrastra la foto del producto',
+  'productNotFound.photoSocket': 'Foto del casquillo',
+  'productNotFound.photoSocketHint': 'Foto del casquillo de cerca',
+  'productNotFound.nameLabel': 'Nombre y apellidos',
+  'productNotFound.namePlaceholder': 'Mario Rossi',
+  'productNotFound.emailPlaceholder': 'mario@email.it',
+  'productNotFound.phoneLabel': 'Teléfono / WhatsApp',
+  'productNotFound.phonePlaceholder': '+39 ___ ___ ____',
+  'productNotFound.codeLabel': 'Código / EAN / MPN',
+  'productNotFound.codePlaceholder': 'ej. 8711500411990',
+  'productNotFound.brandLabel': 'Marca (si la conoces)',
+  'productNotFound.brandPlaceholder': 'Philips, Osram…',
+  'productNotFound.usage': 'Uso',
+  'productNotFound.usageHome': 'Casa',
+  'productNotFound.usageShop': 'Tienda',
+  'productNotFound.usageOffice': 'Oficina',
+  'productNotFound.usageOutdoor': 'Exterior',
+  'productNotFound.usageInstall': 'Instalación',
+  'productNotFound.urgency': 'Urgencia',
+  'productNotFound.urgencyLow': 'Baja',
+  'productNotFound.urgencyMedium': 'Media',
+  'productNotFound.urgencyHigh': 'Alta',
+  'productNotFound.messageLabel': 'Mensaje',
+  'productNotFound.messagePlaceholder': 'Describe el producto, dónde lo usabas y qué necesitas…',
+  'productNotFound.submit': 'Enviar solicitud',
+  'productNotFound.privacyNote': 'Al enviar aceptas la',
+  'productNotFound.privacyLink': 'Política de privacidad',
+  'productNotFound.responseNote': 'Respondemos por email o WhatsApp, normalmente en el mismo día laborable.',
+  'productNotFound.success': 'Solicitud enviada. Te responderemos pronto.',
+  'productNotFound.error': 'No se pudo enviar la solicitud',
+  'productNotFound.stepsTitle': 'Cómo funciona',
+  'productNotFound.preferTalk': '¿PREFIERES HABLAR?',
+  'productNotFound.whatsapp': 'Escríbenos por WhatsApp',
+  'productNotFound.professionalsTitle': 'También para profesionales',
+  'productNotFound.professionalsBody':
+    '¿Listas largas o pedidos recurrentes? Súbenos un archivo con los códigos: te preparamos un presupuesto único.',
+  'productNotFound.professionalsCta': 'Área profesionales',
+  'productNotFound.showroomTitle': 'Showroom de Roma',
+  'productNotFound.showroomBody':
+    'Via Appia Pignatelli 450 · Lun–Vie 9–13 / 15–18. Trae la pieza: la identificamos al momento.',
+  'productNotFound.showroomCta': 'Descubre el showroom',
   'auth.sessionChecking': 'Verificando sesión…',
   'auth.redirectingToLogin': 'Redirigiendo al inicio de sesión…',
   'auth.loggingIn': 'Iniciando sesión…',
@@ -2363,8 +2663,12 @@ const ES: Record<MessageKey, string> = {
   'auth.registering': 'Registrando…',
   'auth.noAccount': '¿No tienes cuenta?',
   'auth.hasAccount': '¿Ya tienes cuenta?',
+  'auth.firstNamePlaceholder': 'Juan',
+  'auth.lastNamePlaceholder': 'García',
+  'auth.emailPlaceholder': 'nombre@email.com',
   'home.title': 'Idea di Luce',
   'home.subtitle': 'Iluminación para el hogar y profesionales',
+  'home.metaDescription': 'La luce pensata. Iluminación para el hogar y profesionales.',
   'home.featuredTitle': 'Productos destacados',
   'home.featuredDescription': 'Una selección de nuestro catálogo disponible.',
   'home.goToCatalog': 'Ir al catálogo',
@@ -2378,6 +2682,24 @@ const ES: Record<MessageKey, string> = {
   'catalog.searchPlaceholder': 'Escribe al menos 3 caracteres…',
   'catalog.clearSearch': 'Borrar búsqueda',
   'catalog.noSuggestions': 'Sin sugerencias en los productos cargados.',
+  'catalog.suggestGroupAttacchi': 'Casquillos',
+  'catalog.suggestGroupBrands': 'Marcas',
+  'catalog.suggestGroupCategories': 'Categorías',
+  'catalog.suggestGroupProducts': 'Productos',
+  'catalog.suggestGroupHints': 'Sugerencias',
+  'catalog.suggestGroupQueries': 'Búsquedas',
+  'catalog.searchRecentLabel': 'Búsquedas recientes',
+  'catalog.searchEmptyTitle': 'Sin resultados',
+  'catalog.searchEmptyDescription': 'Prueba con otros términos, un casquillo o una marca.',
+  'catalog.searchViewAllResults': 'Ver los {count} resultados',
+  'catalog.searchViewAllResultsNoCount': 'Ver todos los resultados',
+  'catalog.searchKeyboardNavigate': 'Navegar',
+  'catalog.searchKeyboardSelect': 'Seleccionar',
+  'catalog.searchKeyboardClose': 'Cerrar',
+  'catalog.searchShortcutHint': 'Pulsa {shortcut} para abrir la búsqueda',
+  'catalog.searchPopularLabel': 'Búsquedas populares',
+  'catalog.searchClearRecent': 'Borrar',
+  'header.openSearch': 'Abrir búsqueda del catálogo',
   'catalog.inStock': 'Solo disponibles',
   'catalog.inStockHint': 'Mostrar solo productos con stock en almacén.',
   'catalog.sort': 'Ordenar',
@@ -2432,11 +2754,22 @@ const ES: Record<MessageKey, string> = {
   'product.variantLabel': 'Variante',
   'product.variantSoldOut': 'Agotado',
   'login.title': 'Iniciar sesión',
+  'login.welcomeTitle': 'Bienvenido de nuevo',
+  'login.subtitle': 'Accede a tu cuenta IdeaDiLuce.',
   'login.forgot': '¿Olvidaste tu contraseña?',
+  'login.rememberMe': 'Recordarme en este dispositivo',
+  'login.passwordPlaceholder': '••••••••',
+  'login.showPassword': 'Mostrar contraseña',
+  'login.hidePassword': 'Ocultar contraseña',
+  'login.professionalPrompt': '¿Eres un profesional?',
+  'login.professionalCta': 'Accede al área B2B',
   'register.title': 'Crear cuenta',
+  'register.subtitle': 'Crea tu cuenta IdeaDiLuce.',
   'register.business': 'Cuenta business (tarifa B2B)',
   'register.passwordHint': 'Contraseña (mín. 8 caracteres)',
+  'register.passwordPlaceholder': 'Mín. 8 caracteres',
   'forgot.title': 'Recuperar contraseña',
+  'forgot.subtitle': 'Te enviaremos un enlace para restablecer tu contraseña.',
   'forgot.submit': 'Enviar enlace',
   'forgot.error': 'No se pudo enviar el enlace. Inténtalo de nuevo.',
   'forgot.sentMessage': 'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.',
@@ -2884,7 +3217,10 @@ const ES: Record<MessageKey, string> = {
   'breadcrumb.nav': 'Ruta de navegación',
   'language.switcher.current': 'Idioma: {locale}. Cambiar idioma',
   'language.switcher.other': 'Otros idiomas',
-  'theme.switcher.title': 'Tema claro / oscuro',
+  'theme.switcher.title': 'Tema clásico, negro u oscuro',
+  'theme.switcher.toLight': 'Cambiar a tema negro',
+  'theme.switcher.toDark': 'Cambiar a tema oscuro',
+  'theme.switcher.toClassic': 'Cambiar a tema clásico (marrón)',
   'skeleton.loadingProducts': 'Cargando productos…',
   'skeleton.loadingCart': 'Cargando carrito…',
   'skeleton.loadingCartSummary': 'Cargando resumen del carrito…',
@@ -2946,6 +3282,51 @@ const FR: Record<MessageKey, string> = {
   'notFound.linkGuide': 'Guides',
   'notFound.linkProductNotFound': 'Produit introuvable ?',
   'notFound.footer': 'TLB Italy Srl · Via Appia Pignatelli 450, Rome · info@ideadiluce.com',
+  'productNotFound.formTitle': 'Dites-nous ce que vous cherchez',
+  'productNotFound.formDescription':
+    'Plus vous nous donnez d\'informations, plus vite nous trouverons le bon produit.',
+  'productNotFound.photoProduct': 'Photo du produit ou du culot',
+  'productNotFound.photoProductHint': 'Déposez la photo du produit',
+  'productNotFound.photoSocket': 'Photo du culot',
+  'productNotFound.photoSocketHint': 'Photo du culot de près',
+  'productNotFound.nameLabel': 'Nom et prénom',
+  'productNotFound.namePlaceholder': 'Mario Rossi',
+  'productNotFound.emailPlaceholder': 'mario@email.it',
+  'productNotFound.phoneLabel': 'Téléphone / WhatsApp',
+  'productNotFound.phonePlaceholder': '+39 ___ ___ ____',
+  'productNotFound.codeLabel': 'Code / EAN / MPN',
+  'productNotFound.codePlaceholder': 'ex. 8711500411990',
+  'productNotFound.brandLabel': 'Marque (si connue)',
+  'productNotFound.brandPlaceholder': 'Philips, Osram…',
+  'productNotFound.usage': 'Usage',
+  'productNotFound.usageHome': 'Maison',
+  'productNotFound.usageShop': 'Commerce',
+  'productNotFound.usageOffice': 'Bureau',
+  'productNotFound.usageOutdoor': 'Extérieur',
+  'productNotFound.usageInstall': 'Installation',
+  'productNotFound.urgency': 'Urgence',
+  'productNotFound.urgencyLow': 'Faible',
+  'productNotFound.urgencyMedium': 'Moyenne',
+  'productNotFound.urgencyHigh': 'Élevée',
+  'productNotFound.messageLabel': 'Message',
+  'productNotFound.messagePlaceholder': 'Décrivez le produit, où vous l\'utilisiez et ce dont vous avez besoin…',
+  'productNotFound.submit': 'Envoyer la demande',
+  'productNotFound.privacyNote': 'En envoyant, vous acceptez la',
+  'productNotFound.privacyLink': 'Politique de confidentialité',
+  'productNotFound.responseNote': 'Nous répondons par e-mail ou WhatsApp, généralement dans la journée.',
+  'productNotFound.success': 'Demande envoyée. Nous vous répondrons bientôt.',
+  'productNotFound.error': 'Échec de l\'envoi',
+  'productNotFound.stepsTitle': 'Comment ça marche',
+  'productNotFound.preferTalk': 'VOUS PRÉFÉREZ EN PARLER ?',
+  'productNotFound.whatsapp': 'Écrivez-nous sur WhatsApp',
+  'productNotFound.professionalsTitle': 'Aussi pour les professionnels',
+  'productNotFound.professionalsBody':
+    'Listes longues ou réassorts récurrents ? Envoyez-nous un fichier de codes : nous préparons un devis unique.',
+  'productNotFound.professionalsCta': 'Espace professionnels',
+  'productNotFound.showroomTitle': 'Showroom de Rome',
+  'productNotFound.showroomBody':
+    'Via Appia Pignatelli 450 · Lun–Ven 9–13 / 15–18. Apportez la pièce : nous l\'identifions sur place.',
+  'productNotFound.showroomCta': 'Découvrir le showroom',
   'auth.sessionChecking': 'Vérification de la session…',
   'auth.redirectingToLogin': 'Redirection vers la connexion…',
   'auth.loggingIn': 'Connexion…',
@@ -2958,8 +3339,12 @@ const FR: Record<MessageKey, string> = {
   'auth.registering': 'Inscription…',
   'auth.noAccount': "Vous n'avez pas de compte ?",
   'auth.hasAccount': 'Vous avez déjà un compte ?',
+  'auth.firstNamePlaceholder': 'Jean',
+  'auth.lastNamePlaceholder': 'Dupont',
+  'auth.emailPlaceholder': 'nom@email.com',
   'home.title': 'Idea di Luce',
   'home.subtitle': 'Éclairage pour la maison et les professionnels',
+  'home.metaDescription': 'La luce pensata. Éclairage pour la maison et les professionnels.',
   'home.featuredTitle': 'Produits en vedette',
   'home.featuredDescription': 'Une sélection de notre catalogue disponible.',
   'home.goToCatalog': 'Aller au catalogue',
@@ -2973,6 +3358,24 @@ const FR: Record<MessageKey, string> = {
   'catalog.searchPlaceholder': 'Saisissez au moins 3 caractères…',
   'catalog.clearSearch': 'Effacer la recherche',
   'catalog.noSuggestions': 'Aucune suggestion dans les produits chargés.',
+  'catalog.suggestGroupAttacchi': 'Culots',
+  'catalog.suggestGroupBrands': 'Marques',
+  'catalog.suggestGroupCategories': 'Catégories',
+  'catalog.suggestGroupProducts': 'Produits',
+  'catalog.suggestGroupHints': 'Suggestions',
+  'catalog.suggestGroupQueries': 'Recherches',
+  'catalog.searchRecentLabel': 'Recherches récentes',
+  'catalog.searchEmptyTitle': 'Aucun résultat',
+  'catalog.searchEmptyDescription': 'Essayez un autre terme, un culot ou une marque.',
+  'catalog.searchViewAllResults': 'Voir les {count} résultats',
+  'catalog.searchViewAllResultsNoCount': 'Voir tous les résultats',
+  'catalog.searchKeyboardNavigate': 'Naviguer',
+  'catalog.searchKeyboardSelect': 'Sélectionner',
+  'catalog.searchKeyboardClose': 'Fermer',
+  'catalog.searchShortcutHint': 'Appuyez sur {shortcut} pour ouvrir la recherche',
+  'catalog.searchPopularLabel': 'Recherches populaires',
+  'catalog.searchClearRecent': 'Effacer',
+  'header.openSearch': 'Ouvrir la recherche catalogue',
   'catalog.inStock': 'En stock uniquement',
   'catalog.inStockHint': 'Afficher uniquement les produits disponibles en entrepôt.',
   'catalog.sort': 'Trier',
@@ -3027,11 +3430,22 @@ const FR: Record<MessageKey, string> = {
   'product.variantLabel': 'Variante',
   'product.variantSoldOut': 'Épuisé',
   'login.title': 'Connexion',
+  'login.welcomeTitle': 'Bon retour',
+  'login.subtitle': 'Connectez-vous à votre compte IdeaDiLuce.',
   'login.forgot': 'Mot de passe oublié ?',
+  'login.rememberMe': 'Se souvenir de moi sur cet appareil',
+  'login.passwordPlaceholder': '••••••••',
+  'login.showPassword': 'Afficher le mot de passe',
+  'login.hidePassword': 'Masquer le mot de passe',
+  'login.professionalPrompt': 'Vous êtes un professionnel ?',
+  'login.professionalCta': 'Accéder à l’espace B2B',
   'register.title': 'Créer un compte',
+  'register.subtitle': 'Créez votre compte IdeaDiLuce.',
   'register.business': 'Compte professionnel (tarif B2B)',
   'register.passwordHint': 'Mot de passe (min. 8 caractères)',
+  'register.passwordPlaceholder': 'Min. 8 caractères',
   'forgot.title': 'Récupération du mot de passe',
+  'forgot.subtitle': 'Nous vous enverrons un lien pour réinitialiser votre mot de passe.',
   'forgot.submit': 'Envoyer le lien',
   'forgot.error': 'Impossible d\'envoyer le lien. Veuillez réessayer.',
   'forgot.sentMessage': 'Si l\'e-mail est enregistré, vous recevrez un lien pour réinitialiser votre mot de passe.',
@@ -3481,7 +3895,10 @@ const FR: Record<MessageKey, string> = {
   'breadcrumb.nav': "Fil d'Ariane",
   'language.switcher.current': 'Langue : {locale}. Changer de langue',
   'language.switcher.other': 'Autres langues',
-  'theme.switcher.title': 'Thème clair / sombre',
+  'theme.switcher.title': 'Thème classique, noir ou sombre',
+  'theme.switcher.toLight': 'Passer au thème noir',
+  'theme.switcher.toDark': 'Passer au thème sombre',
+  'theme.switcher.toClassic': 'Passer au thème classique (marron)',
   'skeleton.loadingProducts': 'Chargement des produits…',
   'skeleton.loadingCart': 'Chargement du panier…',
   'skeleton.loadingCartSummary': 'Chargement du récapitulatif panier…',
@@ -3543,6 +3960,51 @@ const DE: Record<MessageKey, string> = {
   'notFound.linkGuide': 'Ratgeber',
   'notFound.linkProductNotFound': 'Produkt nicht gefunden?',
   'notFound.footer': 'TLB Italy Srl · Via Appia Pignatelli 450, Rom · info@ideadiluce.com',
+  'productNotFound.formTitle': 'Sagen Sie uns, was Sie suchen',
+  'productNotFound.formDescription':
+    'Je mehr Informationen Sie geben, desto schneller finden wir das richtige Produkt.',
+  'productNotFound.photoProduct': 'Foto vom Produkt oder Sockel',
+  'productNotFound.photoProductHint': 'Produktfoto hier ablegen',
+  'productNotFound.photoSocket': 'Sockelfoto',
+  'productNotFound.photoSocketHint': 'Nahaufnahme des Sockels',
+  'productNotFound.nameLabel': 'Vor- und Nachname',
+  'productNotFound.namePlaceholder': 'Max Mustermann',
+  'productNotFound.emailPlaceholder': 'max@email.de',
+  'productNotFound.phoneLabel': 'Telefon / WhatsApp',
+  'productNotFound.phonePlaceholder': '+39 ___ ___ ____',
+  'productNotFound.codeLabel': 'Code / EAN / MPN',
+  'productNotFound.codePlaceholder': 'z. B. 8711500411990',
+  'productNotFound.brandLabel': 'Marke (falls bekannt)',
+  'productNotFound.brandPlaceholder': 'Philips, Osram…',
+  'productNotFound.usage': 'Verwendung',
+  'productNotFound.usageHome': 'Zuhause',
+  'productNotFound.usageShop': 'Geschäft',
+  'productNotFound.usageOffice': 'Büro',
+  'productNotFound.usageOutdoor': 'Außen',
+  'productNotFound.usageInstall': 'Anlage',
+  'productNotFound.urgency': 'Dringlichkeit',
+  'productNotFound.urgencyLow': 'Niedrig',
+  'productNotFound.urgencyMedium': 'Mittel',
+  'productNotFound.urgencyHigh': 'Hoch',
+  'productNotFound.messageLabel': 'Nachricht',
+  'productNotFound.messagePlaceholder': 'Beschreiben Sie das Produkt, wo Sie es verwendet haben und was Sie brauchen…',
+  'productNotFound.submit': 'Anfrage senden',
+  'productNotFound.privacyNote': 'Mit dem Absenden akzeptieren Sie die',
+  'productNotFound.privacyLink': 'Datenschutzerklärung',
+  'productNotFound.responseNote': 'Wir antworten per E-Mail oder WhatsApp, meist noch am selben Werktag.',
+  'productNotFound.success': 'Anfrage gesendet. Wir melden uns bald.',
+  'productNotFound.error': 'Senden fehlgeschlagen',
+  'productNotFound.stepsTitle': 'So funktioniert es',
+  'productNotFound.preferTalk': 'LIEBER DIREKT SPRECHEN?',
+  'productNotFound.whatsapp': 'Schreiben Sie uns auf WhatsApp',
+  'productNotFound.professionalsTitle': 'Auch für Profis',
+  'productNotFound.professionalsBody':
+    'Lange Listen oder wiederkehrende Nachbestellungen? Laden Sie eine Datei mit Codes hoch – wir erstellen ein Gesamtangebot.',
+  'productNotFound.professionalsCta': 'Profi-Bereich',
+  'productNotFound.showroomTitle': 'Showroom in Rom',
+  'productNotFound.showroomBody':
+    'Via Appia Pignatelli 450 · Mo–Fr 9–13 / 15–18. Bringen Sie das Teil mit – wir identifizieren es sofort.',
+  'productNotFound.showroomCta': 'Showroom entdecken',
   'auth.sessionChecking': 'Sitzung wird geprüft…',
   'auth.redirectingToLogin': 'Weiterleitung zur Anmeldung…',
   'auth.loggingIn': 'Anmeldung…',
@@ -3555,8 +4017,12 @@ const DE: Record<MessageKey, string> = {
   'auth.registering': 'Registrierung…',
   'auth.noAccount': 'Noch kein Konto?',
   'auth.hasAccount': 'Bereits ein Konto?',
+  'auth.firstNamePlaceholder': 'Max',
+  'auth.lastNamePlaceholder': 'Müller',
+  'auth.emailPlaceholder': 'name@email.com',
   'home.title': 'Idea di Luce',
   'home.subtitle': 'Beleuchtung für Zuhause und Profis',
+  'home.metaDescription': 'La luce pensata. Beleuchtung für Zuhause und Profis.',
   'home.featuredTitle': 'Empfohlene Produkte',
   'home.featuredDescription': 'Eine Auswahl aus unserem verfügbaren Katalog.',
   'home.goToCatalog': 'Zum Katalog',
@@ -3570,6 +4036,24 @@ const DE: Record<MessageKey, string> = {
   'catalog.searchPlaceholder': 'Mindestens 3 Zeichen eingeben…',
   'catalog.clearSearch': 'Suche löschen',
   'catalog.noSuggestions': 'Keine Vorschläge in den geladenen Produkten.',
+  'catalog.suggestGroupAttacchi': 'Fassungen',
+  'catalog.suggestGroupBrands': 'Marken',
+  'catalog.suggestGroupCategories': 'Kategorien',
+  'catalog.suggestGroupProducts': 'Produkte',
+  'catalog.suggestGroupHints': 'Vorschläge',
+  'catalog.suggestGroupQueries': 'Suchen',
+  'catalog.searchRecentLabel': 'Letzte Suchen',
+  'catalog.searchEmptyTitle': 'Keine Ergebnisse',
+  'catalog.searchEmptyDescription': 'Versuchen Sie einen anderen Begriff, eine Fassung oder eine Marke.',
+  'catalog.searchViewAllResults': 'Alle {count} Ergebnisse anzeigen',
+  'catalog.searchViewAllResultsNoCount': 'Alle Ergebnisse anzeigen',
+  'catalog.searchKeyboardNavigate': 'Navigieren',
+  'catalog.searchKeyboardSelect': 'Auswählen',
+  'catalog.searchKeyboardClose': 'Schließen',
+  'catalog.searchShortcutHint': '{shortcut} drücken, um die Suche zu öffnen',
+  'catalog.searchPopularLabel': 'Beliebte Suchen',
+  'catalog.searchClearRecent': 'Löschen',
+  'header.openSearch': 'Katalogsuche öffnen',
   'catalog.inStock': 'Nur verfügbare',
   'catalog.inStockHint': 'Nur Produkte mit Lagerbestand anzeigen.',
   'catalog.sort': 'Sortieren',
@@ -3624,11 +4108,22 @@ const DE: Record<MessageKey, string> = {
   'product.variantLabel': 'Variante',
   'product.variantSoldOut': 'Ausverkauft',
   'login.title': 'Anmelden',
+  'login.welcomeTitle': 'Willkommen zurück',
+  'login.subtitle': 'Melden Sie sich bei Ihrem IdeaDiLuce-Konto an.',
   'login.forgot': 'Passwort vergessen?',
+  'login.rememberMe': 'Auf diesem Gerät merken',
+  'login.passwordPlaceholder': '••••••••',
+  'login.showPassword': 'Passwort anzeigen',
+  'login.hidePassword': 'Passwort verbergen',
+  'login.professionalPrompt': 'Sind Sie Fachhändler?',
+  'login.professionalCta': 'Zum B2B-Bereich',
   'register.title': 'Konto erstellen',
+  'register.subtitle': 'Erstellen Sie Ihr IdeaDiLuce-Konto.',
   'register.business': 'Business-Konto (B2B-Preisliste)',
   'register.passwordHint': 'Passwort (mind. 8 Zeichen)',
+  'register.passwordPlaceholder': 'Mind. 8 Zeichen',
   'forgot.title': 'Passwort zurücksetzen',
+  'forgot.subtitle': 'Wir senden Ihnen einen Link zum Zurücksetzen Ihres Passworts.',
   'forgot.submit': 'Link senden',
   'forgot.error': 'Link konnte nicht gesendet werden. Bitte erneut versuchen.',
   'forgot.sentMessage': 'Wenn die E-Mail registriert ist, erhalten Sie einen Link zum Zurücksetzen des Passworts.',
@@ -4076,7 +4571,10 @@ const DE: Record<MessageKey, string> = {
   'breadcrumb.nav': 'Brotkrumen-Navigation',
   'language.switcher.current': 'Sprache: {locale}. Sprache ändern',
   'language.switcher.other': 'Weitere Sprachen',
-  'theme.switcher.title': 'Helles / dunkles Design',
+  'theme.switcher.title': 'Klassisches, schwarzes oder dunkles Design',
+  'theme.switcher.toLight': 'Zum schwarzen Design wechseln',
+  'theme.switcher.toDark': 'Zum dunklen Design wechseln',
+  'theme.switcher.toClassic': 'Zum klassischen (braunen) Design wechseln',
   'skeleton.loadingProducts': 'Produkte werden geladen…',
   'skeleton.loadingCart': 'Warenkorb wird geladen…',
   'skeleton.loadingCartSummary': 'Warenkorbübersicht wird geladen…',

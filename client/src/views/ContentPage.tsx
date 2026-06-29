@@ -7,6 +7,7 @@ import type { ContentPageContent, SitePageKey } from '@/types/site-content'
 import { isContentPage, isGuidePageKey } from '@/lib/site-page-keys'
 import { ContentPageView } from '@/components/site/content/ContentPageView'
 import { ContattiPageView } from '@/components/site/content/ContattiPageView'
+import { ProductNotFoundPageView } from '@/components/site/product-not-found/ProductNotFoundPageView'
 import { GuideArticlePageView } from '@/components/site/content/GuideArticlePageView'
 import { useLocale } from '@/context/locale-context'
 import { ErrorState } from '@/components/ErrorState'
@@ -68,6 +69,20 @@ export function ContentPage({ pageKey, breadcrumb, initialContent = null }: Prop
         }
       >
         {content ? <ContattiPageView content={content} /> : null}
+      </PageLoadTransition>
+    )
+  }
+
+  if (pageKey === 'prodotto-non-trovato') {
+    return (
+      <PageLoadTransition
+        isLoading={!content}
+        skeleton={<ContentPageSkeleton />}
+        loadingHeader={
+          fallbackTitle ? <PageHeader title={fallbackTitle} /> : null
+        }
+      >
+        {content ? <ProductNotFoundPageView content={content} /> : null}
       </PageLoadTransition>
     )
   }

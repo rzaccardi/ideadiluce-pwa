@@ -22,7 +22,7 @@ export function CheckoutLoadingRing({ className, size = 76 }: IconProps) {
         cy="38"
         r="33"
         fill="none"
-        stroke="#f0ad57"
+        stroke="#c9a24b"
         strokeWidth="5"
         strokeLinecap="round"
         strokeDasharray="60 150"
@@ -46,7 +46,7 @@ export function CheckoutLoadingPin({ className, size = 34 }: IconProps) {
       aria-hidden
     >
       <path d="M24 6 q11 0 11 12 q0 9 -11 22 q-11 -13 -11 -22 q0 -12 11 -12Z" />
-      <circle cx="24" cy="18" r="4" fill="#f0ad57" stroke="none" />
+      <circle cx="24" cy="18" r="4" fill="#c9a24b" stroke="none" />
     </svg>
   )
 }
@@ -96,7 +96,7 @@ export function CheckoutLoadingShield({ className, size = 34 }: IconProps) {
 export function CheckoutLoadingBulb({ className, size = 38 }: IconProps) {
   return (
     <svg className={cn('idl-bulb', className)} viewBox="0 0 48 48" width={size} height={size} aria-hidden>
-      <path d="M24 8 q11 0 11 12 q0 7 -6 11 v4 h-10 v-4 q-6 -4 -6 -11 q0 -12 11 -12Z" fill="#f0ad57" />
+      <path d="M24 8 q11 0 11 12 q0 7 -6 11 v4 h-10 v-4 q-6 -4 -6 -11 q0 -12 11 -12Z" fill="#c9a24b" />
       <rect x="19" y="36" width="10" height="5" rx="2" fill="#cdbfa5" />
       <rect x="20" y="42" width="8" height="3" rx="1.5" fill="#cdbfa5" />
     </svg>

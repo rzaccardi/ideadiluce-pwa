@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { Link } from '@/lib/navigation'
-import { SiteImage } from '../../SiteImage'
+import { RoomCardMedia } from '../../sections/RoomCardMedia'
 import { SectionContainer } from '../../primitives'
 import {
   AMBIENTI_ROOM_GROUPS,
@@ -85,15 +85,13 @@ export function AmbientiRoomsSection({ items, lp }: Props) {
                 >
                   <Link to={lp(item.href)} className="block">
                     {item.imageUrl ? (
-                      <div className="relative aspect-[16/10] overflow-hidden bg-idl-cream">
-                        <SiteImage
-                          src={item.imageUrl}
-                          alt={item.title}
-                          fill
-                          className="object-cover transition duration-500 group-hover:scale-[1.02]"
-                          sizes="(max-width: 1024px) 50vw, 33vw"
-                        />
-                      </div>
+                      <RoomCardMedia
+                        imageUrl={item.imageUrl}
+                        videoUrl={item.videoUrl}
+                        alt={item.title}
+                        hoverScaleClass="group-hover:scale-[1.02]"
+                        sizes="(max-width: 1024px) 50vw, 33vw"
+                      />
                     ) : null}
                   </Link>
                   <div className="p-5 sm:p-6">

@@ -8,7 +8,6 @@ import { accountDisplayName } from '@/components/account/accountHeaderCopy'
 import { useLogoutConfirm } from '@/hooks/use-logout-confirm'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
-import { useTheme } from '@/context/theme-context'
 import {
   ACCOUNT_PRIMARY_NAV,
   ACCOUNT_SECONDARY_NAV,
@@ -42,7 +41,6 @@ type Props = {
 export function HeaderAccountMenu({ onOpenChange }: Props) {
   const lp = useLocalePath()
   const { t } = useI18n()
-  const { isDark } = useTheme()
   const auth = useSnapshot(authStore)
   const { requestLogout, logoutDialog } = useLogoutConfirm()
   const [open, setOpen] = useState(false)
@@ -80,14 +78,7 @@ export function HeaderAccountMenu({ onOpenChange }: Props) {
         to={lp('/login')}
         aria-label={t('nav.login')}
         title={t('nav.login')}
-        className={cn(
-          ui.interactive,
-          ui.headerAction,
-          'no-underline',
-          isDark
-            ? 'border-white/16 bg-white/6 text-idl-design-fg hover:border-idl-brass hover:text-idl-glow'
-            : 'border-idl-border-strong bg-white text-idl-ink-soft hover:text-idl-ink',
-        )}
+        className={cn(ui.interactive, ui.headerAction, ui.headerActionBtn, 'no-underline')}
       >
         <UserIcon className="size-[17px] shrink-0" />
         <span className={ui.headerActionText}>{t('nav.login')}</span>
@@ -110,49 +101,24 @@ export function HeaderAccountMenu({ onOpenChange }: Props) {
           title={t('nav.account')}
           className={cn(
             ui.interactive,
-            'inline-flex size-[38px] shrink-0 items-center justify-center rounded-full border-2 bg-idl-design p-0 font-serif text-[17px] font-semibold text-idl-glow hover:border-idl-brass',
-            isDark ? 'border-idl-glow/50' : 'border-[#e0d2bd]',
+            'inline-flex size-[38px] shrink-0 items-center justify-center rounded-full border-2 border-idl-border-strong bg-idl-design p-0 font-serif text-[17px] font-semibold text-idl-glow hover:border-idl-brass',
           )}
         >
           {userInitial(user)}
         </button>
 
         {open ? (
-          <div
-            id={menuId}
-            role="menu"
-            className={cn(
-              'absolute right-0 top-full z-50 mt-2 w-[248px] rounded-[14px] border p-2 shadow-[0_20px_54px_rgba(0,0,0,0.2)]',
-              isDark ? 'border-white/12 bg-idl-design-elevated' : 'border-idl-border bg-white',
-            )}
-          >
-            <div
-              className={cn(
-                'mb-1.5 flex items-center gap-2.5 border-b px-2.5 py-2.5',
-                isDark ? 'border-white/10' : 'border-idl-tech-border',
-              )}
-            >
+          <div id={menuId} role="menu" className={cn(ui.headerDropdown, 'w-[248px]')}>
+            <div className="mb-1.5 flex items-center gap-2.5 border-b border-idl-tech-border px-2.5 py-2.5">
               <span
-                className={cn(
-                  'flex size-[38px] shrink-0 items-center justify-center rounded-full bg-idl-design font-serif text-[17px] font-semibold text-idl-glow',
-                  isDark ? 'border border-idl-glow/50' : 'border border-[#e0d2bd]',
-                )}
+                className="flex size-[38px] shrink-0 items-center justify-center rounded-full border border-idl-border-strong bg-idl-design font-serif text-[17px] font-semibold text-idl-glow"
                 aria-hidden
               >
                 {userInitial(user)}
               </span>
               <div className="min-w-0">
-                <div
-                  className={cn(
-                    'truncate text-sm font-extrabold',
-                    isDark ? 'text-idl-design-fg' : 'text-idl-ink',
-                  )}
-                >
-                  {displayName}
-                </div>
-                <div className={cn('truncate text-[11.5px]', isDark ? 'text-idl-design-subtle' : 'text-idl-placeholder')}>
-                  {user.email}
-                </div>
+                <div className="truncate text-sm font-extrabold text-idl-ink">{displayName}</div>
+                <div className="truncate text-[11.5px] text-idl-placeholder">{user.email}</div>
               </div>
             </div>
 
@@ -162,18 +128,13 @@ export function HeaderAccountMenu({ onOpenChange }: Props) {
                 to={lp(item.to)}
                 role="menuitem"
                 onClick={() => setMenuOpen(false)}
-                className={cn(
-                  'flex w-full items-center gap-2.5 rounded-[9px] px-3 py-2.5 text-[13.5px] font-semibold no-underline transition',
-                  isDark
-                    ? 'text-idl-design-muted hover:bg-white/6 hover:text-idl-glow'
-                    : 'text-idl-graphite-2 hover:bg-[#faf6ef] hover:text-idl-brass',
-                )}
+                className={ui.headerDropdownItem}
               >
                 {t(item.labelKey)}
               </Link>
             ))}
 
-            <div className={cn('mx-2 my-1.5 h-px', isDark ? 'bg-white/10' : 'bg-idl-tech-border')} aria-hidden />
+            <div className={ui.headerDropdownDivider} aria-hidden />
 
             {ACCOUNT_SECONDARY_NAV.map((item) => (
               <Link
@@ -181,18 +142,13 @@ export function HeaderAccountMenu({ onOpenChange }: Props) {
                 to={lp(item.to)}
                 role="menuitem"
                 onClick={() => setMenuOpen(false)}
-                className={cn(
-                  'flex w-full items-center gap-2.5 rounded-[9px] px-3 py-2.5 text-[13.5px] font-semibold no-underline transition',
-                  isDark
-                    ? 'text-idl-design-muted hover:bg-white/6 hover:text-idl-glow'
-                    : 'text-idl-graphite-2 hover:bg-[#faf6ef] hover:text-idl-brass',
-                )}
+                className={ui.headerDropdownItem}
               >
                 {t(item.labelKey)}
               </Link>
             ))}
 
-            <div className={cn('mx-2 my-1.5 h-px', isDark ? 'bg-white/10' : 'bg-idl-tech-border')} aria-hidden />
+            <div className={ui.headerDropdownDivider} aria-hidden />
 
             <button
               type="button"
@@ -203,10 +159,8 @@ export function HeaderAccountMenu({ onOpenChange }: Props) {
               }}
               className={cn(
                 ui.navButton,
-                'flex w-full items-center gap-2.5 rounded-[9px] px-3 py-2.5 text-left text-[13.5px] font-bold',
-                isDark
-                  ? 'text-idl-glow hover:bg-white/6'
-                  : 'text-idl-brass hover:bg-[#faf6ef]',
+                ui.headerDropdownItem,
+                'text-left font-bold text-idl-brass hover:text-idl-brass',
               )}
             >
               {t('nav.logout')}

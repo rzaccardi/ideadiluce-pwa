@@ -526,6 +526,39 @@ export type OrderReorderResultDTO = {
   cart: CartDTO
 }
 
+export type QuickReorderMatchTypeDTO =
+  | 'odoo_barcode'
+  | 'odoo_sku'
+  | 'arfly_ean'
+  | 'arfly_sku'
+  | 'arfly_mpn'
+  | 'arfly_variant_id'
+  | 'arfly_template_id'
+
+export type ResolvedCodeLineDTO = {
+  code: string
+  quantity: number
+  productRef: string
+  variantRef: string | null
+  productName: string
+  variantLabel?: string | null
+  imageUrl?: string | null
+  matchType: QuickReorderMatchTypeDTO
+}
+
+export type UnresolvedCodeLineDTO = {
+  code: string
+  quantity: number
+  reason: string
+}
+
+export type ResolveCodesResultDTO = {
+  matched: ResolvedCodeLineDTO[]
+  unmatched: UnresolvedCodeLineDTO[]
+}
+
+export type QuickReorderResultDTO = OrderReorderResultDTO & ResolveCodesResultDTO
+
 export type WishlistItemDTO = {
   id: string
   productRef: string

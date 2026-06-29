@@ -63,18 +63,18 @@ export function CheckoutAccountSection() {
     const initial = (auth.me.firstName?.[0] ?? auth.me.email[0] ?? 'U').toUpperCase()
     return (
       <>
-        <div className="flex items-center gap-3 rounded-xl border border-[#e2e6eb] bg-[#f7f8fa] px-3 py-3 sm:px-4">
+        <div className="flex items-center gap-3 rounded-xl border border-idl-tech-border bg-idl-tech-panel px-3 py-3 sm:px-4">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#14161b] text-sm font-bold text-white">
             {initial}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold text-[#14161b]">{displayName}</p>
-            <p className="truncate text-sm text-[#6c727c]">{auth.me.email}</p>
+            <p className="truncate font-semibold text-idl-graphite">{displayName}</p>
+            <p className="truncate text-sm text-idl-muted">{auth.me.email}</p>
           </div>
           <button
             type="button"
             onClick={() => void handleLogout()}
-            className="shrink-0 text-xs font-semibold text-[#9a6a2f] underline decoration-[#cdbfa5] underline-offset-2 hover:decoration-[#9a6a2f] sm:text-sm"
+            className="shrink-0 text-xs font-semibold text-[#9a7b33] underline decoration-[#cdbfa5] underline-offset-2 hover:decoration-[#9a7b33] sm:text-sm"
           >
             {t('checkout.account.notYou')}
           </button>

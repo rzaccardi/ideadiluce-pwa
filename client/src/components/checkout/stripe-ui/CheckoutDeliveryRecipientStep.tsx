@@ -37,7 +37,7 @@ export function CheckoutDeliveryRecipientStep() {
       />
 
       {recipient.mode === 'other' ? (
-        <CheckoutPanel className="space-y-4 bg-[#f7f8fa]">
+        <CheckoutPanel className="space-y-4 bg-idl-tech-panel">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <StripeFieldGroup>
               <StripeControlledInput
@@ -87,7 +87,7 @@ export function CheckoutDeliveryRecipientStep() {
               updateDropshipAddress('country', resolved.country)
             }}
           />
-          <p className="text-xs text-[#6c727c]">{t('checkout.deliveryRecipient.notSavedHint')}</p>
+          <p className="text-xs text-idl-muted">{t('checkout.deliveryRecipient.notSavedHint')}</p>
         </CheckoutPanel>
       ) : null}
 

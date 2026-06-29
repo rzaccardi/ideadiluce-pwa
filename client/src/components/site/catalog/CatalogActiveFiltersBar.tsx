@@ -31,7 +31,7 @@ export function CatalogActiveFiltersBar({
       <button
         type="button"
         onClick={onToggleFilters}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-idl-tech-border bg-white px-3 py-2 text-[13px] font-bold text-idl-ink transition hover:border-idl-ink"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-idl-tech-border bg-idl-tech-panel px-3 py-2 text-[13px] font-bold text-idl-ink transition hover:border-idl-ink"
       >
         <span aria-hidden>{filtersOpen ? '⟨' : '☰'}</span>
         {filtersOpen ? 'Nascondi filtri' : 'Mostra filtri'}
@@ -44,7 +44,7 @@ export function CatalogActiveFiltersBar({
           {activeFilters.map((filter) => (
             <span
               key={filter.key}
-              className="inline-flex items-center gap-1.5 rounded-[30px] border border-idl-tech-border bg-white px-3 py-1.5 text-[12.5px] text-idl-graphite-2"
+              className="inline-flex items-center gap-1.5 rounded-[30px] border border-idl-tech-border bg-idl-tech-panel px-3 py-1.5 text-[12.5px] text-idl-graphite-2"
             >
               {filter.label}
               <button
@@ -76,7 +76,7 @@ export function CatalogActiveFiltersBar({
           value={sort}
           onChange={(e) => onSelectSort(e.target.value as CatalogSort)}
           className={cn(
-            'w-full rounded-lg border border-idl-tech-border bg-white px-3.5 py-2 text-[13.5px] font-semibold text-idl-ink sm:w-auto',
+            'w-full rounded-lg border border-idl-tech-border bg-idl-tech-panel px-3.5 py-2 text-[13.5px] font-semibold text-idl-ink sm:w-auto',
           )}
         >
           {SORT_OPTIONS.map((option) => (

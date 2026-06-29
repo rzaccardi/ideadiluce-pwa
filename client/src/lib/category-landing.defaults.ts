@@ -101,6 +101,31 @@ export const DEFAULT_DESIGN_CATEGORY_IT: CategoryLandingContent = {
       { question: 'Quali tempi di consegna per i prodotti su ordinazione?' },
     ],
   },
+  articles: {
+    eyebrow: 'MAGAZINE',
+    title: 'Ispirazioni d\'arredo',
+    subtitle: 'Trend, designer e consigli per scegliere la luce giusta negli ambienti.',
+    items: [
+      {
+        category: 'SHOP THE LOOK',
+        title: 'Luce CALDA o FREDDA: la scelta illuminante',
+        meta: 'Giugno 2024',
+        href: '/guide/luce-calda-o-fredda',
+      },
+      {
+        category: 'DESIGN SPOTLIGHT',
+        title: 'CALIPSO – Designed by Artemide',
+        meta: 'Giugno 2024',
+        href: '/guide/calipso-artemide-io-vengo-dalla-luna',
+      },
+      {
+        category: 'STYLE RADAR',
+        title: 'Lighting trends 2024 – LA NATURA',
+        meta: 'Giugno 2024',
+        href: '/guide/la-natura-trend-2024',
+      },
+    ],
+  },
   cta: {
     title: 'Vuoi un consiglio sulla luce giusta?',
     description:

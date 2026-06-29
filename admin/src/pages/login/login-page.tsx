@@ -5,6 +5,7 @@ import { Loader2Icon } from 'lucide-react'
 import { adminAuthStore } from '@/features/auth'
 import { useAdminAuth } from '@/context/admin-auth'
 import { BrandLogo } from '@/components/brand-logo'
+import { getRecaptchaToken, isRecaptchaEnabled, RECAPTCHA_ACTIONS } from '@/lib/recaptcha'
 import { Button } from '@/components/ui/button'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -32,10 +33,13 @@ export function LoginPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     try {
-      await login(email, password)
+      const recaptchaToken = await getRecaptchaToken(RECAPTCHA_ACTIONS.adminLogin)
+      await login(email, password, recaptchaToken)
       navigate(location.state?.from ?? '/orders', { replace: true })
-    } catch {
-      /* errore in adminAuthStore.error */
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith('RECAPTCHA_')) {
+        adminAuthStore.error = 'Verifica anti-bot non riuscita. Riprova.'
+      }
     }
   }
 
@@ -94,6 +98,30 @@ export function LoginPage() {
             </Button>
           </FieldGroup>
         </form>
+
+        {isRecaptchaEnabled() ? (
+          <p className="mt-4 text-center text-[11px] leading-relaxed text-gray-400">
+            Questo sito è protetto da reCAPTCHA. Si applicano le{' '}
+            <a
+              href="https://policies.google.com/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              Norme sulla privacy
+            </a>{' '}
+            e i{' '}
+            <a
+              href="https://policies.google.com/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              Termini di servizio
+            </a>{' '}
+            di Google.
+          </p>
+        ) : null}
       </div>
     </div>
   )

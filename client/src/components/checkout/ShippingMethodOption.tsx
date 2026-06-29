@@ -29,16 +29,16 @@ export function ShippingMethodOption({ quote, selected, selecting, disabled, onS
           <CarrierLogo carrierCode={quote.carrierCode} source={quote.source} className="h-6 w-14 sm:h-7 sm:w-[4.5rem]" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[15px] font-bold text-[#14161b]">{quote.label}</p>
+          <p className="text-[15px] font-bold text-idl-graphite">{quote.label}</p>
           {quote.etaDays != null ? (
-            <p className="mt-0.5 text-[13px] text-[#6c727c]">
+            <p className="mt-0.5 text-[13px] text-idl-muted">
               {tParams('checkout.shipping.eta', { days: quote.etaDays })}
             </p>
           ) : null}
         </div>
-        <p className="shrink-0 text-right text-[15px] font-bold tabular-nums text-[#14161b]">
+        <p className="shrink-0 text-right text-[15px] font-bold tabular-nums text-idl-graphite">
           {selecting ? (
-            <span className="text-sm font-normal text-[#6c727c]">…</span>
+            <span className="text-sm font-normal text-idl-muted">…</span>
           ) : quote.amountCents === 0 ? (
             t('checkout.summary.free')
           ) : (

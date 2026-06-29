@@ -30,7 +30,7 @@ export function ProductCardSkeleton({ className }: SkeletonProps) {
   return (
     <article
       className={cn(
-        'flex h-full flex-col overflow-hidden rounded-xl border border-idl-border bg-white',
+        'flex h-full flex-col overflow-hidden rounded-xl border border-idl-border bg-idl-tech-panel',
         className,
       )}
     >
@@ -90,7 +90,7 @@ export function CartLineSkeleton({ variant = 'default' }: { variant?: 'default' 
   }
 
   return (
-    <li className="flex flex-col gap-3 rounded-xl border border-idl-border bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+    <li className="flex flex-col gap-3 rounded-xl border border-idl-border bg-idl-tech-panel p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="space-y-2">
         <Skeleton className="h-5 w-36" />
         <Skeleton className="h-4 w-24" />
@@ -114,7 +114,7 @@ export function CartItemsSkeleton({
       <div className={cn('flex flex-col gap-[18px]', className)} role="status">
         <SrOnlyStatus messageKey="skeleton.loadingCart" />
         <Skeleton className="h-[74px] rounded-[14px]" />
-        <ul className="overflow-hidden rounded-[14px] border border-idl-tech-border bg-white">
+        <ul className="overflow-hidden rounded-[14px] border border-idl-tech-border bg-idl-tech-panel">
           {Array.from({ length: count }).map((_, index) => (
             <CartLineSkeleton key={index} variant="page" />
           ))}
@@ -143,8 +143,8 @@ export function CartSummarySkeleton({
     <aside
       className={cn(
         variant === 'page'
-          ? 'sticky top-6 rounded-[14px] border border-idl-tech-border bg-white p-[22px]'
-          : 'h-fit rounded-xl border border-idl-border bg-white p-6 shadow-sm shadow-idl-ink/5',
+          ? 'sticky top-6 rounded-[14px] border border-idl-tech-border bg-idl-tech-panel p-[22px]'
+          : 'h-fit rounded-xl border border-idl-border bg-idl-tech-panel p-6 shadow-sm shadow-idl-ink/5',
         className,
       )}
       role="status"
@@ -215,11 +215,11 @@ export function ProductDetailSkeleton() {
 
 export function CheckoutCartSectionSkeleton() {
   return (
-    <section className="rounded-xl border border-idl-border bg-white p-6 shadow-sm shadow-idl-ink/5">
+    <section className="rounded-xl border border-idl-border bg-idl-tech-panel p-6 shadow-sm shadow-idl-ink/5">
       <Skeleton className="h-5 w-44" />
       <Skeleton className="mt-2 h-4 w-2/3" />
       <Skeleton className="mt-5 h-4 w-56" />
-      <div className="mt-3 divide-y divide-zinc-100 rounded-lg border border-idl-border bg-zinc-50/50">
+      <div className="mt-3 divide-y divide-idl-border bg-idl-path-tech rounded-lg border border-idl-border">
         {Array.from({ length: 3 }).map((_, index) => (
           <div key={index} className="flex items-center justify-between px-3 py-3">
             <Skeleton className="h-4 w-32" />
@@ -233,7 +233,7 @@ export function CheckoutCartSectionSkeleton() {
 
 export function CheckoutFormSkeleton() {
   return (
-    <section className="rounded-xl border border-idl-border bg-white p-6 shadow-sm shadow-idl-ink/5">
+    <section className="rounded-xl border border-idl-border bg-idl-tech-panel p-6 shadow-sm shadow-idl-ink/5">
       <Skeleton className="h-5 w-40" />
       <Skeleton className="mt-2 h-4 w-3/4" />
       <div className="mt-5 space-y-6">
@@ -262,7 +262,7 @@ export function CheckoutPageSkeleton() {
       <div className="space-y-8">
         <CheckoutCartSectionSkeleton />
         <CheckoutFormSkeleton />
-        <section className="rounded-xl border border-idl-border bg-white p-6 shadow-sm shadow-idl-ink/5">
+        <section className="rounded-xl border border-idl-border bg-idl-tech-panel p-6 shadow-sm shadow-idl-ink/5">
           <Skeleton className="h-5 w-28" />
           <Skeleton className="mt-2 h-4 w-2/3" />
           <Skeleton className="mt-5 h-10 w-48 rounded-lg" />
@@ -315,7 +315,7 @@ export function PaymentResultContentSkeleton() {
   const { t } = useI18n()
   return (
     <div
-      className="w-full space-y-4 overflow-hidden rounded-2xl bg-white p-6 shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:p-8"
+      className="w-full space-y-4 overflow-hidden rounded-2xl bg-idl-tech-panel p-6 shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:p-8"
       role="status"
       aria-label={t('skeleton.loadingPaymentResult')}
     >
@@ -346,7 +346,7 @@ export function CatalogFiltersSkeleton() {
   const { t } = useI18n()
   return (
     <div
-      className="mb-8 space-y-4 rounded-xl border border-idl-border bg-white p-4 sm:p-6"
+      className="mb-8 space-y-4 rounded-xl border border-idl-border bg-idl-tech-panel p-4 sm:p-6"
       role="status"
       aria-label={t('skeleton.loadingCatalogFilters')}
     >
@@ -380,7 +380,7 @@ export function EditorialPageSkeleton() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="status" aria-label={t('skeleton.loadingProducts')}>
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="space-y-3 rounded-xl border border-idl-border bg-white p-5">
+        <div key={i} className="space-y-3 rounded-xl border border-idl-border bg-idl-tech-panel p-5">
           <Skeleton className="aspect-[4/3] w-full rounded-lg" />
           <Skeleton className="h-5 w-3/4" />
           <Skeleton className="h-4 w-1/2" />
@@ -433,7 +433,7 @@ export function HomePageSkeleton() {
   const { t } = useI18n()
   return (
     <PageFlexShell tone="paper">
-      <div className="grid border-b border-idl-border bg-white lg:grid-cols-2" role="status" aria-label={t('skeleton.loadingPageHeader')}>
+      <div className="grid border-b border-idl-border bg-idl-tech-panel lg:grid-cols-2" role="status" aria-label={t('skeleton.loadingPageHeader')}>
         <Skeleton className="min-h-[320px] rounded-none sm:min-h-[380px] lg:min-h-[420px]" />
         <Skeleton className="min-h-[320px] rounded-none sm:min-h-[380px] lg:min-h-[420px]" />
       </div>
@@ -469,7 +469,7 @@ export function StaticHubSectionSkeleton({ count = 6 }: { count?: number }) {
       aria-label={t('skeleton.loadingPageHeader')}
     >
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="space-y-3 rounded-xl border border-idl-border bg-white p-4">
+        <div key={i} className="space-y-3 rounded-xl border border-idl-border bg-idl-tech-panel p-4">
           <Skeleton className="aspect-[4/3] w-full rounded-lg" />
           <Skeleton className="h-5 w-3/4" />
           <Skeleton className="h-4 w-1/2" />
@@ -514,7 +514,7 @@ export function OrderDetailSkeleton() {
         <Skeleton className="h-7 w-24 rounded-full" />
         <Skeleton className="h-7 w-28 rounded-full" />
       </div>
-      <div className="space-y-3 rounded-xl border border-idl-border bg-white p-4">
+      <div className="space-y-3 rounded-xl border border-idl-border bg-idl-tech-panel p-4">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="flex justify-between gap-4">
             <Skeleton className="h-4 w-28" />
@@ -539,7 +539,7 @@ export function CheckoutStripeBootstrapSkeleton() {
       role="status"
       aria-label={t('skeleton.loadingCheckout')}
     >
-      <aside className="hidden min-w-0 bg-[#16130d] lg:col-start-1 lg:row-start-1 lg:block lg:min-h-dvh lg:w-auto lg:max-w-none lg:shrink">
+      <aside className="checkout-summary-dark hidden min-w-0 lg:col-start-1 lg:row-start-1 lg:block lg:min-h-dvh lg:w-auto lg:max-w-none lg:shrink">
         <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-10 xl:px-12">
           <DarkSkeleton className="h-5 w-32" />
           {Array.from({ length: 2 }).map((_, index) => (
@@ -592,8 +592,8 @@ export function CheckoutStripeBootstrapSkeleton() {
 export function AccountBootstrapSkeleton({ children }: { children: React.ReactNode }) {
   const { t } = useI18n()
   return (
-    <div className="bg-[#f4f5f7]" role="status" aria-label={t('skeleton.loadingAccount')}>
-      <div className="border-b border-[#eef0f3] bg-white">
+    <div className="bg-idl-tech-panel" role="status" aria-label={t('skeleton.loadingAccount')}>
+      <div className="border-b border-idl-tech-border bg-idl-tech-panel">
         <div className={cn(SITE_CONTENT_CLASS, 'flex items-center gap-4 py-8')}>
           <Skeleton className="size-[58px] rounded-full" />
           <div className="flex-1 space-y-2">
@@ -614,8 +614,8 @@ export function AccountBootstrapSkeleton({ children }: { children: React.ReactNo
 
 export function SiteChromeSkeleton({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-50">
-      <header className="border-b border-idl-border bg-white">
+    <div className="flex min-h-screen flex-col bg-idl-paper">
+      <header className="border-b border-idl-border bg-idl-tech-panel">
         <div className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <Skeleton className="h-6 w-32" />
@@ -631,7 +631,7 @@ export function SiteChromeSkeleton({ children }: { children: React.ReactNode }) 
       <main className="flex-1 py-8">
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">{children}</div>
       </main>
-      <footer className="border-t border-idl-border bg-white py-8">
+      <footer className="border-t border-idl-border bg-idl-tech-panel py-8">
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
           <Skeleton className="h-4 w-48" />
         </div>
@@ -646,7 +646,7 @@ export function ListSkeleton({
 }: SkeletonProps & { count?: number }) {
   return (
     <ul
-      className={cn('divide-y divide-zinc-200 rounded-xl border border-idl-border bg-white', className)}
+      className={cn('divide-y divide-idl-border rounded-xl border border-idl-border bg-idl-tech-panel', className)}
       role="status"
     >
       <SrOnlyStatus messageKey="skeleton.loadingList" as="li" />

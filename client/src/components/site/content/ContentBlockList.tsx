@@ -1,6 +1,8 @@
 'use client'
 
+import Image from 'next/image'
 import { Link } from '@/lib/navigation'
+import { ArticleImage } from '@/components/site/content/ArticleImage'
 import type { ContentBlock } from '@/types/site-content'
 import { SiteLeadForm } from '@/components/site/content/SiteLeadForm'
 import { ContactPanel } from '@/components/site/content/ContactPanel'
@@ -45,7 +47,7 @@ function BlockRenderer({
           >
             {block.items.map((item) => (
               <StaggerItem key={item.title}>
-                <div className="h-full rounded-xl border border-idl-tech-border bg-white p-5 sm:p-6">
+                <div className="h-full rounded-xl border border-idl-tech-border bg-idl-tech-panel p-5 sm:p-6">
                   {item.num ? (
                     <div className="font-mono text-[11px] text-idl-amber">{item.num}</div>
                   ) : null}
@@ -66,6 +68,67 @@ function BlockRenderer({
           </Stagger>
         </div>
       )
+    case 'image':
+      return (
+        <ArticleImage
+          imageUrl={block.imageUrl}
+          alt={block.alt ?? ''}
+          caption={block.caption}
+          layout={block.layout ?? 'wide'}
+        />
+      )
+    case 'split': {
+      const image = (
+        <ArticleImage
+          imageUrl={block.imageUrl}
+          alt={block.alt ?? block.title ?? ''}
+          caption={block.caption}
+          layout="portrait"
+        />
+      )
+      const copy = (
+        <div className="space-y-4 text-[15px] leading-relaxed text-idl-ink-muted">
+          {block.title ? <h2 className="text-xl font-bold text-idl-ink">{block.title}</h2> : null}
+          {block.paragraphs.map((p) => (
+            <p key={p.slice(0, 40)}>{p}</p>
+          ))}
+        </div>
+      )
+      return (
+        <div className="grid max-w-5xl gap-8 lg:grid-cols-2 lg:items-center">
+          {block.layout === 'image-right' ? (
+            <>
+              {copy}
+              {image}
+            </>
+          ) : (
+            <>
+              {image}
+              {copy}
+            </>
+          )}
+        </div>
+      )
+    }
+    case 'gallery':
+      return (
+        <div className={tone === 'guide' ? 'max-w-5xl' : undefined}>
+          {block.title ? <h2 className="mb-1 text-xl font-bold text-idl-ink">{block.title}</h2> : null}
+          {block.subtitle ? <p className="mb-4 text-sm text-idl-muted">{block.subtitle}</p> : null}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {block.items.map((item) => (
+              <figure key={item.imageUrl} className="overflow-hidden rounded-xl border border-idl-tech-border bg-idl-tech-panel">
+                <div className="relative aspect-[4/3] bg-idl-cream">
+                  <Image src={item.imageUrl} alt={item.alt ?? ''} fill className="object-cover" sizes="(max-width: 768px) 100vw, 320px" />
+                </div>
+                {item.caption ? (
+                  <figcaption className="px-4 py-3 text-[13px] leading-relaxed text-idl-muted">{item.caption}</figcaption>
+                ) : null}
+              </figure>
+            ))}
+          </div>
+        </div>
+      )
     case 'cards':
       return (
         <div className={tone === 'guide' ? 'max-w-4xl' : undefined}>
@@ -81,12 +144,25 @@ function BlockRenderer({
               <Link
                 key={item.href}
                 to={lp(item.href)}
-                className={cn(ui.card, 'block p-5 hover:border-idl-brass')}
+                className={cn(ui.card, 'block overflow-hidden p-0 hover:border-idl-brass')}
               >
-                <div className="font-semibold text-idl-ink">{item.title}</div>
-                {item.description ? (
-                  <p className="mt-1 text-sm text-idl-muted">{item.description}</p>
+                {item.imageUrl ? (
+                  <div className="relative aspect-[4/3] w-full bg-idl-cream">
+                    <Image
+                      src={item.imageUrl}
+                      alt={item.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 100vw, 50vw"
+                    />
+                  </div>
                 ) : null}
+                <div className="p-5">
+                  <div className="font-semibold text-idl-ink">{item.title}</div>
+                  {item.description ? (
+                    <p className="mt-1 text-sm text-idl-muted">{item.description}</p>
+                  ) : null}
+                </div>
               </Link>
             ))}
           </div>
@@ -135,7 +211,7 @@ function BlockRenderer({
           className={cn(
             ui.panel,
             block.variant === 'light' && 'bg-idl-cream',
-            tone === 'guide' && 'max-w-3xl border-idl-tech-border bg-[#faf6ef]/40',
+            tone === 'guide' && 'max-w-3xl border-idl-tech-border bg-[#f8f8f6]/40',
           )}
         >
           <h2 className="text-lg font-bold text-idl-ink">{block.title}</h2>
@@ -150,7 +226,7 @@ function BlockRenderer({
             {block.secondaryLabel && block.secondaryHref ? (
               <Link
                 to={lp(block.secondaryHref)}
-                className="inline-flex rounded-md border border-idl-border-strong bg-white px-4 py-2 text-sm font-semibold text-idl-graphite hover:bg-idl-cream"
+                className="inline-flex rounded-md border border-idl-border-strong bg-idl-tech-panel px-4 py-2 text-sm font-semibold text-idl-graphite hover:bg-idl-cream"
               >
                 {block.secondaryLabel}
               </Link>

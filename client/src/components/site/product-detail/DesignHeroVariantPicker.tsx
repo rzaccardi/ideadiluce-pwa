@@ -70,10 +70,10 @@ export function DesignHeroVariantPicker({ variants, selectedRef, onChange }: Pro
                 className={cn(
                   'size-[38px] rounded-full border-2 transition',
                   active
-                    ? 'border-idl-glow shadow-[0_0_0_3px_#16130d_inset]'
+                    ? 'border-idl-glow shadow-[0_0_0_3px_#0c0c0d_inset]'
                     : 'border-white/20 hover:border-white/35',
                 )}
-                style={{ background: option.swatch ?? '#8c8273' }}
+                style={{ background: option.swatch ?? '#8f8f93' }}
               />
             )
           })}

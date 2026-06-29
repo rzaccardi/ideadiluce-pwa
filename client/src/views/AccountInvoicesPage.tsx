@@ -58,27 +58,27 @@ export function AccountInvoicesPage() {
 
       <PageLoadTransition isLoading={loading} skeleton={<ListSkeleton />}>
         {list && list.length === 0 ? (
-          <p className="py-8 text-center text-sm text-[#6c727c]">{t('account.invoices.empty')}</p>
+          <p className="py-8 text-center text-sm text-idl-muted">{t('account.invoices.empty')}</p>
         ) : null}
 
         {list && list.length > 0 ? (
           <div className="flex flex-col gap-3.5">
             {list.map((inv) => (
-              <article key={inv.id} className="overflow-hidden rounded-xl border border-[#e7eaee]">
-                <div className="flex flex-wrap items-center justify-between gap-3 bg-[#f7f8fa] px-[18px] py-3.5">
+              <article key={inv.id} className="overflow-hidden rounded-xl border border-idl-tech-border">
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-idl-tech-panel px-[18px] py-3.5">
                   <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                    <span className="font-mono text-[12.5px] font-semibold text-[#14161b]">{inv.name}</span>
-                    <span className="text-[12.5px] text-[#6c727c]">
+                    <span className="font-mono text-[12.5px] font-semibold text-idl-graphite">{inv.name}</span>
+                    <span className="text-[12.5px] text-idl-muted">
                       {inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleDateString('it-IT') : '—'}
                     </span>
                     <AccountDcStatusPill label={inv.state} tone={invoiceStateTone(inv.state)} />
                     {inv.paymentState ? (
-                      <span className="text-[12px] text-[#6c727c]">{inv.paymentState}</span>
+                      <span className="text-[12px] text-idl-muted">{inv.paymentState}</span>
                     ) : null}
                   </div>
                   <div className="flex items-center gap-[18px]">
                     {inv.amountTotalCents != null ? (
-                      <span className="text-sm font-extrabold text-[#14161b]">
+                      <span className="text-sm font-extrabold text-idl-graphite">
                         {formatMoney(inv.amountTotalCents, inv.currencyCode ?? 'EUR')}
                       </span>
                     ) : null}

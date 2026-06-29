@@ -52,7 +52,7 @@ export function CartFreeShippingBanner({ hint, currencyCode = 'EUR', className }
   return (
     <div
       className={cn(
-        'rounded-[14px] border border-idl-tech-border bg-white px-[22px] py-[18px]',
+        'rounded-[14px] border border-idl-tech-border bg-idl-tech-panel px-[22px] py-[18px]',
         className,
       )}
     >

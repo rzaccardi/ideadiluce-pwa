@@ -31,8 +31,7 @@
     "smoke:prod": "node server/scripts/smoke-production.mjs",
     "test:api": "node server/scripts/api-integration-test.mjs",
     "stripe:setup": "node server/scripts/stripe-setup.mjs",
-    "stripe:webhook": "stripe listen --forward-to localhost:4000/api/v1/payments/webhook/stripe",
-    "prepare:professionisti-html": "npm run prepare:professionisti-html --workspace=client"
+    "stripe:webhook": "stripe listen --forward-to localhost:4000/api/v1/payments/webhook/stripe"
   },
   "engines": {
     "node": ">=20"

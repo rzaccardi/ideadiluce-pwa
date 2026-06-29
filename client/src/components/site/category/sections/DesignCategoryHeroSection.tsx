@@ -13,7 +13,7 @@ type HeroProps = {
 export function DesignCategoryHeroSection({ content, lp }: HeroProps) {
   return (
     <section className="relative overflow-hidden bg-idl-design text-idl-design-fg">
-      <div className="pointer-events-none absolute -top-16 -right-16 size-[280px] rounded-full bg-[radial-gradient(circle,rgba(240,173,87,0.22)_0%,rgba(240,173,87,0)_70%)] sm:-top-20 sm:right-4 sm:size-[380px] lg:right-20 lg:size-[520px]" />
+      <div className="pointer-events-none absolute -top-16 -right-16 size-[280px] rounded-full bg-[radial-gradient(circle,rgba(201, 162, 75,0.22)_0%,rgba(201, 162, 75,0)_70%)] sm:-top-20 sm:right-4 sm:size-[380px] lg:right-20 lg:size-[520px]" />
       <SectionContainer className="relative z-[2] py-5 pb-10 pt-4 sm:py-8 sm:pb-16 sm:pt-5">
         <CategoryBreadcrumb items={content.breadcrumb} lp={lp} variant="design" />
         <div className="max-w-2xl">
@@ -54,7 +54,7 @@ export function DesignCategoryTypeGridSection({
             <Link
               key={tile.key}
               to={lp(tile.href)}
-              className="flex flex-col items-center gap-1.5 rounded-lg border border-idl-path-design-border bg-white px-1.5 py-3 transition hover:border-idl-brass sm:gap-2 sm:px-2 sm:py-4"
+              className="flex flex-col items-center gap-1.5 rounded-lg border border-idl-path-design-border bg-idl-tech-panel px-1.5 py-3 transition hover:border-idl-brass sm:gap-2 sm:px-2 sm:py-4"
             >
               <CategoryTypeIcon tile={tile} />
               <div className="text-center">

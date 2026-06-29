@@ -73,3 +73,11 @@ export function getSiteUrl(): string {
     (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173')
   )
 }
+
+export function getRecaptchaSiteKey(): string | undefined {
+  return (
+    process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY?.trim() ||
+    process.env.VITE_RECAPTCHA_SITE_KEY?.trim() ||
+    undefined
+  )
+}

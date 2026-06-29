@@ -15,18 +15,18 @@ export function AccountOverviewInvoiceRow({ invoice }: Props) {
   const { t } = useI18n()
 
   return (
-    <article className="overflow-hidden rounded-xl border border-[#e7eaee]">
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-[#f7f8fa] px-[18px] py-3.5">
+    <article className="overflow-hidden rounded-xl border border-idl-tech-border">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-idl-tech-panel px-[18px] py-3.5">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <span className="font-mono text-[12.5px] font-semibold text-[#14161b]">{invoice.name}</span>
-          <span className="text-[12.5px] text-[#6c727c]">
+          <span className="font-mono text-[12.5px] font-semibold text-idl-graphite">{invoice.name}</span>
+          <span className="text-[12.5px] text-idl-muted">
             {invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString('it-IT') : '—'}
           </span>
           <AccountDcStatusPill label={invoice.state} tone={invoiceStateTone(invoice.state)} />
         </div>
         <div className="flex items-center gap-4">
           {invoice.amountTotalCents != null ? (
-            <span className="text-sm font-extrabold text-[#14161b]">
+            <span className="text-sm font-extrabold text-idl-graphite">
               {formatMoney(invoice.amountTotalCents, invoice.currencyCode ?? 'EUR')}
             </span>
           ) : null}

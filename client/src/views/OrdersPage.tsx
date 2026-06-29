@@ -28,15 +28,15 @@ export function OrdersPage() {
       <PageLoadTransition isLoading={isLoading} skeleton={<ListSkeleton />}>
         {orders.list && orders.list.length === 0 ? (
           <div className="py-8 text-center">
-            <p className="text-sm font-medium text-[#14161b]">{t('account.orders.emptyTitle')}</p>
-            <p className="mt-1 text-sm text-[#6c727c]">{t('account.orders.emptyDescription')}</p>
+            <p className="text-sm font-medium text-idl-graphite">{t('account.orders.emptyTitle')}</p>
+            <p className="mt-1 text-sm text-idl-muted">{t('account.orders.emptyDescription')}</p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Link to="/catalogo" className={accountDcPrimaryBtnClass}>
                 {t('nav.catalog')}
               </Link>
               <Link
                 to="/account"
-                className="inline-flex items-center justify-center rounded-lg border border-[#e7eaee] px-[18px] py-3 text-[13.5px] font-bold text-[#14161b]"
+                className="inline-flex items-center justify-center rounded-lg border border-idl-tech-border px-[18px] py-3 text-[13.5px] font-bold text-idl-graphite"
               >
                 {t('account.nav.dashboard')}
               </Link>

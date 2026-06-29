@@ -50,5 +50,6 @@ export const GUIDE_CATEGORIES = [
   { value: 'TECNICO', label: 'Tecnico' },
   { value: 'ACQUISTO', label: 'Acquisto' },
   { value: 'AMBIENTE', label: 'Ambiente' },
+  { value: 'ARREDO', label: 'Arredo' },
   { value: 'GLOSSARIO', label: 'Glossario' },
 ] as const

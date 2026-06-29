@@ -63,7 +63,7 @@ export const BRAND_DIRECTORY_FILTERS: {
   dot?: string
 }[] = [
   { id: 'all', label: 'Tutti' },
-  { id: 'design', label: 'Design', dot: '#9a6a2f' },
+  { id: 'design', label: 'Design', dot: '#9a7b33' },
   { id: 'tecnico', label: 'Tecnico', dot: '#3f4651' },
   { id: 'decorativo', label: 'Decorativo', dot: '#c9a063' },
   { id: 'outdoor', label: 'Outdoor', dot: '#1f9d57' },
@@ -269,6 +269,68 @@ export function primaryCategoryLabel(categories: BrandCategory[]): string {
 
 export function isDesignCategory(categories: BrandCategory[]): boolean {
   return categories.includes('design') || categories.includes('decorativo')
+}
+
+export function resolveHomeBrandCards(
+  items: ReadonlyArray<string | { name: string; href?: string }>,
+  hubBrands: BrandListItemDTO[],
+): BrandCard[] {
+  const merged = mergeBrandCards(hubBrands)
+  const byName = new Map(merged.map((brand) => [brand.name.toLowerCase(), brand]))
+  const bySlug = new Map(merged.map((brand) => [brand.slug, brand]))
+
+  return items.flatMap((item) => {
+    const name = typeof item === 'string' ? item : item.name
+    const customHref = typeof item === 'string' ? undefined : item.href
+    const fromMeta = BRAND_META.find((brand) => brand.name.toLowerCase() === name.toLowerCase())
+    const fromHub =
+      byName.get(name.toLowerCase()) ??
+      (fromMeta ? bySlug.get(fromMeta.slug) : undefined)
+
+    if (fromHub) {
+      return [
+        {
+          ...fromHub,
+          href: customHref ?? fromHub.href,
+        },
+      ]
+    }
+
+    if (fromMeta) {
+      return [
+        {
+          slug: fromMeta.slug,
+          name: fromMeta.name,
+          displayStyle: fromMeta.displayStyle,
+          categories: fromMeta.categories,
+          description: fromMeta.description,
+          tags: fromMeta.tags,
+          productLines: fromMeta.productLines,
+          productCount: fromMeta.defaultProductCount ?? 0,
+          href: customHref ?? brandHref(fromMeta.slug),
+          featured: fromMeta.featured ?? false,
+        },
+      ]
+    }
+
+    const slug = brandSlugFromDisplayName(name)
+    if (!slug) return []
+
+    return [
+      {
+        slug,
+        name,
+        displayStyle: 'bold' as BrandDisplayStyle,
+        categories: ['tecnico'] as BrandCategory[],
+        description: '',
+        tags: [],
+        productLines: '',
+        productCount: 0,
+        href: customHref ?? brandHref(slug),
+        featured: false,
+      },
+    ]
+  })
 }
 
 export function mergeBrandCards(hubBrands: BrandListItemDTO[]): BrandCard[] {

@@ -7,7 +7,7 @@ import { CatalogFiltersSkeleton, ProductGridSkeleton, Skeleton } from '@/compone
 export function CatalogPageSkeleton() {
   return (
     <PageFlexShell tone="tech-panel">
-      <section className="border-b border-idl-tech-border bg-white">
+      <section className="border-b border-idl-tech-border bg-idl-tech-panel">
         <SectionContainer className="py-6 sm:py-7">
           <Skeleton className="mb-3 h-3 w-48" />
           <Skeleton className="h-9 w-72 max-w-full" />

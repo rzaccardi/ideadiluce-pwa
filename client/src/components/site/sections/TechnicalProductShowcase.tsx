@@ -84,7 +84,7 @@ export function TechnicalProductShowcase({
   addToCartLabel,
 }: ShowcaseProps) {
   return (
-    <section className="border-t border-idl-tech-border bg-white">
+    <section className="border-t border-idl-tech-border bg-idl-tech-panel">
       <SectionContainer className="py-14">
         <SiteSectionHeader
           eyebrow={eyebrow}

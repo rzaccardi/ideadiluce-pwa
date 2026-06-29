@@ -64,8 +64,8 @@ function Tracker({ steps }: { steps: TrackerStep[] }) {
           step.state === 'done'
             ? 'bg-[#1f9d57] text-white'
             : step.state === 'active'
-              ? 'border-[2.5px] border-[#d9831a] bg-white text-[#d9831a]'
-              : 'border-2 border-[#cfd5dc] bg-white text-[#9298a3]'
+              ? 'border-[2.5px] border-[#d9831a] bg-idl-tech-panel text-[#d9831a]'
+              : 'border-2 border-[#cfd5dc] bg-idl-tech-panel text-[#9298a3]'
 
         return (
           <div key={step.id} className="relative flex-1 text-center">
@@ -92,7 +92,7 @@ function Tracker({ steps }: { steps: TrackerStep[] }) {
                 aria-hidden
               />
             ) : null}
-            <div className={cn('mt-2.5 text-[13px] font-bold', step.state === 'upcoming' && 'font-semibold text-[#6c727c]')}>
+            <div className={cn('mt-2.5 text-[13px] font-bold', step.state === 'upcoming' && 'font-semibold text-idl-muted')}>
               {step.label}
             </div>
             <div className="text-[11.5px] text-[#8b919b]">{step.hint}</div>
@@ -114,7 +114,7 @@ export function AccountDcOrderTracker({ order, t }: Props) {
 
   return (
     <div>
-      <h3 className="mb-6 text-[17px] font-extrabold tracking-[-0.01em] text-[#14161b]">
+      <h3 className="mb-6 text-[17px] font-extrabold tracking-[-0.01em] text-idl-graphite">
         {t('thankYou.tracker.title')}
       </h3>
       <Tracker steps={trackerSteps(order, t)} />

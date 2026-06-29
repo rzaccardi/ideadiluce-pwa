@@ -63,7 +63,7 @@ function BrandWall({
 
 export function BrandThematicSection({ brands, lp }: Props) {
   return (
-    <section className="border-t border-idl-tech-border bg-white">
+    <section className="border-t border-idl-tech-border bg-idl-tech-panel">
       <SectionContainer className="py-10 sm:py-12">
         <div className="grid gap-10 lg:grid-cols-2 lg:gap-10">
           <BrandWall

@@ -45,7 +45,9 @@ export function SiteFooter({ footer }: { footer: SiteShellContent['footer'] }) {
       </SectionContainer>
       <Reveal delay={0.08} className="border-t border-white/10">
         <SectionContainer className="flex flex-col gap-3 py-5 text-[12px] text-idl-design-subtle sm:flex-row sm:items-center sm:justify-between">
-          <BrandWordmark className="text-idl-design-fg" />
+          <Link to={lp('/')} className="rounded-sm transition-opacity hover:opacity-80">
+            <BrandWordmark className="text-white" accentClassName="text-idl-glow" />
+          </Link>
           <span>{footer.legalNote}</span>
         </SectionContainer>
       </Reveal>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useSnapshot } from 'valtio/react'
 import { ExternalLinkIcon, RefreshCwIcon, SearchIcon } from 'lucide-react'
 import { toast } from 'sonner'
@@ -142,6 +143,20 @@ export function SeoPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
+          <div>
+            <CardTitle>Migrazione SEO da WordPress</CardTitle>
+            <CardDescription>
+              Storico export inviati dal plugin WordPress con URL, metadati Yoast, prodotti e redirect.
+            </CardDescription>
+          </div>
+          <Button variant="outline" render={<Link to="/seo/migration" />}>
+            Apri storico migrazioni
+          </Button>
+        </CardHeader>
+      </Card>
 
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">

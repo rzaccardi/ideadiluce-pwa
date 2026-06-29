@@ -14,8 +14,8 @@ export const DEFAULT_PROFESSIONISTI_IT: ProfessionistiPageContent = {
     placeholder: 'incolla qui la tua lista…',
     exampleLines: ['8711500411990 ×10', '4058075609907 ×24', '322805 ×4'],
     ctaLabel: 'Aggiungi tutto al carrello',
-    footnote: 'Riconosce SKU, EAN e MPN · disponibile con account business attivo',
-    loginHint: 'Attiva l\'account business per usare il riordino rapido.',
+    footnote: 'Riconosce SKU, EAN e MPN · disponibile dopo il login',
+    loginHint: 'Accedi al tuo account per usare il riordino rapido.',
   },
   features: [
     {

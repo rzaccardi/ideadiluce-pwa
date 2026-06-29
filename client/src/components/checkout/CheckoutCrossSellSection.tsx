@@ -49,14 +49,14 @@ function CrossSellRow({
     <div
       className={cn(
         'flex items-center gap-3 rounded-[11px] border p-[11px]',
-        dark ? 'border-white/[0.08]' : 'border-[#e2e6eb] bg-white',
+        dark ? 'border-white/[0.08]' : 'border-idl-tech-border bg-idl-tech-panel',
       )}
     >
       <Link to={`/prodotto/${product.slug}`} className="shrink-0">
         <CartLineThumb
           imageUrl={product.imageUrl}
           name={product.name}
-          className={cn('size-[42px] rounded-lg', dark ? 'border-white/10' : 'border-[#e2e6eb]')}
+          className={cn('size-[42px] rounded-lg', dark ? 'border-white/10' : 'border-idl-tech-border')}
         />
       </Link>
       <div className="min-w-0 flex-1">
@@ -64,12 +64,12 @@ function CrossSellRow({
           to={`/prodotto/${product.slug}`}
           className={cn(
             'line-clamp-2 text-[12.5px] font-semibold leading-tight hover:underline',
-            dark ? 'text-[#f1e8d8]' : 'text-[#14161b]',
+            dark ? 'text-[#f1e8d8]' : 'text-idl-graphite',
           )}
         >
           {product.name}
         </Link>
-        <p className={cn('mt-0.5 text-xs tabular-nums', dark ? 'text-[#9a8e78]' : 'text-[#6c727c]')}>
+        <p className={cn('mt-0.5 text-xs tabular-nums', dark ? 'text-[#b0b0b4]' : 'text-idl-muted')}>
           {formatMoney(product.priceCents, product.currency)}
         </p>
       </div>
@@ -80,7 +80,7 @@ function CrossSellRow({
         aria-label={t('checkout.summary.crossSellAdd')}
         className={cn(
           'flex size-7 shrink-0 items-center justify-center rounded-lg text-lg font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60',
-          dark ? 'bg-[#3a332a] hover:bg-[#4d4438]' : 'bg-[#d9831a] hover:bg-[#c2730f]',
+          dark ? 'bg-[#3a332a] hover:bg-[#4d4438]' : 'bg-[#d9831a] hover:bg-[#b08e3e]',
         )}
       >
         +
@@ -108,12 +108,12 @@ export function CheckoutCrossSellSection({
         <span
           className={cn(
             'font-mono text-[10px] font-bold uppercase tracking-[0.14em]',
-            dark ? 'text-[#9a8e78]' : 'text-[#9a6a2f]',
+            dark ? 'text-[#b0b0b4]' : 'text-[#9a7b33]',
           )}
         >
           {t('checkout.summary.crossSellTitle')}
         </span>
-        <span className={cn('text-[11.5px]', dark ? 'text-[#6f6450]' : 'text-[#6c727c]')}>
+        <span className={cn('text-[11.5px]', dark ? 'text-[#6f6450]' : 'text-idl-muted')}>
           {t('checkout.summary.crossSellCompat')}
         </span>
       </div>
@@ -125,7 +125,7 @@ export function CheckoutCrossSellSection({
               key={i}
               className={cn(
                 'h-[64px] animate-pulse rounded-[11px] border',
-                dark ? 'border-white/[0.08] bg-white/[0.04]' : 'border-[#e2e6eb] bg-[#f7f8fa]',
+                dark ? 'border-white/[0.08] bg-idl-tech-panel/[0.04]' : 'border-idl-tech-border bg-idl-tech-panel',
               )}
             />
           ))}

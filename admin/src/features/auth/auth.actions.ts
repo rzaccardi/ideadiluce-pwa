@@ -30,13 +30,13 @@ export function fetchAdminMe() {
   return dedupeAsync('admin:auth:me', loadMe)
 }
 
-export async function adminLogin(email: string, password: string) {
+export async function adminLogin(email: string, password: string, recaptchaToken?: string) {
   adminAuthStore.isSubmitting = true
   adminAuthStore.error = null
   try {
     const res = await adminAuthApi<MeResponse>('/admin/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, recaptchaToken }),
     })
     adminAuthStore.user = res.user
     adminAuthStore.workspace = res.workspace

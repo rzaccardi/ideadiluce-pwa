@@ -21,7 +21,7 @@ export function PopularLooksSection({ lp }: Props) {
             <Link
               key={look.title}
               to={lp(look.href)}
-              className="group overflow-hidden rounded-xl border border-idl-path-design-border bg-white transition hover:border-idl-brass hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
+              className="group overflow-hidden rounded-xl border border-idl-path-design-border bg-idl-tech-panel transition hover:border-idl-brass hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
             >
               <div className="relative aspect-[4/3] overflow-hidden bg-idl-cream">
                 <SiteImage

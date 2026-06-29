@@ -10,6 +10,7 @@ import { parseHubLocale } from '../../lib/hub-locale.js'
 import type { CategoryDTO, ProductListDTO } from '../../types/dto.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { enrichProductCardsWithStock } from './catalog-stock.enrich.js'
+import { sanitizeCatalogSearchQuery } from './catalog-search-guard.js'
 
 export type BrandListItemDTO = {
   slug: string
@@ -165,7 +166,7 @@ export const catalogStorefrontService = {
     const locale = parseHubLocale(options.locale)
     const page = Math.max(1, Number(options.page) || 1)
     const pageSize = Math.min(60, Math.max(1, Number(options.pageSize) || 24))
-    const effectiveQ = options.q?.trim() ?? ''
+    const effectiveQ = sanitizeCatalogSearchQuery(options.q) ?? ''
 
     if (!isArflyConfigured()) {
       return {

@@ -160,7 +160,7 @@ export function ProductSocialProofNotifications({ slug, productName }: Props) {
     >
       <div
         key={`${event.purchasedAt}-${index}`}
-        className="social-proof-enter pointer-events-auto w-full rounded-xl border border-idl-border/90 bg-white p-3.5 shadow-xl shadow-zinc-950/15"
+        className="social-proof-enter pointer-events-auto w-full rounded-xl border border-idl-border/90 bg-idl-tech-panel p-3.5 shadow-xl shadow-zinc-950/15"
       >
         <div className="flex gap-3">
           <PurchaseIcon />

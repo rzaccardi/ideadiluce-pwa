@@ -96,7 +96,7 @@ export function TechnicalHeroVariantPicker({ variants, selectedRef, onChange }: 
                       showKelvinBar ? 'font-sans' : 'font-mono',
                       active
                         ? 'bg-idl-graphite text-white'
-                        : 'border border-idl-tech-chip-border bg-white text-idl-graphite-2 hover:border-idl-amber/40',
+                        : 'border border-idl-tech-chip-border bg-idl-tech-panel text-idl-graphite-2 hover:border-idl-amber/40',
                     )}
                   >
                     {value}

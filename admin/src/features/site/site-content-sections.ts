@@ -3,6 +3,7 @@ export type SiteContentSection =
   | { id: string; label: string; pick: string[] }
   | { id: string; label: string; navItemsOnly: true }
   | { id: string; label: string; navMegaMenu: string }
+  | { id: string; label: string; articleEditor: true }
 
 const EDITORIAL_SECTIONS: SiteContentSection[] = [
   { id: 'header', label: 'Intestazione', pick: ['eyebrow', 'title', 'subtitle', 'intro'] },
@@ -10,8 +11,14 @@ const EDITORIAL_SECTIONS: SiteContentSection[] = [
   { id: 'footer', label: 'Chiusura pagina', pick: ['cta', 'footerNote'] },
 ]
 
-const CONTENT_PAGE_SECTIONS: SiteContentSection[] = [
+const ARTICLE_PAGE_SECTIONS: SiteContentSection[] = [
   { id: 'header', label: 'Intestazione', pick: ['layout', 'eyebrow', 'title', 'subtitle', 'intro', 'heroBadges'] },
+  { id: 'article-body', label: 'Copertina e impaginazione', articleEditor: true },
+  { id: 'footer', label: 'Chiusura e SEO', pick: ['cta', 'seo'] },
+]
+
+const CONTENT_PAGE_SECTIONS: SiteContentSection[] = [
+  { id: 'header', label: 'Intestazione', pick: ['layout', 'eyebrow', 'title', 'subtitle', 'intro', 'heroBadges', 'coverImage'] },
   { id: 'blocks', label: 'Blocchi contenuto', pick: ['blocks'] },
   { id: 'footer', label: 'Chiusura e SEO', pick: ['cta', 'seo'] },
 ]
@@ -65,6 +72,7 @@ const CONTENT_PAGE_KEYS = new Set([
   'contatti',
   'privacy',
   'cookie',
+  'termini',
   'prodotto-non-trovato',
 ])
 
@@ -147,22 +155,33 @@ function mergeNavMegaMenu(content: Record<string, unknown>, menuId: string, sect
 
 export function getSiteContentSections(pageKey: string): SiteContentSection[] {
   if (SITE_CONTENT_SECTIONS[pageKey]) return SITE_CONTENT_SECTIONS[pageKey]
-  if (pageKey.startsWith('guide-') || CONTENT_PAGE_KEYS.has(pageKey)) return CONTENT_PAGE_SECTIONS
+  if (pageKey.startsWith('guide-')) return ARTICLE_PAGE_SECTIONS
+  if (CONTENT_PAGE_KEYS.has(pageKey)) return CONTENT_PAGE_SECTIONS
   return [{ id: 'all', label: 'Contenuto pagina', pick: [] }]
 }
 
 export function pickSectionValue(content: Record<string, unknown>, section: SiteContentSection) {
   if ('navItemsOnly' in section) return pickNavItemsOnly(content)
   if ('navMegaMenu' in section) return pickNavMegaMenu(content, section.navMegaMenu)
+  if ('articleEditor' in section) {
+    const picked: Record<string, unknown> = {}
+    if ('coverImage' in content) picked.coverImage = content.coverImage
+    if ('layout' in content) picked.layout = content.layout
+    if ('blocks' in content) picked.blocks = content.blocks
+    return picked
+  }
   if ('root' in section) {
     return content[section.root]
   }
-  if (section.pick.length === 0) return content
-  const picked: Record<string, unknown> = {}
-  for (const key of section.pick) {
-    if (key in content) picked[key] = content[key]
+  if ('pick' in section) {
+    if (section.pick.length === 0) return content
+    const picked: Record<string, unknown> = {}
+    for (const key of section.pick) {
+      if (key in content) picked[key] = content[key]
+    }
+    return picked
   }
-  return picked
+  return content
 }
 
 export function mergeSectionValue(
@@ -172,11 +191,17 @@ export function mergeSectionValue(
 ) {
   if ('navItemsOnly' in section) return mergeNavItemsOnly(content, sectionValue)
   if ('navMegaMenu' in section) return mergeNavMegaMenu(content, section.navMegaMenu, sectionValue)
+  if ('articleEditor' in section) {
+    return { ...content, ...(sectionValue as Record<string, unknown>) }
+  }
   if ('root' in section) {
     return { ...content, [section.root]: sectionValue }
   }
-  if (section.pick.length === 0) {
-    return sectionValue as Record<string, unknown>
+  if ('pick' in section) {
+    if (section.pick.length === 0) {
+      return sectionValue as Record<string, unknown>
+    }
+    return { ...content, ...(sectionValue as Record<string, unknown>) }
   }
-  return { ...content, ...(sectionValue as Record<string, unknown>) }
+  return content
 }

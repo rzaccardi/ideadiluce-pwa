@@ -42,7 +42,7 @@ export function CheckoutShippingMethodStep() {
       {!isRomePickupEligible(checkout.draft.shipping) &&
       checkout.draft.shipping.country.toUpperCase() === 'IT' &&
       checkout.shippingQuotes.length > 0 ? (
-        <p className="text-sm text-[#6c727c]">{t('checkout.shipping.pickupRomeOnly')}</p>
+        <p className="text-sm text-idl-muted">{t('checkout.shipping.pickupRomeOnly')}</p>
       ) : null}
 
       <CheckoutActionRow>

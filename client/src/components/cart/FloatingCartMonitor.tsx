@@ -107,7 +107,7 @@ export function FloatingCartMonitor() {
       <CartActivityToasts />
 
       {isOpen ? (
-        <section className="w-[min(calc(100vw-2.5rem),380px)] rounded-2xl border border-idl-border bg-white p-4 shadow-2xl shadow-zinc-950/20">
+        <section className="w-[min(calc(100vw-2.5rem),380px)] rounded-2xl border border-idl-border bg-idl-tech-panel p-4 shadow-2xl shadow-zinc-950/20">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-base font-semibold text-idl-graphite">{t('cart.title')}</h2>
             <button
@@ -128,13 +128,13 @@ export function FloatingCartMonitor() {
             </div>
           ) : (
             <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-lg border border-idl-border/60 bg-idl-cream px-3 py-2.5">
+              <div className="rounded-lg border border-idl-border/60 bg-idl-tech-panel px-3 py-2.5">
                 <dt className="text-xs text-idl-muted">{t('cart.floating.items')}</dt>
                 <dd className="mt-0.5 text-base font-semibold tabular-nums text-idl-graphite">
                   {itemCount}
                 </dd>
               </div>
-              <div className="rounded-lg border border-idl-border/60 bg-idl-cream px-3 py-2.5">
+              <div className="rounded-lg border border-idl-border/60 bg-idl-tech-panel px-3 py-2.5">
                 <dt className="text-xs text-idl-muted">{t('cart.floating.estimatedTotal')}</dt>
                 <dd className="mt-0.5 text-base font-semibold tabular-nums text-idl-graphite">
                   {cart && total != null ? formatMoney(total, cart.currencyCode) : '—'}
@@ -150,7 +150,7 @@ export function FloatingCartMonitor() {
                 return (
                   <li
                     key={item.id}
-                    className="flex flex-col gap-2 rounded-lg border border-idl-border/60 bg-white p-2 text-sm"
+                    className="flex flex-col gap-2 rounded-lg border border-idl-border/60 bg-idl-tech-panel p-2 text-sm"
                   >
                     <div className="flex items-center gap-2.5">
                       <Link
@@ -225,7 +225,7 @@ export function FloatingCartMonitor() {
           {itemCount > 0 ? (
             <span
               className={cn(
-                'rounded-full bg-white px-2 py-0.5 text-xs text-idl-graphite',
+                'rounded-full bg-idl-tech-panel px-2 py-0.5 text-xs text-idl-graphite',
                 badgePop && 'cart-badge-pop',
               )}
             >

@@ -88,8 +88,8 @@ export function PurchaseErrorPageView({ order }: Props) {
   const errorDetail = order.lastPaymentError?.trim()
 
   return (
-    <div className="-mx-4 bg-white sm:-mx-6 lg:-mx-12">
-      <div className="border-b border-[#e6dcc9] bg-[#f7f1e8]">
+    <div className="-mx-4 bg-idl-tech-panel sm:-mx-6 lg:-mx-12">
+      <div className="border-b border-[#e4e3de] bg-[#ffffff]">
         <SectionContainer className="flex max-w-[1100px] flex-wrap items-center justify-between gap-3 py-[18px]">
           <Link to={lp('/')} className="text-idl-ink no-underline">
             <BrandWordmark className="text-2xl" />
@@ -98,13 +98,13 @@ export function PurchaseErrorPageView({ order }: Props) {
             <LockIcon />
             {t('purchaseError.securePayment')}
           </div>
-          <a href="tel:+39067167111" className="text-[13px] text-[#544b40] no-underline">
+          <a href="tel:+39067167111" className="text-[13px] text-[#3a3a3d] no-underline">
             {t('purchaseError.supportPhone')}
           </a>
         </SectionContainer>
       </div>
 
-      <section className="border-b border-[#eef0f3] bg-white py-10 text-center sm:py-12">
+      <section className="border-b border-[#ededea] bg-idl-tech-panel py-10 text-center sm:py-12">
         <SectionContainer className="max-w-[1100px]">
           <div className="mx-auto mb-6 flex size-[78px] items-center justify-center rounded-full bg-[#fdeceb]">
             <CrossIcon />
@@ -135,7 +135,7 @@ export function PurchaseErrorPageView({ order }: Props) {
             </Link>
             <Link
               to={changeMethodHref}
-              className="inline-flex items-center gap-2 rounded-[10px] border border-[#cfd5dc] bg-white px-[26px] py-3.5 text-[15px] font-bold text-idl-graphite transition hover:border-idl-graphite"
+              className="inline-flex items-center gap-2 rounded-[10px] border border-[#cfd5dc] bg-idl-tech-panel px-[26px] py-3.5 text-[15px] font-bold text-idl-graphite transition hover:border-idl-graphite"
             >
               {t('purchaseError.hero.changeMethod')}
             </Link>
@@ -150,7 +150,7 @@ export function PurchaseErrorPageView({ order }: Props) {
       <SectionContainer className="max-w-[1100px] py-8 sm:py-10">
         <div className="grid items-start gap-7 lg:grid-cols-[1fr_380px]">
           <div className="flex flex-col gap-[18px]">
-            <div className="rounded-[14px] border border-[#e7eaee] bg-white p-6 sm:p-[26px]">
+            <div className="rounded-[14px] border border-[#e7eaee] bg-idl-tech-panel p-6 sm:p-[26px]">
               <h2 className="text-[17px] font-extrabold tracking-[-0.01em]">
                 {t('purchaseError.causes.title')}
               </h2>
@@ -170,7 +170,7 @@ export function PurchaseErrorPageView({ order }: Props) {
               </div>
             </div>
 
-            <div className="rounded-[14px] border border-[#e7eaee] bg-white p-6 sm:p-[26px]">
+            <div className="rounded-[14px] border border-[#e7eaee] bg-idl-tech-panel p-6 sm:p-[26px]">
               <h2 className="mb-4 text-[17px] font-extrabold tracking-[-0.01em]">
                 {t('purchaseError.methods.title')}
               </h2>
@@ -219,14 +219,14 @@ export function PurchaseErrorPageView({ order }: Props) {
           </div>
 
           <aside className="flex flex-col gap-4 lg:sticky lg:top-6">
-            <div className="rounded-[14px] border border-[#e7eaee] bg-white p-[22px]">
+            <div className="rounded-[14px] border border-[#e7eaee] bg-idl-tech-panel p-[22px]">
               <div className="mb-4 flex items-center gap-2">
                 <CheckIcon />
                 <h2 className="text-base font-extrabold tracking-[-0.01em]">{t('purchaseError.cart.title')}</h2>
               </div>
 
               {order.lines.length > 0 ? (
-                <ul className="divide-y divide-[#eef0f3]">
+                <ul className="divide-y divide-[#ededea]">
                   {order.lines.map((line) => (
                     <li
                       key={`${line.productRef}-${line.variantRef ?? ''}`}
@@ -268,7 +268,7 @@ export function PurchaseErrorPageView({ order }: Props) {
                   </span>
                 </div>
               ) : null}
-              <div className="mt-2 flex items-baseline justify-between border-t border-[#eef0f3] pt-3">
+              <div className="mt-2 flex items-baseline justify-between border-t border-[#ededea] pt-3">
                 <span className="text-[15px] font-extrabold">{t('thankYou.summary.total')}</span>
                 <span className="text-[21px] font-extrabold">{total}</span>
               </div>
@@ -304,12 +304,12 @@ export function PurchaseErrorPageView({ order }: Props) {
         </div>
       </SectionContainer>
 
-      <div className="bg-[#16130d] text-[#9a8e78]">
+      <div className="bg-[#0c0c0d] text-[#b0b0b4]">
         <SectionContainer className="flex max-w-[1100px] flex-wrap items-center justify-between gap-3 py-6">
           <div className="text-[12.5px]">{t('purchaseError.footer.company')}</div>
           <div className="text-[12.5px]">
             {t('purchaseError.footer.help')}{' '}
-            <a href="mailto:info@ideadiluce.com" className="font-bold text-[#f0ad57] no-underline">
+            <a href="mailto:info@ideadiluce.com" className="font-bold text-[#c9a24b] no-underline">
               info@ideadiluce.com
             </a>
           </div>

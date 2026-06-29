@@ -366,6 +366,7 @@ export async function seedSitePages() {
   await patchShellNavCategoryLinks()
   await patchShellMegaMenuColumns()
   await patchShellNavEditorialLinks()
+  await patchShellItSource()
   await patchHomeHeroCategoryLinks()
   await patchAmbientiPageLinks()
   await patchLegacyCatalogPaths()
@@ -373,6 +374,10 @@ export async function seedSitePages() {
 
   const { siteGuideService } = await import('../site-guides/site-guides.service.js')
   await siteGuideService.seedSiteGuides()
+  const { seedLegacyEditorialGuides } = await import('../site-guides/seed-legacy-editorial-guides.js')
+  await seedLegacyEditorialGuides()
+  const { seedLegacyWordpressSeoRedirects } = await import('./seed-legacy-wordpress-seo.js')
+  await seedLegacyWordpressSeoRedirects()
 }
 
 /** Hero home: catalogo generico → landing categoria prodotto. */
@@ -397,6 +402,19 @@ async function patchHomeHeroCategoryLinks() {
     if (legacyTechnical) content.hero.technical.ctaHref = nextTechnical
     await siteRepository.upsert('home', locale, content, row.published)
   }
+}
+
+/** Allinea il contenuto IT della shell ai default aggiornati (nav, mega-menu, footer). */
+async function patchShellItSource() {
+  const row = await siteRepository.findByKeyLocale('shell', 'IT')
+  if (!row?.published) return
+
+  const fresh = structuredClone(DEFAULT_SHELL_IT)
+  const currentJson = JSON.stringify(row.content)
+  const freshJson = JSON.stringify(fresh)
+  if (currentJson === freshJson) return
+
+  await siteRepository.upsert('shell', 'IT', fresh, row.published)
 }
 
 /** Mega-menu e href dropdown → landing categoria prodotto. */
@@ -429,8 +447,22 @@ async function patchShellNavCategoryLinks() {
           panelJson.includes('/catalog?world=technical'))
 
       if (needsPanelRefresh) {
-        item.panel = fresh.panel
-        changed = true
+        if (locale === 'IT') {
+          item.panel = fresh.panel
+          changed = true
+        } else {
+          for (const freshColumn of fresh.panel.columns) {
+            const currentColumn = item.panel.columns.find((col) => col.title === freshColumn.title)
+            if (!currentColumn) continue
+            for (const freshLink of freshColumn.links) {
+              const currentLink = currentColumn.links.find((link) => link.label === freshLink.label)
+              if (currentLink && currentLink.href !== freshLink.href) {
+                currentLink.href = freshLink.href
+                changed = true
+              }
+            }
+          }
+        }
       }
     }
 
@@ -453,16 +485,46 @@ async function patchShellMegaMenuColumns() {
 
     for (const id of menuIds) {
       const item = content.nav.items.find((navItem) => navItem.kind === 'dropdown' && navItem.id === id)
-      if (item?.kind !== 'dropdown') continue
+      const fresh = DEFAULT_SHELL_IT.nav.items.find((navItem) => navItem.kind === 'dropdown' && navItem.id === id)
+      if (item?.kind !== 'dropdown' || fresh?.kind !== 'dropdown') continue
 
-      const staleTitles =
-        id === 'arredo'
-          ? ['IN EVIDENZA']
-          : ['SCOPRI', 'GUIDE TECNICHE']
+      const staleTitles = ['SCOPRI']
       const beforeCount = item.panel.columns.length
       item.panel.columns = item.panel.columns.filter((col) => !staleTitles.includes(col.title))
       if (item.panel.columns.length !== beforeCount) {
         changed = true
+      }
+
+      if (locale === 'IT') {
+        const freshJson = JSON.stringify(fresh.panel)
+        const currentJson = JSON.stringify(item.panel)
+        const needsPanelRefresh =
+          currentJson !== freshJson &&
+          (id === 'arredo'
+            ? !currentJson.includes('q=sospensione') || !currentJson.includes('IN EVIDENZA')
+            : !currentJson.includes('GUIDE TECNICHE') || !currentJson.includes('q=striscia+led'))
+
+        if (needsPanelRefresh) {
+          item.panel = structuredClone(fresh.panel)
+          changed = true
+        }
+        continue
+      }
+
+      for (let columnIndex = 0; columnIndex < fresh.panel.columns.length; columnIndex += 1) {
+        const freshColumn = fresh.panel.columns[columnIndex]
+        const currentColumn = item.panel.columns[columnIndex]
+        if (!freshColumn || !currentColumn) continue
+
+        for (let linkIndex = 0; linkIndex < freshColumn.links.length; linkIndex += 1) {
+          const freshLink = freshColumn.links[linkIndex]
+          const currentLink = currentColumn.links[linkIndex]
+          if (!freshLink || !currentLink) continue
+          if (currentLink.href !== freshLink.href) {
+            currentLink.href = freshLink.href
+            changed = true
+          }
+        }
       }
     }
 

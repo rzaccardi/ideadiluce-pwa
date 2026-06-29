@@ -78,7 +78,7 @@ export function CartSummary({
 
   return (
     <aside className={cn('flex flex-col gap-4', className)}>
-      <div className="rounded-[14px] border border-idl-tech-border bg-white p-[22px]">
+      <div className="rounded-[14px] border border-idl-tech-border bg-idl-tech-panel p-[22px]">
         <h2 className="mb-4 text-base font-extrabold tracking-tight text-idl-graphite">
           {t('cart.summary.title')}
         </h2>

@@ -40,7 +40,7 @@ export function AmbienteRoomView({ room, products }: Props) {
               <Link
                 key={tag.href}
                 to={lp(tag.href)}
-                className="rounded-full border border-idl-border bg-white px-4 py-2 text-[13px] font-semibold text-idl-ink transition hover:border-idl-brass hover:text-idl-brass"
+                className="rounded-full border border-idl-border bg-idl-tech-panel px-4 py-2 text-[13px] font-semibold text-idl-ink transition hover:border-idl-brass hover:text-idl-brass"
               >
                 {tag.label}
               </Link>

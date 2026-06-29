@@ -15,7 +15,7 @@ export function BrandFeaturedSection({ brands, lp }: Props) {
   if (brands.length === 0) return null
 
   return (
-    <section className="bg-[#fbfbfa]">
+    <section className="bg-[#f3f2ee]">
       <SectionContainer className="pb-2 pt-10 sm:pt-12">
         <h2 className="text-[22px] font-extrabold tracking-tight text-idl-graphite">Brand in evidenza</h2>
         <p className="mt-1 text-[14px] text-idl-graphite-2">Una selezione dei marchi più richiesti del catalogo.</p>
@@ -26,7 +26,7 @@ export function BrandFeaturedSection({ brands, lp }: Props) {
               <Link
                 key={brand.slug}
                 to={lp(brand.href)}
-                className="flex flex-col rounded-[14px] border border-idl-tech-border bg-white p-6 transition hover:border-[#cfd4db] hover:shadow-[0_10px_30px_rgba(0,0,0,0.05)] sm:p-7"
+                className="flex flex-col rounded-[14px] border border-idl-tech-border bg-idl-tech-panel p-6 transition hover:border-[#cfd4db] hover:shadow-[0_10px_30px_rgba(0,0,0,0.05)] sm:p-7"
               >
                 <div className="mb-5 flex h-16 items-center">
                   <BrandNameDisplay name={brand.name} style={brand.displayStyle} size="lg" />

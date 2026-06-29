@@ -69,13 +69,13 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
 
   if (compact) {
     return (
-      <div className="flex flex-col gap-4 rounded-[11px] border border-[#e7eaee] bg-[#f7f8fa] p-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-4 rounded-[11px] border border-idl-tech-border bg-idl-tech-panel p-4 sm:flex-row sm:items-center">
         {visibleLines[0]?.imageUrl ? (
-          <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-white">
+          <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-idl-tech-panel">
             <SiteImage src={visibleLines[0].imageUrl} alt="" fill className="object-cover" sizes="56px" />
           </div>
         ) : (
-          <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-white text-xs font-bold text-[#6c727c]">
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-idl-tech-panel text-xs font-bold text-idl-muted">
             {lines?.length ?? '·'}
           </div>
         )}
@@ -84,11 +84,11 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
             {formatOrderRef(order.odooSaleOrderId, locale)}
             {lineCountLabel ? ` · ${lineCountLabel}` : null}
           </div>
-          <div className="mt-0.5 text-[14.5px] font-bold text-[#14161b]">{statusLabel}</div>
+          <div className="mt-0.5 text-[14.5px] font-bold text-idl-graphite">{statusLabel}</div>
         </div>
         <div className="text-right">
           <div className="text-[11.5px] text-[#8b919b]">{t('account.dashboard.delivery')}</div>
-          <div className="text-[13.5px] font-bold text-[#14161b]">{t('account.dashboard.deliverySoon')}</div>
+          <div className="text-[13.5px] font-bold text-idl-graphite">{t('account.dashboard.deliverySoon')}</div>
         </div>
         <AccountDcStatusPill label={statusLabel} tone={statusTone} />
       </div>
@@ -96,17 +96,17 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
   }
 
   return (
-    <article className="overflow-hidden rounded-xl border border-[#e7eaee]">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eef0f3] bg-[#f7f8fa] px-[18px] py-3.5">
+    <article className="overflow-hidden rounded-xl border border-idl-tech-border">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ededea] bg-idl-tech-panel px-[18px] py-3.5">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-          <span className="font-mono text-[12.5px] font-semibold text-[#14161b]">
+          <span className="font-mono text-[12.5px] font-semibold text-idl-graphite">
             {formatOrderRef(order.odooSaleOrderId, locale)}
           </span>
-          <span className="text-[12.5px] text-[#6c727c]">{formatOrderDate(order.createdAt, locale)}</span>
+          <span className="text-[12.5px] text-idl-muted">{formatOrderDate(order.createdAt, locale)}</span>
           <AccountDcStatusPill label={statusLabel} tone={statusTone} />
         </div>
         <div className="flex items-center gap-[18px]">
-          <span className="text-sm font-extrabold text-[#14161b]">{total}</span>
+          <span className="text-sm font-extrabold text-idl-graphite">{total}</span>
           <Link
             to={`/account/orders/${order.id}`}
             className="text-[13px] font-bold text-[#d9831a] no-underline hover:underline"
@@ -130,7 +130,7 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
           {visibleLines.map((line) => (
             <div
               key={`${line.productRef}-${line.variantRef ?? ''}`}
-              className="relative size-[46px] overflow-hidden rounded-[7px] bg-[#f7f8fa]"
+              className="relative size-[46px] overflow-hidden rounded-[7px] bg-idl-tech-panel"
             >
               {line.imageUrl ? (
                 <SiteImage src={line.imageUrl} alt="" fill className="object-cover" sizes="46px" />
@@ -138,7 +138,7 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
             </div>
           ))}
           {extraCount > 0 ? (
-            <div className="flex size-[46px] items-center justify-center rounded-[7px] bg-[#f0f2f5] text-xs font-bold text-[#6c727c]">
+            <div className="flex size-[46px] items-center justify-center rounded-[7px] bg-[#f0f2f5] text-xs font-bold text-idl-muted">
               +{extraCount}
             </div>
           ) : null}

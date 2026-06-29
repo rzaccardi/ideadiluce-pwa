@@ -90,6 +90,7 @@ export function buildWebSiteJsonLd(siteUrl: string) {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Idea di Luce',
+    description: 'La luce pensata',
     url: site,
     potentialAction: {
       '@type': 'SearchAction',

@@ -73,6 +73,18 @@ export type CategoryGuideSection = {
   faq: CategoryFaqItem[]
 }
 
+export type CategoryArticlesSection = {
+  eyebrow: string
+  title: string
+  subtitle?: string
+  items: Array<{
+    category?: string
+    title: string
+    meta?: string
+    href: string
+  }>
+}
+
 export type CategoryTipsSection = {
   title: string
   subtitle: string
@@ -102,6 +114,7 @@ export type CategoryLandingContent = {
   sortValue: string
   loadMoreLabel?: string
   guide?: CategoryGuideSection
+  articles?: CategoryArticlesSection
   tips?: CategoryTipsSection
   cta: CategoryCtaBanner
   searchQuery?: string

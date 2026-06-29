@@ -78,7 +78,7 @@ export function CategoryResultsToolbar({
         {!isDesign && compareEnabled ? (
           <span className="hidden items-center gap-1.5 text-[13px] text-idl-muted sm:inline-flex">
             <span className="relative inline-block h-[18px] w-[34px] rounded-full bg-idl-amber">
-              <span className="absolute top-0.5 right-0.5 size-3.5 rounded-full bg-white" />
+              <span className="absolute top-0.5 right-0.5 size-3.5 rounded-full bg-idl-tech-panel" />
             </span>
             Confronta
           </span>

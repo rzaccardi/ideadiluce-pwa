@@ -55,7 +55,7 @@ export function CheckoutShippingOptions({
   return (
     <section className={cn((blocked || selectionBusy) && 'pointer-events-none')}>
       {blocked ? (
-        <p className="mb-3 text-sm text-[#6c727c]">{t('checkout.shipping.addressIncomplete')}</p>
+        <p className="mb-3 text-sm text-idl-muted">{t('checkout.shipping.addressIncomplete')}</p>
       ) : null}
 
       {showLoading ? (

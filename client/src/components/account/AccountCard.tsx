@@ -14,7 +14,7 @@ export function AccountCard({
   return (
     <div
       className={cn(
-        'rounded-md border border-zinc-200 bg-white',
+        'rounded-md border border-zinc-200 bg-idl-tech-panel',
         padding && 'p-4 sm:p-5',
         className,
       )}

@@ -1,8 +1,10 @@
 'use client'
 
 import { Link } from '@/lib/navigation'
+import { useI18n } from '@/hooks/use-i18n'
 import { SectionContainer } from '../primitives'
-import type { CatalogWorldTab } from '@/lib/catalog-filters'
+import { CatalogSearchTrigger } from './CatalogSearchTrigger'
+import { CATALOG_WORLD_TAB_HREFS, type CatalogWorldTab } from '@/lib/catalog-filters'
 import { cn } from '@/utils/cn'
 
 type Props = {
@@ -11,29 +13,28 @@ type Props = {
   worldTab: CatalogWorldTab
   designLabel: string
   technicalLabel: string
-  onSelectTab: (tab: CatalogWorldTab) => void
+  searchQuery?: string
 }
 
-function TabButton({
+function TabLink({
   active,
-  onClick,
+  href,
   children,
 }: {
   active: boolean
-  onClick: () => void
+  href: string
   children: React.ReactNode
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <Link
+      to={href}
       className={cn(
         'rounded-[30px] px-[18px] py-2.5 text-[13.5px] font-bold transition',
-        active ? 'bg-white text-idl-ink shadow-sm' : 'bg-transparent text-idl-muted hover:text-idl-ink',
+        active ? 'bg-idl-tech-panel text-idl-ink shadow-sm' : 'bg-transparent text-idl-muted hover:text-idl-ink',
       )}
     >
       {children}
-    </button>
+    </Link>
   )
 }
 
@@ -43,10 +44,12 @@ export function CatalogHeroSection({
   worldTab,
   designLabel,
   technicalLabel,
-  onSelectTab,
+  searchQuery = '',
 }: Props) {
+  const { t } = useI18n()
+
   return (
-    <section className="border-b border-idl-tech-border bg-white">
+    <section className="border-b border-idl-tech-border bg-idl-tech-panel">
       <SectionContainer className="py-6 sm:py-7">
         <div className="mb-3.5 font-mono text-[11.5px] text-idl-muted">
           <Link to={lp('/')} className="hover:text-idl-ink">
@@ -68,16 +71,31 @@ export function CatalogHeroSection({
           </div>
 
           <div className="flex gap-2 rounded-[30px] bg-idl-tech-panel p-1">
-            <TabButton active={worldTab === 'all'} onClick={() => onSelectTab('all')}>
+            <TabLink active={worldTab === 'all'} href={lp(CATALOG_WORLD_TAB_HREFS.all)}>
               Tutti
-            </TabButton>
-            <TabButton active={worldTab === 'design'} onClick={() => onSelectTab('design')}>
+            </TabLink>
+            <TabLink active={worldTab === 'design'} href={lp(CATALOG_WORLD_TAB_HREFS.design)}>
               {designLabel}
-            </TabButton>
-            <TabButton active={worldTab === 'technical'} onClick={() => onSelectTab('technical')}>
+            </TabLink>
+            <TabLink active={worldTab === 'technical'} href={lp(CATALOG_WORLD_TAB_HREFS.technical)}>
               {technicalLabel}
-            </TabButton>
+            </TabLink>
           </div>
+        </div>
+
+        <div className="mt-5 max-w-3xl">
+          <label htmlFor="catalog-page-search" className="sr-only">
+            {t('catalog.searchLabel')}
+          </label>
+          <CatalogSearchTrigger
+            searchSource="catalog"
+            id="catalog-page-search"
+            variant="catalog"
+            displayValue={searchQuery}
+            placeholder={t('catalog.searchPlaceholder')}
+            ctaLabel={t('catalog.search')}
+            showHints={false}
+          />
         </div>
       </SectionContainer>
     </section>

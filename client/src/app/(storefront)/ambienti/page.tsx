@@ -3,9 +3,9 @@ import { buildMetadata } from '@/lib/seo'
 import { AmbientiPage } from '@/views/AmbientiPage'
 
 export const metadata: Metadata = buildMetadata({
-  title: 'Scegli per ambiente',
+  title: 'Acquista per ambiente',
   description:
-    'Illuminazione per soggiorno, cucina, camera, bagno, studio ed esterno. Shop by room e shop the look.',
+    'Illuminazione per soggiorno, cucina, camera, bagno, studio ed esterno. Scegli la luce giusta per ogni spazio.',
 })
 
 export default function Page() {

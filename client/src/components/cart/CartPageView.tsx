@@ -72,7 +72,7 @@ export function CartPageView({ state }: Props) {
           <div className="flex min-w-0 flex-col gap-[18px]">
             <CartFreeShippingBanner hint={cart.freeShippingHint} currencyCode={cart.currencyCode} />
 
-            <div className="overflow-hidden rounded-[14px] border border-idl-tech-border bg-white">
+            <div className="overflow-hidden rounded-[14px] border border-idl-tech-border bg-idl-tech-panel">
               {cart.items.map((line, index) => (
                 <CartLineItem
                   key={line.id}

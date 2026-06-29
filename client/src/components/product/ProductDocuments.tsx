@@ -52,7 +52,7 @@ export function ProductDocuments({
           Documenti e schede tecniche
         </h2>
       ) : null}
-      <ul className="divide-y divide-idl-border rounded-lg border border-idl-border bg-white">
+      <ul className="divide-y divide-idl-border rounded-lg border border-idl-border bg-idl-tech-panel">
         {documents.map((doc) => {
           const size = formatBytes(doc.sizeBytes)
           const meta = [doc.type, doc.format?.toUpperCase(), size].filter(Boolean).join(' · ')

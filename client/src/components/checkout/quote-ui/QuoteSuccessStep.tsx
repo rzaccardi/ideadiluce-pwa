@@ -12,8 +12,8 @@ const primaryActionClass = cn(
 )
 
 const secondaryActionClass = cn(
-  'inline-flex w-full items-center justify-center rounded-xl border border-[#e2e6eb] bg-white',
-  'px-4 py-4 text-base font-extrabold text-[#14161b] transition hover:border-[#14161b]',
+  'inline-flex w-full items-center justify-center rounded-xl border border-idl-tech-border bg-idl-tech-panel',
+  'px-4 py-4 text-base font-extrabold text-idl-graphite transition hover:border-[#14161b]',
   checkoutActionControlClass,
 )
 
@@ -37,8 +37,8 @@ export function QuoteSuccessStep() {
             />
           </svg>
         </div>
-        <p className="mt-4 text-sm font-semibold text-[#14161b]">{t('cart.quote.success')}</p>
-        <p className="mt-2 text-sm leading-relaxed text-[#6c727c]">{t('cart.quote.successPending')}</p>
+        <p className="mt-4 text-sm font-semibold text-idl-graphite">{t('cart.quote.success')}</p>
+        <p className="mt-2 text-sm leading-relaxed text-idl-muted">{t('cart.quote.successPending')}</p>
       </div>
 
       <div className="flex flex-col gap-2.5 sm:flex-row">

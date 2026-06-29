@@ -10,12 +10,12 @@ type Props = {
 export function AmbientiHeroSection({ lp }: Props) {
   return (
     <section className="relative overflow-hidden bg-idl-design text-idl-design-fg">
-      <div className="pointer-events-none absolute -top-16 right-[10%] size-[320px] rounded-full bg-[radial-gradient(circle,rgba(240,173,87,0.20)_0%,rgba(240,173,87,0)_68%)] sm:size-[420px] lg:-top-[60px] lg:size-[520px]" />
+      <div className="pointer-events-none absolute -top-16 right-[10%] size-[320px] rounded-full bg-[radial-gradient(circle,rgba(201, 162, 75,0.20)_0%,rgba(201, 162, 75,0)_68%)] sm:size-[420px] lg:-top-[60px] lg:size-[520px]" />
       <SectionContainer className="relative z-[2] pt-4 pb-10 sm:pb-14 sm:pt-5">
         <CategoryBreadcrumb
           items={[
             { label: 'Home', href: '/' },
-            { label: 'Scegli per ambiente' },
+            { label: 'Acquista per ambiente' },
           ]}
           lp={lp}
           variant="design"
@@ -23,9 +23,7 @@ export function AmbientiHeroSection({ lp }: Props) {
         <div className="mx-auto max-w-[900px] pt-6 text-center sm:pt-10">
           <Eyebrow className="mb-4 sm:mb-5">{AMBIENTI_HERO.eyebrow}</Eyebrow>
           <h1 className="font-serif text-[34px] leading-[1.05] font-medium tracking-tight sm:text-[44px] lg:text-[52px]">
-            Trova la luce giusta
-            <br />
-            per ogni ambiente
+            {AMBIENTI_HERO.h1}
           </h1>
           <p className="mx-auto mt-4 max-w-[640px] text-[15px] leading-relaxed text-idl-design-muted sm:mt-5 sm:text-[17px]">
             {AMBIENTI_HERO.subtitle}

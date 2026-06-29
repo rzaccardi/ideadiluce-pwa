@@ -1,5 +1,7 @@
 import type { ContentPageContent } from './site.types.js'
 import { getStorePickupLocation } from '../../config/store-location.js'
+import { getLegacyEditorialGuideContent } from '../site-guides/legacy-editorial-guides.content.js'
+import { DEFAULT_TERMINI_IT } from './site-content-termini.defaults.js'
 
 const pickup = getStorePickupLocation()
 
@@ -26,8 +28,12 @@ export const CONTENT_PAGE_KEYS = [
   'contatti',
   'privacy',
   'cookie',
+  'termini',
   'prodotto-non-trovato',
   'guide-luce-calda-naturale-fredda',
+  'guide-luce-calda-o-fredda',
+  'guide-calipso-artemide-io-vengo-dalla-luna',
+  'guide-la-natura-trend-2024',
   'guide-gu10-gu53',
   'guide-lampadina-r7s',
   'guide-illuminare-soggiorno',
@@ -39,6 +45,9 @@ export const CONTENT_PAGE_KEYS = [
 export type ContentPageKey = (typeof CONTENT_PAGE_KEYS)[number]
 
 export const GUIDE_SLUG_TO_PAGE_KEY: Record<string, ContentPageKey> = {
+  'luce-calda-o-fredda': 'guide-luce-calda-o-fredda',
+  'calipso-artemide-io-vengo-dalla-luna': 'guide-calipso-artemide-io-vengo-dalla-luna',
+  'la-natura-trend-2024': 'guide-la-natura-trend-2024',
   'luce-calda-naturale-fredda': 'guide-luce-calda-naturale-fredda',
   'gu10-gu53': 'guide-gu10-gu53',
   'lampadina-r7s': 'guide-lampadina-r7s',
@@ -221,6 +230,8 @@ export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> =
     layout: 'legal',
     title: 'Privacy Policy',
     subtitle: 'Informativa sul trattamento dei dati personali.',
+    intro:
+      'TLB ITALY S.r.l., titolare del trattamento, utilizza i dati forniti per gestire ordini, account e assistenza clienti.',
     seo: { noindex: false },
     blocks: [
       {
@@ -250,19 +261,21 @@ export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> =
     ],
   },
 
+  termini: DEFAULT_TERMINI_IT,
+
   'prodotto-non-trovato': {
     layout: 'hero-dark',
-    eyebrow: 'CONSULENZA · RICAMBI DIFFICILI',
-    title: 'Non trovi il prodotto giusto?',
+    eyebrow: 'ON DEMAND · IDEA DI LUCE',
+    title: 'On Demand',
     subtitle:
-      'Hai una lampadina vecchia, un codice poco leggibile o un prodotto fuori produzione? Inviaci una foto, l\'attacco o il codice: troviamo il ricambio compatibile o un\'alternativa.',
+      'Se non trovi il prodotto desiderato nel nostro catalogo online, contattaci: compila il form con i dettagli e faremo del nostro meglio per procurartelo. Meriti la luce migliore e siamo qui per aiutarti a trovarla.',
     heroBadges: ['Risposta in giornata', 'Showroom a Roma', '25+ anni di esperienza'],
     blocks: [
       {
         kind: 'lead-form',
         form: 'product-not-found',
-        title: 'Raccontaci cosa cerchi',
-        description: 'Più informazioni ci dai, più velocemente troviamo il prodotto corretto.',
+        title: 'Contattaci ora! Siamo solo a un modulo di distanza.',
+        description: 'Indicaci cosa ti serve e il nostro team si metterà al lavoro per te.',
       },
       {
         kind: 'steps',
@@ -439,4 +452,11 @@ export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> =
       },
     ],
   },
+
+  'guide-luce-calda-o-fredda': getLegacyEditorialGuideContent('luce-calda-o-fredda', 'IT'),
+  'guide-calipso-artemide-io-vengo-dalla-luna': getLegacyEditorialGuideContent(
+    'calipso-artemide-io-vengo-dalla-luna',
+    'IT',
+  ),
+  'guide-la-natura-trend-2024': getLegacyEditorialGuideContent('la-natura-trend-2024', 'IT'),
 }

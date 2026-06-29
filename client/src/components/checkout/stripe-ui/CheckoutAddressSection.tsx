@@ -219,7 +219,7 @@ export function CheckoutAddressSection({
             </StripeFieldGroup>
           )
         ) : (
-          <div className="overflow-hidden rounded-[14px] border border-[#e2e6eb] bg-white p-4 shadow-[0_1px_2px_rgba(20,22,27,0.04)] sm:p-5">
+          <div className="overflow-hidden rounded-[14px] border border-idl-tech-border bg-idl-tech-panel p-4 shadow-[0_1px_2px_rgba(20,22,27,0.04)] sm:p-5">
             <CheckoutAddressFields
               layout="card"
               prefix={prefix}

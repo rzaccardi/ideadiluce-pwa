@@ -93,7 +93,7 @@ export function ProductDetailGallery({ images, alt, activeUrl, variant = 'design
           className={cn(
             'relative aspect-square w-full overflow-hidden focus:outline-none focus-visible:ring-2',
             isDesign
-              ? 'rounded shadow-[0_0_90px_rgba(240,173,87,0.10)] focus-visible:ring-idl-glow/40'
+              ? 'rounded shadow-[0_0_90px_rgba(201, 162, 75,0.10)] focus-visible:ring-idl-glow/40'
               : 'rounded-xl border border-idl-tech-border bg-[#f7f8fa] focus-visible:ring-idl-amber/30',
           )}
           onClick={() => openLightbox(current)}
@@ -141,7 +141,7 @@ export function ProductDetailGallery({ images, alt, activeUrl, variant = 'design
                 disabled={!url}
                 onClick={() => url && setSelected(url)}
                 className={cn(
-                  'overflow-hidden rounded-lg border bg-white transition',
+                  'overflow-hidden rounded-lg border bg-idl-tech-panel transition',
                   url
                     ? selectedThumb
                       ? 'border-2 border-idl-amber'
@@ -174,7 +174,7 @@ export function ProductDetailGallery({ images, alt, activeUrl, variant = 'design
         >
           <button
             type="button"
-            className="absolute right-4 top-4 rounded-full bg-white/10 px-3 py-1 text-sm text-white hover:bg-white/20"
+            className="absolute right-4 top-4 rounded-full bg-idl-tech-panel/10 px-3 py-1 text-sm text-white hover:bg-idl-tech-panel/20"
             onClick={() => setLightboxOpen(false)}
           >
             Chiudi
@@ -183,7 +183,7 @@ export function ProductDetailGallery({ images, alt, activeUrl, variant = 'design
             <>
               <button
                 type="button"
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-white hover:bg-white/20 sm:left-4"
+                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-idl-tech-panel/10 px-3 py-2 text-white hover:bg-idl-tech-panel/20 sm:left-4"
                 onClick={(e) => {
                   e.stopPropagation()
                   goPrev()
@@ -194,7 +194,7 @@ export function ProductDetailGallery({ images, alt, activeUrl, variant = 'design
               </button>
               <button
                 type="button"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-white hover:bg-white/20 sm:right-4"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-idl-tech-panel/10 px-3 py-2 text-white hover:bg-idl-tech-panel/20 sm:right-4"
                 onClick={(e) => {
                   e.stopPropagation()
                   goNext()

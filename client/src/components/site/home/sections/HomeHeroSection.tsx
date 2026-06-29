@@ -15,7 +15,7 @@ export function HomeHeroSection({ design, technical, lp }: Props) {
   return (
     <div className="grid border-b border-idl-border lg:grid-cols-2">
       <FadeIn className="relative overflow-hidden bg-idl-design px-6 py-10 text-idl-design-fg sm:px-12 sm:py-16 lg:px-16 lg:py-[74px]">
-        <div className="pointer-events-none absolute -top-20 -right-10 size-[460px] rounded-full bg-[radial-gradient(circle,rgba(240,173,87,0.26)_0%,rgba(240,173,87,0)_70%)]" />
+        <div className="pointer-events-none absolute -top-20 -right-10 size-[460px] rounded-full bg-[radial-gradient(circle,rgba(201, 162, 75,0.26)_0%,rgba(201, 162, 75,0)_70%)]" />
         <div className="relative z-[2] max-w-lg lg:ml-auto">
           <Eyebrow>{design.eyebrow}</Eyebrow>
           <h1 className="mt-5 font-serif text-[31px] leading-[1.07] font-medium tracking-tight sm:text-[44px]">
@@ -35,7 +35,7 @@ export function HomeHeroSection({ design, technical, lp }: Props) {
       </FadeIn>
       <FadeIn
         delay={0.1}
-        className="border-idl-border bg-white px-6 py-10 sm:px-12 sm:py-16 lg:border-l lg:px-16 lg:py-[74px]"
+        className="border-idl-border bg-idl-tech-panel px-6 py-10 sm:px-12 sm:py-16 lg:border-l lg:px-16 lg:py-[74px]"
       >
         <Eyebrow variant="technical">{technical.eyebrow}</Eyebrow>
         <h2 className="mt-5 text-[28px] leading-[1.05] font-extrabold tracking-tight sm:text-[43px]">

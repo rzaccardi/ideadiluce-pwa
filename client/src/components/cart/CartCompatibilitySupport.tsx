@@ -16,7 +16,7 @@ export function CartCompatibilitySupport() {
       </p>
       <Link
         to={lp('/prodotto-non-trovato')}
-        className="mt-3.5 inline-block rounded-lg border border-[#e0d2bd] bg-white px-4 py-2.5 text-[13px] font-bold text-idl-graphite transition hover:border-idl-border-strong"
+        className="mt-3.5 inline-block rounded-lg border border-[#e0d2bd] bg-idl-tech-panel px-4 py-2.5 text-[13px] font-bold text-idl-graphite transition hover:border-idl-border-strong"
       >
         {t('cart.compatibility.cta')}
       </Link>

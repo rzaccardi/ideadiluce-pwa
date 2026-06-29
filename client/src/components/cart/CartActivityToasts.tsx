@@ -44,7 +44,7 @@ export function CartActivityToasts({ className }: { className?: string }) {
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className="cart-toast-enter flex items-center gap-3 rounded-xl border border-idl-border bg-white p-3 shadow-lg shadow-zinc-950/10"
+          className="cart-toast-enter flex items-center gap-3 rounded-xl border border-idl-border bg-idl-tech-panel p-3 shadow-lg shadow-zinc-950/10"
         >
           <button
             type="button"

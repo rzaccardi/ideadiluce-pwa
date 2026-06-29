@@ -11,6 +11,8 @@ export type SiteNavColumn = {
 
 export type SiteMegaMenuPanel = {
   columns: SiteNavColumn[]
+  eyebrow?: string
+  allSocketsCta?: string
   promo?: {
     title: string
     description: string
@@ -60,6 +62,7 @@ export type HomePathCard = {
 export type HomeRoomCard = {
   title: string
   imageUrl: string
+  videoUrl?: string
   href: string
 }
 
@@ -130,6 +133,10 @@ export type HomePageContent = {
   brands: {
     title: string
     subtitle: string
+    linkLabel: string
+    linkHref: string
+    ctaLabel: string
+    ctaHref: string
     items: Array<string | { name: string; href?: string }>
   }
   guides: {
@@ -168,6 +175,7 @@ export type EditorialTile = {
   description?: string
   href: string
   imageUrl?: string
+  videoUrl?: string
   meta?: string
   category?: string
   code?: string
@@ -225,6 +233,28 @@ export type ContentBlock =
       title?: string
       description?: string
     }
+  | {
+      kind: 'image'
+      imageUrl: string
+      alt?: string
+      caption?: string
+      layout?: 'wide' | 'inline' | 'portrait' | 'full'
+    }
+  | {
+      kind: 'split'
+      imageUrl: string
+      alt?: string
+      caption?: string
+      title?: string
+      paragraphs: string[]
+      layout?: 'image-left' | 'image-right'
+    }
+  | {
+      kind: 'gallery'
+      title?: string
+      subtitle?: string
+      items: Array<{ imageUrl: string; alt?: string; caption?: string }>
+    }
 
 export type ContentPageContent = {
   layout?: 'default' | 'hero-dark' | 'legal' | 'article'
@@ -233,6 +263,7 @@ export type ContentPageContent = {
   subtitle?: string
   intro?: string
   heroBadges?: string[]
+  coverImage?: { imageUrl: string; alt?: string; caption?: string }
   blocks: ContentBlock[]
   cta?: SiteLink
   seo?: { noindex?: boolean }
@@ -317,8 +348,12 @@ export type SitePageKey =
   | 'contatti'
   | 'privacy'
   | 'cookie'
+  | 'termini'
   | 'prodotto-non-trovato'
   | 'guide-luce-calda-naturale-fredda'
+  | 'guide-luce-calda-o-fredda'
+  | 'guide-calipso-artemide-io-vengo-dalla-luna'
+  | 'guide-la-natura-trend-2024'
   | 'guide-gu10-gu53'
   | 'guide-lampadina-r7s'
   | 'guide-illuminare-soggiorno'
@@ -344,8 +379,12 @@ export type SitePageContentMap = {
   contatti: ContentPageContent
   privacy: ContentPageContent
   cookie: ContentPageContent
+  termini: ContentPageContent
   'prodotto-non-trovato': ContentPageContent
   'guide-luce-calda-naturale-fredda': ContentPageContent
+  'guide-luce-calda-o-fredda': ContentPageContent
+  'guide-calipso-artemide-io-vengo-dalla-luna': ContentPageContent
+  'guide-la-natura-trend-2024': ContentPageContent
   'guide-gu10-gu53': ContentPageContent
   'guide-lampadina-r7s': ContentPageContent
   'guide-illuminare-soggiorno': ContentPageContent

@@ -152,7 +152,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
   })
 
   return (
-    <div className="min-w-0 w-full overflow-x-clip bg-white pb-20 sm:pb-0">
+    <div className="min-w-0 w-full overflow-x-clip bg-idl-tech-panel pb-20 sm:pb-0">
       <ProductDetailBreadcrumb items={breadcrumbItems} lp={lp} variant="technical" />
 
       {/* HERO */}
@@ -219,7 +219,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
           ) : null}
 
           {/* Buy box card */}
-          <div className="rounded-xl border border-idl-tech-border bg-white p-4 shadow-[0_4px_16px_rgba(0,0,0,0.04)] sm:p-[22px]">
+          <div className="rounded-xl border border-idl-tech-border bg-idl-tech-panel p-4 shadow-[0_4px_16px_rgba(0,0,0,0.04)] sm:p-[22px]">
             <div className="mb-1.5 flex flex-wrap items-baseline gap-2">
               <span className="text-[26px] font-extrabold tracking-[-0.02em] sm:text-[30px]">
                 {formatMoney(displayPriceCents, product.currency)}
@@ -268,7 +268,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                 type="button"
                 disabled={!availability?.canAddToCart || isAddingToCart}
                 onClick={handleAddToCart}
-                className="flex-1 rounded-lg bg-idl-amber px-4 py-3.5 text-center text-[15.5px] font-bold text-white transition hover:bg-[#c2730f] disabled:opacity-60"
+                className="flex-1 rounded-lg bg-idl-amber px-4 py-3.5 text-center text-[15.5px] font-bold text-white transition hover:bg-[#b08e3e] disabled:opacity-60"
               >
                 {isAddingToCart ? t('product.addingToCart') : t('product.addToCart')}
               </button>
@@ -291,7 +291,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
               </div>
             ) : null}
 
-            <div className="mt-3.5 flex flex-col gap-3 border-t border-[#eef0f3] pt-3.5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mt-3.5 flex flex-col gap-3 border-t border-[#ededea] pt-3.5 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <div className="text-[13.5px] font-bold text-idl-graphite">Non sei sicuro che sia quello giusto?</div>
                 <div className="text-[12.5px] text-[#7a6a52]">
@@ -316,7 +316,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
       </SectionContainer>
 
       {/* Compatibilità */}
-      <section className="border-y border-[#eef0f3] bg-[#f7f8fa]">
+      <section className="border-y border-[#ededea] bg-[#f7f8fa]">
         <SectionContainer className="grid gap-5 py-7 sm:grid-cols-2 sm:gap-6 sm:py-[34px]">
           <ProductDetailCard variant="technical" className="p-4 sm:p-[26px]">
             <h2 className="mb-4 text-base font-extrabold tracking-[-0.01em]">Compatibilità rapida</h2>
@@ -413,7 +413,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                     <ProductDetailSectionLabel variant="technical" className="mb-2 tracking-wider">
                       {group.title}
                     </ProductDetailSectionLabel>
-                    <div className="overflow-hidden rounded-[10px] border border-idl-tech-border bg-white">
+                    <div className="overflow-hidden rounded-[10px] border border-idl-tech-border bg-idl-tech-panel">
                       {group.rows.map((row, index) => (
                         <div
                           key={`${row.label}-${index}`}
@@ -591,7 +591,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
               <Link
                 key={item.slug}
                 to={lp(`/prodotto/${item.slug}`)}
-                className="rounded-xl border border-idl-tech-border bg-white px-4 py-3 text-sm font-semibold transition hover:border-idl-amber"
+                className="rounded-xl border border-idl-tech-border bg-idl-tech-panel px-4 py-3 text-sm font-semibold transition hover:border-idl-amber"
               >
                 {item.name}
               </Link>
@@ -612,7 +612,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
               Le risposte ai dubbi più comuni su questo prodotto.
             </p>
             <div className="space-y-2.5">
-              <details className="group overflow-hidden rounded-xl border border-amber-200 bg-white shadow-sm open:shadow-md" open>
+              <details className="group overflow-hidden rounded-xl border border-amber-200 bg-idl-tech-panel shadow-sm open:shadow-md" open>
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-[15px] font-bold [&::-webkit-details-marker]:hidden">
                   Come verifico che sia il ricambio giusto?
                   <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-idl-amber text-sm text-white group-open:rotate-180">
@@ -633,7 +633,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                 (q) => (
                   <details
                     key={q}
-                    className="overflow-hidden rounded-xl border border-idl-tech-border bg-white [&_summary]:flex [&_summary]:cursor-pointer [&_summary]:list-none [&_summary]:items-center [&_summary]:justify-between [&_summary]:gap-3 [&_summary]:px-5 [&_summary]:py-4 [&_summary]:text-[15px] [&_summary]:font-bold [&::-webkit-details-marker]:hidden"
+                    className="overflow-hidden rounded-xl border border-idl-tech-border bg-idl-tech-panel [&_summary]:flex [&_summary]:cursor-pointer [&_summary]:list-none [&_summary]:items-center [&_summary]:justify-between [&_summary]:gap-3 [&_summary]:px-5 [&_summary]:py-4 [&_summary]:text-[15px] [&_summary]:font-bold [&::-webkit-details-marker]:hidden"
                   >
                     <summary>
                       {q}

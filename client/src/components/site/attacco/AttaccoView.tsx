@@ -37,12 +37,12 @@ export function AttaccoView() {
   }, [])
 
   return (
-    <div className="bg-white">
+    <div className="bg-idl-tech-panel">
       <Reveal immediate>
         <AttaccoHeroSection lp={lp} onOpenWizard={openWizard} />
       </Reveal>
       <Reveal>
-        <AttaccoSearchSection lp={lp} />
+        <AttaccoSearchSection />
       </Reveal>
       <Reveal>
         <AttaccoSocketGridSection lp={lp} />

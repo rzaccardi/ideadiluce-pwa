@@ -12,7 +12,7 @@ export function SectionCard({ title, description, children, className }: Props) 
   return (
     <section
       className={cn(
-        'rounded-xl border border-zinc-200 bg-white p-6 shadow-sm shadow-zinc-950/5',
+        'rounded-xl border border-zinc-200 bg-idl-tech-panel p-6 shadow-sm shadow-zinc-950/5',
         className,
       )}
     >

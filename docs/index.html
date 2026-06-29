@@ -7,65 +7,37 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{background:#f7f1e8;font-family:'Hanken Grotesk',system-ui,sans-serif;color:#211c16;padding:56px 32px 80px;}
+  body{background:#ffffff;font-family:'Hanken Grotesk',system-ui,sans-serif;color:#0c0c0d;padding:56px 32px 80px;}
   .wrap{max-width:1040px;margin:0 auto;}
-  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.22em;color:#9a6a2f;margin-bottom:16px;}
+  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.22em;color:#9a7b33;margin-bottom:16px;}
   h1{font-family:'Newsreader',serif;font-size:40px;font-weight:500;letter-spacing:-.01em;margin-bottom:12px;}
-  h1 i{color:#9a6a2f;}
+  h1 i{color:#9a7b33;}
   .lead{font-size:16px;line-height:1.55;color:#6b6157;max-width:620px;margin-bottom:40px;}
   .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
-  .card{background:#fff;border:1px solid #e6dcc9;border-radius:12px;padding:22px 24px;display:flex;align-items:center;justify-content:space-between;gap:18px;transition:border-color .12s;}
-  .card:hover{border-color:#9a6a2f;}
+  .card{background:#fff;border:1px solid #e4e3de;border-radius:12px;padding:22px 24px;display:flex;align-items:center;justify-content:space-between;gap:18px;transition:border-color .12s;}
+  .card:hover{border-color:#9a7b33;}
   .card .name{font-family:'Newsreader',serif;font-size:20px;font-weight:500;}
   .card .meta{font-size:12.5px;color:#a3987f;margin-top:3px;}
   .links{display:flex;gap:8px;flex-shrink:0;}
   a.btn{text-decoration:none;font-size:13px;font-weight:700;padding:9px 15px;border-radius:7px;white-space:nowrap;}
-  a.d{background:#211c16;color:#fff;}
+  a.d{background:#0c0c0d;color:#fff;}
   a.d:hover{background:#3a3228;}
-  a.m{background:#fff;color:#211c16;border:1px solid #d8ccb6;}
-  a.m:hover{border-color:#9a6a2f;color:#9a6a2f;}
-  a.soon{background:#f3ece0;color:#b3a892;cursor:default;}
-  .section-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;color:#8c8273;text-transform:uppercase;margin:36px 0 14px;}
-  .note{font-size:13px;line-height:1.6;color:#8c8273;margin-top:36px;border-top:1px solid #e6dcc9;padding-top:22px;}
+  .section-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;color:#8f8f93;text-transform:uppercase;margin:36px 0 14px;}
+  .note{font-size:13px;line-height:1.6;color:#8f8f93;margin-top:36px;border-top:1px solid #e4e3de;padding-top:22px;}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="eyebrow">IDEADILUCE · EXPORT</div>
   <h1>Idea<i>di</i>Luce — Schermate</h1>
-  <p class="lead">Tutte le schermate del portale, desktop e mobile. Apri il file <strong>desktop</strong> o <strong>mobile</strong> di ogni vista. Le immagini e i componenti sono inclusi: funziona offline.</p>
-
-  <div class="section-label">Schermate principali</div>
-  <div class="grid">
-    <div class="card"><div><div class="name">Home</div><div class="meta">La doppia anima: arredo + tecnica</div></div><div class="links"><a class="btn d" href="Home — desktop.dc.html">Desktop</a><a class="btn m" href="Home — mobile.dc.html">Mobile</a></div></div>
-    <div class="card"><div><div class="name">Categoria Arredo</div><div class="meta">Catalogo design · stile editoriale</div></div><div class="links"><a class="btn d" href="Categoria Arredo — desktop.dc.html">Desktop</a><a class="btn soon">Mobile ›</a></div></div>
-    <div class="card"><div><div class="name">Categoria Tecnica</div><div class="meta">Catalogo tecnico · filtri + dati</div></div><div class="links"><a class="btn d" href="Categoria Tecnica — desktop.dc.html">Desktop</a><a class="btn soon">Mobile ›</a></div></div>
-    <div class="card"><div><div class="name">Scheda Prodotto Arredo</div><div class="meta">Eclisse · storytelling design</div></div><div class="links"><a class="btn d" href="Scheda Prodotto Arredo — desktop.dc.html">Desktop</a><a class="btn soon">Mobile ›</a></div></div>
-    <div class="card"><div><div class="name">Scheda Prodotto Tecnica</div><div class="meta">R7s · verifica compatibilità</div></div><div class="links"><a class="btn d" href="Scheda Prodotto Tecnica — desktop.dc.html">Desktop</a><a class="btn soon">Mobile ›</a></div></div>
-  </div>
-
-  <div class="section-label">Percorsi di scelta</div>
-  <div class="grid">
-    <div class="card"><div><div class="name">Scegli per attacco</div><div class="meta">Wizard interattivo + forme</div></div><div class="links"><a class="btn d" href="Scegli per attacco — desktop.dc.html">Desktop</a><a class="btn soon">Mobile ›</a></div></div>
-    <div class="card"><div><div class="name">Scegli per ambiente</div><div class="meta">Shop the look interattivo</div></div><div class="links"><a class="btn d" href="Scegli per ambiente — desktop.dc.html">Desktop</a><a class="btn soon">Mobile ›</a></div></div>
-    <div class="card"><div><div class="name">Scegli per brand</div><div class="meta">Directory marchi · catalogica</div></div><div class="links"><a class="btn d" href="Scegli per brand — desktop.dc.html">Desktop</a><a class="btn soon">Mobile ›</a></div></div>
-    <div class="card"><div><div class="name">Guide</div><div class="meta">Knowledge center</div></div><div class="links"><a class="btn d" href="Guide — desktop.dc.html">Desktop</a><a class="btn soon">Mobile ›</a></div></div>
-  </div>
-
-  <div class="section-label">Conversione &amp; servizio</div>
-  <div class="grid">
-    <div class="card"><div><div class="name">Professionisti</div><div class="meta">B2B · riordino, preventivi</div></div><div class="links"><a class="btn d" href="Professionisti — desktop.dc.html">Desktop</a><a class="btn soon">Mobile ›</a></div></div>
-    <div class="card"><div><div class="name">Prodotto non trovato</div><div class="meta">Lead generation · consulenza</div></div><div class="links"><a class="btn d" href="Prodotto non trovato — desktop.dc.html">Desktop</a><a class="btn soon">Mobile ›</a></div></div>
-    <div class="card"><div><div class="name">Checkout</div><div class="meta">3 step · pagamento sicuro</div></div><div class="links"><a class="btn d" href="Checkout — desktop.dc.html">Desktop</a><a class="btn soon">Mobile ›</a></div></div>
-    <div class="card"><div><div class="name">Mega-menu</div><div class="meta">Componente navigazione</div></div><div class="links"><a class="btn d" href="Mega-menu — desktop.dc.html">Desktop</a><a class="btn soon">Mobile ›</a></div></div>
-  </div>
+  <p class="lead">I template delle pagine storefront sono stati integrati nella PWA. Restano qui solo i riferimenti di design system e le preview Lottie in <code>lottie/preview/</code>.</p>
 
   <div class="section-label">Sistema</div>
   <div class="grid">
     <div class="card"><div><div class="name">Design System</div><div class="meta">Fondamenta, componenti, gallery</div></div><div class="links"><a class="btn d" href="Design System.dc.html">Apri</a></div></div>
   </div>
 
-  <p class="note">Versione mobile attualmente disponibile per la Home. Le altre viste mobile (indicate “Mobile ›”) sono in arrivo come passo successivo. Tutti i file aprono direttamente nel browser; immagini e runtime sono inclusi nella cartella.</p>
+  <p class="note">Per rigenerare i template HTML legacy usare i file già presenti in <code>client/src/templates/</code>.</p>
 </div>
 </body>
 </html>

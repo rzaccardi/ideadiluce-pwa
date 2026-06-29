@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { validateRequest } from '../../middlewares/validate-request.js'
+import { requireRecaptcha } from '../../middlewares/require-recaptcha.js'
 import { requireLogin } from '../../middlewares/session.js'
 import {
   checkoutRegisterBodySchema,
@@ -13,11 +14,22 @@ import { authController } from '../../controllers/auth.controller.js'
 
 export const authRouter = Router()
 
-authRouter.post('/register', validateRequest({ body: registerBodySchema }), authController.register)
-authRouter.post('/login', validateRequest({ body: loginBodySchema }), authController.login)
+authRouter.post(
+  '/register',
+  validateRequest({ body: registerBodySchema }),
+  requireRecaptcha('register'),
+  authController.register,
+)
+authRouter.post(
+  '/login',
+  validateRequest({ body: loginBodySchema }),
+  requireRecaptcha('login'),
+  authController.login,
+)
 authRouter.post(
   '/checkout-register',
   validateRequest({ body: checkoutRegisterBodySchema }),
+  requireRecaptcha('register'),
   authController.checkoutRegister,
 )
 authRouter.post('/logout', authController.logout)

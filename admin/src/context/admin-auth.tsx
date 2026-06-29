@@ -13,7 +13,7 @@ export type { AdminUser }
 type AdminAuthContextValue = {
   user: AdminUser | null
   loading: boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string, recaptchaToken?: string) => Promise<void>
   logout: () => Promise<void>
   refresh: () => Promise<void>
 }

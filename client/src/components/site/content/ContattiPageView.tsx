@@ -25,7 +25,7 @@ function FeatureCards({ block }: { block: Extract<ContentBlock, { kind: 'feature
       <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" stagger={0.05}>
         {block.items.map((item) => (
           <StaggerItem key={item.title}>
-            <div className="h-full rounded-xl border border-idl-tech-border bg-white p-6">
+            <div className="h-full rounded-xl border border-idl-tech-border bg-idl-tech-panel p-6">
               {item.num ? (
                 <div className="font-mono text-[11px] text-idl-amber">{item.num}</div>
               ) : null}
@@ -50,7 +50,7 @@ function CtaBanner({
 }) {
   const primaryClass =
     block.variant === 'accent'
-      ? 'bg-idl-amber text-white hover:bg-[#c2730f]'
+      ? 'bg-idl-amber text-white hover:bg-[#b08e3e]'
       : block.variant === 'light'
         ? 'bg-idl-ink text-white hover:bg-idl-ink-soft'
         : 'bg-idl-ink text-white hover:bg-idl-ink-soft'
@@ -69,7 +69,7 @@ function CtaBanner({
         {block.secondaryLabel && block.secondaryHref ? (
           <Link
             to={lp(block.secondaryHref)}
-            className="inline-flex rounded-lg border border-idl-border-strong bg-white px-5 py-2.5 text-sm font-semibold text-idl-graphite transition hover:bg-idl-cream"
+            className="inline-flex rounded-lg border border-idl-border-strong bg-idl-tech-panel px-5 py-2.5 text-sm font-semibold text-idl-graphite transition hover:bg-idl-cream"
           >
             {block.secondaryLabel}
           </Link>

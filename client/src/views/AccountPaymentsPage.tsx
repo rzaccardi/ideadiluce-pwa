@@ -49,9 +49,9 @@ export function AccountPaymentsPage() {
         title={t('account.payments.title')}
         description={t('account.profile.preferredPaymentHint')}
       >
-        <p className="mb-4 text-sm text-[#6c727c]">
+        <p className="mb-4 text-sm text-idl-muted">
           {t('account.payments.current')}:{' '}
-          <strong className="text-[#14161b]">
+          <strong className="text-idl-graphite">
             {paymentMethodLabel(user.preferredPaymentMethod, locale)}
           </strong>
         </p>

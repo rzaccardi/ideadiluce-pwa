@@ -6,6 +6,12 @@ import { resolveProductCardCatalogKind } from '@/lib/product-catalog-kind'
 
 export type CatalogWorldTab = 'all' | 'design' | 'technical'
 
+export const CATALOG_WORLD_TAB_HREFS: Record<CatalogWorldTab, string> = {
+  all: '/catalogo',
+  design: '/categoria-prodotto/illuminazione-arredo',
+  technical: '/categoria-prodotto/illuminazione-tecnica',
+}
+
 export type CatalogPriceBucket = '0-50' | '50-200' | '200-700' | '700+'
 
 export const CATALOG_PRICE_BUCKETS: ReadonlyArray<{

@@ -83,8 +83,8 @@ function Tracker({ steps }: { steps: TrackerStep[] }) {
           step.state === 'done'
             ? 'bg-[#1f9d57] text-white'
             : step.state === 'active'
-              ? 'border-[2.5px] border-idl-amber bg-white text-idl-amber'
-              : 'border-2 border-[#cfd5dc] bg-white text-[#9298a3]'
+              ? 'border-[2.5px] border-idl-amber bg-idl-tech-panel text-idl-amber'
+              : 'border-2 border-[#cfd5dc] bg-idl-tech-panel text-[#9298a3]'
 
         return (
           <div key={step.id} className="relative flex-1 text-center">
@@ -156,8 +156,8 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
   const ordersHref = lp(`/account/orders/${order.orderId}`)
 
   return (
-    <div className="-mx-4 bg-white sm:-mx-6 lg:-mx-12">
-      <section className="border-b border-[#eef0f3] bg-white py-10 text-center sm:py-12">
+    <div className="-mx-4 bg-idl-tech-panel sm:-mx-6 lg:-mx-12">
+      <section className="border-b border-[#ededea] bg-idl-tech-panel py-10 text-center sm:py-12">
         <SectionContainer className="max-w-[1100px]">
           <div
             className="mx-auto mb-6 flex size-[78px] items-center justify-center rounded-full bg-[#e8f6ee]"
@@ -199,7 +199,7 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
       <SectionContainer className="max-w-[1100px] py-8 sm:py-10">
         <div className="grid items-start gap-7 lg:grid-cols-[1fr_380px]">
           <div className="flex flex-col gap-[18px]">
-            <div className="rounded-[14px] border border-[#e7eaee] bg-white p-6 sm:p-[26px]">
+            <div className="rounded-[14px] border border-[#e7eaee] bg-idl-tech-panel p-6 sm:p-[26px]">
                 <h2 className="mb-6 text-[17px] font-extrabold tracking-[-0.01em]">
                   {t('thankYou.tracker.title')}
                 </h2>
@@ -222,11 +222,11 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
             </div>
 
             {order.lines.length > 0 ? (
-              <div className="rounded-[14px] border border-[#e7eaee] bg-white p-6 sm:p-[26px]">
+              <div className="rounded-[14px] border border-[#e7eaee] bg-idl-tech-panel p-6 sm:p-[26px]">
                 <h2 className="mb-[18px] text-[17px] font-extrabold tracking-[-0.01em]">
                   {t('thankYou.lines.title')}
                 </h2>
-                <ul className="divide-y divide-[#eef0f3]">
+                <ul className="divide-y divide-[#ededea]">
                   {order.lines.map((line) => (
                     <li key={`${line.productRef}-${line.variantRef ?? ''}`} className="flex gap-3.5 py-4 first:pt-0 last:pb-0">
                       <div className="relative size-[66px] shrink-0 overflow-hidden rounded-[9px] bg-[#f7f8fa]">
@@ -271,7 +271,7 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
           </div>
 
           <aside className="flex flex-col gap-4">
-            <div className="rounded-[14px] border border-[#e7eaee] bg-white p-[22px]">
+            <div className="rounded-[14px] border border-[#e7eaee] bg-idl-tech-panel p-[22px]">
               <h2 className="mb-4 text-base font-extrabold tracking-[-0.01em]">{t('thankYou.summary.title')}</h2>
               {subtotal ? (
                 <div className="flex justify-between py-1 text-[13.5px] text-[#5b616b]">
@@ -287,7 +287,7 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
                   </span>
                 </div>
               ) : null}
-              <div className="mt-2 flex items-baseline justify-between border-t border-[#eef0f3] pt-3">
+              <div className="mt-2 flex items-baseline justify-between border-t border-[#ededea] pt-3">
                 <span className="text-[15px] font-extrabold">{t('thankYou.summary.total')}</span>
                 <span className="text-[21px] font-extrabold">{total}</span>
               </div>
@@ -304,7 +304,7 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
               ) : null}
 
               {shippingLines.length > 0 ? (
-                <div className="mt-4 border-t border-[#eef0f3] pt-4">
+                <div className="mt-4 border-t border-[#ededea] pt-4">
                   <div className="font-mono text-[10px] tracking-[0.1em] text-[#8b919b] uppercase">
                     {t('thankYou.summary.shipTo')}
                   </div>
@@ -317,7 +317,7 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
               ) : null}
 
               {order.paymentMethod ? (
-                <div className="mt-4 border-t border-[#eef0f3] pt-4">
+                <div className="mt-4 border-t border-[#ededea] pt-4">
                   <div className="font-mono text-[10px] tracking-[0.1em] text-[#8b919b] uppercase">
                     {t('thankYou.summary.payment')}
                   </div>
@@ -338,12 +338,12 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
             </div>
 
             {!isAuthenticated ? (
-              <div className="rounded-[14px] bg-[#16130d] p-[22px] text-[#f1e8d8]">
+              <div className="rounded-[14px] bg-[#0c0c0d] p-[22px] text-[#f1e8d8]">
                 <div className="font-serif text-lg">{t('thankYou.account.title')}</div>
-                <p className="mt-1.5 text-[12.5px] leading-relaxed text-[#c9bfae]">{t('thankYou.account.body')}</p>
+                <p className="mt-1.5 text-[12.5px] leading-relaxed text-[#b0b0b4]">{t('thankYou.account.body')}</p>
                 <Link
                   to={registerHref}
-                  className="mt-4 block rounded-lg bg-[#f0ad57] py-3 text-center text-[13.5px] font-bold text-[#16130d] transition hover:brightness-105"
+                  className="mt-4 block rounded-lg bg-[#c9a24b] py-3 text-center text-[13.5px] font-bold text-[#0c0c0d] transition hover:brightness-105"
                 >
                   {t('thankYou.account.cta')}
                 </Link>
@@ -351,7 +351,7 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
             ) : (
               <Link
                 to={ordersHref}
-                className="block rounded-[14px] border border-[#e7eaee] bg-white px-[22px] py-4 text-center text-sm font-bold text-idl-amber transition hover:border-idl-amber/40"
+                className="block rounded-[14px] border border-[#e7eaee] bg-idl-tech-panel px-[22px] py-4 text-center text-sm font-bold text-idl-amber transition hover:border-idl-amber/40"
               >
                 {t('paymentResult.myOrders')}
               </Link>
@@ -361,7 +361,7 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
       </SectionContainer>
 
       {recommendations.length > 0 ? (
-        <section className="border-t border-[#eef0f3] bg-white">
+        <section className="border-t border-[#ededea] bg-idl-tech-panel">
           <SectionContainer className="max-w-[1100px] py-10 sm:py-12">
             <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
               <div>

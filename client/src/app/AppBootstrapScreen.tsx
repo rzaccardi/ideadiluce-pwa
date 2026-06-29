@@ -127,7 +127,7 @@ function BootstrapPageContent({ route }: { route: BootstrapRoute }) {
 
     case 'checkout':
       return (
-        <div className="checkout-root min-h-screen bg-white">
+        <div className="checkout-root min-h-screen bg-idl-tech-panel">
           <CheckoutStripeBootstrapSkeleton />
         </div>
       )
@@ -135,7 +135,7 @@ function BootstrapPageContent({ route }: { route: BootstrapRoute }) {
     case 'checkout-return':
     case 'checkout-result':
       return (
-        <div className="bg-white">
+        <div className="bg-idl-tech-panel">
           <ThankYouPageSkeleton />
         </div>
       )
@@ -148,7 +148,7 @@ function BootstrapPageContent({ route }: { route: BootstrapRoute }) {
               <Skeleton className="h-12 w-full rounded-lg" />
               <Skeleton className="h-12 w-full rounded-lg" />
             </div>
-            <div className="rounded-md border border-idl-border bg-white p-4 shadow-sm shadow-idl-ink/5">
+            <div className="rounded-md border border-idl-border bg-idl-tech-panel p-4 shadow-sm shadow-idl-ink/5">
               <Skeleton className="mb-4 h-5 w-36" />
               <ListSkeleton count={3} className="border-0 shadow-none" />
             </div>
@@ -166,7 +166,7 @@ function BootstrapPageContent({ route }: { route: BootstrapRoute }) {
     case 'account-order-detail':
       return (
         <AccountBootstrapSkeleton>
-          <div className="rounded-md border border-zinc-200 bg-white p-4 shadow-sm shadow-zinc-950/5">
+          <div className="rounded-md border border-zinc-200 bg-idl-tech-panel p-4 shadow-sm shadow-zinc-950/5">
             <div className="space-y-3">
               {Array.from({ length: 4 }).map((_, index) => (
                 <div
@@ -185,7 +185,7 @@ function BootstrapPageContent({ route }: { route: BootstrapRoute }) {
     case 'account-profile':
       return (
         <AccountBootstrapSkeleton>
-          <div className="w-full rounded-md border border-idl-border bg-white p-4 shadow-sm shadow-idl-ink/5">
+          <div className="w-full rounded-md border border-idl-border bg-idl-tech-panel p-4 shadow-sm shadow-idl-ink/5">
             <div className="grid gap-8 xl:grid-cols-2">
               <div className="space-y-4">
                 <Skeleton className="h-6 w-36" />

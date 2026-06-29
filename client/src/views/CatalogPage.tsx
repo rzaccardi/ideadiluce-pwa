@@ -279,6 +279,7 @@ export function CatalogPage({
     }
   }
 
+
   return (
     <CatalogPageView
         lp={lp}

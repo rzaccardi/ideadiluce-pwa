@@ -39,7 +39,12 @@ function shouldTranslateValue(key: string | null, value: string) {
   }
   if (trimmed.includes('@') && trimmed.includes('.')) return false
   if (/^\+?[\d\s().-]{7,}$/.test(trimmed)) return false
-  if (/^[A-Z0-9][A-Z0-9._/-]*$/i.test(trimmed) && !trimmed.includes(' ') && trimmed.length <= 24) {
+  // Codici tecnici brevi (E27, GU10, IP65), non parole italiane da tradurre.
+  if (
+    !trimmed.includes(' ') &&
+    trimmed.length <= 12 &&
+    (/[0-9]/.test(trimmed) || trimmed === trimmed.toUpperCase())
+  ) {
     return false
   }
   return true

@@ -7,4 +7,5 @@ export { DesignCatalogProductGrid, DesignCatalogProductCard } from './DesignCata
 export { TechnicalCatalogProductGrid, TechnicalCatalogProductCard } from './TechnicalCatalogProductGrid'
 export { CategoryCtaBanner } from './CategoryCtaBanner'
 export { CategoryGuideSection } from './CategoryGuideSection'
+export { CategoryArticlesSection } from './CategoryArticlesSection'
 export { CategoryTipsSection } from './CategoryTipsSection'

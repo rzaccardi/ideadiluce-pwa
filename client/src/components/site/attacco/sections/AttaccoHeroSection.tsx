@@ -10,7 +10,7 @@ type Props = {
 
 export function AttaccoHeroSection({ lp, onOpenWizard }: Props) {
   return (
-    <section className="border-b border-idl-tech-border bg-white">
+    <section className="border-b border-idl-tech-border bg-idl-tech-panel">
       <SectionContainer className="pb-8 pt-5 sm:pb-9 sm:pt-5">
         <CategoryBreadcrumb
           items={[{ label: 'Home', href: '/' }, { label: 'Scegli per attacco' }]}
@@ -40,7 +40,7 @@ export function AttaccoHeroSection({ lp, onOpenWizard }: Props) {
             <button
               type="button"
               onClick={onOpenWizard}
-              className="mt-4 w-full rounded-[7px] bg-idl-amber px-5 py-3.5 text-[14.5px] font-bold text-white transition hover:bg-[#c2730f] sm:w-auto"
+              className="mt-4 w-full rounded-[7px] bg-idl-amber px-5 py-3.5 text-[14.5px] font-bold text-white transition hover:bg-[#b08e3e] sm:w-auto"
             >
               {ATTACCO_HERO.wizardCta}
             </button>

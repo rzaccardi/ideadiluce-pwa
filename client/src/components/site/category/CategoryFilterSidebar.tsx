@@ -108,7 +108,7 @@ export function CategoryFilterSidebar({
                         ? 'border-idl-ink bg-idl-ink font-mono text-white'
                         : isDesign
                           ? 'border-idl-path-design-border text-idl-ink-soft hover:border-idl-brass'
-                          : 'border-idl-tech-border bg-white font-mono text-idl-graphite-2 hover:border-idl-amber',
+                          : 'border-idl-tech-border bg-idl-tech-panel font-mono text-idl-graphite-2 hover:border-idl-amber',
                     )}
                   >
                     {option.label}

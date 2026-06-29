@@ -3,6 +3,7 @@
 import { Reveal } from '@/components/motion'
 import type { HomePageContent } from '@/types/site-content'
 import type { ProductCardDTO } from '@/types/dto'
+import type { BrandCard } from '@/lib/brand.defaults'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import {
   CatalogSearchBridge,
@@ -24,13 +25,14 @@ type Props = {
   content: Readonly<HomePageContent>
   designProducts: ProductCardDTO[]
   technicalProducts: ProductCardDTO[]
+  homeBrands: BrandCard[]
 }
 
-export function HomeView({ content, designProducts, technicalProducts }: Props) {
+export function HomeView({ content, designProducts, technicalProducts, homeBrands }: Props) {
   const lp = useLocalePath()
 
   return (
-    <div className="bg-white">
+    <div className="bg-idl-tech-panel">
       <Reveal immediate>
         <HomeHeroSection design={content.hero.design} technical={content.hero.technical} lp={lp} />
       </Reveal>
@@ -42,7 +44,6 @@ export function HomeView({ content, designProducts, technicalProducts }: Props) 
           placeholder={content.search.placeholder}
           ctaLabel={content.search.ctaLabel}
           hints={content.search.hints}
-          lp={lp}
         />
       </Reveal>
 
@@ -83,7 +84,7 @@ export function HomeView({ content, designProducts, technicalProducts }: Props) 
       </Reveal>
 
       <Reveal>
-        <HomeBrandsSection section={content.brands} lp={lp} />
+        <HomeBrandsSection section={content.brands} brands={homeBrands} lp={lp} />
       </Reveal>
       <Reveal>
         <HomeGuidesSection section={content.guides} lp={lp} />

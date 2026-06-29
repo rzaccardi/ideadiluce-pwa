@@ -4,7 +4,7 @@ import type { ComponentType } from 'react'
 function SospensioneIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 80 80" className={className} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="40" cy="52" r="16" fill="#f0ad57" opacity="0.14" stroke="none" />
+      <circle cx="40" cy="52" r="16" fill="#c9a24b" opacity="0.14" stroke="none" />
       <path d="M14 12 H66" />
       <path d="M40 12 V30" />
       <path d="M26 45 Q40 24 54 45" />
@@ -17,7 +17,7 @@ function SospensioneIcon({ className }: IconProps) {
 function PareteIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 80 80" className={className} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="44" cy="40" r="14" fill="#f0ad57" opacity="0.14" stroke="none" />
+      <circle cx="44" cy="40" r="14" fill="#c9a24b" opacity="0.14" stroke="none" />
       <path d="M18 12 V68" />
       <path d="M18 40 H28" />
       <path d="M28 32 H46 V48 H28 Z" />
@@ -30,7 +30,7 @@ function PareteIcon({ className }: IconProps) {
 function TavoloIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 80 80" className={className} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="40" cy="34" r="15" fill="#f0ad57" opacity="0.14" stroke="none" />
+      <circle cx="40" cy="34" r="15" fill="#c9a24b" opacity="0.14" stroke="none" />
       <path d="M28 41 L34 24 H46 L52 41 Z" />
       <path d="M40 41 V60" />
       <path d="M30 61 Q40 65 50 61" />
@@ -41,7 +41,7 @@ function TavoloIcon({ className }: IconProps) {
 function TerraIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 80 80" className={className} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="43" cy="36" r="12" fill="#f0ad57" opacity="0.14" stroke="none" />
+      <circle cx="43" cy="36" r="12" fill="#c9a24b" opacity="0.14" stroke="none" />
       <path d="M32 22 H54 L48 35 H38 Z" />
       <path d="M43 22 V64" />
       <path d="M33 65 H53" />
@@ -53,7 +53,7 @@ function TerraIcon({ className }: IconProps) {
 function PlafoniereIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 80 80" className={className} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="40" cy="26" r="14" fill="#f0ad57" opacity="0.14" stroke="none" />
+      <circle cx="40" cy="26" r="14" fill="#c9a24b" opacity="0.14" stroke="none" />
       <path d="M14 16 H66" />
       <path d="M27 16 Q40 35 53 16" />
       <path d="M33 16 Q40 25 47 16" opacity="0.55" />
@@ -65,7 +65,7 @@ function PlafoniereIcon({ className }: IconProps) {
 function FarettiIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 80 80" className={className} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="40" cy="48" r="15" fill="#f0ad57" opacity="0.14" stroke="none" />
+      <circle cx="40" cy="48" r="15" fill="#c9a24b" opacity="0.14" stroke="none" />
       <path d="M14 16 H66" />
       <ellipse cx="40" cy="20" rx="9" ry="3" />
       <path d="M33 22 L25 60 H55 L47 22" opacity="0.85" />

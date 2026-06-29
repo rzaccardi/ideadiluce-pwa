@@ -3,8 +3,7 @@ import { asyncHandler } from '../../utils/async-handler.js'
 import { ok } from '../../lib/api-response.js'
 import { validateRequest } from '../../middlewares/validate-request.js'
 import { siteService } from './site.service.js'
-import { siteInquiryService } from './site-inquiry.service.js'
-import { siteInquirySchema } from './site-inquiry.validators.js'
+import { siteInquiryRouter } from './site-inquiry.routes.js'
 import { siteLocaleQuerySchema, sitePageKeyParamSchema } from './site-admin.validators.js'
 import { siteGuidesPublicQuerySchema } from '../site-guides/site-guides.validators.js'
 
@@ -30,10 +29,4 @@ siteRouter.get(
   }),
 )
 
-siteRouter.post(
-  '/inquiries',
-  validateRequest({ body: siteInquirySchema }),
-  asyncHandler(async (req, res) => {
-    res.status(201).json(ok(await siteInquiryService.submit(req.body)))
-  }),
-)
+siteRouter.use('/inquiries', siteInquiryRouter)

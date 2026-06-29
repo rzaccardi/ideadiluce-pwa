@@ -19,7 +19,6 @@ export function BrandView() {
   const [hubBrands, setHubBrands] = useState<BrandListItemDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState<BrandCategory | 'all'>('all')
-  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     void api.catalog
@@ -37,13 +36,12 @@ export function BrandView() {
   )
 
   return (
-    <div className="bg-[#fbfbfa]">
+    <div className="bg-[#f3f2ee]">
       <Reveal immediate>
         <BrandHeroSection
           lp={lp}
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
-          onSearchQuery={setSearchQuery}
         />
       </Reveal>
 
@@ -60,12 +58,8 @@ export function BrandView() {
             <BrandDirectorySection
               brands={brands}
               activeFilter={activeFilter}
-              searchQuery={searchQuery}
               onFilterChange={setActiveFilter}
-              onReset={() => {
-                setActiveFilter('all')
-                setSearchQuery('')
-              }}
+              onReset={() => setActiveFilter('all')}
               lp={lp}
             />
           </Reveal>

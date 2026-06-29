@@ -40,7 +40,7 @@ export function AccountQuotesPage() {
 
       <PageLoadTransition isLoading={isLoading} skeleton={<ListSkeleton />}>
         {quotes.list && quotes.list.length === 0 ? (
-          <p className="py-8 text-center text-sm text-[#6c727c]">{t('account.quotes.empty')}</p>
+          <p className="py-8 text-center text-sm text-idl-muted">{t('account.quotes.empty')}</p>
         ) : null}
 
         {quotes.list && quotes.list.length > 0 ? (
@@ -50,16 +50,16 @@ export function AccountQuotesPage() {
               const label = quoteDisplayReference(q)
 
               return (
-                <article key={q.id} className="overflow-hidden rounded-xl border border-[#e7eaee]">
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eef0f3] bg-[#f7f8fa] px-[18px] py-3.5">
+                <article key={q.id} className="overflow-hidden rounded-xl border border-idl-tech-border">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ededea] bg-idl-tech-panel px-[18px] py-3.5">
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
                       <Link
                         to={`/account/quotes/${q.id}`}
-                        className="font-mono text-[12.5px] font-semibold text-[#14161b] no-underline hover:underline"
+                        className="font-mono text-[12.5px] font-semibold text-idl-graphite no-underline hover:underline"
                       >
                         {label}
                       </Link>
-                      <span className="text-[12.5px] text-[#6c727c]">
+                      <span className="text-[12.5px] text-idl-muted">
                         {new Date(q.createdAt).toLocaleDateString('it-IT')}
                       </span>
                       <AccountDcStatusPill
@@ -70,7 +70,7 @@ export function AccountQuotesPage() {
                     </div>
                     <div className="flex items-center gap-[18px]">
                       {q.estimatedTotal != null ? (
-                        <span className="text-sm font-extrabold text-[#14161b]">
+                        <span className="text-sm font-extrabold text-idl-graphite">
                           {formatMoney(q.estimatedTotal, q.currencyCode)}
                         </span>
                       ) : null}

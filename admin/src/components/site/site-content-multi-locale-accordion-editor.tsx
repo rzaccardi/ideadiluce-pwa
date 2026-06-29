@@ -18,6 +18,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
+import { ArticleContentEditor } from '@/components/site/article-content-editor'
 import { SiteContentMultiLocaleFieldEditor } from '@/components/site/site-content-multi-locale-field-editor'
 
 type SiteContentMultiLocaleAccordionEditorProps = {
@@ -37,6 +38,7 @@ export function SiteContentMultiLocaleAccordionEditor({
   const sections = getSiteContentSections(pageKey)
   const visibleSections = sections.filter((section) => {
     if (!searchQuery) return true
+    if ('articleEditor' in section) return 'impaginazione copertina immagine'.includes(searchQuery.toLowerCase())
     const sectionValue = pickSectionValue(italianContent, section)
     return contentMatchesSearch(sectionValue, searchQuery, section.label)
   })
@@ -87,8 +89,11 @@ export function SiteContentMultiLocaleAccordionEditor({
             >,
           ]),
         ) as Record<SiteLocale, Record<string, unknown>>
-        const fieldCount = countEditableFields(sectionRoot)
-        const translatableCount = countTranslatableFields(sectionRoot)
+        const fieldCount =
+          'articleEditor' in section
+            ? (Array.isArray(italianContent.blocks) ? italianContent.blocks.length : 0) + (italianContent.coverImage ? 1 : 0)
+            : countEditableFields(sectionRoot)
+        const translatableCount = 'articleEditor' in section ? 0 : countTranslatableFields(sectionRoot)
 
         return (
           <AccordionItem key={section.id} value={section.id} className="rounded-lg border px-3">
@@ -106,15 +111,19 @@ export function SiteContentMultiLocaleAccordionEditor({
               </span>
             </AccordionTrigger>
             <AccordionContent className="pb-4 pt-1">
-              <SiteContentMultiLocaleFieldEditor
-                value={sectionRoot}
-                path={[]}
-                draftsByLocale={sectionDrafts}
-                onLocaleChange={(locale, nextRoot) => {
-                  handleLocaleSectionChange(locale, section, nextRoot)
-                }}
-                searchQuery={searchQuery}
-              />
+              {'articleEditor' in section ? (
+                <ArticleContentEditor draftsByLocale={draftsByLocale} onLocaleChange={onLocaleChange} />
+              ) : (
+                <SiteContentMultiLocaleFieldEditor
+                  value={sectionRoot}
+                  path={[]}
+                  draftsByLocale={sectionDrafts}
+                  onLocaleChange={(locale, nextRoot) => {
+                    handleLocaleSectionChange(locale, section, nextRoot)
+                  }}
+                  searchQuery={searchQuery}
+                />
+              )}
             </AccordionContent>
           </AccordionItem>
         )

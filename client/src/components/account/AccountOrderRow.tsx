@@ -54,7 +54,7 @@ export function AccountOrderRow({ order, className }: { order: OrderDTO; classNa
     <Link
       to={`/account/orders/${order.id}`}
       className={cn(
-        'group flex items-center gap-4 rounded-md border border-zinc-200 bg-white px-4 py-3.5 transition',
+        'group flex items-center gap-4 rounded-md border border-zinc-200 bg-idl-tech-panel px-4 py-3.5 transition',
         'hover:border-zinc-300 hover:shadow-[0_1px_2px_rgba(0,0,0,0.04)]',
         className,
       )}

@@ -18,12 +18,12 @@ export function CheckoutStepHeader({
   return (
     <header className={cn('mb-5', className)}>
       {title ? (
-        <h2 className="text-lg font-extrabold tracking-[-0.01em] text-[#14161b] sm:text-[20px]">
+        <h2 className="text-lg font-extrabold tracking-[-0.01em] text-idl-graphite sm:text-[20px]">
           {title}
         </h2>
       ) : null}
       {subtitle ? (
-        <p className={cn('text-sm leading-relaxed text-[#6c727c]', title ? 'mt-1' : undefined)}>
+        <p className={cn('text-sm leading-relaxed text-idl-muted', title ? 'mt-1' : undefined)}>
           {subtitle}
         </p>
       ) : null}
@@ -47,14 +47,14 @@ export function CheckoutPanel({
 /** Nota informativa con icona (es. IVA / corriere). */
 export function CheckoutInfoNote({ children }: { children: ReactNode }) {
   return (
-    <div className="flex gap-2.5 rounded-[11px] border border-[#eef0f3] bg-[#f7f8fa] px-[15px] py-3.5">
+    <div className="flex gap-2.5 rounded-[11px] border border-[#ededea] bg-idl-tech-panel px-[15px] py-3.5">
       <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center text-[#d9831a]" aria-hidden>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.25" />
           <path d="M8 7v4M8 5.5v0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       </span>
-      <p className="text-[12.5px] leading-relaxed text-[#6c727c]">{children}</p>
+      <p className="text-[12.5px] leading-relaxed text-idl-muted">{children}</p>
     </div>
   )
 }
@@ -71,7 +71,7 @@ export function CheckoutReviewCard({
 }) {
   return (
     <section className={cn('rounded-xl border border-[#e7eaee] px-4 py-4 sm:px-5 sm:py-[18px]', className)}>
-      <h3 className="mb-3 text-[13px] font-extrabold text-[#14161b]">{title}</h3>
+      <h3 className="mb-3 text-[13px] font-extrabold text-idl-graphite">{title}</h3>
       <div className="space-y-1">{children}</div>
     </section>
   )
@@ -89,7 +89,7 @@ export function CheckoutReviewRow({
   return (
     <div className="flex items-start justify-between gap-3 py-0.5 text-[13px] text-[#5b616b]">
       <span>{label}</span>
-      <span className={cn('text-right', strong ? 'font-extrabold text-[#14161b]' : 'font-semibold text-[#14161b]')}>
+      <span className={cn('text-right', strong ? 'font-extrabold text-idl-graphite' : 'font-semibold text-idl-graphite')}>
         {value}
       </span>
     </div>
@@ -122,7 +122,7 @@ export function CheckoutToggleCheckbox({
       <span
         className={cn(
           'mt-0.5 flex size-[18px] shrink-0 items-center justify-center rounded-[5px] border-[1.5px] text-[11px] text-white',
-          checked ? 'border-[#14161b] bg-[#14161b]' : 'border-[#c0c5cc] bg-white',
+          checked ? 'border-[#14161b] bg-[#14161b]' : 'border-[#c0c5cc] bg-idl-tech-panel',
         )}
         aria-hidden
       >
@@ -161,8 +161,8 @@ export function CheckoutSelectableCard({
   const shared = cn(
     'flex w-full cursor-pointer items-center gap-3.5 rounded-xl border-[1.5px] p-4 text-left transition sm:gap-[15px] sm:px-[18px] sm:py-4',
     selected
-      ? 'border-[#14161b] bg-[#faf6ef] shadow-[0_0_0_3px_rgba(240,173,87,0.18)]'
-      : 'border-[#e2e6eb] bg-white hover:border-[#c0c5cc]',
+      ? 'border-[#14161b] bg-[#f8f8f6] shadow-[0_0_0_3px_rgba(201, 162, 75,0.18)]'
+      : 'border-idl-tech-border bg-idl-tech-panel hover:border-[#c0c5cc]',
     disabled && 'pointer-events-none opacity-60',
     className,
   )
@@ -170,7 +170,7 @@ export function CheckoutSelectableCard({
   const dot = (
     <span
       className={cn(
-        'flex size-[18px] shrink-0 items-center justify-center rounded-full border-[5px] bg-white',
+        'flex size-[18px] shrink-0 items-center justify-center rounded-full border-[5px] bg-idl-tech-panel',
         selected ? 'border-[#14161b]' : 'border-[#c0c5cc]',
       )}
       aria-hidden
@@ -206,7 +206,7 @@ export function CheckoutSegmentControl<T extends string>({
   onChange: (value: T) => void
 }) {
   return (
-    <div className="grid grid-cols-2 gap-1 rounded-xl border border-[#e2e6eb] bg-[#f7f8fa] p-1">
+    <div className="grid grid-cols-2 gap-1 rounded-xl border border-idl-tech-border bg-idl-tech-panel p-1">
       {options.map((option) => (
         <button
           key={option.value}
@@ -215,8 +215,8 @@ export function CheckoutSegmentControl<T extends string>({
           className={cn(
             'rounded-[10px] px-2 py-2.5 text-xs font-bold leading-tight transition sm:px-3 sm:text-sm',
             value === option.value
-              ? 'bg-white text-[#14161b] shadow-sm'
-              : 'text-[#6c727c] hover:text-[#14161b]',
+              ? 'bg-idl-tech-panel text-idl-graphite shadow-sm'
+              : 'text-idl-muted hover:text-idl-graphite',
           )}
         >
           {option.label}

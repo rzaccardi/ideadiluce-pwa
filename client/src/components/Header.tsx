@@ -25,7 +25,7 @@ export function Header() {
   const { requestLogout, logoutDialog } = useLogoutConfirm()
 
   return (
-    <header className="border-b border-zinc-200 bg-white">
+    <header className="border-b border-zinc-200 bg-idl-tech-panel">
       <Container className="flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between">
         <Link to={localize('/')} className="text-lg font-semibold tracking-tight text-zinc-900">
           {t('brand.name')}

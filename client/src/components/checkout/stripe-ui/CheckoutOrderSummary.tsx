@@ -47,16 +47,16 @@ const summaryThemeClasses = {
     itemTitle: 'text-[#14161b]',
     itemMeta: 'text-[#6c727c]',
     row: 'text-[#14161b]',
-    rowMuted: 'text-[#9a8e78]',
+    rowMuted: 'text-[#b0b0b4]',
     border: 'border-[#e2e6eb]',
     qtyBadge: 'bg-[#3a332a] text-[#f1e8d8]',
     thumbBorder: 'border-white/10',
   },
   dark: {
     itemTitle: 'text-[#f1e8d8]',
-    itemMeta: 'text-[#9a8e78]',
+    itemMeta: 'text-[#b0b0b4]',
     row: 'text-[#f1e8d8]',
-    rowMuted: 'text-[#9a8e78]',
+    rowMuted: 'text-[#b0b0b4]',
     border: 'border-white/10',
     qtyBadge: 'bg-[#3a332a] text-[#f1e8d8]',
     thumbBorder: 'border-white/10',
@@ -212,18 +212,18 @@ export function CheckoutOrderSummary({
           onClick={() => setMobileOpen((v) => !v)}
           className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left sm:px-5 sm:py-3.5"
         >
-          <span className="flex min-w-0 items-center gap-2 text-sm text-[#14161b] underline decoration-[#c0c5cc] underline-offset-2">
+          <span className="flex min-w-0 items-center gap-2 text-sm text-idl-graphite underline decoration-idl-muted/50 underline-offset-2">
             <ChevronIcon open={mobileOpen} />
             <span className="truncate">
               {mobileOpen ? t('checkout.summary.hideOrderSummary') : t('checkout.summary.showOrderSummary')}
             </span>
           </span>
-          <span className="shrink-0 text-base font-bold tabular-nums text-[#14161b]">
+          <span className="shrink-0 text-base font-bold tabular-nums text-idl-graphite">
             {formatMoney(total, cart.currencyCode)}
           </span>
         </button>
         {mobileOpen ? (
-          <div className="max-h-[min(60dvh,28rem)] overflow-y-auto border-t border-[#e2e6eb] px-4 pb-5 pt-4 sm:px-5">
+          <div className="max-h-[min(60dvh,28rem)] overflow-y-auto border-t border-idl-tech-border px-4 pb-5 pt-4 sm:px-5">
             <SummaryContent
               cart={cart}
               selectedShipping={selectedShipping}
@@ -245,7 +245,7 @@ export function CheckoutOrderSummary({
     <aside className={checkoutSummaryAsideClass}>
       <div className={checkoutSummaryInnerClass}>
         <CheckoutSummaryHeader theme="dark" />
-        <p className="mt-8 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#9a8e78]">
+        <p className="mt-8 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#b0b0b4]">
           {tParams('checkout.payStore', { store: CHECKOUT_STORE_NAME })}
         </p>
         <p className={cn(checkoutTitleTypographyClass, 'mt-1 font-serif text-2xl font-semibold text-[#f1e8d8] sm:text-[28px]')}>
@@ -337,18 +337,18 @@ export function CheckoutSummaryHeader({
           'min-w-0 text-lg sm:text-[21px]',
           dark ? 'text-white' : 'text-[#14161b]',
         )}
-        accentClassName="text-[#f0ad57]"
+        accentClassName="text-[#c9a24b]"
       />
       <span
         className={cn(
           'ml-auto shrink-0 rounded-[5px] px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-[0.05em] sm:px-2 sm:py-1 sm:text-[10px]',
-          'bg-[#f0ad57] text-[#16130d]',
+          'bg-[#c9a24b] text-[#0c0c0d]',
         )}
       >
         {t('checkout.summary.secureBadge')}
       </span>
       {isDev() ? (
-        <span className="shrink-0 rounded bg-[#f0ad57] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#16130d] sm:text-[10px]">
+        <span className="shrink-0 rounded bg-[#c9a24b] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#0c0c0d] sm:text-[10px]">
           Test
         </span>
       ) : null}
@@ -365,7 +365,7 @@ export function CheckoutSummaryFooter({ theme = 'light' }: { theme?: SummaryThem
       <div
         className={cn(
           'flex flex-wrap items-center gap-x-5 gap-y-2 border-t pt-5 text-[11.5px] font-bold',
-          dark ? 'border-white/[0.07] text-[#9a8e78]' : 'border-[#e2e6eb] text-[#6c727c]',
+          dark ? 'border-white/[0.07] text-[#b0b0b4]' : 'border-[#e2e6eb] text-[#6c727c]',
         )}
       >
         <span className="inline-flex items-center gap-2">
@@ -385,13 +385,13 @@ export function CheckoutSummaryFooter({ theme = 'light' }: { theme?: SummaryThem
       >
         <span>{t('checkout.poweredByStripe')}</span>
         <span aria-hidden>·</span>
-        <a href="/" className={dark ? 'hover:text-[#f1e8d8]' : 'hover:text-[#14161b]'}>
+        <Link to="/tos" className={dark ? 'hover:text-[#f1e8d8]' : 'hover:text-[#14161b]'}>
           {t('legal.terms')}
-        </a>
+        </Link>
         <span aria-hidden>·</span>
-        <a href="/" className={dark ? 'hover:text-[#f1e8d8]' : 'hover:text-[#14161b]'}>
+        <Link to="/privacy-policy" className={dark ? 'hover:text-[#f1e8d8]' : 'hover:text-[#14161b]'}>
           {t('legal.privacy')}
-        </a>
+        </Link>
       </div>
     </footer>
   )

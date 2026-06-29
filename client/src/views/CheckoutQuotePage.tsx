@@ -129,7 +129,7 @@ export function CheckoutQuotePage() {
 
   if (c && c.items.length === 0 && !cart.isLoading && !successId) {
     return (
-      <div className="checkout-root flex min-h-dvh items-center justify-center bg-white px-4 py-12">
+      <div className="checkout-root flex min-h-dvh items-center justify-center bg-idl-tech-panel px-4 py-12">
         <EmptyCartPrompt compact className="w-full max-w-md" />
       </div>
     )
@@ -164,7 +164,7 @@ export function CheckoutQuotePage() {
           <div
             className={cn(
               checkoutFormColumnClass,
-              'w-full border-b border-white/10 bg-[#16130d] py-3 sm:py-3.5 lg:hidden',
+              'w-full border-b border-white/10 bg-[#0c0c0d] py-3 sm:py-3.5 lg:hidden',
               checkoutColumnGutterClass,
             )}
           >
@@ -217,11 +217,11 @@ export function CheckoutQuotePage() {
           <footer className="mt-10 flex flex-wrap items-center justify-center gap-x-2 text-xs text-[#9298a3] lg:hidden">
             <span>{t('checkout.poweredByStripe')}</span>
             <span aria-hidden>·</span>
-            <Link to="/" className="hover:text-[#14161b]">
+            <Link to="/tos" className="hover:text-idl-graphite">
               {t('legal.terms')}
             </Link>
             <span aria-hidden>·</span>
-            <Link to="/" className="hover:text-[#14161b]">
+            <Link to="/privacy-policy" className="hover:text-idl-graphite">
               {t('legal.privacy')}
             </Link>
           </footer>

@@ -7,6 +7,7 @@ import { ImpersonationBanner } from '@/components/ImpersonationBanner'
 import { CartFeedbackLayer } from '@/components/cart/CartFeedbackLayer'
 import { PageTransitionShell } from '@/components/motion'
 import { SiteShell } from '@/components/site/SiteShell'
+import { GlobalSearchProvider } from '@/context/global-search-context'
 import { fetchSitePage, seedSitePageContent, siteStore } from '@/features/site'
 import { useLocale } from '@/context/locale-context'
 import { resolveDcActiveNavId } from '@/lib/dc-static-routes'
@@ -35,12 +36,12 @@ export function StorefrontLayout({ children, initialShell = null }: Props) {
   }, [locale])
 
   return (
-    <>
+    <GlobalSearchProvider>
       <CartFeedbackLayer />
       <ImpersonationBanner />
       <SiteShell shell={shell as SiteShellContent | null} activeNavId={activeNavId}>
         <PageTransitionShell>{children}</PageTransitionShell>
       </SiteShell>
-    </>
+    </GlobalSearchProvider>
   )
 }

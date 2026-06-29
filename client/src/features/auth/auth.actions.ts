@@ -134,6 +134,7 @@ export async function checkoutRegister(input: {
   lastName: string
   phone?: string
   customerSegment?: 'retail' | 'business'
+  recaptchaToken?: string
 }) {
   authStore.isLoading = true
   authStore.error = null
@@ -148,11 +149,11 @@ export async function checkoutRegister(input: {
   }
 }
 
-export async function login(email: string, password: string) {
+export async function login(email: string, password: string, recaptchaToken?: string) {
   authStore.isLoading = true
   authStore.error = null
   try {
-    await api.auth.login({ email, password })
+    await api.auth.login({ email, password, recaptchaToken })
     await establishAuthenticatedSession()
   } catch (e) {
     authStore.error = errMessage(e)
@@ -170,6 +171,7 @@ export async function register(
     lastName?: string
     phone?: string
     customerSegment?: 'retail' | 'business'
+    recaptchaToken?: string
   },
 ) {
   authStore.isLoading = true
@@ -182,6 +184,7 @@ export async function register(
       lastName: extra?.lastName,
       phone: extra?.phone,
       customerSegment: extra?.customerSegment,
+      recaptchaToken: extra?.recaptchaToken,
     })
     await establishAuthenticatedSession()
   } catch (e) {

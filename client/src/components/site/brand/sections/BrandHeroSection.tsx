@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
-import { useNavigate } from '@/lib/navigation'
 import { CategoryBreadcrumb } from '../../category/CategoryBreadcrumb'
 import { Eyebrow, SectionContainer } from '../../primitives'
+import { CatalogSearchTrigger } from '@/components/site/catalog/CatalogSearchTrigger'
 import { BRAND_HERO, BRAND_HERO_FILTERS, type BrandCategory } from '@/lib/brand.defaults'
 import { ui } from '@/lib/ui-classes'
 import type { LocalePathFn } from '../../sections/types'
@@ -13,24 +12,11 @@ type Props = {
   lp: LocalePathFn
   activeFilter: BrandCategory | 'all'
   onFilterChange: (filter: BrandCategory | 'all') => void
-  onSearchQuery: (query: string) => void
 }
 
-export function BrandHeroSection({ lp, activeFilter, onFilterChange, onSearchQuery }: Props) {
-  const navigate = useNavigate()
-  const [query, setQuery] = useState('')
-
-  function onSubmit(e: FormEvent) {
-    e.preventDefault()
-    const trimmed = query.trim()
-    onSearchQuery(trimmed)
-    if (trimmed) {
-      navigate(`${lp('/catalogo')}?q=${encodeURIComponent(trimmed)}`)
-    }
-  }
-
+export function BrandHeroSection({ lp, activeFilter, onFilterChange }: Props) {
   return (
-    <section className="border-b border-idl-tech-border bg-white">
+    <section className="border-b border-idl-tech-border bg-idl-tech-panel">
       <SectionContainer className="pb-8 pt-4 sm:pb-7">
         <CategoryBreadcrumb
           items={[{ label: 'Home', href: '/' }, { label: 'Brand' }]}
@@ -48,23 +34,16 @@ export function BrandHeroSection({ lp, activeFilter, onFilterChange, onSearchQue
             {BRAND_HERO.subtitle}
           </p>
         </div>
-        <form
-          onSubmit={onSubmit}
-          className="mt-6 flex max-w-2xl items-center gap-2.5 rounded-[10px] border-[1.5px] border-idl-tech-chip-border bg-idl-tech-panel py-1.5 pl-5 pr-1.5"
-        >
-          <input
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value)
-              onSearchQuery(e.target.value)
-            }}
+        <div className="mt-6 max-w-2xl">
+          <CatalogSearchTrigger
+            searchSource="brand"
+            variant="catalog"
             placeholder={BRAND_HERO.searchPlaceholder}
-            className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-idl-muted"
+            ctaLabel={BRAND_HERO.searchCta}
+            showHints={false}
+            formClassName="rounded-[10px] border-[1.5px] border-idl-tech-chip-border bg-idl-tech-panel py-1.5 pl-5 pr-1.5"
           />
-          <button type="submit" className={cn(ui.ctaInk, 'shrink-0 rounded-[7px] bg-idl-graphite px-6 py-3 text-[14.5px] font-bold text-white')}>
-            {BRAND_HERO.searchCta}
-          </button>
-        </form>
+        </div>
         <div className="mt-4 flex flex-wrap gap-2">
           {BRAND_HERO_FILTERS.map((filter) => {
             const active = activeFilter === filter.id
@@ -78,7 +57,7 @@ export function BrandHeroSection({ lp, activeFilter, onFilterChange, onSearchQue
                   'rounded-[30px] px-4 py-2 text-[13px] font-semibold',
                   active
                     ? 'bg-idl-graphite font-bold text-white hover:bg-[#2a2d35]'
-                    : 'border border-idl-tech-chip-border bg-white text-idl-graphite-2 hover:border-idl-amber hover:text-idl-amber',
+                    : 'border border-idl-tech-chip-border bg-idl-tech-panel text-idl-graphite-2 hover:border-idl-amber hover:text-idl-amber',
                 )}
               >
                 {filter.label}

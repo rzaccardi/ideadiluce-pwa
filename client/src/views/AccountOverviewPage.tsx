@@ -141,7 +141,7 @@ export function AccountOverviewPage() {
       ) : !auth.me?.isProfessional ? (
         <div className={accountDcPromoClass}>
           <div>
-            <p className="text-base font-extrabold text-[#14161b]">{t('account.overview.professionalCta')}</p>
+            <p className="text-base font-extrabold text-idl-graphite">{t('account.overview.professionalCta')}</p>
           </div>
           <Link to="/professionisti" className={accountDcPrimaryBtnClass}>
             {t('account.overview.professionalCtaLink')}
@@ -211,7 +211,7 @@ export function AccountOverviewPage() {
             </div>
           ) : (
             <div className="py-6 text-center">
-              <p className="text-sm text-[#6c727c]">{t('account.overview.noQuotes')}</p>
+              <p className="text-sm text-idl-muted">{t('account.overview.noQuotes')}</p>
               <Link to="/cart" className={`mt-4 inline-flex ${accountDcPrimaryBtnClass}`}>
                 {t('cart.quoteCta')}
               </Link>
@@ -242,14 +242,14 @@ export function AccountOverviewPage() {
               ))}
             </div>
           ) : (
-            <p className="py-6 text-center text-sm text-[#6c727c]">{t('account.overview.noInvoices')}</p>
+            <p className="py-6 text-center text-sm text-idl-muted">{t('account.overview.noInvoices')}</p>
           )}
         </PageLoadTransition>
       </AccountDcPanel>
 
       <div className={accountDcPromoClass}>
         <div>
-          <div className="mb-1.5 text-base font-extrabold text-[#14161b]">
+          <div className="mb-1.5 text-base font-extrabold text-idl-graphite">
             {t('account.dashboard.reorderParts')}
           </div>
           <p className="max-w-xl text-[13.5px] leading-relaxed text-[#7a6a52]">
@@ -292,7 +292,7 @@ export function AccountOverviewPage() {
         {orderList.length === 0 ? (
           <AccountDcPanel title={t('account.overview.recentOrders')}>
             <div className="py-6 text-center">
-              <p className="text-sm font-medium text-[#14161b]">{t('account.overview.noOrders')}</p>
+              <p className="text-sm font-medium text-idl-graphite">{t('account.overview.noOrders')}</p>
               <Link to="/catalogo" className={`mt-6 inline-flex ${accountDcPrimaryBtnClass}`}>
                 {t('account.overview.browseCatalog')}
               </Link>

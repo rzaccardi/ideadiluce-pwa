@@ -5,7 +5,7 @@ import { getIntegrationsToken, getPublicApiUrl, isDev } from '@/lib/env'
 type JsonBody = Record<string, unknown> | unknown[] | null
 
 export type ApiTransport = {
-  get<T>(path: string): Promise<T>
+  get<T>(path: string, init?: Pick<RequestInit, 'signal'>): Promise<T>
   post<T>(path: string, body?: JsonBody): Promise<T>
   postForm<T>(path: string, body: FormData): Promise<T>
   patch<T>(path: string, body?: JsonBody): Promise<T>
@@ -94,8 +94,8 @@ export async function apiRequest<T>(
 
 export function createApiClient(base: string): ApiTransport {
   return {
-    get<T>(path: string) {
-      return apiRequest<T>(base, path, { method: 'GET' })
+    get<T>(path: string, init?: Pick<RequestInit, 'signal'>) {
+      return apiRequest<T>(base, path, { method: 'GET', ...init })
     },
     post<T>(path: string, body?: JsonBody) {
       return apiRequest<T>(base, path, {

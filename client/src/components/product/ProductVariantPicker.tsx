@@ -111,7 +111,7 @@ export function ProductVariantPicker({
                   'inline-flex min-h-11 min-w-[3rem] flex-col items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2',
                   selected
                     ? 'border-zinc-900 bg-idl-ink text-white shadow-sm'
-                    : 'border-idl-border-strong bg-white text-idl-graphite hover:border-zinc-500',
+                    : 'border-idl-border-strong bg-idl-tech-panel text-idl-graphite hover:border-zinc-500',
                   outOfStock && !selected && 'border-idl-border text-idl-muted',
                 )}
               >
@@ -138,7 +138,7 @@ export function ProductVariantPicker({
     <label className={cn('block text-left text-sm', className)}>
       <span className="mb-1 block font-medium text-idl-ink-soft">{groupLabel}</span>
       <select
-        className="min-h-11 w-full cursor-pointer appearance-none rounded-lg border border-idl-border-strong bg-white bg-[length:1.25rem] bg-[position:right_0.75rem_center] bg-no-repeat px-3 py-2.5 pr-10 text-base text-idl-graphite outline-none focus:ring-2 focus:ring-zinc-400"
+        className="min-h-11 w-full cursor-pointer appearance-none rounded-lg border border-idl-border-strong bg-idl-tech-panel bg-[length:1.25rem] bg-[position:right_0.75rem_center] bg-no-repeat px-3 py-2.5 pr-10 text-base text-idl-graphite outline-none focus:ring-2 focus:ring-zinc-400"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2371717a'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`,
         }}

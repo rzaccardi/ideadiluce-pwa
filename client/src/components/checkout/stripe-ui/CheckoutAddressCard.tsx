@@ -47,26 +47,26 @@ export function CheckoutAddressCard({
   const line2 = address.line2?.trim()
 
   return (
-    <CheckoutPanel className="overflow-hidden border-[#e2e6eb] bg-white p-0 shadow-[0_1px_2px_rgba(20,22,27,0.04)]">
-      <div className="flex gap-3 border-b border-[#eef0f3] bg-[#f7f8fa] px-4 py-3.5 sm:px-5">
-        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-[#9a6a2f] shadow-sm ring-1 ring-[#e2e6eb]">
+    <CheckoutPanel className="overflow-hidden border-idl-tech-border bg-idl-tech-panel p-0 shadow-[0_1px_2px_rgba(20,22,27,0.04)]">
+      <div className="flex gap-3 border-b border-[#ededea] bg-idl-tech-panel px-4 py-3.5 sm:px-5">
+        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-idl-tech-panel text-[#9a7b33] shadow-sm ring-1 ring-[#e2e6eb]">
           <PinIcon />
         </span>
         <div className="min-w-0 flex-1">
           <CheckoutEyebrowLabel>{t('checkout.address.selectedTitle')}</CheckoutEyebrowLabel>
-          <p className="text-[15px] font-semibold leading-snug text-[#14161b]">
+          <p className="text-[15px] font-semibold leading-snug text-idl-graphite">
             {summary.street || t('checkout.address.label')}
           </p>
           {summary.locality ? (
-            <p className="mt-0.5 text-sm text-[#6c727c]">{summary.locality}</p>
+            <p className="mt-0.5 text-sm text-idl-muted">{summary.locality}</p>
           ) : null}
           {line2 ? <p className="mt-1 text-xs text-[#9298a3]">{line2}</p> : null}
         </div>
       </div>
 
       {detailsUnlocked ? (
-        <div className="border-b border-[#eef0f3] px-4 py-4 sm:px-5">
-          <p className="mb-3 text-[13px] font-semibold text-[#14161b]">{t('checkout.address.detailsTitle')}</p>
+        <div className="border-b border-[#ededea] px-4 py-4 sm:px-5">
+          <p className="mb-3 text-[13px] font-semibold text-idl-graphite">{t('checkout.address.detailsTitle')}</p>
           <CheckoutAddressFields
             layout="card"
             prefix={prefix}
@@ -82,20 +82,20 @@ export function CheckoutAddressCard({
       <div
         className={cn(
           'flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-5',
-          detailsUnlocked ? 'bg-[#fafbfc]' : 'bg-white',
+          detailsUnlocked ? 'bg-[#fafbfc]' : 'bg-idl-tech-panel',
         )}
       >
         <button
           type="button"
           onClick={onToggleDetails}
-          className="text-sm font-semibold text-[#14161b] underline decoration-[#d0d5dc] underline-offset-2 hover:decoration-[#14161b]"
+          className="text-sm font-semibold text-idl-graphite underline decoration-[#d0d5dc] underline-offset-2 hover:decoration-[#14161b]"
         >
           {detailsUnlocked ? t('checkout.address.lockEdits') : t('checkout.address.unlockEdits')}
         </button>
         <button
           type="button"
           onClick={onChangeAddress}
-          className="text-sm font-semibold text-[#9a6a2f] underline decoration-[#cdbfa5] underline-offset-2 hover:decoration-[#9a6a2f]"
+          className="text-sm font-semibold text-[#9a7b33] underline decoration-[#cdbfa5] underline-offset-2 hover:decoration-[#9a7b33]"
         >
           {t('checkout.address.changeAddress')}
         </button>

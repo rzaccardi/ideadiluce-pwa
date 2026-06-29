@@ -30,8 +30,11 @@ const CONTENT_PATHS = new Set([
   '/spedizioni',
   '/pagamenti',
   '/garanzia',
-  '/privacy',
+  '/privacy-policy',
   '/cookie',
+  '/tos',
+  '/on-demand',
+  '/acquista-ambiente',
   '/lavora-con-noi',
   '/prodotto-non-trovato',
 ])
@@ -42,7 +45,7 @@ export function resolveBootstrapRoute(pathname: string): BootstrapRoute {
   const normalized = path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path
 
   if (normalized === '/' || normalized === '') return 'home'
-  if (normalized === '/catalogo' || normalized === '/catalog') return 'catalog'
+  if (normalized === '/catalogo' || normalized === '/catalog' || normalized === '/negozio') return 'catalog'
   if (/^\/(product|prodotto)\/[^/]+/.test(normalized)) return 'product'
   if (normalized === '/wishlist') return 'wishlist'
   if (normalized === '/cart') return 'cart'
@@ -57,11 +60,14 @@ export function resolveBootstrapRoute(pathname: string): BootstrapRoute {
   if (/^\/account\/orders\/[^/]+/.test(normalized)) return 'account-order-detail'
   if (normalized === '/professionisti') return 'professionisti'
   if (normalized === '/brand' || normalized.startsWith('/brand/')) return 'brand'
-  if (normalized === '/ambienti' || normalized.startsWith('/ambienti/')) return 'ambienti'
+  if (normalized === '/ambienti' || normalized.startsWith('/ambienti/') || normalized === '/acquista-ambiente') {
+    return 'ambienti'
+  }
   if (normalized === '/attacco' || normalized.startsWith('/attacco/')) return 'attacco'
-  if (normalized === '/guide' || normalized.startsWith('/guide/')) return 'guide'
+  if (normalized === '/guide' || normalized.startsWith('/guide/') || normalized === '/blog') return 'guide'
   if (
     normalized.startsWith('/categoria-prodotto/') ||
+    normalized === '/illuminazione-arredo' ||
     normalized === '/categoria-prodotto/illuminazione-arredo' ||
     normalized === '/categoria-prodotto/illuminazione-tecnica'
   ) {

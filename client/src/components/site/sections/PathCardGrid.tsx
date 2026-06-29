@@ -14,12 +14,12 @@ export function PathCardGrid({ cards, lp, stagger = 0.06 }: Props) {
   return (
     <Stagger className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5" stagger={stagger}>
       {cards.map((card) => (
-        <StaggerItem key={card.title}>
-          <HoverLift>
+        <StaggerItem key={card.title} className="h-full">
+          <HoverLift className="h-full">
             <Link
               to={lp(card.href)}
               className={cn(
-                'block rounded-lg border p-5 transition',
+                'flex h-full flex-col rounded-lg border p-5 transition',
                 card.variant === 'design' && 'border-idl-path-design-border bg-idl-path-design hover:border-idl-brass',
                 card.variant === 'technical' && 'border-idl-path-tech-border bg-idl-path-tech hover:border-idl-amber',
                 card.variant === 'dark' && 'border-transparent bg-idl-design text-idl-design-fg',
@@ -28,7 +28,7 @@ export function PathCardGrid({ cards, lp, stagger = 0.06 }: Props) {
               <div className="text-base font-bold">{card.title}</div>
               <p
                 className={cn(
-                  'mt-1.5 text-[13px] leading-snug',
+                  'mt-1.5 flex-1 text-[13px] leading-snug',
                   card.variant === 'dark'
                     ? 'text-idl-design-muted'
                     : card.variant === 'design'

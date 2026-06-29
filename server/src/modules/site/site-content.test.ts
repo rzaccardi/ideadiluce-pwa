@@ -39,6 +39,16 @@ describe('site-content-i18n', () => {
     expect(slots[0]?.value).toBe('Titolo da tradurre')
   })
 
+  it('non salta etichette di menu in una sola parola', () => {
+    const slots = collectTranslatableStringSlots({
+      label: 'Sospensione',
+      code: 'GU10',
+      href: '/catalogo',
+    })
+
+    expect(slots.map((slot) => slot.value)).toEqual(['Sospensione'])
+  })
+
   it('conta le stringhe traducibili nel contenuto shell', () => {
     const count = countTranslatableStrings(DEFAULT_SHELL_IT)
     expect(count).toBeGreaterThan(10)

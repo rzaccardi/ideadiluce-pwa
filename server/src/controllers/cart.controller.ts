@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express'
 import { ok } from '../lib/api-response.js'
 import { cartService } from '../modules/cart/cart.service.js'
+import { cartQuickReorderService } from '../modules/cart/cart-quick-reorder.service.js'
 import { asyncHandler } from '../utils/async-handler.js'
 
 export const cartController = {
@@ -53,5 +54,11 @@ export const cartController = {
   checkStock: asyncHandler(async (req: Request, res: Response) => {
     const data = await cartService.checkStock(req)
     res.json(ok(data))
+  }),
+
+  quickReorder: asyncHandler(async (req: Request, res: Response) => {
+    const body = req.body as { text?: string; lines?: Array<{ code: string; quantity: number }>; locale?: string }
+    const data = await cartQuickReorderService.quickReorder(req, body)
+    res.status(201).json(ok(data))
   }),
 }

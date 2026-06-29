@@ -40,7 +40,7 @@ export const checkoutShellClass = [
 
 /** Main checkout: colonna form bianca, scroll indipendente su desktop. */
 export const checkoutMainClass = [
-  'flex w-full min-w-0 flex-1 flex-col bg-white',
+  'flex w-full min-w-0 flex-1 flex-col bg-idl-tech-panel',
   'lg:col-start-2 lg:row-start-1 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain',
 ].join(' ')
 
@@ -62,13 +62,13 @@ export const checkoutSummaryInnerClass = [
 
 /** Sidebar checkout desktop — occupa la prima colonna della grid. */
 export const checkoutSummaryAsideClass = [
-  'hidden min-h-0 min-w-0 bg-[var(--checkout-bg-dark,#16130d)]',
+  'checkout-summary-dark hidden min-h-0 min-w-0',
   'lg:col-start-1 lg:row-start-1 lg:flex lg:h-full lg:min-h-0 lg:flex-col lg:overflow-y-auto lg:overscroll-contain',
 ].join(' ')
 
 /** Barra riepilogo mobile collassabile, sticky in cima. */
 export const checkoutMobileSummaryClass =
-  'sticky top-0 z-20 border-b border-[#e2e6eb] bg-[#f7f8fa] lg:hidden'
+  'sticky top-0 z-20 border-b border-idl-tech-border bg-idl-tech-panel lg:hidden'
 
 /** Pulsante indietro: stessa cap-height del titolo a ogni breakpoint. */
 export const checkoutBackButtonSizeClass = 'size-7 shrink-0 sm:size-8'
@@ -78,17 +78,17 @@ export const CHECKOUT_BRAND = {
   fg: '#14161b',
   fgMuted: '#6c727c',
   fgSubtle: '#9298a3',
-  fgWarm: '#9a8e78',
+  fgWarm: '#b0b0b4',
   fgCream: '#f1e8d8',
   border: '#e2e6eb',
   surfaceMuted: '#f7f8fa',
-  surfaceDark: '#1f1a12',
+  surfaceDark: '#161617',
   primary: '#14161b',
   primaryHover: '#2a2d35',
-  accent: '#f0ad57',
+  accent: '#c9a24b',
   accentStrong: '#d9831a',
-  accentHover: '#c2730f',
-  accentSoft: '#faf6ef',
+  accentHover: '#b08e3e',
+  accentSoft: '#f8f8f6',
 } as const
 
 export function checkoutCountryLabel(code: string) {

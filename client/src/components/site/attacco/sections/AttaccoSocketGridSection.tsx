@@ -11,7 +11,7 @@ type Props = {
 
 export function AttaccoSocketGridSection({ lp }: Props) {
   return (
-    <section className="bg-white">
+    <section className="bg-idl-tech-panel">
       <SectionContainer className="py-10 sm:py-12">
         <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <h2 className="text-[22px] font-extrabold tracking-tight text-idl-graphite sm:text-2xl">Trova per attacco</h2>
@@ -29,14 +29,14 @@ export function AttaccoSocketGridSection({ lp }: Props) {
                 'flex flex-col rounded-[10px] border p-5 transition hover:border-idl-amber hover:shadow-[0_8px_22px_rgba(0,0,0,0.05)]',
                 socket.dashed
                   ? 'border-dashed border-idl-tech-border bg-idl-tech-panel'
-                  : 'border-idl-tech-border bg-white',
+                  : 'border-idl-tech-border bg-idl-tech-panel',
               )}
             >
               <div className="mb-3.5 flex items-center gap-4">
                 <div
                   className={cn(
                     'flex size-[60px] shrink-0 items-center justify-center rounded-lg',
-                    socket.dashed ? 'border border-idl-tech-border bg-white' : 'bg-idl-path-tech',
+                    socket.dashed ? 'border border-idl-tech-border bg-idl-tech-panel' : 'bg-idl-path-tech',
                   )}
                 >
                   <AttaccoSocketIcon icon={socket.icon} size={socket.dashed ? 34 : 40} />

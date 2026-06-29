@@ -1,6 +1,9 @@
 import type { ContentPageKey, HomePageContent, SitePageKey } from '@/types/site-content'
 
 export const GUIDE_SLUG_TO_PAGE_KEY: Record<string, ContentPageKey> = {
+  'luce-calda-o-fredda': 'guide-luce-calda-o-fredda',
+  'calipso-artemide-io-vengo-dalla-luna': 'guide-calipso-artemide-io-vengo-dalla-luna',
+  'la-natura-trend-2024': 'guide-la-natura-trend-2024',
   'luce-calda-naturale-fredda': 'guide-luce-calda-naturale-fredda',
   'gu10-gu53': 'guide-gu10-gu53',
   'lampadina-r7s': 'guide-lampadina-r7s',
@@ -64,7 +67,12 @@ export const STATIC_ROUTE_PAGE_KEYS: Record<string, SitePageKey> = {
   '/pagamenti': 'pagamenti',
   '/garanzia': 'garanzia',
   '/contatti': 'contatti',
-  '/privacy': 'privacy',
+  '/privacy-policy': 'privacy',
   '/cookie': 'cookie',
-  '/prodotto-non-trovato': 'prodotto-non-trovato',
+  '/tos': 'termini',
+  '/on-demand': 'prodotto-non-trovato',
+  '/acquista-ambiente': 'ambienti',
+  '/blog': 'guide',
+  '/negozio': 'catalog',
+  '/illuminazione-arredo': 'catalog',
 }

@@ -217,8 +217,8 @@ export function CheckoutBusinessFieldsSection({
   }
 
   return (
-    <CheckoutPanel className="space-y-3 bg-[#f7f8fa]">
-      <p className="text-sm font-bold text-[#14161b]">{t('checkout.billing.businessTitle')}</p>
+    <CheckoutPanel className="space-y-3 bg-idl-tech-panel">
+      <p className="text-sm font-bold text-idl-graphite">{t('checkout.billing.businessTitle')}</p>
       {fields}
     </CheckoutPanel>
   )

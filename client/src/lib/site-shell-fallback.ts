@@ -36,7 +36,7 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
     messages: ['Spedizione tracciata in tutta Italia', 'Showroom a Roma', 'Assistenza tecnica reale'],
     links: [
       { label: 'Professionisti', href: '/professionisti' },
-      { label: 'Aiuto', href: '/guide' },
+      { label: 'Aiuto', href: '/prodotto-non-trovato' },
     ],
   },
   nav: {
@@ -51,12 +51,12 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
             {
               title: 'PER TIPOLOGIA',
               links: [
-                { label: 'Sospensione', href: '/catalogo?world=design' },
-                { label: 'Parete', href: '/catalogo?world=design' },
-                { label: 'Tavolo', href: '/catalogo?world=design' },
-                { label: 'Terra', href: '/catalogo?world=design' },
-                { label: 'Plafoniere', href: '/catalogo?world=design' },
-                { label: 'Faretti e incassi', href: '/catalogo?world=design' },
+                { label: 'Sospensione', href: '/catalogo?world=design&q=sospensione' },
+                { label: 'Parete', href: '/catalogo?world=design&q=parete' },
+                { label: 'Tavolo', href: '/catalogo?world=design&q=tavolo' },
+                { label: 'Terra', href: '/catalogo?world=design&q=terra' },
+                { label: 'Plafoniere', href: '/catalogo?world=design&q=plafoniere' },
+                { label: 'Faretti e incassi', href: '/catalogo?world=design&q=faretto' },
               ],
             },
             {
@@ -73,12 +73,12 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
             {
               title: 'PER STILE',
               links: [
-                { label: 'Moderno', href: '/catalogo?world=design' },
-                { label: 'Classico', href: '/catalogo?world=design' },
-                { label: 'Minimal', href: '/catalogo?world=design' },
-                { label: 'Decorativo', href: '/catalogo?world=design' },
-                { label: 'Industrial', href: '/catalogo?world=design' },
-                { label: 'Outdoor', href: '/catalogo?world=design' },
+                { label: 'Moderno', href: '/catalogo?world=design&q=moderno' },
+                { label: 'Classico', href: '/catalogo?world=design&q=classico' },
+                { label: 'Minimal', href: '/catalogo?world=design&q=minimal' },
+                { label: 'Decorativo', href: '/catalogo?world=design&q=decorativo' },
+                { label: 'Industrial', href: '/catalogo?world=design&q=industrial' },
+                { label: 'Outdoor', href: '/catalogo?world=design&q=outdoor' },
               ],
             },
             {
@@ -90,6 +90,15 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
                 { label: 'Davide Groppi', href: '/brand/davide-groppi' },
                 { label: 'Ideal Lux', href: '/brand/ideal-lux' },
                 { label: 'TLB Italy', href: '/brand/tlb-italy' },
+              ],
+            },
+            {
+              title: 'IN EVIDENZA',
+              links: [
+                { label: 'Novità', href: '/catalogo?world=design&sort=new' },
+                { label: 'Pronta consegna', href: '/catalogo?world=design&inStock=1' },
+                { label: 'Icone di design', href: '/catalogo?world=design&q=design' },
+                { label: 'Offerte', href: '/catalogo?world=design&q=offerta' },
               ],
             },
           ],
@@ -112,7 +121,7 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
             {
               title: 'TECNOLOGIA',
               links: [
-                { label: 'LED', href: '/categoria-prodotto/illuminazione-tecnica' },
+                { label: 'LED', href: '/catalogo?world=technical&q=LED' },
                 { label: 'Alogena', href: '/catalogo?world=technical&q=alogena' },
                 { label: 'Fluorescenza', href: '/catalogo?world=technical&q=fluorescenza' },
                 { label: 'Incandescenza', href: '/catalogo?world=technical&q=incandescenza' },
@@ -133,7 +142,7 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
               title: 'PRODOTTI TECNICI',
               links: [
                 { label: 'Alimentatori', href: '/categoria-prodotto/illuminazione-tecnica/prodotti-tecnici' },
-                { label: 'Driver LED', href: '/categoria-prodotto/illuminazione-tecnica/prodotti-tecnici' },
+                { label: 'Driver LED', href: '/catalogo?world=technical&q=driver' },
                 { label: 'Trasformatori', href: '/catalogo?world=technical&q=trasformatore' },
                 { label: 'Portalampade', href: '/catalogo?world=technical&q=portalampade' },
                 { label: 'Dimmer', href: '/catalogo?world=technical&q=dimmer' },
@@ -142,11 +151,21 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
             {
               title: 'APPLICAZIONI',
               links: [
-                { label: 'Strisce LED', href: '/catalogo?world=technical' },
-                { label: 'Profili LED', href: '/catalogo?world=technical' },
-                { label: 'Automotive', href: '/catalogo?world=technical' },
-                { label: 'Proiettori', href: '/catalogo?world=technical' },
-                { label: 'Outdoor IP65', href: '/catalogo?world=technical' },
+                { label: 'Strisce LED', href: '/catalogo?world=technical&q=striscia+led' },
+                { label: 'Profili LED', href: '/catalogo?world=technical&q=profilo+led' },
+                { label: 'Automotive', href: '/catalogo?world=technical&q=automotive' },
+                { label: 'Proiettori', href: '/catalogo?world=technical&q=proiettore' },
+                { label: 'Outdoor IP65', href: '/catalogo?world=technical&q=IP65' },
+              ],
+            },
+            {
+              title: 'GUIDE TECNICHE',
+              links: [
+                { label: 'Kelvin & CRI', href: '/guide/luce-calda-naturale-fredda' },
+                { label: 'Lumen vs watt', href: '/guide/scegliere-lampadina-led' },
+                { label: 'Dimmerabilità', href: '/guide/scegliere-lampadina-led' },
+                { label: 'Grado IP', href: '/guide/glossario' },
+                { label: 'Retrofit LED', href: '/guide/scegliere-lampadina-led' },
               ],
             },
           ],
@@ -166,6 +185,8 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
         href: '/attacco',
         panel: {
           columns: attaccoMegaMenuColumns(),
+          eyebrow: 'Lampadine per attacco · ordinati per diffusione',
+          allSocketsCta: 'Tutti gli attacchi →',
           promo: {
             title: "Non trovi l'attacco?",
             description: 'Invia una foto o il codice prodotto: ti aiutiamo a trovare il ricambio.',
@@ -209,12 +230,14 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
       {
         title: 'Utilità',
         links: [
-          { label: 'Guide alla luce', href: '/guide' },
+          { label: 'Catalogo', href: '/negozio' },
+          { label: 'Guide alla luce', href: '/blog' },
           { label: 'Scegli per attacco', href: '/attacco' },
           { label: 'Brand', href: '/brand' },
-          { label: 'Ambienti', href: '/ambienti' },
+          { label: 'Ambienti', href: '/acquista-ambiente' },
           { label: 'Glossario tecnico', href: '/guide/glossario' },
-          { label: 'Privacy', href: '/privacy' },
+          { label: 'Privacy', href: '/privacy-policy' },
+          { label: 'Termini', href: '/tos' },
           { label: 'Cookie', href: '/cookie' },
         ],
       },
@@ -225,6 +248,6 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
       ctaLabel: 'Richiedi supporto →',
       ctaHref: '/prodotto-non-trovato',
     },
-    legalNote: '© Idea di Luce · P.IVA 00000000000',
+    legalNote: '© TLB ITALY Srl · P.IVA IT17245551001',
   },
 }

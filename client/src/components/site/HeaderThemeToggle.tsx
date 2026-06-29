@@ -1,9 +1,10 @@
 'use client'
 
-import { useTheme } from '@/context/theme-context'
+import { useTheme, type SiteTheme } from '@/context/theme-context'
 import { useI18n } from '@/hooks/use-i18n'
 import { cn } from '@/utils/cn'
 import { ui } from '@/lib/ui-classes'
+import type { MessageKey } from '@/i18n/messages'
 
 function SunIcon({ className }: { className?: string }) {
   return (
@@ -33,26 +34,48 @@ function MoonIcon({ className }: { className?: string }) {
   )
 }
 
+function ClassicIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className={className} fill="none">
+      <path
+        d="M12 3c-3.5 2.5-6 6.2-6 10.4a6 6 0 1 0 12 0C18 9.2 15.5 5.5 12 3Z"
+        stroke="currentColor"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+    </svg>
+  )
+}
+
+const NEXT_THEME_LABEL: Record<SiteTheme, MessageKey> = {
+  classic: 'theme.switcher.toLight',
+  light: 'theme.switcher.toDark',
+  dark: 'theme.switcher.toClassic',
+}
+
 export function HeaderThemeToggle() {
-  const { isDark, toggleTheme } = useTheme()
+  const { theme, isDark, isClassic, toggleTheme } = useTheme()
   const { t } = useI18n()
+  const nextLabel = t(NEXT_THEME_LABEL[theme])
 
   return (
     <button
       type="button"
       onClick={toggleTheme}
-      title={t('theme.switcher.title')}
-      aria-label={t('theme.switcher.title')}
+      title={nextLabel}
+      aria-label={nextLabel}
       className={cn(
         ui.interactive,
-        'inline-flex size-[38px] shrink-0 items-center justify-center rounded-full border p-0',
-        isDark
-          ? 'border-white/16 bg-white/6 text-white hover:border-white/40 hover:text-white'
-          : 'border-idl-border-strong bg-white text-idl-brass hover:border-idl-brass',
+        ui.headerAction,
+        ui.headerActionBtn,
+        isDark && 'text-idl-glow',
+        isClassic && 'text-idl-amber',
       )}
     >
-      {isDark ? (
+      {theme === 'dark' ? (
         <MoonIcon className="size-[18px]" />
+      ) : theme === 'classic' ? (
+        <ClassicIcon className="size-[18px]" />
       ) : (
         <SunIcon className="size-[18px] text-idl-brass" />
       )}

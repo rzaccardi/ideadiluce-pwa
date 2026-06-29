@@ -15,7 +15,6 @@ import { SITE_PAGE_X_CLASS } from '@/components/site/primitives'
 import { useCartSync } from '@/hooks/use-cart-sync'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
-import { useTheme } from '@/context/theme-context'
 import { formatMoney } from '@/lib/format'
 import { cartTotalCents } from '@/lib/cartTotals'
 import { AnimatePresence, motion, useReducedMotion } from '@/lib/motion-client'
@@ -67,7 +66,6 @@ type MiniCartPanelProps = {
   itemCount: number
   total: number | null
   stockInsufficient: readonly CartStockInsufficientDTO[]
-  isDark: boolean
   layout: 'dropdown' | 'sheet'
   onClose: () => void
 }
@@ -79,7 +77,6 @@ function MiniCartPanel({
   itemCount,
   total,
   stockInsufficient,
-  isDark,
   layout,
   onClose,
 }: MiniCartPanelProps) {
@@ -92,9 +89,7 @@ function MiniCartPanel({
   return (
     <>
       <div className={cn('flex items-center justify-between gap-3', isSheet ? 'shrink-0' : undefined)}>
-        <h2 className={cn('text-base font-semibold', isDark ? 'text-idl-design-fg' : 'text-idl-graphite')}>
-          {t('cart.title')}
-        </h2>
+        <h2 className="text-base font-semibold text-idl-graphite">{t('cart.title')}</h2>
         <button
           type="button"
           onClick={onClose}
@@ -102,18 +97,8 @@ function MiniCartPanel({
             ui.interactive,
             'inline-flex shrink-0 items-center justify-center rounded-full',
             isSheet
-              ? cn(
-                  'size-10 border',
-                  isDark
-                    ? 'border-white/16 bg-white/6 text-idl-design-fg hover:border-idl-brass hover:text-idl-glow'
-                    : 'border-idl-border-strong bg-white text-idl-ink-soft hover:text-idl-ink',
-                )
-              : cn(
-                  'size-8',
-                  isDark
-                    ? 'text-idl-design-muted hover:bg-white/10 hover:text-idl-design-fg'
-                    : 'text-idl-muted hover:bg-idl-cream hover:text-idl-graphite',
-                ),
+              ? cn(ui.mobileMenuClose, 'size-10')
+              : 'size-8 text-idl-muted hover:bg-idl-cream hover:text-idl-graphite',
           )}
           aria-label={t('cart.floating.close')}
         >
@@ -129,29 +114,13 @@ function MiniCartPanel({
         </div>
       ) : (
         <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
-          <div
-            className={cn(
-              'rounded-lg border px-3 py-2.5',
-              isDark ? 'border-white/10 bg-white/5' : 'border-idl-border/60 bg-idl-cream',
-            )}
-          >
-            <dt className={cn('text-xs', isDark ? 'text-idl-design-subtle' : 'text-idl-muted')}>
-              {t('cart.floating.items')}
-            </dt>
-            <dd className={cn('mt-0.5 text-base font-semibold tabular-nums', isDark ? 'text-idl-design-fg' : 'text-idl-graphite')}>
-              {itemCount}
-            </dd>
+          <div className="rounded-lg border border-idl-border/60 bg-idl-tech-panel px-3 py-2.5">
+            <dt className="text-xs text-idl-muted">{t('cart.floating.items')}</dt>
+            <dd className="mt-0.5 text-base font-semibold tabular-nums text-idl-graphite">{itemCount}</dd>
           </div>
-          <div
-            className={cn(
-              'rounded-lg border px-3 py-2.5',
-              isDark ? 'border-white/10 bg-white/5' : 'border-idl-border/60 bg-idl-cream',
-            )}
-          >
-            <dt className={cn('text-xs', isDark ? 'text-idl-design-subtle' : 'text-idl-muted')}>
-              {t('cart.floating.estimatedTotal')}
-            </dt>
-            <dd className={cn('mt-0.5 text-base font-semibold tabular-nums', isDark ? 'text-idl-design-fg' : 'text-idl-graphite')}>
+          <div className="rounded-lg border border-idl-border/60 bg-idl-tech-panel px-3 py-2.5">
+            <dt className="text-xs text-idl-muted">{t('cart.floating.estimatedTotal')}</dt>
+            <dd className="mt-0.5 text-base font-semibold tabular-nums text-idl-graphite">
               {cart && total != null ? formatMoney(total, cart.currencyCode) : '—'}
             </dd>
           </div>
@@ -170,10 +139,7 @@ function MiniCartPanel({
             return (
               <li
                 key={item.id}
-                className={cn(
-                  'flex flex-col gap-2 rounded-lg border p-2 text-sm',
-                  isDark ? 'border-white/10 bg-white/5' : 'border-idl-border/60 bg-white',
-                )}
+                className="flex flex-col gap-2 rounded-lg border border-idl-border/60 bg-idl-tech-panel p-2 text-sm"
               >
                 <div className="flex items-center gap-2.5">
                   <Link
@@ -186,20 +152,17 @@ function MiniCartPanel({
                   <div className="min-w-0 flex-1">
                     <Link
                       to={lp(`/prodotto/${item.productSlug ?? item.productRef}`)}
-                      className={cn(
-                        'block truncate font-medium hover:underline',
-                        isDark ? 'text-idl-design-fg' : 'text-idl-graphite',
-                      )}
+                      className="block truncate font-medium text-idl-graphite hover:underline"
                       onClick={onClose}
                     >
                       {item.productName ?? item.productSlug ?? item.productRef}
                     </Link>
-                    <p className={cn('text-xs', isDark ? 'text-idl-design-subtle' : 'text-idl-muted')}>
+                    <p className="text-xs text-idl-muted">
                       {tParams('orders.detail.quantity', { count: item.quantity })}
                     </p>
                   </div>
                   {item.lineTotalEstimateCents != null ? (
-                    <span className={cn('shrink-0 text-xs font-medium', isDark ? 'text-idl-design-muted' : 'text-idl-ink-soft')}>
+                    <span className="shrink-0 text-xs font-medium text-idl-ink-soft">
                       {formatMoney(item.lineTotalEstimateCents, cart.currencyCode)}
                     </span>
                   ) : null}
@@ -209,7 +172,7 @@ function MiniCartPanel({
             )
           })}
           {hiddenCount > 0 ? (
-            <li className={cn('text-center text-xs', isDark ? 'text-idl-design-subtle' : 'text-idl-muted')}>
+            <li className="text-center text-xs text-idl-muted">
               {tParams('cart.floating.moreLines', { count: hiddenCount })}
             </li>
           ) : null}
@@ -221,7 +184,7 @@ function MiniCartPanel({
       {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
 
       {cart && cart.items.length > 0 ? (
-        <div className={cn('mt-4', isSheet && 'shrink-0 border-t pt-4', isDark && isSheet ? 'border-white/10' : isSheet ? 'border-idl-border' : undefined)}>
+        <div className={cn('mt-4', isSheet && 'shrink-0 border-t border-idl-border pt-4')}>
           <Link to={lp('/cart')} onClick={onClose}>
             <Button className="w-full">{t('cart.floating.openCart')}</Button>
           </Link>
@@ -237,7 +200,6 @@ type Props = {
 
 export function HeaderMiniCart({ onOpenChange }: Props) {
   const { t } = useI18n()
-  const { isDark } = useTheme()
   const reduceMotion = useReducedMotion()
   const { cart, error, isLoading, stockInsufficient } = useSnapshot(cartStore)
   const { cartPulse, miniCartOpenRequest } = useSnapshot(cartFeedbackStore)
@@ -308,7 +270,6 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
     itemCount,
     total,
     stockInsufficient,
-    isDark,
     onClose: () => setCartOpen(false),
   }
 
@@ -323,11 +284,7 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
         aria-label={t('cart.floating.openMiniCart')}
         className={cn(
           ui.interactive,
-          ui.headerAction,
-          isDark
-            ? 'border-white/16 bg-white/6 text-idl-design-fg hover:border-idl-brass hover:text-idl-glow'
-            : 'border-idl-border-strong bg-white text-idl-ink-soft hover:text-idl-ink',
-          isBouncing && 'cart-bounce',
+          cn(ui.headerAction, ui.headerActionBtn, isBouncing && 'cart-bounce'),
         )}
       >
         <CartIcon className="size-[17px] shrink-0" />
@@ -370,11 +327,8 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
               aria-modal="true"
               aria-label={t('cart.title')}
               className={cn(
-                'fixed inset-x-0 bottom-0 z-[60] flex max-h-[min(96dvh,100%)] flex-col rounded-t-[20px] border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl lg:hidden',
+                'fixed inset-x-0 bottom-0 z-[60] flex max-h-[min(96dvh,100%)] flex-col rounded-t-[20px] border border-idl-border border-t bg-idl-paper p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl shadow-zinc-950/20 lg:hidden',
                 SITE_PAGE_X_CLASS,
-                isDark
-                  ? 'border-white/12 bg-idl-design-elevated shadow-black/40'
-                  : 'border-idl-border bg-idl-paper shadow-zinc-950/20',
               )}
               initial={reduceMotion ? false : { y: '100%' }}
               animate={{ y: 0 }}
@@ -389,12 +343,7 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
               key="mini-cart-dropdown"
               role="dialog"
               aria-label={t('cart.title')}
-              className={cn(
-                'absolute right-0 top-full z-50 mt-2 hidden w-[min(calc(100vw-2.5rem),380px)] rounded-2xl border p-4 shadow-2xl lg:block',
-                isDark
-                  ? 'border-white/12 bg-idl-design-elevated shadow-black/40'
-                  : 'border-idl-border bg-white shadow-zinc-950/20',
-              )}
+              className="absolute right-0 top-full z-50 mt-2 hidden w-[min(calc(100vw-2.5rem),380px)] rounded-2xl border border-idl-border bg-idl-tech-panel p-4 shadow-2xl shadow-zinc-950/20 lg:block"
             >
               <MiniCartPanel {...panelProps} layout="dropdown" />
             </section>

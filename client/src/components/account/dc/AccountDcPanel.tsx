@@ -21,7 +21,7 @@ export function AccountDcPanel({ title, action, description, children, className
           )}
         >
           {title ? (
-            <h2 className="text-lg font-extrabold tracking-[-0.01em] text-[#14161b]">{title}</h2>
+            <h2 className="text-lg font-extrabold tracking-[-0.01em] text-idl-graphite">{title}</h2>
           ) : (
             <span />
           )}
@@ -29,7 +29,7 @@ export function AccountDcPanel({ title, action, description, children, className
         </div>
       ) : null}
       {description ? (
-        <p className="mb-5 text-[13.5px] leading-relaxed text-[#6c727c]">{description}</p>
+        <p className="mb-5 text-[13.5px] leading-relaxed text-idl-muted">{description}</p>
       ) : null}
       {children}
     </section>

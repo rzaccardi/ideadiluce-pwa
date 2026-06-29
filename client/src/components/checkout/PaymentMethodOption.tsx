@@ -20,14 +20,14 @@ export function PaymentMethodOption({ id, title, description, selected, disabled
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-[15px] font-bold text-[#14161b]">{title}</span>
+            <span className="text-[15px] font-bold text-idl-graphite">{title}</span>
             <PaymentBrandIcons method={id} />
           </div>
-          <p className="mt-1 text-[13px] leading-snug text-[#6c727c]">{description}</p>
+          <p className="mt-1 text-[13px] leading-snug text-idl-muted">{description}</p>
           {children ? (
             <div
               className={cn(
-                'mt-4 border-t border-[#e7eaee] pt-4',
+                'mt-4 border-t border-idl-tech-border pt-4',
                 !selected && 'pointer-events-none hidden opacity-0',
               )}
             >

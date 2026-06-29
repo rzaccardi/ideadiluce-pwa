@@ -5,8 +5,13 @@ import { enrichProductDetailWithStock } from '../modules/catalog/catalog-stock.e
 import { enrichProductDetailWithOdooPricing } from '../modules/catalog/catalog-pricing.enrich.js'
 import { resolvePricingContext } from '../modules/pricing/pricelist.service.js'
 import { siteService } from '../modules/site/site.service.js'
+import { cartQuickReorderService } from '../modules/cart/cart-quick-reorder.service.js'
 import type { ProductDetailDTO } from '../types/dto.js'
 import { asyncHandler } from '../utils/async-handler.js'
+import {
+  resolveCatalogListPageSize,
+  sanitizeCatalogSearchQuery,
+} from '../modules/catalog/catalog-search-guard.js'
 
 export const catalogPublicController = {
   bootstrap: asyncHandler(async (req: Request, res: Response) => {
@@ -57,13 +62,20 @@ export const catalogPublicController = {
         : typeof req.query.per_page === 'string'
           ? req.query.per_page
           : undefined
+    const searchQ = sanitizeCatalogSearchQuery(
+      typeof req.query.q === 'string' ? req.query.q : undefined,
+    )
+    const pageSize = resolveCatalogListPageSize(
+      pageSizeRaw ? Number(pageSizeRaw) : undefined,
+      Boolean(searchQ),
+    )
     const ctx = { correlationId: req.correlationId, req }
     const pricing = await resolvePricingContext(req)
     const data = await catalogStorefrontService.listProducts(ctx, {
       locale: typeof req.query.locale === 'string' ? req.query.locale : undefined,
       page: pageRaw ? Number(pageRaw) : undefined,
-      pageSize: pageSizeRaw ? Number(pageSizeRaw) : undefined,
-      q: typeof req.query.q === 'string' ? req.query.q : undefined,
+      pageSize,
+      q: searchQ,
       categorySlug: typeof req.query.category === 'string' ? req.query.category : undefined,
       brandSlug: typeof req.query.brand === 'string' ? req.query.brand : undefined,
       partnerId: pricing.partnerId ?? undefined,
@@ -79,5 +91,11 @@ export const catalogPublicController = {
     let enriched = await enrichProductDetailWithStock(ctx, product)
     enriched = await enrichProductDetailWithOdooPricing(ctx, enriched, pricing)
     res.json(ok(enriched))
+  }),
+
+  resolveCodes: asyncHandler(async (req: Request, res: Response) => {
+    const body = req.body as { text?: string; lines?: Array<{ code: string; quantity: number }>; locale?: string }
+    const data = await cartQuickReorderService.resolveCodes(req, body)
+    res.json(ok(data))
   }),
 }

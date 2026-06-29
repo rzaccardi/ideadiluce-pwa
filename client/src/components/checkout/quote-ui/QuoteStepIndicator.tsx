@@ -51,12 +51,12 @@ export function QuoteStepIndicator({ currentStep, accountConfirmed = false }: Pr
         <h1
           className={cn(
             checkoutFormTitleClass,
-            'font-extrabold tracking-[-0.01em] text-[#14161b]',
+            'font-extrabold tracking-[-0.01em] text-idl-graphite',
           )}
         >
           {pageTitle}
         </h1>
-        <p className="mt-1.5 text-sm leading-relaxed text-[#6c727c]">{pageSubtitle}</p>
+        <p className="mt-1.5 text-sm leading-relaxed text-idl-muted">{pageSubtitle}</p>
       </header>
     )
   }
@@ -67,12 +67,12 @@ export function QuoteStepIndicator({ currentStep, accountConfirmed = false }: Pr
         <h1
           className={cn(
             checkoutFormTitleClass,
-            'font-extrabold tracking-[-0.01em] text-[#14161b]',
+            'font-extrabold tracking-[-0.01em] text-idl-graphite',
           )}
         >
           {pageTitle}
         </h1>
-        <p className="mt-1.5 text-sm leading-relaxed text-[#6c727c]">{pageSubtitle}</p>
+        <p className="mt-1.5 text-sm leading-relaxed text-idl-muted">{pageSubtitle}</p>
       </header>
 
       <nav aria-label={t('cart.quote.steps.navLabel')}>
@@ -86,7 +86,7 @@ export function QuoteStepIndicator({ currentStep, accountConfirmed = false }: Pr
                   className={cn(
                     'h-1 rounded-full transition-colors',
                     isCurrent
-                      ? 'bg-[#f0ad57] shadow-[0_0_12px_rgba(240,173,87,0.45)]'
+                      ? 'bg-[#c9a24b] shadow-[0_0_12px_rgba(201, 162, 75,0.45)]'
                       : done
                         ? 'bg-[#14161b]'
                         : 'bg-[#e2e6eb]',
@@ -95,7 +95,7 @@ export function QuoteStepIndicator({ currentStep, accountConfirmed = false }: Pr
                 <span
                   className={cn(
                     'text-[10px] font-bold leading-tight sm:text-xs',
-                    isCurrent ? 'text-[#14161b]' : done ? 'text-[#6c727c]' : 'text-[#9298a3]',
+                    isCurrent ? 'text-idl-graphite' : done ? 'text-idl-muted' : 'text-[#9298a3]',
                   )}
                 >
                   {t(group.labelKey)}

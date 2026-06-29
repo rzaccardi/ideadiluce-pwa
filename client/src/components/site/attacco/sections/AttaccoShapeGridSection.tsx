@@ -11,7 +11,7 @@ type Props = {
 
 export function AttaccoShapeGridSection({ lp }: Props) {
   return (
-    <section className="border-t border-idl-tech-border bg-white">
+    <section className="border-t border-idl-tech-border bg-idl-tech-panel">
       <SectionContainer className="py-10 sm:py-12">
         <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <h2 className="text-[22px] font-extrabold tracking-tight text-idl-graphite sm:text-2xl">
@@ -31,7 +31,7 @@ export function AttaccoShapeGridSection({ lp }: Props) {
                 'flex flex-col items-center gap-3 rounded-[10px] border px-3 py-4 transition hover:border-idl-amber hover:shadow-[0_8px_22px_rgba(0,0,0,0.05)]',
                 shape.dashed
                   ? 'justify-center border-dashed border-idl-tech-border bg-idl-tech-panel'
-                  : 'border-idl-tech-border bg-white',
+                  : 'border-idl-tech-border bg-idl-tech-panel',
               )}
             >
               <div className="flex h-[74px] w-full items-center justify-center">

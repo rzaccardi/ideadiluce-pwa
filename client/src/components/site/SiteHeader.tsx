@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from '@/lib/motion-client'
 import { Link } from '@/lib/navigation'
-import { useTheme } from '@/context/theme-context'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import type { DcActiveNavId } from '@/lib/dc-static-routes'
@@ -13,6 +12,15 @@ import { cn } from '@/utils/cn'
 import { ui } from '@/lib/ui-classes'
 import { slideDownVariants, transitionBase } from '@/lib/motion/presets'
 import { AttaccoMegaPanel } from './AttaccoMegaPanel'
+
+const ATTACCO_MOBILE_SOCKETS = [
+  { label: 'E27', href: '/attacco/e27' },
+  { label: 'E14', href: '/attacco/e14' },
+  { label: 'GU10', href: '/attacco/gu10' },
+  { label: 'GU5.3', href: '/attacco/gu5-3' },
+  { label: 'R7s', href: '/attacco/r7s' },
+  { label: 'Tutti gli attacchi →', href: '/attacco' },
+]
 import { SiteHeaderActions } from './SiteHeaderActions'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { BrandWordmark, SectionContainer, SITE_PAGE_X_CLASS } from './primitives'
@@ -58,7 +66,10 @@ function MegaPanel({
   const inner = (
     <SectionContainer className="flex flex-col gap-8 py-8 lg:flex-row lg:items-start">
       <div
-        className="grid min-w-0 flex-1 gap-8 sm:grid-cols-2 lg:grid-cols-4"
+        className={cn(
+          'grid min-w-0 flex-1 gap-8',
+          panel.columns.length >= 5 ? 'sm:grid-cols-2 lg:grid-cols-5' : 'sm:grid-cols-2 lg:grid-cols-4',
+        )}
       >
         {panel.columns.map((col) => (
           <div key={col.title} className="min-w-0">
@@ -119,8 +130,8 @@ function MegaPanel({
             className={cn(
               'inline-block rounded-md px-4 py-2.5 text-[13px] font-bold whitespace-nowrap transition-colors',
               panel.promo.variant === 'design'
-                ? 'bg-idl-glow text-idl-design hover:bg-[#f7bd6f]'
-                : 'bg-idl-amber text-white hover:bg-[#c2730f]',
+                ? 'bg-idl-glow text-idl-design hover:bg-idl-cta-glow-hover'
+                : 'bg-idl-amber text-white hover:bg-idl-cta-amber-hover',
             )}
           >
             {panel.promo.ctaLabel}
@@ -132,7 +143,7 @@ function MegaPanel({
 
   const panelClass = cn(
     'absolute inset-x-0 top-full border-t shadow-2xl',
-    dark ? 'border-idl-glow/20 bg-idl-design text-idl-design-fg' : 'border-idl-tech-border bg-white',
+    dark ? 'border-idl-glow/20 bg-idl-design text-idl-design-fg' : 'border-idl-tech-border bg-idl-tech-panel',
   )
 
   if (reduceMotion) {
@@ -162,7 +173,6 @@ export function SiteHeader({
 }) {
   const lp = useLocalePath()
   const { t } = useI18n()
-  const { isDark } = useTheme()
   const reduceMotion = useReducedMotion()
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -227,10 +237,7 @@ export function SiteHeader({
         ) : null}
       </AnimatePresence>
       <motion.header
-        className={cn(
-          'sticky top-0 z-50 border-b',
-          isDark ? 'border-white/8 bg-idl-design text-idl-design-muted' : 'border-idl-border bg-idl-paper',
-        )}
+        className={cn('sticky top-0 z-50', ui.headerBar)}
         initial={reduceMotion ? false : 'hidden'}
         animate="visible"
         variants={slideDownVariants}
@@ -248,15 +255,12 @@ export function SiteHeader({
                 setMobileOpen((v) => !v)
               }}
             >
-              <span className={cn('h-0.5 w-5', isDark ? 'bg-white' : 'bg-idl-ink-soft')} />
-              <span className={cn('h-0.5 w-5', isDark ? 'bg-white' : 'bg-idl-ink-soft')} />
-              <span className={cn('h-0.5 w-3', isDark ? 'bg-white' : 'bg-idl-ink-soft')} />
+              <span className={cn('w-5', ui.hamburgerBar)} />
+              <span className={cn('w-5', ui.hamburgerBar)} />
+              <span className={cn('w-3', ui.hamburgerBar)} />
             </button>
             <Link to={lp('/')} className="rounded-sm transition-opacity hover:opacity-80" onClick={closeMenu}>
-              <BrandWordmark
-                className={cn('text-[20px] md:text-[22px] lg:text-[25px]', isDark && 'text-white')}
-                accentClassName={isDark ? 'text-white' : undefined}
-              />
+              <BrandWordmark className="text-[20px] md:text-[22px] lg:text-[25px]" />
             </Link>
             <nav className="hidden items-center gap-5 text-[14.5px] font-medium lg:flex">
               {nav.items.map((item) =>
@@ -268,10 +272,8 @@ export function SiteHeader({
                     className={cn(
                       'relative py-1.5 transition-colors',
                       activeNavId === item.id
-                        ? 'text-idl-brass hover:text-idl-brass-light'
-                        : isDark
-                          ? 'text-idl-design-muted hover:text-idl-design-fg'
-                          : 'text-idl-ink-soft hover:text-idl-ink',
+                        ? ui.headerNavLinkActive
+                        : ui.headerNavLink,
                     )}
                   >
                     {item.label}
@@ -285,11 +287,9 @@ export function SiteHeader({
                       'relative py-1.5 transition-colors',
                       isDropdownActive(item.id)
                         ? item.id === 'arredo'
-                          ? 'text-idl-brass hover:text-idl-brass-light'
-                          : 'text-idl-amber hover:text-[#c2730f]'
-                        : isDark
-                          ? 'text-idl-design-muted hover:text-idl-design-fg'
-                          : 'text-idl-ink-soft hover:text-idl-ink',
+                          ? ui.headerNavLinkActive
+                          : 'text-idl-amber hover:text-idl-cta-amber-hover'
+                        : ui.headerNavLink,
                     )}
                     onClick={() => setOpenMenu((cur) => (cur === item.id ? null : item.id))}
                   >
@@ -324,42 +324,24 @@ export function SiteHeader({
             role="dialog"
             aria-modal="true"
             aria-label="Menu"
-            className={cn(
-              'fixed inset-0 z-[60] flex min-h-dvh flex-col lg:hidden',
-              isDark ? 'bg-idl-design text-idl-design-muted' : 'bg-idl-paper text-idl-ink-soft',
-            )}
+            className={ui.mobileMenu}
             initial={reduceMotion ? false : { opacity: 0, x: '100%' }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={transitionBase}
           >
-            <div
-              className={cn(
-                'flex shrink-0 items-center justify-between border-b py-4',
-                SITE_PAGE_X_CLASS,
-                isDark ? 'border-white/8' : 'border-idl-border',
-              )}
-            >
+            <div className={cn(ui.mobileMenuBar, SITE_PAGE_X_CLASS)}>
               <Link
                 to={lp('/')}
                 className="rounded-sm transition-opacity hover:opacity-80"
                 onClick={() => setMobileOpen(false)}
               >
-                <BrandWordmark
-                  className={cn('text-[20px] md:text-[22px]', isDark ? 'text-white' : undefined)}
-                  accentClassName={isDark ? 'text-white' : undefined}
-                />
+                <BrandWordmark className="text-[20px] md:text-[22px]" />
               </Link>
               <button
                 type="button"
                 aria-label="Chiudi menu"
-                className={cn(
-                  ui.interactive,
-                  'inline-flex size-10 shrink-0 items-center justify-center rounded-full border',
-                  isDark
-                    ? 'border-white/16 bg-white/6 text-white hover:border-idl-brass hover:text-white'
-                    : 'border-idl-border-strong bg-white text-idl-ink-soft hover:text-idl-ink',
-                )}
+                className={cn(ui.interactive, ui.mobileMenuClose)}
                 onClick={() => setMobileOpen(false)}
               >
                 <MobileMenuCloseIcon className="size-5" />
@@ -369,7 +351,6 @@ export function SiteHeader({
               className={cn(
                 'flex flex-1 flex-col gap-3 overflow-y-auto py-6 text-[15px] font-medium',
                 SITE_PAGE_X_CLASS,
-                isDark ? 'text-idl-design-muted' : 'text-idl-ink-soft',
               )}
             >
               {nav.items.map((item) =>
@@ -377,46 +358,84 @@ export function SiteHeader({
                   <Link
                     key={item.id}
                     to={lp(item.href)}
-                    className={cn('transition-colors', isDark ? 'hover:text-idl-design-fg' : 'hover:text-idl-ink')}
+                    className={ui.headerNavLink}
                     onClick={() => setMobileOpen(false)}
                   >
                     {item.label}
                   </Link>
                 ) : (
-                  <Link
-                    key={item.id}
-                    to={lp(resolveNavDropdownHref(item.id, item.href))}
-                    className={cn('transition-colors', isDark ? 'hover:text-idl-design-fg' : 'hover:text-idl-ink')}
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    {item.label}
-                  </Link>
+                  <div key={item.id} className="space-y-2">
+                    <Link
+                      to={lp(resolveNavDropdownHref(item.id, item.href))}
+                      className="block font-semibold text-idl-ink transition-colors hover:text-idl-brass"
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                    {item.id === 'attacco' ? (
+                      <div className="flex flex-col gap-1.5 pl-3 text-[14px] font-normal">
+                        {ATTACCO_MOBILE_SOCKETS.map((socket) => (
+                          <Link
+                            key={socket.href}
+                            to={lp(socket.href)}
+                            className={ui.headerNavLink}
+                            onClick={() => setMobileOpen(false)}
+                          >
+                            {socket.label}
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-3 pl-3 text-[14px] font-normal">
+                        {item.panel.columns.map((column) => (
+                          <div key={column.title} className="space-y-1.5">
+                            <div
+                              className={cn(
+                                'font-mono text-[10px] tracking-[0.12em] uppercase text-idl-brass',
+                              )}
+                            >
+                              {column.title}
+                            </div>
+                            {column.links.map((link) => (
+                              <Link
+                                key={link.href + link.label}
+                                to={lp(link.href)}
+                                className={cn('block', ui.headerNavLink)}
+                                onClick={() => setMobileOpen(false)}
+                              >
+                                {link.label}
+                              </Link>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ),
               )}
               <Link
                 to={lp('/catalogo')}
-                className={cn('transition-colors', isDark ? 'hover:text-idl-design-fg' : 'hover:text-idl-ink')}
+                className={ui.headerNavLink}
                 onClick={() => setMobileOpen(false)}
               >
                 {t('nav.catalog')}
               </Link>
               <Link
                 to={lp('/wishlist')}
-                className={cn('transition-colors', isDark ? 'hover:text-idl-design-fg' : 'hover:text-idl-ink')}
+                className={ui.headerNavLink}
                 onClick={() => setMobileOpen(false)}
               >
                 {t('nav.wishlist')}
               </Link>
               <Link
                 to={lp('/login')}
-                className={cn('transition-colors', isDark ? 'hover:text-idl-design-fg' : 'hover:text-idl-ink')}
+                className={ui.headerNavLink}
                 onClick={() => setMobileOpen(false)}
               >
                 {t('nav.login')}
               </Link>
               <LanguageSwitcher
                 variant="mobileNav"
-                theme={isDark ? 'dark' : 'light'}
                 onLocaleChange={() => setMobileOpen(false)}
               />
             </nav>

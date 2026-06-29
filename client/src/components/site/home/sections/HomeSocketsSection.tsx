@@ -11,7 +11,7 @@ type Props = {
 
 export function HomeSocketsSection({ section, lp }: Props) {
   return (
-    <Reveal className="border-b border-idl-tech-border bg-white">
+    <Reveal className="border-b border-idl-tech-border bg-idl-tech-panel">
       <SectionContainer className="py-10 sm:py-12">
         <SiteSectionHeader
           eyebrow={section.eyebrow}

@@ -57,6 +57,7 @@ export const api = {
       lastName?: string
       phone?: string
       customerSegment?: 'retail' | 'business'
+      recaptchaToken?: string
     }) {
       return apiClient.post<{ user: UserDTO }>('/api/v1/auth/register', body)
     },
@@ -66,7 +67,7 @@ export const api = {
     resetPassword(token: string, password: string) {
       return apiClient.post<{ reset: boolean }>('/api/v1/auth/reset-password', { token, password })
     },
-    login(body: { email: string; password: string }) {
+    login(body: { email: string; password: string; recaptchaToken?: string }) {
       return apiClient.post<{ user: UserDTO }>('/api/v1/auth/login', body)
     },
     checkoutRegister(body: {
@@ -76,6 +77,7 @@ export const api = {
       lastName: string
       phone?: string
       customerSegment?: 'retail' | 'business'
+      recaptchaToken?: string
     }) {
       return apiClient.post<{ user: UserDTO }>('/api/v1/auth/checkout-register', body)
     },
@@ -193,9 +195,58 @@ export const api = {
       productCode?: string
       brand?: string
       quantity?: number
+      usage?: string
+      urgency?: string
       locale?: string
     }) {
       return apiClient.post<{ submitted: boolean }>('/api/v1/site/inquiries', body)
+    },
+    submitProductNotFoundInquiry(body: {
+      name: string
+      email: string
+      phone?: string
+      message?: string
+      productCode?: string
+      brand?: string
+      quantity?: number
+      usage?: string
+      urgency?: string
+      locale?: string
+      productPhoto?: File | null
+      socketPhoto?: File | null
+    }) {
+      const hasFiles = Boolean(body.productPhoto || body.socketPhoto)
+      if (!hasFiles) {
+        return apiClient.post<{ submitted: boolean }>('/api/v1/site/inquiries', {
+          kind: 'product-not-found',
+          name: body.name,
+          email: body.email,
+          phone: body.phone,
+          message: body.message,
+          productCode: body.productCode,
+          brand: body.brand,
+          quantity: body.quantity,
+          usage: body.usage,
+          urgency: body.urgency,
+          locale: body.locale,
+        })
+      }
+
+      const form = new FormData()
+      form.set('kind', 'product-not-found')
+      form.set('name', body.name)
+      form.set('email', body.email)
+      if (body.phone) form.set('phone', body.phone)
+      if (body.message) form.set('message', body.message)
+      if (body.productCode) form.set('productCode', body.productCode)
+      if (body.brand) form.set('brand', body.brand)
+      if (body.quantity != null) form.set('quantity', String(body.quantity))
+      if (body.usage) form.set('usage', body.usage)
+      if (body.urgency) form.set('urgency', body.urgency)
+      if (body.locale) form.set('locale', body.locale)
+      if (body.productPhoto) form.set('productPhoto', body.productPhoto)
+      if (body.socketPhoto) form.set('socketPhoto', body.socketPhoto)
+      return apiClient.postForm<{ submitted: boolean }>('/api/v1/site/inquiries', form)
     },
     submitProfessionalRequest(body: {
       companyName: string
@@ -263,14 +314,17 @@ export const api = {
         `/api/v1/catalog/brands/${encodeURIComponent(slug)}${search}`,
       )
     },
-    products(params: {
+    products(
+      params: {
       locale?: string
       page?: number
       pageSize?: number
       q?: string
       category?: string
       brand?: string
-    }) {
+    },
+      init?: Pick<RequestInit, 'signal'>,
+    ) {
       const search = new URLSearchParams()
       if (params.locale) search.set('locale', params.locale)
       if (params.page) search.set('page', String(params.page))
@@ -280,12 +334,19 @@ export const api = {
       if (params.brand) search.set('brand', params.brand)
       return apiClient.get<import('@/types/dto').ProductListDTO>(
         `/api/v1/catalog/products?${search.toString()}`,
+        init,
       )
     },
     enrichProductDetail(product: import('@/types/dto').ProductDetailDTO) {
       return apiClient.post<import('@/types/dto').ProductDetailDTO>(
         '/api/v1/catalog/availability/enrich-detail',
         product,
+      )
+    },
+    resolveCodes(body: { text: string; locale?: string }) {
+      return apiClient.post<import('@/types/dto').ResolveCodesResultDTO>(
+        '/api/v1/catalog/resolve-codes',
+        body,
       )
     },
     socialProof(slug: string) {
@@ -339,6 +400,12 @@ export const api = {
       expiresAt?: string | null
     }) {
       return apiClient.post<CartDTO>('/api/v1/cart/sync-from-client', body)
+    },
+    quickReorder(body: { text: string; locale?: string }) {
+      return apiClient.post<import('@/types/dto').QuickReorderResultDTO>(
+        '/api/v1/cart/quick-reorder',
+        body,
+      )
     },
   },
   wishlist: {

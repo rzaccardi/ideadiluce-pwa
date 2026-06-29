@@ -218,7 +218,7 @@ export const siteGuideService = {
 }
 
 export const guidePatchSchema = z.object({
-  category: z.enum(['BASE', 'ATTACCHI', 'TECNICO', 'ACQUISTO', 'AMBIENTE', 'GLOSSARIO']).optional(),
+  category: z.enum(['BASE', 'ATTACCHI', 'TECNICO', 'ACQUISTO', 'AMBIENTE', 'ARREDO', 'GLOSSARIO']).optional(),
   readingMeta: z.string().trim().max(40).optional(),
   sortOrder: z.number().int().min(0).max(9999).optional(),
   indexed: z.boolean().optional(),

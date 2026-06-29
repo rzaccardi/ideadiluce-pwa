@@ -17,8 +17,13 @@ function kindLabel(kind: SiteInquiryInput['kind']) {
   }
 }
 
+type InquiryAttachment = {
+  filename: string
+  content: Buffer
+}
+
 export const siteInquiryService = {
-  async submit(input: SiteInquiryInput) {
+  async submit(input: SiteInquiryInput, attachments: InquiryAttachment[] = []) {
     const lines = [
       `Tipo: ${kindLabel(input.kind)}`,
       `Nome: ${input.name}`,
@@ -27,7 +32,10 @@ export const siteInquiryService = {
       input.productCode ? `Codice/EAN: ${input.productCode}` : null,
       input.brand ? `Marca: ${input.brand}` : null,
       input.quantity ? `Quantità: ${input.quantity}` : null,
+      input.usage ? `Uso: ${input.usage}` : null,
+      input.urgency ? `Urgenza: ${input.urgency}` : null,
       input.locale ? `Lingua: ${input.locale}` : null,
+      attachments.length ? `Allegati: ${attachments.map((a) => a.filename).join(', ')}` : null,
       '',
       input.message?.trim() || '(nessun messaggio)',
     ].filter(Boolean)
@@ -35,12 +43,13 @@ export const siteInquiryService = {
     const text = lines.join('\n')
     const subject = `[Idea di Luce] ${kindLabel(input.kind)} — ${input.name}`
 
-    logger.info('site.inquiry', { kind: input.kind, email: input.email })
+    logger.info('site.inquiry', { kind: input.kind, email: input.email, attachments: attachments.length })
 
     await sendMail({
       to: INQUIRY_TO,
       subject,
       text,
+      attachments: attachments.length ? attachments : undefined,
     })
 
     return { submitted: true }

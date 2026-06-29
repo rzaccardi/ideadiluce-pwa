@@ -9,6 +9,8 @@ export const siteInquirySchema = z.object({
   productCode: z.string().trim().max(120).optional(),
   brand: z.string().trim().max(120).optional(),
   quantity: z.coerce.number().int().min(1).max(9999).optional(),
+  usage: z.string().trim().max(80).optional(),
+  urgency: z.string().trim().max(80).optional(),
   locale: z.string().trim().max(5).optional(),
 })
 

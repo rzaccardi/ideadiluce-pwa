@@ -19,7 +19,7 @@ function Collapse({
 }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white">
+    <div className="rounded-lg border border-zinc-200 bg-idl-tech-panel">
       <button
         type="button"
         onClick={() => setOpen(!open)}

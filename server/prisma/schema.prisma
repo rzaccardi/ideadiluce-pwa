@@ -751,6 +751,34 @@ model ProductDocumentDownload {
   @@index([userId])
 }
 
+/** Eventi ricerca catalogo storefront (analisi mercato / BO). */
+model CatalogSearchEvent {
+  id              String   @id @default(cuid())
+  query           String
+  normalizedQuery String
+  locale          String   @default("IT")
+  /** palette | hero | catalog | brand | attacco | inline */
+  source          String   @default("inline")
+  /** submit | suggest_pick | view_all */
+  action          String   @default("submit")
+  resultCount     Int?
+  productTotal    Int?
+  clickedPath     String?
+  clickedKind     String?
+  clickedLabel    String?
+  userId          String?
+  sessionId       String?
+  userAgent       String?
+  createdAt       DateTime @default(now())
+
+  @@index([normalizedQuery])
+  @@index([locale])
+  @@index([source])
+  @@index([action])
+  @@index([createdAt])
+  @@index([userId])
+}
+
 /** Richiesta email quando un prodotto torna disponibile o richiesta prodotto fuori stock. */
 model StockRestockRequest {
   id          String    @id @default(cuid())
@@ -932,4 +960,51 @@ model SeoRedirect {
   reason     String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+/// Run di export SEO da WordPress (plugin IdeaDiLuce SEO Migration Exporter).
+model WpSeoMigrationRun {
+  id            String   @id @default(cuid())
+  externalJobId String?  @unique
+  status        String   @default("running")
+  exportType    String
+  options       Json?
+  sourceUrl     String?
+  phase         String?
+  processed     Int      @default(0)
+  message       String?
+  errorMessage  String?
+  startedAt     DateTime @default(now())
+  completedAt   DateTime?
+  updatedAt     DateTime @updatedAt
+  records       WpSeoMigrationRecord[]
+
+  @@index([status, startedAt])
+}
+
+/// Singola entità SEO importata da WordPress (payload completo + campi indicizzati).
+model WpSeoMigrationRecord {
+  id                String   @id @default(cuid())
+  runId             String
+  run               WpSeoMigrationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  batchNumber       Int      @default(0)
+  recordType        String   @default("")
+  objectId          String?
+  postType          String?
+  taxonomy          String?
+  termId            String?
+  currentUrl        String?
+  slug              String?
+  titleWp           String?
+  recommendedAction String?
+  nextjsTargetUrl   String?
+  seoPriority       String?
+  notes             String?
+  payload           Json
+  createdAt         DateTime @default(now())
+
+  @@index([runId, createdAt])
+  @@index([runId, recordType])
+  @@index([currentUrl])
+  @@index([slug])
 }

@@ -34,7 +34,7 @@ export function CheckoutAddressFields({
 }: Props) {
   const { t } = useI18n()
   const streetNumberId = `${prefix}-streetNumber`
-  const lockedClass = locked ? 'cursor-default bg-[#f7f8fa] text-[#14161b]' : undefined
+  const lockedClass = locked ? 'cursor-default bg-idl-tech-panel text-idl-graphite' : undefined
   const isCard = layout === 'card'
 
   useEffect(() => {
@@ -107,9 +107,9 @@ export function CheckoutAddressFields({
           </FieldBlock>
           <label
             className={cn(
-              'flex min-h-[52px] cursor-pointer items-center gap-2.5 rounded-[11px] border border-[#e2e6eb] bg-white px-3.5 py-3 text-sm font-medium text-[#6c727c] sm:min-w-[7.5rem]',
-              locked && 'cursor-default bg-[#f7f8fa]',
-              address.isSnc && 'border-[#14161b] bg-[#faf6ef] text-[#14161b]',
+              'flex min-h-[52px] cursor-pointer items-center gap-2.5 rounded-[11px] border border-idl-tech-border bg-idl-tech-panel px-3.5 py-3 text-sm font-medium text-idl-muted sm:min-w-[7.5rem]',
+              locked && 'cursor-default bg-idl-tech-panel',
+              address.isSnc && 'border-[#14161b] bg-[#f8f8f6] text-idl-graphite',
             )}
           >
             <input
@@ -117,7 +117,7 @@ export function CheckoutAddressFields({
               checked={address.isSnc}
               disabled={locked}
               onChange={(e) => handleSncChange(e.target.checked)}
-              className="size-4 shrink-0 rounded border-[#c0c5cc] text-[#14161b] focus:ring-[#f0ad57]/35"
+              className="size-4 shrink-0 rounded border-[#c0c5cc] text-idl-graphite focus:ring-[#c9a24b]/35"
             />
             <span>{t('checkout.address.isSnc')}</span>
           </label>
@@ -213,7 +213,7 @@ export function CheckoutAddressFields({
         className={lockedClass}
         onValueChange={(value) => onChange('line1', value)}
       />
-      <div className="[&>*+*]:border-[#e2e6eb] sm:grid sm:grid-cols-[1fr_auto] sm:[&>*+*]:border-l">
+      <div className="[&>*+*]:border-idl-tech-border sm:grid sm:grid-cols-[1fr_auto] sm:[&>*+*]:border-l">
         <StripeControlledInput
           id={streetNumberId}
           name={`${prefix}-streetNumber`}
@@ -227,8 +227,8 @@ export function CheckoutAddressFields({
         />
         <label
           className={cn(
-            'flex cursor-pointer items-center gap-2 border-t border-[#e2e6eb] px-3 py-3 text-sm text-[#6c727c] sm:min-w-[7.5rem] sm:border-t-0',
-            locked && 'cursor-default bg-[#f7f8fa]',
+            'flex cursor-pointer items-center gap-2 border-t border-idl-tech-border px-3 py-3 text-sm text-idl-muted sm:min-w-[7.5rem] sm:border-t-0',
+            locked && 'cursor-default bg-idl-tech-panel',
           )}
         >
           <input
@@ -253,7 +253,7 @@ export function CheckoutAddressFields({
         className={lockedClass}
         onValueChange={(value) => onChange('line2', value)}
       />
-      <div className="grid grid-cols-1 gap-0 sm:grid-cols-[1fr_auto] sm:[&>*+*]:border-l sm:[&>*+*]:border-[#e2e6eb]">
+      <div className="grid grid-cols-1 gap-0 sm:grid-cols-[1fr_auto] sm:[&>*+*]:border-l sm:[&>*+*]:border-idl-tech-border">
         <StripeControlledInput
           name={`${prefix}-city`}
           placeholder={t('checkout.address.city')}
@@ -322,7 +322,7 @@ function CourierNotesField({
       rows={2}
       className={cn(
         'idl-field block w-full resize-none px-[15px] py-3.5 text-[15px] outline-none placeholder:text-[#9298a3]',
-        'focus:ring-2 focus:ring-[#f0ad57]/35 focus:ring-inset',
+        'focus:ring-2 focus:ring-[#c9a24b]/35 focus:ring-inset',
         lockedClass,
       )}
       onChange={field.onChange}
@@ -354,7 +354,7 @@ export function CheckoutAddressFieldsManual({
 
 function CheckoutPanelFields({ children }: { children: ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-[14px] border border-[#e2e6eb] bg-white p-4 shadow-[0_1px_2px_rgba(20,22,27,0.04)] sm:p-5">
+    <div className="overflow-hidden rounded-[14px] border border-idl-tech-border bg-idl-tech-panel p-4 shadow-[0_1px_2px_rgba(20,22,27,0.04)] sm:p-5">
       {children}
     </div>
   )

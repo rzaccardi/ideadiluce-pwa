@@ -9,6 +9,7 @@ import { ProductGrid } from '@/components/product/ProductGrid'
 import { ProductGridSkeleton } from '@/components/Skeleton'
 import { useI18n } from '@/hooks/use-i18n'
 import { cn } from '@/utils/cn'
+import { ui } from '@/lib/ui-classes'
 
 type Props = {
   className?: string
@@ -73,7 +74,7 @@ export function EmptyCartPrompt({ className, compact = false, showSuggestions = 
       <h2 className={cn('font-semibold text-idl-graphite', compact ? 'mt-3 text-base' : 'mt-4 text-lg')}>
         {title}
       </h2>
-      <p className={cn('text-idl-muted', compact ? 'mt-1 text-sm' : 'mt-2 text-sm max-w-md mx-auto')}>
+      <p className={cn('text-idl-muted', compact ? 'mt-1 text-sm' : 'mx-auto mt-2 max-w-md text-sm')}>
         {description}
       </p>
       {actions}
@@ -88,7 +89,7 @@ export function EmptyCartPrompt({ className, compact = false, showSuggestions = 
                 <Link
                   to={`/catalogo?category=${encodeURIComponent(c.slug)}`}
                   onClick={onNavigate}
-                  className="inline-block rounded-full border border-idl-border bg-white px-3 py-1 text-sm text-idl-ink-soft hover:border-idl-border-strong"
+                  className={cn(ui.chipInteractive, 'inline-block')}
                 >
                   {c.name}
                 </Link>
@@ -103,7 +104,7 @@ export function EmptyCartPrompt({ className, compact = false, showSuggestions = 
   if (showSuggestions) {
     return (
       <div className={className}>
-        <div className="rounded-xl border border-dashed border-idl-border bg-white px-6 py-10 text-center">
+        <div className={cn(ui.panel, 'border-dashed px-6 py-10 text-center')}>
           {body}
         </div>
         <section className="mt-10">
@@ -126,8 +127,8 @@ export function EmptyCartPrompt({ className, compact = false, showSuggestions = 
       className={cn(
         'text-center',
         compact
-          ? 'rounded-xl border border-dashed border-idl-border bg-idl-cream/80 px-4 py-5'
-          : 'rounded-xl border border-dashed border-idl-border bg-white px-6 py-12',
+          ? 'rounded-lg border border-idl-border/60 bg-idl-tech-panel px-4 py-5'
+          : 'rounded-xl border border-dashed border-idl-border bg-idl-tech-panel px-6 py-12',
         className,
       )}
     >

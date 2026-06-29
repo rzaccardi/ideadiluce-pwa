@@ -48,6 +48,7 @@ export type AmbientiPopularLook = {
 
 export const AMBIENTI_HERO = {
   eyebrow: 'SHOP BY ROOM · SHOP THE LOOK',
+  h1: 'Ambienti',
   title: 'Trova la luce giusta per ogni ambiente',
   subtitle:
     'Scegli uno spazio, lasciati ispirare da ambienti reali e scopri i prodotti — e i componenti necessari — per ricreare lo stesso effetto luminoso a casa tua.',

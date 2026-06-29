@@ -10,6 +10,7 @@ import { JsonLdGraph } from '@/components/JsonLdGraph'
 import { buildArticleJsonLd } from '@/lib/seo/json-ld'
 import { getSiteUrl } from '@/lib/env'
 import { localizePath } from '@/lib/locale'
+import { getLegacySeoPage, type LegacySeoPageId } from '@/lib/legacy-seo-pages'
 
 const CONTENT_PAGE_PATHS: Partial<Record<SitePageKey, string>> = {
   'chi-siamo': '/chi-siamo',
@@ -19,9 +20,16 @@ const CONTENT_PAGE_PATHS: Partial<Record<SitePageKey, string>> = {
   pagamenti: '/pagamenti',
   garanzia: '/garanzia',
   contatti: '/contatti',
-  privacy: '/privacy',
+  privacy: '/privacy-policy',
   cookie: '/cookie',
-  'prodotto-non-trovato': '/prodotto-non-trovato',
+  termini: '/tos',
+  'prodotto-non-trovato': '/on-demand',
+}
+
+const LEGACY_CONTENT_SEO: Partial<Record<SitePageKey, LegacySeoPageId>> = {
+  privacy: 'privacy-policy',
+  termini: 'tos',
+  'prodotto-non-trovato': 'on-demand',
 }
 
 const CONTENT_PAGE_FALLBACKS: Partial<Record<SitePageKey, { title: string; description?: string }>> = {
@@ -32,17 +40,29 @@ const CONTENT_PAGE_FALLBACKS: Partial<Record<SitePageKey, { title: string; descr
   pagamenti: { title: 'Pagamenti' },
   garanzia: { title: 'Garanzia e resi' },
   contatti: { title: 'Contatti' },
-  privacy: { title: 'Privacy' },
-  cookie: { title: 'Cookie' },
-  'prodotto-non-trovato': { title: 'Prodotto non trovato', description: 'Richiedi un prodotto non in catalogo.' },
+  cookie: { title: 'Cookie Policy', description: 'Uso dei cookie e tecnologie simili.' },
 }
 
 export function createContentPageRoute(pageKey: SitePageKey) {
   const path = CONTENT_PAGE_PATHS[pageKey]
-  const fallback = CONTENT_PAGE_FALLBACKS[pageKey]
 
   async function generateMetadata(): Promise<Metadata> {
-    if (!path || !fallback) return {}
+    if (!path) return {}
+
+    const legacyId = LEGACY_CONTENT_SEO[pageKey]
+    if (legacyId) {
+      const legacy = getLegacySeoPage(legacyId)
+      return buildContentPageMetadata({
+        pageKey,
+        path,
+        fallbackTitle: legacy.title,
+        fallbackDescription: legacy.description,
+      })
+    }
+
+    const fallback = CONTENT_PAGE_FALLBACKS[pageKey]
+    if (!fallback) return {}
+
     return buildContentPageMetadata({
       pageKey,
       path,

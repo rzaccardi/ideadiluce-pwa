@@ -16,7 +16,7 @@ export const DC_HOME_RESPONSIVE_CSS = `
     position: sticky;
     top: var(--dc-home-chrome-top);
     z-index: 20;
-    border-bottom: 1px solid #e6dcc9;
+    border-bottom: 1px solid #e4e3de;
   }
 
   [data-dc-static-root][data-dc-home] [data-dc-section="search"] > div {
@@ -117,7 +117,7 @@ export const DC_HOME_RESPONSIVE_CSS = `
   [data-dc-static-root][data-dc-home] [data-dc-section="hero"] > div:last-child {
     padding: 34px 22px 32px !important;
     border-left: none !important;
-    border-bottom: 1px solid #eef0f3 !important;
+    border-bottom: 1px solid #ededea !important;
   }
 
   [data-dc-static-root][data-dc-home] [data-dc-section="hero"] > div:last-child > div > div:nth-child(1) {

@@ -32,7 +32,7 @@ export function ImpersonationBanner() {
         <button
           type="button"
           onClick={() => void endImpersonation()}
-          className="shrink-0 rounded-md border border-amber-400 bg-white px-3 py-1.5 font-medium text-amber-950 hover:bg-amber-100"
+          className="shrink-0 rounded-md border border-amber-400 bg-idl-tech-panel px-3 py-1.5 font-medium text-amber-950 hover:bg-amber-100"
         >
           {t('impersonation.banner.end')}
         </button>

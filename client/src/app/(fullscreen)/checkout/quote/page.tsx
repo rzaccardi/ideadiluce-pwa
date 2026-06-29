@@ -5,7 +5,7 @@ const CheckoutQuotePage = dynamic(
   () => import('@/views/CheckoutQuotePage').then((mod) => mod.CheckoutQuotePage),
   {
     loading: () => (
-      <div className="checkout-root min-h-screen bg-white">
+      <div className="checkout-root min-h-screen bg-idl-tech-panel">
         <CheckoutStripeBootstrapSkeleton />
       </div>
     ),

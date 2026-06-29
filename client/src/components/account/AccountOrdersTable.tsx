@@ -52,7 +52,7 @@ export function AccountOrdersTable({ orders }: { orders: readonly OrderDTO[] }) 
   }
 
   return (
-    <div className="w-full overflow-x-auto rounded-md border border-zinc-200 bg-white">
+    <div className="w-full overflow-x-auto rounded-md border border-zinc-200 bg-idl-tech-panel">
       <table className="w-full min-w-[640px] text-left text-sm">
         <thead>
           <tr className="border-b border-zinc-200 bg-zinc-50/80">

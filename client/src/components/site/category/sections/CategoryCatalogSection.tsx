@@ -92,7 +92,7 @@ export function CategoryCatalogSection({
             className={cn(
               'flex w-full items-center justify-between rounded-lg border px-4 py-3 text-[14px] font-semibold',
               isDesign
-                ? 'border-idl-path-design-border bg-white text-idl-ink'
+                ? 'border-idl-path-design-border bg-idl-tech-panel text-idl-ink'
                 : 'border-idl-tech-border bg-idl-tech-panel text-idl-ink',
             )}
           >
@@ -103,7 +103,7 @@ export function CategoryCatalogSection({
             <div
               className={cn(
                 'mt-3 rounded-lg border p-4',
-                isDesign ? 'border-idl-path-design-border bg-white' : 'border-idl-tech-border bg-white',
+                isDesign ? 'border-idl-path-design-border bg-idl-tech-panel' : 'border-idl-tech-border bg-idl-tech-panel',
               )}
             >
               <CategoryFilterSidebar {...filterSidebarProps} sticky={false} />

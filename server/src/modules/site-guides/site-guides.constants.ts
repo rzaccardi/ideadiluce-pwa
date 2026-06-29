@@ -1,6 +1,6 @@
 import type { ContentPageKey } from '../site/site-content-pages.defaults.js'
 
-export const GUIDE_CATEGORIES = ['BASE', 'ATTACCHI', 'TECNICO', 'ACQUISTO', 'AMBIENTE', 'GLOSSARIO'] as const
+export const GUIDE_CATEGORIES = ['BASE', 'ATTACCHI', 'TECNICO', 'ACQUISTO', 'AMBIENTE', 'ARREDO', 'GLOSSARIO'] as const
 export type GuideCategory = (typeof GUIDE_CATEGORIES)[number]
 
 export type GuideSeed = {
@@ -13,6 +13,9 @@ export type GuideSeed = {
 }
 
 export const DEFAULT_SITE_GUIDES: GuideSeed[] = [
+  { slug: 'luce-calda-o-fredda', category: 'ARREDO', readingMeta: 'Giugno 2024', sortOrder: 5, indexed: true, featured: true },
+  { slug: 'calipso-artemide-io-vengo-dalla-luna', category: 'ARREDO', readingMeta: 'Giugno 2024', sortOrder: 6, indexed: true, featured: true },
+  { slug: 'la-natura-trend-2024', category: 'ARREDO', readingMeta: 'Giugno 2024', sortOrder: 7, indexed: true, featured: true },
   { slug: 'luce-calda-naturale-fredda', category: 'BASE', readingMeta: '5 min', sortOrder: 10, indexed: true, featured: true },
   { slug: 'scegliere-lampadina-led', category: 'BASE', readingMeta: '5 min', sortOrder: 20, indexed: true, featured: true },
   { slug: 'gu10-gu53', category: 'ATTACCHI', readingMeta: '4 min', sortOrder: 30, indexed: true, featured: false },

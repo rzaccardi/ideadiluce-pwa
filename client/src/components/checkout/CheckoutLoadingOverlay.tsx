@@ -159,13 +159,13 @@ export function CheckoutLoadingOverlay({ icon, messageKey }: Props) {
       aria-live="polite"
       aria-busy="true"
     >
-      <div className="flex w-full max-w-[min(100%,20rem)] flex-col items-center gap-4 rounded-[20px] bg-white px-6 py-8 shadow-[0_30px_80px_rgba(0,0,0,0.34)] sm:max-w-xs sm:gap-5 sm:px-10 sm:py-9">
+      <div className="flex w-full max-w-[min(100%,20rem)] flex-col items-center gap-4 rounded-[20px] bg-idl-tech-panel px-6 py-8 shadow-[0_30px_80px_rgba(0,0,0,0.34)] sm:max-w-xs sm:gap-5 sm:px-10 sm:py-9">
         <div className="relative flex size-[76px] items-center justify-center">
           <CheckoutLoadingRing />
           <LoadingIcon icon={icon} />
         </div>
         <div className="text-center">
-          <p className="text-[14.5px] font-bold text-[#14161b]">{t(messageKey)}</p>
+          <p className="text-[14.5px] font-bold text-idl-graphite">{t(messageKey)}</p>
           <p className="mt-1 text-xs text-[#9298a3]">{t('checkout.loading.dontClose')}</p>
         </div>
       </div>

@@ -74,7 +74,7 @@ export function ForgotPasswordModal({ open, initialEmail = '', onClose }: Props)
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col bg-white sm:items-center sm:justify-center sm:bg-idl-backdrop sm:p-4"
+      className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col bg-idl-tech-panel sm:items-center sm:justify-center sm:bg-idl-backdrop sm:p-4"
       role="presentation"
       onClick={() => {
         if (!loading) onClose()
@@ -85,19 +85,19 @@ export function ForgotPasswordModal({ open, initialEmail = '', onClose }: Props)
         aria-modal="true"
         aria-labelledby="forgot-password-title"
         className={cn(
-          'flex h-full w-full flex-col bg-white sm:h-auto sm:max-h-[min(100dvh,640px)] sm:max-w-md sm:overflow-hidden sm:rounded-2xl sm:shadow-xl sm:shadow-idl-ink/10',
+          'flex h-full w-full flex-col bg-idl-tech-panel sm:h-auto sm:max-h-[min(100dvh,640px)] sm:max-w-md sm:overflow-hidden sm:rounded-2xl sm:shadow-xl sm:shadow-idl-ink/10',
         )}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-[#e7eaee] px-4 py-3.5 sm:px-6">
-          <h2 id="forgot-password-title" className="text-lg font-extrabold tracking-[-0.01em] text-[#14161b]">
+        <div className="flex items-center justify-between border-b border-idl-tech-border px-4 py-3.5 sm:px-6">
+          <h2 id="forgot-password-title" className="text-lg font-extrabold tracking-[-0.01em] text-idl-graphite">
             {t('forgot.title')}
           </h2>
           <button
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="rounded-lg px-2 py-1 text-sm font-semibold text-[#6c727c] hover:text-[#14161b] disabled:opacity-50"
+            className="rounded-lg px-2 py-1 text-sm font-semibold text-idl-muted hover:text-idl-graphite disabled:opacity-50"
           >
             {t('common.close')}
           </button>

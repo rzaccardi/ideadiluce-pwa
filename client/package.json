@@ -8,23 +8,21 @@
     "build": "next build",
     "start": "next start --port 3000",
     "lint": "eslint .",
-    "prepare:dc-shell": "node scripts/prepare-dc-shell.mjs",
-    "prepare:home-html": "node scripts/prepare-dc-html.mjs \"docs/Home - desktop.dc.html\" \"src/templates/home-desktop.html\" --content-only",
-    "prepare:categoria-arredo-html": "node scripts/prepare-dc-html.mjs \"docs/Categoria Arredo - desktop.dc.html\" \"src/templates/categoria-arredo-desktop.html\" --content-only",
-    "prepare:categoria-tecnica-html": "node scripts/prepare-dc-html.mjs \"docs/Categoria Tecnica - desktop.dc.html\" \"src/templates/categoria-tecnica-desktop.html\" --content-only",
-    "unpack:professionisti-dc": "node scripts/unpack-bundled-dc.mjs \"docs/IdeaDiLuce - Professionisti.html\"",
-    "prepare:professionisti-html": "npm run unpack:professionisti-dc && node scripts/prepare-dc-html.mjs \"docs/IdeaDiLuce - Professionisti.dc.html\" \"src/templates/professionisti-desktop.html\" --content-only"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "benchmark:catalog-search": "node scripts/benchmark-catalog-search.mjs"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^6.5.0",
     "@stripe/stripe-js": "^9.7.0",
+    "@tailwindcss/postcss": "^4.2.2",
     "circle-flags": "^2.8.3",
+    "lottie-react": "^2.4.1",
     "motion": "^12.42.0",
     "next": "^15.5.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "sonner": "^2.0.7",
-    "@tailwindcss/postcss": "^4.2.2",
     "tailwindcss": "^4.2.2",
     "valtio": "^2.3.1",
     "zod": "^4.4.3"
@@ -39,6 +37,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "globals": "^17.4.0",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.57.0"
+    "typescript-eslint": "^8.57.0",
+    "vitest": "^3.2.6"
   }
 }

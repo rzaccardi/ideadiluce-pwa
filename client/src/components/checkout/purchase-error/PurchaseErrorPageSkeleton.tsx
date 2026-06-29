@@ -8,7 +8,7 @@ export function PurchaseErrorPageSkeleton() {
   const { t } = useI18n()
 
   return (
-    <div className="bg-white" role="status" aria-label={t('paymentResult.loading')}>
+    <div className="bg-idl-tech-panel" role="status" aria-label={t('paymentResult.loading')}>
       <SectionContainer className="max-w-[1100px] py-4">
         <Skeleton className="h-8 w-40" />
       </SectionContainer>

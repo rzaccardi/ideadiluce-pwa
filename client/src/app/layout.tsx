@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     default: 'Idea di Luce',
     template: '%s | Idea di Luce',
   },
-  description: 'Illuminazione per casa e professionisti',
+  description: 'La luce pensata. Illuminazione per casa e professionisti.',
   manifest: '/manifest.webmanifest',
   icons: {
     icon: '/icons.svg',
@@ -41,7 +41,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <body className="flex min-h-screen flex-col" suppressHydrationWarning>
         <Script id="idl-theme-init" strategy="beforeInteractive">
-          {`(function(){try{var t=localStorage.getItem('idl-theme');if(t==='dark'){document.documentElement.dataset.theme='dark';document.documentElement.style.colorScheme='dark'}}catch(e){}})();`}
+          {`(function(){try{var t=localStorage.getItem('idl-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t==='dark'?'dark':'light'}else{delete document.documentElement.dataset.theme;document.documentElement.style.colorScheme='light'}}catch(e){}})();`}
         </Script>
         <Script id="legacy-sw-cleanup" strategy="beforeInteractive">
           {`(function(){if(!('serviceWorker'in navigator))return;var k='idl-sw-clean';if(sessionStorage.getItem(k))return;navigator.serviceWorker.getRegistrations().then(function(r){if(!r.length)return;return Promise.all(r.map(function(x){return x.unregister()}))}).then(function(changed){if(!window.caches)return changed;return caches.keys().then(function(keys){return Promise.all(keys.map(function(key){return caches.delete(key)}))}).then(function(){return changed})}).then(function(changed){if(changed){sessionStorage.setItem(k,'1');location.reload()}})})();`}

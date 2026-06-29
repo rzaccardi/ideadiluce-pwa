@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { authRouter } from '../../modules/auth/auth.routes.js'
 import { catalogRouter } from '../../modules/catalog/catalog.routes.js'
+import { searchRouter, searchAnalyticsAdminRouter } from '../../modules/search/search.routes.js'
 import { wishlistRouter } from '../../modules/wishlist/wishlist.routes.js'
 import { cartRouter } from '../../modules/cart/cart.routes.js'
 import { checkoutRouter } from '../../modules/checkout/checkout.routes.js'
@@ -28,6 +29,8 @@ import { invoicesRouter } from '../../modules/invoices/invoices.routes.js'
 import { integrationLogsAdminRouter } from '../../modules/integration-logs-admin/integration-logs-admin.routes.js'
 import { documentDownloadsAdminRouter } from '../../modules/document-downloads-admin/document-downloads-admin.routes.js'
 import { restockAdminRouter } from '../../modules/restock-admin/restock-admin.routes.js'
+import { wpSeoMigrationAdminRouter } from '../../modules/wp-seo-migration/wp-seo-migration.admin.routes.js'
+import { wpSeoMigrationIngestRouter } from '../../modules/wp-seo-migration/wp-seo-migration.ingest.routes.js'
 
 import { taxAdminRouter } from '../../modules/tax/tax.admin.routes.js'
 import { taxRouter, vatRouter } from '../../modules/tax/tax.routes.js'
@@ -37,8 +40,11 @@ export const v1Router = Router()
 v1Router.use('/auth', authRouter)
 v1Router.use('/address', addressRouter)
 v1Router.use('/catalog', catalogRouter)
+v1Router.use('/search', searchRouter)
+v1Router.use('/admin/search-analytics', searchAnalyticsAdminRouter)
 v1Router.use('/seo', seoRouter)
 v1Router.use('/admin/seo', seoAdminRouter)
+v1Router.use('/admin/wp-seo-migration', wpSeoMigrationAdminRouter)
 v1Router.use('/site', siteRouter)
 v1Router.use('/site/professional-requests', professionalAccountRouter)
 v1Router.use('/admin/site', siteAdminRouter)
@@ -66,3 +72,4 @@ v1Router.use('/payments', paymentsRouter)
 v1Router.use('/orders', ordersRouter)
 v1Router.use('/users', usersRouter)
 v1Router.use('/integrations', integrationsApiRouter)
+v1Router.use('/integrations/wp-seo-migration', wpSeoMigrationIngestRouter)

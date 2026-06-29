@@ -85,7 +85,7 @@ export function WishlistItemCard({
   return (
     <article
       className={cn(
-        'flex flex-col overflow-hidden rounded-lg border border-idl-border bg-white',
+        'flex flex-col overflow-hidden rounded-lg border border-idl-border bg-idl-tech-panel',
         className,
       )}
     >

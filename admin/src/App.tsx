@@ -15,6 +15,8 @@ import { AbandonedCartDetailPage } from '@/pages/abandoned-carts/abandoned-cart-
 import { GuidesListPage } from '@/pages/guides/guides-list-page'
 import { GuideDetailPage } from '@/pages/guides/guide-detail-page'
 import { SeoPage } from '@/pages/seo/seo-page'
+import { SeoMigrationListPage } from '@/pages/seo/seo-migration-list-page'
+import { SeoMigrationDetailPage } from '@/pages/seo/seo-migration-detail-page'
 import { SitePagesListPage } from '@/pages/site/site-pages-list-page'
 import { SitePageDetailPage } from '@/pages/site/site-page-detail-page'
 import { ProfessionalRequestsPage } from '@/pages/professional-requests/professional-requests-page'
@@ -22,6 +24,7 @@ import { ProfessionalRequestDetailPage } from '@/pages/professional-requests/pro
 import { TaxRulesPage } from '@/pages/tax-rules/tax-rules-page'
 import { IntegrationLogsPage } from '@/pages/integration-logs/integration-logs-page'
 import { DocumentDownloadsPage } from '@/pages/document-downloads/document-downloads-page'
+import { SearchAnalyticsPage } from '@/pages/search-analytics/search-analytics-page'
 import { SyncQueuePage } from '@/pages/sync-queue/sync-queue-page'
 import { OdooPricelistsPage } from '@/pages/odoo/pricelists-page'
 import { OdooQuotationDetailPage } from '@/pages/odoo/quotation-detail-page'
@@ -47,6 +50,7 @@ export function App() {
               <Route path="tax-rules" element={<TaxRulesPage />} />
               <Route path="integration-logs" element={<IntegrationLogsPage />} />
               <Route path="document-downloads" element={<DocumentDownloadsPage />} />
+              <Route path="search-analytics" element={<SearchAnalyticsPage />} />
               <Route path="odoo/quotations" element={<OdooQuotationsPage />} />
               <Route path="odoo/quotations/:id" element={<OdooQuotationDetailPage />} />
               <Route path="odoo/pricelists" element={<OdooPricelistsPage />} />
@@ -57,6 +61,8 @@ export function App() {
               <Route path="guides" element={<GuidesListPage />} />
               <Route path="guides/:slug" element={<GuideDetailPage />} />
               <Route path="seo" element={<SeoPage />} />
+              <Route path="seo/migration" element={<SeoMigrationListPage />} />
+              <Route path="seo/migration/:id" element={<SeoMigrationDetailPage />} />
               <Route path="professional-requests" element={<ProfessionalRequestsPage />} />
               <Route path="professional-requests/:id" element={<ProfessionalRequestDetailPage />} />
             </Route>

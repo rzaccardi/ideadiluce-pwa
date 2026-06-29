@@ -27,7 +27,7 @@ export function ShopTheLookSection({ lp }: Props) {
         </div>
 
         <div className="grid items-start gap-8 lg:grid-cols-[1.5fr_1fr] lg:gap-9">
-          <div className="relative overflow-hidden rounded-lg shadow-[0_0_90px_rgba(240,173,87,0.10)]">
+          <div className="relative overflow-hidden rounded-lg shadow-[0_0_90px_rgba(201, 162, 75,0.10)]">
             <div className="relative aspect-[4/3] bg-idl-design-elevated">
               <SiteImage src={look.imageUrl} alt={look.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 60vw" />
               {look.hotspots.map((hotspot) => {
@@ -40,7 +40,7 @@ export function ShopTheLookSection({ lp }: Props) {
                     onClick={() => setActiveId(isActive ? null : hotspot.id)}
                     className={cn(
                       'ambienti-hotspot absolute flex size-[30px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white text-[14px] font-extrabold text-idl-design transition',
-                      isActive ? 'bg-white' : 'bg-idl-glow',
+                      isActive ? 'bg-idl-tech-panel' : 'bg-idl-glow',
                     )}
                     style={{
                       left: hotspot.left,
@@ -84,7 +84,7 @@ export function ShopTheLookSection({ lp }: Props) {
             ) : null}
           </div>
 
-          <div className="rounded-xl border border-white/7 bg-[#1b160f] p-5 sm:p-6">
+          <div className="rounded-xl border border-white/7 bg-[#0c0c0d] p-5 sm:p-6">
             <h3 className="font-serif text-[19px] text-idl-design-fg sm:text-[21px]">Prodotti in questo look</h3>
             <p className="mt-1 text-[13px] text-idl-design-dim">Visibili nella foto + componenti necessari.</p>
 
@@ -143,7 +143,7 @@ export function ShopTheLookSection({ lp }: Props) {
           </div>
         </div>
 
-        <div className="mt-6 flex flex-col items-start gap-3 rounded-[10px] border border-idl-glow/20 bg-[#241d12] p-4 sm:flex-row sm:items-center sm:gap-3.5 sm:p-5">
+        <div className="mt-6 flex flex-col items-start gap-3 rounded-[10px] border border-idl-glow/20 bg-[#1a1a1b] p-4 sm:flex-row sm:items-center sm:gap-3.5 sm:p-5">
           <span className="shrink-0 rounded bg-idl-glow px-2.5 py-1 font-mono text-[10.5px] tracking-[0.1em] text-idl-design">
             CONSIGLIO
           </span>

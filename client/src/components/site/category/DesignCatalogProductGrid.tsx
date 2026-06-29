@@ -19,7 +19,7 @@ export function DesignCatalogProductCard({ product, lp, discoverLabel = 'Scopri 
     <HoverLift className="h-full">
       <Link
         to={lp(`/prodotto/${product.slug}`)}
-        className="group flex h-full flex-col overflow-hidden rounded border border-idl-path-design-border bg-white transition hover:border-idl-brass hover:shadow-[0_6px_20px_rgba(0,0,0,0.06)]"
+        className="group flex h-full flex-col overflow-hidden rounded border border-idl-path-design-border bg-idl-tech-panel transition hover:border-idl-brass hover:shadow-[0_6px_20px_rgba(0,0,0,0.06)]"
       >
         <div className="relative aspect-[4/5] overflow-hidden bg-idl-cream">
           {product.imageUrl ? (

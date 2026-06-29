@@ -66,7 +66,7 @@ export function DesignProductShowcase({
 }: ShowcaseProps) {
   return (
     <section className="relative overflow-hidden bg-idl-design text-idl-design-fg">
-      <div className="pointer-events-none absolute top-10 -left-16 size-[420px] rounded-full bg-[radial-gradient(circle,rgba(240,173,87,0.16)_0%,transparent_70%)]" />
+      <div className="pointer-events-none absolute top-10 -left-16 size-[420px] rounded-full bg-[radial-gradient(circle,rgba(201, 162, 75,0.16)_0%,transparent_70%)]" />
       <SectionContainer className="relative z-[2] py-14">
         <SiteSectionHeader
           eyebrow={eyebrow}

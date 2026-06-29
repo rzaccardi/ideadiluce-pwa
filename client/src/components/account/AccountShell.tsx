@@ -35,14 +35,14 @@ export function AccountShell({ user, nav, children }: Props) {
       <div className={accountDcUserBandClass}>
         <SectionContainer className="flex flex-wrap items-center gap-[18px] py-7 sm:py-8">
           <div
-            className="flex size-[58px] shrink-0 items-center justify-center rounded-full bg-[#16130d] font-serif text-2xl font-semibold text-[#f0ad57]"
+            className="flex size-[58px] shrink-0 items-center justify-center rounded-full bg-[#0c0c0d] font-serif text-2xl font-semibold text-[#c9a24b]"
             aria-hidden
           >
             {userInitial(user)}
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="text-[23px] font-extrabold tracking-[-0.02em] text-[#14161b]">{greeting}</h1>
-            <p className="text-[13.5px] text-[#6c727c]">
+            <h1 className="text-[23px] font-extrabold tracking-[-0.02em] text-idl-graphite">{greeting}</h1>
+            <p className="text-[13.5px] text-idl-muted">
               {displayEmail}
               {user.isProfessional ? ` · ${t('account.overview.professionalActive')}` : null}
             </p>

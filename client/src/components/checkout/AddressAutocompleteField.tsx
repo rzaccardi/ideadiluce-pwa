@@ -72,8 +72,8 @@ export function AddressAutocompleteField({
   }, [])
 
   const inputClass = isStripe
-    ? 'block w-full bg-white px-3 py-3 text-[15px] text-zinc-900 outline-none placeholder:text-zinc-400 focus:ring-2 focus:ring-amber-300/60 focus:ring-inset disabled:opacity-60'
-    : 'w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:ring-2 focus:ring-zinc-400 disabled:opacity-60'
+    ? 'block w-full bg-idl-tech-panel px-3 py-3 text-[15px] text-zinc-900 outline-none placeholder:text-zinc-400 focus:ring-2 focus:ring-amber-300/60 focus:ring-inset disabled:opacity-60'
+    : 'w-full rounded-lg border border-zinc-300 bg-idl-tech-panel px-3 py-2 text-zinc-900 outline-none focus:ring-2 focus:ring-zinc-400 disabled:opacity-60'
 
   function updateDropdownRect() {
     const el = inputRef.current
@@ -182,7 +182,7 @@ export function AddressAutocompleteField({
               width: dropdownRect.width,
               zIndex: 9999,
             }}
-            className="max-h-56 overflow-auto rounded-md border border-zinc-200 bg-white py-1 shadow-lg"
+            className="max-h-56 overflow-auto rounded-md border border-zinc-200 bg-idl-tech-panel py-1 shadow-lg"
           >
             {suggestions.map((item, index) => (
               <li key={item.id} role="option" aria-selected={index === activeIndex}>

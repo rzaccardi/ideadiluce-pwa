@@ -125,7 +125,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
       <section className="relative overflow-hidden bg-idl-design">
         <div
           aria-hidden
-          className="pointer-events-none absolute top-10 right-[8%] hidden h-[540px] w-[540px] rounded-full bg-[radial-gradient(circle,rgba(240,173,87,0.20)_0%,rgba(240,173,87,0)_68%)] animate-idl-glow-drift lg:block"
+          className="pointer-events-none absolute top-10 right-[8%] hidden h-[540px] w-[540px] rounded-full bg-[radial-gradient(circle,rgba(201, 162, 75,0.20)_0%,rgba(201, 162, 75,0)_68%)] animate-idl-glow-drift lg:block"
         />
         <ProductDetailBreadcrumb items={breadcrumbItems} lp={lp} variant="design" inHero />
 
@@ -251,7 +251,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
       </section>
 
       {/* STORIA */}
-      <section className="border-t border-white/6 bg-[#1b160f]">
+      <section className="border-t border-white/6 bg-[#0c0c0d]">
         <SectionContainer narrow className="py-12 text-center sm:py-16">
           <ProductDetailSectionLabel variant="design" className="mb-6 tracking-[0.22em]">
             LA STORIA
@@ -476,7 +476,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
             {[1, 2, 3].map((n) => (
               <div
                 key={n}
-                className="rounded-xl border border-idl-path-design-border bg-white p-[26px] opacity-70"
+                className="rounded-xl border border-idl-path-design-border bg-idl-tech-panel p-[26px] opacity-70"
               >
                 <div className="mb-3.5 text-[15px] tracking-[2px] text-[#e0a85a]">★★★★★</div>
                 <ProductDetailPlaceholder className="block font-serif text-[17px] leading-[1.55] not-italic text-[#2a241c]">
@@ -491,7 +491,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
       {/* Designer placeholder */}
       <section className="border-t border-white/6 bg-idl-design">
         <SectionContainer className="grid items-center gap-10 py-14 sm:gap-14 lg:grid-cols-[0.8fr_1.2fr] lg:py-16">
-          <div className="relative aspect-[4/5] overflow-hidden rounded bg-idl-design-elevated shadow-[0_0_70px_rgba(240,173,87,0.08)]">
+          <div className="relative aspect-[4/5] overflow-hidden rounded bg-idl-design-elevated shadow-[0_0_70px_rgba(201, 162, 75,0.08)]">
             <div className="flex h-full items-center justify-center text-sm text-idl-design-dim">
               <ProductDetailPlaceholder>Ritratto designer — in arrivo</ProductDetailPlaceholder>
             </div>

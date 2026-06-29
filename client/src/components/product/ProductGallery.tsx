@@ -113,7 +113,7 @@ export function ProductGallery({ images, alt, activeUrl }: Props) {
         >
           <button
             type="button"
-            className="absolute right-4 top-4 rounded-full bg-white/10 px-3 py-1 text-sm text-white hover:bg-white/20"
+            className="absolute right-4 top-4 rounded-full bg-idl-tech-panel/10 px-3 py-1 text-sm text-white hover:bg-idl-tech-panel/20"
             onClick={() => setLightboxOpen(false)}
           >
             Chiudi
@@ -122,7 +122,7 @@ export function ProductGallery({ images, alt, activeUrl }: Props) {
             <>
               <button
                 type="button"
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-white hover:bg-white/20 sm:left-4"
+                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-idl-tech-panel/10 px-3 py-2 text-white hover:bg-idl-tech-panel/20 sm:left-4"
                 onClick={(e) => {
                   e.stopPropagation()
                   goPrev()
@@ -133,7 +133,7 @@ export function ProductGallery({ images, alt, activeUrl }: Props) {
               </button>
               <button
                 type="button"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-white hover:bg-white/20 sm:right-4"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-idl-tech-panel/10 px-3 py-2 text-white hover:bg-idl-tech-panel/20 sm:right-4"
                 onClick={(e) => {
                   e.stopPropagation()
                   goNext()

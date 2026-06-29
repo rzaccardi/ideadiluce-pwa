@@ -85,7 +85,7 @@ export function ProductCard({ product, className }: Props) {
   return (
     <article
       className={cn(
-        'relative flex h-full flex-col overflow-hidden rounded-lg border border-idl-tech-border bg-white transition hover:border-idl-border-strong',
+        'relative flex h-full flex-col overflow-hidden rounded-lg border border-idl-tech-border bg-idl-tech-panel transition hover:border-idl-border-strong',
         className,
       )}
     >

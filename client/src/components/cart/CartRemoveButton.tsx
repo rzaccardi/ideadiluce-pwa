@@ -26,7 +26,7 @@ export function CartRemoveButton({
       disabled={disabled}
       className={cn(
         'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-red-600 transition disabled:cursor-not-allowed disabled:opacity-50',
-        dark ? 'hover:bg-white/10 hover:text-red-400' : 'hover:bg-red-50 hover:text-red-700',
+        dark ? 'hover:bg-idl-tech-panel/10 hover:text-red-400' : 'hover:bg-red-50 hover:text-red-700',
         className,
       )}
       aria-label={t('cart.remove')}

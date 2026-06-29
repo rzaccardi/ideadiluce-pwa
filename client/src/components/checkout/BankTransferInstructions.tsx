@@ -46,8 +46,8 @@ function CopyButton({
         copied
           ? 'bg-zinc-900 text-white'
           : dark
-            ? 'border border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-50'
-            : 'border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50',
+            ? 'border border-zinc-300 bg-idl-tech-panel text-zinc-900 hover:bg-zinc-50'
+            : 'border border-zinc-200 bg-idl-tech-panel text-zinc-900 hover:bg-zinc-50',
       )}
     >
       {copied ? t('bankTransfer.copied') : label}
@@ -135,7 +135,7 @@ function BankTransferTable({ instructions, showCopyAll }: Props) {
                 key={row.labelKey}
                 className={cn(
                   index > 0 && 'border-t border-zinc-200',
-                  row.highlight ? 'bg-white' : 'bg-zinc-50',
+                  row.highlight ? 'bg-idl-tech-panel' : 'bg-zinc-50',
                 )}
               >
                 <th

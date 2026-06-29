@@ -18,7 +18,7 @@ function SupportCard({ card, lp }: { card: CategorySupportCard; lp: LocalePathFn
         </Link>
         <Link
           to={lp(card.secondaryCta.href)}
-          className="rounded-md border border-idl-path-design-border bg-white px-4 py-2 text-[13px] font-bold text-idl-ink"
+          className="rounded-md border border-idl-path-design-border bg-idl-tech-panel px-4 py-2 text-[13px] font-bold text-idl-ink"
         >
           {card.secondaryCta.label}
         </Link>
@@ -34,7 +34,7 @@ type Props = {
 
 export function TechnicalCategoryHeroSection({ content, lp }: Props) {
   return (
-    <section className="border-b border-idl-tech-border bg-white">
+    <section className="border-b border-idl-tech-border bg-idl-tech-panel">
       <SectionContainer className="py-4 pb-6 sm:py-5 sm:pb-7">
         <CategoryBreadcrumb items={content.breadcrumb} lp={lp} variant="technical" />
         <div className="flex flex-col items-stretch justify-between gap-5 sm:gap-6 lg:flex-row lg:items-end">
@@ -70,7 +70,7 @@ export function TechnicalCategorySubtypeSection({
               <Link
                 key={chip.label}
                 to={lp(chip.href)}
-                className="shrink-0 rounded-full border border-idl-tech-border bg-white px-4 py-2 text-[13.5px] font-semibold whitespace-nowrap text-idl-graphite-2 transition hover:border-idl-amber"
+                className="shrink-0 rounded-full border border-idl-tech-border bg-idl-tech-panel px-4 py-2 text-[13.5px] font-semibold whitespace-nowrap text-idl-graphite-2 transition hover:border-idl-amber"
               >
                 {chip.label}
               </Link>
@@ -80,7 +80,7 @@ export function TechnicalCategorySubtypeSection({
                 className={
                   chip.active
                     ? 'shrink-0 rounded-full bg-idl-ink px-4 py-2 text-[13.5px] font-bold whitespace-nowrap text-white'
-                    : 'shrink-0 rounded-full border border-idl-tech-border bg-white px-4 py-2 text-[13.5px] font-semibold whitespace-nowrap text-idl-graphite-2'
+                    : 'shrink-0 rounded-full border border-idl-tech-border bg-idl-tech-panel px-4 py-2 text-[13.5px] font-semibold whitespace-nowrap text-idl-graphite-2'
                 }
               >
                 {chip.label}

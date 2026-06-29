@@ -73,7 +73,7 @@ export function ProductProfessionalBanner({ variant = 'design' }: Props) {
                   key={item}
                   className={cn(
                     'rounded-full px-3 py-1',
-                    isDesign ? 'border border-white/15' : 'border border-idl-tech-chip-border bg-white',
+                    isDesign ? 'border border-white/15' : 'border border-idl-tech-chip-border bg-idl-tech-panel',
                   )}
                 >
                   {item}
@@ -85,7 +85,7 @@ export function ProductProfessionalBanner({ variant = 'design' }: Props) {
             to={lp('/professionisti')}
             className={cn(
               'inline-flex shrink-0 items-center justify-center rounded-lg px-5 py-3.5 text-center text-[14px] font-bold sm:text-[14.5px]',
-              isDesign ? 'bg-idl-glow text-idl-design hover:bg-[#f7bd6f]' : 'bg-idl-amber text-white hover:bg-[#c2730f]',
+              isDesign ? 'bg-idl-glow text-idl-design hover:bg-[#f7bd6f]' : 'bg-idl-amber text-white hover:bg-[#b08e3e]',
             )}
           >
             {COPY.ctaLabel}

@@ -51,8 +51,8 @@ export function ProductDetailStickyBar({
       className={cn(
         'sticky bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom,0px)]',
         isDesign
-          ? 'border-idl-glow/20 bg-[#1b160f]'
-          : 'border-idl-tech-border bg-white shadow-[0_-4px_16px_rgba(0,0,0,0.05)]',
+          ? 'border-idl-glow/20 bg-[#0c0c0d]'
+          : 'border-idl-tech-border bg-idl-tech-panel shadow-[0_-4px_16px_rgba(0,0,0,0.05)]',
       )}
     >
       <SectionContainer className="flex items-center justify-between gap-2 py-2.5 sm:gap-6 sm:py-3">
@@ -121,7 +121,7 @@ export function ProductDetailStickyBar({
               'min-w-0 shrink rounded-lg px-3 py-2.5 text-xs font-bold transition disabled:opacity-60 sm:px-6 sm:py-3 sm:text-sm',
               isDesign
                 ? 'bg-idl-glow text-idl-design hover:bg-[#f7bd6f]'
-                : 'bg-idl-amber text-white hover:bg-[#c2730f]',
+                : 'bg-idl-amber text-white hover:bg-[#b08e3e]',
             )}
           >
             {isAddingToCart ? (

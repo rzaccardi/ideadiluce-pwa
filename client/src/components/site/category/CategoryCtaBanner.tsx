@@ -51,7 +51,7 @@ export function CategoryCtaBanner({ banner, lp, variant = 'design' }: Props) {
                 'rounded border px-5 py-3 text-center text-[14px] font-semibold sm:text-[14.5px] sm:whitespace-nowrap',
                 isDesign
                   ? 'border-idl-design-dim text-idl-design-fg'
-                  : 'border-idl-path-design-border bg-white font-bold text-idl-ink',
+                  : 'border-idl-path-design-border bg-idl-tech-panel font-bold text-idl-ink',
               )}
             >
               {banner.secondaryCta.label}

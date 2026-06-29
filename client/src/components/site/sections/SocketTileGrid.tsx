@@ -26,7 +26,7 @@ export function SocketTileGrid({ items, lp, variant = 'home', stagger = 0.04 }: 
             <HoverLift>
               <Link
                 to={lp(tile.href)}
-                className="flex min-h-[120px] flex-col rounded-lg border border-idl-tech-border bg-white p-5 transition hover:border-idl-brass"
+                className="flex min-h-[120px] flex-col rounded-lg border border-idl-tech-border bg-idl-tech-panel p-5 transition hover:border-idl-brass"
               >
                 <div className="font-mono text-2xl font-bold tracking-tight text-idl-ink">
                   {tile.code ?? tile.title}

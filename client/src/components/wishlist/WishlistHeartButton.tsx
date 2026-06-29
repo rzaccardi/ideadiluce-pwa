@@ -96,7 +96,7 @@ export function WishlistHeartButton({
       disabled={disabled}
       onClick={() => void handleClick()}
       className={cn(
-        'inline-flex h-10 w-10 items-center justify-center rounded-full border bg-white transition disabled:cursor-not-allowed disabled:opacity-50',
+        'inline-flex h-10 w-10 items-center justify-center rounded-full border bg-idl-tech-panel transition disabled:cursor-not-allowed disabled:opacity-50',
         isFavorited
           ? 'border-rose-200 text-rose-500 hover:border-rose-300 hover:bg-rose-50'
           : 'border-idl-border text-idl-ink-soft hover:border-idl-border-strong hover:bg-idl-cream',

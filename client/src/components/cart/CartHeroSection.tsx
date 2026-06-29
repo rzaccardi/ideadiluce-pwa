@@ -19,7 +19,7 @@ export function CartHeroSection({ itemCount }: Props) {
       : tParams('cart.itemCountMany', { count: itemCount })
 
   return (
-    <section className="border-b border-idl-tech-border bg-white">
+    <section className="border-b border-idl-tech-border bg-idl-tech-panel">
       <SectionContainer className="py-6 sm:py-7">
         <div className="mb-3 font-mono text-[11.5px] text-idl-muted">
           <Link to={lp('/')} className="transition hover:text-idl-ink">

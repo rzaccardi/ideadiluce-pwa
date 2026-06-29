@@ -26,7 +26,7 @@ export function AttaccoGuideSection({ lp }: Props) {
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {ATTACCO_GUIDE_CARDS.map((card) => (
-            <div key={card.title} className="rounded-[10px] border border-idl-tech-border bg-white p-5 sm:p-6">
+            <div key={card.title} className="rounded-[10px] border border-idl-tech-border bg-idl-tech-panel p-5 sm:p-6">
               <h3 className="text-base font-bold text-idl-graphite">{card.title}</h3>
               <p className="mt-3 text-[13.5px] leading-relaxed text-idl-graphite-2">{card.body}</p>
             </div>

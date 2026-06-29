@@ -48,7 +48,7 @@ export function TechnicalCatalogProductCard({ product, lp, addLabel = 'Aggiungi'
 
   return (
     <HoverLift className="h-full">
-      <div className="flex h-full flex-col rounded-lg border border-idl-tech-border bg-white p-4 transition hover:border-idl-muted hover:shadow-md">
+      <div className="flex h-full flex-col rounded-lg border border-idl-tech-border bg-idl-tech-panel p-4 transition hover:border-idl-muted hover:shadow-md">
         <Link to={lp(`/prodotto/${product.slug}`)} className="block">
           <div className="mb-2 flex items-center justify-between">
             <span className={`text-[11px] font-bold ${stock.className}`}>{stock.label}</span>

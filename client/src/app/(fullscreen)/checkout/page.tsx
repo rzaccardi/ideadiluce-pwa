@@ -12,7 +12,7 @@ const CheckoutPage = dynamic(
   () => import('@/views/CheckoutPage').then((mod) => mod.CheckoutPage),
   {
     loading: () => (
-      <div className="checkout-root min-h-screen bg-white">
+      <div className="checkout-root min-h-screen bg-idl-tech-panel">
         <CheckoutStripeBootstrapSkeleton />
       </div>
     ),

@@ -32,7 +32,7 @@ export function AccountNav() {
           {t(item.labelKey)}
         </NavLink>
       ))}
-      <div className="mx-1.5 my-2 h-px bg-[#eef0f3]" aria-hidden />
+      <div className="mx-1.5 my-2 h-px bg-[#ededea]" aria-hidden />
       {ACCOUNT_SECONDARY_NAV.map((item) => (
         <NavLink
           key={item.to}

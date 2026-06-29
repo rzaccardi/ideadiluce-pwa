@@ -116,7 +116,7 @@ export function ProductRestockNotify({
             aria-labelledby={titleId}
             aria-describedby={descriptionId}
             onSubmit={(e) => void handleSubmit(e)}
-            className="w-full max-w-md space-y-4 rounded-xl border border-idl-border bg-white p-6 text-left shadow-xl shadow-zinc-950/10"
+            className="w-full max-w-md space-y-4 rounded-xl border border-idl-border bg-idl-tech-panel p-6 text-left shadow-xl shadow-zinc-950/10"
             onClick={(event) => event.stopPropagation()}
           >
             <div>

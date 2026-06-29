@@ -21,7 +21,7 @@ export function AmbientiView({ content, roomsLoading = false }: Props) {
   const lp = useLocalePath()
 
   return (
-    <div className="bg-white">
+    <div className="bg-idl-tech-panel">
       <Reveal immediate>
         <AmbientiHeroSection lp={lp} />
       </Reveal>

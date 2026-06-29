@@ -49,7 +49,7 @@ export function TechnicalCategoryView({
   lp,
 }: CatalogSectionProps) {
   return (
-    <div className="bg-white">
+    <div className="bg-idl-tech-panel">
       <Reveal immediate>
         <TechnicalCategoryHeroSection content={content} lp={lp} />
       </Reveal>

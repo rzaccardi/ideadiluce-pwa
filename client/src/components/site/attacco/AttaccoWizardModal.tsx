@@ -78,10 +78,10 @@ export function AttaccoWizardModal({
       aria-label="Trova il tuo attacco"
     >
       <div
-        className="max-h-[92vh] w-full max-w-[680px] overflow-auto rounded-2xl bg-white shadow-[0_30px_80px_rgba(0,0,0,0.4)]"
+        className="max-h-[92vh] w-full max-w-[680px] overflow-auto rounded-2xl bg-idl-tech-panel shadow-[0_30px_80px_rgba(0,0,0,0.4)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 flex items-center justify-between rounded-t-2xl border-b border-idl-tech-border bg-white px-5 py-4 sm:px-7">
+        <div className="sticky top-0 flex items-center justify-between rounded-t-2xl border-b border-idl-tech-border bg-idl-tech-panel px-5 py-4 sm:px-7">
           <div className="flex items-center gap-3 sm:gap-3.5">
             <div className="font-mono text-[11px] tracking-[0.18em] text-idl-amber">TROVA IL TUO ATTACCO</div>
             <div className="flex gap-1.5">
@@ -118,7 +118,7 @@ export function AttaccoWizardModal({
                     key={type.id}
                     type="button"
                     onClick={() => onStep(2)}
-                    className="flex items-center gap-3 rounded-[10px] border border-idl-tech-chip-border bg-white p-3.5 text-left transition hover:border-idl-amber hover:bg-[#fffdf9] sm:p-4"
+                    className="flex items-center gap-3 rounded-[10px] border border-idl-tech-chip-border bg-idl-tech-panel p-3.5 text-left transition hover:border-idl-amber hover:bg-[#fffdf9] sm:p-4"
                   >
                     <AttaccoSocketIcon icon={type.icon === 'goccia' ? 'E27' : type.icon === 'spot' ? 'GU10' : type.icon === 'lineare' ? 'R7s' : type.icon === 'sfera' ? 'G9' : 'altri'} size={30} />
                     <div>
@@ -152,7 +152,7 @@ export function AttaccoWizardModal({
                     key={option.key}
                     type="button"
                     onClick={() => onShape(option.key)}
-                    className="flex items-center gap-3.5 rounded-[10px] border border-idl-tech-chip-border bg-white p-3.5 text-left transition hover:border-idl-amber hover:bg-[#fffdf9] sm:px-4"
+                    className="flex items-center gap-3.5 rounded-[10px] border border-idl-tech-chip-border bg-idl-tech-panel p-3.5 text-left transition hover:border-idl-amber hover:bg-[#fffdf9] sm:px-4"
                   >
                     <WizardSocketIcon socket={option.key} />
                     <div>
@@ -175,7 +175,7 @@ export function AttaccoWizardModal({
                 ← Indietro
               </button>
               <div className="flex flex-col items-center gap-4 rounded-[14px] border border-idl-tech-border bg-idl-path-tech p-5 text-idl-graphite sm:flex-row sm:items-center sm:gap-5 sm:p-6">
-                <div className="flex size-[88px] shrink-0 items-center justify-center rounded-xl border border-idl-tech-border bg-white">
+                <div className="flex size-[88px] shrink-0 items-center justify-center rounded-xl border border-idl-tech-border bg-idl-tech-panel">
                   <WizardSocketIcon socket={result.key} />
                 </div>
                 <div>
@@ -210,7 +210,7 @@ export function AttaccoWizardModal({
                 <button
                   type="button"
                   onClick={onRestart}
-                  className="rounded-[7px] border border-idl-tech-chip-border bg-white px-5 py-3 text-[14.5px] font-bold text-idl-graphite"
+                  className="rounded-[7px] border border-idl-tech-chip-border bg-idl-tech-panel px-5 py-3 text-[14.5px] font-bold text-idl-graphite"
                 >
                   Ricomincia
                 </button>

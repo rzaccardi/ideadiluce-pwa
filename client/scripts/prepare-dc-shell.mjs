@@ -55,7 +55,7 @@ function fixDocLinks(html) {
   )
   out = out.replace(
     '<span>Aiuto</span>',
-    '<a href="/guide" style="color:inherit;text-decoration:none;">Aiuto</a>',
+    '<a href="/prodotto-non-trovato" style="color:inherit;text-decoration:none;">Aiuto</a>',
   )
   return out
 }

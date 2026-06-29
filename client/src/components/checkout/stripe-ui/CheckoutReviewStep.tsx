@@ -97,17 +97,17 @@ export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Pro
         />
       </CheckoutReviewCard>
 
-      <details className="rounded-xl border border-[#e7eaee] bg-[#f7f8fa] px-4 py-3">
-        <summary className="cursor-pointer text-sm font-bold text-[#14161b]">
+      <details className="rounded-xl border border-[#e7eaee] bg-idl-tech-panel px-4 py-3">
+        <summary className="cursor-pointer text-sm font-bold text-idl-graphite">
           {t('checkout.review.detailsToggle')}
         </summary>
-        <div className="mt-3 space-y-3 border-t border-[#e2e6eb] pt-3 text-sm text-[#5b616b]">
+        <div className="mt-3 space-y-3 border-t border-idl-tech-border pt-3 text-sm text-[#5b616b]">
           <div>
-            <p className="font-semibold text-[#14161b]">{t('common.email')}</p>
+            <p className="font-semibold text-idl-graphite">{t('common.email')}</p>
             <p>{checkout.draft.email}</p>
           </div>
           <div>
-            <p className="font-semibold text-[#14161b]">{t('checkout.billingAddress')}</p>
+            <p className="font-semibold text-idl-graphite">{t('checkout.billingAddress')}</p>
             <pre className="mt-1 whitespace-pre-wrap font-sans">
               {formatAddress(
                 checkout.draft.billingSameAsShipping ? checkout.draft.shipping : checkout.draft.billing,
@@ -115,7 +115,7 @@ export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Pro
             </pre>
           </div>
           <div>
-            <p className="font-semibold text-[#14161b]">{t('checkout.shippingAddress')}</p>
+            <p className="font-semibold text-idl-graphite">{t('checkout.shippingAddress')}</p>
             <pre className="mt-1 whitespace-pre-wrap font-sans">
               {formatAddress(checkout.draft.shipping)}
             </pre>
@@ -132,7 +132,7 @@ export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Pro
       </details>
 
       <div className="space-y-2">
-        <label htmlFor="checkout-order-notes" className="block text-sm font-semibold text-[#14161b]">
+        <label htmlFor="checkout-order-notes" className="block text-sm font-semibold text-idl-graphite">
           {t('checkout.orderNotes')}
         </label>
         <textarea
@@ -141,7 +141,7 @@ export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Pro
           rows={3}
           value={checkout.draft.orderNotes}
           placeholder={t('checkout.orderNotesPlaceholder')}
-          className="idl-field block w-full resize-none px-[15px] py-3.5 text-[15px] outline-none focus:ring-2 focus:ring-[#f0ad57]/35"
+          className="idl-field block w-full resize-none px-[15px] py-3.5 text-[15px] outline-none focus:ring-2 focus:ring-[#c9a24b]/35"
           onChange={(e) => updateCheckoutOrderNotes(e.target.value)}
         />
       </div>

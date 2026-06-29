@@ -44,7 +44,6 @@ type Props = {
   activeFilters: ReadonlyArray<CatalogActiveFilter>
   sort: CatalogSort
   loadMoreRef: React.RefObject<HTMLDivElement | null>
-  onSelectWorldTab: (tab: CatalogWorldTab) => void
   onToggleFilters: () => void
   onSelectCategory: (slug?: string) => void
   onSelectBrand: (slug?: string) => void
@@ -104,7 +103,6 @@ export function CatalogPageView({
   activeFilters,
   sort,
   loadMoreRef,
-  onSelectWorldTab,
   onToggleFilters,
   onSelectCategory,
   onSelectBrand,
@@ -147,7 +145,7 @@ export function CatalogPageView({
         worldTab={worldTab}
         designLabel={designLabel}
         technicalLabel={technicalLabel}
-        onSelectTab={onSelectWorldTab}
+        searchQuery={searchQuery}
       />
 
       <CatalogCategoryNavSection lp={lp} worldTab={worldTab} searchQuery={searchQuery} />
@@ -161,7 +159,7 @@ export function CatalogPageView({
         >
           {filtersOpen ? (
             <div className="hidden lg:block">
-              <div className="sticky top-6 max-h-[calc(100vh-3rem)] overflow-auto rounded-[14px] border border-idl-tech-border bg-white p-5">
+              <div className="sticky top-6 max-h-[calc(100vh-3rem)] overflow-auto rounded-[14px] border border-idl-tech-border bg-idl-tech-panel p-5">
                 <CatalogFilterSidebar {...sidebarProps} />
               </div>
             </div>
@@ -170,7 +168,7 @@ export function CatalogPageView({
           <div className="min-w-0">
             {filtersOpen ? (
               <div className="mb-4 lg:hidden">
-                <div className="rounded-[14px] border border-idl-tech-border bg-white p-4">
+                <div className="rounded-[14px] border border-idl-tech-border bg-idl-tech-panel p-4">
                   <CatalogFilterSidebar {...sidebarProps} />
                 </div>
               </div>

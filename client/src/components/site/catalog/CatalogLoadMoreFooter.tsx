@@ -38,8 +38,8 @@ export function CatalogLoadMoreFooter({
               isDesign
                 ? 'w-full border-idl-path-design-border text-[14.5px] font-semibold text-idl-ink hover:border-idl-brass hover:text-idl-brass sm:w-auto'
                 : variant === 'technical'
-                  ? 'border-idl-tech-chip-border bg-white text-idl-ink hover:border-idl-ink'
-                  : 'border-idl-tech-chip-border bg-white text-idl-ink hover:border-idl-ink',
+                  ? 'border-idl-tech-chip-border bg-idl-tech-panel text-idl-ink hover:border-idl-ink'
+                  : 'border-idl-tech-chip-border bg-idl-tech-panel text-idl-ink hover:border-idl-ink',
             )}
           >
             {loadMoreLabel}

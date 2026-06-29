@@ -5,6 +5,7 @@ import type { CatalogSort } from '@/features/catalog/catalog.store'
 import type { CategoryLandingContent } from '@/types/category-landing'
 import type { ProductCardDTO } from '@/types/dto'
 import { CategoryCtaBanner } from './CategoryCtaBanner'
+import { CategoryArticlesSection } from './CategoryArticlesSection'
 import { CategoryGuideSection } from './CategoryGuideSection'
 import {
   DesignCategoryHeroSection,
@@ -49,7 +50,7 @@ export function DesignCategoryView({
   lp,
 }: CatalogSectionProps) {
   return (
-    <div className="bg-white">
+    <div className="bg-idl-tech-panel">
       <Reveal immediate>
         <DesignCategoryHeroSection content={content} lp={lp} />
       </Reveal>
@@ -81,6 +82,11 @@ export function DesignCategoryView({
       {content.guide ? (
         <Reveal>
           <CategoryGuideSection section={content.guide} />
+        </Reveal>
+      ) : null}
+      {content.articles?.items.length ? (
+        <Reveal>
+          <CategoryArticlesSection section={content.articles} lp={lp} />
         </Reveal>
       ) : null}
       <Reveal>
