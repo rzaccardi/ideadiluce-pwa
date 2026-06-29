@@ -3,7 +3,7 @@ import { buildMetadata } from '@/lib/seo'
 import { BrandPage } from '@/views/BrandPage'
 
 export const metadata: Metadata = buildMetadata({
-  title: 'Brand di illuminazione | Idea di Luce',
+  title: 'Brand di illuminazione',
   description: 'Scopri i marchi di arredo e tecnica disponibili su Idea di Luce.',
 })
 

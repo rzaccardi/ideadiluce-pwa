@@ -922,3 +922,14 @@ model SiteGuide {
   @@index([sortOrder])
   @@index([published, indexed])
 }
+
+/// Redirect 301/302 per cambi slug o URL legacy (lookup middleware PWA).
+model SeoRedirect {
+  id         String   @id @default(cuid())
+  fromPath   String   @unique
+  toPath     String
+  statusCode Int      @default(301)
+  reason     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}

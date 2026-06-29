@@ -1,10 +1,18 @@
 import type { Metadata } from 'next'
-import type { ProductAlternateDTO, ProductDetailDTO, ProductSeoDTO } from '@/types/dto'
-import {
-  getProductAvailabilityStatus,
-  resolveAvailabilityData,
-} from '@/lib/product-availability'
+import type { ProductAlternateDTO, ProductSeoDTO } from '@/types/dto'
 import { getSiteUrl } from '@/lib/env'
+
+export {
+  buildArticleJsonLd,
+  buildBreadcrumbJsonLd,
+  buildCollectionPageJsonLd,
+  buildFaqPageJsonLd,
+  buildOrganizationJsonLd,
+  buildProductJsonLd,
+  buildProductPageUrl,
+  buildWebSiteJsonLd,
+} from '@/lib/seo/json-ld'
+export type { BreadcrumbItem } from '@/lib/seo/json-ld'
 
 export function productSeoFromDto(
   seo: ProductSeoDTO | undefined,
@@ -55,7 +63,7 @@ export function buildMetadata(input: {
   return {
     title,
     description: description ?? undefined,
-    robots: noindex ? { index: false, follow: false } : undefined,
+    robots: noindex ? { index: false, follow: true } : undefined,
     alternates: {
       canonical: canonical ?? undefined,
       languages: Object.keys(languages).length ? languages : undefined,
@@ -72,38 +80,6 @@ export function buildMetadata(input: {
       title,
       description: description ?? undefined,
       images: ogImage ? [ogImage] : undefined,
-    },
-  }
-}
-
-export function buildProductJsonLd(
-  product: ProductDetailDTO,
-  pageUrl: string,
-  options?: { variantRef?: string | null },
-) {
-  const images = product.images.length ? product.images : product.imageUrl ? [product.imageUrl] : []
-  const selectedVariant =
-    options?.variantRef != null
-      ? product.variants.find((v) => v.ref === options.variantRef)
-      : product.variants.find((v) => v.inStock !== false) ?? product.variants[0]
-  const availability = getProductAvailabilityStatus({
-    availability: resolveAvailabilityData(product, selectedVariant),
-  })
-  const priceCents = selectedVariant?.priceCents ?? product.priceCents
-
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: product.name,
-    description: product.shortDescription ?? product.seo.metaDescription ?? undefined,
-    sku: product.sku ?? undefined,
-    image: images,
-    offers: {
-      '@type': 'Offer',
-      url: pageUrl,
-      priceCurrency: product.currency,
-      price: (priceCents / 100).toFixed(2),
-      availability: availability.schemaOrgAvailability,
     },
   }
 }

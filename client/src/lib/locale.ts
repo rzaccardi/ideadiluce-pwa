@@ -18,6 +18,15 @@ export const LOCALE_NAME: Record<PwaLocale, string> = {
   DE: 'Deutsch',
 }
 
+/** Attributo lang su <html> (BCP 47). */
+export const HTML_LANG: Record<PwaLocale, string> = {
+  IT: 'it',
+  EN: 'en',
+  ES: 'es',
+  FR: 'fr',
+  DE: 'de',
+}
+
 /** Prefisso path URL (IT = radice) */
 export const LOCALE_PATH_PREFIX: Record<PwaLocale, string> = {
   IT: '',

@@ -10,7 +10,6 @@ import { EditorialPageView } from '@/components/site/editorial/EditorialPageView
 import { useLocale } from '@/context/locale-context'
 import { ErrorState } from '@/components/ErrorState'
 import { ToastOnError } from '@/components/ToastFeedback'
-import { SeoHead } from '@/components/SeoHead'
 import { PageFlexBody, PageFlexShell } from '@/components/layout/PageFlexShell'
 import { EditorialPageSkeleton } from '@/components/Skeleton'
 import { PageHeader } from '@/components/PageHeader'
@@ -125,13 +124,7 @@ export function EditorialPage({ pageKey }: { pageKey: EditorialKey }) {
             }
           >
             {viewContent ? (
-              <>
-                <SeoHead
-                  title={`${viewContent.title} | Idea di Luce`}
-                  description={viewContent.subtitle ?? viewContent.intro}
-                />
-                <EditorialPageView pageKey={pageKey} content={viewContent} />
-              </>
+              <EditorialPageView pageKey={pageKey} content={viewContent} />
             ) : null}
           </PageLoadTransition>
         </SectionContainer>

@@ -9,8 +9,11 @@ import { v1Router } from './routes/v1/index.js'
 import { errorHandler } from './middlewares/error-handler.js'
 import { loadOrCreateSession, loadSessionIfPresent } from './middlewares/session.js'
 import { paymentsController } from './controllers/payments.controller.js'
-import { buildProductSitemapXml } from './modules/seo/sitemap.service.js'
-import { buildLlmsTxt } from './modules/seo/llms.service.js'
+import {
+  getCachedLlmsTxt,
+  getCachedMerchantFeedXml,
+  getCachedSitemapXml,
+} from './modules/seo/seo-cache.service.js'
 import { arflyProxyRouter } from './modules/arfly-proxy/arfly-proxy.routes.js'
 import { asyncHandler } from './utils/async-handler.js'
 
@@ -63,12 +66,21 @@ export function createApp() {
   app.get(
     '/sitemap.xml',
     asyncHandler(async (_req, res) => {
-      res.type('application/xml').send(await buildProductSitemapXml())
+      res.type('application/xml').send(await getCachedSitemapXml())
     }),
   )
-  app.get('/llms.txt', (_req, res) => {
-    res.type('text/plain; charset=utf-8').send(buildLlmsTxt())
-  })
+  app.get(
+    '/llms.txt',
+    asyncHandler(async (_req, res) => {
+      res.type('text/plain; charset=utf-8').send(await getCachedLlmsTxt())
+    }),
+  )
+  app.get(
+    '/merchant-feed.xml',
+    asyncHandler(async (_req, res) => {
+      res.type('application/xml').send(await getCachedMerchantFeedXml())
+    }),
+  )
   app.use('/api/v1', loadOrCreateSession, v1Router)
   app.use('/api/v2', loadSessionIfPresent, arflyProxyRouter)
 

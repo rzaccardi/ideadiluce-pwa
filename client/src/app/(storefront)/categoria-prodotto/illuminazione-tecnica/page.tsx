@@ -1,12 +1,21 @@
 import type { Metadata } from 'next'
-import { buildMetadata } from '@/lib/seo'
+import { buildCategoryLandingMetadata } from '@/lib/seo/landing-metadata'
 import { ProductCategoryLandingPage } from '@/views/ProductCategoryLandingPage'
 
-export const metadata: Metadata = buildMetadata({
-  title: 'Illuminazione tecnica — Idea di Luce',
-  description:
-    'Lampadine, alimentatori, driver e accessori tecnici. Filtra per tecnologia, attacco, potenza e marca.',
-})
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
+
+export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
+  const params = await searchParams
+  return buildCategoryLandingMetadata({
+    title: 'Illuminazione tecnica',
+    description:
+      'Lampadine, alimentatori, driver e accessori tecnici. Filtra per tecnologia, attacco, potenza e marca.',
+    path: '/categoria-prodotto/illuminazione-tecnica',
+    searchParams: params,
+  })
+}
 
 export default function Page() {
   return <ProductCategoryLandingPage pageKey="technical" />

@@ -5,8 +5,10 @@
 ## Pagine principali
 
 - Home: /
-- Catalogo: /catalog
+- Catalogo: /catalogo
 - Brand: /brand
+- Guide: /guide
+- Ambienti: /ambienti
 - Professionisti: /professionisti
 - Contatti: /contatti
 
@@ -15,12 +17,21 @@
 - Prodotto: /prodotto/{slug}/
 - Categoria: /categoria/{slug}
 - Brand: /brand/{slug}
+- Guida: /guide/{slug}
+- Ambiente: /ambienti/{room}
 
-## Sitemap
+## Contenuti importanti
+
+- Guide tecniche su lumen, Kelvin, CRI, attacchi lampadine
+- Schede prodotto con specifiche tecniche e disponibilità
+- Pagine ambiente per scelta illuminazione per stanza
+
+## Sitemap e feed
 
 - /sitemap.xml
+- /merchant-feed.xml
 
 ## Note
 
 - I prezzi e la disponibilità possono dipendere dal listino e dalla sessione utente.
-- Non indicizzare URL con filtri query complessi sul catalogo; usare le pagine categoria e brand.
+- Non indicizzare URL con filtri query complessi sul catalogo; usare le pagine categoria, brand e ambiente.

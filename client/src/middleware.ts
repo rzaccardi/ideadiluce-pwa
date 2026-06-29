@@ -8,6 +8,12 @@ const PREFIX_TO_LOCALE = new Map(
   PWA_LOCALES.filter((l) => LOCALE_PATH_PREFIX[l]).map((l) => [LOCALE_PATH_PREFIX[l], l]),
 )
 
+const SEO_REDIRECT_API =
+  process.env.API_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  'http://localhost:4000'
+
 function parseLocaleFromPath(pathname: string): { locale: PwaLocale; internalPath: string } {
   for (const [prefix, locale] of PREFIX_TO_LOCALE) {
     if (prefix && (pathname === prefix || pathname.startsWith(`${prefix}/`))) {
@@ -18,7 +24,19 @@ function parseLocaleFromPath(pathname: string): { locale: PwaLocale; internalPat
   return { locale: 'IT', internalPath: pathname }
 }
 
-export function middleware(request: NextRequest) {
+async function lookupSeoRedirect(internalPath: string): Promise<{ toPath: string; statusCode: number } | null> {
+  try {
+    const url = `${SEO_REDIRECT_API.replace(/\/$/, '')}/api/v1/seo/redirect?path=${encodeURIComponent(internalPath)}`
+    const res = await fetch(url, { next: { revalidate: 300 } })
+    if (!res.ok) return null
+    const json = (await res.json()) as { data?: { toPath: string; statusCode: number } | null }
+    return json.data ?? null
+  } catch {
+    return null
+  }
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (
@@ -28,6 +46,7 @@ export function middleware(request: NextRequest) {
     pathname === '/robots.txt' ||
     pathname === '/llms.txt' ||
     pathname === '/sitemap.xml' ||
+    pathname === '/merchant-feed.xml' ||
     pathname === '/impersonate' ||
     pathname.startsWith('/impersonate/')
   ) {
@@ -35,6 +54,15 @@ export function middleware(request: NextRequest) {
   }
 
   const { locale, internalPath } = parseLocaleFromPath(pathname)
+  const redirect = await lookupSeoRedirect(internalPath)
+  if (redirect) {
+    const prefix = LOCALE_PATH_PREFIX[locale]
+    const destination = `${prefix}${redirect.toPath.startsWith('/') ? redirect.toPath : `/${redirect.toPath}`}`
+    const target = request.nextUrl.clone()
+    target.pathname = destination
+    return NextResponse.redirect(target, redirect.statusCode === 302 ? 302 : 301)
+  }
+
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set(LOCALE_HEADER, locale)
 
@@ -47,5 +75,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|merchant-feed.xml).*)'],
 }

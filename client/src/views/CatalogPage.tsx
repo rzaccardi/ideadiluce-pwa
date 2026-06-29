@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueryParams } from '@/lib/navigation'
 import { useLocale } from '@/context/locale-context'
 import { useLocalePath } from '@/hooks/use-locale-path'
-import { SeoHead } from '@/components/SeoHead'
 import { useI18n } from '@/hooks/use-i18n'
 import type { CatalogSort } from '@/features/catalog/catalog.store'
 import { useSnapshot } from 'valtio/react'
@@ -13,6 +12,7 @@ import { siteStore } from '@/features/site'
 import type { CatalogPageContent } from '@/types/site-content'
 import { CatalogPageView } from '@/components/site/catalog/CatalogPageView'
 import { useInfiniteScrollSentinel } from '@/hooks/use-infinite-scroll-sentinel'
+import type { ProductCardDTO } from '@/types/dto'
 import {
   buildActiveFilters,
   buildCatalogSearchQuery,
@@ -26,7 +26,13 @@ import {
   worldTabToParam,
 } from '@/lib/catalog-filters'
 
-export function CatalogPage({ forcedBrandSlug }: { forcedBrandSlug?: string } = {}) {
+export function CatalogPage({
+  forcedBrandSlug,
+  initialProducts,
+}: {
+  forcedBrandSlug?: string
+  initialProducts?: ProductCardDTO[]
+} = {}) {
   const { locale } = useLocale()
   const lp = useLocalePath()
   const { t } = useI18n()
@@ -133,6 +139,18 @@ export function CatalogPage({ forcedBrandSlug }: { forcedBrandSlug?: string } = 
     loading: cat.isLoading || cat.isLoadingMore,
     onLoadMore: loadMore,
   })
+
+  useEffect(() => {
+    if (initialProducts?.length) {
+      catalogStore.products = initialProducts
+      catalogStore.pagination = {
+        ...catalogStore.pagination,
+        total: initialProducts.length,
+        hasNextPage: initialProducts.length >= catalogStore.pagination.pageSize,
+      }
+      catalogStore.isLoading = false
+    }
+  }, [initialProducts])
 
   useEffect(() => {
     void fetchCatalogBootstrap({ locale })
@@ -262,12 +280,7 @@ export function CatalogPage({ forcedBrandSlug }: { forcedBrandSlug?: string } = 
   }
 
   return (
-    <>
-      <SeoHead
-        title={`Catalogo completo | ${t('brand.name')}`}
-        description={t('catalog.metaDescription')}
-      />
-      <CatalogPageView
+    <CatalogPageView
         lp={lp}
         error={cat.error}
         isLoading={cat.isLoading}
@@ -293,7 +306,6 @@ export function CatalogPage({ forcedBrandSlug }: { forcedBrandSlug?: string } = 
         activeFilters={activeFilters}
         sort={sortParam}
         loadMoreRef={loadMoreRef}
-        onSelectWorldTab={selectWorldTab}
         onToggleFilters={() => setFiltersOpen((open) => !open)}
         onSelectCategory={selectCategory}
         onSelectBrand={selectBrand}
@@ -309,6 +321,5 @@ export function CatalogPage({ forcedBrandSlug }: { forcedBrandSlug?: string } = 
         emptyDescription={t('catalog.emptyDescription')}
         searchQuery={queryParam}
       />
-    </>
   )
 }

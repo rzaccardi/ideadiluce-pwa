@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo } from 'react'
 import { useQueryParams } from '@/lib/navigation'
 import { useLocale } from '@/context/locale-context'
 import { useLocalePath } from '@/hooks/use-locale-path'
-import { SeoHead } from '@/components/SeoHead'
 import type { CatalogSort } from '@/features/catalog/catalog.store'
 import { useSnapshot } from 'valtio/react'
 import {
@@ -160,14 +159,9 @@ export function ProductCategoryLandingPage({ pageKey }: Props) {
     lp,
   }
 
-  return (
-    <>
-      <SeoHead title={`${content.title} — Idea di Luce`} description={content.description} />
-      {isDesign ? (
-        <DesignCategoryView {...catalogSectionProps} />
-      ) : (
-        <TechnicalCategoryView {...catalogSectionProps} />
-      )}
-    </>
+  return isDesign ? (
+    <DesignCategoryView {...catalogSectionProps} />
+  ) : (
+    <TechnicalCategoryView {...catalogSectionProps} />
   )
 }

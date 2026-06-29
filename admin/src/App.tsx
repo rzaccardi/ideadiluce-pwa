@@ -14,6 +14,7 @@ import { AbandonedCartsPage } from '@/pages/abandoned-carts/abandoned-carts-page
 import { AbandonedCartDetailPage } from '@/pages/abandoned-carts/abandoned-cart-detail-page'
 import { GuidesListPage } from '@/pages/guides/guides-list-page'
 import { GuideDetailPage } from '@/pages/guides/guide-detail-page'
+import { SeoPage } from '@/pages/seo/seo-page'
 import { SitePagesListPage } from '@/pages/site/site-pages-list-page'
 import { SitePageDetailPage } from '@/pages/site/site-page-detail-page'
 import { ProfessionalRequestsPage } from '@/pages/professional-requests/professional-requests-page'
@@ -55,6 +56,7 @@ export function App() {
               <Route path="site/:pageKey" element={<SitePageDetailPage />} />
               <Route path="guides" element={<GuidesListPage />} />
               <Route path="guides/:slug" element={<GuideDetailPage />} />
+              <Route path="seo" element={<SeoPage />} />
               <Route path="professional-requests" element={<ProfessionalRequestsPage />} />
               <Route path="professional-requests/:id" element={<ProfessionalRequestDetailPage />} />
             </Route>

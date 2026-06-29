@@ -1,3 +1,5 @@
 import { createContentPageRoute } from '@/app/_shared/create-content-page-route'
 
-export default createContentPageRoute('prodotto-non-trovato')
+const { Page, generateMetadata } = createContentPageRoute('prodotto-non-trovato')
+export { generateMetadata }
+export default Page

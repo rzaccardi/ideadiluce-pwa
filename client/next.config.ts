@@ -11,6 +11,20 @@ const apiUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   'http://localhost:4000'
 
+const LOCALE_PREFIXES = ['', '/en', '/es', '/fr', '/de']
+
+function buildSeoRedirects() {
+  const rules: Array<{ source: string; destination: string; permanent: boolean }> = []
+  for (const prefix of LOCALE_PREFIXES) {
+    rules.push(
+      { source: `${prefix}/product/:slug`, destination: `${prefix}/prodotto/:slug`, permanent: true },
+      { source: `${prefix}/category/:slug`, destination: `${prefix}/categoria/:slug`, permanent: true },
+      { source: `${prefix}/catalog`, destination: `${prefix}/catalogo`, permanent: true },
+    )
+  }
+  return rules
+}
+
 const nextConfig: NextConfig = {
   reactStrictMode: false,
   // zod esterno evita vendor-chunks stale in dev/HMR; motion va bundlato (useContext SSR).
@@ -27,10 +41,15 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: '**.odoo.com', pathname: '/web/image/**' },
     ],
   },
+  async redirects() {
+    return buildSeoRedirects()
+  },
   async rewrites() {
     return [
       { source: '/api/:path*', destination: `${apiUrl.replace(/\/$/, '')}/api/:path*` },
       { source: '/sitemap.xml', destination: `${apiUrl.replace(/\/$/, '')}/sitemap.xml` },
+      { source: '/llms.txt', destination: `${apiUrl.replace(/\/$/, '')}/llms.txt` },
+      { source: '/merchant-feed.xml', destination: `${apiUrl.replace(/\/$/, '')}/merchant-feed.xml` },
     ]
   },
 }

@@ -12,6 +12,7 @@ import {
   type GuideCategory,
 } from './site-guides.constants.js'
 import { siteGuideRepository } from './site-guides.repository.js'
+import { refreshSeoCaches } from '../seo/seo-cache.service.js'
 
 function assertGuideSlug(slug: string) {
   const row = DEFAULT_SITE_GUIDES.find((guide) => guide.slug === slug)
@@ -177,7 +178,11 @@ export const siteGuideService = {
     if (!guide) {
       throw new AppError('SITE_GUIDE_NOT_FOUND', 'Guide not found', 'Guida non trovata.', 404, false)
     }
-    return siteGuideRepository.update(slug, data)
+    const updated = await siteGuideRepository.update(slug, data)
+    if (data.indexed !== undefined || data.published !== undefined) {
+      void refreshSeoCaches().catch(() => undefined)
+    }
+    return updated
   },
 
   async listPublicGuides(localeInput: string, options?: { featuredOnly?: boolean }) {

@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
 import { t } from '@/i18n/messages'
+import { getSiteUrl } from '@/lib/env'
 import { getRequestLocale } from '@/lib/locale-server'
 import { fetchHomeContentServer } from '@/lib/server-site'
-import { buildMetadata } from '@/lib/seo'
+import { buildMetadata, buildOrganizationJsonLd, buildWebSiteJsonLd } from '@/lib/seo'
+import { JsonLdGraph } from '@/components/JsonLdGraph'
 import { HomePage } from '@/views/HomePage'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -16,6 +18,14 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function Page() {
   const locale = await getRequestLocale()
   const initialContent = await fetchHomeContentServer(locale)
+  const site = getSiteUrl()
 
-  return <HomePage initialContent={initialContent} />
+  return (
+    <>
+      <JsonLdGraph
+        items={[buildOrganizationJsonLd(site), buildWebSiteJsonLd(site)]}
+      />
+      <HomePage initialContent={initialContent} />
+    </>
+  )
 }

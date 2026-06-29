@@ -32,15 +32,40 @@ export function brandSeoPath(slug: string): string {
   return `/brand/${slug}`
 }
 
-/** true se il catalogo ha filtri query non indicizzabili. */
-export function catalogHasFilterQuery(
+function hasNonEmptyParam(
   searchParams: Record<string, string | string[] | undefined>,
+  keys: string[],
 ): boolean {
-  const keys = ['category', 'brand', 'q', 'inStock', 'sort', 'minPrice', 'maxPrice', 'world']
   return keys.some((k) => {
     const v = searchParams[k]
     if (v == null) return false
     if (Array.isArray(v)) return v.some((x) => String(x).trim() !== '')
     return String(v).trim() !== ''
   })
+}
+
+/** true se il catalogo ha filtri query non indicizzabili. */
+export function catalogHasFilterQuery(
+  searchParams: Record<string, string | string[] | undefined>,
+): boolean {
+  return hasNonEmptyParam(searchParams, [
+    'category',
+    'brand',
+    'q',
+    'inStock',
+    'sort',
+    'minPrice',
+    'maxPrice',
+    'world',
+    'attacco',
+    'colorTemp',
+    'priceBucket',
+  ])
+}
+
+/** true se una landing categoria-prodotto ha filtri query non indicizzabili. */
+export function landingHasFilterQuery(
+  searchParams: Record<string, string | string[] | undefined>,
+): boolean {
+  return hasNonEmptyParam(searchParams, ['f', 'brand', 'sort', 'inStock', 'minPrice', 'maxPrice'])
 }

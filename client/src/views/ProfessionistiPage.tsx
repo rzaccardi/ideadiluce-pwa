@@ -9,7 +9,6 @@ import type { ProfessionistiPageContent } from '@/types/site-content'
 import { ProfessionistiPageView } from '@/components/site/professionisti/ProfessionistiPageView'
 import { ErrorState } from '@/components/ErrorState'
 import { ToastOnError } from '@/components/ToastFeedback'
-import { SeoHead } from '@/components/SeoHead'
 import { ProfessionistiPageSkeleton } from '@/components/Skeleton'
 import { PageHeader } from '@/components/PageHeader'
 import { PageLoadTransition } from '@/components/motion'
@@ -62,16 +61,7 @@ export function ProfessionistiPage({ initialContent = null }: Props) {
         fallbackTitle ? <PageHeader title={fallbackTitle} /> : null
       }
     >
-      {content ? (
-        <>
-          <SeoHead
-            title={`${content.title} | Idea di Luce`}
-            description={content.subtitle}
-            noindex={content.seo?.noindex}
-          />
-          <ProfessionistiPageView content={content} />
-        </>
-      ) : null}
+      {content ? <ProfessionistiPageView content={content} /> : null}
     </PageLoadTransition>
   )
 }

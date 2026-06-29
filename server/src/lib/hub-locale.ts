@@ -58,6 +58,32 @@ export function homePath(locale: HubLocale): string {
   return prefix || '/'
 }
 
+export function guideIndexPath(locale: HubLocale): string {
+  const prefix = LOCALE_PATH[locale]
+  return `${prefix}/guide`
+}
+
+export function guideArticlePath(slug: string, locale: HubLocale): string {
+  const prefix = LOCALE_PATH[locale]
+  return `${prefix}/guide/${slug}`
+}
+
+export function ambientiIndexPath(locale: HubLocale): string {
+  const prefix = LOCALE_PATH[locale]
+  return `${prefix}/ambienti`
+}
+
+export function ambienteRoomPath(room: string, locale: HubLocale): string {
+  const prefix = LOCALE_PATH[locale]
+  return `${prefix}/ambienti/${room}`
+}
+
+export function staticContentPath(path: string, locale: HubLocale): string {
+  const prefix = LOCALE_PATH[locale]
+  const normalized = path.startsWith('/') ? path : `/${path}`
+  return `${prefix}${normalized}`
+}
+
 export function absoluteUrl(siteBase: string, path: string): string {
   const base = siteBase.replace(/\/$/, '')
   const p = path.startsWith('/') ? path : `/${path}`

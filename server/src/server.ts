@@ -10,6 +10,7 @@ import {
   startAbandonedCartScheduler,
   startSyncRetryWorkerScheduler,
 } from './jobs/abandonedCart.scheduler.js'
+import { startSeoCacheScheduler } from './jobs/seoCache.scheduler.js'
 
 const app = createApp()
 
@@ -31,6 +32,7 @@ startOdooSyncRetryScheduler()
 startPaidSyncAlertScheduler()
 startAbandonedCartScheduler()
 startSyncRetryWorkerScheduler()
+startSeoCacheScheduler()
 
 const server = app.listen(env.PORT, () => {
   logger.info(`API in ascolto sulla porta ${env.PORT}`, { nodeEnv: env.NODE_ENV })

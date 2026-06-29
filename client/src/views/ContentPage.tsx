@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { useSnapshot } from 'valtio/react'
-import { fetchSitePage, siteStore } from '@/features/site'
+import { fetchSitePage, seedSitePageContent, siteStore } from '@/features/site'
 import type { ContentPageContent, SitePageKey } from '@/types/site-content'
 import { isContentPage, isGuidePageKey } from '@/lib/site-page-keys'
 import { ContentPageView } from '@/components/site/content/ContentPageView'
@@ -11,7 +11,6 @@ import { GuideArticlePageView } from '@/components/site/content/GuideArticlePage
 import { useLocale } from '@/context/locale-context'
 import { ErrorState } from '@/components/ErrorState'
 import { ToastOnError } from '@/components/ToastFeedback'
-import { SeoHead } from '@/components/SeoHead'
 import { PageFlexBody, PageFlexShell } from '@/components/layout/PageFlexShell'
 import { ContentPageSkeleton } from '@/components/Skeleton'
 import { PageHeader } from '@/components/PageHeader'
@@ -22,12 +21,19 @@ import { getPageHeaderFallbackTitle } from '@/lib/page-header-fallbacks'
 type Props = {
   pageKey: SitePageKey
   breadcrumb?: Array<{ label: string; to?: string }>
+  initialContent?: ContentPageContent | null
 }
 
-export function ContentPage({ pageKey, breadcrumb }: Props) {
+export function ContentPage({ pageKey, breadcrumb, initialContent = null }: Props) {
   const { locale } = useLocale()
   const snap = useSnapshot(siteStore)
-  const raw = snap.pages[pageKey]
+  const raw = snap.pages[pageKey] ?? initialContent
+
+  useEffect(() => {
+    if (initialContent && !siteStore.pages[pageKey]) {
+      seedSitePageContent(pageKey, locale, initialContent)
+    }
+  }, [initialContent, pageKey, locale])
 
   useEffect(() => {
     void fetchSitePage(pageKey, locale, { skipIfFresh: true })
@@ -61,16 +67,7 @@ export function ContentPage({ pageKey, breadcrumb }: Props) {
           fallbackTitle ? <PageHeader title={fallbackTitle} /> : null
         }
       >
-        {content ? (
-          <>
-            <SeoHead
-              title={`${content.title} | Idea di Luce`}
-              description={content.subtitle ?? content.intro}
-              noindex={content.seo?.noindex}
-            />
-            <ContattiPageView content={content} />
-          </>
-        ) : null}
+        {content ? <ContattiPageView content={content} /> : null}
       </PageLoadTransition>
     )
   }
@@ -87,18 +84,11 @@ export function ContentPage({ pageKey, breadcrumb }: Props) {
             }
           >
             {content ? (
-              <>
-                <SeoHead
-                  title={`${content.title} | Idea di Luce`}
-                  description={content.subtitle ?? content.intro}
-                  noindex={content.seo?.noindex}
-                />
-                {isGuideArticle ? (
-                  <GuideArticlePageView content={content} />
-                ) : (
-                  <ContentPageView content={content} breadcrumb={breadcrumb} />
-                )}
-              </>
+              isGuideArticle ? (
+                <GuideArticlePageView content={content} breadcrumb={breadcrumb} />
+              ) : (
+                <ContentPageView content={content} breadcrumb={breadcrumb} />
+              )
             ) : null}
           </PageLoadTransition>
         </SectionContainer>

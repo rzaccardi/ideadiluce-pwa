@@ -134,3 +134,4 @@ background_jobs:
     - paidSyncAlert
     - abandonedCart
     - syncRetryWorker
+    - seoCache

@@ -8,7 +8,6 @@ import { AmbientiView } from '@/components/site/ambienti'
 import { useLocale } from '@/context/locale-context'
 import { ErrorState } from '@/components/ErrorState'
 import { ToastOnError } from '@/components/ToastFeedback'
-import { SeoHead } from '@/components/SeoHead'
 import type { EditorialPageContent } from '@/types/site-content'
 
 export function AmbientiPage() {
@@ -38,12 +37,6 @@ export function AmbientiPage() {
     raw && isEditorialPage(raw) ? (raw as EditorialPageContent) : null
 
   return (
-    <>
-      <SeoHead
-        title="Scegli per ambiente | Idea di Luce"
-        description="Illuminazione per soggiorno, cucina, camera, bagno, studio ed esterno. Shop by room e shop the look."
-      />
-      <AmbientiView content={content} roomsLoading={!content && loading} />
-    </>
+    <AmbientiView content={content} roomsLoading={!content && loading} />
   )
 }

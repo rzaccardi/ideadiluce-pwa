@@ -7,6 +7,7 @@ import {
   HomeIcon,
   LayoutTemplateIcon,
   MegaphoneIcon,
+  SearchIcon,
   ShoppingBagIcon,
   ShoppingCartIcon,
   TagsIcon,
@@ -47,6 +48,14 @@ export const navSections: NavSection[] = [
         accentClass: 'text-amber-700',
         accentBgClass: 'bg-amber-50',
         match: (p) => p.startsWith('/guides'),
+      },
+      {
+        to: '/seo',
+        label: 'SEO e feed',
+        icon: SearchIcon,
+        accentClass: 'text-emerald-700',
+        accentBgClass: 'bg-emerald-50',
+        match: (p) => p.startsWith('/seo'),
       },
       {
         to: '/site',
@@ -243,6 +252,12 @@ export function getBreadcrumbs(pathname: string, _search = ''): BreadcrumbItem[]
       { label: 'Elenco guide' },
     ]
   }
+  if (pathname.startsWith('/seo')) {
+    return [
+      { label: 'SEO e feed', href: '/seo' },
+      { label: 'Sitemap, Merchant Center e redirect' },
+    ]
+  }
   if (pathname.startsWith('/site/') && pathname !== '/site') {
     const pageKey = decodeURIComponent(pathname.slice('/site/'.length).split('/')[0] ?? '')
     return [
@@ -418,6 +433,15 @@ export function getPageMeta(pathname: string, _search = ''): {
       icon: BookOpenIcon,
       iconClassName: 'text-amber-700',
       iconBgClassName: 'bg-amber-50',
+    }
+  }
+  if (pathname.startsWith('/seo')) {
+    return {
+      title: 'SEO e feed',
+      description: 'Sitemap, Google Merchant feed, llms.txt e redirect 301',
+      icon: SearchIcon,
+      iconClassName: 'text-emerald-700',
+      iconBgClassName: 'bg-emerald-50',
     }
   }
   if (pathname.startsWith('/site/') && pathname !== '/site') {

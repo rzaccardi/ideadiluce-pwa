@@ -53,3 +53,10 @@ export async function fetchProfessionistiContentServer(
   const content = await cachedSitePage<unknown>('professionisti', locale)
   return content && isProfessionistiPageContent(content) ? content : null
 }
+
+export function fetchContentPageServer<T = unknown>(
+  pageKey: string,
+  locale: PwaLocale,
+): Promise<T | null> {
+  return cachedSitePage<T>(pageKey, locale)
+}

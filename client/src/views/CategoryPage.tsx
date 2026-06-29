@@ -6,7 +6,6 @@ import { api } from '@/api/endpoints'
 import { Breadcrumb } from '@/components/Breadcrumb'
 import { ProductGrid } from '@/components/product/ProductGrid'
 import { PageHeader } from '@/components/PageHeader'
-import { SeoHead } from '@/components/SeoHead'
 import { PageFlexBody, PageFlexShell } from '@/components/layout/PageFlexShell'
 import { SectionContainer } from '@/components/site/primitives'
 import { CategoryPageSkeleton } from '@/components/Skeleton'
@@ -17,19 +16,24 @@ import { useI18n } from '@/hooks/use-i18n'
 import { toPwaLocale } from '@/lib/arfly/lookup'
 import type { ProductCardDTO } from '@/types/dto'
 
-export function CategoryPage() {
+type Props = {
+  initialProducts?: ProductCardDTO[]
+  initialCategoryName?: string | null
+}
+
+export function CategoryPage({ initialProducts, initialCategoryName = null }: Props) {
   const slug = useParam('slug')
   const { locale } = useLocale()
-  const { t, tParams } = useI18n()
+  const { t } = useI18n()
   const lp = useLocalePath()
-  const [products, setProducts] = useState<ProductCardDTO[]>([])
-  const [categoryName, setCategoryName] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [products, setProducts] = useState<ProductCardDTO[]>(initialProducts ?? [])
+  const [categoryName, setCategoryName] = useState<string | null>(initialCategoryName)
+  const [loading, setLoading] = useState(!initialProducts?.length && !initialCategoryName)
 
   useEffect(() => {
     if (!slug) return
     let cancelled = false
-    setLoading(true)
+    if (!initialProducts?.length) setLoading(true)
     void (async () => {
       try {
         const pwaLocale = toPwaLocale(locale)
@@ -48,12 +52,12 @@ export function CategoryPage() {
     return () => {
       cancelled = true
     }
-  }, [slug, locale])
+  }, [slug, locale, initialProducts?.length])
 
   if (!slug) return null
 
   const title = categoryName ?? slug
-  const description = `Scopri i prodotti nella categoria ${title} su Idea di Luce.`
+  const intro = `Scopri la selezione ${title.toLowerCase()} su Idea di Luce: lampade e componenti per illuminazione d'arredo e tecnica, con filtri per brand, prezzo e disponibilità.`
 
   return (
     <PageFlexShell tone="paper">
@@ -75,20 +79,22 @@ export function CategoryPage() {
             }
           >
             <>
-              <SeoHead title={`${title} | ${t('brand.name')}`} description={description} />
               <Breadcrumb
                 items={[
                   { label: t('catalog.title'), to: lp('/catalogo') },
                   { label: title },
                 ]}
               />
-              <PageHeader title={title} />
-              <ProductGrid products={products} emptyMessage={t('category.empty')} />
-              <p className="mt-6">
-                <Link to={lp('/catalogo')} className="text-sm font-bold text-idl-brass hover:underline">
-                  {tParams('category.backToCatalog', { catalog: t('catalog.title') })}
+              <PageHeader title={title} description={intro} />
+              <ProductGrid products={products} />
+              <div className="mt-10 flex flex-wrap gap-4 text-sm">
+                <Link to={lp('/ambienti')} className="font-bold text-idl-brass">
+                  Scegli per ambiente →
                 </Link>
-              </p>
+                <Link to={lp('/guide')} className="font-bold text-idl-brass">
+                  Guide alla scelta →
+                </Link>
+              </div>
             </>
           </PageLoadTransition>
         </SectionContainer>

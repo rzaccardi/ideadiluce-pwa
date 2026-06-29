@@ -3,8 +3,10 @@ import { notFound } from 'next/navigation'
 import { ProductDetailPage } from '@/views/ProductDetailPage'
 import { getRequestLocale } from '@/lib/locale-server'
 import { fetchProductDetailServer } from '@/lib/server-catalog'
-import { buildMetadata, buildProductJsonLd, productSeoFromDto } from '@/lib/seo'
+import { buildMetadata, buildProductJsonLd, buildProductPageUrl, productSeoFromDto } from '@/lib/seo'
 import { JsonLd } from '@/components/JsonLd'
+
+export const revalidate = 3600
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -34,13 +36,11 @@ export default async function ProductDetailRoute({ params }: PageProps) {
   if (!data) notFound()
 
   const seo = productSeoFromDto(data.product.seo, data.product.name)
-  const pageUrl = seo.canonical ?? undefined
+  const pageUrl = seo.canonical ?? buildProductPageUrl(slug, locale)
 
   return (
     <>
-      {pageUrl ? (
-        <JsonLd data={buildProductJsonLd(data.product, pageUrl)} />
-      ) : null}
+      <JsonLd data={buildProductJsonLd(data.product, pageUrl)} />
       <ProductDetailPage
         slug={slug}
         initialProduct={data.product}

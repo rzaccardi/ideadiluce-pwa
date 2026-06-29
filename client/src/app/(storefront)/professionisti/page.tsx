@@ -5,7 +5,7 @@ import { buildMetadata } from '@/lib/seo'
 import { ProfessionistiPage } from '@/views/ProfessionistiPage'
 
 export const metadata: Metadata = buildMetadata({
-  title: 'Area professionisti | Idea di Luce',
+  title: 'Area professionisti',
   description:
     'Prezzi B2B, riordino rapido da codice o EAN, preventivi e supporto su ricambi per installatori, architetti e aziende.',
 })

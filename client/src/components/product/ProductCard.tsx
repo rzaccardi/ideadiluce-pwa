@@ -17,6 +17,7 @@ import {
 } from '@/lib/product-availability'
 import { formatMoney } from '@/lib/format'
 import { formatPriceDisplayModeLabel } from '@/lib/price-display'
+import { SiteImage } from '@/components/site/SiteImage'
 import { cn } from '@/utils/cn'
 
 type Props = {
@@ -79,6 +80,8 @@ export function ProductCard({ product, className }: Props) {
     }
   }
 
+  const imageAlt = product.name
+
   return (
     <article
       className={cn(
@@ -89,10 +92,12 @@ export function ProductCard({ product, className }: Props) {
       <Link to={productHref} className="block text-left">
         <div className="relative aspect-[4/3] bg-idl-cream">
           {product.imageUrl ? (
-            <img
+            <SiteImage
               src={product.imageUrl}
-              alt=""
-              className={cn('h-full w-full object-cover', outOfStock && 'opacity-75 saturate-50')}
+              alt={imageAlt}
+              fill
+              sizes="(max-width: 640px) 100vw, 320px"
+              className={cn('object-cover', outOfStock && 'opacity-75 saturate-50')}
             />
           ) : (
             <div className="flex h-full items-center justify-center text-xs text-idl-placeholder">

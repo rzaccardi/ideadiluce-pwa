@@ -1,3 +1,5 @@
 import { createContentPageRoute } from '@/app/_shared/create-content-page-route'
 
-export default createContentPageRoute('spedizioni')
+const { Page, generateMetadata } = createContentPageRoute('spedizioni')
+export { generateMetadata }
+export default Page

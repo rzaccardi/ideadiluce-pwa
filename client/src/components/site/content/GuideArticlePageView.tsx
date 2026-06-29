@@ -10,6 +10,7 @@ import { cn } from '@/utils/cn'
 
 type Props = {
   content: ContentPageContent
+  breadcrumb?: Array<{ label: string; to?: string }>
 }
 
 function parseGuideEyebrow(eyebrow?: string) {
@@ -36,13 +37,14 @@ function GuideBadge({ children, variant }: { children: React.ReactNode; variant:
   )
 }
 
-export function GuideArticlePageView({ content }: Props) {
+export function GuideArticlePageView({ content, breadcrumb }: Props) {
   const lp = useLocalePath()
   const { category, meta } = parseGuideEyebrow(content.eyebrow)
+  const crumbs = breadcrumb ?? [{ label: 'Guide', to: '/guide' }, { label: content.title }]
 
   return (
     <div>
-      <Breadcrumb items={[{ label: 'Guide', to: '/guide' }, { label: content.title }]} />
+      <Breadcrumb items={crumbs} />
 
       <Reveal immediate>
         <Link
@@ -70,7 +72,10 @@ export function GuideArticlePageView({ content }: Props) {
               </p>
             ) : null}
             {content.intro ? (
-              <p className="mt-4 max-w-3xl text-[15px] leading-relaxed text-idl-ink-muted">{content.intro}</p>
+              <div className="mt-4 max-w-3xl rounded-lg border border-idl-tech-border bg-idl-cream/60 px-4 py-3">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-idl-brass">Risposta breve</p>
+                <p className="mt-2 text-[15px] leading-relaxed text-idl-ink-muted">{content.intro}</p>
+              </div>
             ) : null}
           </div>
         </div>

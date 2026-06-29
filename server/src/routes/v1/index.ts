@@ -16,6 +16,7 @@ import { abandonedCartsAdminRouter } from '../../modules/abandoned-carts-admin/a
 import { adminAuthRouter } from '../../modules/admin-auth/admin-auth.routes.js'
 import { addressRouter } from '../../modules/address/address.routes.js'
 import { seoRouter } from '../../modules/seo/seo.routes.js'
+import { seoAdminRouter } from '../../modules/seo/seo-admin.routes.js'
 import { siteRouter } from '../../modules/site/site.routes.js'
 import { siteAdminRouter } from '../../modules/site/site-admin.routes.js'
 import { siteGuidesAdminRouter } from '../../modules/site-guides/site-guides-admin.routes.js'
@@ -37,6 +38,7 @@ v1Router.use('/auth', authRouter)
 v1Router.use('/address', addressRouter)
 v1Router.use('/catalog', catalogRouter)
 v1Router.use('/seo', seoRouter)
+v1Router.use('/admin/seo', seoAdminRouter)
 v1Router.use('/site', siteRouter)
 v1Router.use('/site/professional-requests', professionalAccountRouter)
 v1Router.use('/admin/site', siteAdminRouter)

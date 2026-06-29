@@ -1,34 +1,15 @@
-import type { Metadata } from 'next'
-import { CategoryPage } from '@/views/CategoryPage'
-import { getRequestLocale } from '@/lib/locale-server'
-import { buildMetadata } from '@/lib/seo'
-import {
-  buildLocalizedPageSeo,
-  categorySeoPath,
-} from '@/lib/seo-paths'
-import { fetchCategoryMetaServer } from '@/lib/server-catalog'
+import { CategoryListRoute, generateCategoryMetadata, revalidate } from '@/app/_shared/category-list-route'
 
 type PageProps = {
   params: Promise<{ slug: string }>
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { slug } = await params
-  const locale = await getRequestLocale()
-  const category = await fetchCategoryMetaServer(slug, locale)
-  const name = category?.name ?? slug
-  const { canonical, alternates } = buildLocalizedPageSeo({
-    currentLocale: locale,
-    pathForLocale: () => categorySeoPath(slug),
-  })
-  return buildMetadata({
-    title: `${name} | Idea di Luce`,
-    description: `Scopri i prodotti nella categoria ${name} su Idea di Luce.`,
-    canonical,
-    alternates,
-  })
+export { revalidate }
+
+export async function generateMetadata(props: PageProps) {
+  return generateCategoryMetadata(props)
 }
 
-export default function Page() {
-  return <CategoryPage />
+export default function Page(props: PageProps) {
+  return CategoryListRoute(props)
 }

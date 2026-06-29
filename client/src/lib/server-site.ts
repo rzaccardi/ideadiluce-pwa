@@ -1,4 +1,5 @@
 export {
+  fetchContentPageServer,
   fetchHomeContentServer,
   fetchProfessionistiContentServer,
   fetchShellContentServer,

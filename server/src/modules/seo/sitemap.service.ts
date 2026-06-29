@@ -1,18 +1,27 @@
 import { env } from '../../config/env.js'
 import {
   absoluteUrl,
+  ambienteRoomPath,
+  ambientiIndexPath,
   brandPath,
   brandsIndexPath,
   catalogPath,
   categoryPath,
+  guideArticlePath,
+  guideIndexPath,
   HREFLANG_CODE,
   homePath,
   HUB_LOCALES,
   productPath,
+  staticContentPath,
   type HubLocale,
 } from '../../lib/hub-locale.js'
 import { catalogStorefrontService } from '../catalog/catalog-storefront.service.js'
 import { listArflyProductSlugs } from '../catalog/catalogResolver.service.js'
+import {
+  STATIC_SITEMAP_PATHS,
+} from './seo-sitemap.constants.js'
+import { listAmbienteRoomSlugs, listIndexedGuideSlugs } from './seo-guide-slugs.js'
 
 function escapeXml(s: string): string {
   return s
@@ -73,17 +82,37 @@ function pathsForStatic(pathFn: (locale: HubLocale) => string): Record<HubLocale
 
 export async function buildProductSitemapXml(): Promise<string> {
   const siteBase = env.PUBLIC_SITE_URL
-  const [productSlugs, categories, brands] = await Promise.all([
+  const [productSlugs, categories, brands, guideSlugs] = await Promise.all([
     listArflyProductSlugs('IT'),
     catalogStorefrontService.listCategories('IT'),
     catalogStorefrontService.listBrands('IT'),
+    listIndexedGuideSlugs(),
   ])
+  const roomSlugs = listAmbienteRoomSlugs()
 
   const entries: SitemapEntry[] = []
 
   pushLocalizedGroup(entries, siteBase, pathsForStatic(homePath))
   pushLocalizedGroup(entries, siteBase, pathsForStatic(catalogPath))
   pushLocalizedGroup(entries, siteBase, pathsForStatic(brandsIndexPath))
+  pushLocalizedGroup(entries, siteBase, pathsForStatic(guideIndexPath))
+  pushLocalizedGroup(entries, siteBase, pathsForStatic(ambientiIndexPath))
+
+  for (const staticPath of STATIC_SITEMAP_PATHS) {
+    pushLocalizedGroup(
+      entries,
+      siteBase,
+      pathsForStatic((locale) => staticContentPath(staticPath, locale)),
+    )
+  }
+
+  for (const guideSlug of guideSlugs) {
+    pushLocalizedGroup(entries, siteBase, pathsForSlug(guideSlug, guideArticlePath))
+  }
+
+  for (const room of roomSlugs) {
+    pushLocalizedGroup(entries, siteBase, pathsForSlug(room, ambienteRoomPath))
+  }
 
   for (const slug of productSlugs) {
     pushLocalizedGroup(entries, siteBase, pathsForSlug(slug, productPath))

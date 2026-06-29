@@ -8,6 +8,7 @@ export type AmbientiRoomTag = {
 export type AmbientiRoomMeta = {
   slug: string
   description: string
+  intro?: string
   tags: AmbientiRoomTag[]
   kelvinTip: string
   kelvinWarning?: boolean
@@ -65,6 +66,8 @@ export const AMBIENTI_ROOM_META: AmbientiRoomMeta[] = [
     slug: 'soggiorno',
     group: 'casa',
     description: "Luce d'atmosfera, lettura e relax per un ambiente caldo e accogliente.",
+    intro:
+      'Per illuminare un soggiorno servono luce generale, punti per la lettura e una componente d\'atmosfera: in media 3.000–4.000 lumen totali distribuiti su più fonti.',
     tags: [
       { label: 'Piantane', href: '/catalogo?world=design&q=piantana' },
       { label: 'Applique', href: '/catalogo?world=design&q=applique' },
