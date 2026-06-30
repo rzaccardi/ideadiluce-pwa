@@ -31,7 +31,7 @@ export const checkoutDraftService = {
     const ctx: OdooCallContext = { correlationId: req.correlationId, req }
     const priceLocked = await isCartCheckoutPriceLocked(cart.id)
 
-    if (!priceLocked && body.step !== 'lock') {
+    if (!priceLocked && body.step !== 'lock' && body.step !== 'shipping') {
       const pricing = await resolvePricingContext(req)
       await repriceCartFromOdoo(req, cart.id, pricing)
     }

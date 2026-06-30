@@ -1,3 +1,5 @@
+export { dynamic, fetchCache } from '@/app/_shared/private-route'
+
 import { FullscreenLayout } from '@/layouts/FullscreenLayout'
 import { jetbrains, newsreader } from '@/lib/fonts'
 

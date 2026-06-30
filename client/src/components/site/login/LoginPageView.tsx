@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from '@/lib/navigation'
 import { useSnapshot } from 'valtio/react'
 import { authStore, login } from '@/features/auth'
+import { LoadingState } from '@/components/LoadingState'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { notify } from '@/lib/notify'
@@ -32,16 +33,20 @@ export function LoginPageView() {
   const lp = useLocalePath()
   const navigate = useNavigate()
   const searchParams = useSearchParams()
-  const from = searchParams.get('from') ?? '/'
+  const accountPath = lp('/account')
+  const from = searchParams.get('from') ?? accountPath
   const auth = useSnapshot(authStore)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(true)
 
   const registerHref =
-    from !== '/'
+    from !== accountPath
       ? `${lp('/register')}?from=${encodeURIComponent(from)}`
       : lp('/register')
+
+  const isBusy = auth.isLoading || auth.isHydrating
+  const busyMessage = auth.isHydrating ? t('auth.preparingAccount') : t('auth.loggingIn')
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -73,6 +78,15 @@ export function LoginPageView() {
         </>
       }
     >
+      {isBusy ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-white/85 backdrop-blur-[2px]"
+          role="status"
+          aria-live="polite"
+        >
+          <LoadingState message={busyMessage} />
+        </div>
+      ) : null}
       <AuthCard>
         <AuthCardHeader title={t('login.welcomeTitle')} subtitle={t('login.subtitle')} />
 
@@ -122,8 +136,8 @@ export function LoginPageView() {
             {t('login.rememberMe')}
           </AuthCheckbox>
 
-          <AuthSubmitButton disabled={auth.isLoading}>
-            {auth.isLoading ? t('auth.loggingIn') : t('auth.loginSubmit')}
+          <AuthSubmitButton disabled={isBusy}>
+            {isBusy ? busyMessage : t('auth.loginSubmit')}
           </AuthSubmitButton>
         </form>
       </AuthCard>

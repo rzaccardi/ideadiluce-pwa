@@ -190,12 +190,12 @@ export function SiteFooter({ footer }: { footer: SiteShellContent['footer'] }) {
         </SectionContainer>
       </Reveal>
       <Reveal delay={0.08} className="border-t border-white/10">
-        <SectionContainer className="flex flex-col gap-4 py-5 text-[12px] text-idl-design-subtle sm:flex-row sm:items-center sm:justify-between">
+        <SectionContainer className="flex flex-col items-center gap-4 py-5 text-center text-[12px] text-idl-design-subtle sm:flex-row sm:items-center sm:justify-between sm:text-left">
           <Link to={lp('/')} className="rounded-sm transition-opacity hover:opacity-80">
             <BrandWordmark className="text-white" accentClassName="text-idl-glow" />
           </Link>
-          <div className="flex w-full flex-col items-end gap-3 sm:ml-auto sm:w-auto sm:flex-row sm:items-center sm:gap-5">
-            <span className="max-w-prose text-right sm:text-left">{footer.legalNote}</span>
+          <div className="flex w-full flex-col items-center gap-3 sm:ml-auto sm:w-auto sm:flex-row sm:items-center sm:gap-5">
+            <span className="max-w-prose">{footer.legalNote}</span>
             <FooterThemeSelect />
           </div>
         </SectionContainer>

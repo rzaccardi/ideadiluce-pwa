@@ -9,16 +9,30 @@ import {
 import { ApiRequestError } from '@/types/api'
 import { fetchCart } from '@/features/cart'
 import { fetchOrdersList } from '@/features/orders'
+import { fetchQuotesList } from '@/features/quotes'
 import { fetchWishlist } from '@/features/wishlist'
+import type { UserDTO } from '@/types/dto'
 import { authStore, setAuthUser } from './auth.store'
 import { clearClientSessionState, type ClearClientSessionScope } from './clear-client-session'
 
 function refreshSessionStores() {
-  return Promise.all([
-    fetchCart({ force: true }),
-    fetchWishlist({ force: true }),
-    fetchOrdersList({ force: true }),
-  ])
+  return hydrateSessionStores()
+}
+
+async function hydrateSessionStores() {
+  authStore.isHydrating = true
+  try {
+    await Promise.allSettled([
+      fetchCart({ force: true, reprice: true }),
+      fetchWishlist({ force: true }),
+      fetchOrdersList({ force: true }),
+      fetchQuotesList().catch(() => {
+        /* errori già in quotesStore.listError */
+      }),
+    ])
+  } finally {
+    authStore.isHydrating = false
+  }
 }
 
 function errMessage(e: unknown) {
@@ -35,19 +49,20 @@ export type LogoutResult = {
   remoteOk: boolean
 }
 
-async function applyRefreshResult() {
+async function applyRefreshResult(fallbackUser?: UserDTO) {
   const { user, impersonation, expiresAt } = await api.auth.refresh()
-  if (user) {
-    setAuthUser(user, impersonation, expiresAt)
+  const resolvedUser = user ?? fallbackUser ?? null
+  if (resolvedUser) {
+    setAuthUser(resolvedUser, impersonation, expiresAt)
   } else {
     clearAuthSessionMirror()
     setAuthUser(null)
   }
-  return user
+  return resolvedUser
 }
 
-async function establishAuthenticatedSession() {
-  const user = await applyRefreshResult()
+async function establishAuthenticatedSession(fallbackUser?: UserDTO) {
+  const user = await applyRefreshResult(fallbackUser)
   if (!user) {
     throw new ApiRequestError(
       'UNAUTHORIZED',
@@ -58,7 +73,7 @@ async function establishAuthenticatedSession() {
       false,
     )
   }
-  await refreshSessionStores()
+  await hydrateSessionStores()
   return user
 }
 
@@ -138,8 +153,8 @@ export async function checkoutRegister(input: {
   authStore.isLoading = true
   authStore.error = null
   try {
-    await api.auth.checkoutRegister(input)
-    await establishAuthenticatedSession()
+    const { user } = await api.auth.checkoutRegister(input)
+    await establishAuthenticatedSession(user)
   } catch (e) {
     authStore.error = errMessage(e)
     throw e
@@ -152,8 +167,8 @@ export async function checkoutLogin(email: string, password: string) {
   authStore.isLoading = true
   authStore.error = null
   try {
-    await api.auth.checkoutLogin({ email, password })
-    await establishAuthenticatedSession()
+    const { user } = await api.auth.checkoutLogin({ email, password })
+    await establishAuthenticatedSession(user)
   } catch (e) {
     authStore.error = errMessage(e)
     throw e
@@ -166,8 +181,8 @@ export async function login(email: string, password: string) {
   authStore.isLoading = true
   authStore.error = null
   try {
-    await api.auth.login({ email, password })
-    await establishAuthenticatedSession()
+    const { user } = await api.auth.login({ email, password })
+    await establishAuthenticatedSession(user)
   } catch (e) {
     authStore.error = errMessage(e)
     throw e
@@ -189,7 +204,7 @@ export async function register(
   authStore.isLoading = true
   authStore.error = null
   try {
-    await api.auth.register({
+    const { user } = await api.auth.register({
       email,
       password,
       firstName: extra?.firstName,
@@ -197,7 +212,7 @@ export async function register(
       phone: extra?.phone,
       customerSegment: extra?.customerSegment,
     })
-    await establishAuthenticatedSession()
+    await establishAuthenticatedSession(user)
   } catch (e) {
     authStore.error = errMessage(e)
     throw e
@@ -237,8 +252,8 @@ export async function exchangeImpersonationToken(token: string) {
   authStore.isLoading = true
   authStore.error = null
   try {
-    await api.auth.impersonateExchange(token)
-    await establishAuthenticatedSession()
+    const { user } = await api.auth.impersonateExchange(token)
+    await establishAuthenticatedSession(user)
     return { user: authStore.me!, impersonation: authStore.impersonation }
   } catch (e) {
     authStore.error = errMessage(e)

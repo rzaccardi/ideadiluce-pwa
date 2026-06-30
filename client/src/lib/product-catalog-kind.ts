@@ -1,3 +1,4 @@
+import { stripLocalePrefix } from '@/lib/locale'
 import type { ProductCardDTO, ProductDetailDTO } from '@/types/dto'
 
 export type ProductCatalogKind = 'design' | 'technical'
@@ -47,6 +48,33 @@ export function resolveProductCardCatalogKind(product: ProductCardDTO): ProductC
 
   const text = [product.name, product.shortDescription].filter(Boolean).join(' · ')
   if (/\b(E27|E14|GU10|GU5|R7s|GX53|G9|G4|driver|alimentator|starter|dimmer|T5|T8|G5)\b/i.test(text)) {
+    return 'technical'
+  }
+
+  return 'design'
+}
+
+export function extractProductSlugFromPath(pathname: string): string | null {
+  const path = stripLocalePrefix(pathname)
+  const normalized = path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path
+  const match = normalized.match(/^\/(?:product|prodotto)\/([^/]+)/)
+  return match?.[1] ?? null
+}
+
+/** Stima design vs technical quando il prodotto non è ancora caricato (slug / override). */
+export function resolveProductCatalogKindFromSlug(slug: string): ProductCatalogKind {
+  const slugOverride = PRODUCT_CATALOG_KIND_BY_SLUG[slug]
+  if (slugOverride) return slugOverride
+
+  const normalized = slug.toLowerCase()
+  if (DESIGN_CATEGORY_RE.test(normalized)) return 'design'
+  if (TECHNICAL_CATEGORY_RE.test(normalized)) return 'technical'
+
+  if (
+    /\b(e27|e14|gu10|gu5|r7s|gx53|g9|g4|driver|alimentator|starter|dimmer|t5|t8|g5|lampadina|fluorescent|ricambio|component)\b/i.test(
+      normalized,
+    )
+  ) {
     return 'technical'
   }
 

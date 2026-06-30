@@ -18,6 +18,12 @@ import {
 } from '@/lib/cartTotals'
 import { Button } from '@/components/Button'
 import { ProfessionalCartBanner } from '@/components/cart/PricelistBadge'
+import {
+  BonificoBancarioLogo,
+  MastercardLogo,
+  PayPalLogo,
+  VisaLogo,
+} from '@/components/payment-method-logos'
 import { useI18n } from '@/hooks/use-i18n'
 import { preloadStripe } from '@/lib/stripe-loader'
 import { CART_CARD_SURFACE } from '@/components/cart/cart-surfaces'
@@ -53,10 +59,10 @@ function LockIcon() {
 }
 
 const paymentBadges = [
-  { label: 'VISA', className: 'text-[#1a1f71]' },
-  { label: 'MC', className: 'text-[#eb001b]' },
-  { label: 'PayPal', className: 'text-[#003087]' },
-  { label: 'Bonifico', className: 'text-idl-graphite' },
+  { id: 'visa', label: 'Visa', Logo: VisaLogo },
+  { id: 'mastercard', label: 'Mastercard', Logo: MastercardLogo },
+  { id: 'paypal', label: 'PayPal', Logo: PayPalLogo },
+  { id: 'bonifico', label: 'Bonifico bancario', Logo: BonificoBancarioLogo },
 ] as const
 
 export function CartSummary({
@@ -167,15 +173,15 @@ export function CartSummary({
               {t('cart.summary.securePayment')}
             </p>
             <div className="mt-3.5 flex flex-wrap justify-center gap-1.5">
-              {paymentBadges.map((badge) => (
+              {paymentBadges.map(({ id, label, Logo }) => (
                 <span
-                  key={badge.label}
-                  className={cn(
-                    'rounded bg-idl-tech-chip px-2 py-1.5 font-mono text-[10px] font-bold',
-                    badge.className,
-                  )}
+                  key={id}
+                  className="flex h-8 items-center justify-center rounded bg-idl-tech-chip px-2"
+                  role="img"
+                  aria-label={label}
+                  title={label}
                 >
-                  {badge.label}
+                  <Logo className={id === 'bonifico' ? 'h-[18px] text-idl-graphite' : 'h-5'} />
                 </span>
               ))}
             </div>

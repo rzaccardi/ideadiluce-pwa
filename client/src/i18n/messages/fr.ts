@@ -102,7 +102,9 @@ export const messages: Record<MessageKey, string> = {
   'chiSiamo.mapAlt': 'Plan / façade du showroom',
   'auth.sessionChecking': 'Vérification de la session…',
   'auth.redirectingToLogin': 'Redirection vers la connexion…',
+  'auth.redirectingToAccount': 'Redirection vers votre espace…',
   'auth.loggingIn': 'Connexion…',
+  'auth.preparingAccount': 'Chargement du compte, du panier et des commandes…',
   'auth.loggedIn': 'Connexion réussie.',
   'auth.loggedOut': 'Vous êtes déconnecté.',
   'auth.loggedOutLocalOnly':
@@ -399,7 +401,12 @@ export const messages: Record<MessageKey, string> = {
   'checkout.shipping.deliveryEstimate':
     'Livraison unique estimée sous {days} jours ouvrés (délai le plus long du panier).',
   'checkout.shipping.pickupRomeOnly':
-    'Le retrait en magasin est réservé aux clients domiciliés à Rome.',
+    'Le retrait en magasin est disponible uniquement pour les clients basés à Rome.',
+  'checkout.shipping.methodSubtitle': 'Choisissez comment recevoir votre commande.',
+  'checkout.shipping.paidLocked': 'Non sélectionnable avec la livraison gratuite active.',
+  'checkout.shipping.freeShippingLockedHint':
+    'Vous bénéficiez de la livraison gratuite : vous pouvez choisir la livraison gratuite ou le retrait en magasin. Les options payantes ne sont pas sélectionnables.',
+  'checkout.addresses.subtitle': 'Données de facturation et adresse de facturation.',
   'paymentResult.loading': 'Vérification du paiement…',
   'paymentResult.notFound': 'Commande introuvable',
   'paymentResult.fetchError': 'Erreur lors de la récupération de la commande',

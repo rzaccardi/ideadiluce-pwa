@@ -29,6 +29,8 @@ type Props = {
   address: AddressInput
   showCourierNotes?: boolean
   showTitle?: boolean
+  /** Nasconde nome, cognome e telefono (es. indirizzo di sola fatturazione). */
+  hideContactFields?: boolean
   onChange: <K extends keyof AddressInput>(key: K, value: AddressInput[K]) => void
   onAddressResolved?: (resolved: ResolvedAddress) => void
 }
@@ -39,6 +41,7 @@ export function CheckoutAddressSection({
   address,
   showCourierNotes = false,
   showTitle = false,
+  hideContactFields = false,
   onChange,
   onAddressResolved,
 }: Props) {
@@ -144,49 +147,53 @@ export function CheckoutAddressSection({
     <section className="space-y-4">
       {showTitle ? <StripeSectionTitle>{title}</StripeSectionTitle> : null}
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <StripeFieldLabel htmlFor={`${prefix}-firstName`}>{t('common.firstName')}</StripeFieldLabel>
-          <StripeFieldGroup>
-            <StripeControlledInput
-              id={`${prefix}-firstName`}
-              name={`${prefix}-firstName`}
-              placeholder={t('common.firstName')}
-              value={address.firstName}
-              autoComplete="given-name"
-              onValueChange={(value) => onChange('firstName', value)}
-            />
-          </StripeFieldGroup>
-        </div>
-        <div>
-          <StripeFieldLabel htmlFor={`${prefix}-lastName`}>{t('common.lastName')}</StripeFieldLabel>
-          <StripeFieldGroup>
-            <StripeControlledInput
-              id={`${prefix}-lastName`}
-              name={`${prefix}-lastName`}
-              placeholder={t('common.lastName')}
-              value={address.lastName}
-              autoComplete="family-name"
-              onValueChange={(value) => onChange('lastName', value)}
-            />
-          </StripeFieldGroup>
-        </div>
-      </div>
+      {!hideContactFields ? (
+        <>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <StripeFieldLabel htmlFor={`${prefix}-firstName`}>{t('common.firstName')}</StripeFieldLabel>
+              <StripeFieldGroup>
+                <StripeControlledInput
+                  id={`${prefix}-firstName`}
+                  name={`${prefix}-firstName`}
+                  placeholder={t('common.firstName')}
+                  value={address.firstName}
+                  autoComplete="given-name"
+                  onValueChange={(value) => onChange('firstName', value)}
+                />
+              </StripeFieldGroup>
+            </div>
+            <div>
+              <StripeFieldLabel htmlFor={`${prefix}-lastName`}>{t('common.lastName')}</StripeFieldLabel>
+              <StripeFieldGroup>
+                <StripeControlledInput
+                  id={`${prefix}-lastName`}
+                  name={`${prefix}-lastName`}
+                  placeholder={t('common.lastName')}
+                  value={address.lastName}
+                  autoComplete="family-name"
+                  onValueChange={(value) => onChange('lastName', value)}
+                />
+              </StripeFieldGroup>
+            </div>
+          </div>
 
-      <div>
-        <StripeFieldLabel htmlFor={`${prefix}-phone`}>{t('checkout.address.phoneOptional')}</StripeFieldLabel>
-        <StripeFieldGroup>
-          <StripeControlledInput
-            id={`${prefix}-phone`}
-            name={`${prefix}-phone`}
-            type="tel"
-            placeholder="+39 333 1234567"
-            value={address.phone ?? ''}
-            autoComplete="tel"
-            onValueChange={(value) => onChange('phone', value)}
-          />
-        </StripeFieldGroup>
-      </div>
+          <div>
+            <StripeFieldLabel htmlFor={`${prefix}-phone`}>{t('checkout.address.phoneOptional')}</StripeFieldLabel>
+            <StripeFieldGroup>
+              <StripeControlledInput
+                id={`${prefix}-phone`}
+                name={`${prefix}-phone`}
+                type="tel"
+                placeholder="+39 333 1234567"
+                value={address.phone ?? ''}
+                autoComplete="tel"
+                onValueChange={(value) => onChange('phone', value)}
+              />
+            </StripeFieldGroup>
+          </div>
+        </>
+      ) : null}
 
       <div>
         <StripeFieldLabel htmlFor={`${prefix}-search`}>{t('checkout.address.label')}</StripeFieldLabel>

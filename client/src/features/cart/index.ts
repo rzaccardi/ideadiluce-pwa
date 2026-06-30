@@ -1,5 +1,5 @@
 export { cartStore } from './cart.store'
-export { getProductCartQuantity, isCartFlowPath } from './cart.utils'
+export { getProductCartQuantity, isCartFlowPath, isCartPagePath } from './cart.utils'
 export { cartHasBlockedLines } from '@/lib/cartTotals'
 export { cartFeedbackStore } from './cart-feedback.store'
 export { notifyCartItemAdded, dismissCartToast, requestOpenMiniCart } from './cart-feedback'

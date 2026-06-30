@@ -42,7 +42,8 @@ export function CheckoutBusinessFieldsSection({
   const isItaly = billingCountry === 'IT'
   const isEuVat = !isItaly && /^[A-Z]{2}$/.test(billingCountry)
   const b = checkout.business
-  const stepBusy = disabled || checkout.isLoading || checkout.addressPrefillLoading
+  const stepBusy =
+    disabled || checkout.isLoading || checkout.initLoadingPhase != null || checkout.addressPrefillLoading
   const vatFieldBusy = stepBusy || b.taxValidating
 
   async function handleValidateVat() {

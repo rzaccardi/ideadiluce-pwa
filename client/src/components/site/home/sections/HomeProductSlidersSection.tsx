@@ -99,15 +99,18 @@ export function HomeProductSlidersSection({ sliders, lp }: Props) {
           <section
             key={slider.key}
             className={cn(
-              isDesign && 'relative overflow-hidden bg-idl-design text-idl-design-fg',
+              'overflow-visible',
+              isDesign && 'relative bg-idl-design text-idl-design-fg',
               isTechnical && 'border-t border-idl-border bg-white',
               meta.tone === 'paper' && 'border-t border-idl-border bg-idl-cream/40',
             )}
           >
             {isDesign ? (
-              <div className="pointer-events-none absolute top-10 -left-16 size-[420px] rounded-full bg-[radial-gradient(circle,rgba(201,162,75,0.16)_0%,transparent_70%)]" />
+              <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                <div className="absolute top-10 -left-16 size-[420px] rounded-full bg-[radial-gradient(circle,rgba(201,162,75,0.16)_0%,transparent_70%)]" />
+              </div>
             ) : null}
-            <SectionContainer className={cn('relative z-[2] py-12 sm:py-14', isTechnical && 'py-12')}>
+            <SectionContainer className={cn('relative z-[2] pt-12 pb-6 sm:pt-14', isTechnical && 'pt-12')}>
               <SiteSectionHeader
                 eyebrow={t(meta.eyebrowKey)}
                 eyebrowVariant={meta.eyebrowVariant}
@@ -119,24 +122,26 @@ export function HomeProductSlidersSection({ sliders, lp }: Props) {
                 linkTone={isDesign ? 'glow' : isTechnical ? 'amber' : 'brass'}
                 titleStyle={isDesign ? 'serif-lg' : 'sans-lg'}
                 layout="split"
-                className="mb-6"
                 lp={lp}
               />
+            </SectionContainer>
+            <div className={cn('relative z-[2] pb-12 sm:pb-14', isTechnical && 'pb-12')}>
               <ProductSlider
                 products={slider.products.slice(0, HOME_SLIDER_PRODUCT_COUNT)}
-                variant="contained"
+                variant="fullBleed"
+                loop
               />
-              <div className="mt-5 sm:hidden">
-                <Link
-                  to={lp(meta.linkHref)}
-                  className={cn(
-                    'text-sm font-bold',
-                    isDesign ? 'text-idl-glow' : isTechnical ? 'text-idl-amber' : 'text-idl-brass',
-                  )}
-                >
-                  {t(meta.linkKey)} →
-                </Link>
-              </div>
+            </div>
+            <SectionContainer className="relative z-[2] pb-5 sm:hidden">
+              <Link
+                to={lp(meta.linkHref)}
+                className={cn(
+                  'text-sm font-bold',
+                  isDesign ? 'text-idl-glow' : isTechnical ? 'text-idl-amber' : 'text-idl-brass',
+                )}
+              >
+                {t(meta.linkKey)} →
+              </Link>
             </SectionContainer>
           </section>
         )

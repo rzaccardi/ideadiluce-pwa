@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation } from '@/lib/navigation'
 import { useSnapshot } from 'valtio/react'
 import { cartStore } from '@/features/cart'
-import { isCartFlowPath } from '@/features/cart/cart.utils'
+import { isCartFlowPath, isCartPagePath } from '@/features/cart/cart.utils'
 import { cartFeedbackStore } from '@/features/cart/cart-feedback.store'
 import { CartLineStockAlert, getCartStockIssue } from '@/components/cart/CartStockAlert'
 import { CartFlyIn } from '@/components/cart/CartFlyIn'
@@ -14,6 +14,7 @@ import { Button } from '@/components/Button'
 import { Skeleton } from '@/components/Skeleton'
 import { SITE_PAGE_X_CLASS } from '@/components/site/primitives'
 import { useCartSync } from '@/hooks/use-cart-sync'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { formatMoney } from '@/lib/format'
@@ -205,6 +206,9 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
   const { cartPulse, miniCartOpenRequest } = useSnapshot(cartFeedbackStore)
   const { pathname } = useLocation()
   const isCartFlow = isCartFlowPath(pathname)
+  const isCartPage = isCartPagePath(pathname)
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const isCartPageDesktop = isCartPage && isDesktop
   const [open, setOpen] = useState(false)
   const [isBouncing, setIsBouncing] = useState(false)
   const [badgePop, setBadgePop] = useState(false)
@@ -265,7 +269,8 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
   const itemCount = cart?.itemCount ?? 0
   const total = cart && cart.items.length > 0 ? cartTotalCents(cart) : null
 
-  if (isCartFlow) return null
+  // Checkout: nascosto ovunque. Pagina carrello: nascosto su mobile via CSS (evita branch SSR su viewport).
+  if (isCartFlow && !isCartPage) return null
 
   const panelProps = {
     cart: cart ?? null,
@@ -278,21 +283,23 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
   }
 
   return (
-    <div className="relative">
+    <div className={cn('relative', isCartPage && 'hidden lg:block')}>
       <CartFlyIn anchor="header" />
       <button
         type="button"
-        onClick={() => setCartOpen(!open)}
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        aria-label={t('cart.floating.openMiniCart')}
+        onClick={isCartPageDesktop ? undefined : () => setCartOpen(!open)}
+        aria-expanded={isCartPageDesktop ? undefined : open}
+        aria-haspopup={isCartPageDesktop ? undefined : 'dialog'}
+        aria-current={isCartPageDesktop ? 'page' : undefined}
+        aria-label={isCartPageDesktop ? t('nav.cart') : t('cart.floating.openMiniCart')}
         className={cn(
           ui.interactive,
           cn(
             ui.headerAction,
             ui.headerActionBtn,
             'relative lg:gap-1.5 lg:px-3 lg:py-1.5 lg:text-[13px]',
-            isBouncing && 'cart-bounce',
+            isCartPageDesktop && 'cursor-default border-idl-brass text-idl-brass',
+            isBouncing && !isCartPageDesktop && 'cart-bounce',
           ),
         )}
       >
@@ -311,7 +318,7 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
       </button>
 
       <AnimatePresence>
-        {open ? (
+        {open && !isCartPageDesktop ? (
           <>
             {/* Mobile — bottom sheet quasi fullscreen */}
             <motion.button

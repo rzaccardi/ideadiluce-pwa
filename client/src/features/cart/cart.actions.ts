@@ -27,8 +27,8 @@ function detectStaleCartMirror(serverCartId: string): boolean {
 // Source of truth: session cookie server-side. Il mirror `emil_cart_mirror_v1` salva solo
 // cartId + scadenza riserva (vedi cart-local-storage). POST /cart/sync-from-client resta
 // legacy per sync righe guest e non viene invocato dal client.
-async function loadCart(options?: { skipMirrorCheck?: boolean; reprice?: boolean }) {
-  cartStore.isLoading = true
+async function loadCart(options?: { skipMirrorCheck?: boolean; reprice?: boolean; silent?: boolean }) {
+  if (!options?.silent) cartStore.isLoading = true
   cartStore.error = null
   try {
     const next = await api.cart.get({ reprice: options?.reprice })
@@ -45,7 +45,7 @@ async function loadCart(options?: { skipMirrorCheck?: boolean; reprice?: boolean
   } catch (e) {
     cartStore.error = errMessage(e)
   } finally {
-    cartStore.isLoading = false
+    if (!options?.silent) cartStore.isLoading = false
   }
 }
 
@@ -56,14 +56,21 @@ export type FetchCartOptions = {
   skipMirrorCheck?: boolean
   /** Richiede reprice Odoo lato server (cart/checkout). */
   reprice?: boolean
+  /** Non mostrare lo stato di caricamento globale del carrello. */
+  silent?: boolean
 }
 
 export function fetchCart(options?: FetchCartOptions) {
   if (!options?.force && cartStore.cart) {
     return Promise.resolve()
   }
-  return dedupeAsync(`cart:get${options?.reprice ? ':reprice' : ''}`, () =>
-    loadCart({ skipMirrorCheck: options?.skipMirrorCheck, reprice: options?.reprice }),
+  const dedupeKey = `cart:get${options?.reprice ? ':reprice' : ''}${options?.silent ? ':silent' : ''}`
+  return dedupeAsync(dedupeKey, () =>
+    loadCart({
+      skipMirrorCheck: options?.skipMirrorCheck,
+      reprice: options?.reprice,
+      silent: options?.silent,
+    }),
   )
 }
 
@@ -129,8 +136,8 @@ export async function updateItem(id: string, quantity: number) {
   }
 }
 
-export async function removeItem(id: string) {
-  cartStore.isLoading = true
+export async function removeItem(id: string, options?: { silent?: boolean }) {
+  if (!options?.silent) cartStore.isLoading = true
   cartStore.error = null
   try {
     cartStore.cart = await api.cart.removeItem(id)
@@ -140,7 +147,7 @@ export async function removeItem(id: string) {
     cartStore.error = errMessage(e)
     throw e
   } finally {
-    cartStore.isLoading = false
+    if (!options?.silent) cartStore.isLoading = false
   }
 }
 

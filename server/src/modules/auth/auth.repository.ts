@@ -1,5 +1,6 @@
 import type { CustomerSegment } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
+import { invalidateSessionCacheForSession } from '../../middlewares/session.js'
 
 export const authRepository = {
   findUserByEmail(email: string) {
@@ -30,7 +31,8 @@ export const authRepository = {
     return prisma.session.deleteMany({ where: { tokenHash } })
   },
 
-  linkSessionToUser(sessionId: string, userId: string, expiresAt: Date) {
+  async linkSessionToUser(sessionId: string, userId: string, expiresAt: Date) {
+    invalidateSessionCacheForSession(sessionId)
     return prisma.session.update({
       where: { id: sessionId },
       data: { userId, expiresAt },

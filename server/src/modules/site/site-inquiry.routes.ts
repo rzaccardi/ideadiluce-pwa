@@ -13,6 +13,7 @@ const upload = multer({
 const imageFields = upload.fields([
   { name: 'productPhoto', maxCount: 1 },
   { name: 'socketPhoto', maxCount: 1 },
+  { name: 'attachments', maxCount: 3 },
 ])
 
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'])
@@ -54,6 +55,7 @@ siteInquiryRouter.post(
     const attachments = [
       ...collectAttachments(fileMap?.productPhoto),
       ...collectAttachments(fileMap?.socketPhoto),
+      ...collectAttachments(fileMap?.attachments),
     ]
 
     res.status(201).json(ok(await siteInquiryService.submit(parsed.data, attachments)))

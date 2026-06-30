@@ -159,7 +159,7 @@ export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Pro
         <StripePayButton
           className="min-w-0 flex-1"
           disabled={!canPay || !checkout.termsAccepted || !canStartCheckout()}
-          loading={checkout.isLoading || checkout.isPaying}
+          loading={checkout.isLoading || checkout.isPaying || checkout.cartRefreshing}
           variant="pay"
           onClick={() => {
             void (async () => {

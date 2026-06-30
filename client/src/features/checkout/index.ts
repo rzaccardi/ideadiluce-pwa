@@ -47,6 +47,7 @@ export {
   resetCheckout,
   clearCheckoutAfterLogout,
   invalidateCheckoutAfterCartChange,
+  refreshCheckoutAfterCartChange,
   setPaymentMethod,
   setCustomerSegment,
   markAnagraficaCollectedAtAccount,
@@ -67,4 +68,5 @@ export {
   updateCheckoutEmail,
   updateCheckoutOrderNotes,
 } from './checkout.actions'
+export type { CheckoutInitLoadingPhase } from './checkout.store'
 export { isPickupQuote, isRomePickupEligible } from './shipping-quotes'

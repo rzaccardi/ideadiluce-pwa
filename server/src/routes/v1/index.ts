@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { noStorePrivateApi } from '../../middlewares/no-store-private-api.js'
 import { authRouter } from '../../modules/auth/auth.routes.js'
 import { catalogRouter } from '../../modules/catalog/catalog.routes.js'
 import { searchRouter, searchAnalyticsAdminRouter } from '../../modules/search/search.routes.js'
@@ -36,6 +37,8 @@ import { taxAdminRouter } from '../../modules/tax/tax.admin.routes.js'
 import { taxRouter, vatRouter } from '../../modules/tax/tax.routes.js'
 
 export const v1Router = Router()
+
+v1Router.use(noStorePrivateApi)
 
 v1Router.use('/auth', authRouter)
 v1Router.use('/address', addressRouter)

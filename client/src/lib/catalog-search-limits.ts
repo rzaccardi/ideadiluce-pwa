@@ -23,13 +23,17 @@ export function createCatalogSearchApiGateState(): CatalogSearchApiGateState {
   return { lastApiQuery: '', lastApiAtMs: 0, apiTimestamps: [] }
 }
 
-/** Normalizza input utente: rimuove control chars, collassa spazi, tronca. */
-export function sanitizeCatalogSearchInput(raw: string): string {
+/** Sanitizza input mentre l'utente digita — senza trim per non bloccare gli spazi tra parole. */
+export function sanitizeCatalogSearchInputLive(raw: string): string {
   return raw
     .replace(/[\u0000-\u001F\u007F]/g, '')
     .replace(/\s+/g, ' ')
-    .trim()
     .slice(0, CATALOG_SEARCH_LIMITS.maxQueryLength)
+}
+
+/** Normalizza query per confronti, API e submit: rimuove control chars, collassa spazi, tronca. */
+export function sanitizeCatalogSearchInput(raw: string): string {
+  return sanitizeCatalogSearchInputLive(raw).trim()
 }
 
 export function canFetchProductSuggestions(

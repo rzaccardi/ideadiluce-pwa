@@ -34,6 +34,7 @@ import {
   filterVisibleShippingQuotes,
   isFreeShippingLocked,
   isFreeShippingQuote,
+  isShippingQuoteSelectable,
 } from './shipping-quotes'
 
 function currentLocale() {
@@ -50,12 +51,13 @@ function errMessage(e: unknown) {
 }
 
 function shippingAddressPayload() {
+  const dropship = dropshipPayload()
+  if (dropship) return { ...dropship }
   return { ...checkoutStore.draft.shipping }
 }
 
 function billingAddressPayload() {
-  const { draft } = checkoutStore
-  return draft.billingSameAsShipping ? { ...draft.shipping } : { ...draft.billing }
+  return { ...checkoutStore.draft.billing }
 }
 
 function shippingAddressForQuotes() {
@@ -203,7 +205,37 @@ function applyTaxValidationResult(res: TaxValidationResultDTO) {
   }
 }
 
+/** Dati fiscali invariati rispetto al profilo BE già verificato — niente re-validazione API. */
+function taxFieldsTrustedFromAuth(): boolean {
+  const user = authStore.me
+  if (!user || !checkoutStore.anagraficaCollectedAtAccount) return false
+
+  const b = checkoutStore.business
+  if (isBusinessCheckout()) {
+    return (
+      b.companyName.trim() === (user.companyName?.trim() ?? '') &&
+      b.vatNumber.trim() === (user.vatNumber?.trim() ?? '') &&
+      b.pec.trim() === (user.pec?.trim() ?? '') &&
+      b.sdiCode.trim() === (user.sdiCode?.trim() ?? '')
+    )
+  }
+
+  return b.fiscalCode.trim() === (user.fiscalCode?.trim() ?? '')
+}
+
+function syncAnagraficaCollectedFromAuthProfile() {
+  if (!authStore.isAuthenticated) return
+  if (isAnagraficaCompartmentComplete()) {
+    checkoutStore.anagraficaCollectedAtAccount = true
+  }
+}
+
 export async function validateTaxFields() {
+  if (taxFieldsTrustedFromAuth()) {
+    applyUserTaxProfileToCheckout(authStore.me!)
+    return null
+  }
+
   const country = billingAddressPayload().country.toUpperCase()
   const fiscalCode = checkoutStore.business.fiscalCode.trim()
   const vatNumber = checkoutStore.business.vatNumber.trim()
@@ -301,6 +333,8 @@ function invalidateShippingIfDestinationChanged() {
 }
 
 function scheduleShippingQuotesFetch(delayMs = 450) {
+  if (checkoutStore.initLoadingPhase) return
+  if (checkoutStore.addressPrefillLoading) return
   if (shippingQuotesDebounce) clearTimeout(shippingQuotesDebounce)
 
   const addr = shippingAddressPayload()
@@ -363,16 +397,28 @@ function ensureCheckoutEmailInDraft(): string {
   return email
 }
 
+function ensureBillingContactFromProfile() {
+  const bill = checkoutStore.draft.billing
+  const user = authStore.me
+  if (!bill.firstName.trim()) {
+    bill.firstName = user?.firstName?.trim() || 'Cliente'
+  }
+  if (!bill.lastName.trim()) {
+    bill.lastName = user?.lastName?.trim() || 'Fatturazione'
+  }
+}
+
 export function isAnagraficaCompartmentComplete(): boolean {
   if (!authStore.isAuthenticated) return false
   if (effectiveCustomerSegment() == null) return false
   if (!isCheckoutEmailValid(resolveCheckoutEmail())) return false
-  if (!addressComplete(checkoutStore.draft.billing) || !businessBillingComplete()) return false
-  return addressComplete(checkoutStore.draft.shipping)
+  ensureBillingContactFromProfile()
+  return addressComplete(checkoutStore.draft.billing) && businessBillingComplete()
 }
 
 export function isSpedizioneCompartmentComplete(): boolean {
   if (!isAnagraficaCompartmentComplete()) return false
+  if (!addressComplete(checkoutStore.draft.shipping)) return false
   if (!canAdvanceFromStep('delivery_recipient')) return false
   return Boolean(checkoutStore.selectedShippingMethodRef && checkoutStore.shippingSelectionPersisted)
 }
@@ -434,7 +480,8 @@ function businessBillingComplete(): boolean {
 }
 
 function dropshipPayload() {
-  if (checkoutStore.deliveryRecipient.mode !== 'other') return undefined
+  const mode = checkoutStore.deliveryRecipient.mode ?? 'self'
+  if (mode !== 'other') return undefined
   const addr = checkoutStore.dropshipAddress
   const meta = checkoutStore.deliveryRecipient
   return {
@@ -504,7 +551,6 @@ export function shouldSkipCheckoutStep(step: CheckoutStep): boolean {
   }
   if (step === 'account' && authStore.isAuthenticated) return true
   if (step === 'customer_type' && effectiveCustomerSegment() != null) return true
-  if (step === 'delivery_recipient' && !isBusinessCheckout()) return true
   return false
 }
 
@@ -594,10 +640,21 @@ export function prefillCheckoutFromAuthUser() {
     if (addr.postalCode) checkoutStore.draft.shipping.postalCode = addr.postalCode
     if (addr.country) checkoutStore.draft.shipping.country = addr.country
     if (addr.phone) checkoutStore.draft.shipping.phone = addr.phone ?? ''
+
+    const billing = checkoutStore.draft.billing
+    if (addr.line1) billing.line1 = addr.line1
+    if (addr.streetNumber) billing.streetNumber = addr.streetNumber
+    if (addr.isSnc) billing.isSnc = addr.isSnc
+    if (addr.line2) billing.line2 = addr.line2 ?? ''
+    if (addr.city) billing.city = addr.city
+    if (addr.postalCode) billing.postalCode = addr.postalCode
+    if (addr.country) billing.country = addr.country
+    if (user.firstName) billing.firstName = user.firstName
+    if (user.lastName) billing.lastName = user.lastName
   }
-  if (checkoutStore.draft.billingSameAsShipping) {
-    checkoutStore.draft.billing = { ...checkoutStore.draft.shipping }
-  }
+  ensureBillingContactFromProfile()
+
+  syncAnagraficaCollectedFromAuthProfile()
 }
 
 export function setCheckoutStep(step: CheckoutStep) {
@@ -629,27 +686,37 @@ async function resolvePrefilledCheckoutAddressesFromAuth() {
 }
 
 async function runAddressPrefillInit() {
-  prefillCheckoutFromAuthUser()
-
-  const shipping = checkoutStore.draft.shipping
-  const billing = checkoutStore.draft.billing
-  const needsGeocode =
-    hasPrefilledAddress(shipping) ||
-    (!checkoutStore.draft.billingSameAsShipping && hasPrefilledAddress(billing))
-
-  if (!needsGeocode) {
-    checkoutStore.addressPrefillLoading = false
-    checkoutStore.currentStep = resolveInitialCheckoutStep()
-    return
-  }
-
-  checkoutStore.addressPrefillLoading = true
+  checkoutStore.initLoadingPhase = 'anagrafica'
   checkoutStore.currentStep = 'account'
+
   try {
-    await refreshAddressAutocompleteStatus()
-    await resolvePrefilledCheckoutAddressesFromAuth()
+    prefillCheckoutFromAuthUser()
+    syncAnagraficaCollectedFromAuthProfile()
+
+    const shipping = checkoutStore.draft.shipping
+    const billing = checkoutStore.draft.billing
+    const needsGeocode =
+      hasPrefilledAddress(shipping) ||
+      (!checkoutStore.draft.billingSameAsShipping && hasPrefilledAddress(billing))
+
+    if (needsGeocode) {
+      checkoutStore.initLoadingPhase = 'indirizzi'
+      await refreshAddressAutocompleteStatus()
+      await resolvePrefilledCheckoutAddressesFromAuth()
+    }
+
+    if (destinationComplete(shippingAddressPayload())) {
+      checkoutStore.initLoadingPhase = 'spedizioni'
+      try {
+        await fetchShippingQuotes()
+      } catch {
+        /* errore già in checkoutStore.error */
+      }
+    }
   } finally {
+    checkoutStore.initLoadingPhase = null
     checkoutStore.addressPrefillLoading = false
+    syncAnagraficaCollectedFromAuthProfile()
     checkoutStore.currentStep = resolveInitialCheckoutStep()
   }
 }
@@ -658,6 +725,7 @@ export function initializeCheckoutNavigation(): Promise<void> {
   if (!authStore.isAuthenticated) {
     checkoutStore.currentStep = 'account'
     checkoutStore.addressPrefillLoading = false
+    checkoutStore.initLoadingPhase = null
     return Promise.resolve()
   }
 
@@ -679,24 +747,92 @@ export async function prepareCheckoutAfterAuth() {
 }
 
 /** Dopo modifica righe carrello: azzera pagamento e spedizione già calcolati. */
-export function invalidateCheckoutAfterCartChange() {
+function clearCheckoutPricingState() {
   checkoutStore.payment = null
+  checkoutStore.order = null
   checkoutStore.shippingQuotes = []
   checkoutStore.freeShippingHint = null
   checkoutStore.shippingQuotesFingerprint = null
   checkoutStore.selectedShippingMethodRef = null
   checkoutStore.shippingSelectionPersisted = false
   checkoutStore.taxBreakdown = null
+}
+
+function checkoutStepNeedsShippingRefresh(step: CheckoutStep): boolean {
+  return (
+    step !== 'account' &&
+    step !== 'customer_type' &&
+    step !== 'addresses' &&
+    step !== 'billing' &&
+    step !== 'shipping'
+  )
+}
+
+let checkoutCartRefreshPromise: Promise<void> | null = null
+
+export function invalidateCheckoutAfterCartChange() {
+  clearCheckoutPricingState()
   if (
-    checkoutStore.currentStep !== 'account' &&
-    checkoutStore.currentStep !== 'addresses' &&
-    checkoutStore.currentStep !== 'billing' &&
-    checkoutStore.currentStep !== 'shipping' &&
+    checkoutStepNeedsShippingRefresh(checkoutStore.currentStep) &&
     destinationComplete(shippingAddressPayload())
   ) {
     scheduleShippingQuotesFetch(0)
     scheduleTaxRecalculate(0)
   }
+}
+
+/** Aggiorna carrello in checkout senza cambiare step; overlay a pagina intera e pagamento bloccato. */
+export async function refreshCheckoutAfterCartChange() {
+  if (checkoutCartRefreshPromise) return checkoutCartRefreshPromise
+
+  const step = checkoutStore.currentStep
+  const previousShippingRef = checkoutStore.selectedShippingMethodRef
+
+  checkoutCartRefreshPromise = (async () => {
+    checkoutStore.cartRefreshing = true
+    checkoutStore.error = null
+    clearCheckoutPricingState()
+
+    try {
+      await fetchCart({ force: true, reprice: true, silent: true })
+
+      if (
+        checkoutStepNeedsShippingRefresh(step) &&
+        destinationComplete(shippingAddressPayload())
+      ) {
+        await fetchShippingQuotes({ skipAutoSelect: true })
+        const preferredRef =
+          previousShippingRef &&
+          checkoutStore.shippingQuotes.some((quote) => quote.methodRef === previousShippingRef)
+            ? previousShippingRef
+            : null
+        if (preferredRef) {
+          await selectShippingMethod(preferredRef, { silent: true })
+        } else {
+          await autoSelectShippingQuote(checkoutStore.shippingQuotes)
+        }
+        await syncCheckoutDraft('shipping', { silent: true })
+      } else if (destinationComplete(shippingAddressPayload())) {
+        await refreshTaxBreakdown()
+      }
+
+      if (
+        (step === 'payment' || step === 'review') &&
+        canStartCheckout() &&
+        checkoutStore.selectedPaymentMethod
+      ) {
+        if (!checkoutStore.order) await startCheckout({ silent: true })
+        if (!checkoutStore.payment) await createPaymentSession({ silent: true })
+      }
+    } catch (e) {
+      checkoutStore.error = errMessage(e)
+    } finally {
+      checkoutStore.cartRefreshing = false
+      checkoutCartRefreshPromise = null
+    }
+  })()
+
+  return checkoutCartRefreshPromise
 }
 
 export function resetCheckout(options?: { legacyLayout?: boolean }) {
@@ -710,6 +846,8 @@ export function resetCheckout(options?: { legacyLayout?: boolean }) {
   checkoutStore.error = null
   checkoutStore.isPaying = false
   checkoutStore.addressPrefillLoading = false
+  checkoutStore.initLoadingPhase = null
+  checkoutStore.cartRefreshing = false
   checkoutStore.selectedPaymentMethod = 'stripe'
   checkoutStore.shippingQuotes = []
   checkoutStore.freeShippingHint = null
@@ -744,7 +882,7 @@ export function resetCheckout(options?: { legacyLayout?: boolean }) {
   checkoutStore.clientOrderRef = ''
   checkoutStore.dropshipAddress = emptyCheckoutAddress()
   checkoutStore.deliveryRecipient = {
-    mode: null,
+    mode: 'self',
     firstName: '',
     lastName: '',
     company: '',
@@ -757,7 +895,7 @@ export function resetCheckout(options?: { legacyLayout?: boolean }) {
   checkoutStore.draft = {
     email: '',
     orderNotes: '',
-    billingSameAsShipping: true,
+    billingSameAsShipping: false,
     billing: emptyCheckoutAddress(),
     shipping: emptyCheckoutAddress(),
   }
@@ -779,6 +917,8 @@ export function clearCheckoutAfterLogout() {
   checkoutStore.isPaying = false
   checkoutStore.isLoading = false
   checkoutStore.addressPrefillLoading = false
+  checkoutStore.initLoadingPhase = null
+  checkoutStore.cartRefreshing = false
   checkoutStore.shippingSelectionPersisted = false
   checkoutStore.selectedShippingMethodRef = null
   checkoutStore.shippingQuotes = []
@@ -792,7 +932,7 @@ export function clearCheckoutAfterLogout() {
   checkoutStore.anagraficaCollectedAtAccount = false
   checkoutStore.termsAccepted = false
   checkoutStore.deliveryRecipient = {
-    mode: null,
+    mode: 'self',
     firstName: '',
     lastName: '',
     company: '',
@@ -853,6 +993,7 @@ export function updateBusinessField(
   value: string,
 ) {
   checkoutStore.business[key] = value
+  checkoutStore.anagraficaCollectedAtAccount = false
   if (key === 'vatNumber') {
     checkoutStore.business.vatValidated = false
     checkoutStore.business.vatForceAccepted = false
@@ -975,24 +1116,23 @@ export function canFetchShippingQuotes() {
 }
 
 export function canAdvanceFromStep(step: CheckoutStep): boolean {
+  if (checkoutStore.cartRefreshing) return false
   switch (step) {
     case 'account':
       return authStore.isAuthenticated && isCheckoutEmailValid(resolveCheckoutEmail())
     case 'customer_type':
       return effectiveCustomerSegment() != null
     case 'addresses':
-    case 'billing':
-    case 'shipping': {
-      const same = checkoutStore.draft.billingSameAsShipping
-      const shippingOk = addressComplete(checkoutStore.draft.shipping)
-      const billingOk = same || addressComplete(checkoutStore.draft.billing)
-      return shippingOk && billingOk && businessBillingComplete()
+    case 'billing': {
+      ensureBillingContactFromProfile()
+      return addressComplete(checkoutStore.draft.billing) && businessBillingComplete()
     }
     case 'delivery_recipient': {
-      if (!isBusinessCheckout()) return true
-      const r = checkoutStore.deliveryRecipient
-      if (r.mode === 'self') return true
-      if (r.mode === 'other') {
+      const mode = checkoutStore.deliveryRecipient.mode ?? 'self'
+      if (mode === 'self') {
+        return addressComplete(checkoutStore.draft.shipping)
+      }
+      if (mode === 'other') {
         const addr = dropshipPayload()
         return Boolean(addr && addressComplete(addr))
       }
@@ -1010,6 +1150,7 @@ export function canAdvanceFromStep(step: CheckoutStep): boolean {
 }
 
 export function canStartCheckout() {
+  if (checkoutStore.cartRefreshing) return false
   if (isFrozenQuoteCheckout()) {
     return Boolean(checkoutStore.order?.orderId) && Boolean(checkoutStore.selectedPaymentMethod)
   }
@@ -1047,6 +1188,14 @@ async function autoSelectShippingQuote(quotes: ShippingQuoteDTO[]) {
   }
 }
 
+function syncShippingFromDeliveryRecipient() {
+  const mode = checkoutStore.deliveryRecipient.mode ?? 'self'
+  if (mode === 'other') {
+    const dropship = dropshipPayload()
+    if (dropship) checkoutStore.draft.shipping = { ...dropship }
+  }
+}
+
 export async function advanceCheckoutStep() {
   const step = checkoutStore.currentStep
 
@@ -1060,13 +1209,11 @@ export async function advanceCheckoutStep() {
 
   try {
     if (step === 'addresses' || step === 'billing') {
+      ensureBillingContactFromProfile()
       await validateTaxFields()
       if (!canAdvanceFromStep(step === 'billing' ? 'addresses' : step)) {
         checkoutStore.error = localeMessage('checkout.error.incompleteStep')
         return
-      }
-      if (checkoutStore.draft.billingSameAsShipping) {
-        checkoutStore.draft.billing = { ...checkoutStore.draft.shipping }
       }
       if (!isAnagraficaCompartmentComplete()) {
         checkoutStore.error = localeMessage('checkout.error.incompleteStep')
@@ -1074,10 +1221,10 @@ export async function advanceCheckoutStep() {
       }
       ensureCheckoutEmailInDraft()
       await syncCheckoutDraft('details', { silent: true })
-      await fetchShippingQuotes()
     }
 
     if (step === 'delivery_recipient') {
+      syncShippingFromDeliveryRecipient()
       await fetchShippingQuotes()
     }
 
@@ -1129,7 +1276,7 @@ export function canGoBackCheckoutStep(step: CheckoutStep = checkoutStore.current
   return getPreviousCheckoutStep(step) != null
 }
 
-export async function fetchShippingQuotes() {
+export async function fetchShippingQuotes(options?: { skipAutoSelect?: boolean }) {
   checkoutStore.shippingQuotesLoading = true
   checkoutStore.error = null
   try {
@@ -1140,7 +1287,9 @@ export async function fetchShippingQuotes() {
     checkoutStore.deliveryEstimateDays = res.deliveryEstimateDays ?? null
     checkoutStore.shippingQuotes = filterVisibleShippingQuotes(res.quotes, res.freeShippingHint)
     checkoutStore.shippingQuotesFingerprint = shippingFingerprint(shippingAddressPayload())
-    await autoSelectShippingQuote(checkoutStore.shippingQuotes)
+    if (!options?.skipAutoSelect) {
+      await autoSelectShippingQuote(checkoutStore.shippingQuotes)
+    }
   } catch (e) {
     checkoutStore.error = errMessage(e)
     throw e
@@ -1155,8 +1304,8 @@ export async function selectShippingMethod(methodRef: string, options?: { silent
   }
 
   if (freeShippingSelectionLocked()) {
-    const freeRef = checkoutStore.shippingQuotes.find(isFreeShippingQuote)?.methodRef
-    if (freeRef && methodRef !== freeRef) {
+    const quote = checkoutStore.shippingQuotes.find((q) => q.methodRef === methodRef)
+    if (!quote || !isShippingQuoteSelectable(quote, true)) {
       return
     }
   }
@@ -1171,6 +1320,7 @@ export async function selectShippingMethod(methodRef: string, options?: { silent
   const previousRef = checkoutStore.selectedShippingMethodRef
   checkoutStore.shippingSelectingRef = methodRef
   checkoutStore.error = null
+  let shouldSyncDraft = false
   try {
     await api.shipping.select({
       shippingAddress: shippingAddressForQuotes(),
@@ -1183,9 +1333,7 @@ export async function selectShippingMethod(methodRef: string, options?: { silent
     checkoutStore.selectedShippingMethodRef = methodRef
     checkoutStore.shippingSelectionPersisted = true
     await fetchCart()
-    if (isSpedizioneCompartmentComplete()) {
-      await syncCheckoutDraft('shipping', { silent: true })
-    }
+    shouldSyncDraft = isSpedizioneCompartmentComplete()
     scheduleTaxRecalculate(0)
   } catch (e) {
     if (checkoutStore.selectedShippingMethodRef === methodRef) {
@@ -1195,6 +1343,12 @@ export async function selectShippingMethod(methodRef: string, options?: { silent
     throw e
   } finally {
     checkoutStore.shippingSelectingRef = null
+  }
+
+  if (shouldSyncDraft) {
+    void syncCheckoutDraft('shipping', { silent: true }).catch((e) => {
+      checkoutStore.error = errMessage(e)
+    })
   }
 }
 
@@ -1227,6 +1381,8 @@ function checkoutBusinessPayload() {
 }
 
 type CheckoutDraftStep = 'details' | 'shipping' | 'payment_method' | 'lock'
+
+let checkoutDraftSyncPromise: Promise<void> | null = null
 
 function canSyncCheckoutDraft(step: CheckoutDraftStep): boolean {
   if (!authStore.isAuthenticated) return false
@@ -1266,15 +1422,35 @@ function checkoutDraftBody(step: CheckoutDraftStep) {
 
 export async function syncCheckoutDraft(step: CheckoutDraftStep, options?: { silent?: boolean }) {
   if (!canSyncCheckoutDraft(step)) return
-  if (!options?.silent) checkoutStore.isLoading = true
-  checkoutStore.error = null
+
+  const run = async () => {
+    if (!options?.silent) checkoutStore.isLoading = true
+    checkoutStore.error = null
+    try {
+      checkoutStore.order = await api.checkout.patchDraft(checkoutDraftBody(step))
+    } catch (e) {
+      checkoutStore.error = errMessage(e)
+      throw e
+    } finally {
+      if (!options?.silent) checkoutStore.isLoading = false
+    }
+  }
+
+  if (checkoutDraftSyncPromise) {
+    await checkoutDraftSyncPromise.catch(() => undefined)
+  }
+
+  const promise = run()
+  checkoutDraftSyncPromise = promise.then(
+    () => undefined,
+    () => undefined,
+  )
   try {
-    checkoutStore.order = await api.checkout.patchDraft(checkoutDraftBody(step))
-  } catch (e) {
-    checkoutStore.error = errMessage(e)
-    throw e
+    await promise
   } finally {
-    if (!options?.silent) checkoutStore.isLoading = false
+    if (checkoutDraftSyncPromise === promise) {
+      checkoutDraftSyncPromise = null
+    }
   }
 }
 

@@ -34,8 +34,8 @@ export function TechnicalProductShowcase({
   const items = products.slice(0, Math.max(productCount, HOME_SLIDER_PRODUCT_COUNT))
 
   return (
-    <section className="border-t border-idl-tech-border bg-idl-tech-panel">
-      <SectionContainer className="py-14">
+    <section className="overflow-visible border-t border-idl-tech-border bg-idl-tech-panel">
+      <SectionContainer className="pt-14 pb-6">
         <SiteSectionHeader
           eyebrow={eyebrow}
           eyebrowVariant="technical"
@@ -46,11 +46,12 @@ export function TechnicalProductShowcase({
           linkTone="amber"
           titleStyle="sans-lg"
           layout="split"
-          className="mb-6"
           lp={lp}
         />
-        <ProductSlider products={items} variant="contained" />
       </SectionContainer>
+      <div className="pb-14">
+        <ProductSlider products={items} variant="fullBleed" loop />
+      </div>
     </section>
   )
 }

@@ -100,7 +100,9 @@ export const messages: Record<MessageKey, string> = {
   'chiSiamo.mapAlt': 'Mappa / facciata showroom',
   'auth.sessionChecking': 'Verifica sessione…',
   'auth.redirectingToLogin': 'Reindirizzamento al login…',
+  'auth.redirectingToAccount': 'Reindirizzamento alla dashboard…',
   'auth.loggingIn': 'Accesso…',
+  'auth.preparingAccount': 'Caricamento account, carrello e ordini…',
   'auth.loggedIn': 'Accesso effettuato.',
   'auth.loggedOut': 'Sei uscito dall’account.',
   'auth.loggedOutLocalOnly':
@@ -445,6 +447,9 @@ export const messages: Record<MessageKey, string> = {
   'checkout.shipping.diffAddressSubtitle':
     'Diverso dalla fatturazione — dove consegniamo il pacco.',
   'checkout.shipping.methodSubtitle': 'Scegli come ricevere il tuo ordine.',
+  'checkout.shipping.paidLocked': 'Non selezionabile con spedizione gratuita attiva.',
+  'checkout.shipping.freeShippingLockedHint':
+    'Hai diritto alla spedizione gratuita: puoi scegliere la consegna gratuita o il ritiro in negozio. Le spedizioni a pagamento non sono selezionabili.',
   'checkout.shipping.diffFromBilling':
     'Spedisci a un indirizzo diverso da quello di fatturazione',
   'checkout.summary.showOrderSummary': 'Mostra riepilogo ordine',
@@ -462,8 +467,11 @@ export const messages: Record<MessageKey, string> = {
   'checkout.summary.trust.showroomSubtitle': 'Assistenza reale prima e dopo l\'ordine',
   'checkout.summary.trust.recentActivity': 'Attività recente',
   'checkout.loading.dontClose': 'Non chiudere questa pagina',
-  'checkout.loading.address': 'Verifica indirizzi…',
-  'checkout.loading.shipping': 'Calcolo spedizione…',
+  'checkout.loading.cart': 'Aggiorno carrello…',
+  'checkout.loading.profile': 'Recupero anagrafiche…',
+  'checkout.loading.addresses': 'Recupero indirizzi…',
+  'checkout.loading.address': 'Recupero indirizzi…',
+  'checkout.loading.shipping': 'Calcolo spedizioni…',
   'checkout.loading.payment': 'Preparazione pagamento…',
   'checkout.payStore': 'Paga {store}',
   'checkout.steps.navLabel': 'Passaggi checkout',
@@ -514,7 +522,7 @@ export const messages: Record<MessageKey, string> = {
   'checkout.deliveryRecipient.notSavedHint': 'L’indirizzo non viene salvato in rubrica: vale solo per questo ordine.',
   'checkout.billing.professionalActive': 'Condizioni professional attive',
   'checkout.billing.subtitle': 'Inserisci i dati per fatturazione e consegna.',
-  'checkout.addresses.subtitle': 'Indirizzo di spedizione e, se diverso, di fatturazione.',
+  'checkout.addresses.subtitle': 'Dati di fatturazione e indirizzo per la fattura.',
   'checkout.billing.businessTitle': 'Dati fatturazione azienda',
   'checkout.billing.companyName': 'Ragione sociale',
   'checkout.billing.vatNumber': 'Partita IVA / VAT',

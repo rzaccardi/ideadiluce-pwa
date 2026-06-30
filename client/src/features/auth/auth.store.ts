@@ -10,6 +10,8 @@ export const authStore = proxy({
   impersonation: null as ImpersonationInfoDTO | null,
   isAuthenticated: false,
   isLoading: false,
+  /** Caricamento carrello, ordini e preferiti subito dopo login/registrazione. */
+  isHydrating: false,
   error: null as string | null,
   sessionExpiresAt: null as string | null,
 })

@@ -102,7 +102,9 @@ export const messages: Record<MessageKey, string> = {
   'chiSiamo.mapAlt': 'Karte / Showroom-Fassade',
   'auth.sessionChecking': 'Sitzung wird geprüft…',
   'auth.redirectingToLogin': 'Weiterleitung zur Anmeldung…',
+  'auth.redirectingToAccount': 'Weiterleitung zum Konto…',
   'auth.loggingIn': 'Anmeldung…',
+  'auth.preparingAccount': 'Konto, Warenkorb und Bestellungen werden geladen…',
   'auth.loggedIn': 'Anmeldung erfolgreich.',
   'auth.loggedOut': 'Sie wurden abgemeldet.',
   'auth.loggedOutLocalOnly':
@@ -399,6 +401,11 @@ export const messages: Record<MessageKey, string> = {
   'checkout.shipping.deliveryEstimate':
     'Einzelne Lieferung voraussichtlich innerhalb von {days} Werktagen (längste Vorlaufzeit im Warenkorb).',
   'checkout.shipping.pickupRomeOnly': 'Abholung vor Ort ist nur für Kunden mit Sitz in Rom verfügbar.',
+  'checkout.shipping.methodSubtitle': 'Wählen Sie, wie Sie Ihre Bestellung erhalten möchten.',
+  'checkout.shipping.paidLocked': 'Bei aktivem Gratisversand nicht wählbar.',
+  'checkout.shipping.freeShippingLockedHint':
+    'Sie haben Anspruch auf Gratisversand: Sie können kostenlose Lieferung oder Abholung im Geschäft wählen. Kostenpflichtige Versandoptionen sind nicht wählbar.',
+  'checkout.addresses.subtitle': 'Rechnungsdaten und Rechnungsadresse.',
   'paymentResult.loading': 'Zahlung wird geprüft…',
   'paymentResult.notFound': 'Bestellung nicht gefunden',
   'paymentResult.fetchError': 'Fehler beim Abrufen der Bestellung',

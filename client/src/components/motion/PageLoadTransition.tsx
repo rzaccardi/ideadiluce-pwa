@@ -1,6 +1,7 @@
 'use client'
 
 import { AnimatePresence, motion, useReducedMotion } from '@/lib/motion-client'
+import { useRef } from 'react'
 import type { ReactNode } from 'react'
 import { fadeUpVariants } from '@/lib/motion/presets'
 import { PAGE_FLEX_LAYOUT_CLASS } from '@/components/layout/PageFlexShell'
@@ -27,6 +28,9 @@ export function PageLoadTransition({
   const layoutClass = cn(PAGE_FLEX_LAYOUT_CLASS, className)
   const showSkeleton = isLoading && children == null
   const showContent = children != null
+  const hadSkeletonRef = useRef(false)
+  if (showSkeleton) hadSkeletonRef.current = true
+  const animateContentIn = hadSkeletonRef.current
 
   if (reduceMotion) {
     return (
@@ -53,7 +57,7 @@ export function PageLoadTransition({
         {showContent ? (
           <motion.div
             key="content"
-            initial="hidden"
+            initial={animateContentIn ? 'hidden' : false}
             animate="visible"
             exit={{ opacity: 0 }}
             variants={fadeUpVariants}

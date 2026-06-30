@@ -71,6 +71,7 @@ export function CheckoutShippingOptions({
         <div className={cn('flex flex-col gap-3', (blocked || selectionBusy) && 'opacity-60')}>
           {quotes.map((q) => {
             const selectable = isShippingQuoteSelectable(q, selectionLocked)
+            const locked = selectionLocked && !selectable
             return (
               <ShippingMethodOption
                 key={q.methodRef}
@@ -78,6 +79,7 @@ export function CheckoutShippingOptions({
                 selected={selectedRef === q.methodRef || selectingRef === q.methodRef}
                 selecting={selectingRef === q.methodRef}
                 disabled={blocked || loading || selectionBusy || !selectable}
+                locked={locked}
                 onSelect={() => {
                   if (!selectable || selectionBusy) return
                   onSelect(q.methodRef)

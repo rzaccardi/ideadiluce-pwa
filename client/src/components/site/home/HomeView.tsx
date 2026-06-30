@@ -80,6 +80,10 @@ export function HomeView({
       </Reveal>
 
       <Reveal>
+        <HomeBrandsSection section={content.brands} brands={homeBrands} lp={lp} />
+      </Reveal>
+
+      <Reveal>
         <TechnicalProductShowcase
           eyebrow={content.technicalShowcase.eyebrow}
           title={content.technicalShowcase.title}
@@ -93,14 +97,11 @@ export function HomeView({
       </Reveal>
 
       <Reveal>
-        <HomeProductSlidersSection sliders={extraSliders} lp={lp} />
+        <HomeGuidesSection section={content.guides} lp={lp} />
       </Reveal>
 
       <Reveal>
-        <HomeBrandsSection section={content.brands} brands={homeBrands} lp={lp} />
-      </Reveal>
-      <Reveal>
-        <HomeGuidesSection section={content.guides} lp={lp} />
+        <HomeProductSlidersSection sliders={extraSliders} lp={lp} />
       </Reveal>
       <Reveal>
         <HomeB2bSection b2b={content.b2b} leadGen={content.leadGen} lp={lp} />

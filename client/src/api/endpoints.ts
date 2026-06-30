@@ -205,8 +205,29 @@ export const api = {
       usage?: string
       urgency?: string
       locale?: string
+      attachments?: File[]
     }) {
-      return apiClient.post<{ submitted: boolean }>('/api/v1/site/inquiries', body)
+      const files = body.attachments?.filter(Boolean) ?? []
+      if (!files.length) {
+        return apiClient.post<{ submitted: boolean }>('/api/v1/site/inquiries', body)
+      }
+
+      const form = new FormData()
+      form.set('kind', body.kind)
+      form.set('name', body.name)
+      form.set('email', body.email)
+      if (body.phone) form.set('phone', body.phone)
+      if (body.message) form.set('message', body.message)
+      if (body.productCode) form.set('productCode', body.productCode)
+      if (body.brand) form.set('brand', body.brand)
+      if (body.quantity != null) form.set('quantity', String(body.quantity))
+      if (body.usage) form.set('usage', body.usage)
+      if (body.urgency) form.set('urgency', body.urgency)
+      if (body.locale) form.set('locale', body.locale)
+      for (const file of files) {
+        form.append('attachments', file)
+      }
+      return apiClient.postForm<{ submitted: boolean }>('/api/v1/site/inquiries', form)
     },
     submitProductNotFoundInquiry(body: {
       name: string

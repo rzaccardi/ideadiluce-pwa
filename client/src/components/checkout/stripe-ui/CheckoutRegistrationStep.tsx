@@ -48,7 +48,7 @@ export function CheckoutRegistrationStep() {
       onAuthSuccess={handleAuthSuccess}
       showAuthenticatedContinue
       authenticatedContinueLabel={t('checkout.continue')}
-      authenticatedContinueLoading={checkout.addressPrefillLoading}
+      authenticatedContinueLoading={checkout.initLoadingPhase != null || checkout.addressPrefillLoading}
       onAuthenticatedContinue={() => void prepareCheckoutAfterAuth()}
       logoutScope="checkout"
       collectCustomerTypeOnRegister

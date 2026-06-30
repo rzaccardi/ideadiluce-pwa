@@ -62,12 +62,15 @@ export function EditorialPageView({ pageKey, content }: Props) {
         </Reveal>
       ) : null}
 
-      <Reveal immediate delay={0.05}>
-        {layout === 'tiles' ? <SocketTileGrid items={toSocketItems(content.items)} lp={lp} variant="editorial" /> : null}
-        {layout === 'rooms' ? <RoomCardGrid items={content.items} lp={lp} variant="editorial" /> : null}
-        {layout === 'brands' ? <BrandGrid items={content.items} lp={lp} variant="editorial" stagger={0.03} /> : null}
-        {layout === 'guides' ? <GuideCardGrid items={content.items} lp={lp} variant="editorial" /> : null}
-      </Reveal>
+      {layout === 'guides' ? (
+        <GuideCardGrid items={content.items} lp={lp} variant="editorial" />
+      ) : (
+        <Reveal immediate delay={0.05}>
+          {layout === 'tiles' ? <SocketTileGrid items={toSocketItems(content.items)} lp={lp} variant="editorial" /> : null}
+          {layout === 'rooms' ? <RoomCardGrid items={content.items} lp={lp} variant="editorial" /> : null}
+          {layout === 'brands' ? <BrandGrid items={content.items} lp={lp} variant="editorial" stagger={0.03} /> : null}
+        </Reveal>
+      )}
 
       {content.cta ? (
         <Reveal className="mt-10">

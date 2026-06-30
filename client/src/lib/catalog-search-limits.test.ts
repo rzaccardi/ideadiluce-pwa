@@ -5,6 +5,7 @@ import {
   createCatalogSearchApiGateState,
   recordProductSuggestionFetch,
   sanitizeCatalogSearchInput,
+  sanitizeCatalogSearchInputLive,
 } from './catalog-search-limits'
 
 describe('sanitizeCatalogSearchInput', () => {
@@ -15,6 +16,12 @@ describe('sanitizeCatalogSearchInput', () => {
 
   it('rimuove caratteri di controllo e collassa spazi', () => {
     expect(sanitizeCatalogSearchInput('  GU10\u0007   12V  ')).toBe('GU10 12V')
+  })
+})
+
+describe('sanitizeCatalogSearchInputLive', () => {
+  it('mantiene lo spazio finale mentre si digita la parola successiva', () => {
+    expect(sanitizeCatalogSearchInputLive('lampada ')).toBe('lampada ')
   })
 })
 

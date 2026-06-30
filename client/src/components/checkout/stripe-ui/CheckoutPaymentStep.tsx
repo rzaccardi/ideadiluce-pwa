@@ -26,7 +26,7 @@ export function CheckoutPaymentStep({ stripeCardDetails }: Props) {
     <section className="space-y-5">
       <CheckoutPaymentOptions
         selected={checkout.selectedPaymentMethod}
-        disabled={checkout.isLoading || checkout.isPaying}
+        disabled={checkout.isLoading || checkout.isPaying || checkout.cartRefreshing}
         stripeCardDetails={stripeCardDetails}
         onSelect={(method) => setPaymentMethod(method as import('@/features/checkout').CheckoutPaymentMethodDTO)}
       />
@@ -35,8 +35,10 @@ export function CheckoutPaymentStep({ stripeCardDetails }: Props) {
         <CheckoutStepBackButton />
         <StripePayButton
           className="min-w-0 flex-1"
-          disabled={!canAdvanceFromStep('payment') || checkout.isLoading}
-          loading={checkout.isLoading}
+          disabled={
+            !canAdvanceFromStep('payment') || checkout.isLoading || checkout.cartRefreshing
+          }
+          loading={checkout.isLoading || checkout.cartRefreshing}
           onClick={() => {
             void (async () => {
               try {

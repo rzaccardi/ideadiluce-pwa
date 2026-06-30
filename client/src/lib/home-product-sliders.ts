@@ -3,7 +3,8 @@ import type { ProductCardDTO } from '@/types/dto'
 
 export const HOME_SLIDER_PRODUCT_COUNT = 12
 
-const SHOWCASE_SLIDER_KEYS = new Set<HomeProductSliderKey>(['top-design', 'top-technical'])
+/** Un solo slider extra in home, intercalato tra le altre sezioni */
+const HOME_EXTRA_SLIDER_KEY: HomeProductSliderKey = 'in-stock'
 
 export function productsFromHomeSlider(
   sliders: ReadonlyArray<HomeProductSliderDTO>,
@@ -15,7 +16,8 @@ export function productsFromHomeSlider(
 export function extraHomeProductSliders(
   sliders: ReadonlyArray<HomeProductSliderDTO>,
 ): HomeProductSliderDTO[] {
-  return sliders.filter((slider) => !SHOWCASE_SLIDER_KEYS.has(slider.key))
+  const extra = sliders.find((slider) => slider.key === HOME_EXTRA_SLIDER_KEY)
+  return extra ? [extra] : []
 }
 
 export function resolveShowcaseProducts(

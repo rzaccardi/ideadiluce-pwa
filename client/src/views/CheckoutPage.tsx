@@ -12,7 +12,7 @@ import {
   completeBankTransferCheckout,
   createPaymentSession,
   initializeCheckoutNavigation,
-  invalidateCheckoutAfterCartChange,
+  refreshCheckoutAfterCartChange,
   isFrozenQuoteCheckout,
   prepareCheckoutPayment,
   resumeCheckoutForOrder,
@@ -148,6 +148,7 @@ export function CheckoutPage() {
     canStartCheckout() &&
     !checkout.isLoading &&
     !checkout.isPaying &&
+    !checkout.cartRefreshing &&
     checkout.termsAccepted
   const totalCents = displayCart
     ? checkoutTotalCents(displayCart, shippingQuote, checkout.taxBreakdown)
@@ -161,8 +162,7 @@ export function CheckoutPage() {
   }, [recommendationKey])
 
   function handleCrossSellAdded() {
-    invalidateCheckoutAfterCartChange()
-    void fetchCart({ force: true, reprice: true })
+    void refreshCheckoutAfterCartChange()
   }
 
   const loadingState = useStableCheckoutLoading(
@@ -170,6 +170,8 @@ export function CheckoutPage() {
       step,
       isLoading: checkout.isLoading,
       isPaying: checkout.isPaying,
+      cartRefreshing: checkout.cartRefreshing,
+      initLoadingPhase: checkout.initLoadingPhase,
       addressPrefillLoading: checkout.addressPrefillLoading,
       shippingQuotesLoading: checkout.shippingQuotesLoading,
       shippingSelecting: Boolean(checkout.shippingSelectingRef),
@@ -232,6 +234,7 @@ export function CheckoutPage() {
       !canStartCheckout() ||
       checkout.isLoading ||
       checkout.isPaying ||
+      checkout.cartRefreshing ||
       checkout.shippingSelectingRef ||
       !checkout.shippingSelectionPersisted
     ) {
@@ -279,11 +282,13 @@ export function CheckoutPage() {
     checkout.selectedPaymentMethod,
     checkout.isLoading,
     checkout.isPaying,
+    checkout.cartRefreshing,
     checkout.payment,
     checkout.order,
   ])
 
   async function handlePay() {
+    if (checkoutStore.cartRefreshing) return
     checkoutStore.error = null
     checkoutStore.isPaying = true
     try {
@@ -342,9 +347,8 @@ export function CheckoutPage() {
           })
 
   async function handleRemoveFromCheckout(itemId: string) {
-    await removeItem(itemId)
-    invalidateCheckoutAfterCartChange()
-    await fetchCart({ force: true, reprice: true })
+    await removeItem(itemId, { silent: true })
+    await refreshCheckoutAfterCartChange()
   }
 
   const shouldMountPaymentStep = step === 'payment' || step === 'review' || stripeMount !== null
@@ -390,7 +394,7 @@ export function CheckoutPage() {
             recommendationsLoading={cart.isRecommendationsLoading}
             onCrossSellAdded={handleCrossSellAdded}
             onRemoveItem={frozenCheckout ? undefined : (id) => void handleRemoveFromCheckout(id)}
-            removeDisabled={cart.isLoading || frozenCheckout}
+            removeDisabled={cart.isLoading || checkout.cartRefreshing || frozenCheckout}
           />
           <CheckoutOrderSummary
             cart={displayCart}
@@ -401,7 +405,7 @@ export function CheckoutPage() {
             recommendationsLoading={cart.isRecommendationsLoading}
             onCrossSellAdded={handleCrossSellAdded}
             onRemoveItem={frozenCheckout ? undefined : (id) => void handleRemoveFromCheckout(id)}
-            removeDisabled={cart.isLoading || frozenCheckout}
+            removeDisabled={cart.isLoading || checkout.cartRefreshing || frozenCheckout}
           />
         </>
       ) : isCartUnresolved || cart.isLoading ? (

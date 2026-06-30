@@ -22,7 +22,8 @@ export function CheckoutRetailFiscalCodeField({ disabled = false }: Props) {
   const billingCountry = checkout.draft.billing.country.toUpperCase() || 'IT'
   if (billingCountry !== 'IT') return null
 
-  const stepBusy = disabled || checkout.isLoading || checkout.addressPrefillLoading
+  const stepBusy =
+    disabled || checkout.isLoading || checkout.initLoadingPhase != null || checkout.addressPrefillLoading
   const fiscalFieldBusy = stepBusy || b.taxValidating
 
   async function handleTaxBlur() {

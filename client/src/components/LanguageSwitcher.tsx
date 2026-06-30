@@ -186,7 +186,7 @@ export function LanguageSwitcher({ variant = 'icon', onOpenChange, onLocaleChang
               ? cn(
                   'absolute right-0 w-[188px] rounded-[14px] border border-idl-border bg-idl-paper p-2 shadow-[0_20px_54px_rgba(0,0,0,0.2)]',
                   layers.headerDropdown,
-                  isUtilityBar ? 'bottom-full mb-1.5' : 'top-full mt-2',
+                  'top-full mt-2',
                 )
               : cn(
                   'absolute right-0 top-full mt-2 flex w-max flex-col gap-1.5 rounded-xl border border-idl-border bg-idl-tech-panel p-1 shadow-lg shadow-idl-ink/10',

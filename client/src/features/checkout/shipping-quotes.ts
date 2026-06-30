@@ -12,16 +12,12 @@ function sortShippingQuotes(quotes: ShippingQuoteDTO[]) {
   })
 }
 
-/** Quote visibili in checkout: gratuita + corrieri a pagamento se sbloccata, altrimenti solo a pagamento. */
+/** Quote visibili in checkout: sempre tutte; con spedizione gratuita attiva restano selezionabili solo consegna gratuita e ritiro in negozio. */
 export function filterVisibleShippingQuotes(
   quotes: ShippingQuoteDTO[],
-  hint: FreeShippingHintDTO | null | undefined,
+  _hint: FreeShippingHintDTO | null | undefined,
 ): ShippingQuoteDTO[] {
-  const freeQuotes = quotes.filter(isFreeShippingQuote)
-  if (hint?.eligible && freeQuotes.length > 0) {
-    return sortShippingQuotes(quotes)
-  }
-  return sortShippingQuotes(quotes.filter((q) => !isFreeShippingQuote(q)))
+  return sortShippingQuotes(quotes)
 }
 
 export function isShippingQuoteSelectable(
@@ -29,7 +25,7 @@ export function isShippingQuoteSelectable(
   selectionLocked: boolean,
 ) {
   if (!selectionLocked) return true
-  return isFreeShippingQuote(quote)
+  return isFreeShippingQuote(quote) || isPickupQuote(quote)
 }
 
 export function isFreeShippingLocked(

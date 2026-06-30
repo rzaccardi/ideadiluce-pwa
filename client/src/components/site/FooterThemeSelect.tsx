@@ -16,14 +16,14 @@ export function FooterThemeSelect() {
   const { t } = useI18n()
 
   return (
-    <label className="inline-flex items-center gap-2">
+    <label className="flex w-full items-center gap-2 sm:inline-flex sm:w-auto">
       <span className="sr-only">{t('theme.switcher.title')}</span>
       <select
         value={theme}
         onChange={(event) => setTheme(event.target.value as SiteTheme)}
         aria-label={t('theme.switcher.title')}
         className={cn(
-          'cursor-pointer rounded-md border border-white/20 bg-idl-design-elevated py-1.5 pr-7 pl-2.5',
+          'w-full cursor-pointer rounded-md border border-white/20 bg-idl-design-elevated py-1.5 pr-7 pl-2.5 sm:w-auto',
           'text-[12px] font-medium text-idl-design-fg outline-none',
           'appearance-none bg-[length:10px] bg-position-[right_0.6rem_center] bg-no-repeat',
           'focus:border-idl-glow focus:ring-2 focus:ring-idl-glow/25',

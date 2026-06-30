@@ -10,10 +10,25 @@ const THEME_CYCLE: SiteTheme[] = ['classic', 'light', 'dark']
 
 export const SITE_THEMES = THEME_CYCLE
 
-const DEFAULT_THEME: SiteTheme = 'classic'
+const DEFAULT_THEME: SiteTheme = 'dark'
 
 function isSiteTheme(value: string | null): value is SiteTheme {
   return value === 'light' || value === 'dark' || value === 'classic'
+}
+
+function readStoredTheme(): SiteTheme | null {
+  if (typeof window === 'undefined') return null
+  const stored = window.localStorage.getItem(STORAGE_KEY)
+  return isSiteTheme(stored) ? stored : null
+}
+
+function getSystemTheme(): SiteTheme {
+  if (typeof window === 'undefined') return DEFAULT_THEME
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'classic'
+}
+
+export function resolveTheme(): SiteTheme {
+  return readStoredTheme() ?? getSystemTheme()
 }
 
 export function getNextTheme(theme: SiteTheme): SiteTheme {
@@ -31,12 +46,6 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
-function readStoredTheme(): SiteTheme {
-  if (typeof window === 'undefined') return DEFAULT_THEME
-  const stored = window.localStorage.getItem(STORAGE_KEY)
-  return isSiteTheme(stored) ? stored : DEFAULT_THEME
-}
-
 function applyTheme(theme: SiteTheme) {
   if (theme === 'classic') {
     delete document.documentElement.dataset.theme
@@ -50,9 +59,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<SiteTheme>(DEFAULT_THEME)
 
   useEffect(() => {
-    const stored = readStoredTheme()
-    setThemeState(stored)
-    applyTheme(stored)
+    const resolved = resolveTheme()
+    setThemeState(resolved)
+    applyTheme(resolved)
+
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+    const onSystemChange = () => {
+      if (readStoredTheme()) return
+      const next = getSystemTheme()
+      setThemeState(next)
+      applyTheme(next)
+    }
+
+    media.addEventListener('change', onSystemChange)
+    return () => media.removeEventListener('change', onSystemChange)
   }, [])
 
   const setTheme = useCallback((next: SiteTheme) => {

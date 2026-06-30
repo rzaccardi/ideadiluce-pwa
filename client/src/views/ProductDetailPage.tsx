@@ -7,7 +7,7 @@ import { Button } from '@/components/Button'
 import { ProductDetailSkeleton } from '@/components/Skeleton'
 import { PageLoadTransition } from '@/components/motion'
 import { useProductDetailState } from '@/hooks/use-product-detail-state'
-import { resolveProductCatalogKind, applyProductCatalogOverrides } from '@/lib/product-catalog-kind'
+import { resolveProductCatalogKind, applyProductCatalogOverrides, resolveProductCatalogKindFromSlug } from '@/lib/product-catalog-kind'
 import {
   DesignProductDetailView,
   TechnicalProductDetailView,
@@ -27,11 +27,14 @@ export function ProductDetailPage({
 }: ProductDetailPageProps = {}) {
   const { localize } = useLocale()
   const state = useProductDetailState({ slug: slugProp, initialProduct, initialRelatedProducts })
-  const { product, relatedProducts, isLoading, error, t } = state
+  const { product, relatedProducts, isLoading, error, t, slug } = state
+  const skeletonVariant = product
+    ? resolveProductCatalogKind(applyProductCatalogOverrides(product as ProductDetailDTO))
+    : resolveProductCatalogKindFromSlug(slug ?? '')
 
   if (isLoading && !product) {
     return (
-      <PageLoadTransition isLoading skeleton={<ProductDetailSkeleton />}>
+      <PageLoadTransition isLoading skeleton={<ProductDetailSkeleton variant={skeletonVariant} />}>
         {null}
       </PageLoadTransition>
     )
@@ -69,7 +72,7 @@ export function ProductDetailPage({
     )
 
   return (
-    <PageLoadTransition isLoading={false} skeleton={<ProductDetailSkeleton />}>
+    <PageLoadTransition isLoading={false} skeleton={<ProductDetailSkeleton variant={skeletonVariant} />}>
       {detailView}
     </PageLoadTransition>
   )

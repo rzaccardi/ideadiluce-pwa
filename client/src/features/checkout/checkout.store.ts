@@ -63,6 +63,8 @@ export function emptyCheckoutAddress(): AddressInput {
   }
 }
 
+export type CheckoutInitLoadingPhase = 'anagrafica' | 'indirizzi' | 'spedizioni'
+
 export const checkoutStore = proxy({
   checkoutMode: 'standard' as CheckoutMode,
   frozenOrderSummary: null as ThankYouOrderDTO | null,
@@ -72,6 +74,10 @@ export const checkoutStore = proxy({
   currentStep: 'account' as CheckoutStep,
   isLoading: false,
   isPaying: false,
+  /** true mentre il carrello viene aggiornato dal riepilogo checkout (rimozione riga, cross-sell) */
+  cartRefreshing: false,
+  /** Fase overlay durante init checkout utente loggato (anagrafica → indirizzi → spedizioni). */
+  initLoadingPhase: null as CheckoutInitLoadingPhase | null,
   /** true mentre si precompila e geocodifica l'indirizzo salvato (utente loggato) */
   addressPrefillLoading: false,
   error: null as string | null,
@@ -109,7 +115,7 @@ export const checkoutStore = proxy({
     taxValidating: false,
   },
   deliveryRecipient: {
-    mode: null as DeliveryRecipientMode,
+    mode: 'self' as DeliveryRecipientMode,
     firstName: '',
     lastName: '',
     company: '',
@@ -123,7 +129,7 @@ export const checkoutStore = proxy({
   draft: {
     email: '',
     orderNotes: '',
-    billingSameAsShipping: true,
+    billingSameAsShipping: false,
     billing: emptyCheckoutAddress(),
     shipping: emptyCheckoutAddress(),
   },

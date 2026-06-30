@@ -1,5 +1,6 @@
 import type { ApiFailureBody } from '@/types/api'
 import { ApiRequestError } from '@/types/api'
+import { privateApiFetchInit } from '@/lib/api-cache-policy'
 import { getIntegrationsToken, getPublicApiUrl, isDev } from '@/lib/env'
 
 type JsonBody = Record<string, unknown> | unknown[] | null
@@ -74,6 +75,7 @@ export async function apiRequest<T>(
   let res: Response
   try {
     res = await fetch(`${base}${path}`, {
+      ...privateApiFetchInit(path),
       ...init,
       headers: buildHeaders(init, init.body as JsonBody | undefined),
       credentials: 'include',

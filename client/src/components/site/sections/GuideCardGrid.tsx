@@ -24,7 +24,7 @@ export function GuideCardGrid({ items, lp, variant = 'home', stagger = 0.07 }: P
   const minHeight = variant === 'home' ? 'min-h-[210px]' : 'min-h-[180px]'
 
   return (
-    <Stagger className={gridClass} stagger={stagger}>
+    <Stagger className={gridClass} stagger={stagger} immediate={variant === 'editorial'}>
       {items.map((guide) => (
         <StaggerItem key={guide.href}>
           <HoverLift>

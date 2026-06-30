@@ -16,7 +16,11 @@ import {
   getRecentSearchQueries,
   recentQueriesToSuggestionGroup,
 } from '@/lib/catalog-search-recent'
-import { CATALOG_SEARCH_LIMITS, sanitizeCatalogSearchInput } from '@/lib/catalog-search-limits'
+import {
+  CATALOG_SEARCH_LIMITS,
+  sanitizeCatalogSearchInput,
+  sanitizeCatalogSearchInputLive,
+} from '@/lib/catalog-search-limits'
 import {
   buildPaletteDisplayGroups,
   nextSearchActiveIndex,
@@ -243,7 +247,7 @@ export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palett
             className="min-w-0 flex-1 bg-transparent text-[16px] text-idl-ink outline-none placeholder:text-idl-placeholder"
             maxLength={CATALOG_SEARCH_LIMITS.maxQueryLength}
             onChange={(event) => {
-              const next = sanitizeCatalogSearchInput(event.target.value)
+              const next = sanitizeCatalogSearchInputLive(event.target.value)
               setQuery(next)
               setActiveIndex(-1)
               scheduleAutocomplete(next)

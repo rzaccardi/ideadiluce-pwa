@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { CheckoutStep } from '@/features/checkout'
+import type { CheckoutInitLoadingPhase } from '@/features/checkout/checkout.store'
 import { useI18n } from '@/hooks/use-i18n'
 import type { MessageKey } from '@/i18n/messages'
 import {
@@ -37,6 +39,8 @@ export function resolveCheckoutLoading(params: {
   step: CheckoutStep
   isLoading: boolean
   isPaying: boolean
+  cartRefreshing: boolean
+  initLoadingPhase: CheckoutInitLoadingPhase | null
   addressPrefillLoading: boolean
   shippingQuotesLoading: boolean
   shippingSelecting: boolean
@@ -46,6 +50,8 @@ export function resolveCheckoutLoading(params: {
     step,
     isLoading,
     isPaying,
+    cartRefreshing,
+    initLoadingPhase,
     addressPrefillLoading,
     shippingQuotesLoading,
     shippingSelecting,
@@ -56,15 +62,19 @@ export function resolveCheckoutLoading(params: {
     return { visible: true, icon: 'shield', messageKey: 'checkout.loading.payment' }
   }
 
-  if (addressPrefillLoading) {
-    return { visible: true, icon: 'pin', messageKey: 'checkout.loading.address' }
+  if (cartRefreshing) {
+    return { visible: true, icon: 'bulb', messageKey: 'checkout.loading.cart' }
   }
 
-  if (shippingQuotesLoading) {
-    return { visible: true, icon: 'truck', messageKey: 'checkout.loading.shipping' }
+  if (initLoadingPhase === 'anagrafica') {
+    return { visible: true, icon: 'bulb', messageKey: 'checkout.loading.profile' }
   }
 
-  if (shippingSelecting) {
+  if (initLoadingPhase === 'indirizzi' || addressPrefillLoading) {
+    return { visible: true, icon: 'pin', messageKey: 'checkout.loading.addresses' }
+  }
+
+  if (initLoadingPhase === 'spedizioni' || shippingQuotesLoading || shippingSelecting) {
     return { visible: true, icon: 'truck', messageKey: 'checkout.loading.shipping' }
   }
 
@@ -83,7 +93,7 @@ export function resolveCheckoutLoading(params: {
   }
 
   if (ADDRESS_STEPS.includes(step)) {
-    return { visible: true, icon: 'pin', messageKey: 'checkout.loading.address' }
+    return { visible: true, icon: 'pin', messageKey: 'checkout.loading.addresses' }
   }
 
   return { visible: true, icon: 'bulb', messageKey: 'checkout.processing' }
@@ -138,20 +148,31 @@ type Props = {
 
 export function CheckoutLoadingOverlay({ icon, messageKey }: Props) {
   const { t } = useI18n()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     const main = document.querySelector('.checkout-shell > main')
-    if (!(main instanceof HTMLElement)) return
-    const prev = main.style.overflow
-    main.style.overflow = 'hidden'
+    const prevBodyOverflow = document.body.style.overflow
+    const prevMainOverflow = main instanceof HTMLElement ? main.style.overflow : ''
+
+    document.body.style.overflow = 'hidden'
+    if (main instanceof HTMLElement) main.style.overflow = 'hidden'
+
     return () => {
-      main.style.overflow = prev
+      document.body.style.overflow = prevBodyOverflow
+      if (main instanceof HTMLElement) main.style.overflow = prevMainOverflow
     }
   }, [])
 
-  return (
+  if (!mounted) return null
+
+  return createPortal(
     <div
-      className="checkout-loading-overlay absolute inset-0 z-50 flex touch-none items-center justify-center bg-[rgba(22,19,13,0.62)] p-4"
+      className="checkout-loading-overlay fixed inset-0 z-[200] flex h-dvh max-h-dvh w-full touch-none items-center justify-center bg-[rgba(22,19,13,0.62)] p-4"
       role="status"
       aria-live="polite"
       aria-busy="true"
@@ -166,6 +187,7 @@ export function CheckoutLoadingOverlay({ icon, messageKey }: Props) {
           <p className="mt-1 text-xs text-[#9298a3]">{t('checkout.loading.dontClose')}</p>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

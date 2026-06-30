@@ -22,6 +22,10 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
     }
   }, [auth.isLoading, auth.isAuthenticated, locale, pathname, router])
 
+  if (auth.isHydrating) {
+    return <LoadingState message={t('auth.preparingAccount')} />
+  }
+
   if (auth.isLoading && !auth.me && auth.error == null) {
     return <LoadingState message={t('auth.sessionChecking')} />
   }

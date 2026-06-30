@@ -7,7 +7,6 @@ import {
   canAdvanceFromStep,
   checkoutStore,
   isBusinessCheckout,
-  setBillingSameAsShipping,
   updateCheckoutAddress,
   updateClientOrderRef,
 } from '@/features/checkout'
@@ -16,7 +15,7 @@ import { CheckoutAccountSection } from './CheckoutAccountSection'
 import { CheckoutAddressSection } from './CheckoutAddressSection'
 import { CheckoutBusinessFieldsSection } from './CheckoutBusinessFieldsSection'
 import { CheckoutRetailFiscalCodeField } from './CheckoutRetailFiscalCodeField'
-import { CheckoutInfoNote, CheckoutToggleCheckbox } from './CheckoutStepPrimitives'
+import { CheckoutInfoNote } from './CheckoutStepPrimitives'
 import { useI18n } from '@/hooks/use-i18n'
 import {
   CheckoutActionRow,
@@ -38,9 +37,8 @@ export function CheckoutAddressesStep() {
     !business &&
     checkout.anagraficaCollectedAtAccount &&
     Boolean(b.fiscalCode.trim())
-  const stepBusy = checkout.isLoading || checkout.addressPrefillLoading
-  const form = checkout.draft
-  const billingDiffers = !form.billingSameAsShipping
+  const stepBusy =
+    checkout.isLoading || checkout.initLoadingPhase != null || checkout.addressPrefillLoading
 
   return (
     <section className="space-y-5">
@@ -70,36 +68,16 @@ export function CheckoutAddressesStep() {
       {!business && !hideRetailFiscalCode ? <CheckoutRetailFiscalCodeField disabled={stepBusy} /> : null}
 
       <CheckoutAddressSection
-        title={t('checkout.shippingAddress')}
-        prefix="ship"
+        title={t('checkout.billingAddress')}
+        prefix="bill"
         showTitle={false}
-        address={form.shipping}
-        showCourierNotes
-        onChange={(key, value) => updateCheckoutAddress('shipping', key, value)}
+        hideContactFields
+        address={checkout.draft.billing}
+        onChange={(key, value) => updateCheckoutAddress('billing', key, value)}
         onAddressResolved={(resolved) =>
-          void applyResolvedAddress('shipping', resolved).catch(() => {})
+          void applyResolvedAddress('billing', resolved).catch(() => {})
         }
       />
-
-      <CheckoutToggleCheckbox
-        checked={billingDiffers}
-        onChange={(checked) => setBillingSameAsShipping(!checked)}
-        label={t('checkout.shipping.diffFromBilling')}
-        className="mt-2"
-      />
-
-      {billingDiffers ? (
-        <CheckoutAddressSection
-          title={t('checkout.billingAddress')}
-          prefix="bill"
-          showTitle={false}
-          address={form.billing}
-          onChange={(key, value) => updateCheckoutAddress('billing', key, value)}
-          onAddressResolved={(resolved) =>
-            void applyResolvedAddress('billing', resolved).catch(() => {})
-          }
-        />
-      ) : null}
 
       <CheckoutActionRow>
         <CheckoutStepBackButton disabled={stepBusy} />

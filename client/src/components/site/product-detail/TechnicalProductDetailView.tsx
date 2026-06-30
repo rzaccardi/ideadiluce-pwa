@@ -489,7 +489,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
           </div>
 
           <div className="border-b border-idl-tech-chip bg-amber-50/50 px-4 py-3.5 max-lg:space-y-1 lg:grid lg:grid-cols-[2fr_repeat(4,1fr)_1.1fr] lg:items-center lg:px-0">
-            <div className="text-[13.5px] font-bold">
+            <div className="text-[13.5px] font-bold lg:px-4">
               {product.name}{' '}
               <span className="ml-1 rounded bg-amber-100 px-1.5 py-0.5 font-mono text-[10.5px] text-idl-amber">
                 ATTUALE
@@ -517,7 +517,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                   key={alt.slug}
                   className="border-b border-idl-tech-chip px-4 py-3.5 last:border-b-0 max-lg:space-y-2 lg:grid lg:grid-cols-[2fr_repeat(4,1fr)_1.1fr] lg:items-center lg:px-0"
                 >
-                  <div className="text-[13.5px] font-semibold">{alt.name}</div>
+                  <div className="text-[13.5px] font-semibold lg:px-4">{alt.name}</div>
                   <div className="font-mono text-[13px] text-idl-graphite max-lg:inline max-lg:mr-3 lg:px-3">
                     {altTags[1] ?? '—'}
                   </div>

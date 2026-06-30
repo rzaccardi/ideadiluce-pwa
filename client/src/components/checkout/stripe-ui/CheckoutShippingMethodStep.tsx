@@ -33,6 +33,10 @@ export function CheckoutShippingMethodStep() {
         }}
       />
 
+      {freeShippingSelectionLocked() ? (
+        <CheckoutInfoNote>{t('checkout.shipping.freeShippingLockedHint')}</CheckoutInfoNote>
+      ) : null}
+
       {checkout.deliveryEstimateDays != null ? (
         <CheckoutInfoNote>
           {tParams('checkout.shipping.deliveryEstimate', { days: checkout.deliveryEstimateDays })}

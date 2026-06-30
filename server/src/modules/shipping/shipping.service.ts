@@ -199,8 +199,7 @@ async function quotesFromDb(
 }
 
 function applyFreeShippingExclusive(lines: ShippingQuoteLine[]): ShippingQuoteLine[] {
-  const free = lines.filter((l) => l.source === 'free')
-  return free.length > 0 ? free : lines
+  return lines
 }
 
 function toDto(q: ShippingQuoteLine): ShippingQuoteDTO {

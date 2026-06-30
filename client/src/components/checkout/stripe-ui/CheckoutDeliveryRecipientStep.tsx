@@ -1,11 +1,15 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useSnapshot } from 'valtio/react'
 import {
   advanceCheckoutStep,
+  applyResolvedAddress,
   canAdvanceFromStep,
   checkoutStore,
+  isBusinessCheckout,
   setDeliveryRecipientMode,
+  updateCheckoutAddress,
   updateDeliveryRecipientField,
   updateDropshipAddress,
 } from '@/features/checkout'
@@ -24,19 +28,47 @@ export function CheckoutDeliveryRecipientStep() {
   const { t } = useI18n()
   const checkout = useSnapshot(checkoutStore)
   const recipient = checkout.deliveryRecipient
+  const mode = recipient.mode ?? 'self'
+  const business = isBusinessCheckout()
+  const stepBusy =
+    checkout.isLoading || checkout.initLoadingPhase != null || checkout.addressPrefillLoading
+
+  useEffect(() => {
+    if (checkoutStore.deliveryRecipient.mode == null) {
+      setDeliveryRecipientMode('self')
+    }
+  }, [])
 
   return (
     <section className="space-y-5">
       <CheckoutSegmentControl<'self' | 'other'>
-        value={recipient.mode ?? 'self'}
-        options={(['self', 'other'] as const).map((mode) => ({
-          value: mode,
-          label: t(`checkout.deliveryRecipient.${mode}.title`),
-        }))}
-        onChange={(mode) => setDeliveryRecipientMode(mode)}
+        value={mode}
+        options={
+          business
+            ? (['self', 'other'] as const).map((m) => ({
+                value: m,
+                label: t(`checkout.deliveryRecipient.${m}.title`),
+              }))
+            : [{ value: 'self' as const, label: t('checkout.deliveryRecipient.self.title') }]
+        }
+        onChange={(m) => setDeliveryRecipientMode(m)}
       />
 
-      {recipient.mode === 'other' ? (
+      {mode === 'self' ? (
+        <CheckoutAddressSection
+          title={t('checkout.shippingAddress')}
+          prefix="ship"
+          showTitle={false}
+          address={checkout.draft.shipping}
+          showCourierNotes
+          onChange={(key, value) => updateCheckoutAddress('shipping', key, value)}
+          onAddressResolved={(resolved) =>
+            void applyResolvedAddress('shipping', resolved).catch(() => {})
+          }
+        />
+      ) : null}
+
+      {mode === 'other' ? (
         <CheckoutPanel className="space-y-4 bg-idl-tech-panel">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <StripeFieldGroup>
@@ -92,14 +124,14 @@ export function CheckoutDeliveryRecipientStep() {
       ) : null}
 
       <CheckoutActionRow>
-        <CheckoutStepBackButton />
+        <CheckoutStepBackButton disabled={stepBusy} />
         <StripePayButton
           className="min-w-0 flex-1"
-          disabled={!canAdvanceFromStep('delivery_recipient') || checkout.isLoading}
+          disabled={!canAdvanceFromStep('delivery_recipient') || stepBusy}
           loading={checkout.isLoading}
           onClick={() => void advanceCheckoutStep()}
         >
-          {t('checkout.continueToPayment')}
+          {stepBusy ? t('checkout.processing') : t('checkout.continue')}
         </StripePayButton>
       </CheckoutActionRow>
     </section>

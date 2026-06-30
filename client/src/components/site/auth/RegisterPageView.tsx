@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from '@/lib/navigation'
 import { useSnapshot } from 'valtio/react'
 import { authStore, register } from '@/features/auth'
-import { ToastOnError } from '@/components/ToastFeedback'
+import { ApiRequestError } from '@/types/api'
+import { LoadingState } from '@/components/LoadingState'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import {
@@ -30,7 +31,8 @@ export function RegisterPageView() {
   const lp = useLocalePath()
   const navigate = useNavigate()
   const searchParams = useSearchParams()
-  const from = searchParams.get('from') ?? '/'
+  const accountPath = lp('/account')
+  const from = searchParams.get('from') ?? accountPath
   const auth = useSnapshot(authStore)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -39,9 +41,12 @@ export function RegisterPageView() {
   const [isBusiness, setIsBusiness] = useState(searchParams.get('business') === '1')
 
   const loginHref =
-    from !== '/'
+    from !== accountPath
       ? `${lp('/login')}?from=${encodeURIComponent(from)}`
       : lp('/login')
+
+  const isBusy = auth.isLoading || auth.isHydrating
+  const busyMessage = auth.isHydrating ? t('auth.preparingAccount') : t('auth.registering')
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -52,8 +57,10 @@ export function RegisterPageView() {
         customerSegment: isBusiness ? 'business' : 'retail',
       })
       navigate(from, { replace: true })
-    } catch {
-      // error shown via ToastOnError
+    } catch (err) {
+      if (err instanceof ApiRequestError) {
+        authStore.error = err.userMessage ?? err.message
+      }
     }
   }
 
@@ -66,7 +73,20 @@ export function RegisterPageView() {
         </AuthFooterText>
       }
     >
-      <ToastOnError message={auth.error} />
+      {isBusy ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-white/85 backdrop-blur-[2px]"
+          role="status"
+          aria-live="polite"
+        >
+          <LoadingState message={busyMessage} />
+        </div>
+      ) : null}
+      {auth.error ? (
+        <p className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900">
+          {auth.error}
+        </p>
+      ) : null}
       <AuthCard>
         <AuthCardHeader title={t('register.title')} subtitle={t('register.subtitle')} />
 
@@ -137,8 +157,8 @@ export function RegisterPageView() {
             {t('register.business')}
           </AuthCheckbox>
 
-          <AuthSubmitButton disabled={auth.isLoading}>
-            {auth.isLoading ? t('auth.registering') : t('auth.registerSubmit')}
+          <AuthSubmitButton disabled={isBusy}>
+            {isBusy ? busyMessage : t('auth.registerSubmit')}
           </AuthSubmitButton>
         </form>
       </AuthCard>

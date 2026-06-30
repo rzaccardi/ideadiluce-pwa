@@ -29,6 +29,7 @@ import { ThankYouPageSkeleton } from '@/components/checkout/thank-you/ThankYouPa
 import { GuideArticlePageSkeleton } from '@/components/site/content/guide-article/GuideArticlePageSkeleton'
 import { SectionContainer } from '@/components/site/primitives'
 import { resolveBootstrapRoute, type BootstrapRoute } from '@/app/bootstrapRoute'
+import { extractProductSlugFromPath, resolveProductCatalogKindFromSlug } from '@/lib/product-catalog-kind'
 import { parseLocaleFromPathname } from '@/lib/locale'
 import { resolveDcActiveNavId } from '@/lib/dc-static-routes'
 
@@ -42,7 +43,7 @@ function AuthBootstrapSkeleton({ fieldCount }: { fieldCount: number }) {
   return <AuthPageSkeleton fieldCount={fieldCount} />
 }
 
-function BootstrapPageContent({ route }: { route: BootstrapRoute }) {
+function BootstrapPageContent({ route, pathname }: { route: BootstrapRoute; pathname: string }) {
   switch (route) {
     case 'home':
       return <HomePageSkeleton />
@@ -104,8 +105,11 @@ function BootstrapPageContent({ route }: { route: BootstrapRoute }) {
     case 'catalog':
       return <CatalogPageSkeleton />
 
-    case 'product':
-      return <ProductDetailSkeleton />
+    case 'product': {
+      const slug = extractProductSlugFromPath(pathname)
+      const variant = slug ? resolveProductCatalogKindFromSlug(slug) : 'design'
+      return <ProductDetailSkeleton variant={variant} />
+    }
 
     case 'wishlist':
       return (
@@ -222,7 +226,7 @@ function BootstrapPageContent({ route }: { route: BootstrapRoute }) {
 }
 
 function BootstrapScreenBody({ route, pathname }: { route: BootstrapRoute; pathname: string }) {
-  const content = <BootstrapPageContent route={route} />
+  const content = <BootstrapPageContent route={route} pathname={pathname} />
 
   if (
     route === 'checkout' ||

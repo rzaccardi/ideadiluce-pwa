@@ -1,8 +1,36 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useIsClient } from '@/hooks/use-is-client'
+import { layers } from '@/lib/layering'
 import { cn } from '@/utils/cn'
 import { SiteImage } from '@/components/site/SiteImage'
+
+function LightboxCloseIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className={className} fill="none">
+      <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeLinecap="round" strokeWidth="2" />
+    </svg>
+  )
+}
+
+function LightboxChevronIcon({ direction, className }: { direction: 'left' | 'right'; className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className={className} fill="none">
+      <path
+        d={direction === 'left' ? 'M15 6l-6 6 6 6' : 'M9 6l6 6-6 6'}
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+    </svg>
+  )
+}
+
+const lightboxControlClass =
+  'flex size-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50'
 
 type Props = {
   images: readonly string[]
@@ -21,6 +49,7 @@ export function ProductDetailGallery({ images, alt, activeUrl, variant = 'design
   const [selected, setSelected] = useState(base[0] ?? '')
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
+  const isClient = useIsClient()
   const isDesign = variant === 'design'
   const baseKey = base.join('\0')
 
@@ -63,6 +92,15 @@ export function ProductDetailGallery({ images, alt, activeUrl, variant = 'design
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [lightboxOpen, goPrev, goNext])
+
+  useEffect(() => {
+    if (!lightboxOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [lightboxOpen])
 
   const current = selected || base[0]
   const lightboxUrl = base[lightboxIndex] ?? current
@@ -135,55 +173,65 @@ export function ProductDetailGallery({ images, alt, activeUrl, variant = 'design
         ) : null}
       </div>
 
-      {lightboxOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Galleria prodotto"
-          onClick={() => setLightboxOpen(false)}
-        >
-          <button
-            type="button"
-            className="absolute right-4 top-4 rounded-full bg-idl-tech-panel/10 px-3 py-1 text-sm text-white hover:bg-idl-tech-panel/20"
-            onClick={() => setLightboxOpen(false)}
-          >
-            Chiudi
-          </button>
-          {base.length > 1 ? (
-            <>
+      {lightboxOpen && isClient
+        ? createPortal(
+            <div
+              className={cn(
+                'fixed inset-0 flex h-[100dvh] w-screen items-center justify-center bg-black/80 p-4',
+                layers.dialog,
+              )}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Galleria prodotto"
+              onClick={() => setLightboxOpen(false)}
+            >
               <button
                 type="button"
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-idl-tech-panel/10 px-3 py-2 text-white hover:bg-idl-tech-panel/20 sm:left-4"
+                className={cn(lightboxControlClass, 'absolute right-4 top-4')}
                 onClick={(e) => {
                   e.stopPropagation()
-                  goPrev()
+                  setLightboxOpen(false)
                 }}
-                aria-label="Immagine precedente"
+                aria-label="Chiudi galleria"
               >
-                ‹
+                <LightboxCloseIcon className="size-5" />
               </button>
-              <button
-                type="button"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-idl-tech-panel/10 px-3 py-2 text-white hover:bg-idl-tech-panel/20 sm:right-4"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  goNext()
-                }}
-                aria-label="Immagine successiva"
-              >
-                ›
-              </button>
-            </>
-          ) : null}
-          <img
-            src={lightboxUrl}
-            alt={alt}
-            className="max-h-[90vh] max-w-full object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      ) : null}
+              {base.length > 1 ? (
+                <>
+                  <button
+                    type="button"
+                    className={cn(lightboxControlClass, 'absolute left-3 top-1/2 -translate-y-1/2 sm:left-5')}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      goPrev()
+                    }}
+                    aria-label="Immagine precedente"
+                  >
+                    <LightboxChevronIcon direction="left" className="size-6" />
+                  </button>
+                  <button
+                    type="button"
+                    className={cn(lightboxControlClass, 'absolute right-3 top-1/2 -translate-y-1/2 sm:right-5')}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      goNext()
+                    }}
+                    aria-label="Immagine successiva"
+                  >
+                    <LightboxChevronIcon direction="right" className="size-6" />
+                  </button>
+                </>
+              ) : null}
+              <img
+                src={lightboxUrl}
+                alt={alt}
+                className="max-h-[calc(100dvh-2rem)] max-w-full object-contain"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>,
+            document.body,
+          )
+        : null}
     </>
   )
 }

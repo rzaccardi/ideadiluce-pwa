@@ -11,6 +11,7 @@ const card = { slug: 'a', locale: 'IT', name: 'A', priceCents: 100, currency: 'E
 const sliders: HomeProductSliderDTO[] = [
   { key: 'top-design', products: [{ ...card, slug: 'design-1' }] },
   { key: 'top-technical', products: [{ ...card, slug: 'tech-1' }] },
+  { key: 'in-stock', products: [{ ...card, slug: 'stock-1' }] },
   { key: 'room-soggiorno', products: [{ ...card, slug: 'room-1' }] },
 ]
 
@@ -19,8 +20,8 @@ describe('home-product-sliders helpers', () => {
     expect(productsFromHomeSlider(sliders, 'top-design')[0]?.slug).toBe('design-1')
   })
 
-  it('esclude gli slider delle showcase principali', () => {
-    expect(extraHomeProductSliders(sliders).map((s) => s.key)).toEqual(['room-soggiorno'])
+  it('restituisce solo lo slider extra in-stock', () => {
+    expect(extraHomeProductSliders(sliders).map((s) => s.key)).toEqual(['in-stock'])
   })
 
   it('usa il fallback query quando lo slider è vuoto', () => {

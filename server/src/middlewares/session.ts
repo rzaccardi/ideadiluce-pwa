@@ -30,6 +30,15 @@ function writeSessionCache(tokenHash: string, record: NonNullable<Request['sessi
   })
 }
 
+/** Dopo login/registrazione la sessione in DB ha `userId` ma la cache può ancora avere `user: null`. */
+export function invalidateSessionCacheForSession(sessionId: string) {
+  for (const [key, cached] of sessionLookupCache) {
+    if (cached.record.id === sessionId) {
+      sessionLookupCache.delete(key)
+    }
+  }
+}
+
 async function loadValidSession(raw: string) {
   const tokenHash = hashSessionToken(raw)
   const cached = readSessionCache(tokenHash)

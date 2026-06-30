@@ -11,7 +11,11 @@ import {
 import { cn } from '@/utils/cn'
 import { ui } from '@/lib/ui-classes'
 import { nextSearchActiveIndex } from '@/lib/catalog-search-palette'
-import { CATALOG_SEARCH_LIMITS, sanitizeCatalogSearchInput } from '@/lib/catalog-search-limits'
+import {
+  CATALOG_SEARCH_LIMITS,
+  sanitizeCatalogSearchInput,
+  sanitizeCatalogSearchInputLive,
+} from '@/lib/catalog-search-limits'
 import type { CategoryDTO } from '@/types/dto'
 import type { BrandListItemDTO } from '@/types/site-content'
 import type { LocalePathFn } from '../sections/types'
@@ -290,7 +294,7 @@ export function CatalogSearchField({
           className={cn('min-w-0 flex-1 bg-transparent text-left outline-none', styles.input)}
           maxLength={CATALOG_SEARCH_LIMITS.maxQueryLength}
           onChange={(e) => {
-            const next = sanitizeCatalogSearchInput(e.target.value)
+            const next = sanitizeCatalogSearchInputLive(e.target.value)
             setQuery(next)
             scheduleAutocomplete(next)
           }}

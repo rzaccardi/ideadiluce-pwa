@@ -13,6 +13,8 @@ type Props = {
   className?: string
   /** fullBleed: edge-to-edge nel layout pagina; contained: scroll orizzontale nel genitore */
   variant?: 'fullBleed' | 'contained'
+  /** Scorre in modo circolare: da ultimo a primo e viceversa */
+  loop?: boolean
 }
 
 function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
@@ -35,6 +37,7 @@ export function ProductSlider({
   emptyMessage,
   className,
   variant = 'fullBleed',
+  loop = false,
 }: Props) {
   const { t } = useI18n()
   const message = emptyMessage ?? t('product.grid.empty')
@@ -69,6 +72,21 @@ export function ProductSlider({
     const firstCard = el.querySelector<HTMLElement>('li')
     const gap = 24
     const step = firstCard ? firstCard.offsetWidth + gap : el.clientWidth * 0.85
+    const { scrollLeft, scrollWidth, clientWidth } = el
+
+    if (loop) {
+      const atStart = scrollLeft <= 4
+      const atEnd = scrollLeft + clientWidth >= scrollWidth - 4
+      if (direction === 1 && atEnd) {
+        el.scrollTo({ left: 0, behavior: 'smooth' })
+        return
+      }
+      if (direction === -1 && atStart) {
+        el.scrollTo({ left: scrollWidth - clientWidth, behavior: 'smooth' })
+        return
+      }
+    }
+
     el.scrollBy({ left: direction * step, behavior: 'smooth' })
   }
 
@@ -84,7 +102,7 @@ export function ProductSlider({
       <button
         type="button"
         aria-label={t('product.slider.prev')}
-        disabled={!canScrollPrev}
+        disabled={!loop && !canScrollPrev}
         onClick={() => scrollBy(-1)}
         className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-idl-border bg-idl-tech-panel text-idl-ink-soft transition hover:border-idl-border-strong hover:bg-idl-cream disabled:cursor-not-allowed disabled:opacity-40"
       >
@@ -93,7 +111,7 @@ export function ProductSlider({
       <button
         type="button"
         aria-label={t('product.slider.next')}
-        disabled={!canScrollNext}
+        disabled={!loop && !canScrollNext}
         onClick={() => scrollBy(1)}
         className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-idl-border bg-idl-tech-panel text-idl-ink-soft transition hover:border-idl-border-strong hover:bg-idl-cream disabled:cursor-not-allowed disabled:opacity-40"
       >

@@ -32,9 +32,11 @@ export function DesignProductShowcase({
   const items = products.slice(0, Math.max(productCount, HOME_SLIDER_PRODUCT_COUNT))
 
   return (
-    <section className="relative overflow-hidden bg-idl-design text-idl-design-fg">
-      <div className="pointer-events-none absolute top-10 -left-16 size-[420px] rounded-full bg-[radial-gradient(circle,rgba(201, 162, 75,0.16)_0%,transparent_70%)]" />
-      <SectionContainer className="relative z-[2] py-14">
+    <section className="relative overflow-visible bg-idl-design text-idl-design-fg">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute top-10 -left-16 size-[420px] rounded-full bg-[radial-gradient(circle,rgba(201,162,75,0.16)_0%,transparent_70%)]" />
+      </div>
+      <SectionContainer className="relative z-[2] pt-14 pb-6">
         <SiteSectionHeader
           eyebrow={eyebrow}
           title={title}
@@ -45,11 +47,12 @@ export function DesignProductShowcase({
           linkTone="glow"
           titleStyle="serif-lg"
           layout="split"
-          className="mb-6"
           lp={lp}
         />
-        <ProductSlider products={items} variant="contained" />
       </SectionContainer>
+      <div className="relative z-[2] pb-14">
+        <ProductSlider products={items} variant="fullBleed" loop />
+      </div>
     </section>
   )
 }

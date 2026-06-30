@@ -224,7 +224,7 @@ export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> =
         kind: 'lead-form',
         form: 'contact',
         title: 'Scrivici',
-        description: 'Compila il modulo: ti rispondiamo il prima possibile negli orari di ufficio.',
+        description: 'Compila il modulo: puoi allegare foto. Ti rispondiamo il prima possibile negli orari di ufficio.',
       },
       {
         kind: 'cta',

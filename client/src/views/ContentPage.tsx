@@ -8,6 +8,7 @@ import { isContentPage, isGuidePageKey } from '@/lib/site-page-keys'
 import { ContentPageView } from '@/components/site/content/ContentPageView'
 import { ContattiPageView } from '@/components/site/content/ContattiPageView'
 import { ChiSiamoPageView } from '@/components/site/content/ChiSiamoPageView'
+import { ChiSiamoPageSkeleton } from '@/components/site/content/ChiSiamoPageSkeleton'
 import { ProductNotFoundPageView } from '@/components/site/product-not-found/ProductNotFoundPageView'
 import { GuideArticlePageView } from '@/components/site/content/GuideArticlePageView'
 import { useLocale } from '@/context/locale-context'
@@ -73,7 +74,7 @@ export function ContentPage({ pageKey, breadcrumb, initialContent = null }: Prop
     return (
       <PageLoadTransition
         isLoading={!content}
-        skeleton={<ContentPageSkeleton />}
+        skeleton={<ChiSiamoPageSkeleton />}
       >
         {content ? <ChiSiamoPageView content={content} /> : null}
       </PageLoadTransition>

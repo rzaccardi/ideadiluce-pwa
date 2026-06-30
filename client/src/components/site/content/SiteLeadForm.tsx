@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { api } from '@/api/endpoints'
 import { useLocale } from '@/context/locale-context'
 import { Button } from '@/components/Button'
+import { PhotoUploadSlot } from '@/components/site/forms/PhotoUploadSlot'
 import { ui } from '@/lib/ui-classes'
 import { cn } from '@/utils/cn'
 
@@ -28,7 +29,30 @@ export function SiteLeadForm({ kind, title, description, embedded = false, class
   const [brand, setBrand] = useState('')
   const [quantity, setQuantity] = useState('1')
   const [message, setMessage] = useState('')
+  const [media1, setMedia1] = useState<File | null>(null)
+  const [media2, setMedia2] = useState<File | null>(null)
+  const [media1Preview, setMedia1Preview] = useState<string | null>(null)
+  const [media2Preview, setMedia2Preview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  const acceptsMedia = kind === 'contact'
+
+  function onMedia1(file: File | null) {
+    if (media1Preview) URL.revokeObjectURL(media1Preview)
+    setMedia1(file)
+    setMedia1Preview(file ? URL.createObjectURL(file) : null)
+  }
+
+  function onMedia2(file: File | null) {
+    if (media2Preview) URL.revokeObjectURL(media2Preview)
+    setMedia2(file)
+    setMedia2Preview(file ? URL.createObjectURL(file) : null)
+  }
+
+  function clearMedia() {
+    onMedia1(null)
+    onMedia2(null)
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -44,11 +68,13 @@ export function SiteLeadForm({ kind, title, description, embedded = false, class
         brand: brand.trim() || undefined,
         quantity: kind === 'product-not-found' ? Number(quantity) || 1 : undefined,
         locale,
+        attachments: acceptsMedia ? [media1, media2].filter((f): f is File => Boolean(f)) : undefined,
       })
       toast.success('Richiesta inviata. Ti risponderemo al più presto.')
       setMessage('')
       setProductCode('')
       setBrand('')
+      if (acceptsMedia) clearMedia()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Invio non riuscito')
     } finally {
@@ -130,6 +156,26 @@ export function SiteLeadForm({ kind, title, description, embedded = false, class
             </>
           ) : null}
         </div>
+        {acceptsMedia ? (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <PhotoUploadSlot
+              id="contact-media-1"
+              label="Foto / allegato"
+              hint="Tocca per allegare una foto (prodotto, ambiente, etichetta…)"
+              file={media1}
+              previewUrl={media1Preview}
+              onPick={onMedia1}
+            />
+            <PhotoUploadSlot
+              id="contact-media-2"
+              label="Altra foto (opzionale)"
+              hint="Seconda immagine, se utile"
+              file={media2}
+              previewUrl={media2Preview}
+              onPick={onMedia2}
+            />
+          </div>
+        ) : null}
         <label className="block text-sm">
           <span className={ui.labelSm}>Messaggio</span>
           <textarea

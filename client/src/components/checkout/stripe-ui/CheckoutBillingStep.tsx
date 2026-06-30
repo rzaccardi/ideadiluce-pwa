@@ -37,7 +37,8 @@ export function CheckoutBillingStep() {
     !business &&
     checkout.anagraficaCollectedAtAccount &&
     Boolean(b.fiscalCode.trim())
-  const stepBusy = checkout.isLoading || checkout.addressPrefillLoading
+  const stepBusy =
+    checkout.isLoading || checkout.initLoadingPhase != null || checkout.addressPrefillLoading
 
   return (
     <section className="space-y-5">
