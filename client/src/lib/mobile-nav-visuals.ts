@@ -1,5 +1,7 @@
 /** Immagini e metadati per le card del menu mobile. */
 
+import type { HomeRoomCard } from '@/types/site-content'
+
 export type NavLinkVisual =
   | { kind: 'image'; imageUrl: string; videoUrl?: string }
   | { kind: 'look'; imageUrl: string }
@@ -82,7 +84,7 @@ export function shortMobileTabLabel(id: string, label: string): string {
   return label.split(' ')[0] ?? label
 }
 
-export const FALLBACK_ROOM_ITEMS = [
+export const FALLBACK_ROOM_ITEMS: HomeRoomCard[] = [
   { title: 'Soggiorno', href: '/ambienti/soggiorno', imageUrl: '/site/images/room-soggiorno.webp' },
   { title: 'Cucina', href: '/ambienti/cucina', imageUrl: '/site/images/room-cucina.webp' },
   {
@@ -94,4 +96,4 @@ export const FALLBACK_ROOM_ITEMS = [
   { title: 'Bagno', href: '/ambienti/bagno', imageUrl: '/site/images/room-bagno.webp' },
   { title: 'Studio', href: '/ambienti/studio', imageUrl: '/site/images/room-studio.webp' },
   { title: 'Esterno', href: '/ambienti/esterno', imageUrl: '/site/images/room-esterno.webp' },
-] as const
+]
