@@ -11,8 +11,16 @@ import {
   prepareCheckoutAfterAuth,
 } from '@/features/checkout'
 import { useI18n } from '@/hooks/use-i18n'
+import { getRecaptchaToken, RECAPTCHA_ACTIONS } from '@/lib/recaptcha'
 import { ApiRequestError } from '@/types/api'
 import { StripeErrorBanner, StripeFieldGroup, StripeControlledInput } from './StripeFields'
+
+function isRecaptchaClientError(err: unknown): boolean {
+  return (
+    err instanceof Error &&
+    (err.message === 'RECAPTCHA_LOAD_FAILED' || err.message === 'RECAPTCHA_EXECUTE_FAILED')
+  )
+}
 
 /** Login email/password nel checkout (sezione compatta). */
 export function CheckoutAccountSection() {
@@ -38,12 +46,17 @@ export function CheckoutAccountSection() {
     setError(null)
     setLoading(true)
     try {
-      await login(loginEmail.trim(), loginPassword)
+      const recaptchaToken = await getRecaptchaToken(RECAPTCHA_ACTIONS.login)
+      await login(loginEmail.trim(), loginPassword, recaptchaToken)
       await prepareCheckoutAfterAuth()
       await fetchCart({ force: true })
       setShowLogin(false)
       setLoginPassword('')
     } catch (err) {
+      if (isRecaptchaClientError(err)) {
+        setError(t('auth.recaptchaFailed'))
+        return
+      }
       setError(
         err instanceof ApiRequestError ? (err.userMessage ?? err.message) : t('checkout.account.loginError'),
       )
