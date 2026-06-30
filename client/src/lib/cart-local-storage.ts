@@ -1,5 +1,8 @@
-const STORAGE_KEY = 'emil_cart_mirror_v1'
-const LEGACY_STORAGE_KEY = 'emil_cart_v1'
+import {
+  IDEADILUCE_CART_MIRROR_KEY,
+  LEGACY_STORAGE_KEYS,
+} from '@/lib/storage-keys'
+import { readWithMigration, removeLegacyKeys } from '@/lib/storage-migrate'
 
 export type LocalCartMirror = {
   cartId: string
@@ -7,17 +10,25 @@ export type LocalCartMirror = {
   updatedAt: string
 }
 
+const CART_MIRROR_LEGACY_KEYS = LEGACY_STORAGE_KEYS[IDEADILUCE_CART_MIRROR_KEY]
+
 function clearLegacyStorage(): void {
   if (typeof window === 'undefined') return
-  window.localStorage.removeItem(LEGACY_STORAGE_KEY)
+  removeLegacyKeys(window.localStorage, CART_MIRROR_LEGACY_KEYS)
 }
 
 export function loadLocalCartMirror(): LocalCartMirror | null {
   if (typeof window === 'undefined') return null
-  clearLegacyStorage()
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
+    const raw = readWithMigration(
+      window.localStorage,
+      IDEADILUCE_CART_MIRROR_KEY,
+      CART_MIRROR_LEGACY_KEYS,
+    )
+    if (!raw) {
+      clearLegacyStorage()
+      return null
+    }
     const parsed = JSON.parse(raw) as LocalCartMirror
     if (!parsed?.cartId) return null
     return parsed
@@ -31,8 +42,9 @@ export function saveLocalCartMirror(cart: {
   reservation: { expiresAt: string | null }
 } | null): void {
   if (typeof window === 'undefined') return
+  clearLegacyStorage()
   if (!cart) {
-    window.localStorage.removeItem(STORAGE_KEY)
+    window.localStorage.removeItem(IDEADILUCE_CART_MIRROR_KEY)
     return
   }
   const snapshot: LocalCartMirror = {
@@ -40,12 +52,13 @@ export function saveLocalCartMirror(cart: {
     reservationExpiresAt: cart.reservation.expiresAt,
     updatedAt: new Date().toISOString(),
   }
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot))
+  window.localStorage.setItem(IDEADILUCE_CART_MIRROR_KEY, JSON.stringify(snapshot))
 }
 
 export function clearLocalCartMirror(): void {
   if (typeof window === 'undefined') return
-  window.localStorage.removeItem(STORAGE_KEY)
+  window.localStorage.removeItem(IDEADILUCE_CART_MIRROR_KEY)
+  clearLegacyStorage()
 }
 
 /** @deprecated Mirror legacy guest items — migrato a cartId + reservationExpiresAt. */

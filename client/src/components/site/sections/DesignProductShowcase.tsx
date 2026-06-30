@@ -51,7 +51,7 @@ export function DesignProductShowcase({
         />
       </SectionContainer>
       <div className="relative z-[2] pb-14">
-        <ProductSlider products={items} variant="fullBleed" loop />
+        <ProductSlider products={items} variant="fullBleed" loop cardKind="design" lp={lp} />
       </div>
     </section>
   )

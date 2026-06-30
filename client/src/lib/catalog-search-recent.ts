@@ -1,8 +1,12 @@
 import { sanitizeCatalogSearchInput } from '@/lib/catalog-search-limits'
 import type { PwaLocale } from '@/lib/locale'
 import type { CatalogSearchSuggestion, CatalogSearchSuggestionGroup } from '@/lib/catalog-search-suggestions'
+import {
+  catalogSearchRecentKey,
+  legacyCatalogSearchRecentKey,
+} from '@/lib/storage-keys'
+import { readWithMigration } from '@/lib/storage-migrate'
 
-const STORAGE_PREFIX = 'idl:catalog-search-recent:'
 export const CATALOG_SEARCH_RECENT_MAX = 8
 
 type RecentEntry = {
@@ -10,14 +14,16 @@ type RecentEntry = {
   at: number
 }
 
-function storageKey(locale: PwaLocale): string {
-  return `${STORAGE_PREFIX}${locale}`
+function readRawEntries(locale: PwaLocale): string | null {
+  if (typeof window === 'undefined') return null
+  const key = catalogSearchRecentKey(locale)
+  return readWithMigration(window.localStorage, key, [legacyCatalogSearchRecentKey(locale)])
 }
 
 function readEntries(locale: PwaLocale): RecentEntry[] {
   if (typeof window === 'undefined') return []
   try {
-    const raw = window.localStorage.getItem(storageKey(locale))
+    const raw = readRawEntries(locale)
     if (!raw) return []
     const parsed = JSON.parse(raw) as unknown
     if (!Array.isArray(parsed)) return []
@@ -38,7 +44,10 @@ function readEntries(locale: PwaLocale): RecentEntry[] {
 function writeEntries(locale: PwaLocale, entries: RecentEntry[]): void {
   if (typeof window === 'undefined') return
   try {
-    window.localStorage.setItem(storageKey(locale), JSON.stringify(entries.slice(0, CATALOG_SEARCH_RECENT_MAX)))
+    window.localStorage.setItem(
+      catalogSearchRecentKey(locale),
+      JSON.stringify(entries.slice(0, CATALOG_SEARCH_RECENT_MAX)),
+    )
   } catch {
     /* quota o storage disabilitato */
   }
@@ -62,7 +71,8 @@ export function recordRecentSearchQuery(locale: PwaLocale, rawQuery: string): vo
 export function clearRecentSearchQueries(locale: PwaLocale): void {
   if (typeof window === 'undefined') return
   try {
-    window.localStorage.removeItem(storageKey(locale))
+    window.localStorage.removeItem(catalogSearchRecentKey(locale))
+    window.localStorage.removeItem(legacyCatalogSearchRecentKey(locale))
   } catch {
     /* ignore */
   }

@@ -36,6 +36,7 @@ import {
   isFreeShippingQuote,
   isShippingQuoteSelectable,
 } from './shipping-quotes'
+import { checkoutDbg } from './checkout-debug'
 
 function currentLocale() {
   if (typeof window === 'undefined') return 'IT' as const
@@ -99,7 +100,11 @@ function checkoutNetCents(): number {
 function scheduleTaxRecalculate(delayMs = 450) {
   if (taxRecalcDebounce) clearTimeout(taxRecalcDebounce)
   const ship = shippingAddressPayload()
-  if (!destinationComplete(ship)) return
+  if (!destinationComplete(ship)) {
+    checkoutDbg.fn('scheduleTaxRecalculate', 'skip', { reason: 'destination incomplete' })
+    return
+  }
+  checkoutDbg.schedule('scheduleTaxRecalculate', delayMs, { fingerprint: shippingFingerprint(ship) })
   taxRecalcDebounce = setTimeout(() => {
     taxRecalcDebounce = null
     void refreshTaxBreakdown()
@@ -107,15 +112,18 @@ function scheduleTaxRecalculate(delayMs = 450) {
 }
 
 export async function refreshTaxBreakdown() {
+  checkoutDbg.fn('refreshTaxBreakdown', 'enter', { step: checkoutStore.currentStep })
   const ship = shippingAddressPayload()
   const bill = billingAddressPayload()
   if (!destinationComplete(ship)) {
     checkoutStore.taxBreakdown = null
+    checkoutDbg.fn('refreshTaxBreakdown', 'skip', { reason: 'destination incomplete' })
     return
   }
   checkoutStore.taxCalculating = true
   try {
     const segment = effectiveCustomerSegment()
+    checkoutDbg.api('tax.calculate', { netCents: checkoutNetCents(), segment })
     checkoutStore.taxBreakdown = await api.tax.calculate({
       netCents: checkoutNetCents(),
       billingCountry: bill.country,
@@ -125,8 +133,10 @@ export async function refreshTaxBreakdown() {
       vatValidated: checkoutStore.business.vatValidated || undefined,
       vatForceAccepted: checkoutStore.business.vatForceAccepted || undefined,
     })
-  } catch {
+    checkoutDbg.fn('refreshTaxBreakdown', 'exit', { taxCents: checkoutStore.taxBreakdown?.taxCents })
+  } catch (e) {
     checkoutStore.taxBreakdown = null
+    checkoutDbg.fn('refreshTaxBreakdown', 'error', { message: errMessage(e) })
   } finally {
     checkoutStore.taxCalculating = false
   }
@@ -325,6 +335,7 @@ function invalidateShippingIfDestinationChanged() {
   const current = shippingFingerprint(shippingAddressPayload())
   const cached = checkoutStore.shippingQuotesFingerprint
   if (cached && cached !== current) {
+    checkoutDbg.state('invalidateShippingIfDestinationChanged', { cached, current })
     checkoutStore.shippingQuotes = []
     checkoutStore.freeShippingHint = null
     checkoutStore.selectedShippingMethodRef = null
@@ -333,16 +344,24 @@ function invalidateShippingIfDestinationChanged() {
 }
 
 function scheduleShippingQuotesFetch(delayMs = 450) {
-  if (checkoutStore.initLoadingPhase) return
-  if (checkoutStore.addressPrefillLoading) return
+  if (checkoutStore.initLoadingPhase) {
+    checkoutDbg.fn('scheduleShippingQuotesFetch', 'skip', { reason: 'initLoadingPhase' })
+    return
+  }
+  if (checkoutStore.addressPrefillLoading) {
+    checkoutDbg.fn('scheduleShippingQuotesFetch', 'skip', { reason: 'addressPrefillLoading' })
+    return
+  }
   if (shippingQuotesDebounce) clearTimeout(shippingQuotesDebounce)
 
   const addr = shippingAddressPayload()
   if (!destinationComplete(addr)) {
     shippingQuotesDebounce = null
+    checkoutDbg.fn('scheduleShippingQuotesFetch', 'skip', { reason: 'destination incomplete' })
     return
   }
 
+  checkoutDbg.schedule('scheduleShippingQuotesFetch', delayMs, { fingerprint: shippingFingerprint(addr) })
   shippingQuotesDebounce = setTimeout(() => {
     shippingQuotesDebounce = null
     void refreshShippingQuotesIfNeeded()
@@ -350,26 +369,33 @@ function scheduleShippingQuotesFetch(delayMs = 450) {
 }
 
 async function refreshShippingQuotesIfNeeded() {
+  checkoutDbg.fn('refreshShippingQuotesIfNeeded', 'enter')
   const addr = shippingAddressPayload()
-  if (!destinationComplete(addr)) return
+  if (!destinationComplete(addr)) {
+    checkoutDbg.fn('refreshShippingQuotesIfNeeded', 'skip', { reason: 'destination incomplete' })
+    return
+  }
 
   const fp = shippingFingerprint(addr)
   if (
     checkoutStore.shippingQuotesFingerprint === fp &&
     checkoutStore.shippingQuotes.length > 0
   ) {
+    checkoutDbg.fn('refreshShippingQuotesIfNeeded', 'skip', { reason: 'cached fingerprint', fp })
     return
   }
 
   if (checkoutStore.shippingQuotesLoading) {
+    checkoutDbg.fn('refreshShippingQuotesIfNeeded', 'skip', { reason: 'already loading, reschedule' })
     scheduleShippingQuotesFetch(300)
     return
   }
 
   try {
     await fetchShippingQuotes()
-  } catch {
-    // errore già in checkoutStore.error
+    checkoutDbg.fn('refreshShippingQuotesIfNeeded', 'exit', { quotes: checkoutStore.shippingQuotes.length })
+  } catch (e) {
+    checkoutDbg.fn('refreshShippingQuotesIfNeeded', 'error', { message: errMessage(e) })
   }
 }
 
@@ -658,6 +684,7 @@ export function prefillCheckoutFromAuthUser() {
 }
 
 export function setCheckoutStep(step: CheckoutStep) {
+  checkoutDbg.state('setCheckoutStep', { from: checkoutStore.currentStep, to: step })
   checkoutStore.currentStep = normalizeCheckoutStep(step)
 }
 
@@ -686,6 +713,7 @@ async function resolvePrefilledCheckoutAddressesFromAuth() {
 }
 
 async function runAddressPrefillInit() {
+  checkoutDbg.fn('runAddressPrefillInit', 'enter')
   checkoutStore.initLoadingPhase = 'anagrafica'
   checkoutStore.currentStep = 'account'
 
@@ -718,18 +746,27 @@ async function runAddressPrefillInit() {
     checkoutStore.addressPrefillLoading = false
     syncAnagraficaCollectedFromAuthProfile()
     checkoutStore.currentStep = resolveInitialCheckoutStep()
+    checkoutDbg.fn('runAddressPrefillInit', 'exit', { step: checkoutStore.currentStep })
   }
 }
 
 export function initializeCheckoutNavigation(): Promise<void> {
+  checkoutDbg.fn('initializeCheckoutNavigation', 'enter', {
+    authenticated: authStore.isAuthenticated,
+    hasPrefillPromise: Boolean(addressPrefillPromise),
+  })
   if (!authStore.isAuthenticated) {
     checkoutStore.currentStep = 'account'
     checkoutStore.addressPrefillLoading = false
     checkoutStore.initLoadingPhase = null
+    checkoutDbg.fn('initializeCheckoutNavigation', 'skip', { reason: 'not authenticated' })
     return Promise.resolve()
   }
 
-  if (addressPrefillPromise) return addressPrefillPromise
+  if (addressPrefillPromise) {
+    checkoutDbg.fn('initializeCheckoutNavigation', 'skip', { reason: 'prefill already running' })
+    return addressPrefillPromise
+  }
 
   addressPrefillPromise = runAddressPrefillInit().finally(() => {
     addressPrefillPromise = null
@@ -771,6 +808,7 @@ function checkoutStepNeedsShippingRefresh(step: CheckoutStep): boolean {
 let checkoutCartRefreshPromise: Promise<void> | null = null
 
 export function invalidateCheckoutAfterCartChange() {
+  checkoutDbg.fn('invalidateCheckoutAfterCartChange', 'enter', { step: checkoutStore.currentStep })
   clearCheckoutPricingState()
   if (
     checkoutStepNeedsShippingRefresh(checkoutStore.currentStep) &&
@@ -783,10 +821,14 @@ export function invalidateCheckoutAfterCartChange() {
 
 /** Aggiorna carrello in checkout senza cambiare step; overlay a pagina intera e pagamento bloccato. */
 export async function refreshCheckoutAfterCartChange() {
-  if (checkoutCartRefreshPromise) return checkoutCartRefreshPromise
+  if (checkoutCartRefreshPromise) {
+    checkoutDbg.fn('refreshCheckoutAfterCartChange', 'skip', { reason: 'already running' })
+    return checkoutCartRefreshPromise
+  }
 
   const step = checkoutStore.currentStep
   const previousShippingRef = checkoutStore.selectedShippingMethodRef
+  checkoutDbg.fn('refreshCheckoutAfterCartChange', 'enter', { step, previousShippingRef })
 
   checkoutCartRefreshPromise = (async () => {
     checkoutStore.cartRefreshing = true
@@ -794,6 +836,7 @@ export async function refreshCheckoutAfterCartChange() {
     clearCheckoutPricingState()
 
     try {
+      checkoutDbg.api('fetchCart', { force: true, reprice: true })
       await fetchCart({ force: true, reprice: true, silent: true })
 
       if (
@@ -826,9 +869,11 @@ export async function refreshCheckoutAfterCartChange() {
       }
     } catch (e) {
       checkoutStore.error = errMessage(e)
+      checkoutDbg.fn('refreshCheckoutAfterCartChange', 'error', { message: checkoutStore.error })
     } finally {
       checkoutStore.cartRefreshing = false
       checkoutCartRefreshPromise = null
+      checkoutDbg.fn('refreshCheckoutAfterCartChange', 'exit', { step })
     }
   })()
 
@@ -836,6 +881,7 @@ export async function refreshCheckoutAfterCartChange() {
 }
 
 export function resetCheckout(options?: { legacyLayout?: boolean }) {
+  checkoutDbg.fn('resetCheckout', 'enter', { legacyLayout: options?.legacyLayout })
   if (shippingQuotesDebounce) clearTimeout(shippingQuotesDebounce)
   if (taxRecalcDebounce) clearTimeout(taxRecalcDebounce)
   shippingQuotesDebounce = null
@@ -962,6 +1008,7 @@ export function clearCheckoutAfterLogout() {
 }
 
 export function setPaymentMethod(method: CheckoutPaymentMethodDTO) {
+  checkoutDbg.state('setPaymentMethod', { from: checkoutStore.selectedPaymentMethod, to: method })
   checkoutStore.selectedPaymentMethod = method
 }
 
@@ -1073,6 +1120,7 @@ export function setCheckoutAddressFields(
   if (kind === 'shipping') {
     scheduleShippingQuotesFetch(options?.skipInvalidation ? 0 : 450)
   }
+  checkoutDbg.fn('setCheckoutAddressFields', 'state', { kind, fields: Object.keys(fields) })
 }
 
 export async function applyResolvedAddress(kind: 'billing' | 'shipping', resolved: ResolvedAddress) {
@@ -1198,9 +1246,11 @@ function syncShippingFromDeliveryRecipient() {
 
 export async function advanceCheckoutStep() {
   const step = checkoutStore.currentStep
+  checkoutDbg.fn('advanceCheckoutStep', 'enter', { step })
 
   if (step !== 'addresses' && step !== 'billing' && !canAdvanceFromStep(step)) {
     checkoutStore.error = localeMessage('checkout.error.incompleteStep')
+    checkoutDbg.fn('advanceCheckoutStep', 'skip', { reason: 'incomplete step', step })
     return
   }
 
@@ -1252,8 +1302,10 @@ export async function advanceCheckoutStep() {
     if (next === 'shipping_method' && checkoutStore.shippingQuotes.length === 0 && canFetchShippingQuotes()) {
       await fetchShippingQuotes()
     }
-  } catch {
-    /* errore già in store */
+
+    checkoutDbg.fn('advanceCheckoutStep', 'exit', { from: step, to: next })
+  } catch (e) {
+    checkoutDbg.fn('advanceCheckoutStep', 'error', { message: errMessage(e) })
   } finally {
     checkoutStore.isLoading = false
   }
@@ -1277,9 +1329,11 @@ export function canGoBackCheckoutStep(step: CheckoutStep = checkoutStore.current
 }
 
 export async function fetchShippingQuotes(options?: { skipAutoSelect?: boolean }) {
+  checkoutDbg.fn('fetchShippingQuotes', 'enter', { skipAutoSelect: options?.skipAutoSelect })
   checkoutStore.shippingQuotesLoading = true
   checkoutStore.error = null
   try {
+    checkoutDbg.api('shipping.quotes', { fingerprint: shippingFingerprint(shippingAddressPayload()) })
     const res = await api.shipping.quotes({
       shippingAddress: shippingAddressForQuotes(),
     })
@@ -1290,8 +1344,13 @@ export async function fetchShippingQuotes(options?: { skipAutoSelect?: boolean }
     if (!options?.skipAutoSelect) {
       await autoSelectShippingQuote(checkoutStore.shippingQuotes)
     }
+    checkoutDbg.fn('fetchShippingQuotes', 'exit', {
+      quotes: checkoutStore.shippingQuotes.length,
+      selected: checkoutStore.selectedShippingMethodRef,
+    })
   } catch (e) {
     checkoutStore.error = errMessage(e)
+    checkoutDbg.fn('fetchShippingQuotes', 'error', { message: checkoutStore.error })
     throw e
   } finally {
     checkoutStore.shippingQuotesLoading = false
@@ -1299,13 +1358,16 @@ export async function fetchShippingQuotes(options?: { skipAutoSelect?: boolean }
 }
 
 export async function selectShippingMethod(methodRef: string, options?: { silent?: boolean }) {
+  checkoutDbg.fn('selectShippingMethod', 'enter', { methodRef, silent: options?.silent })
   if (checkoutStore.shippingSelectingRef != null) {
+    checkoutDbg.fn('selectShippingMethod', 'skip', { reason: 'already selecting', active: checkoutStore.shippingSelectingRef })
     return
   }
 
   if (freeShippingSelectionLocked()) {
     const quote = checkoutStore.shippingQuotes.find((q) => q.methodRef === methodRef)
     if (!quote || !isShippingQuoteSelectable(quote, true)) {
+      checkoutDbg.fn('selectShippingMethod', 'skip', { reason: 'free shipping locked', methodRef })
       return
     }
   }
@@ -1314,6 +1376,7 @@ export async function selectShippingMethod(methodRef: string, options?: { silent
     checkoutStore.selectedShippingMethodRef === methodRef &&
     checkoutStore.shippingSelectionPersisted
   ) {
+    checkoutDbg.fn('selectShippingMethod', 'skip', { reason: 'already selected', methodRef })
     return
   }
 
@@ -1322,6 +1385,7 @@ export async function selectShippingMethod(methodRef: string, options?: { silent
   checkoutStore.error = null
   let shouldSyncDraft = false
   try {
+    checkoutDbg.api('shipping.select', { methodRef })
     await api.shipping.select({
       shippingAddress: shippingAddressForQuotes(),
       methodRef,
@@ -1329,12 +1393,14 @@ export async function selectShippingMethod(methodRef: string, options?: { silent
     if (previousRef !== methodRef) {
       checkoutStore.order = null
       checkoutStore.payment = null
+      checkoutDbg.state('selectShippingMethod:clearedPayment', { previousRef, methodRef })
     }
     checkoutStore.selectedShippingMethodRef = methodRef
     checkoutStore.shippingSelectionPersisted = true
     await fetchCart()
     shouldSyncDraft = isSpedizioneCompartmentComplete()
     scheduleTaxRecalculate(0)
+    checkoutDbg.fn('selectShippingMethod', 'exit', { methodRef })
   } catch (e) {
     if (checkoutStore.selectedShippingMethodRef === methodRef) {
       checkoutStore.shippingSelectionPersisted = false
@@ -1346,6 +1412,7 @@ export async function selectShippingMethod(methodRef: string, options?: { silent
   }
 
   if (shouldSyncDraft) {
+    checkoutDbg.fn('selectShippingMethod', 'state', { action: 'syncCheckoutDraft shipping' })
     void syncCheckoutDraft('shipping', { silent: true }).catch((e) => {
       checkoutStore.error = errMessage(e)
     })
@@ -1421,15 +1488,22 @@ function checkoutDraftBody(step: CheckoutDraftStep) {
 }
 
 export async function syncCheckoutDraft(step: CheckoutDraftStep, options?: { silent?: boolean }) {
-  if (!canSyncCheckoutDraft(step)) return
+  checkoutDbg.fn('syncCheckoutDraft', 'enter', { step, silent: options?.silent, orderId: checkoutStore.order?.orderId })
+  if (!canSyncCheckoutDraft(step)) {
+    checkoutDbg.fn('syncCheckoutDraft', 'skip', { reason: 'canSyncCheckoutDraft=false', step })
+    return
+  }
 
   const run = async () => {
     if (!options?.silent) checkoutStore.isLoading = true
     checkoutStore.error = null
     try {
+      checkoutDbg.api('checkout.patchDraft', { step, orderId: checkoutStore.order?.orderId })
       checkoutStore.order = await api.checkout.patchDraft(checkoutDraftBody(step))
+      checkoutDbg.fn('syncCheckoutDraft', 'exit', { step, orderId: checkoutStore.order?.orderId })
     } catch (e) {
       checkoutStore.error = errMessage(e)
+      checkoutDbg.fn('syncCheckoutDraft', 'error', { step, message: checkoutStore.error })
       throw e
     } finally {
       if (!options?.silent) checkoutStore.isLoading = false
@@ -1437,6 +1511,7 @@ export async function syncCheckoutDraft(step: CheckoutDraftStep, options?: { sil
   }
 
   if (checkoutDraftSyncPromise) {
+    checkoutDbg.fn('syncCheckoutDraft', 'skip', { reason: 'awaiting prior sync', step })
     await checkoutDraftSyncPromise.catch(() => undefined)
   }
 
@@ -1455,13 +1530,16 @@ export async function syncCheckoutDraft(step: CheckoutDraftStep, options?: { sil
 }
 
 export async function startCheckout(options?: { silent?: boolean }) {
+  checkoutDbg.fn('startCheckout', 'enter', { silent: options?.silent, step: checkoutStore.currentStep })
   if (!authStore.isAuthenticated) {
     checkoutStore.error = localeMessage('checkout.error.authRequired')
+    checkoutDbg.fn('startCheckout', 'skip', { reason: 'not authenticated' })
     throw new Error(checkoutStore.error)
   }
   if (!options?.silent) checkoutStore.isLoading = true
   checkoutStore.error = null
   try {
+    checkoutDbg.api('checkout.start', { email: ensureCheckoutEmailInDraft() })
     checkoutStore.order = await api.checkout.start({
       email: ensureCheckoutEmailInDraft(),
       customerSegment: effectiveCustomerSegment() ?? undefined,
@@ -1477,8 +1555,10 @@ export async function startCheckout(options?: { silent?: boolean }) {
       vatForceAccepted: checkoutStore.business.vatForceAccepted || undefined,
       lockPrices: true,
     })
+    checkoutDbg.fn('startCheckout', 'exit', { orderId: checkoutStore.order?.orderId })
   } catch (e) {
     checkoutStore.error = errMessage(e)
+    checkoutDbg.fn('startCheckout', 'error', { message: checkoutStore.error })
     throw e
   } finally {
     if (!options?.silent) checkoutStore.isLoading = false
@@ -1487,13 +1567,16 @@ export async function startCheckout(options?: { silent?: boolean }) {
 
 export async function createPaymentSession(options?: { silent?: boolean }) {
   const orderId = checkoutStore.order?.orderId
+  checkoutDbg.fn('createPaymentSession', 'enter', { orderId, method: checkoutStore.selectedPaymentMethod })
   if (!orderId) {
     checkoutStore.error = localeMessage('checkout.error.missingOrder')
+    checkoutDbg.fn('createPaymentSession', 'skip', { reason: 'missing orderId' })
     return
   }
   if (!options?.silent) checkoutStore.isLoading = true
   checkoutStore.error = null
   try {
+    checkoutDbg.api('payments.createSession', { orderId, method: checkoutStore.selectedPaymentMethod })
     checkoutStore.payment = await api.payments.createSession({
       orderId,
       paymentMethod: checkoutStore.selectedPaymentMethod,
@@ -1503,8 +1586,14 @@ export async function createPaymentSession(options?: { silent?: boolean }) {
       const { preloadStripe } = await import('@/lib/stripe-loader')
       preloadStripe(publishableKey)
     }
+    checkoutDbg.fn('createPaymentSession', 'exit', {
+      orderId,
+      method: checkoutStore.payment?.method,
+      hasClientSecret: Boolean(checkoutStore.payment?.clientSecret),
+    })
   } catch (e) {
     checkoutStore.error = errMessage(e)
+    checkoutDbg.fn('createPaymentSession', 'error', { message: checkoutStore.error })
     throw e
   } finally {
     if (!options?.silent) checkoutStore.isLoading = false
@@ -1518,6 +1607,11 @@ export async function refreshStaleStripePaymentSession(options?: { silent?: bool
 }
 
 export async function prepareCheckoutPayment(options?: { silent?: boolean }) {
+  checkoutDbg.fn('prepareCheckoutPayment', 'enter', {
+    hasOrder: Boolean(checkoutStore.order),
+    hasPayment: Boolean(checkoutStore.payment),
+    method: checkoutStore.selectedPaymentMethod,
+  })
   if (!checkoutStore.order && !isFrozenQuoteCheckout()) {
     await startCheckout(options)
   }
@@ -1525,6 +1619,10 @@ export async function prepareCheckoutPayment(options?: { silent?: boolean }) {
   if (!payment || payment.method !== checkoutStore.selectedPaymentMethod) {
     await createPaymentSession(options)
   }
+  checkoutDbg.fn('prepareCheckoutPayment', 'exit', {
+    orderId: checkoutStore.order?.orderId,
+    hasClientSecret: Boolean(checkoutStore.payment?.clientSecret),
+  })
 }
 
 export async function confirmPayment(mockStatus?: 'captured' | 'pending' | 'failed' | 'cancelled') {

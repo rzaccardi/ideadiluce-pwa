@@ -304,7 +304,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
           </div>
 
             <div className="mt-3.5 flex flex-wrap gap-[18px] text-[12.5px] text-idl-muted">
-              <span>✓ Reso entro 50 giorni</span>
+              <span>✓ {t('product.trust.returnBadge')}</span>
               <span>✓ Garanzia 2 anni</span>
               <span>✓ Pagamenti sicuri</span>
             </div>

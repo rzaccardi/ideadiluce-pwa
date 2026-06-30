@@ -398,7 +398,7 @@ export const cartService = {
     }
     await cartRepository.deleteItem(itemId)
     await syncReservationAfterItemsChange(cart.id)
-    const { dto } = await dtoFromCartId(req, cart.id, { reprice: false })
+    const { dto } = await dtoFromCartId(req, cart.id, { reprice: true })
     return dto
   },
 

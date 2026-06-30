@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useSnapshot } from 'valtio/react'
 import {
   cartStore,
@@ -18,6 +18,7 @@ import { useI18n } from '@/hooks/use-i18n'
 export function CartPage() {
   const { t } = useI18n()
   const cart = useSnapshot(cartStore)
+  const [isPageReady, setIsPageReady] = useState(false)
   const recommendationKey =
     cart.cart?.items.map((line) => `${line.productRef}:${line.quantity}`).sort().join('|') ?? ''
 
@@ -25,16 +26,21 @@ export function CartPage() {
   useCartReservationSync()
 
   useEffect(() => {
-    void fetchCart({ force: true, reprice: true })
+    let active = true
+    void fetchCart({ force: true, reprice: true }).finally(() => {
+      if (active) setIsPageReady(true)
+    })
+    return () => {
+      active = false
+    }
   }, [])
 
   useEffect(() => {
-    if (recommendationKey) void fetchRecommendations()
-  }, [recommendationKey])
+    if (!isPageReady || !recommendationKey) return
+    void fetchRecommendations()
+  }, [isPageReady, recommendationKey])
 
-  const isInitialLoading = cart.isLoading && !cart.cart
-
-  if (cart.error && !cart.cart) {
+  if (isPageReady && cart.error && !cart.cart) {
     return (
       <>
         <ToastOnError message={cart.error} />
@@ -47,8 +53,8 @@ export function CartPage() {
   }
 
   return (
-    <PageLoadTransition isLoading={isInitialLoading} skeleton={<CartPageSkeleton />}>
-      <CartPageView state={cart} />
+    <PageLoadTransition isLoading={!isPageReady} skeleton={<CartPageSkeleton />}>
+      {isPageReady ? <CartPageView state={cart} /> : null}
     </PageLoadTransition>
   )
 }

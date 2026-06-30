@@ -7,6 +7,7 @@ import { useI18n } from '@/hooks/use-i18n'
 import { formatMoney } from '@/lib/format'
 import { SectionContainer, BrandWordmark } from '@/components/site/primitives'
 import { SiteImage } from '@/components/site/SiteImage'
+import { MastercardLogo, PayPalLogo, VisaLogo } from '@/components/payment-method-logos'
 import type { MessageKey } from '@/i18n/messages'
 
 type Props = {
@@ -179,9 +180,13 @@ export function PurchaseErrorPageView({ order }: Props) {
                   to={checkoutRetryHref(lp, order.orderId, { step: 'payment', method: 'stripe' })}
                   className="flex flex-col items-center gap-2 rounded-[10px] border border-[#e7eaee] px-3.5 py-[18px] no-underline transition hover:border-idl-amber hover:bg-[#fdf6ed]"
                 >
-                  <div className="flex gap-1">
-                    <span className="rounded bg-[#f0f2f5] px-1.5 py-1 font-mono text-[10px] font-bold text-[#1a1f71]">VISA</span>
-                    <span className="rounded bg-[#f0f2f5] px-1.5 py-1 font-mono text-[10px] font-bold text-[#eb001b]">MC</span>
+                  <div className="flex gap-1.5">
+                    <span className="flex h-8 items-center rounded bg-[#f0f2f5] px-1.5" role="img" aria-label="Visa">
+                      <VisaLogo className="h-5" />
+                    </span>
+                    <span className="flex h-8 items-center rounded bg-[#f0f2f5] px-1.5" role="img" aria-label="Mastercard">
+                      <MastercardLogo className="h-5" />
+                    </span>
                   </div>
                   <span className="text-[13px] font-bold text-idl-graphite">{t('purchaseError.methods.card')}</span>
                 </Link>
@@ -189,7 +194,9 @@ export function PurchaseErrorPageView({ order }: Props) {
                   to={checkoutRetryHref(lp, order.orderId, { step: 'payment', method: 'stripe' })}
                   className="flex flex-col items-center gap-2 rounded-[10px] border border-[#e7eaee] px-3.5 py-[18px] no-underline transition hover:border-idl-amber hover:bg-[#fdf6ed]"
                 >
-                  <span className="rounded bg-[#f0f2f5] px-2 py-1 font-mono text-[11px] font-bold text-[#003087]">PayPal</span>
+                  <span className="flex h-8 items-center rounded bg-[#f0f2f5] px-2" role="img" aria-label="PayPal">
+                    <PayPalLogo className="h-5" />
+                  </span>
                   <span className="text-[13px] font-bold text-idl-graphite">{t('purchaseError.methods.paypal')}</span>
                 </Link>
                 <Link

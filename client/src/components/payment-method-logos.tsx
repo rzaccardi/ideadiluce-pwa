@@ -18,10 +18,9 @@ const PAYMENT_BRAND_ICONS = {
 type PaymentBrandId = keyof typeof PAYMENT_BRAND_ICONS
 
 function PaymentBrandImage({ brand, className }: LogoProps & { brand: PaymentBrandId }) {
-  const { src, label } = PAYMENT_BRAND_ICONS[brand]
+  const { src } = PAYMENT_BRAND_ICONS[brand]
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element -- SVG ufficiali brand, serviti staticamente
     <img
       src={src}
       alt=""

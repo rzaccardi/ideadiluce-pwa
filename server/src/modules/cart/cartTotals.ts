@@ -21,6 +21,8 @@ export function usePersistedCartTotals(
 ): boolean {
   if (cart.lastPricedAt == null || cart.estimatedSubtotal == null) return false
   if (cart.estimatedSubtotal === 0 && (computedSubtotal ?? 0) > 0) return false
+  // Totali Odoo obsoleti dopo rimozione/modifica righe: preferisci il subtotale dalle righe.
+  if (computedSubtotal != null && computedSubtotal !== cart.estimatedSubtotal) return false
   return true
 }
 

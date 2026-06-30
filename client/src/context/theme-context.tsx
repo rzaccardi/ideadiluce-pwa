@@ -1,16 +1,21 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import {
+  IDEADILUCE_THEME_KEY,
+  LEGACY_STORAGE_KEYS,
+} from '@/lib/storage-keys'
+import { readWithMigration } from '@/lib/storage-migrate'
 
 export type SiteTheme = 'light' | 'dark' | 'classic'
 
-const STORAGE_KEY = 'idl-theme'
+const THEME_LEGACY_KEYS = LEGACY_STORAGE_KEYS[IDEADILUCE_THEME_KEY]
 
 const THEME_CYCLE: SiteTheme[] = ['classic', 'light', 'dark']
 
 export const SITE_THEMES = THEME_CYCLE
 
-const DEFAULT_THEME: SiteTheme = 'dark'
+const DEFAULT_THEME: SiteTheme = 'light'
 
 function isSiteTheme(value: string | null): value is SiteTheme {
   return value === 'light' || value === 'dark' || value === 'classic'
@@ -18,13 +23,12 @@ function isSiteTheme(value: string | null): value is SiteTheme {
 
 function readStoredTheme(): SiteTheme | null {
   if (typeof window === 'undefined') return null
-  const stored = window.localStorage.getItem(STORAGE_KEY)
+  const stored = readWithMigration(window.localStorage, IDEADILUCE_THEME_KEY, THEME_LEGACY_KEYS)
   return isSiteTheme(stored) ? stored : null
 }
 
 function getSystemTheme(): SiteTheme {
-  if (typeof window === 'undefined') return DEFAULT_THEME
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'classic'
+  return DEFAULT_THEME
 }
 
 export function resolveTheme(): SiteTheme {
@@ -76,7 +80,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const setTheme = useCallback((next: SiteTheme) => {
-    window.localStorage.setItem(STORAGE_KEY, next)
+    window.localStorage.setItem(IDEADILUCE_THEME_KEY, next)
     applyTheme(next)
     setThemeState(next)
   }, [])
@@ -84,7 +88,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const toggleTheme = useCallback(() => {
     setThemeState((current) => {
       const next = getNextTheme(current)
-      window.localStorage.setItem(STORAGE_KEY, next)
+      window.localStorage.setItem(IDEADILUCE_THEME_KEY, next)
       applyTheme(next)
       return next
     })

@@ -42,12 +42,14 @@ type Props = {
   product: ProductCardDTO
   lp: LocalePathFn
   addLabel?: string
+  showSelection?: boolean
 }
 
 export const TechnicalCatalogProductCard = memo(function TechnicalCatalogProductCard({
   product,
   lp,
   addLabel = 'Aggiungi',
+  showSelection = true,
 }: Props) {
   const { locale } = useLocale()
   const selection = useTechnicalCatalogSelectionContext()
@@ -92,7 +94,7 @@ export const TechnicalCatalogProductCard = memo(function TechnicalCatalogProduct
         <Link to={lp(`/prodotto/${product.slug}`)} className="block">
           <div className="mb-2 flex items-center justify-between">
             <span className={`text-[11px] font-bold ${stock.className}`}>{stock.label}</span>
-            {selection ? (
+            {showSelection && selection ? (
               <TechnicalCatalogSelectionCheckbox
                 checked={checked}
                 disabled={checkboxDisabled}
@@ -100,9 +102,9 @@ export const TechnicalCatalogProductCard = memo(function TechnicalCatalogProduct
                 productName={product.name}
                 className={!selectionActive && !checked ? 'opacity-70' : undefined}
               />
-            ) : (
+            ) : showSelection ? (
               <span className="size-4 rounded border-[1.5px] border-idl-tech-chip-border" aria-hidden />
-            )}
+            ) : null}
           </div>
           <div className="relative mb-3 aspect-square overflow-hidden rounded bg-idl-tech-panel">
             {product.imageUrl ? (

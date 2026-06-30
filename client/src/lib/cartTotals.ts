@@ -24,6 +24,8 @@ function subtotalFromLines(cart: CartLike): number {
 function shouldUsePersistedSubtotal(cart: CartLike, fromLines: number): boolean {
   if (cart.estimatedSubtotal == null) return false
   if (cart.estimatedSubtotal === 0 && fromLines > 0) return false
+  // Totali server obsoleti: se le righe hanno prezzi, il subtotale deve combaciare.
+  if (fromLines > 0 && fromLines !== cart.estimatedSubtotal) return false
   return true
 }
 

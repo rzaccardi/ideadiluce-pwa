@@ -3,8 +3,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ProductCardDTO } from '@/types/dto'
 import { ProductCard } from '@/components/product/ProductCard'
+import { DesignCatalogProductCard } from '@/components/site/category/DesignCatalogProductGrid'
+import { TechnicalCatalogProductCard } from '@/components/site/category/TechnicalCatalogProductGrid'
 import { useI18n } from '@/hooks/use-i18n'
+import { useLocalePath } from '@/hooks/use-locale-path'
+import {
+  resolveProductCardCatalogKind,
+  type ProductCatalogKind,
+} from '@/lib/product-catalog-kind'
+import type { LocalePathFn } from '@/components/site/sections/types'
 import { cn } from '@/utils/cn'
+
+export type ProductSliderCardKind = ProductCatalogKind | 'auto' | 'legacy'
 
 type Props = {
   products: ReadonlyArray<ProductCardDTO>
@@ -15,6 +25,28 @@ type Props = {
   variant?: 'fullBleed' | 'contained'
   /** Scorre in modo circolare: da ultimo a primo e viceversa */
   loop?: boolean
+  /** Card catalogo arredo/tecnica; `auto` risolve per prodotto, `legacy` usa ProductCard */
+  cardKind?: ProductSliderCardKind
+  lp?: LocalePathFn
+}
+
+function resolveSlideCardKind(
+  product: ProductCardDTO,
+  cardKind: ProductSliderCardKind,
+): ProductCatalogKind | 'legacy' {
+  if (cardKind === 'legacy') return 'legacy'
+  if (cardKind === 'design' || cardKind === 'technical') return cardKind
+  return resolveProductCardCatalogKind(product)
+}
+
+function slideItemWidth(kind: ProductCatalogKind | 'legacy', isContained: boolean): string {
+  if (kind === 'legacy') {
+    return isContained ? 'w-[14rem] sm:w-[17.5rem]' : 'w-[min(85vw,17.5rem)]'
+  }
+  if (kind === 'design') {
+    return isContained ? 'w-[13rem] sm:w-[16rem]' : 'w-[min(75vw,16rem)]'
+  }
+  return isContained ? 'w-[14rem] sm:w-[17.5rem]' : 'w-[min(85vw,17.5rem)]'
 }
 
 function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
@@ -38,8 +70,12 @@ export function ProductSlider({
   className,
   variant = 'fullBleed',
   loop = false,
+  cardKind = 'auto',
+  lp: lpProp,
 }: Props) {
   const { t } = useI18n()
+  const lpFromHook = useLocalePath()
+  const lp = lpProp ?? lpFromHook
   const message = emptyMessage ?? t('product.grid.empty')
   const scrollRef = useRef<HTMLUListElement>(null)
   const [canScrollPrev, setCanScrollPrev] = useState(false)
@@ -140,17 +176,23 @@ export function ProductSlider({
             : 'ml-[calc(50%-50vw)] w-screen max-w-none pl-[max(1rem,calc((100vw-72rem)/2+1rem))] pr-[max(1rem,calc((100vw-72rem)/2+1rem))]',
         )}
       >
-        {products.map((p) => (
-          <li
-            key={p.slug}
-            className={cn(
-              'flex shrink-0 snap-start',
-              isContained ? 'w-[14rem] sm:w-[17.5rem]' : 'w-[min(85vw,17.5rem)]',
-            )}
-          >
-            <ProductCard product={p} className="h-full w-full" />
-          </li>
-        ))}
+        {products.map((p) => {
+          const resolvedKind = resolveSlideCardKind(p, cardKind)
+          return (
+            <li
+              key={p.slug}
+              className={cn('flex shrink-0 snap-start', slideItemWidth(resolvedKind, isContained))}
+            >
+              {resolvedKind === 'design' ? (
+                <DesignCatalogProductCard product={p} lp={lp} />
+              ) : resolvedKind === 'technical' ? (
+                <TechnicalCatalogProductCard product={p} lp={lp} showSelection={false} />
+              ) : (
+                <ProductCard product={p} className="h-full w-full" />
+              )}
+            </li>
+          )
+        })}
       </ul>
     </section>
   )

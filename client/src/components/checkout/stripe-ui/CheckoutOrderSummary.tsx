@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Link } from '@/lib/navigation'
+import { Link, useNavigate } from '@/lib/navigation'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { useLocalePath } from '@/hooks/use-locale-path'
 import type { CartDTO, CartItemDTO, FreeShippingHintDTO, ProductCardDTO, ShippingQuoteDTO, TaxBreakdownDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
 import { cartSubtotalCents, cartTaxCents, cartTotalCents } from '@/lib/cartTotals'
@@ -306,30 +308,48 @@ export function CheckoutBackButton({
   className?: string
 }) {
   const { t } = useI18n()
+  const navigate = useNavigate()
+  const lp = useLocalePath()
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const label = backLabel ?? t('checkout.backToCart')
   const dark = theme === 'dark'
   return (
-    <Link
-      to={backHref}
-      className={cn(
-        'flex size-[38px] shrink-0 items-center justify-center rounded-full border transition',
-        dark
-          ? 'border-white/15 text-[#f1e8d8] hover:bg-white/10'
-          : 'border-[#e2e6eb] text-[#14161b] hover:bg-black/5',
-        className,
-      )}
-      aria-label={label}
-    >
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-        <path
-          d="M10 3 5 8l5 5"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </Link>
+    <>
+      <button
+        type="button"
+        onClick={() => setConfirmOpen(true)}
+        className={cn(
+          'flex size-[38px] shrink-0 items-center justify-center rounded-full border transition',
+          dark
+            ? 'border-white/15 text-[#f1e8d8] hover:bg-white/10'
+            : 'border-[#e2e6eb] text-[#14161b] hover:bg-black/5',
+          className,
+        )}
+        aria-label={label}
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+          <path
+            d="M10 3 5 8l5 5"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+      <ConfirmDialog
+        open={confirmOpen}
+        title={t('checkout.backToCartConfirmTitle')}
+        description={t('checkout.backToCartConfirmDescription')}
+        confirmLabel={t('checkout.backToCart')}
+        cancelLabel={t('common.cancel')}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false)
+          navigate(lp(backHref))
+        }}
+      />
+    </>
   )
 }
 

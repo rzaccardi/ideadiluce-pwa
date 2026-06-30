@@ -238,7 +238,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
             </ProductDetailContactLink>
 
             <div className="flex flex-wrap gap-3 border-t border-white/10 pt-4 text-[12px] text-idl-design-dim sm:gap-5 sm:pt-[18px] sm:text-[12.5px]">
-              <span>✓ Reso entro 50 giorni</span>
+              <span>✓ {t('product.trust.returnBadge')}</span>
               <span>✓ Garanzia ufficiale</span>
               {product.brand?.name ? <span>✓ Prodotto originale {product.brand.name}</span> : null}
             </div>

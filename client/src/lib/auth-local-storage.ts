@@ -1,4 +1,8 @@
-const STORAGE_KEY = 'idl_auth_session_v1'
+import {
+  IDEADILUCE_AUTH_SESSION_KEY,
+  LEGACY_STORAGE_KEYS,
+} from '@/lib/storage-keys'
+import { readWithMigration } from '@/lib/storage-migrate'
 
 /** Lead time prima della scadenza in cui tentare un refresh proattivo. */
 export const AUTH_SESSION_REFRESH_LEAD_MS = 7 * 24 * 60 * 60 * 1000
@@ -9,6 +13,8 @@ export type AuthSessionMirror = {
   expiresAt: string
   savedAt: string
 }
+
+const AUTH_SESSION_LEGACY_KEYS = LEGACY_STORAGE_KEYS[IDEADILUCE_AUTH_SESSION_KEY]
 
 export function saveAuthSessionMirror(input: {
   userId: string
@@ -22,13 +28,17 @@ export function saveAuthSessionMirror(input: {
     expiresAt: input.expiresAt,
     savedAt: new Date().toISOString(),
   }
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot))
+  window.localStorage.setItem(IDEADILUCE_AUTH_SESSION_KEY, JSON.stringify(snapshot))
 }
 
 export function loadAuthSessionMirror(): AuthSessionMirror | null {
   if (typeof window === 'undefined') return null
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
+    const raw = readWithMigration(
+      window.localStorage,
+      IDEADILUCE_AUTH_SESSION_KEY,
+      AUTH_SESSION_LEGACY_KEYS,
+    )
     if (!raw) return null
     const parsed = JSON.parse(raw) as AuthSessionMirror
     if (!parsed?.userId || !parsed?.email) return null
@@ -40,7 +50,7 @@ export function loadAuthSessionMirror(): AuthSessionMirror | null {
 
 export function clearAuthSessionMirror(): void {
   if (typeof window === 'undefined') return
-  window.localStorage.removeItem(STORAGE_KEY)
+  window.localStorage.removeItem(IDEADILUCE_AUTH_SESSION_KEY)
 }
 
 export function hasPersistedAuthSession(): boolean {

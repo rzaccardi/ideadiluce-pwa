@@ -6,6 +6,7 @@ import {
   recentQueriesToSuggestionGroup,
   recordRecentSearchQuery,
 } from './catalog-search-recent'
+import { legacyCatalogSearchRecentKey } from './storage-keys'
 
 const storage = new Map<string, string>()
 
@@ -66,5 +67,15 @@ describe('catalog-search-recent', () => {
     recordRecentSearchQuery('IT', 'E27')
     recordRecentSearchQuery('IT', 'GU10')
     expect(getRecentSearchQueries('IT')[0]).toBe('GU10')
+  })
+
+  it('migra le query dalla chiave legacy idl:', () => {
+    storage.set(
+      legacyCatalogSearchRecentKey('IT'),
+      JSON.stringify([{ query: 'GU10', at: 1 }]),
+    )
+
+    expect(getRecentSearchQueries('IT')).toEqual(['GU10'])
+    expect(storage.has(legacyCatalogSearchRecentKey('IT'))).toBe(false)
   })
 })

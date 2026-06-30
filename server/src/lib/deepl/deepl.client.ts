@@ -1,5 +1,6 @@
 import { AppError } from '../../types/errors.js'
 import { assertDeepLEnabled, deeplConfig } from './deepl.config.js'
+import { decodeDeepLHtmlEntities } from './deepl-html.js'
 
 const SITE_LOCALE_TO_DEEPL: Record<string, string> = {
   IT: 'IT',
@@ -74,7 +75,7 @@ export async function translateTexts(
       )
     }
 
-    results.push(...data.translations.map((item) => item.text))
+    results.push(...data.translations.map((item) => decodeDeepLHtmlEntities(item.text)))
   }
 
   return results

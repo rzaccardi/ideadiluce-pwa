@@ -6,6 +6,7 @@ import {
   SITE_PAGE_LABELS,
   type SiteLocale,
 } from './site.constants.js'
+import { decodeDeepLHtmlEntitiesInTree } from '../../lib/deepl/deepl-html.js'
 import { countTranslatableStrings, translateSiteContentTree } from './site-content-i18n.js'
 import { mergeSiteContentWithDefaults } from './site-content.merge.js'
 import { assertSitePageContent } from './site-content.validate.js'
@@ -44,9 +45,15 @@ function assertPageKey(pageKey: string): SitePageKey {
   return pageKey as SitePageKey
 }
 
+function defaultSiteContentForLocale(pageKey: SitePageKey, locale: SiteLocale) {
+  if (pageKey === 'termini') return withTerminiVersion(getTerminiDefaults(locale))
+  if (pageKey === 'privacy') return withPrivacyVersion(getPrivacyDefaults(locale))
+  return defaultSiteContent(pageKey)
+}
+
 function prepareContent(pageKey: SitePageKey, content: unknown) {
   assertSitePageContent(pageKey, content)
-  return mergeSiteContentWithDefaults(pageKey, content)
+  return mergeSiteContentWithDefaults(pageKey, decodeDeepLHtmlEntitiesInTree(content))
 }
 
 function toAdminPageDto(
@@ -143,8 +150,17 @@ export const siteService = {
       return {
         pageKey: key,
         locale: loc,
-        content: mergeSiteContentWithDefaults(key, row.content),
+        content: prepareContent(key, row.content),
         updatedAt: row.updatedAt.toISOString(),
+      }
+    }
+
+    if (key === 'termini' || key === 'privacy') {
+      return {
+        pageKey: key,
+        locale: loc,
+        content: prepareContent(key, defaultSiteContentForLocale(key, loc)),
+        updatedAt: null,
       }
     }
 
@@ -153,7 +169,7 @@ export const siteService = {
       return {
         pageKey: key,
         locale: 'IT',
-        content: mergeSiteContentWithDefaults(key, fallback.content),
+        content: prepareContent(key, fallback.content),
         updatedAt: fallback.updatedAt.toISOString(),
       }
     }

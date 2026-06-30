@@ -12,6 +12,32 @@ import { SocialBrandIcon, hasSocialBrandIcon } from '@/components/site/social-br
 import { cn } from '@/utils/cn'
 import { BrandWordmark, SectionContainer } from './primitives'
 import { FooterThemeSelect } from './FooterThemeSelect'
+import { useI18n } from '@/hooks/use-i18n'
+
+function FooterLegalLinks({ className }: { className?: string }) {
+  const lp = useLocalePath()
+  const { t } = useI18n()
+
+  return (
+    <nav aria-label={t('footer.legal.heading')} className={className}>
+      <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 sm:justify-start">
+        <li>
+          <Link to={lp('/tos')} className="hover:text-idl-design-fg">
+            {t('footer.legal.terms')}
+          </Link>
+        </li>
+        <li aria-hidden className="text-idl-design-subtle/60">
+          ·
+        </li>
+        <li>
+          <Link to={lp('/privacy-policy')} className="hover:text-idl-design-fg">
+            {t('footer.legal.privacy')}
+          </Link>
+        </li>
+      </ul>
+    </nav>
+  )
+}
 
 function FooterHeading({ children }: { children: ReactNode }) {
   return (
@@ -99,7 +125,7 @@ export function SiteFooter({ footer }: { footer: SiteShellContent['footer'] }) {
     hoursLines: [...COMPANY_CONTACT.hoursLines],
   }
 
-  const [ideaCol, serviceCol] = footer.columns
+  const [ideaCol] = footer.columns
 
   return (
     <footer className="bg-idl-design text-idl-design-fg">
@@ -158,11 +184,6 @@ export function SiteFooter({ footer }: { footer: SiteShellContent['footer'] }) {
                 ))}
               </div>
             </div>
-            {serviceCol && serviceCol.links.length > 0 ? (
-              <div className="mt-5">
-                <FooterLinkList links={serviceCol.links} lp={lp} />
-              </div>
-            ) : null}
           </StaggerItem>
 
           <StaggerItem>
@@ -194,7 +215,8 @@ export function SiteFooter({ footer }: { footer: SiteShellContent['footer'] }) {
           <Link to={lp('/')} className="rounded-sm transition-opacity hover:opacity-80">
             <BrandWordmark className="text-white" accentClassName="text-idl-glow" />
           </Link>
-          <div className="flex w-full flex-col items-center gap-3 sm:ml-auto sm:w-auto sm:flex-row sm:items-center sm:gap-5">
+          <div className="flex w-full flex-col items-center gap-3 sm:ml-auto sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-x-5 sm:gap-y-2">
+            <FooterLegalLinks className="text-idl-design-subtle" />
             <span className="max-w-prose">{footer.legalNote}</span>
             <FooterThemeSelect />
           </div>

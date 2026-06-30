@@ -24,7 +24,7 @@ function detectStaleCartMirror(serverCartId: string): boolean {
   return mirror.cartId !== serverCartId
 }
 
-// Source of truth: session cookie server-side. Il mirror `emil_cart_mirror_v1` salva solo
+// Source of truth: session cookie server-side. Il mirror `ideadiluce:cart-mirror:v1` salva solo
 // cartId + scadenza riserva (vedi cart-local-storage). POST /cart/sync-from-client resta
 // legacy per sync righe guest e non viene invocato dal client.
 async function loadCart(options?: { skipMirrorCheck?: boolean; reprice?: boolean; silent?: boolean }) {

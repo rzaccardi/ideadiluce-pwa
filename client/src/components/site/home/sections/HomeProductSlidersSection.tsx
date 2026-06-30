@@ -130,6 +130,8 @@ export function HomeProductSlidersSection({ sliders, lp }: Props) {
                 products={slider.products.slice(0, HOME_SLIDER_PRODUCT_COUNT)}
                 variant="fullBleed"
                 loop
+                cardKind={isTechnical ? 'technical' : isDesign ? 'design' : 'auto'}
+                lp={lp}
               />
             </div>
             <SectionContainer className="relative z-[2] pb-5 sm:hidden">

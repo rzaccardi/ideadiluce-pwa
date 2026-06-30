@@ -50,7 +50,7 @@ export function TechnicalProductShowcase({
         />
       </SectionContainer>
       <div className="pb-14">
-        <ProductSlider products={items} variant="fullBleed" loop />
+        <ProductSlider products={items} variant="fullBleed" loop cardKind="technical" lp={lp} />
       </div>
     </section>
   )

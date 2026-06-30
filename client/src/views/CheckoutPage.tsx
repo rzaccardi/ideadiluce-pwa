@@ -62,6 +62,7 @@ import {
 import { useI18n } from '@/hooks/use-i18n'
 import { ApiRequestError } from '@/types/api'
 import { preloadStripe } from '@/lib/stripe-loader'
+import { checkoutDbg } from '@/features/checkout/checkout-debug'
 
 export function CheckoutPage() {
   const { t, tParams } = useI18n()
@@ -81,12 +82,17 @@ export function CheckoutPage() {
   const checkoutPrepareBlockedRef = useRef(false)
 
   useEffect(() => {
+    checkoutDbg.effect('normalizeLegacySteps', { step: checkoutStore.currentStep })
     if (checkoutStore.currentStep === 'billing' || checkoutStore.currentStep === 'shipping') {
       checkoutStore.currentStep = 'addresses'
     }
   }, [])
 
   useEffect(() => {
+    checkoutDbg.effect('checkoutInit', {
+      retryOrder: searchParams.get('retryOrder'),
+      frozenOrderId: searchParams.get('orderId'),
+    })
     preloadStripe()
     const retryOrderId = searchParams.get('retryOrder')
     const frozenOrderId = searchParams.get('orderId')
@@ -127,6 +133,13 @@ export function CheckoutPage() {
   }, [searchParams])
 
   useEffect(() => {
+    checkoutDbg.effect('authNavigation', {
+      isLoading: auth.isLoading,
+      isAuthenticated: auth.isAuthenticated,
+      hasMe: Boolean(auth.me),
+      frozen: isFrozenQuoteCheckout(),
+      step: checkoutStore.currentStep,
+    })
     if (isFrozenQuoteCheckout()) return
     if (!auth.isLoading && auth.me) {
       void initializeCheckoutNavigation()
@@ -158,7 +171,10 @@ export function CheckoutPage() {
     displayCart?.items.map((line) => `${line.productRef}:${line.quantity}`).sort().join('|') ?? ''
 
   useEffect(() => {
-    if (recommendationKey) void fetchRecommendations()
+    if (recommendationKey) {
+      checkoutDbg.effect('fetchRecommendations', { recommendationKey })
+      void fetchRecommendations()
+    }
   }, [recommendationKey])
 
   function handleCrossSellAdded() {
@@ -182,6 +198,11 @@ export function CheckoutPage() {
   useEffect(() => {
     if (isFrozenQuoteCheckout()) return
     if (step === 'shipping_method' || step === 'payment' || step === 'review') {
+      checkoutDbg.effect('refreshTaxBreakdown', {
+        step,
+        shippingRef: checkout.selectedShippingMethodRef,
+        vatValidated: checkout.business.vatValidated,
+      })
       void refreshTaxBreakdown()
     }
   }, [
@@ -195,12 +216,17 @@ export function CheckoutPage() {
   ])
 
   useEffect(() => {
+    checkoutDbg.effect('clearStripeMountOnPaymentNull', { hasPayment: Boolean(checkout.payment) })
     if (!checkout.payment) {
       setStripeMount(null)
     }
   }, [checkout.payment])
 
   useEffect(() => {
+    checkoutDbg.effect('syncStripeMount', {
+      method: checkout.payment?.method,
+      hasClientSecret: Boolean(checkout.payment?.clientSecret),
+    })
     if (checkout.payment?.method === 'stripe' && checkout.payment.clientSecret) {
       setStripeMount((prev) => {
         const next = {
@@ -223,11 +249,28 @@ export function CheckoutPage() {
   }, [checkout.payment])
 
   useEffect(() => {
+    checkoutDbg.effect('resetPrepareRefsOnPaymentMethodChange', {
+      method: checkout.selectedPaymentMethod,
+    })
     checkoutPrepareBlockedRef.current = false
     checkoutPrepareKeyRef.current = null
   }, [checkout.selectedPaymentMethod])
 
   useEffect(() => {
+    const guards = {
+      step,
+      method: checkout.selectedPaymentMethod,
+      canStart: canStartCheckout(),
+      isLoading: checkout.isLoading,
+      isPaying: checkout.isPaying,
+      cartRefreshing: checkout.cartRefreshing,
+      shippingSelecting: checkout.shippingSelectingRef,
+      shippingPersisted: checkout.shippingSelectionPersisted,
+      hasPayment: Boolean(checkout.payment),
+      hasOrder: Boolean(checkout.order),
+    }
+    checkoutDbg.effect('prepareStripeSession', guards)
+
     if (step !== 'payment' && step !== 'review') return
     if (checkout.selectedPaymentMethod !== 'stripe') return
     if (
@@ -238,9 +281,13 @@ export function CheckoutPage() {
       checkout.shippingSelectingRef ||
       !checkout.shippingSelectionPersisted
     ) {
+      checkoutDbg.fn('prepareStripeSession', 'skip', { reason: 'guards failed', guards })
       return
     }
-    if (checkout.payment) return
+    if (checkout.payment) {
+      checkoutDbg.fn('prepareStripeSession', 'skip', { reason: 'payment already exists' })
+      return
+    }
 
     const form = checkout.draft
     const prepareKey = [
@@ -253,23 +300,36 @@ export function CheckoutPage() {
     ].join('|')
 
     if (checkoutPrepareBlockedRef.current && checkoutPrepareKeyRef.current === prepareKey) {
+      checkoutDbg.fn('prepareStripeSession', 'skip', { reason: 'blocked after error', prepareKey })
       return
     }
 
+    checkoutDbg.schedule('prepareStripeSession', 400, { prepareKey })
     const timer = setTimeout(() => {
       void (async () => {
         checkoutPrepareKeyRef.current = prepareKey
+        checkoutDbg.fn('prepareStripeSession', 'enter', { prepareKey })
         try {
           if (!checkoutStore.order) await startCheckout({ silent: true })
           if (!checkoutStore.payment) await createPaymentSession({ silent: true })
           checkoutPrepareBlockedRef.current = false
-        } catch {
+          checkoutDbg.fn('prepareStripeSession', 'exit', {
+            orderId: checkoutStore.order?.orderId,
+            hasClientSecret: Boolean(checkoutStore.payment?.clientSecret),
+          })
+        } catch (e) {
           checkoutPrepareBlockedRef.current = true
+          checkoutDbg.fn('prepareStripeSession', 'error', {
+            message: e instanceof Error ? e.message : String(e),
+          })
         }
       })()
     }, 400)
 
-    return () => clearTimeout(timer)
+    return () => {
+      checkoutDbg.fn('prepareStripeSession', 'skip', { reason: 'effect cleanup (deps changed)' })
+      clearTimeout(timer)
+    }
   }, [
     step,
     checkout.draft.email,
