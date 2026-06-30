@@ -11,3 +11,13 @@
 **Impatto misurabile:** per un carrello con N righe uniche → da ~2N chiamate Arfly a ~N (stima −50% round-trip catalogo su GET/reprice).
 
 **Test:** `cd server && npm run build && npm run test` — OK.
+
+### Feature 2 — BE: Merchant feed parallel build + persistence
+
+**Prima:** batch parallelo a 24 slug; cache solo in memoria (cold start = rebuild O(n) al primo hit).
+
+**Dopo:** batch limitato a 8 slug; persistenza su disco `.cache/seo/*.json` + `hydrateSeoCacheFromDisk()` all'avvio.
+
+**Impatto:** cold start serve feed da disco se presente; build più graduale sotto carico Arfly.
+
+**Test:** server build + 131 test — OK.

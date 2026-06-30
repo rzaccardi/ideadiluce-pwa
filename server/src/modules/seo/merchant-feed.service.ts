@@ -52,7 +52,7 @@ function feedItemXml(product: ProductDetailDTO, siteBase: string, locale: HubLoc
   return lines.join('\n')
 }
 
-const MERCHANT_FEED_BATCH_SIZE = 24
+const MERCHANT_FEED_BATCH_SIZE = 8
 
 export async function buildMerchantFeedXml(): Promise<string> {
   const siteBase = env.PUBLIC_SITE_URL

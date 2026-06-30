@@ -1,3 +1,5 @@
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import path from 'node:path'
 import { logger } from '../../lib/logger.js'
 import { buildLlmsTxt } from './llms.service.js'
 import { buildMerchantFeedXml } from './merchant-feed.service.js'
@@ -9,10 +11,49 @@ type CacheEntry = {
   itemCount: number | null
 }
 
+type CacheKey = 'sitemap' | 'merchantFeed' | 'llms'
+
+const DISK_CACHE_DIR = path.join(process.cwd(), '.cache', 'seo')
+
 const cache = {
   sitemap: null as CacheEntry | null,
   merchantFeed: null as CacheEntry | null,
   llms: null as CacheEntry | null,
+}
+
+function diskCachePath(key: CacheKey) {
+  return path.join(DISK_CACHE_DIR, `${key}.json`)
+}
+
+async function persistDiskCache(key: CacheKey, entry: CacheEntry) {
+  try {
+    await mkdir(DISK_CACHE_DIR, { recursive: true })
+    await writeFile(diskCachePath(key), JSON.stringify(entry), 'utf8')
+  } catch (err) {
+    logger.warn('seo.disk_cache_write_failed', { key, err: String(err) })
+  }
+}
+
+async function readDiskCache(key: CacheKey): Promise<CacheEntry | null> {
+  try {
+    const raw = await readFile(diskCachePath(key), 'utf8')
+    const parsed = JSON.parse(raw) as CacheEntry
+    if (typeof parsed.body !== 'string' || typeof parsed.builtAt !== 'string') return null
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+/** Ripristina cache SEO da disco per evitare rebuild O(n) al cold start. */
+export async function hydrateSeoCacheFromDisk() {
+  const keys: CacheKey[] = ['sitemap', 'merchantFeed', 'llms']
+  await Promise.all(
+    keys.map(async (key) => {
+      const entry = await readDiskCache(key)
+      if (entry) cache[key] = entry
+    }),
+  )
 }
 
 let refreshRunning = false
@@ -78,6 +119,7 @@ async function buildAndStoreSitemap(): Promise<CacheEntry> {
   const body = await buildProductSitemapXml()
   const builtAt = new Date().toISOString()
   cache.sitemap = { body, builtAt, itemCount: countSitemapUrls(body) }
+  void persistDiskCache('sitemap', cache.sitemap)
   return cache.sitemap
 }
 
@@ -85,6 +127,7 @@ async function buildAndStoreMerchantFeed(): Promise<CacheEntry> {
   const body = await buildMerchantFeedXml()
   const builtAt = new Date().toISOString()
   cache.merchantFeed = { body, builtAt, itemCount: countMerchantItems(body) }
+  void persistDiskCache('merchantFeed', cache.merchantFeed)
   return cache.merchantFeed
 }
 
@@ -92,6 +135,7 @@ async function buildAndStoreLlms(): Promise<CacheEntry> {
   const body = await buildLlmsTxt()
   const builtAt = new Date().toISOString()
   cache.llms = { body, builtAt, itemCount: null }
+  void persistDiskCache('llms', cache.llms)
   return cache.llms
 }
 

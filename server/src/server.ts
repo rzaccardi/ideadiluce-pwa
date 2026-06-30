@@ -12,6 +12,7 @@ import {
   startSyncRetryWorkerScheduler,
 } from './jobs/abandonedCart.scheduler.js'
 import { startSeoCacheScheduler } from './jobs/seoCache.scheduler.js'
+import { hydrateSeoCacheFromDisk } from './modules/seo/seo-cache.service.js'
 import { startSearchHintsOdooScheduler } from './jobs/searchHintsOdoo.scheduler.js'
 
 const app = createApp()
@@ -34,6 +35,10 @@ startOdooSyncRetryScheduler()
 startPaidSyncAlertScheduler()
 startAbandonedCartScheduler()
 startSyncRetryWorkerScheduler()
+void hydrateSeoCacheFromDisk().catch((e) => {
+  logger.warn('seo.disk_cache_hydrate_failed', { err: String(e) })
+})
+
 startSeoCacheScheduler()
 startSearchHintsOdooScheduler()
 
