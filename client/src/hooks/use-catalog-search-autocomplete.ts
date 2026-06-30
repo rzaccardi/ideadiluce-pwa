@@ -104,7 +104,7 @@ export function useCatalogSearchAutocomplete({
 
   useEffect(() => {
     if (!enableAutocomplete) return
-    void fetchCatalogBootstrap({ locale })
+    void fetchCatalogBootstrap({ locale, skipIfFresh: true })
   }, [enableAutocomplete, locale])
 
   useEffect(() => {

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { getLegacySeoPage } from '@/lib/legacy-seo-pages'
 import { buildCategoryLandingMetadata } from '@/lib/seo/landing-metadata'
-import { ProductCategoryLandingPage } from '@/views/ProductCategoryLandingPage'
+import { CategoryLandingRoutePage } from '@/app/_shared/category-landing-route'
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -20,6 +20,6 @@ export async function generateIlluminazioneArredoMetadata({
   })
 }
 
-export function IlluminazioneArredoRoutePage() {
-  return <ProductCategoryLandingPage pageKey="design" />
+export async function IlluminazioneArredoRoutePage() {
+  return <CategoryLandingRoutePage pageKey="design" />
 }

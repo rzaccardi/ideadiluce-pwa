@@ -129,7 +129,7 @@ export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palett
 
   useEffect(() => {
     if (!open) return
-    void fetchCatalogBootstrap({ locale })
+    void fetchCatalogBootstrap({ locale, skipIfFresh: true })
     setRecentVersion((value) => value + 1)
   }, [locale, open])
 

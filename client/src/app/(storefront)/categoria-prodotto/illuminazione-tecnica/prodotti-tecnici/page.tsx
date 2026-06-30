@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { buildCategoryLandingMetadata } from '@/lib/seo/landing-metadata'
-import { ProductCategoryLandingPage } from '@/views/ProductCategoryLandingPage'
+import { CategoryLandingRoutePage } from '@/app/_shared/category-landing-route'
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -18,5 +18,5 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 }
 
 export default function Page() {
-  return <ProductCategoryLandingPage pageKey="technical-products" />
+  return <CategoryLandingRoutePage pageKey="technical-products" />
 }

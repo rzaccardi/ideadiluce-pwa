@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo } from 'react'
 import { useQueryParams } from '@/lib/navigation'
 import { useLocale } from '@/context/locale-context'
 import { useLocalePath } from '@/hooks/use-locale-path'
@@ -12,7 +12,9 @@ import {
   fetchNextProductsPage,
   fetchProducts,
   reapplyCatalogClientFilters,
+  seedCatalogBootstrap,
 } from '@/features/catalog'
+import type { CatalogBootstrapServerData } from '@/lib/server-catalog'
 import { getCategoryLandingContent } from '@/lib/category-landing.defaults'
 import {
   buildCategoryLandingActiveFilters,
@@ -35,9 +37,10 @@ import type { CategoryLandingKey } from '@/types/category-landing'
 
 type Props = {
   pageKey: CategoryLandingKey
+  initialBootstrap?: CatalogBootstrapServerData
 }
 
-export function ProductCategoryLandingPage({ pageKey }: Props) {
+export function ProductCategoryLandingPage({ pageKey, initialBootstrap }: Props) {
   const { locale } = useLocale()
   const lp = useLocalePath()
   const [params, setParams] = useQueryParams()
@@ -92,8 +95,13 @@ export function ProductCategoryLandingPage({ pageKey }: Props) {
     void fetchNextProductsPage()
   }, [])
 
+  useLayoutEffect(() => {
+    if (!initialBootstrap) return
+    seedCatalogBootstrap(initialBootstrap, locale)
+  }, [initialBootstrap, locale])
+
   useEffect(() => {
-    void fetchCatalogBootstrap({ locale })
+    void fetchCatalogBootstrap({ locale, skipIfFresh: true })
   }, [locale])
 
   useEffect(() => {

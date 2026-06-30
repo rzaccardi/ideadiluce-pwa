@@ -37,3 +37,9 @@
 **Dopo:** `fetchCatalogBootstrapServer` in `catalog-route.tsx` + `seedCatalogBootstrap` con `skipIfFresh` sul client.
 
 **Test:** client build + 46 test — OK.
+
+### Feature 5 — FE: waterfall catalogo/landing residui
+
+**Dopo:** bootstrap SSR anche su landing categoria (arredo/tecnica); `skipIfFresh` su search palette e autocomplete.
+
+**Test:** client build + 46 test — OK.
