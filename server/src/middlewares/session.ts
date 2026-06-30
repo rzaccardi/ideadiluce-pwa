@@ -4,6 +4,7 @@ import { env } from '../config/env.js'
 import { hashSessionToken, generateSessionToken } from '../lib/token-hash.js'
 import { setSessionCookie } from '../lib/cookies.js'
 import { AppError } from '../types/errors.js'
+import { isPrivateApiPath } from '../lib/private-api-paths.js'
 
 const SESSION_LOOKUP_TTL_MS = 5_000
 type CachedSession = {
@@ -111,6 +112,27 @@ export function loadOrCreateSession(req: Request, res: Response, next: NextFunct
     writeSessionCache(hashSessionToken(token), record, token)
     next()
   })().catch(next)
+}
+
+/**
+ * API v1: evita INSERT sessione guest su letture pubbliche senza cookie.
+ * Con cookie carica la sessione (listino B2B); su path privati crea sessione se assente.
+ */
+export function loadV1Session(req: Request, res: Response, next: NextFunction) {
+  const path = req.originalUrl || req.url || ''
+  const hasCookie = Boolean(req.cookies?.[env.SESSION_COOKIE_NAME])
+
+  if (!hasCookie && !isPrivateApiPath(path)) {
+    next()
+    return
+  }
+
+  if (hasCookie && !isPrivateApiPath(path)) {
+    loadSessionIfPresent(req, res, next)
+    return
+  }
+
+  loadOrCreateSession(req, res, next)
 }
 
 export function requireLogin(req: Request, _res: Response, next: NextFunction) {

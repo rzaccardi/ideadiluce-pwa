@@ -21,3 +21,11 @@
 **Impatto:** cold start serve feed da disco se presente; build più graduale sotto carico Arfly.
 
 **Test:** server build + 131 test — OK.
+
+### Feature 3 — BE: Session middleware skip DB su route pubbliche
+
+**Prima:** ogni richiesta `/api/v1/*` senza cookie creava sessione guest in DB.
+
+**Dopo:** `loadV1Session` — senza cookie su path non-privati (`catalog`, `site`, `seo`, …) nessun hit DB; con cookie carica sessione per listino B2B; path privati (`cart`, `checkout`, …) invariati.
+
+**Test:** 133 test — OK.

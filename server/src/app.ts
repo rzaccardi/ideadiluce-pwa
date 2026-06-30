@@ -8,7 +8,7 @@ import { correlationMiddleware } from './lib/correlation.js'
 import { healthRouter } from './routes/health.js'
 import { v1Router } from './routes/v1/index.js'
 import { errorHandler } from './middlewares/error-handler.js'
-import { loadOrCreateSession, loadSessionIfPresent } from './middlewares/session.js'
+import { loadSessionIfPresent, loadV1Session } from './middlewares/session.js'
 import { paymentsController } from './controllers/payments.controller.js'
 import {
   getCachedLlmsTxt,
@@ -87,7 +87,7 @@ export function createApp() {
       sendSeoPublicAsset(res, 'application/xml; charset=utf-8', body, builtAt)
     }),
   )
-  app.use('/api/v1', loadOrCreateSession, v1Router)
+  app.use('/api/v1', loadV1Session, v1Router)
   app.use('/api/v2', loadSessionIfPresent, arflyProxyRouter)
 
   app.use(errorHandler)
