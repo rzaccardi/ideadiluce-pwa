@@ -1,10 +1,10 @@
-import { useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useCallback, useEffect, useMemo } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useSnapshot } from 'valtio/react'
 import { BookOpenIcon } from 'lucide-react'
 import { fetchGuidesList, guidesStore, setGuidePublished } from '@/features/guides'
 import { RoutePageHeader } from '@/components/route-page-header'
-import { ClickableTableRow, RouteSkeleton } from '@/components/shared'
+import { ClickableTableRow, InfiniteScrollSentinel, RouteSkeleton } from '@/components/shared'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -19,13 +19,42 @@ import {
 } from '@/components/ui/table'
 import { SITE_LOCALES } from '@/features/site/site.store'
 import { toast } from 'sonner'
+import { useInfiniteScrollSentinel } from '@/hooks/use-infinite-scroll-sentinel'
+
+const PAGE_SIZE = 25
+
+function buildListQuery(searchParams: URLSearchParams, page: number) {
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(PAGE_SIZE),
+  })
+  return params.toString()
+}
 
 export function GuidesListPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const store = useSnapshot(guidesStore)
+  const page = Number(searchParams.get('page') ?? '1')
+  const listQuery = useMemo(() => buildListQuery(searchParams, page), [searchParams, page])
+  const hasMore =
+    store.list != null && store.list.hasNextPage && store.items.length > 0
 
   useEffect(() => {
-    void fetchGuidesList()
-  }, [])
+    void fetchGuidesList(listQuery, { append: page > 1 })
+  }, [listQuery, page])
+
+  const loadMore = useCallback(() => {
+    if (store.listLoading || store.listLoadingMore || !hasMore || !store.list) return
+    const p = new URLSearchParams(searchParams)
+    p.set('page', String(store.list.page + 1))
+    setSearchParams(p, { replace: true })
+  }, [hasMore, store.list, store.listLoading, store.listLoadingMore, searchParams, setSearchParams])
+
+  const sentinelRef = useInfiniteScrollSentinel({
+    hasMore,
+    loading: store.listLoadingMore,
+    onLoadMore: loadMore,
+  })
 
   async function onTogglePublished(slug: string, published: boolean) {
     try {
@@ -64,7 +93,7 @@ export function GuidesListPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {store.isLoading && store.items.length === 0 ? (
+          {store.listLoading && store.items.length === 0 ? (
             <RouteSkeleton />
           ) : store.items.length === 0 ? (
             <p className="text-sm text-muted-foreground">
@@ -172,6 +201,7 @@ export function GuidesListPage() {
                   ))}
                 </TableBody>
               </Table>
+              <InfiniteScrollSentinel ref={sentinelRef} hasMore={hasMore} loading={store.listLoadingMore} />
             </div>
           )}
         </CardContent>

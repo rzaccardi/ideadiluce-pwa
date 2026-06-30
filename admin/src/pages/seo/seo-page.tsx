@@ -1,17 +1,19 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useSnapshot } from 'valtio/react'
 import { ExternalLinkIcon, RefreshCwIcon, SearchIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   deleteSeoRedirect,
-  fetchSeoStatus,
+  fetchSeoAdminData,
+  fetchSeoRedirectsList,
   refreshSeoCaches,
   seoStore,
   upsertSeoRedirect,
 } from '@/features/seo'
 import { RoutePageHeader } from '@/components/route-page-header'
-import { RouteSkeleton } from '@/components/shared'
+import { InfiniteScrollSentinel, RouteSkeleton } from '@/components/shared'
+import { useInfiniteScrollSentinel } from '@/hooks/use-infinite-scroll-sentinel'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -31,15 +33,61 @@ function formatWhen(iso: string | undefined | null) {
   return new Date(iso).toLocaleString('it-IT')
 }
 
+const REDIRECTS_PAGE_SIZE = 50
+
+function buildRedirectsQuery(searchParams: URLSearchParams, page: number) {
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(REDIRECTS_PAGE_SIZE),
+  })
+  return params.toString()
+}
+
 export function SeoPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const store = useSnapshot(seoStore)
   const [fromPath, setFromPath] = useState('')
   const [toPath, setToPath] = useState('')
   const [reason, setReason] = useState('')
+  const page = Number(searchParams.get('page') ?? '1')
+  const redirectsQuery = useMemo(() => buildRedirectsQuery(searchParams, page), [searchParams, page])
+  const hasMoreRedirects =
+    store.redirectsList != null && store.redirectsList.hasNextPage && store.redirects.length > 0
 
   useEffect(() => {
-    void fetchSeoStatus()
-  }, [])
+    if (page === 1) {
+      void fetchSeoAdminData('page=1&pageSize=50')
+      return
+    }
+    void fetchSeoRedirectsList(redirectsQuery, { append: true })
+  }, [redirectsQuery, page])
+
+  const loadMoreRedirects = useCallback(() => {
+    if (
+      store.redirectsLoading ||
+      store.redirectsLoadingMore ||
+      !hasMoreRedirects ||
+      !store.redirectsList
+    ) {
+      return
+    }
+    const p = new URLSearchParams(searchParams)
+    p.set('page', String(store.redirectsList.page + 1))
+    setSearchParams(p, { replace: true })
+  }, [
+    hasMoreRedirects,
+    store.redirectsList,
+    store.redirectsLoading,
+    store.redirectsLoadingMore,
+    searchParams,
+    setSearchParams,
+  ])
+
+  const redirectsSentinelRef = useInfiniteScrollSentinel({
+    hasMore: hasMoreRedirects,
+    loading: store.redirectsLoadingMore,
+    onLoadMore: loadMoreRedirects,
+  })
 
   async function onRefresh() {
     try {
@@ -230,6 +278,11 @@ export function SeoPage() {
                   ))}
                 </TableBody>
               </Table>
+              <InfiniteScrollSentinel
+                ref={redirectsSentinelRef}
+                hasMore={hasMoreRedirects}
+                loading={store.redirectsLoadingMore}
+              />
             </div>
           )}
         </CardContent>

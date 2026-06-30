@@ -64,6 +64,43 @@ async function isGuideVisibleForLocale(guidePublished: boolean, slug: string, lo
   return !row && locale === 'IT'
 }
 
+async function mapGuideToAdminListItem(guide: {
+  slug: string
+  category: string
+  readingMeta: string
+  sortOrder: number
+  indexed: boolean
+  featured: boolean
+  published: boolean
+  updatedAt: Date
+}) {
+  const pageKey = guidePageKey(guide.slug)
+  const localeRows = await siteRepository.listByPageKey(pageKey)
+  const byLocale = new Map(localeRows.map((row) => [row.locale, row]))
+  const targetLocales = SITE_LOCALES.filter((locale) => locale !== 'IT')
+  const locales = Object.fromEntries(
+    SITE_LOCALES.map((locale) => [locale, localeStatus(locale, byLocale.get(locale))]),
+  )
+  const missingLocales = targetLocales.filter((locale) => locales[locale]?.status === 'missing')
+  const title = (await readGuideTitle(guide.slug, 'IT')) ?? guide.slug
+
+  return {
+    slug: guide.slug,
+    pageKey,
+    title,
+    category: guide.category,
+    readingMeta: guide.readingMeta,
+    sortOrder: guide.sortOrder,
+    indexed: guide.indexed,
+    featured: guide.featured,
+    published: guide.published,
+    missingLocales,
+    missingCount: missingLocales.length,
+    locales,
+    updatedAt: guide.updatedAt.toISOString(),
+  }
+}
+
 export const siteGuideService = {
   async seedSiteGuides() {
     for (const guide of DEFAULT_SITE_GUIDES) {
@@ -87,36 +124,28 @@ export const siteGuideService = {
   async listAdminGuides() {
     await this.ensureSiteGuidesSeeded()
     const guides = await siteGuideRepository.listAll()
-    const targetLocales = SITE_LOCALES.filter((locale) => locale !== 'IT')
+    return Promise.all(guides.map((guide) => mapGuideToAdminListItem(guide)))
+  },
 
-    return Promise.all(
-      guides.map(async (guide) => {
-        const pageKey = guidePageKey(guide.slug)
-        const localeRows = await siteRepository.listByPageKey(pageKey)
-        const byLocale = new Map(localeRows.map((row) => [row.locale, row]))
-        const locales = Object.fromEntries(
-          SITE_LOCALES.map((locale) => [locale, localeStatus(locale, byLocale.get(locale))]),
-        )
-        const missingLocales = targetLocales.filter((locale) => locales[locale]?.status === 'missing')
-        const title = (await readGuideTitle(guide.slug, 'IT')) ?? guide.slug
-
-        return {
-          slug: guide.slug,
-          pageKey,
-          title,
-          category: guide.category,
-          readingMeta: guide.readingMeta,
-          sortOrder: guide.sortOrder,
-          indexed: guide.indexed,
-          featured: guide.featured,
-          published: guide.published,
-          missingLocales,
-          missingCount: missingLocales.length,
-          locales,
-          updatedAt: guide.updatedAt.toISOString(),
-        }
-      }),
-    )
+  async listAdminGuidesPage(page = 1, pageSize = 25) {
+    await this.ensureSiteGuidesSeeded()
+    const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1
+    const safeSize = Number.isFinite(pageSize) && pageSize > 0 ? Math.min(Math.floor(pageSize), 100) : 25
+    const [guides, total] = await Promise.all([
+      siteGuideRepository.listPaginated(safePage, safeSize),
+      siteGuideRepository.count(),
+    ])
+    const items = await Promise.all(guides.map((guide) => mapGuideToAdminListItem(guide)))
+    const totalPages = Math.max(1, Math.ceil(total / safeSize))
+    return {
+      items,
+      page: safePage,
+      pageSize: safeSize,
+      total,
+      totalPages,
+      hasNextPage: safePage < totalPages,
+      hasPreviousPage: safePage > 1,
+    }
   },
 
   async getAdminGuide(slug: string) {

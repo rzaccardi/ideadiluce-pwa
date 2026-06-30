@@ -5,6 +5,19 @@ export const siteGuideRepository = {
     return prisma.siteGuide.findMany({ orderBy: [{ sortOrder: 'asc' }, { slug: 'asc' }] })
   },
 
+  listPaginated(page: number, pageSize: number) {
+    const skip = Math.max(0, (page - 1) * pageSize)
+    return prisma.siteGuide.findMany({
+      orderBy: [{ sortOrder: 'asc' }, { slug: 'asc' }],
+      skip,
+      take: pageSize,
+    })
+  },
+
+  count() {
+    return prisma.siteGuide.count()
+  },
+
   findBySlug(slug: string) {
     return prisma.siteGuide.findUnique({ where: { slug } })
   },

@@ -11,6 +11,7 @@ import { getSeoCacheStatus, refreshSeoCaches } from './seo-cache.service.js'
 import {
   deleteSeoRedirect,
   listSeoRedirects,
+  listSeoRedirectsPage,
   upsertSeoRedirect,
 } from './seo-redirect.service.js'
 
@@ -53,7 +54,13 @@ seoAdminRouter.get(
 
 seoAdminRouter.get(
   '/redirects',
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (req, res) => {
+    const pageRaw = typeof req.query.page === 'string' ? Number(req.query.page) : undefined
+    const pageSizeRaw = typeof req.query.pageSize === 'string' ? Number(req.query.pageSize) : undefined
+    if (pageRaw != null || pageSizeRaw != null) {
+      res.json(ok(await listSeoRedirectsPage(pageRaw ?? 1, pageSizeRaw ?? 50)))
+      return
+    }
     const items = await listSeoRedirects()
     res.json(ok({ items }))
   }),

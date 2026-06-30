@@ -1,5 +1,7 @@
 export {
   deleteSeoRedirect,
+  fetchSeoAdminData,
+  fetchSeoRedirectsList,
   fetchSeoStatus,
   refreshSeoCaches,
   seoStore,

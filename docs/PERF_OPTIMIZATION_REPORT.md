@@ -55,3 +55,9 @@
 ### Feature 7 — Cleanup: FloatingCartMonitor rimosso
 
 Componente non montato (duplicava polling di `useCartSync` in `HeaderMiniCart`). File eliminato.
+
+### Feature 8 — Admin: paginazione guide e redirect SEO
+
+**Dopo:** `GET /admin/guides?page&pageSize` e `GET /admin/seo/redirects?page&pageSize` con infinite scroll in BO.
+
+**Test:** server 133 test + admin build — OK.

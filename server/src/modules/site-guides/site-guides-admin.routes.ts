@@ -20,7 +20,13 @@ siteGuidesAdminRouter.use(loadAdminSession, requireAdminAuth)
 
 siteGuidesAdminRouter.get(
   '/',
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (req, res) => {
+    const pageRaw = typeof req.query.page === 'string' ? Number(req.query.page) : undefined
+    const pageSizeRaw = typeof req.query.pageSize === 'string' ? Number(req.query.pageSize) : undefined
+    if (pageRaw != null || pageSizeRaw != null) {
+      res.json(ok(await siteGuideService.listAdminGuidesPage(pageRaw ?? 1, pageSizeRaw ?? 25)))
+      return
+    }
     res.json(ok(await siteGuideService.listAdminGuides()))
   }),
 )

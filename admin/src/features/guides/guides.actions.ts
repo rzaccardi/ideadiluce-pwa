@@ -11,7 +11,7 @@ import {
   updateLocaleDraftContent,
   type SiteLocale,
 } from '@/features/site'
-import { guidesStore } from './guides.store'
+import { guidesStore, type GuidesListPage } from './guides.store'
 import type { GuideDetail, GuideListItem } from '@/types/guides'
 
 function errMessage(e: unknown) {
@@ -22,21 +22,32 @@ function guidePageKey(slug: string) {
   return `guide-${slug}`
 }
 
-async function loadGuidesList() {
-  guidesStore.isLoading = true
-  guidesStore.error = null
+type GuidesListResponse = GuidesListPage & { items: GuideListItem[] }
+
+async function loadGuidesList(query: string, options?: { append?: boolean }) {
+  if (options?.append) {
+    guidesStore.listLoadingMore = true
+  } else {
+    guidesStore.listLoading = true
+    guidesStore.error = null
+  }
   try {
-    guidesStore.items = await adminApi<GuideListItem[]>('/admin/guides')
+    const data = await adminApi<GuidesListResponse>(`/admin/guides?${query}`)
+    guidesStore.list = data
+    guidesStore.items = options?.append ? [...guidesStore.items, ...data.items] : data.items
   } catch (e) {
     guidesStore.error = errMessage(e)
-    guidesStore.items = []
+    if (!options?.append) guidesStore.items = []
   } finally {
-    guidesStore.isLoading = false
+    guidesStore.listLoading = false
+    guidesStore.listLoadingMore = false
   }
 }
 
-export function fetchGuidesList() {
-  return dedupeAsync('admin:guides:list', loadGuidesList)
+export function fetchGuidesList(query = 'page=1&pageSize=25', options?: { append?: boolean }) {
+  return dedupeAsync(`admin:guides:list:${query}:${options?.append ? 'a' : 'r'}`, () =>
+    loadGuidesList(query, options),
+  )
 }
 
 export async function fetchGuideDetail(slug: string) {
@@ -78,7 +89,7 @@ export async function updateGuideMeta(
     if (options?.refreshDetail !== false && guidesStore.current?.slug === slug) {
       await fetchGuideDetail(slug)
     }
-    await fetchGuidesList()
+    await fetchGuidesList('page=1&pageSize=25')
   } catch (e) {
     guidesStore.error = errMessage(e)
     throw e
@@ -110,7 +121,7 @@ export async function saveGuideLocalePublished(slug: string, locale: SiteLocale,
     if (guidesStore.current?.slug === slug) {
       await fetchGuideDetail(slug)
     }
-    await fetchGuidesList()
+    await fetchGuidesList('page=1&pageSize=25')
   } catch (e) {
     guidesStore.error = errMessage(e)
     throw e
@@ -146,7 +157,7 @@ export async function publishGuide(slug: string) {
     if (guidesStore.current?.slug === slug) {
       await fetchGuideDetail(slug)
     }
-    await fetchGuidesList()
+    await fetchGuidesList('page=1&pageSize=25')
   } catch (e) {
     guidesStore.error = errMessage(e)
     throw e
@@ -180,7 +191,7 @@ export async function saveGuideContent(
       },
     )
     await fetchGuideDetail(slug)
-    await fetchGuidesList()
+    await fetchGuidesList('page=1&pageSize=25')
   } catch (e) {
     guidesStore.error = errMessage(e)
     throw e
@@ -195,7 +206,7 @@ export async function saveGuideAllDirtyLocales(slug: string) {
   try {
     await saveSitePageAllDirtyLocales(guidePageKey(slug))
     await fetchGuideDetail(slug)
-    await fetchGuidesList()
+    await fetchGuidesList('page=1&pageSize=25')
   } catch (e) {
     guidesStore.error = errMessage(e)
     throw e
@@ -221,7 +232,7 @@ export async function translateGuide(slug: string, onlyMissingLocales = false) {
       },
     )
     await fetchGuideDetail(slug)
-    await fetchGuidesList()
+    await fetchGuidesList('page=1&pageSize=25')
     return result
   } catch (e) {
     guidesStore.error = errMessage(e)

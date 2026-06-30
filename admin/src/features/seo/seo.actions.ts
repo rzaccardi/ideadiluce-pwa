@@ -26,21 +26,61 @@ export type SeoStatus = {
 export const seoStore = proxy({
   status: null as SeoStatus | null,
   redirects: [] as SeoRedirect[],
+  redirectsList: null as {
+    page: number
+    pageSize: number
+    total: number
+    totalPages: number
+    hasNextPage: boolean
+  } | null,
+  redirectsLoading: false,
+  redirectsLoadingMore: false,
   isLoading: false,
   isRefreshing: false,
   error: null as string | null,
 })
 
+type RedirectsListResponse = {
+  items: SeoRedirect[]
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
+  hasNextPage: boolean
+  hasPreviousPage: boolean
+}
+
+export async function fetchSeoRedirectsList(query: string, options?: { append?: boolean }) {
+  if (options?.append) seoStore.redirectsLoadingMore = true
+  else seoStore.redirectsLoading = true
+  try {
+    const data = await adminApi<RedirectsListResponse>(`/admin/seo/redirects?${query}`)
+    seoStore.redirectsList = data
+    seoStore.redirects = options?.append ? [...seoStore.redirects, ...data.items] : data.items
+  } catch (e) {
+    seoStore.error = e instanceof Error ? e.message : 'Errore caricamento redirect'
+    if (!options?.append) seoStore.redirects = []
+  } finally {
+    seoStore.redirectsLoading = false
+    seoStore.redirectsLoadingMore = false
+  }
+}
+
 export async function fetchSeoStatus() {
+  seoStore.error = null
+  seoStore.status = await adminApi<SeoStatus>('/admin/seo/status')
+}
+
+export async function fetchSeoAdminData(redirectsQuery = 'page=1&pageSize=50') {
   seoStore.isLoading = true
   seoStore.error = null
   try {
-    const [status, redirects] = await Promise.all([
-      adminApi<SeoStatus>('/admin/seo/status'),
-      adminApi<{ items: SeoRedirect[] }>('/admin/seo/redirects'),
+    await Promise.all([
+      adminApi<SeoStatus>('/admin/seo/status').then((status) => {
+        seoStore.status = status
+      }),
+      fetchSeoRedirectsList(redirectsQuery),
     ])
-    seoStore.status = status
-    seoStore.redirects = redirects.items
   } catch (e) {
     seoStore.error = e instanceof Error ? e.message : 'Errore caricamento SEO'
   } finally {
@@ -53,7 +93,7 @@ export async function refreshSeoCaches() {
   seoStore.error = null
   try {
     await adminApi('/admin/seo/refresh', { method: 'POST' })
-    await fetchSeoStatus()
+    await fetchSeoAdminData()
   } finally {
     seoStore.isRefreshing = false
   }
@@ -69,11 +109,11 @@ export async function upsertSeoRedirect(input: {
     method: 'POST',
     body: JSON.stringify(input),
   })
-  await fetchSeoStatus()
+  await fetchSeoRedirectsList('page=1&pageSize=50')
 }
 
 export async function deleteSeoRedirect(fromPath: string) {
   const q = new URLSearchParams({ path: fromPath })
   await adminApi(`/admin/seo/redirects?${q}`, { method: 'DELETE' })
-  await fetchSeoStatus()
+  await fetchSeoRedirectsList('page=1&pageSize=50')
 }
