@@ -253,14 +253,20 @@ export async function buildCartAvailabilityLookup(
   ctx: OdooCallContext,
   lines: Array<{ productRef: string; variantRef: string | null; quantity: number }>,
   productResolver: (productRef: string) => Promise<ProductDetailDTO | null>,
+  preResolvedProducts?: Map<string, ProductDetailDTO | null>,
 ): Promise<Map<string, CartLineAvailabilityDTO & { purchasable: boolean }>> {
   const lookup = new Map<string, CartLineAvailabilityDTO & { purchasable: boolean }>()
 
-  const uniqueRefs = [...new Set(lines.map((line) => line.productRef))]
-  const resolvedProducts = await Promise.all(uniqueRefs.map((ref) => productResolver(ref)))
-  const productByRef = new Map(
-    uniqueRefs.map((ref, index) => [ref, resolvedProducts[index] ?? null]),
-  )
+  let productByRef: Map<string, ProductDetailDTO | null>
+  if (preResolvedProducts) {
+    productByRef = preResolvedProducts
+  } else {
+    const uniqueRefs = [...new Set(lines.map((line) => line.productRef))]
+    const resolvedProducts = await Promise.all(uniqueRefs.map((ref) => productResolver(ref)))
+    productByRef = new Map(
+      uniqueRefs.map((ref, index) => [ref, resolvedProducts[index] ?? null]),
+    )
+  }
 
   const lineKeys = lines.map((line) => ({
     line,

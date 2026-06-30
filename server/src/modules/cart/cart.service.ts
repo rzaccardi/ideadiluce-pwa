@@ -2,6 +2,7 @@ import { prisma } from '../../lib/prisma.js'
 import type { Cart, CartItem } from '@prisma/client'
 import { AppError } from '../../types/errors.js'
 import type { Request } from 'express'
+import type { HubLocale } from '../../lib/hub-locale.js'
 import { resolveCatalogProduct, resolveCatalogProductEnriched } from '../catalog/catalogResolver.service.js'
 import { formatOdooTemplateRef, formatOdooVariantRef, parseOdooTemplateId, parseOdooVariantId } from '../catalog/odooRef.js'
 import { fetchArflyProductList, isArflyConfigured } from '../../adapters/arfly/arflyClient.js'
@@ -51,27 +52,67 @@ type CartCatalogEntry = {
   imageUrl: string | null
 }
 
-async function catalogMapForCart(
+async function resolveProductMapForCartLines(
+  ctx: OdooCallContext,
   items: { productRef: string }[],
-  correlationId: string,
-  seed: Map<string, CartCatalogEntry> = new Map(),
-): Promise<Map<string, CartCatalogEntry>> {
-  const map = new Map(seed)
-  const uniqueRefs = [...new Set(items.map((item) => item.productRef))].filter((ref) => !map.has(ref))
+  locale: HubLocale = 'IT',
+): Promise<Map<string, ProductDetailDTO | null>> {
+  const uniqueRefs = [...new Set(items.map((item) => item.productRef))]
   const resolved = await Promise.all(
-    uniqueRefs.map((productRef) => resolveCatalogProduct({ correlationId }, productRef)),
+    uniqueRefs.map((productRef) => resolveCatalogProduct(ctx, productRef, locale)),
   )
-  uniqueRefs.forEach((productRef, index) => {
-    const product = resolved[index]
-    if (!product) return
+  return new Map(uniqueRefs.map((productRef, index) => [productRef, resolved[index] ?? null]))
+}
+
+function catalogMapFromProducts(
+  productByRef: Map<string, ProductDetailDTO | null>,
+  seed: Map<string, CartCatalogEntry> = new Map(),
+): Map<string, CartCatalogEntry> {
+  const map = new Map(seed)
+  for (const [productRef, product] of productByRef) {
+    if (!product || map.has(productRef)) continue
     map.set(productRef, {
       priceCents: product.priceCents,
       slug: product.slug,
       name: product.name,
       imageUrl: product.imageUrl,
     })
-  })
+  }
   return map
+}
+
+async function catalogMapForCart(
+  items: { productRef: string }[],
+  correlationId: string,
+  seed: Map<string, CartCatalogEntry> = new Map(),
+): Promise<Map<string, CartCatalogEntry>> {
+  const uniqueRefs = [...new Set(items.map((item) => item.productRef))].filter((ref) => !seed.has(ref))
+  if (uniqueRefs.length === 0) return new Map(seed)
+  const productByRef = await resolveProductMapForCartLines(
+    { correlationId },
+    items.filter((item) => uniqueRefs.includes(item.productRef)),
+  )
+  return catalogMapFromProducts(productByRef, seed)
+}
+
+async function catalogAndAvailabilityForCart(
+  req: Request,
+  items: Array<{ productRef: string; variantRef: string | null; quantity: number }>,
+  catalogSeed: Map<string, CartCatalogEntry>,
+): Promise<{
+  catalog: Map<string, CartCatalogEntry>
+  availability: Map<string, CartLineAvailabilityDTO & { purchasable: boolean }>
+}> {
+  const ctx: OdooCallContext = { correlationId: req.correlationId, req }
+  const productByRef = await resolveProductMapForCartLines(ctx, items)
+  const catalog = catalogMapFromProducts(productByRef, catalogSeed)
+  const availability = await buildCartAvailabilityLookup(
+    ctx,
+    items,
+    async () => null,
+    productByRef,
+  )
+  return { catalog, availability }
 }
 
 function priceMapFromCatalog(catalog: Map<string, CartCatalogEntry>): Map<string, number> {
@@ -198,11 +239,13 @@ async function persistCartTotalsEstimate(
 async function availabilityMapForCart(
   req: Request,
   items: Array<{ productRef: string; variantRef: string | null; quantity: number }>,
+  productByRef?: Map<string, ProductDetailDTO | null>,
 ) {
   return buildCartAvailabilityLookup(
     { correlationId: req.correlationId, req },
     items,
     (productRef) => resolveCatalogProduct({ correlationId: req.correlationId, req }, productRef),
+    productByRef,
   )
 }
 
@@ -294,7 +337,13 @@ async function dtoFromCartId(
     full.items.length > 0 &&
     !canUseCachedCartPricing(full)
 
-  const catalogLookupPromise = catalogMapForCart(full.items, req.correlationId, catalogSeed)
+  const unifiedCatalogPromise = options?.fastMutation
+    ? null
+    : catalogAndAvailabilityForCart(req, full.items, catalogSeed)
+
+  const catalogLookupPromise = options?.fastMutation
+    ? catalogMapForCart(full.items, req.correlationId, catalogSeed)
+    : unifiedCatalogPromise!.then((r) => r.catalog)
   const availabilityLookupPromise = options?.fastMutation
     ? Promise.resolve(
         buildMutationAvailabilityLookup(
@@ -307,7 +356,7 @@ async function dtoFromCartId(
             : undefined,
         ),
       )
-    : availabilityMapForCart(req, full.items)
+    : unifiedCatalogPromise!.then((r) => r.availability)
   const repricePromise = shouldReprice
     ? syncCartPricing(req, full.id, pricing)
     : Promise.resolve(new Set<string>())
@@ -957,9 +1006,10 @@ export const cartService = {
       return { ok: true, insufficient: [] }
     }
 
-    const catalog = await catalogMapForCart(full.items, req.correlationId)
+    const productByRef = await resolveProductMapForCartLines(ctx, full.items)
+    const catalog = catalogMapFromProducts(productByRef)
     const display = displayMapFromCatalog(catalog)
-    const availabilityLookup = await availabilityMapForCart(req, full.items)
+    const availabilityLookup = await availabilityMapForCart(req, full.items, productByRef)
     return {
       ok: false,
       insufficient: stock.insufficient.map((line) => {
