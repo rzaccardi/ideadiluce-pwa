@@ -10,6 +10,8 @@ import { QuantityInput } from '@/components/QuantityInput'
 import { TextInput } from '@/components/TextInput'
 import { useI18n } from '@/hooks/use-i18n'
 import { ApiRequestError } from '@/types/api'
+import { ViewportPortal } from '@/components/ViewportPortal'
+import { layers } from '@/lib/layering'
 import { cn } from '@/utils/cn'
 
 type Props = {
@@ -52,6 +54,10 @@ export function ProductRestockNotify({
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [open, pending])
+
+  function closeModal() {
+    if (!pending) setOpen(false)
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -102,13 +108,14 @@ export function ProductRestockNotify({
         {ctaLabel ?? t('product.restock.notifyCta')}
       </Button>
 
-      {open ? (
+      <ViewportPortal open={open} lockScroll>
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          className={cn(
+            'fixed inset-0 flex h-[100dvh] w-screen items-center justify-center bg-black/40 p-4',
+            layers.dialog,
+          )}
           role="presentation"
-          onClick={() => {
-            if (!pending) setOpen(false)
-          }}
+          onClick={closeModal}
         >
           <form
             role="dialog"
@@ -147,12 +154,7 @@ export function ProductRestockNotify({
               }
             />
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setOpen(false)}
-                disabled={pending}
-              >
+              <Button type="button" variant="secondary" onClick={closeModal} disabled={pending}>
                 {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={pending || !email.trim()}>
@@ -161,7 +163,7 @@ export function ProductRestockNotify({
             </div>
           </form>
         </div>
-      ) : null}
+      </ViewportPortal>
     </>
   )
 }

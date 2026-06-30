@@ -21,6 +21,7 @@ import { getStripePublishableKey, getStripeClientConfig, decodeStripeClientSecre
 import { parseBankTransferInstructionsJson } from './bankTransferInstructions.js'
 import {
   isStripeCheckoutSessionOpen,
+  retrieveStripeCheckoutSession,
   type StripeLineItemInput,
 } from '../../adapters/payments/stripeCheckoutAdapter.js'
 import { shippingService } from '../shipping/shipping.service.js'
@@ -148,6 +149,13 @@ function jsonValue(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue
 }
 
+async function loadOrderWithLatestPayment(orderId: string) {
+  return prisma.pwaOrder.findFirst({
+    where: { id: orderId },
+    include: { payments: { orderBy: { createdAt: 'desc' }, take: 1 } },
+  })
+}
+
 async function assertOrderAccess(req: Request, orderId: string) {
   const s = assertSession(req)
   const order = await prisma.pwaOrder.findFirst({
@@ -159,6 +167,37 @@ async function assertOrderAccess(req: Request, orderId: string) {
   })
   if (!order) throw new AppError('ORDER_NOT_FOUND', 'Order not found', 'Ordine non trovato.', 404, false)
   return order
+}
+
+/** Dopo redirect Stripe la sessione cookie può non coincidere: prova session_id Stripe come prova d'accesso. */
+async function assertOrderAccessOrStripeSession(
+  req: Request,
+  orderId: string,
+  stripeSessionId?: string | null,
+) {
+  try {
+    return await assertOrderAccess(req, orderId)
+  } catch (e) {
+    if (!(e instanceof AppError && e.code === 'ORDER_NOT_FOUND')) throw e
+    if (!stripeSessionId?.trim()) throw e
+
+    const stripeSession = await retrieveStripeCheckoutSession(stripeSessionId.trim())
+    if (stripeSession.metadata?.pwa_order_id !== orderId) throw e
+
+    const order = await loadOrderWithLatestPayment(orderId)
+    if (!order) throw e
+
+    const sessionUserId = req.sessionRecord?.user?.id
+    if (sessionUserId && !order.userId) {
+      await prisma.pwaOrder.update({
+        where: { id: order.id },
+        data: { userId: sessionUserId },
+      })
+      order.userId = sessionUserId
+    }
+
+    return order
+  }
 }
 
 async function syncOrderToOdoo(ctx: OdooCallContext, order: PwaOrder) {
@@ -924,8 +963,12 @@ export const paymentsService = {
     return mapOrderStatus(order, latestPayment)
   },
 
-  async thankYou(req: Request, orderId: string): Promise<ThankYouOrderDTO> {
-    const order = await assertOrderAccess(req, orderId)
+  async thankYou(
+    req: Request,
+    orderId: string,
+    options?: { stripeSessionId?: string | null },
+  ): Promise<ThankYouOrderDTO> {
+    const order = await assertOrderAccessOrStripeSession(req, orderId, options?.stripeSessionId)
     const latestPayment = order.payments[0] ?? null
     const base = mapOrderStatus(order, latestPayment)
     const shippingAddress = parseShippingAddressJson(order.shippingAddressJson)

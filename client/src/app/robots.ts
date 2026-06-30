@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: '/',
+        allow: ['/', '/llms.txt'],
         disallow: [
           '/account/',
           '/checkout/',
@@ -26,5 +26,6 @@ export default function robots(): MetadataRoute.Robots {
       },
     ],
     sitemap: `${site}/sitemap.xml`,
+    host: site,
   }
 }

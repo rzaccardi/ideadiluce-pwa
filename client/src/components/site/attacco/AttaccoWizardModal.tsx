@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect } from 'react'
 import { Link } from '@/lib/navigation'
+import { ViewportPortal } from '@/components/ViewportPortal'
 import { ATTACCO_WIZARD_SOCKETS, type AttaccoSocketKey } from '@/lib/attacco.defaults'
 import { AttaccoSocketIcon, WizardSocketIcon } from './AttaccoIcons'
 import type { LocalePathFn } from '../sections/types'
@@ -61,21 +62,20 @@ export function AttaccoWizardModal({
   useEffect(() => {
     if (!open) return
     document.addEventListener('keydown', onKeyDown)
-    document.body.style.overflow = 'hidden'
     return () => {
       document.removeEventListener('keydown', onKeyDown)
-      document.body.style.overflow = ''
     }
   }, [open, onKeyDown])
 
   if (!open) return null
 
   return (
-    <div
-      className={cn(
-        'fixed inset-0 flex items-center justify-center bg-[rgba(20,16,9,0.55)] p-4 sm:p-6',
-        layers.modal,
-      )}
+    <ViewportPortal open lockScroll>
+      <div
+        className={cn(
+          'fixed inset-0 flex h-[100dvh] w-screen items-center justify-center bg-[rgba(20,16,9,0.55)] p-4 sm:p-6',
+          layers.modal,
+        )}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -227,5 +227,6 @@ export function AttaccoWizardModal({
         </div>
       </div>
     </div>
+    </ViewportPortal>
   )
 }

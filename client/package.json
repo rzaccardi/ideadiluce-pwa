@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "dev": "node ../scripts/free-port.mjs 5173 && next dev --port 5173",
+    "dev": "node scripts/ensure-next-dev.mjs && node ../scripts/free-port.mjs 5173 && next dev --port 5173",
     "dev:clean": "rm -rf .next && node ../scripts/free-port.mjs 5173 && next dev --port 5173",
     "build": "next build",
     "start": "next start --port 3000",

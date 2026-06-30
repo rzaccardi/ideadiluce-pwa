@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from '@/lib/navigation'
 import { useSnapshot } from 'valtio/react'
 import { authStore, login } from '@/features/auth'
-import { LoadingState } from '@/components/LoadingState'
+import { AuthLoadingOverlay } from '@/components/site/auth/AuthLoadingOverlay'
+import { AuthFormSkeleton } from '@/components/site/skeletons'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { notify } from '@/lib/notify'
@@ -79,14 +80,14 @@ export function LoginPageView() {
       }
     >
       {isBusy ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-white/85 backdrop-blur-[2px]"
-          role="status"
-          aria-live="polite"
-        >
-          <LoadingState message={busyMessage} />
-        </div>
-      ) : null}
+        <>
+          <AuthFormSkeleton fieldCount={2} />
+          <AuthLoadingOverlay
+            icon={auth.isHydrating ? 'bulb' : 'shield'}
+            messageKey={auth.isHydrating ? 'auth.preparingAccount' : 'auth.loggingIn'}
+          />
+        </>
+      ) : (
       <AuthCard>
         <AuthCardHeader title={t('login.welcomeTitle')} subtitle={t('login.subtitle')} />
 
@@ -141,6 +142,7 @@ export function LoginPageView() {
           </AuthSubmitButton>
         </form>
       </AuthCard>
+      )}
     </AuthPageShell>
   )
 }

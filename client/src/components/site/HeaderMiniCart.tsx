@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useLocation } from '@/lib/navigation'
 import { useSnapshot } from 'valtio/react'
 import { cartStore } from '@/features/cart'
@@ -14,6 +15,7 @@ import { Button } from '@/components/Button'
 import { Skeleton } from '@/components/Skeleton'
 import { SITE_PAGE_X_CLASS } from '@/components/site/primitives'
 import { useCartSync } from '@/hooks/use-cart-sync'
+import { useIsClient } from '@/hooks/use-is-client'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
@@ -201,6 +203,7 @@ type Props = {
 
 export function HeaderMiniCart({ onOpenChange }: Props) {
   const { t } = useI18n()
+  const isClient = useIsClient()
   const reduceMotion = useReducedMotion()
   const { cart, error, isLoading, stockInsufficient } = useSnapshot(cartStore)
   const { cartPulse, miniCartOpenRequest } = useSnapshot(cartFeedbackStore)
@@ -213,7 +216,7 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
   const [isBouncing, setIsBouncing] = useState(false)
   const [badgePop, setBadgePop] = useState(false)
 
-  useCartSync(isCartFlow || open)
+  useCartSync(isCartFlow || open, { pollStock: !isCartPage })
 
   const setCartOpen = (value: boolean) => {
     setOpen(value)
@@ -281,6 +284,7 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
     stockInsufficient,
     onClose: () => setCartOpen(false),
   }
+  const showMiniCart = open && !isCartPageDesktop
 
   return (
     <div className={cn('relative', isCartPage && 'hidden lg:block')}>
@@ -317,52 +321,62 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
         ) : null}
       </button>
 
-      <AnimatePresence>
-        {open && !isCartPageDesktop ? (
-          <>
-            {/* Mobile — bottom sheet quasi fullscreen */}
-            <motion.button
-              key="mini-cart-backdrop"
-              type="button"
-              aria-label={t('cart.floating.close')}
-              className={cn('fixed inset-0 bg-idl-backdrop lg:hidden', layers.sheetBackdrop)}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={transitionBase}
-              onClick={() => setCartOpen(false)}
-            />
-            <motion.section
-              key="mini-cart-sheet"
-              role="dialog"
-              aria-modal="true"
-              aria-label={t('cart.title')}
-              className={cn(
-                'fixed inset-x-0 bottom-0 flex max-h-[min(96dvh,100%)] flex-col rounded-t-[20px] border border-idl-border border-t bg-idl-paper p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl shadow-zinc-950/20 lg:hidden',
-                layers.sheet,
-                SITE_PAGE_X_CLASS,
-              )}
-              initial={reduceMotion ? false : { y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={transitionBase}
-            >
-              <MiniCartPanel {...panelProps} layout="sheet" />
-            </motion.section>
+      {isClient
+        ? createPortal(
+            <AnimatePresence>
+              {showMiniCart ? (
+                <>
+                  <motion.button
+                    key="mini-cart-backdrop"
+                    type="button"
+                    aria-label={t('cart.floating.close')}
+                    className={cn(
+                      'fixed inset-0 h-[100dvh] w-screen bg-idl-backdrop lg:hidden',
+                      layers.sheetBackdrop,
+                    )}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={transitionBase}
+                    onClick={() => setCartOpen(false)}
+                  />
+                  <motion.section
+                    key="mini-cart-sheet"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={t('cart.title')}
+                    className={cn(
+                      'fixed inset-x-0 bottom-0 flex max-h-[min(96dvh,100%)] flex-col rounded-t-[20px] border border-idl-border border-t bg-idl-paper p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl shadow-zinc-950/20 lg:hidden',
+                      layers.sheet,
+                      SITE_PAGE_X_CLASS,
+                    )}
+                    initial={reduceMotion ? false : { y: '100%' }}
+                    animate={{ y: 0 }}
+                    exit={{ y: '100%' }}
+                    transition={transitionBase}
+                  >
+                    <MiniCartPanel {...panelProps} layout="sheet" />
+                  </motion.section>
+                </>
+              ) : null}
+            </AnimatePresence>,
+            document.body,
+          )
+        : null}
 
-            {/* Desktop — dropdown */}
-            <section
-              key="mini-cart-dropdown"
-              role="dialog"
-              aria-label={t('cart.title')}
-              className={cn(
-                'absolute right-0 top-full mt-2 hidden w-[min(calc(100vw-2.5rem),380px)] rounded-2xl border border-idl-border bg-idl-tech-panel p-4 shadow-2xl shadow-zinc-950/20 lg:block',
-                layers.headerDropdown,
-              )}
-            >
-              <MiniCartPanel {...panelProps} layout="dropdown" />
-            </section>
-          </>
+      <AnimatePresence>
+        {showMiniCart ? (
+          <section
+            key="mini-cart-dropdown"
+            role="dialog"
+            aria-label={t('cart.title')}
+            className={cn(
+              'absolute right-0 top-full mt-2 hidden w-[min(calc(100vw-2.5rem),380px)] rounded-2xl border border-idl-border bg-idl-tech-panel p-4 shadow-2xl shadow-zinc-950/20 lg:block',
+              layers.headerDropdown,
+            )}
+          >
+            <MiniCartPanel {...panelProps} layout="dropdown" />
+          </section>
         ) : null}
       </AnimatePresence>
     </div>

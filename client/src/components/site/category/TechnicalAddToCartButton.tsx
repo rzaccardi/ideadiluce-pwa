@@ -6,6 +6,7 @@ import { useLocale } from '@/context/locale-context'
 import { useI18n } from '@/hooks/use-i18n'
 import type { ProductCardDTO } from '@/types/dto'
 import { addItem, cartStore, getProductCartQuantity } from '@/features/cart'
+import { buildCartAddHintFromCard } from '@/features/cart/cart-add-hint'
 import { useProductCardStores } from '@/features/product/useProductCardStores'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import {
@@ -16,7 +17,10 @@ import {
 import { cn } from '@/utils/cn'
 
 type Props = {
-  product: Pick<ProductCardDTO, 'slug' | 'name' | 'imageUrl' | 'inStock' | 'availability'>
+  product: Pick<
+    ProductCardDTO,
+    'slug' | 'name' | 'imageUrl' | 'inStock' | 'availability' | 'priceCents' | 'odooTemplateId'
+  >
   label?: string
   className?: string
 }
@@ -41,8 +45,11 @@ export function TechnicalAddToCartButton({ product, label = 'Aggiungi', classNam
     setIsAdding(true)
     try {
       await addItem(product.slug, 1, undefined, {
-        productName: product.name,
-        imageUrl: product.imageUrl,
+        feedback: {
+          productName: product.name,
+          imageUrl: product.imageUrl,
+        },
+        productHint: buildCartAddHintFromCard(product),
       })
     } finally {
       setIsAdding(false)

@@ -7,8 +7,8 @@ import { fetchWishlist } from '@/features/wishlist'
 const POLL_MS = 30_000
 
 /** Polling carrello e preferiti quando la scheda è attiva. */
-export function useCartSync(enabled = true) {
-  useCartStockPolling(enabled)
+export function useCartSync(enabled = true, options?: { pollStock?: boolean }) {
+  useCartStockPolling(enabled && options?.pollStock !== false)
   useCartReservationSync(enabled)
 
   useEffect(() => {

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { ProductCardDTO } from '@/types/dto'
 import { addItem } from '@/features/cart'
+import { buildCartAddHintFromCard } from '@/features/cart/cart-add-hint'
 import { formatTechnicalProductRefLine } from '@/lib/technical-product-ref'
 import {
   getProductAvailabilityStatus,
@@ -63,8 +64,11 @@ export function TechnicalCatalogBulkBar({ products: _products, lp }: Props) {
     for (const product of addable) {
       try {
         await addItem(product.slug, 1, undefined, {
-          productName: product.name,
-          imageUrl: product.imageUrl,
+          feedback: {
+            productName: product.name,
+            imageUrl: product.imageUrl,
+          },
+          productHint: buildCartAddHintFromCard(product),
         })
         added += 1
       } catch {

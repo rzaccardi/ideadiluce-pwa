@@ -27,6 +27,7 @@ import {
   refreshAddressAutocompleteStatus,
   resolvePrefilledAddress,
 } from '@/lib/addressAutocomplete'
+import { shippingAddressFromUser } from '@/lib/address'
 import { isCheckoutAddressValid } from '@/lib/checkout-address.validators'
 import { fetchCart } from '@/features/cart'
 import { cartStore } from '@/features/cart/cart.store'
@@ -423,14 +424,53 @@ function ensureCheckoutEmailInDraft(): string {
   return email
 }
 
-function ensureBillingContactFromProfile() {
-  const bill = checkoutStore.draft.billing
+/** true se nome e cognome sono già nel profilo o nell'indirizzo salvato. */
+export function hasCheckoutContactFromProfile(): boolean {
   const user = authStore.me
-  if (!bill.firstName.trim()) {
-    bill.firstName = user?.firstName?.trim() || 'Cliente'
-  }
-  if (!bill.lastName.trim()) {
-    bill.lastName = user?.lastName?.trim() || 'Fatturazione'
+  if (!user) return false
+  const firstName = user.firstName?.trim() || user.shippingAddress?.firstName?.trim() || ''
+  const lastName = user.lastName?.trim() || user.shippingAddress?.lastName?.trim() || ''
+  return Boolean(firstName && lastName)
+}
+
+function syncCheckoutContactFromProfile() {
+  const user = authStore.me
+  const bill = checkoutStore.draft.billing
+  const ship = checkoutStore.draft.shipping
+  const profileFirst = user?.firstName?.trim() || user?.shippingAddress?.firstName?.trim() || ''
+  const profileLast = user?.lastName?.trim() || user?.shippingAddress?.lastName?.trim() || ''
+
+  if (!bill.firstName.trim() && profileFirst) bill.firstName = profileFirst
+  if (!bill.lastName.trim() && profileLast) bill.lastName = profileLast
+  if (!ship.firstName.trim()) ship.firstName = bill.firstName.trim() || profileFirst
+  if (!ship.lastName.trim()) ship.lastName = bill.lastName.trim() || profileLast
+}
+
+function syncShippingContactFromBillingIfNeeded() {
+  const ship = checkoutStore.draft.shipping
+  const bill = checkoutStore.draft.billing
+  if (!ship.firstName.trim() && bill.firstName.trim()) ship.firstName = bill.firstName
+  if (!ship.lastName.trim() && bill.lastName.trim()) ship.lastName = bill.lastName
+  if (!(ship.phone ?? '').trim() && (bill.phone ?? '').trim()) ship.phone = bill.phone
+}
+
+function syncShippingDestinationFromBillingIfNeeded() {
+  const ship = checkoutStore.draft.shipping
+  if (addressComplete(ship)) return
+  const bill = checkoutStore.draft.billing
+  if (!addressComplete(bill)) return
+  checkoutStore.draft.shipping = {
+    ...ship,
+    line1: bill.line1,
+    streetNumber: bill.streetNumber,
+    isSnc: bill.isSnc,
+    line2: bill.line2,
+    city: bill.city,
+    postalCode: bill.postalCode,
+    country: bill.country,
+    firstName: ship.firstName.trim() || bill.firstName,
+    lastName: ship.lastName.trim() || bill.lastName,
+    phone: (ship.phone ?? '').trim() || bill.phone,
   }
 }
 
@@ -438,7 +478,6 @@ export function isAnagraficaCompartmentComplete(): boolean {
   if (!authStore.isAuthenticated) return false
   if (effectiveCustomerSegment() == null) return false
   if (!isCheckoutEmailValid(resolveCheckoutEmail())) return false
-  ensureBillingContactFromProfile()
   return addressComplete(checkoutStore.draft.billing) && businessBillingComplete()
 }
 
@@ -645,41 +684,30 @@ export function prefillCheckoutFromAuthUser() {
   const user = authStore.me
   if (!user) return
   if (user.email) checkoutStore.draft.email = user.email
-  if (user.firstName) checkoutStore.draft.shipping.firstName = user.firstName
-  if (user.lastName) checkoutStore.draft.shipping.lastName = user.lastName
-  if (user.phone) checkoutStore.draft.shipping.phone = user.phone
   const segment = segmentFromAuth()
   if (segment) checkoutStore.customerSegment = segment
   if (user.companyName) checkoutStore.business.companyName = user.companyName
   applyUserTaxProfileToCheckout(user)
   if (user.pec) checkoutStore.business.pec = user.pec
   if (user.sdiCode) checkoutStore.business.sdiCode = user.sdiCode
-  const addr = user.shippingAddress
-  if (addr) {
-    if (addr.firstName) checkoutStore.draft.shipping.firstName = addr.firstName
-    if (addr.lastName) checkoutStore.draft.shipping.lastName = addr.lastName
-    if (addr.line1) checkoutStore.draft.shipping.line1 = addr.line1
-    if (addr.streetNumber) checkoutStore.draft.shipping.streetNumber = addr.streetNumber
-    if (addr.isSnc) checkoutStore.draft.shipping.isSnc = addr.isSnc
-    if (addr.line2) checkoutStore.draft.shipping.line2 = addr.line2 ?? ''
-    if (addr.city) checkoutStore.draft.shipping.city = addr.city
-    if (addr.postalCode) checkoutStore.draft.shipping.postalCode = addr.postalCode
-    if (addr.country) checkoutStore.draft.shipping.country = addr.country
-    if (addr.phone) checkoutStore.draft.shipping.phone = addr.phone ?? ''
 
-    const billing = checkoutStore.draft.billing
-    if (addr.line1) billing.line1 = addr.line1
-    if (addr.streetNumber) billing.streetNumber = addr.streetNumber
-    if (addr.isSnc) billing.isSnc = addr.isSnc
-    if (addr.line2) billing.line2 = addr.line2 ?? ''
-    if (addr.city) billing.city = addr.city
-    if (addr.postalCode) billing.postalCode = addr.postalCode
-    if (addr.country) billing.country = addr.country
-    if (user.firstName) billing.firstName = user.firstName
-    if (user.lastName) billing.lastName = user.lastName
+  const shipAddr = shippingAddressFromUser(user)
+  checkoutStore.draft.shipping = { ...checkoutStore.draft.shipping, ...shipAddr }
+
+  const billing = checkoutStore.draft.billing
+  if (shipAddr.line1.trim()) {
+    billing.line1 = shipAddr.line1
+    billing.streetNumber = shipAddr.streetNumber
+    billing.isSnc = shipAddr.isSnc
+    billing.line2 = shipAddr.line2
+    billing.city = shipAddr.city
+    billing.postalCode = shipAddr.postalCode
+    billing.country = shipAddr.country
   }
-  ensureBillingContactFromProfile()
+  if (shipAddr.firstName.trim()) billing.firstName = shipAddr.firstName
+  if (shipAddr.lastName.trim()) billing.lastName = shipAddr.lastName
 
+  syncCheckoutContactFromProfile()
   syncAnagraficaCollectedFromAuthProfile()
 }
 
@@ -715,7 +743,6 @@ async function resolvePrefilledCheckoutAddressesFromAuth() {
 async function runAddressPrefillInit() {
   checkoutDbg.fn('runAddressPrefillInit', 'enter')
   checkoutStore.initLoadingPhase = 'anagrafica'
-  checkoutStore.currentStep = 'account'
 
   try {
     prefillCheckoutFromAuthUser()
@@ -776,11 +803,7 @@ export function initializeCheckoutNavigation(): Promise<void> {
 
 /** Dopo login/registrazione: precompila, geocodifica e poi avanza allo step indirizzo. */
 export async function prepareCheckoutAfterAuth() {
-  if (addressPrefillPromise) {
-    await addressPrefillPromise
-    return
-  }
-  await runAddressPrefillInit()
+  await initializeCheckoutNavigation()
 }
 
 /** Dopo modifica righe carrello: azzera pagamento e spedizione già calcolati. */
@@ -1089,6 +1112,9 @@ export function updateCheckoutAddress<K extends AddressKey>(
   if (kind === 'shipping' && checkoutStore.draft.billingSameAsShipping) {
     checkoutStore.draft.billing[key] = value
   }
+  if (kind === 'billing') {
+    syncShippingDestinationFromBillingIfNeeded()
+  }
   invalidateShippingIfDestinationChanged()
   if (kind === 'shipping') {
     scheduleShippingQuotesFetch()
@@ -1146,6 +1172,9 @@ export async function applyResolvedAddress(kind: 'billing' | 'shipping', resolve
   if (kind === 'shipping') {
     scheduleShippingQuotesFetch(0)
   }
+  if (kind === 'billing') {
+    syncShippingDestinationFromBillingIfNeeded()
+  }
 }
 
 export function setBillingSameAsShipping(value: boolean) {
@@ -1172,7 +1201,6 @@ export function canAdvanceFromStep(step: CheckoutStep): boolean {
       return effectiveCustomerSegment() != null
     case 'addresses':
     case 'billing': {
-      ensureBillingContactFromProfile()
       return addressComplete(checkoutStore.draft.billing) && businessBillingComplete()
     }
     case 'delivery_recipient': {
@@ -1259,8 +1287,14 @@ export async function advanceCheckoutStep() {
 
   try {
     if (step === 'addresses' || step === 'billing') {
-      ensureBillingContactFromProfile()
+      syncCheckoutContactFromProfile()
+      syncShippingDestinationFromBillingIfNeeded()
+      syncShippingContactFromBillingIfNeeded()
       await validateTaxFields()
+      if (!addressComplete(checkoutStore.draft.shipping)) {
+        checkoutStore.error = localeMessage('checkout.error.incompleteAddress')
+        return
+      }
       if (!canAdvanceFromStep(step === 'billing' ? 'addresses' : step)) {
         checkoutStore.error = localeMessage('checkout.error.incompleteStep')
         return

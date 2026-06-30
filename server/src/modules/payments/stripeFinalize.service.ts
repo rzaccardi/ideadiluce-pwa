@@ -123,6 +123,9 @@ export async function finalizeStripeCheckout(
       providerTransactionId: paymentIntentId,
       paidAt: new Date(),
       lastPaymentError: null,
+      ...(req.sessionRecord?.user?.id && !order.userId
+        ? { userId: req.sessionRecord.user.id }
+        : {}),
     },
   })
 

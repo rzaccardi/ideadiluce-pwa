@@ -6,6 +6,7 @@ import { generateSessionToken, hashSessionToken } from '../../lib/token-hash.js'
 import { AppError } from '../../types/errors.js'
 import type { ImpersonationInfoDTO } from '../../types/dto.js'
 import { toUserDTO } from '../users/user.mapper.js'
+import { mergeCartsForUser } from '../auth/auth.service.js'
 
 const IMPERSONATION_TOKEN_MINUTES = 5
 
@@ -140,7 +141,11 @@ export const impersonationService = {
     const sessionToken = generateSessionToken()
     const expiresAt = sessionExpiry()
 
-    await prisma.$transaction(async (tx) => {
+    if (currentSessionId) {
+      await mergeCartsForUser(currentSessionId, row.userId)
+    }
+
+    const newSession = await prisma.$transaction(async (tx) => {
       await tx.impersonationToken.update({
         where: { id: row.id },
         data: { usedAt: new Date() },
@@ -154,7 +159,7 @@ export const impersonationService = {
         await tx.session.deleteMany({ where: { id: currentSessionId } })
       }
 
-      await tx.session.create({
+      return tx.session.create({
         data: {
           tokenHash: hashSessionToken(sessionToken),
           userId: row.userId,
@@ -162,6 +167,11 @@ export const impersonationService = {
           expiresAt,
         },
       })
+    })
+
+    await prisma.cart.updateMany({
+      where: { userId: row.userId, status: 'ACTIVE' },
+      data: { sessionId: newSession.id },
     })
 
     await logImpersonation('impersonation.session_started', correlationId, {

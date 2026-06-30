@@ -11,3 +11,20 @@ export function dedupeAsync<T>(key: string, fn: () => Promise<T>): Promise<T> {
   inflight.set(key, promise)
   return promise
 }
+
+/** Invalida richieste in-flight (es. dopo login/logout il carrello server-side cambia). */
+export function invalidateDedupe(keys?: string[]) {
+  if (!keys) {
+    inflight.clear()
+    return
+  }
+  for (const key of keys) {
+    inflight.delete(key)
+  }
+}
+
+export function invalidateDedupePrefix(prefix: string) {
+  for (const key of inflight.keys()) {
+    if (key.startsWith(prefix)) inflight.delete(key)
+  }
+}

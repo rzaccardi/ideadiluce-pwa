@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import type { ProductCardDTO } from '@/types/dto'
 import { useLocale } from '@/context/locale-context'
 import { addItem } from '@/features/cart'
+import { buildCartAddHintFromCard } from '@/features/cart/cart-add-hint'
 import { removeWishlistItem } from '@/features/wishlist'
 import { formatMoney } from '@/lib/format'
 import { Button } from '@/components/Button'
@@ -35,7 +36,9 @@ export function WishlistItemCard({
   async function handleAddToCart() {
     if (!product) return
     try {
-      await addItem(product.slug, 1, variantRef ?? undefined)
+      await addItem(product.slug, 1, variantRef ?? undefined, {
+        productHint: buildCartAddHintFromCard(product, variantRef),
+      })
       await removeWishlistItem(itemId)
       toast.success(t('cart.toast.added'))
       onRemoved?.()

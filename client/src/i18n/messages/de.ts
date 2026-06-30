@@ -215,6 +215,7 @@ export const messages: Record<MessageKey, string> = {
   'product.requestProduct': 'Produkt anfragen',
   'product.availability.available': 'Verfügbar',
   'product.availability.orderable': 'Bestellbar',
+  'product.availability.checking': 'Verfügbarkeit wird geprüft…',
   'product.availability.outOfStock': 'Nicht auf Lager',
   'product.availability.shippedInDays': 'Versand in {days} Werktagen',
   'product.availability.shippedByDate': 'Voraussichtlicher Versand bis {date}',
@@ -263,6 +264,9 @@ export const messages: Record<MessageKey, string> = {
   'cart.pageTitle': 'Ihr Warenkorb',
   'cart.description': 'Artikel prüfen, Mengen aktualisieren und zum Checkout gehen.',
   'cart.clear': 'Warenkorb leeren',
+  'cart.clearConfirmTitle': 'Warenkorb leeren?',
+  'cart.clearConfirmDescription':
+    'Alle Artikel werden entfernt. Diese Aktion kann nicht rückgängig gemacht werden.',
   'cart.continueShopping': 'Weiter einkaufen',
   'cart.itemCountOne': '{count} Artikel',
   'cart.itemCountMany': '{count} Artikel',

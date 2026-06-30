@@ -6,6 +6,7 @@ import {
   getCachedMerchantFeedXml,
   getCachedSitemapXml,
 } from './seo-cache.service.js'
+import { sendSeoPublicAsset } from './seo-response.js'
 import { findSeoRedirect } from './seo-redirect.service.js'
 
 export const seoRouter = Router()
@@ -13,21 +14,24 @@ export const seoRouter = Router()
 seoRouter.get(
   '/sitemap.xml',
   asyncHandler(async (_req, res) => {
-    res.type('application/xml').send(await getCachedSitemapXml())
+    const { body, builtAt } = await getCachedSitemapXml()
+    sendSeoPublicAsset(res, 'application/xml; charset=utf-8', body, builtAt)
   }),
 )
 
 seoRouter.get(
   '/llms.txt',
   asyncHandler(async (_req, res) => {
-    res.type('text/plain; charset=utf-8').send(await getCachedLlmsTxt())
+    const { body, builtAt } = await getCachedLlmsTxt()
+    sendSeoPublicAsset(res, 'text/plain; charset=utf-8', body, builtAt)
   }),
 )
 
 seoRouter.get(
   '/merchant-feed.xml',
   asyncHandler(async (_req, res) => {
-    res.type('application/xml').send(await getCachedMerchantFeedXml())
+    const { body, builtAt } = await getCachedMerchantFeedXml()
+    sendSeoPublicAsset(res, 'application/xml; charset=utf-8', body, builtAt)
   }),
 )
 

@@ -7,7 +7,7 @@ import {
   shouldProactivelyRefreshSession,
 } from '@/lib/auth-local-storage'
 import { ApiRequestError } from '@/types/api'
-import { fetchCart } from '@/features/cart'
+import { fetchCart, resetCartForAuthChange } from '@/features/cart'
 import { fetchOrdersList } from '@/features/orders'
 import { fetchQuotesList } from '@/features/quotes'
 import { fetchWishlist } from '@/features/wishlist'
@@ -21,6 +21,7 @@ function refreshSessionStores() {
 
 async function hydrateSessionStores() {
   authStore.isHydrating = true
+  resetCartForAuthChange()
   try {
     await Promise.allSettled([
       fetchCart({ force: true, reprice: true }),
@@ -237,6 +238,7 @@ export async function logout(options?: LogoutOptions): Promise<LogoutResult> {
     authStore.error = errMessage(e)
   } finally {
     clearClientSessionState({ scope: options?.scope })
+    resetCartForAuthChange()
     try {
       await refreshSessionStores()
     } catch {

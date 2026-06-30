@@ -6,12 +6,31 @@ import { useSnapshot } from 'valtio/react'
 import { api } from '@/api/endpoints'
 import type { ProductCardDTO, ThankYouOrderDTO } from '@/types/dto'
 import { authStore } from '@/features/auth'
+import { ApiRequestError } from '@/types/api'
 import { ToastOnError } from '@/components/ToastFeedback'
 import { PurchaseErrorPageView } from '@/components/checkout/purchase-error/PurchaseErrorPageView'
 import { ThankYouPageView } from '@/components/checkout/thank-you/ThankYouPageView'
 import { ThankYouPageSkeleton } from '@/components/checkout/thank-you/ThankYouPageSkeleton'
 import { PageLoadTransition } from '@/components/motion'
 import { useI18n } from '@/hooks/use-i18n'
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function fetchThankYouOrder(orderId: string, sessionId?: string | null) {
+  const maxAttempts = 5
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    try {
+      return await api.orders.thankYou(orderId, { sessionId: sessionId ?? undefined })
+    } catch (e) {
+      const isRetryable404 = e instanceof ApiRequestError && e.status === 404 && attempt < maxAttempts - 1
+      if (!isRetryable404) throw e
+      await sleep(400 * (attempt + 1))
+    }
+  }
+  throw new Error('Order not found')
+}
 
 export function ThankYouPage() {
   const { t } = useI18n()
@@ -42,7 +61,7 @@ export function ThankYouPage() {
           await api.payments.stripeReturn({ orderId })
         }
 
-        const detail = await api.orders.thankYou(orderId)
+        const detail = await fetchThankYouOrder(orderId, sessionId)
         if (cancelled) return
         setOrder(detail)
 

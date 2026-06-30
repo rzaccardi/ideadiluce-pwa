@@ -613,7 +613,7 @@ export function CheckoutStripeBootstrapSkeleton() {
     >
       <CheckoutSummarySkeleton />
       <main className={checkoutMainClass}>
-        <div className="mx-auto w-full max-w-[540px] flex-1 space-y-8 px-4 py-5 sm:px-5 sm:py-6 md:px-6 lg:py-10 xl:px-12">
+        <div className="mx-auto w-full flex-1 space-y-8 px-4 py-5 sm:px-5 sm:py-6 md:px-6 lg:py-10 xl:px-12">
           <div className="flex gap-2 lg:hidden">
             {Array.from({ length: 3 }).map((_, index) => (
               <Skeleton key={index} className="h-2 flex-1 rounded-full" />

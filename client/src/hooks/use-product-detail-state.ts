@@ -41,6 +41,9 @@ export function useProductDetailState({
   const [quantity, setQuantity] = useState(1)
   const [selectedVariantRef, setSelectedVariantRef] = useState('')
   const [isAddingToCart, setIsAddingToCart] = useState(false)
+  const [isStockEnriching, setIsStockEnriching] = useState(
+    Boolean(initialProduct && initialProduct.slug === slug),
+  )
 
   useEffect(() => {
     if (initialProduct && initialProduct.slug === slug) {
@@ -51,18 +54,30 @@ export function useProductDetailState({
       productStore.isLoading = false
       productStore.error = null
 
+      setIsStockEnriching(true)
+      let cancelled = false
       void api.catalog
         .enrichProductDetail(initialProduct)
         .then((enriched) => {
-          if (productStore.currentSlug === slug && productStore.currentLocale === locale) {
+          if (
+            !cancelled &&
+            productStore.currentSlug === slug &&
+            productStore.currentLocale === locale
+          ) {
             productStore.product = enriched
           }
         })
         .catch(() => {
           /* mantieni dati Arfly se arricchimento non disponibile */
         })
-      return
+        .finally(() => {
+          if (!cancelled) setIsStockEnriching(false)
+        })
+      return () => {
+        cancelled = true
+      }
     }
+    setIsStockEnriching(false)
     if (slug) void fetchProduct(slug, locale)
   }, [slug, locale, initialProduct, initialRelatedProducts])
 
@@ -139,6 +154,7 @@ export function useProductDetailState({
     maxQuantity,
     isAddingToCart,
     setIsAddingToCart,
+    isStockEnriching,
     isLoading: snap.isLoading && !product,
     error: snap.error,
     t,

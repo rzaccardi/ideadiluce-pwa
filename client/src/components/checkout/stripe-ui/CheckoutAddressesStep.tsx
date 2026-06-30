@@ -6,6 +6,7 @@ import {
   applyResolvedAddress,
   canAdvanceFromStep,
   checkoutStore,
+  hasCheckoutContactFromProfile,
   isBusinessCheckout,
   updateCheckoutAddress,
   updateClientOrderRef,
@@ -71,7 +72,7 @@ export function CheckoutAddressesStep() {
         title={t('checkout.billingAddress')}
         prefix="bill"
         showTitle={false}
-        hideContactFields
+        hideContactFields={hasCheckoutContactFromProfile()}
         address={checkout.draft.billing}
         onChange={(key, value) => updateCheckoutAddress('billing', key, value)}
         onAddressResolved={(resolved) =>

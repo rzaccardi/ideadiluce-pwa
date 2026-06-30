@@ -409,7 +409,12 @@ export const api = {
       const q = options?.reprice ? '?reprice=1' : ''
       return apiClient.get<CartDTO>(`/api/v1/cart${q}`)
     },
-    addItem(body: { productRef: string; variantRef?: string | null; quantity?: number }) {
+    addItem(body: {
+      productRef: string
+      variantRef?: string | null
+      quantity?: number
+      productHint?: import('@/features/cart/cart-add-hint').CartAddProductHint
+    }) {
       return apiClient.post<CartDTO>('/api/v1/cart/items', body)
     },
     patchItem(id: string, body: { quantity: number }) {
@@ -533,8 +538,11 @@ export const api = {
     status(id: string) {
       return apiClient.get<PwaOrderStatusResponseDTO>(`/api/v1/orders/${id}/status`)
     },
-    thankYou(id: string) {
-      return apiClient.get<ThankYouOrderDTO>(`/api/v1/orders/${id}/thank-you`)
+    thankYou(id: string, options?: { sessionId?: string }) {
+      const q = new URLSearchParams()
+      if (options?.sessionId) q.set('session_id', options.sessionId)
+      const suffix = q.size > 0 ? `?${q.toString()}` : ''
+      return apiClient.get<ThankYouOrderDTO>(`/api/v1/orders/${id}/thank-you${suffix}`)
     },
     abandon(id: string) {
       return apiClient.post<PwaOrderStatusResponseDTO>(`/api/v1/orders/${id}/abandon`)

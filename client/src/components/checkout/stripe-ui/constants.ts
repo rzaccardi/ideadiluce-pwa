@@ -29,7 +29,7 @@ export const checkoutFormTitleClass =
 export const checkoutColumnGutterClass = SITE_PAGE_X_CLASS
 
 /** Larghezza massima del blocco form nel main. */
-export const checkoutFormColumnClass = 'mx-auto w-full max-w-[540px]'
+export const checkoutFormColumnClass = 'mx-auto w-full'
 
 /** Shell pagina: colonna singola mobile, due colonne da lg. */
 export const checkoutShellClass = [

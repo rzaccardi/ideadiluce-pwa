@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import type { ProductCardDTO } from '@/types/dto'
 import { useLocale } from '@/context/locale-context'
 import { addItem } from '@/features/cart'
+import { buildCartAddHintFromCard } from '@/features/cart/cart-add-hint'
 import { removeWishlistItem } from '@/features/wishlist'
 import { formatMoney } from '@/lib/format'
 import { SiteImage } from '@/components/site/SiteImage'
@@ -32,7 +33,9 @@ export function AccountDcPartCard({
   async function handleReorder() {
     if (!product) return
     try {
-      await addItem(product.slug, 1, variantRef ?? undefined)
+      await addItem(product.slug, 1, variantRef ?? undefined, {
+        productHint: buildCartAddHintFromCard(product, variantRef),
+      })
       toast.success(t('orders.reorder.success'))
     } catch (e) {
       toast.error(String(e))

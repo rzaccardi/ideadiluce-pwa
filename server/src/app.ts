@@ -15,6 +15,7 @@ import {
   getCachedMerchantFeedXml,
   getCachedSitemapXml,
 } from './modules/seo/seo-cache.service.js'
+import { sendSeoPublicAsset } from './modules/seo/seo-response.js'
 import { arflyProxyRouter } from './modules/arfly-proxy/arfly-proxy.routes.js'
 import { asyncHandler } from './utils/async-handler.js'
 
@@ -68,19 +69,22 @@ export function createApp() {
   app.get(
     '/sitemap.xml',
     asyncHandler(async (_req, res) => {
-      res.type('application/xml').send(await getCachedSitemapXml())
+      const { body, builtAt } = await getCachedSitemapXml()
+      sendSeoPublicAsset(res, 'application/xml; charset=utf-8', body, builtAt)
     }),
   )
   app.get(
     '/llms.txt',
     asyncHandler(async (_req, res) => {
-      res.type('text/plain; charset=utf-8').send(await getCachedLlmsTxt())
+      const { body, builtAt } = await getCachedLlmsTxt()
+      sendSeoPublicAsset(res, 'text/plain; charset=utf-8', body, builtAt)
     }),
   )
   app.get(
     '/merchant-feed.xml',
     asyncHandler(async (_req, res) => {
-      res.type('application/xml').send(await getCachedMerchantFeedXml())
+      const { body, builtAt } = await getCachedMerchantFeedXml()
+      sendSeoPublicAsset(res, 'application/xml; charset=utf-8', body, builtAt)
     }),
   )
   app.use('/api/v1', loadOrCreateSession, v1Router)

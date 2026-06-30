@@ -96,6 +96,14 @@ export function CheckoutPage() {
     preloadStripe()
     const retryOrderId = searchParams.get('retryOrder')
     const frozenOrderId = searchParams.get('orderId')
+    const isResumeFlow = Boolean(frozenOrderId || retryOrderId)
+
+    // Reset subito (non dopo fetchCart/fetchMe) così non si cancella input guest
+    // e la precompilazione auth non viene sovrascritta dal reset tardivo.
+    if (!isResumeFlow) {
+      resetCheckout()
+    }
+
     void (async () => {
       await fetchCart({ force: true, reprice: true })
       await fetchMe()
@@ -123,12 +131,9 @@ export function CheckoutPage() {
           return
         } catch {
           resetCheckout()
-          void initializeCheckoutNavigation()
           return
         }
       }
-      resetCheckout()
-      void initializeCheckoutNavigation()
     })()
   }, [searchParams])
 
@@ -141,6 +146,7 @@ export function CheckoutPage() {
       step: checkoutStore.currentStep,
     })
     if (isFrozenQuoteCheckout()) return
+    if (checkoutStore.initLoadingPhase || checkoutStore.addressPrefillLoading) return
     if (!auth.isLoading && auth.me) {
       void initializeCheckoutNavigation()
     }

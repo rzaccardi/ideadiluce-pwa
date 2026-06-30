@@ -56,6 +56,8 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['zod'],
   experimental: {
     optimizePackageImports: ['motion', 'framer-motion'],
+    // Dev proxy: add-to-cart può superare 30s (Arfly + Odoo).
+    proxyTimeout: 120_000,
   },
   eslint: {
     ignoreDuringBuilds: true,
@@ -76,12 +78,7 @@ const nextConfig: NextConfig = {
     return buildSeoRedirects()
   },
   async rewrites() {
-    return [
-      { source: '/api/:path*', destination: `${apiUrl.replace(/\/$/, '')}/api/:path*` },
-      { source: '/sitemap.xml', destination: `${apiUrl.replace(/\/$/, '')}/sitemap.xml` },
-      { source: '/llms.txt', destination: `${apiUrl.replace(/\/$/, '')}/llms.txt` },
-      { source: '/merchant-feed.xml', destination: `${apiUrl.replace(/\/$/, '')}/merchant-feed.xml` },
-    ]
+    return [{ source: '/api/:path*', destination: `${apiUrl.replace(/\/$/, '')}/api/:path*` }]
   },
 }
 

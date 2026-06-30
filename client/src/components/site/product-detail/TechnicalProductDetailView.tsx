@@ -88,6 +88,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
     setSelectedVariantRef,
     isAddingToCart,
     setIsAddingToCart,
+    isStockEnriching,
     t,
   } = state
 
@@ -229,29 +230,33 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                 <span
                   className={cn(
                     'text-[13.5px] font-bold',
-                    availability?.status === 'available'
-                      ? 'text-[#1f9d57]'
-                      : availability?.status === 'orderable'
-                        ? 'text-[#b5701a]'
-                        : 'text-idl-muted',
+                    isStockEnriching
+                      ? 'text-idl-muted'
+                      : availability?.status === 'available'
+                        ? 'text-[#1f9d57]'
+                        : availability?.status === 'orderable'
+                          ? 'text-[#b5701a]'
+                          : 'text-idl-muted',
                   )}
                 >
                   ●{' '}
-                  {availability
-                    ? formatAvailabilityPrimaryLabel(availability)
-                    : t('product.availability.orderable')}
+                  {isStockEnriching
+                    ? t('product.availability.checking')
+                    : availability
+                      ? formatAvailabilityPrimaryLabel(availability)
+                      : t('product.availability.orderable')}
                 </span>
-                {availability?.status === 'available' ? (
+                {!isStockEnriching && availability?.status === 'available' ? (
                   <span className="text-[13px] text-idl-muted">· spedizione entro 24/48h</span>
                 ) : null}
               </div>
-              {availability?.detail ? (
+              {!isStockEnriching && availability?.detail ? (
                 <p className="text-[13px] text-idl-muted">{availability.detail}</p>
               ) : null}
             </div>
 
             <div className="flex min-w-0 flex-col gap-3 min-[480px]:flex-row min-[480px]:items-stretch">
-              {availability?.canAddToCart ? (
+              {!isStockEnriching && availability?.canAddToCart ? (
                 <ProductQuantityStepper
                   value={quantity}
                   min={1}
@@ -262,7 +267,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
               ) : null}
               <button
                 type="button"
-                disabled={!availability?.canAddToCart || isAddingToCart}
+                disabled={isStockEnriching || !availability?.canAddToCart || isAddingToCart}
                 onClick={handleAddToCart}
                 className="flex-1 rounded-lg bg-idl-amber px-4 py-3.5 text-center text-[15.5px] font-bold text-white transition hover:bg-[#b08e3e] disabled:opacity-60"
               >
@@ -270,7 +275,8 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
               </button>
             </div>
 
-            {!availability?.canAddToCart &&
+            {!isStockEnriching &&
+            !availability?.canAddToCart &&
             (availability?.showRestockNotify || availability?.showProductRequest) ? (
               <div className="mt-4">
                 <ProductRestockNotify
@@ -633,11 +639,15 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
         variantRef={variantRef}
         quantity={quantity}
         availabilityLabel={
-          availability ? formatAvailabilityPrimaryLabel(availability) : t('product.availability.orderable')
+          isStockEnriching
+            ? t('product.availability.checking')
+            : availability
+              ? formatAvailabilityPrimaryLabel(availability)
+              : t('product.availability.orderable')
         }
-        availabilityDetail={availability?.detail}
-        availabilityStatus={availability?.status}
-        canAddToCart={availability?.canAddToCart ?? false}
+        availabilityDetail={isStockEnriching ? undefined : availability?.detail}
+        availabilityStatus={isStockEnriching ? undefined : availability?.status}
+        canAddToCart={!isStockEnriching && (availability?.canAddToCart ?? false)}
         isAddingToCart={isAddingToCart}
         onAdd={handleAddToCart}
         addLabel={t('product.addToCart')}

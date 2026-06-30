@@ -32,6 +32,7 @@ export {
   initializeCheckoutNavigation,
   isBusinessCheckout,
   isBusinessAnagraficaComplete,
+  hasCheckoutContactFromProfile,
   isAnagraficaCompartmentComplete,
   isSpedizioneCompartmentComplete,
   resolveCheckoutEmail,

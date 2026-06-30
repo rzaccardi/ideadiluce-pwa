@@ -67,9 +67,7 @@ export function CheckoutAddressSection({
   }, [addressPrefillKey])
 
   useEffect(() => {
-    if (isCheckoutAddressValid(address)) {
-      setAddressSelected(true)
-    }
+    setAddressSelected(isCheckoutAddressValid(address))
   }, [addressPrefillKey])
 
   useEffect(() => {
@@ -89,7 +87,6 @@ export function CheckoutAddressSection({
   }, [])
 
   function applyResolved(resolved: ResolvedAddress) {
-    setAddressSelected(true)
     setDetailsUnlocked(false)
     setFocusStreetNumber(!resolved.streetNumber?.trim())
     if (onAddressResolved) {
@@ -132,6 +129,7 @@ export function CheckoutAddressSection({
   }, [autocompleteEnabled, addressSelected, addressPrefillKey])
 
   function handleChangeAddress() {
+    prefillAttemptedRef.current = true
     setAddressSelected(false)
     setDetailsUnlocked(false)
     setFocusStreetNumber(false)

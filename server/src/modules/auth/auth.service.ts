@@ -10,6 +10,7 @@ import { generateSessionToken, hashSessionToken } from '../../lib/token-hash.js'
 import { toUserDTO } from '../users/user.mapper.js'
 import { loginWithOdooCredentials } from './odoo-account-sync.service.js'
 import { linkOrdersToUser } from '../orders/orders-user-link.service.js'
+import { absorbCartLines, cartLineKey, type MergedCartLine } from './cart-merge.js'
 
 function sessionExpiry(): Date {
   return new Date(Date.now() + env.SESSION_DAYS * 24 * 60 * 60 * 1000)
@@ -19,69 +20,30 @@ export { sessionExpiry }
 
 const AUTH_MERGE_TRANSACTION = { timeout: 15_000 } as const
 
-function cartLineKey(productRef: string, variantRef: string | null) {
-  return `${productRef}\0${variantRef ?? ''}`
-}
-
-type MergedCartLine = {
-  productRef: string
-  variantRef: string | null
-  quantity: number
-  clientUnitPriceEstimate: number | null
-  metadataJson: unknown
-}
-
-function absorbCartLines(
-  merged: Map<string, MergedCartLine>,
-  lines: Array<{
-    productRef: string
-    variantRef: string | null
-    quantity: number
-    clientUnitPriceEstimate: number | null
-    metadataJson: unknown
-  }>,
-) {
-  for (const line of lines) {
-    const key = cartLineKey(line.productRef, line.variantRef)
-    const existing = merged.get(key)
-    if (existing) {
-      existing.quantity += line.quantity
-      if (line.clientUnitPriceEstimate != null) {
-        existing.clientUnitPriceEstimate = line.clientUnitPriceEstimate
-      }
-      if (line.metadataJson != null) {
-        existing.metadataJson = line.metadataJson
-      }
-      continue
-    }
-    merged.set(key, {
-      productRef: line.productRef,
-      variantRef: line.variantRef,
-      quantity: line.quantity,
-      clientUnitPriceEstimate: line.clientUnitPriceEstimate,
-      metadataJson: line.metadataJson,
-    })
-  }
-}
-
-async function mergeCartsForUser(sessionId: string, userId: string) {
+/** Unisce il carrello guest della sessione corrente con eventuali carrelli ACTIVE già salvati sull'utente. */
+export async function mergeCartsForUser(sessionId: string, userId: string) {
   await prisma.cart.updateMany({
     where: { sessionId, userId: null, status: 'ACTIVE' },
     data: { userId },
   })
 
   const carts = await prisma.cart.findMany({
-    where: {
-      status: 'ACTIVE',
-      OR: [{ userId }, { sessionId }],
-    },
+    where: { status: 'ACTIVE', userId },
     include: { items: true },
     orderBy: { createdAt: 'asc' },
   })
-  const unique = [...new Map(carts.map((c) => [c.id, c])).values()]
-  if (unique.length <= 1) return
+  if (carts.length <= 1) {
+    const only = carts[0]
+    if (only && only.sessionId !== sessionId) {
+      await prisma.cart.update({
+        where: { id: only.id },
+        data: { sessionId },
+      })
+    }
+    return
+  }
 
-  const [primary, ...rest] = unique
+  const [primary, ...rest] = carts
   const merged = new Map<string, MergedCartLine>()
   absorbCartLines(merged, primary.items)
   for (const other of rest) {
@@ -108,6 +70,10 @@ async function mergeCartsForUser(sessionId: string, userId: string) {
           })),
         })
       }
+      await tx.cart.update({
+        where: { id: primary.id },
+        data: { sessionId },
+      })
     },
     AUTH_MERGE_TRANSACTION,
   )

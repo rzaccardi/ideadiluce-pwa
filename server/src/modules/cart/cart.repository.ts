@@ -6,6 +6,7 @@ export const cartRepository = {
     return prisma.cart.findFirst({
       where: { sessionId, status: 'ACTIVE' },
       include: { items: true },
+      orderBy: { updatedAt: 'desc' },
     })
   },
 
@@ -13,6 +14,7 @@ export const cartRepository = {
     return prisma.cart.findFirst({
       where: { userId, status: 'ACTIVE' },
       include: { items: true },
+      orderBy: { updatedAt: 'desc' },
     })
   },
 

@@ -15,7 +15,7 @@ import {
   type OdooCallContext,
 } from '../../adapters/odoo/odooClient.js'
 import { authRepository } from './auth.repository.js'
-import { authService, sessionExpiry } from './auth.service.js'
+import { authService, mergeCartsForUser, sessionExpiry } from './auth.service.js'
 import type { UserDTO } from '../../types/dto.js'
 import type { OdooCustomerProfile } from '../../adapters/odoo/odooCustomerAdapter.js'
 
@@ -257,6 +257,7 @@ export async function provisionOdooAccountAfterOrder(
 
   if (input.sessionId && userId) {
     await authRepository.linkSessionToUser(input.sessionId, userId, sessionExpiry())
+    await mergeCartsForUser(input.sessionId, userId)
   }
 
   const loginUrl = publicAppUrl('/login')

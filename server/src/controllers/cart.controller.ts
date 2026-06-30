@@ -2,6 +2,7 @@ import type { Request, Response } from 'express'
 import { ok } from '../lib/api-response.js'
 import { cartService } from '../modules/cart/cart.service.js'
 import { cartQuickReorderService } from '../modules/cart/cart-quick-reorder.service.js'
+import type { CartAddProductHint } from '../modules/cart/cart.validators.js'
 import { asyncHandler } from '../utils/async-handler.js'
 
 export const cartController = {
@@ -11,7 +12,12 @@ export const cartController = {
   }),
 
   addItem: asyncHandler(async (req: Request, res: Response) => {
-    const body = req.body as { productRef: string; variantRef?: string | null; quantity: number }
+    const body = req.body as {
+      productRef: string
+      variantRef?: string | null
+      quantity: number
+      productHint?: CartAddProductHint
+    }
     const data = await cartService.addItem(req, body)
     res.status(201).json(ok(data))
   }),

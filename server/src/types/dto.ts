@@ -143,6 +143,8 @@ export type ProductCardDTO = {
   categorySlug: string | null
   brand?: ProductBrandDTO | null
   sku?: string | null
+  /** ID Odoo `product.template` (catalogo, per add-to-cart senza Arfly). */
+  odooTemplateId?: number | null
   /** Disponibilità acquisto (da Hub/Odoo live). */
   inStock?: boolean
   availability?: ProductAvailabilityDataDTO

@@ -1,8 +1,9 @@
 import { prisma } from '../../lib/prisma.js'
+import type { Cart, CartItem } from '@prisma/client'
 import { AppError } from '../../types/errors.js'
 import type { Request } from 'express'
 import { resolveCatalogProduct, resolveCatalogProductEnriched } from '../catalog/catalogResolver.service.js'
-import { formatOdooTemplateRef } from '../catalog/odooRef.js'
+import { formatOdooTemplateRef, formatOdooVariantRef, parseOdooTemplateId, parseOdooVariantId } from '../catalog/odooRef.js'
 import { fetchArflyProductList, isArflyConfigured } from '../../adapters/arfly/arflyClient.js'
 import { mapArflyListItem } from '../../adapters/arfly/arflyMapper.js'
 import { env } from '../../config/env.js'
@@ -26,10 +27,15 @@ import {
   parseCheckoutPriceSnapshot,
 } from './cart-price-freeze.service.js'
 import { buildCartAvailabilityLookup } from '../catalog/catalog-stock.enrich.js'
-import { resolveVariantAvailability } from '../catalog/availability.service.js'
+import { resolveVariantAvailability, variantAvailabilityToCartLine } from '../catalog/availability.service.js'
 import { taxService } from '../tax/tax.service.js'
 import { normalizeCountryCode } from '../tax/tax.constants.js'
-import type { CartStockCheckDTO, ProductCardDTO, ProductDetailDTO } from '../../types/dto.js'
+import type { CartStockCheckDTO, ProductCardDTO, ProductDetailDTO, CartLineAvailabilityDTO, CartDTO } from '../../types/dto.js'
+import type { PricingContext } from '../pricing/pricelist.service.js'
+import { enrichCartLineProduct } from '../catalog/catalog-stock.enrich.js'
+import { unitPriceCentsFromOdoo } from '../catalog/odooPricing.service.js'
+import { subtotalCentsFromCartItems } from './cartTotals.js'
+import type { CartAddProductHint } from './cart.validators.js'
 
 function storedProductRef(product: ProductDetailDTO): string {
   if (product.odooTemplateId != null) {
@@ -38,30 +44,49 @@ function storedProductRef(product: ProductDetailDTO): string {
   return product.slug
 }
 
-async function priceMapForCart(
+type CartCatalogEntry = {
+  priceCents: number
+  slug: string
+  name: string
+  imageUrl: string | null
+}
+
+async function catalogMapForCart(
   items: { productRef: string }[],
   correlationId: string,
-): Promise<Map<string, number>> {
-  const map = new Map<string, number>()
-  for (const { productRef } of items) {
-    const p = await resolveCatalogProduct({ correlationId }, productRef)
-    if (p) map.set(productRef, p.priceCents)
-  }
+  seed: Map<string, CartCatalogEntry> = new Map(),
+): Promise<Map<string, CartCatalogEntry>> {
+  const map = new Map(seed)
+  const uniqueRefs = [...new Set(items.map((item) => item.productRef))].filter((ref) => !map.has(ref))
+  const resolved = await Promise.all(
+    uniqueRefs.map((productRef) => resolveCatalogProduct({ correlationId }, productRef)),
+  )
+  uniqueRefs.forEach((productRef, index) => {
+    const product = resolved[index]
+    if (!product) return
+    map.set(productRef, {
+      priceCents: product.priceCents,
+      slug: product.slug,
+      name: product.name,
+      imageUrl: product.imageUrl,
+    })
+  })
   return map
 }
 
-async function displayMapForCart(
-  items: { productRef: string }[],
-  correlationId: string,
-): Promise<Map<string, { slug: string; name: string; imageUrl: string | null }>> {
-  const map = new Map<string, { slug: string; name: string; imageUrl: string | null }>()
-  for (const { productRef } of items) {
-    const p = await resolveCatalogProduct({ correlationId }, productRef)
-    if (p) {
-      map.set(productRef, { slug: p.slug, name: p.name, imageUrl: p.imageUrl })
-    }
-  }
-  return map
+function priceMapFromCatalog(catalog: Map<string, CartCatalogEntry>): Map<string, number> {
+  return new Map([...catalog.entries()].map(([ref, entry]) => [ref, entry.priceCents]))
+}
+
+function displayMapFromCatalog(
+  catalog: Map<string, CartCatalogEntry>,
+): Map<string, { slug: string; name: string; imageUrl: string | null }> {
+  return new Map(
+    [...catalog.entries()].map(([ref, entry]) => [
+      ref,
+      { slug: entry.slug, name: entry.name, imageUrl: entry.imageUrl },
+    ]),
+  )
 }
 
 async function arflyRecommendationCards(limit: number): Promise<ProductCardDTO[]> {
@@ -111,6 +136,65 @@ async function resolveOrCreateCart(req: Request) {
   return cart
 }
 
+type CartMutationLineContext = {
+  productRef: string
+  variantRef: string | null
+  availability: CartLineAvailabilityDTO & { purchasable: boolean }
+  catalog: CartCatalogEntry
+}
+
+type DtoFromCartOptions = {
+  reprice?: boolean
+  /** Dopo add/patch/remove: salta reprice Odoo e lookup stock su tutte le righe. */
+  fastMutation?: boolean | CartMutationLineContext
+}
+
+const OPTIMISTIC_LINE_AVAILABILITY: CartLineAvailabilityDTO & { purchasable: boolean } = {
+  state: 'available',
+  stockQty: null,
+  effectiveLeadDays: null,
+  warning: null,
+  purchasable: true,
+}
+
+function buildMutationAvailabilityLookup(
+  items: Array<{ productRef: string; variantRef: string | null }>,
+  mutation?: { key: string; availability: CartLineAvailabilityDTO & { purchasable: boolean } },
+): Map<string, CartLineAvailabilityDTO & { purchasable: boolean }> {
+  const lookup = new Map<string, CartLineAvailabilityDTO & { purchasable: boolean }>()
+  for (const line of items) {
+    const key = `${line.productRef}:${line.variantRef ?? ''}`
+    lookup.set(
+      key,
+      mutation?.key === key ? mutation.availability : OPTIMISTIC_LINE_AVAILABILITY,
+    )
+  }
+  return lookup
+}
+
+async function persistCartTotalsEstimate(
+  cartId: string,
+  items: Array<{ quantity: number; clientUnitPriceEstimate: number | null }>,
+  pricing: PricingContext,
+  shipCountry: string,
+  shippingCents: number | null,
+) {
+  const subtotal = subtotalCentsFromCartItems(items)
+  if (subtotal == null) return
+  const taxBreakdown = await taxService.estimateForCart(subtotal, shipCountry, {
+    customerSegment: pricing.segment,
+    isProfessional: pricing.segment === 'PROFESSIONAL',
+  })
+  const shipping = shippingCents ?? 0
+  await cartRepository.updateTotals(cartId, {
+    estimatedSubtotal: subtotal,
+    estimatedTax: taxBreakdown.taxCents,
+    estimatedShipping: shipping,
+    estimatedTotal: subtotal + taxBreakdown.taxCents + shipping,
+    lastPricedAt: new Date(),
+  })
+}
+
 async function availabilityMapForCart(
   req: Request,
   items: Array<{ productRef: string; variantRef: string | null; quantity: number }>,
@@ -122,7 +206,11 @@ async function availabilityMapForCart(
   )
 }
 
-async function syncCartPricing(req: Request, cartId: string): Promise<Set<string>> {
+async function syncCartPricing(
+  req: Request,
+  cartId: string,
+  pricing?: PricingContext,
+): Promise<Set<string>> {
   const changedIds = new Set<string>()
   const beforeCart = await cartRepository.getWithItems(cartId)
   const beforePrices = new Map(
@@ -137,8 +225,8 @@ async function syncCartPricing(req: Request, cartId: string): Promise<Set<string
       return changedIds
     }
   }
-  const pricing = await resolvePricingContext(req)
-  await repriceCartFromOdoo(req, cartId, pricing)
+  const resolvedPricing = pricing ?? (await resolvePricingContext(req))
+  await repriceCartFromOdoo(req, cartId, resolvedPricing)
 
   const afterCart = await cartRepository.getWithItems(cartId)
   for (const line of afterCart?.items ?? []) {
@@ -149,16 +237,32 @@ async function syncCartPricing(req: Request, cartId: string): Promise<Set<string
   return changedIds
 }
 
+const CART_REPRICE_TTL_MS = 30 * 60 * 1000
+
+/** Evita reprice Odoo se i prezzi in DB sono recenti e completi. */
+export function canUseCachedCartPricing(cart: Cart & { items: CartItem[] }): boolean {
+  if (cart.items.length === 0) return true
+  if (!cart.lastPricedAt) return false
+  if (Date.now() - cart.lastPricedAt.getTime() > CART_REPRICE_TTL_MS) return false
+  if (!cart.items.every((line) => line.clientUnitPriceEstimate != null)) return false
+
+  const oldestLineMs = Math.min(...cart.items.map((line) => line.updatedAt.getTime()))
+  if (Date.now() - oldestLineMs > CART_REPRICE_TTL_MS) return false
+
+  return true
+}
+
 async function dtoFromCartId(
   req: Request,
   cartId: string,
-  options?: { reprice?: boolean },
+  options?: DtoFromCartOptions,
 ): Promise<{ dto: Awaited<ReturnType<typeof mapCartToDTO>>; priceChangedIds: Set<string> }> {
   let priceChangedIds = new Set<string>()
   let full = await cartRepository.getWithItems(cartId)
   if (!full) {
     throw new AppError('CART_NOT_FOUND', 'Cart not found', 'Carrello non trovato.', 404, false)
   }
+  const pricing = await resolvePricingContext(req)
   let { cart: afterExpiry, expired } = await expireCartIfNeeded(full)
   full = afterExpiry
   if (
@@ -171,17 +275,57 @@ async function dtoFromCartId(
     if (refreshed) full = refreshed
   }
 
-  if (options?.reprice === true && full.items.length > 0) {
-    priceChangedIds = await syncCartPricing(req, full.id)
+  const catalogSeed = new Map<string, CartCatalogEntry>()
+  const mutationContext =
+    options?.fastMutation && typeof options.fastMutation === 'object'
+      ? options.fastMutation
+      : null
+  if (mutationContext) {
+    catalogSeed.set(mutationContext.productRef, mutationContext.catalog)
+  }
+
+  const shipCountry = normalizeCountryCode(
+    typeof req.query.country === 'string' ? req.query.country : 'IT',
+  )
+
+  const shouldReprice =
+    options?.reprice === true &&
+    !options?.fastMutation &&
+    full.items.length > 0 &&
+    !canUseCachedCartPricing(full)
+
+  const catalogLookupPromise = catalogMapForCart(full.items, req.correlationId, catalogSeed)
+  const availabilityLookupPromise = options?.fastMutation
+    ? Promise.resolve(
+        buildMutationAvailabilityLookup(
+          full.items,
+          mutationContext
+            ? {
+                key: `${mutationContext.productRef}:${mutationContext.variantRef ?? ''}`,
+                availability: mutationContext.availability,
+              }
+            : undefined,
+        ),
+      )
+    : availabilityMapForCart(req, full.items)
+  const repricePromise = shouldReprice
+    ? syncCartPricing(req, full.id, pricing)
+    : Promise.resolve(new Set<string>())
+
+  const [catalogLookup, availabilityLookup, repriceChangedIds] = await Promise.all([
+    catalogLookupPromise,
+    availabilityLookupPromise,
+    repricePromise,
+  ])
+  priceChangedIds = repriceChangedIds
+
+  if (shouldReprice) {
     const repriced = await cartRepository.getWithItems(cartId)
     if (repriced) full = repriced
   }
 
-  const [priceLookup, displayLookup, availabilityLookup] = await Promise.all([
-    priceMapForCart(full.items, req.correlationId),
-    displayMapForCart(full.items, req.correlationId),
-    availabilityMapForCart(req, full.items),
-  ])
+  const priceLookup = priceMapFromCatalog(catalogLookup)
+  const displayLookup = displayMapFromCatalog(catalogLookup)
   let purchasableSubtotal = 0
   for (const line of full.items) {
     const key = `${line.productRef}:${line.variantRef ?? ''}`
@@ -190,20 +334,34 @@ async function dtoFromCartId(
     const unit = line.clientUnitPriceEstimate ?? priceLookup.get(line.productRef) ?? null
     if (unit != null) purchasableSubtotal += unit * line.quantity
   }
-  const freeShippingHint =
-    full.items.length > 0 ? await shippingService.resolveHintForCart(purchasableSubtotal) : null
-
-  const pricing = await resolvePricingContext(req)
-  const shipCountry = normalizeCountryCode(
-    typeof req.query.country === 'string' ? req.query.country : 'IT',
-  )
-  const taxBreakdown =
+  const freeShippingHintPromise =
+    full.items.length > 0
+      ? shippingService.resolveHintForCart(purchasableSubtotal)
+      : Promise.resolve(null)
+  const taxBreakdownPromise =
     full.items.length === 0
-      ? null
-      : await taxService.estimateForCart(purchasableSubtotal, shipCountry, {
+      ? Promise.resolve(null)
+      : taxService.estimateForCart(purchasableSubtotal, shipCountry, {
           customerSegment: pricing.segment,
           isProfessional: pricing.segment === 'PROFESSIONAL',
         })
+
+  if (options?.fastMutation) {
+    await persistCartTotalsEstimate(
+      full.id,
+      full.items,
+      pricing,
+      shipCountry,
+      full.estimatedShipping,
+    )
+    const refreshed = await cartRepository.getWithItems(cartId)
+    if (refreshed) full = refreshed
+  }
+
+  const [freeShippingHint, taxBreakdown] = await Promise.all([
+    freeShippingHintPromise,
+    taxBreakdownPromise,
+  ])
 
   const dto = mapCartToDTO(
     full,
@@ -216,6 +374,89 @@ async function dtoFromCartId(
     taxBreakdown,
   )
   return { dto, priceChangedIds }
+}
+
+async function buildFastMutationCartDto(
+  req: Request,
+  cartId: string,
+  pricing: PricingContext,
+  mutation: CartMutationLineContext,
+): Promise<CartDTO> {
+  let full = await cartRepository.getWithItems(cartId)
+  if (!full) {
+    throw new AppError('CART_NOT_FOUND', 'Cart not found', 'Carrello non trovato.', 404, false)
+  }
+
+  const catalogLookup = new Map<string, CartCatalogEntry>([
+    [mutation.productRef, mutation.catalog],
+  ])
+  const missingRefs = [
+    ...new Set(
+      full.items
+        .map((line) => line.productRef)
+        .filter((ref) => !catalogLookup.has(ref)),
+    ),
+  ]
+  if (missingRefs.length > 0) {
+    const extra = await catalogMapForCart(
+      full.items.filter((line) => missingRefs.includes(line.productRef)),
+      req.correlationId,
+    )
+    for (const [ref, entry] of extra) catalogLookup.set(ref, entry)
+  }
+
+  const availabilityLookup = buildMutationAvailabilityLookup(full.items, {
+    key: `${mutation.productRef}:${mutation.variantRef ?? ''}`,
+    availability: mutation.availability,
+  })
+  const priceLookup = priceMapFromCatalog(catalogLookup)
+  const displayLookup = displayMapFromCatalog(catalogLookup)
+
+  let purchasableSubtotal = 0
+  for (const line of full.items) {
+    const key = `${line.productRef}:${line.variantRef ?? ''}`
+    const avail = availabilityLookup.get(key)
+    if (!avail?.purchasable) continue
+    const unit = line.clientUnitPriceEstimate ?? priceLookup.get(line.productRef) ?? null
+    if (unit != null) purchasableSubtotal += unit * line.quantity
+  }
+
+  const shipCountry = normalizeCountryCode(
+    typeof req.query.country === 'string' ? req.query.country : 'IT',
+  )
+
+  await persistCartTotalsEstimate(
+    full.id,
+    full.items,
+    pricing,
+    shipCountry,
+    full.estimatedShipping,
+  )
+  const refreshed = await cartRepository.getWithItems(cartId)
+  if (refreshed) full = refreshed
+
+  const [freeShippingHint, taxBreakdown] = await Promise.all([
+    full.items.length > 0
+      ? shippingService.resolveHintForCart(purchasableSubtotal)
+      : Promise.resolve(null),
+    full.items.length === 0
+      ? Promise.resolve(null)
+      : taxService.estimateForCart(purchasableSubtotal, shipCountry, {
+          customerSegment: pricing.segment,
+          isProfessional: pricing.segment === 'PROFESSIONAL',
+        }),
+  ])
+
+  return mapCartToDTO(
+    full,
+    priceLookup,
+    displayLookup,
+    false,
+    freeShippingHint,
+    availabilityLookup,
+    new Set(),
+    taxBreakdown,
+  )
 }
 
 async function syncReservationAfterItemsChange(cartId: string) {
@@ -247,6 +488,125 @@ function lineUnitPriceCents(product: ProductDetailDTO, variantRef: string | null
   const variant = selectedVariant(product, variantRef)
   if (variant?.priceCents != null && variant.priceCents > 0) return variant.priceCents
   return product.priceCents
+}
+
+function availabilityFromProduct(
+  product: ProductDetailDTO,
+  variantRef: string | null,
+  quantity: number,
+): CartLineAvailabilityDTO & { purchasable: boolean } {
+  const variant = selectedVariant(product, variantRef)
+  const availabilityData = variant?.availability ?? product.availability
+  if (!availabilityData) return OPTIMISTIC_LINE_AVAILABILITY
+
+  const resolved = resolveVariantAvailability(
+    {
+      stockQty: availabilityData.qtyAvailable,
+      restockDate: availabilityData.restockDate,
+      leadTimeDays: availabilityData.customerLeadTimeDays,
+      saleOk: !availabilityData.isUnrecoverable,
+      orderable: availabilityData.isOrderable,
+    },
+    quantity,
+  )
+  return variantAvailabilityToCartLine(resolved)
+}
+
+/** Prodotto minimo da ref Odoo + hint client: evita round-trip Arfly su add-to-cart. */
+function productDetailFromOdooHint(
+  productRef: string,
+  variantRef: string | null | undefined,
+  hint?: CartAddProductHint | null,
+): ProductDetailDTO | null {
+  const odooTemplateId = hint?.odooTemplateId ?? parseOdooTemplateId(productRef)
+  if (odooTemplateId == null) return null
+
+  const odooVariantId = hint?.odooVariantId ?? parseOdooVariantId(variantRef ?? null)
+  const slug = hint?.slug ?? productRef
+  const name = hint?.name ?? slug
+  const imageUrl = hint?.imageUrl ?? null
+  const priceCents = hint?.unitPriceCents ?? 0
+
+  const variants =
+    odooVariantId != null
+      ? [
+          {
+            ref: formatOdooVariantRef(odooVariantId),
+            label: name,
+            imageUrl,
+            attributes: [],
+            odooVariantId,
+            priceCents: hint?.unitPriceCents,
+          },
+        ]
+      : []
+
+  return {
+    slug,
+    locale: 'IT',
+    name,
+    shortDescription: null,
+    priceCents,
+    priceDisplayMode: 'ex_vat',
+    currency: 'EUR',
+    imageUrl,
+    categorySlug: null,
+    inStock: true,
+    longDescription: null,
+    sku: null,
+    images: imageUrl ? [imageUrl] : [],
+    odooTemplateId,
+    variants,
+    seo: {
+      metaTitle: null,
+      metaDescription: null,
+      canonical: null,
+      noindex: false,
+    },
+    alternates: [],
+  }
+}
+
+/** Stock + prezzo Odoo solo per la variante aggiunta (non tutte le varianti del prodotto). */
+async function resolveProductForCartLine(
+  ctx: OdooCallContext,
+  productRef: string,
+  variantRef: string | null | undefined,
+  quantity: number,
+  pricing: PricingContext,
+  productHint?: CartAddProductHint | null,
+) {
+  const product =
+    productDetailFromOdooHint(productRef, variantRef, productHint) ??
+    (await resolveCatalogProduct(ctx, productRef, 'IT'))
+  if (!product) return null
+
+  const resolvedVariantRef = resolveVariantRef(product, variantRef)
+  const storedRef = storedProductRef(product)
+  const [withStock, unitFromOdoo] = await Promise.all([
+    enrichCartLineProduct(ctx, product, resolvedVariantRef, quantity),
+    unitPriceCentsFromOdoo(ctx, storedRef, resolvedVariantRef, pricing),
+  ])
+  const unitPriceCents = unitFromOdoo ?? lineUnitPriceCents(withStock, resolvedVariantRef)
+
+  return {
+    product: withStock,
+    productRef: storedRef,
+    variantRef: resolvedVariantRef,
+    unitPriceCents,
+  }
+}
+
+function catalogEntryFromProduct(
+  product: ProductDetailDTO,
+  unitPriceCents: number,
+): CartCatalogEntry {
+  return {
+    priceCents: unitPriceCents,
+    slug: product.slug,
+    name: product.name,
+    imageUrl: product.imageUrl,
+  }
 }
 
 function catalogLineInStock(product: ProductDetailDTO, variantRef: string | null): boolean {
@@ -338,55 +698,90 @@ export const cartService = {
 
   async addItem(
     req: Request,
-    input: { productRef: string; variantRef?: string | null; quantity: number },
+    input: {
+      productRef: string
+      variantRef?: string | null
+      quantity: number
+      productHint?: CartAddProductHint
+    },
   ) {
+    const pricing = await resolvePricingContext(req)
     const ctx: OdooCallContext = { correlationId: req.correlationId, req }
-    const product = await resolveCatalogProductEnriched(ctx, input.productRef, 'IT', input.quantity)
-    if (!product) {
+    const line = await resolveProductForCartLine(
+      ctx,
+      input.productRef,
+      input.variantRef,
+      input.quantity,
+      pricing,
+      input.productHint,
+    )
+    if (!line) {
       throw new AppError('PRODUCT_NOT_FOUND', 'Unknown product', 'Prodotto non disponibile.', 404, false)
     }
     const cart = await resolveOrCreateCart(req)
-    const variantRef = resolveVariantRef(product, input.variantRef)
-    const productRef = storedProductRef(product)
-    const unitPriceCents = lineUnitPriceCents(product, variantRef)
     const existing = await prisma.cartItem.findFirst({
-      where: { cartId: cart.id, productRef, variantRef },
+      where: { cartId: cart.id, productRef: line.productRef, variantRef: line.variantRef },
     })
     const nextQuantity = (existing?.quantity ?? 0) + input.quantity
-    await assertLineStock(req, product, variantRef, nextQuantity)
+    await assertLineStock(req, line.product, line.variantRef, nextQuantity)
     if (existing) {
       await cartRepository.updateItem(existing.id, {
         quantity: nextQuantity,
-        clientUnitPriceEstimate: unitPriceCents,
+        clientUnitPriceEstimate: line.unitPriceCents,
       })
     } else {
       await cartRepository.addItem({
         cart: { connect: { id: cart.id } },
-        productRef,
-        variantRef,
+        productRef: line.productRef,
+        variantRef: line.variantRef,
         quantity: input.quantity,
-        clientUnitPriceEstimate: unitPriceCents,
+        clientUnitPriceEstimate: line.unitPriceCents,
       })
     }
     await syncReservationAfterItemsChange(cart.id)
-    const { dto } = await dtoFromCartId(req, cart.id, { reprice: true })
-    return dto
+    const availability = availabilityFromProduct(line.product, line.variantRef, nextQuantity)
+    return buildFastMutationCartDto(req, cart.id, pricing, {
+      productRef: line.productRef,
+      variantRef: line.variantRef,
+      availability,
+      catalog: catalogEntryFromProduct(line.product, line.unitPriceCents),
+    })
   },
 
   async patchItem(req: Request, itemId: string, quantity: number) {
+    const pricing = await resolvePricingContext(req)
     const cart = await resolveOrCreateCart(req)
     const item = await cartRepository.findItem(cart.id, itemId)
     if (!item) {
       throw new AppError('LINE_NOT_FOUND', 'Line not found', 'Riga non trovata.', 404, false)
     }
     const ctx: OdooCallContext = { correlationId: req.correlationId, req }
-    const product = await resolveCatalogProductEnriched(ctx, item.productRef, 'IT', quantity)
-    if (product) {
-      await assertLineStock(req, product, item.variantRef, quantity)
+    const line = await resolveProductForCartLine(
+      ctx,
+      item.productRef,
+      item.variantRef,
+      quantity,
+      pricing,
+    )
+    if (line) {
+      await assertLineStock(req, line.product, line.variantRef, quantity)
+      await cartRepository.updateItem(itemId, {
+        quantity,
+        clientUnitPriceEstimate: line.unitPriceCents,
+      })
+    } else {
+      await cartRepository.updateItem(itemId, { quantity })
     }
-    await cartRepository.updateItem(itemId, { quantity })
     await syncReservationAfterItemsChange(cart.id)
-    const { dto } = await dtoFromCartId(req, cart.id, { reprice: true })
+    if (line) {
+      return buildFastMutationCartDto(req, cart.id, pricing, {
+        productRef: line.productRef,
+        variantRef: line.variantRef,
+        availability: availabilityFromProduct(line.product, line.variantRef, quantity),
+        catalog: catalogEntryFromProduct(line.product, line.unitPriceCents),
+      })
+    }
+    const { dto } = await dtoFromCartId(req, cart.id, { reprice: false, fastMutation: true })
     return dto
   },
 
@@ -398,7 +793,7 @@ export const cartService = {
     }
     await cartRepository.deleteItem(itemId)
     await syncReservationAfterItemsChange(cart.id)
-    const { dto } = await dtoFromCartId(req, cart.id, { reprice: true })
+    const { dto } = await dtoFromCartId(req, cart.id, { reprice: false, fastMutation: true })
     return dto
   },
 
@@ -562,7 +957,8 @@ export const cartService = {
       return { ok: true, insufficient: [] }
     }
 
-    const display = await displayMapForCart(full.items, req.correlationId)
+    const catalog = await catalogMapForCart(full.items, req.correlationId)
+    const display = displayMapFromCatalog(catalog)
     const availabilityLookup = await availabilityMapForCart(req, full.items)
     return {
       ok: false,

@@ -6,6 +6,7 @@ import { notify } from '@/lib/notify'
 import { useLocale } from '@/context/locale-context'
 import { authStore } from '@/features/auth'
 import { addItem } from '@/features/cart'
+import { buildCartAddHintFromCard } from '@/features/cart/cart-add-hint'
 import {
   wishlistStore,
   fetchWishlist,
@@ -62,7 +63,9 @@ export function WishlistPage() {
     let failed = 0
     for (const entry of availableEntries) {
       try {
-        await addItem(entry.product.slug, 1, entry.variantRef ?? undefined)
+        await addItem(entry.product.slug, 1, entry.variantRef ?? undefined, {
+          productHint: buildCartAddHintFromCard(entry.product, entry.variantRef),
+        })
         await removeWishlistItem(entry.itemId)
         added += 1
       } catch {

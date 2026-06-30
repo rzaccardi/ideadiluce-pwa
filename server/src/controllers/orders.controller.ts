@@ -35,7 +35,9 @@ export const ordersController = {
   }),
 
   thankYou: asyncHandler(async (req: Request, res: Response) => {
-    const data = await paymentsService.thankYou(req, req.params.id)
+    const stripeSessionId =
+      typeof req.query.session_id === 'string' ? req.query.session_id : undefined
+    const data = await paymentsService.thankYou(req, req.params.id, { stripeSessionId })
     res.json(ok(data))
   }),
 

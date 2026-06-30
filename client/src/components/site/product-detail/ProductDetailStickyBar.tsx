@@ -1,6 +1,7 @@
 'use client'
 
 import { addItem } from '@/features/cart'
+import { buildCartAddHintFromDetail } from '@/features/cart/cart-add-hint'
 import { formatMoney } from '@/lib/format'
 import type { ProductAvailabilityStatus } from '@/lib/product-availability'
 import type { ProductDetailDTO } from '@/types/dto'
@@ -150,9 +151,12 @@ export function createAddToCartHandler(input: {
     if (input.setIsAddingToCart) {
       input.setIsAddingToCart(true)
       void addItem(input.product.slug, input.quantity, input.variantRef, {
-        productName: input.product.name,
-        imageUrl: input.galleryImages[0] ?? input.product.imageUrl,
-        quantity: input.quantity,
+        feedback: {
+          productName: input.product.name,
+          imageUrl: input.galleryImages[0] ?? input.product.imageUrl,
+          quantity: input.quantity,
+        },
+        productHint: buildCartAddHintFromDetail(input.product, input.variantRef),
       }).finally(() => input.setIsAddingToCart(false))
     }
   }

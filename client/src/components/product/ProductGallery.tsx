@@ -1,4 +1,8 @@
+'use client'
+
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ViewportPortal } from '@/components/ViewportPortal'
+import { layers } from '@/lib/layering'
 import { cn } from '@/utils/cn'
 
 type Props = {
@@ -103,9 +107,12 @@ export function ProductGallery({ images, alt, activeUrl }: Props) {
         ) : null}
       </div>
 
-      {lightboxOpen ? (
+      <ViewportPortal open={lightboxOpen} lockScroll>
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          className={cn(
+            'fixed inset-0 flex h-[100dvh] w-screen items-center justify-center bg-black/80 p-4',
+            layers.dialog,
+          )}
           role="dialog"
           aria-modal="true"
           aria-label="Galleria prodotto"
@@ -151,7 +158,7 @@ export function ProductGallery({ images, alt, activeUrl }: Props) {
             onClick={(e) => e.stopPropagation()}
           />
         </div>
-      ) : null}
+      </ViewportPortal>
     </>
   )
 }

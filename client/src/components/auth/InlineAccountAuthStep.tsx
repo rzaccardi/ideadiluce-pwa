@@ -107,6 +107,7 @@ export function InlineAccountAuthStep({
   const [loginEmail, setLoginEmail] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
   const [typeChoice, setTypeChoice] = useState<'retail' | 'business'>('retail')
+  const [postAuthPending, setPostAuthPending] = useState(false)
 
   useEffect(() => {
     if (email && !loginEmail) setLoginEmail(email)
@@ -173,14 +174,19 @@ export function InlineAccountAuthStep({
         phone: phone.trim() || undefined,
         customerSegment: collectCustomerTypeOnRegister ? segment : undefined,
       })
-      await onAuthSuccess?.({
-        mode: 'register',
-        email: trimmedEmail,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        phone: phone.trim() || undefined,
-        customerSegment: collectCustomerTypeOnRegister ? segment : undefined,
-      })
+      setPostAuthPending(true)
+      try {
+        await onAuthSuccess?.({
+          mode: 'register',
+          email: trimmedEmail,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          phone: phone.trim() || undefined,
+          customerSegment: collectCustomerTypeOnRegister ? segment : undefined,
+        })
+      } finally {
+        setPostAuthPending(false)
+      }
     } catch (err) {
       if (err instanceof ApiRequestError && err.code === 'EMAIL_TAKEN') {
         setLoginEmail(trimmedEmail)
@@ -204,10 +210,15 @@ export function InlineAccountAuthStep({
     const trimmedEmail = loginEmail.trim()
     try {
       await checkoutLogin(trimmedEmail, loginPassword)
-      await onAuthSuccess?.({
-        mode: 'login',
-        email: trimmedEmail,
-      })
+      setPostAuthPending(true)
+      try {
+        await onAuthSuccess?.({
+          mode: 'login',
+          email: trimmedEmail,
+        })
+      } finally {
+        setPostAuthPending(false)
+      }
     } catch (err) {
       setLoginError(
         err instanceof ApiRequestError ? (err.userMessage ?? err.message) : t('checkout.account.loginError'),
@@ -220,6 +231,18 @@ export function InlineAccountAuthStep({
   if (auth.isAuthenticated && auth.me) {
     const displayName =
       [auth.me.firstName, auth.me.lastName].filter(Boolean).join(' ') || auth.me.email
+
+    if (postAuthPending || authenticatedContinueLoading) {
+      return (
+        <section className="space-y-4">
+          <CheckoutActionRow>
+            <StripePayButton className="w-full" loading disabled>
+              {authenticatedContinueLabel ?? t('checkout.continue')}
+            </StripePayButton>
+          </CheckoutActionRow>
+        </section>
+      )
+    }
 
     if (!showAuthenticatedContinue) {
       return null

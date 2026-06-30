@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from '@/lib/navigation'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { useLocalePath } from '@/hooks/use-locale-path'
@@ -23,6 +23,7 @@ import {
 } from './constants'
 import { CartLineThumb } from '@/components/cart/CartLineThumb'
 import { CartRemoveButton } from '@/components/cart/CartRemoveButton'
+import { ViewportPortal } from '@/components/ViewportPortal'
 import { useI18n } from '@/hooks/use-i18n'
 
 type CartLike = Omit<CartDTO, 'items' | 'warnings'> & {
@@ -207,26 +208,17 @@ export function CheckoutOrderSummary({
   const [mobileOpen, setMobileOpen] = useState(false)
   const total = cartTotalCents(cart, selectedShipping?.amountCents, taxBreakdown)
 
-  useEffect(() => {
-    if (!mobileOnly || !mobileOpen) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
-  }, [mobileOnly, mobileOpen])
-
   if (mobileOnly) {
     return (
       <>
-        {mobileOpen ? (
+        <ViewportPortal open={mobileOpen} lockScroll>
           <button
             type="button"
-            className="fixed inset-0 z-20 bg-[rgba(22,19,13,0.35)] lg:hidden"
+            className="fixed inset-0 z-20 h-[100dvh] w-screen bg-[rgba(22,19,13,0.35)] lg:hidden"
             onClick={() => setMobileOpen(false)}
             aria-label={t('checkout.summary.hideOrderSummary')}
           />
-        ) : null}
+        </ViewportPortal>
         <div className={checkoutMobileSummaryClass}>
           <button
             type="button"

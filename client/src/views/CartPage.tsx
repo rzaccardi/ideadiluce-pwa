@@ -2,13 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useSnapshot } from 'valtio/react'
-import {
-  cartStore,
-  fetchCart,
-  fetchRecommendations,
-  useCartReservationSync,
-  useCartStockPolling,
-} from '@/features/cart'
+import { cartStore, fetchCart, fetchRecommendations } from '@/features/cart'
+import { shouldRepriceCartOnLoad } from '@/features/cart/cart-reprice.policy'
 import { CartPageView } from '@/components/cart/CartPageView'
 import { CartPageSkeleton } from '@/components/cart/CartPageSkeleton'
 import { PageLoadTransition } from '@/components/motion'
@@ -22,12 +17,12 @@ export function CartPage() {
   const recommendationKey =
     cart.cart?.items.map((line) => `${line.productRef}:${line.quantity}`).sort().join('|') ?? ''
 
-  useCartStockPolling()
-  useCartReservationSync()
-
   useEffect(() => {
     let active = true
-    void fetchCart({ force: true, reprice: true }).finally(() => {
+    const reprice = shouldRepriceCartOnLoad(cartStore.cart, {
+      reservationExpiredNotice: cartStore.reservationExpiredNotice,
+    })
+    void fetchCart({ force: true, reprice }).finally(() => {
       if (active) setIsPageReady(true)
     })
     return () => {

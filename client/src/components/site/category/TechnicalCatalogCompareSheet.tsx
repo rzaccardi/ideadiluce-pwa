@@ -1,7 +1,9 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Link } from '@/lib/navigation'
+import { ViewportPortal } from '@/components/ViewportPortal'
+import { layers } from '@/lib/layering'
 import type { ProductCardDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
 import { formatTechnicalProductRefLine } from '@/lib/technical-product-ref'
@@ -17,6 +19,14 @@ type Props = {
 }
 
 export function TechnicalCatalogCompareSheet({ products, lp, onClose, className }: Props) {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
   const rows = useMemo(
     () =>
       products.map((product) => ({
@@ -43,12 +53,17 @@ export function TechnicalCatalogCompareSheet({ products, lp, onClose, className 
   }, [rows])
 
   return (
-    <div
-      className={cn('fixed inset-0 z-50 flex items-end justify-center sm:items-center', className)}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="technical-compare-title"
-    >
+    <ViewportPortal open lockScroll>
+      <div
+        className={cn(
+          'fixed inset-0 flex h-[100dvh] w-screen items-end justify-center sm:items-center',
+          layers.dialog,
+          className,
+        )}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="technical-compare-title"
+      >
       <button
         type="button"
         className="absolute inset-0 bg-black/40"
@@ -120,6 +135,7 @@ export function TechnicalCatalogCompareSheet({ products, lp, onClose, className 
           </table>
         </div>
       </div>
-    </div>
+      </div>
+    </ViewportPortal>
   )
 }

@@ -7,6 +7,7 @@ import { useLocale } from '@/context/locale-context'
 import { useI18n } from '@/hooks/use-i18n'
 import type { ProductCardDTO } from '@/types/dto'
 import { addItem, cartStore, getProductCartQuantity } from '@/features/cart'
+import { buildCartAddHintFromCard } from '@/features/cart/cart-add-hint'
 import { useProductCardStores } from '@/features/product/useProductCardStores'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { WishlistHeartButton } from '@/components/wishlist/WishlistHeartButton'
@@ -72,8 +73,11 @@ export function ProductCard({ product, className }: Props) {
     setPendingAction('cart')
     try {
       await addItem(product.slug, 1, undefined, {
-        productName: product.name,
-        imageUrl: product.imageUrl,
+        feedback: {
+          productName: product.name,
+          imageUrl: product.imageUrl,
+        },
+        productHint: buildCartAddHintFromCard(product),
       })
     } finally {
       setPendingAction(null)

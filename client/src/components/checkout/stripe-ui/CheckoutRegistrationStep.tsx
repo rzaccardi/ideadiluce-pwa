@@ -46,10 +46,6 @@ export function CheckoutRegistrationStep() {
       onEmailChange={updateCheckoutEmail}
       registerContinueLabel={t('checkout.account.createAndContinue')}
       onAuthSuccess={handleAuthSuccess}
-      showAuthenticatedContinue
-      authenticatedContinueLabel={t('checkout.continue')}
-      authenticatedContinueLoading={checkout.initLoadingPhase != null || checkout.addressPrefillLoading}
-      onAuthenticatedContinue={() => void prepareCheckoutAfterAuth()}
       logoutScope="checkout"
       collectCustomerTypeOnRegister
     />

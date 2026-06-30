@@ -47,6 +47,78 @@ function resolveVariantId(variant: ProductVariantDTO): number | null {
   return parseOdooVariantId(variant.ref)
 }
 
+function pickLineVariant(
+  product: ProductDetailDTO,
+  variantRef: string | null,
+): ProductVariantDTO | undefined {
+  return (
+    product.variants.find((variant) => variant.ref === variantRef) ??
+    product.variants.find((variant) => String(variant.odooVariantId) === variantRef) ??
+    product.variants[0]
+  )
+}
+
+function resolveLineVariantTarget(
+  product: ProductDetailDTO,
+  variantRef: string | null,
+): { variantId: number | null; templateId: number | null } {
+  const variant = pickLineVariant(product, variantRef)
+  const fromVariant = variant ? resolveVariantId(variant) : null
+  if (fromVariant != null) return { variantId: fromVariant, templateId: null }
+
+  const parsedVariant = parseOdooVariantId(variantRef)
+  if (parsedVariant != null) return { variantId: parsedVariant, templateId: null }
+
+  if (product.odooTemplateId != null && product.variants.length === 0) {
+    return { variantId: null, templateId: product.odooTemplateId }
+  }
+
+  return { variantId: null, templateId: null }
+}
+
+function availabilityForCartLine(
+  product: ProductDetailDTO,
+  line: { variantRef: string | null; quantity: number },
+  stockMap: Map<number, VariantStockSnapshot>,
+  variantByTemplate: Map<number, number>,
+): CartLineAvailabilityDTO & { purchasable: boolean } {
+  const variant = pickLineVariant(product, line.variantRef)
+  const { variantId, templateId } = resolveLineVariantTarget(product, line.variantRef)
+  const resolvedVariantId =
+    variantId ?? (templateId != null ? (variantByTemplate.get(templateId) ?? null) : null)
+
+  let availabilityData = variant?.availability ?? product.availability
+  if (shouldEnrichFromOdoo() && resolvedVariantId != null) {
+    const snapshot = stockMap.get(resolvedVariantId) ?? defaultStockSnapshot()
+    availabilityData = mergeAvailabilityData(
+      availabilityData,
+      snapshotToAvailabilityData(snapshot, line.quantity),
+    )
+  }
+
+  if (!availabilityData) {
+    return {
+      state: 'available',
+      stockQty: variant?.stockQty ?? null,
+      effectiveLeadDays: null,
+      warning: null,
+      purchasable: true,
+    }
+  }
+
+  const resolved = resolveVariantAvailability(
+    {
+      stockQty: availabilityData.qtyAvailable,
+      restockDate: availabilityData.restockDate,
+      leadTimeDays: availabilityData.customerLeadTimeDays,
+      saleOk: !availabilityData.isUnrecoverable,
+      orderable: availabilityData.isOrderable,
+    },
+    line.quantity,
+  )
+  return variantAvailabilityToCartLine(resolved)
+}
+
 function applyAvailabilityToVariant(
   variant: ProductVariantDTO,
   snapshot: VariantStockSnapshot,
@@ -199,55 +271,105 @@ export async function buildCartAvailabilityLookup(
     ({ key }, index, arr) => arr.findIndex((x) => x.key === key) === index,
   )
 
-  await Promise.all(
-    uniqueLineKeys.map(async ({ line, key }) => {
-      if (lookup.has(key)) return
+  const templateIdsForLookup = new Set<number>()
+  const variantIdsToFetch = new Set<number>()
 
-      const product = productByRef.get(line.productRef)
-      if (!product) {
-        lookup.set(key, {
-          state: 'out_of_stock',
-          stockQty: null,
-          effectiveLeadDays: null,
-          warning: 'Prodotto non più disponibile.',
-          purchasable: false,
-        })
-        return
-      }
+  for (const { line } of uniqueLineKeys) {
+    const product = productByRef.get(line.productRef)
+    if (!product) continue
+    const { variantId, templateId } = resolveLineVariantTarget(product, line.variantRef)
+    if (variantId != null) variantIdsToFetch.add(variantId)
+    else if (templateId != null) templateIdsForLookup.add(templateId)
+  }
 
-      const enriched = await enrichProductDetailWithStock(ctx, product, line.quantity)
-      const variant =
-        enriched.variants.find((v) => v.ref === line.variantRef) ??
-        enriched.variants.find((v) => String(v.odooVariantId) === line.variantRef) ??
-        enriched.variants[0]
-      const availabilityData = variant?.availability ?? enriched.availability
+  const variantByTemplate =
+    shouldEnrichFromOdoo() && templateIdsForLookup.size > 0
+      ? await fetchFirstVariantIdsForTemplates(ctx, [...templateIdsForLookup])
+      : new Map<number, number>()
 
-      if (!availabilityData) {
-        lookup.set(key, {
-          state: 'available',
-          stockQty: variant?.stockQty ?? null,
-          effectiveLeadDays: null,
-          warning: null,
-          purchasable: true,
-        })
-        return
-      }
+  for (const variantId of variantByTemplate.values()) {
+    variantIdsToFetch.add(variantId)
+  }
 
-      const resolved = resolveVariantAvailability(
-        {
-          stockQty: availabilityData.qtyAvailable,
-          restockDate: availabilityData.restockDate,
-          leadTimeDays: availabilityData.customerLeadTimeDays,
-          saleOk: !availabilityData.isUnrecoverable,
-          orderable: availabilityData.isOrderable,
-        },
-        line.quantity,
-      )
-      lookup.set(key, variantAvailabilityToCartLine(resolved))
-    }),
-  )
+  const stockMap =
+    shouldEnrichFromOdoo() && variantIdsToFetch.size > 0
+      ? await fetchVariantStockByIds(ctx, [...variantIdsToFetch])
+      : new Map<number, VariantStockSnapshot>()
+
+  for (const { line, key } of uniqueLineKeys) {
+    if (lookup.has(key)) continue
+
+    const product = productByRef.get(line.productRef)
+    if (!product) {
+      lookup.set(key, {
+        state: 'out_of_stock',
+        stockQty: null,
+        effectiveLeadDays: null,
+        warning: 'Prodotto non più disponibile.',
+        purchasable: false,
+      })
+      continue
+    }
+
+    lookup.set(key, availabilityForCartLine(product, line, stockMap, variantByTemplate))
+  }
 
   return lookup
+}
+
+/** Stock Odoo solo per la variante della riga (add/patch carrello), non tutte le varianti. */
+export async function enrichCartLineProduct(
+  ctx: OdooCallContext,
+  product: ProductDetailDTO,
+  variantRef: string | null,
+  quantity: number,
+): Promise<ProductDetailDTO> {
+  if (!shouldEnrichFromOdoo()) {
+    return {
+      ...product,
+      inStock: deriveInStockFromAvailability(product.availability) && product.inStock !== false,
+    }
+  }
+
+  const { variantId, templateId } = resolveLineVariantTarget(product, variantRef)
+  const variantByTemplate =
+    templateId != null
+      ? await fetchFirstVariantIdsForTemplates(ctx, [templateId])
+      : new Map<number, number>()
+  const resolvedVariantId =
+    variantId ?? (templateId != null ? (variantByTemplate.get(templateId) ?? null) : null)
+
+  if (resolvedVariantId == null) return product
+
+  const stockMap = await fetchVariantStockByIds(ctx, [resolvedVariantId])
+  const snapshot = stockMap.get(resolvedVariantId) ?? defaultStockSnapshot()
+  const targetVariant = pickLineVariant(product, variantRef)
+
+  if (targetVariant) {
+    const variants = product.variants.map((variant) =>
+      variant.ref === targetVariant.ref ||
+      String(variant.odooVariantId) === String(targetVariant.odooVariantId)
+        ? applyAvailabilityToVariant(variant, snapshot, quantity)
+        : variant,
+    )
+    const availability = primaryAvailability(variants, product.availability)
+    return {
+      ...product,
+      variants,
+      availability,
+      inStock: productInStockFromVariants(variants),
+    }
+  }
+
+  const availability = mergeAvailabilityData(
+    product.availability,
+    snapshotToAvailabilityData(snapshot, quantity),
+  )
+  return {
+    ...product,
+    availability,
+    inStock: deriveInStockFromAvailability(availability),
+  }
 }
 
 /** Verifica acquistabilità righe (Arfly + Odoo arricchiti). Consente qty > stock se ordinabile. */

@@ -1,6 +1,18 @@
-import type { PwaOrder } from '@prisma/client'
+import type { PwaOrder, PwaOrderStatus } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { ACCOUNT_VISIBLE_PWA_ORDER_STATUSES } from './orders.constants.js'
+
+/** Ordini collegabili al login: checkout in corso + ordini account. */
+const LINKABLE_PWA_ORDER_STATUSES: PwaOrderStatus[] = [
+  'CART_CREATED',
+  'DRAFT',
+  'CHECKOUT_STARTED',
+  'CHECKOUT_LOCKED',
+  'PAYMENT_STARTED',
+  'PAYMENT_PENDING',
+  'PAYMENT_FAILED',
+  ...ACCOUNT_VISIBLE_PWA_ORDER_STATUSES,
+]
 
 function normalizeEmail(email: string) {
   return email.toLowerCase().trim()
@@ -55,7 +67,7 @@ export async function linkOrdersToUser(params: {
 
   await prisma.pwaOrder.updateMany({
     where: {
-      orderStatus: { in: ACCOUNT_VISIBLE_PWA_ORDER_STATUSES },
+      orderStatus: { in: LINKABLE_PWA_ORDER_STATUSES },
       OR: [{ email: emailLower, userId: null }, ...sessionFilters],
     },
     data: { userId: params.userId },
@@ -64,7 +76,7 @@ export async function linkOrdersToUser(params: {
   const owned = await prisma.pwaOrder.findMany({
     where: {
       userId: params.userId,
-      orderStatus: { in: ACCOUNT_VISIBLE_PWA_ORDER_STATUSES },
+      orderStatus: { in: LINKABLE_PWA_ORDER_STATUSES },
     },
   })
 

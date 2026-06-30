@@ -1,8 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import { Link } from '@/lib/navigation'
 import type { CartDTO, CartItemDTO, CartStockInsufficientDTO, ProductCardDTO } from '@/types/dto'
 import { clearCart } from '@/features/cart'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { CartCompatibilitySupport } from '@/components/cart/CartCompatibilitySupport'
 import { CartFreeShippingBanner } from '@/components/cart/CartFreeShippingBanner'
 import { CartHeroSection } from '@/components/cart/CartHeroSection'
@@ -39,7 +41,21 @@ type Props = {
 export function CartPageView({ state }: Props) {
   const lp = useLocalePath()
   const { t } = useI18n()
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
+  const [clearPending, setClearPending] = useState(false)
   const cart = state.cart
+
+  async function confirmClearCart() {
+    setClearPending(true)
+    try {
+      await clearCart()
+      setClearConfirmOpen(false)
+    } catch {
+      // Errore mostrato da ToastOnError
+    } finally {
+      setClearPending(false)
+    }
+  }
 
   if (!cart || cart.items.length === 0) {
     return (
@@ -90,12 +106,25 @@ export function CartPageView({ state }: Props) {
               <button
                 type="button"
                 disabled={state.isLoading}
-                onClick={() => void clearCart()}
+                onClick={() => setClearConfirmOpen(true)}
                 className="text-sm font-medium text-idl-muted transition hover:text-idl-graphite disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {t('cart.clear')}
               </button>
             </div>
+
+            <ConfirmDialog
+              open={clearConfirmOpen}
+              title={t('cart.clearConfirmTitle')}
+              description={t('cart.clearConfirmDescription')}
+              confirmLabel={t('cart.clear')}
+              cancelLabel={t('common.cancel')}
+              confirmPending={clearPending}
+              onCancel={() => {
+                if (!clearPending) setClearConfirmOpen(false)
+              }}
+              onConfirm={() => void confirmClearCart()}
+            />
 
             <CartRecommendationsSection
               products={state.recommendations}

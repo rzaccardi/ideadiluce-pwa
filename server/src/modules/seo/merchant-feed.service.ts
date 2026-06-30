@@ -52,15 +52,22 @@ function feedItemXml(product: ProductDetailDTO, siteBase: string, locale: HubLoc
   return lines.join('\n')
 }
 
+const MERCHANT_FEED_BATCH_SIZE = 24
+
 export async function buildMerchantFeedXml(): Promise<string> {
   const siteBase = env.PUBLIC_SITE_URL
   const slugs = await listArflyProductSlugs('IT')
   const items: string[] = []
 
-  for (const slug of slugs) {
-    const product = await resolveCatalogProduct({ correlationId: 'merchant-feed' }, slug, 'IT')
-    if (!product || product.seo.noindex) continue
-    items.push(feedItemXml(product, siteBase))
+  for (let i = 0; i < slugs.length; i += MERCHANT_FEED_BATCH_SIZE) {
+    const batch = slugs.slice(i, i + MERCHANT_FEED_BATCH_SIZE)
+    const products = await Promise.all(
+      batch.map((slug) => resolveCatalogProduct({ correlationId: 'merchant-feed' }, slug, 'IT')),
+    )
+    for (const product of products) {
+      if (!product || product.seo.noindex) continue
+      items.push(feedItemXml(product, siteBase))
+    }
   }
 
   return `<?xml version="1.0" encoding="UTF-8"?>

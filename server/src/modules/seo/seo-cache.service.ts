@@ -46,15 +46,12 @@ export async function refreshSeoCaches(options?: { skipPwaRevalidate?: boolean }
   refreshRunning = true
   const startedAt = Date.now()
   try {
-    const [sitemapXml, merchantXml, llmsTxt] = await Promise.all([
-      buildProductSitemapXml(),
-      buildMerchantFeedXml(),
-      buildLlmsTxt(),
+    const [sitemapEntry, merchantEntry] = await Promise.all([
+      buildAndStoreSitemap(),
+      buildAndStoreMerchantFeed(),
+      buildAndStoreLlms(),
     ])
-    const builtAt = new Date().toISOString()
-    cache.sitemap = { body: sitemapXml, builtAt, itemCount: countSitemapUrls(sitemapXml) }
-    cache.merchantFeed = { body: merchantXml, builtAt, itemCount: countMerchantItems(merchantXml) }
-    cache.llms = { body: llmsTxt, builtAt, itemCount: null }
+    const builtAt = sitemapEntry.builtAt
 
     if (!options?.skipPwaRevalidate) {
       await notifyStorefrontRevalidation()
@@ -62,41 +59,91 @@ export async function refreshSeoCaches(options?: { skipPwaRevalidate?: boolean }
 
     logger.info('seo.cache_refreshed', {
       ms: Date.now() - startedAt,
-      sitemapUrls: cache.sitemap.itemCount,
-      merchantItems: cache.merchantFeed.itemCount,
+      sitemapUrls: sitemapEntry.itemCount,
+      merchantItems: merchantEntry.itemCount,
     })
 
     return {
       skipped: false as const,
       builtAt,
-      sitemapUrls: cache.sitemap.itemCount,
-      merchantItems: cache.merchantFeed.itemCount,
+      sitemapUrls: sitemapEntry.itemCount,
+      merchantItems: merchantEntry.itemCount,
     }
   } finally {
     refreshRunning = false
   }
 }
 
-export async function getCachedSitemapXml(): Promise<string> {
-  if (!cache.sitemap) {
-    await refreshSeoCaches({ skipPwaRevalidate: true })
-  }
-  return cache.sitemap!.body
+async function buildAndStoreSitemap(): Promise<CacheEntry> {
+  const body = await buildProductSitemapXml()
+  const builtAt = new Date().toISOString()
+  cache.sitemap = { body, builtAt, itemCount: countSitemapUrls(body) }
+  return cache.sitemap
 }
 
-export async function getCachedMerchantFeedXml(): Promise<string> {
-  if (!cache.merchantFeed) {
-    await refreshSeoCaches({ skipPwaRevalidate: true })
-  }
-  return cache.merchantFeed!.body
+async function buildAndStoreMerchantFeed(): Promise<CacheEntry> {
+  const body = await buildMerchantFeedXml()
+  const builtAt = new Date().toISOString()
+  cache.merchantFeed = { body, builtAt, itemCount: countMerchantItems(body) }
+  return cache.merchantFeed
 }
 
-export async function getCachedLlmsTxt(): Promise<string> {
-  if (!cache.llms) {
-    const body = await buildLlmsTxt()
-    cache.llms = { body, builtAt: new Date().toISOString(), itemCount: null }
+async function buildAndStoreLlms(): Promise<CacheEntry> {
+  const body = await buildLlmsTxt()
+  const builtAt = new Date().toISOString()
+  cache.llms = { body, builtAt, itemCount: null }
+  return cache.llms
+}
+
+const building: Record<keyof typeof cache, boolean> = {
+  sitemap: false,
+  merchantFeed: false,
+  llms: false,
+}
+
+async function waitForSeoCacheEntry(
+  key: keyof typeof cache,
+  build: () => Promise<CacheEntry>,
+): Promise<CacheEntry> {
+  if (cache[key]) return cache[key]!
+
+  if (!building[key]) {
+    building[key] = true
+    try {
+      if (!cache[key]) return await build()
+    } catch (err) {
+      logger.warn('seo.cache_build_failed', { key, err: String(err) })
+      throw err
+    } finally {
+      building[key] = false
+    }
   }
-  return cache.llms.body
+
+  const maxAttempts = 240
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const entry = cache[key]
+    if (entry) return entry
+    await new Promise((resolve) => setTimeout(resolve, 500))
+  }
+
+  throw new Error(`SEO cache "${key}" non disponibile`)
+}
+
+type CachedSeoAsset = { body: string; builtAt: string }
+
+export async function getCachedSitemapXml(): Promise<CachedSeoAsset> {
+  const entry = await waitForSeoCacheEntry('sitemap', buildAndStoreSitemap)
+  return { body: entry.body, builtAt: entry.builtAt }
+}
+
+export async function getCachedMerchantFeedXml(): Promise<CachedSeoAsset> {
+  const entry = await waitForSeoCacheEntry('merchantFeed', buildAndStoreMerchantFeed)
+  return { body: entry.body, builtAt: entry.builtAt }
+}
+
+export async function getCachedLlmsTxt(): Promise<CachedSeoAsset> {
+  const entry = await waitForSeoCacheEntry('llms', buildAndStoreLlms)
+  return { body: entry.body, builtAt: entry.builtAt }
 }
 
 export function getSeoCacheStatus() {

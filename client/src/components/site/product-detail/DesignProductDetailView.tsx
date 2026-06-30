@@ -75,6 +75,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
     setSelectedVariantRef,
     isAddingToCart,
     setIsAddingToCart,
+    isStockEnriching,
     t,
   } = state
 
@@ -171,7 +172,16 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
                 <span className="text-[13.5px] text-idl-design-dim">{priceModeLabel}</span>
               ) : null}
             </div>
-            {availability ? (
+            {isStockEnriching ? (
+              <div className="mt-2 mb-[30px] flex flex-col gap-1 text-[13.5px]">
+                <div className="flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-idl-design-dim/40" aria-hidden />
+                  <span className="text-idl-design-muted not-italic">
+                    {t('product.availability.checking')}
+                  </span>
+                </div>
+              </div>
+            ) : availability ? (
               <div className="mt-2 mb-[30px] flex flex-col gap-1 text-[13.5px]">
                 <div className="flex items-center gap-2">
                   <span className="size-2 rounded-full bg-[#5fb98a]" aria-hidden />
@@ -194,7 +204,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
             />
 
             <div className="mb-3.5 flex min-w-0 flex-col gap-3 min-[480px]:flex-row min-[480px]:items-stretch">
-              {availability?.canAddToCart ? (
+              {!isStockEnriching && availability?.canAddToCart ? (
                 <ProductQuantityStepper
                   value={quantity}
                   min={1}
@@ -205,7 +215,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
               ) : null}
               <button
                 type="button"
-                disabled={!availability?.canAddToCart || isAddingToCart}
+                disabled={isStockEnriching || !availability?.canAddToCart || isAddingToCart}
                 onClick={handleAddToCart}
                 className="flex-1 rounded-lg bg-idl-glow px-4 py-[15px] text-center text-[15.5px] font-bold text-idl-design transition hover:bg-[#f7bd6f] disabled:opacity-60"
               >
@@ -213,7 +223,8 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
               </button>
             </div>
 
-            {!availability?.canAddToCart &&
+            {!isStockEnriching &&
+            !availability?.canAddToCart &&
             (availability?.showRestockNotify || availability?.showProductRequest) ? (
               <div className="mt-4">
                 <ProductRestockNotify
@@ -440,11 +451,15 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
         variantRef={variantRef}
         quantity={quantity}
         availabilityLabel={
-          availability ? formatAvailabilityPrimaryLabel(availability) : t('product.availability.orderable')
+          isStockEnriching
+            ? t('product.availability.checking')
+            : availability
+              ? formatAvailabilityPrimaryLabel(availability)
+              : t('product.availability.orderable')
         }
-        availabilityDetail={availability?.detail}
-        availabilityStatus={availability?.status}
-        canAddToCart={availability?.canAddToCart ?? false}
+        availabilityDetail={isStockEnriching ? undefined : availability?.detail}
+        availabilityStatus={isStockEnriching ? undefined : availability?.status}
+        canAddToCart={!isStockEnriching && (availability?.canAddToCart ?? false)}
         isAddingToCart={isAddingToCart}
         onAdd={handleAddToCart}
         addLabel={t('product.addToCart')}

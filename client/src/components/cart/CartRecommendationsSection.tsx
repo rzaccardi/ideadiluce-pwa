@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Link } from '@/lib/navigation'
 import type { ProductCardDTO } from '@/types/dto'
 import { addItem } from '@/features/cart'
+import { buildCartAddHintFromCard } from '@/features/cart/cart-add-hint'
 import { formatMoney } from '@/lib/format'
 import { CartLineThumb } from '@/components/cart/CartLineThumb'
 import { useI18n } from '@/hooks/use-i18n'
@@ -24,8 +25,11 @@ function RecommendationCard({ product }: { product: ProductCardDTO }) {
     setIsAdding(true)
     try {
       await addItem(product.slug, 1, undefined, {
-        productName: product.name,
-        imageUrl: product.imageUrl,
+        feedback: {
+          productName: product.name,
+          imageUrl: product.imageUrl,
+        },
+        productHint: buildCartAddHintFromCard(product),
       })
     } finally {
       setIsAdding(false)

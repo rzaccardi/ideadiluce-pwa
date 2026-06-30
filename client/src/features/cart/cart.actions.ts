@@ -1,5 +1,5 @@
 import { api } from '@/api/endpoints'
-import { dedupeAsync } from '@/lib/async-cache'
+import { dedupeAsync, invalidateDedupePrefix } from '@/lib/async-cache'
 import {
   clearLocalCartMirror,
   loadLocalCartMirror,
@@ -8,7 +8,22 @@ import {
 import { ApiRequestError } from '@/types/api'
 import type { CartAddedFeedback } from './cart-feedback'
 import { notifyCartItemAdded } from './cart-feedback'
+import type { CartAddProductHint } from './cart-add-hint'
 import { cartStore } from './cart.store'
+
+export type AddItemOptions = {
+  feedback?: CartAddedFeedback
+  productHint?: CartAddProductHint
+}
+
+function normalizeAddItemOptions(
+  options?: AddItemOptions | CartAddedFeedback,
+): AddItemOptions {
+  if (!options) return {}
+  if ('productHint' in options) return options
+  if ('productName' in options) return { feedback: options }
+  return options
+}
 
 function errMessage(e: unknown) {
   return e instanceof ApiRequestError ? (e.userMessage ?? e.message) : 'Errore carrello'
@@ -22,6 +37,16 @@ function detectStaleCartMirror(serverCartId: string): boolean {
   const mirror = loadLocalCartMirror()
   if (!mirror) return false
   return mirror.cartId !== serverCartId
+}
+
+/** Dopo login/logout: evita di mostrare il carrello guest in cache mentre si ricarica quello server. */
+export function resetCartForAuthChange() {
+  invalidateDedupePrefix('cart:')
+  cartStore.cart = null
+  cartStore.recommendations = []
+  cartStore.stockInsufficient = []
+  cartStore.reservationExpiredNotice = false
+  cartStore.error = null
 }
 
 // Source of truth: session cookie server-side. Il mirror `ideadiluce:cart-mirror:v1` salva solo
@@ -60,18 +85,31 @@ export type FetchCartOptions = {
   silent?: boolean
 }
 
+type MergedCartFetch = Pick<FetchCartOptions, 'skipMirrorCheck' | 'reprice' | 'silent'>
+
+let pendingCartFetch: MergedCartFetch | null = null
+
+function queueCartFetchOptions(options?: FetchCartOptions) {
+  const prev = pendingCartFetch ?? {}
+  pendingCartFetch = {
+    skipMirrorCheck: prev.skipMirrorCheck || options?.skipMirrorCheck,
+    reprice: prev.reprice || options?.reprice,
+    silent: Boolean(prev.silent && options?.silent),
+  }
+}
+
 export function fetchCart(options?: FetchCartOptions) {
   if (!options?.force && cartStore.cart) {
     return Promise.resolve()
   }
-  const dedupeKey = `cart:get${options?.reprice ? ':reprice' : ''}${options?.silent ? ':silent' : ''}`
-  return dedupeAsync(dedupeKey, () =>
-    loadCart({
-      skipMirrorCheck: options?.skipMirrorCheck,
-      reprice: options?.reprice,
-      silent: options?.silent,
-    }),
-  )
+  queueCartFetchOptions(options)
+  // Chiave unica: evita GET paralleli cart + cart?reprice=1 (stesso carrello, doppio Odoo).
+  return dedupeAsync('cart:get', async () => {
+    await Promise.resolve()
+    const opts = pendingCartFetch ?? {}
+    pendingCartFetch = null
+    return loadCart(opts)
+  })
 }
 
 /** Verifica mirror localStorage al bootstrap (prima del primo GET). */
@@ -100,17 +138,22 @@ export async function addItem(
   productRef: string,
   quantity = 1,
   variantRef?: string | null,
-  feedback?: CartAddedFeedback,
+  options?: AddItemOptions | CartAddedFeedback,
 ) {
+  const { feedback, productHint } = normalizeAddItemOptions(options)
   cartStore.isLoading = true
   cartStore.error = null
   try {
-    cartStore.cart = await api.cart.addItem({ productRef, quantity, variantRef })
+    cartStore.cart = await api.cart.addItem({
+      productRef,
+      quantity,
+      variantRef,
+      productHint,
+    })
     mirrorCartToLocalStorage()
-    void checkCartAvailability()
     notifyCartItemAdded({
       productName: feedback?.productName ?? productRef,
-      quantity,
+      quantity: feedback?.quantity ?? quantity,
       imageUrl: feedback?.imageUrl,
     })
   } catch (e) {

@@ -1,9 +1,15 @@
 import { appStore } from '@/features/app'
 import { fetchMe } from '@/features/auth'
 import { fetchCart } from '@/features/cart'
+import { isCartFlowPath } from '@/features/cart/cart.utils'
 import { fetchWishlist } from '@/features/wishlist'
 
 let bootstrapPromise: Promise<void> | null = null
+
+export type BootstrapSessionOptions = {
+  /** Path iniziale (senza query): su carrello/checkout il fetch carrello è demandato alla pagina. */
+  pathname?: string
+}
 
 function deferWishlistFetch() {
   const run = () => void fetchWishlist()
@@ -15,16 +21,18 @@ function deferWishlistFetch() {
 }
 
 /** Sessione, carrello e preferiti iniziali: una sola esecuzione anche con React StrictMode. */
-export function bootstrapSession(): Promise<void> {
+export function bootstrapSession(options?: BootstrapSessionOptions): Promise<void> {
   if (!bootstrapPromise) {
+    const skipInitialCart =
+      options?.pathname != null && isCartFlowPath(options.pathname)
     appStore.isBootstrapped = true
     bootstrapPromise = fetchMe()
-      .then(() => fetchCart({ force: false }))
+      .then(() => (skipInitialCart ? undefined : fetchCart({ force: false })))
       .then(() => {
         deferWishlistFetch()
       })
       .catch(() => {
-        void fetchCart({ force: false })
+        if (!skipInitialCart) void fetchCart({ force: false })
         deferWishlistFetch()
       })
   }

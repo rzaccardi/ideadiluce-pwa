@@ -215,6 +215,7 @@ export const messages: Record<MessageKey, string> = {
   'product.requestProduct': 'Demander le produit',
   'product.availability.available': 'Disponible',
   'product.availability.orderable': 'Commandable',
+  'product.availability.checking': 'Vérification de la disponibilité…',
   'product.availability.outOfStock': 'Rupture de stock',
   'product.availability.shippedInDays': 'Expédié sous {days} jours ouvrés',
   'product.availability.shippedByDate': 'Expédition estimée avant le {date}',
@@ -263,6 +264,9 @@ export const messages: Record<MessageKey, string> = {
   'cart.pageTitle': 'Votre panier',
   'cart.description': 'Vérifiez les articles, mettez à jour les quantités et passez au checkout.',
   'cart.clear': 'Vider le panier',
+  'cart.clearConfirmTitle': 'Vider le panier ?',
+  'cart.clearConfirmDescription':
+    'Tous les articles seront supprimés. Cette action est irréversible.',
   'cart.continueShopping': 'Continuer vos achats',
   'cart.itemCountOne': '{count} article',
   'cart.itemCountMany': '{count} articles',

@@ -213,6 +213,7 @@ export const messages: Record<MessageKey, string> = {
   'product.addingToCart': 'Aggiunta in corso…',
   'product.availability.available': 'Disponibile',
   'product.availability.orderable': 'Ordinabile',
+  'product.availability.checking': 'Verifica disponibilità…',
   'product.availability.outOfStock': 'Fuori stock',
   'product.availability.shippedInDays': 'Spedito in {days} giorni lavorativi',
   'product.availability.shippedByDate': 'Spedito indicativamente entro il {date}',
@@ -298,6 +299,9 @@ export const messages: Record<MessageKey, string> = {
   'cart.pageTitle': 'Il tuo carrello',
   'cart.description': 'Controlla le righe, aggiorna le quantità e procedi al checkout.',
   'cart.clear': 'Svuota carrello',
+  'cart.clearConfirmTitle': 'Svuotare il carrello?',
+  'cart.clearConfirmDescription':
+    'Tutti i prodotti verranno rimossi. L\'operazione non può essere annullata.',
   'cart.continueShopping': 'Continua lo shopping',
   'cart.itemCountOne': '{count} prodotto',
   'cart.itemCountMany': '{count} prodotti',
