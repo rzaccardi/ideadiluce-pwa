@@ -250,6 +250,16 @@ export const siteService = {
     return toAdminPageDto(key, loc, row)
   },
 
+  async getAdminPageAllLocales(pageKey: string) {
+    const key = assertPageKey(pageKey)
+    const rows = await siteRepository.listByPageKey(key)
+    const byLocale = new Map(rows.map((row) => [normalizeSiteLocale(row.locale), row]))
+    const locales = SITE_LOCALES.map((locale) =>
+      toAdminPageDto(key, locale, byLocale.get(locale) ?? null),
+    )
+    return { pageKey: key, locales }
+  },
+
   async saveAdminPage(pageKey: string, locale: string, content: unknown, published: boolean) {
     const key = assertPageKey(pageKey)
     const loc = normalizeSiteLocale(locale)

@@ -12,6 +12,7 @@ export const sitePageKeyParamSchema = z.object({
 
 export const siteLocaleQuerySchema = z.object({
   locale: z.enum(SITE_LOCALES).optional().default('IT'),
+  allLocales: z.enum(['1', 'true', '0', 'false']).optional(),
 })
 
 export const sitePagePatchSchema = z.object({

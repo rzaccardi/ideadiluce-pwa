@@ -124,22 +124,17 @@ export async function fetchSitePageAllLocales(pageKey: string) {
   siteStore.pageKey = pageKey
   siteStore.locale = 'IT'
   try {
-    const details = await Promise.all(
-      (['IT', 'EN', 'ES', 'FR', 'DE'] as SiteLocale[]).map(async (locale) => {
-        const detail = await adminApi<SitePageDetail>(
-          `/admin/site/pages/${encodeURIComponent(pageKey)}?locale=${encodeURIComponent(locale)}`,
-        )
-        return { locale, detail }
-      }),
+    const batch = await adminApi<{ pageKey: string; locales: SitePageDetail[] }>(
+      `/admin/site/pages/${encodeURIComponent(pageKey)}?allLocales=1`,
     )
-    for (const { locale, detail } of details) {
-      setLocaleDraft(locale, detail)
+    for (const detail of batch.locales) {
+      setLocaleDraft(detail.locale as SiteLocale, detail)
     }
-    const italian = details.find((entry) => entry.locale === 'IT')?.detail
+    const italian = batch.locales.find((entry) => entry.locale === 'IT')
     if (italian) {
       siteStore.current = italian
     }
-    return details.map((entry) => entry.detail)
+    return batch.locales
   } catch (e) {
     siteStore.error = errMessage(e)
     siteStore.current = null

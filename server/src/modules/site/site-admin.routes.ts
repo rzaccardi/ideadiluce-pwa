@@ -42,6 +42,11 @@ siteAdminRouter.get(
   '/pages/:pageKey',
   validateRequest({ params: sitePageKeyParamSchema, query: siteLocaleQuerySchema }),
   asyncHandler(async (req, res) => {
+    const allLocales = req.query.allLocales === '1' || req.query.allLocales === 'true'
+    if (allLocales) {
+      res.json(ok(await siteService.getAdminPageAllLocales(req.params.pageKey)))
+      return
+    }
     const locale = typeof req.query.locale === 'string' ? req.query.locale : 'IT'
     res.json(ok(await siteService.getAdminPage(req.params.pageKey, locale)))
   }),
