@@ -43,3 +43,15 @@
 **Dopo:** bootstrap SSR anche su landing categoria (arredo/tecnica); `skipIfFresh` su search palette e autocomplete.
 
 **Test:** client build + 46 test — OK.
+
+### Feature 6 — BO: endpoint allLocales batch
+
+**Prima:** `fetchSitePageAllLocales` = 5 richieste HTTP parallele.
+
+**Dopo:** `GET /admin/site/pages/:pageKey?allLocales=1` → 1 richiesta.
+
+**Test:** server 133 test + admin build — OK.
+
+### Feature 7 — Cleanup: FloatingCartMonitor rimosso
+
+Componente non montato (duplicava polling di `useCartSync` in `HeaderMiniCart`). File eliminato.
