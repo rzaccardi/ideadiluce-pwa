@@ -6,6 +6,15 @@ import type { PwaLocale } from '@/lib/locale'
 import type { ProductCardDTO, ProductDetailDTO } from '@/types/dto'
 import type { ArflyProductDetailResponse, ArflyProductListResponse } from '@/lib/arfly/types'
 import type { HomeProductSliderDTO } from '@/types/home-product-sliders'
+import type { CatalogPageContent } from '@/types/site-content'
+import type { CategoryDTO } from '@/types/dto'
+import type { BrandListItemDTO } from '@/types/site-content'
+
+export type CatalogBootstrapServerData = {
+  categories: CategoryDTO[]
+  brands: BrandListItemDTO[]
+  cms: CatalogPageContent | null
+}
 
 export const fetchHomeProductSlidersServer = cache(async function fetchHomeProductSlidersServer(
   locale: PwaLocale,
@@ -29,6 +38,19 @@ export type HomeFeaturedGuideDTO = {
   featured: boolean
   sortOrder: number
 }
+
+export const fetchCatalogBootstrapServer = cache(async function fetchCatalogBootstrapServer(
+  locale: PwaLocale,
+): Promise<CatalogBootstrapServerData> {
+  try {
+    const search = new URLSearchParams({ locale })
+    return await serverApiClient.get<CatalogBootstrapServerData>(
+      `/api/v1/catalog/bootstrap?${search.toString()}`,
+    )
+  } catch {
+    return { categories: [], brands: [], cms: null }
+  }
+})
 
 export const fetchHomeBrandsServer = cache(async function fetchHomeBrandsServer(locale: PwaLocale) {
   try {

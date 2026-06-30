@@ -133,6 +133,22 @@ export function seedCatalogProducts(
   catalogStore.isLoading = false
 }
 
+export function seedCatalogBootstrap(
+  data: {
+    categories: import('@/types/dto').CategoryDTO[]
+    brands: import('@/types/site-content').BrandListItemDTO[]
+    cms?: import('@/types/site-content').CatalogPageContent | null
+  },
+  locale: string,
+) {
+  catalogStore.filters.locale = locale
+  catalogStore.categories = data.categories
+  catalogStore.brands = data.brands
+  if (data.cms) {
+    seedSitePageContent('catalog', locale, data.cms)
+  }
+}
+
 export function fetchCatalogBootstrap(options?: { locale?: string; skipIfFresh?: boolean }) {
   const locale = options?.locale ?? catalogStore.filters.locale
   if (

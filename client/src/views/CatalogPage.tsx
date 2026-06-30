@@ -7,7 +7,8 @@ import { useLocalePath } from '@/hooks/use-locale-path'
 import { useI18n } from '@/hooks/use-i18n'
 import type { CatalogSort } from '@/features/catalog/catalog.store'
 import { useSnapshot } from 'valtio/react'
-import { catalogStore, fetchCatalogBootstrap, fetchNextProductsPage, fetchProducts, reapplyCatalogClientFilters, seedCatalogProducts, catalogServerFetchKey } from '@/features/catalog'
+import { catalogStore, fetchCatalogBootstrap, fetchNextProductsPage, fetchProducts, reapplyCatalogClientFilters, seedCatalogBootstrap, seedCatalogProducts, catalogServerFetchKey } from '@/features/catalog'
+import type { CatalogBootstrapServerData } from '@/lib/server-catalog'
 import { siteStore } from '@/features/site'
 import type { CatalogPageContent } from '@/types/site-content'
 import { CatalogPageView } from '@/components/site/catalog/CatalogPageView'
@@ -30,9 +31,11 @@ import { catalogPendingLoadCount } from '@/lib/catalog-pagination'
 export function CatalogPage({
   forcedBrandSlug,
   initialProducts,
+  initialBootstrap,
 }: {
   forcedBrandSlug?: string
   initialProducts?: ProductCardDTO[]
+  initialBootstrap?: CatalogBootstrapServerData
 } = {}) {
   const { locale } = useLocale()
   const lp = useLocalePath()
@@ -164,6 +167,11 @@ export function CatalogPage({
       q: effectiveQuery || undefined,
     })
   }, [initialProducts, locale, brandParam, categoryParam, effectiveQuery])
+
+  useLayoutEffect(() => {
+    if (!initialBootstrap) return
+    seedCatalogBootstrap(initialBootstrap, locale)
+  }, [initialBootstrap, locale])
 
   useLayoutEffect(() => {
     if (!initialProducts?.length || !initialSeedKey) return

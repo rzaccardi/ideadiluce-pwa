@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { getRequestLocale } from '@/lib/locale-server'
 import { buildLegacySeoMetadata } from '@/lib/legacy-seo-pages'
 import { catalogHasFilterQuery } from '@/lib/seo-paths'
-import { fetchCatalogProductsServer } from '@/lib/server-catalog'
+import { fetchCatalogProductsServer, fetchCatalogBootstrapServer } from '@/lib/server-catalog'
 import { CatalogPage } from '@/views/CatalogPage'
 
 type PageProps = {
@@ -28,6 +28,9 @@ export async function CatalogRoutePage({ searchParams }: PageProps) {
   const initialProducts = hasFilters
     ? undefined
     : (await fetchCatalogProductsServer(locale, { pageSize: 24 })).items
+  const initialBootstrap = hasFilters ? undefined : await fetchCatalogBootstrapServer(locale)
 
-  return <CatalogPage initialProducts={initialProducts} />
+  return (
+    <CatalogPage initialProducts={initialProducts} initialBootstrap={initialBootstrap} />
+  )
 }

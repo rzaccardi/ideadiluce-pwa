@@ -29,3 +29,11 @@
 **Dopo:** `loadV1Session` — senza cookie su path non-privati (`catalog`, `site`, `seo`, …) nessun hit DB; con cookie carica sessione per listino B2B; path privati (`cart`, `checkout`, …) invariati.
 
 **Test:** 133 test — OK.
+
+### Feature 4 — FE: Catalog bootstrap SSR
+
+**Prima:** primo paint catalogo → `fetchCatalogBootstrap` client (`/api/v1/catalog/bootstrap`).
+
+**Dopo:** `fetchCatalogBootstrapServer` in `catalog-route.tsx` + `seedCatalogBootstrap` con `skipIfFresh` sul client.
+
+**Test:** client build + 46 test — OK.

@@ -8,6 +8,7 @@ export {
   fetchProducts,
   fetchProductsByQuery,
   reapplyCatalogClientFilters,
+  seedCatalogBootstrap,
   seedCatalogProducts,
   catalogServerFetchKey,
 } from './catalog.actions'
