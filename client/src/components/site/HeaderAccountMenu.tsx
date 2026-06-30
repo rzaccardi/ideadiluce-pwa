@@ -15,6 +15,7 @@ import {
 import type { UserDTO } from '@/types/dto'
 import { cn } from '@/utils/cn'
 import { ui } from '@/lib/ui-classes'
+import { layers } from '@/lib/layering'
 
 function UserIcon({ className }: { className?: string }) {
   return (
@@ -35,7 +36,7 @@ function userInitial(user: UserDTO): string {
 }
 
 type Props = {
-  variant?: 'header' | 'mobileNav'
+  variant?: 'header' | 'utilityBar' | 'mobileNav'
   onOpenChange?: (open: boolean) => void
   /** Chiamato dopo navigazione (es. chiudere il menu mobile). */
   onNavigate?: () => void
@@ -76,22 +77,48 @@ export function HeaderAccountMenu({ variant = 'header', onOpenChange, onNavigate
   }, [open])
 
   if (!auth.isAuthenticated || !auth.me) {
+    if (variant === 'utilityBar') {
+      return (
+        <>
+          <Link
+            to={lp('/login')}
+            aria-label={t('nav.login')}
+            className={ui.utilityBarLink}
+          >
+            {t('nav.login')}
+          </Link>
+          <Link
+            to={lp('/register')}
+            aria-label={t('nav.register')}
+            className={ui.utilityBarLink}
+          >
+            {t('nav.register')}
+          </Link>
+        </>
+      )
+    }
+
     if (variant === 'mobileNav') {
       return (
-        <Link
-          to={lp('/login')}
-          aria-label={t('nav.login')}
-          title={t('nav.login')}
-          onClick={onNavigate}
-          className={cn(
-            ui.interactive,
-            'flex w-full items-center gap-3 rounded-md py-1 no-underline',
-            ui.headerNavLink,
-          )}
-        >
-          <UserIcon className="size-[22px] shrink-0" />
-          <span>{t('nav.login')}</span>
-        </Link>
+        <p className="py-2 text-[14px] text-idl-ink-soft">
+          <Link
+            to={lp('/login')}
+            onClick={onNavigate}
+            className={cn(ui.interactive, ui.headerNavLink, 'font-semibold no-underline')}
+          >
+            {t('nav.login')}
+          </Link>
+          <span className="mx-2 text-idl-muted" aria-hidden>
+            ·
+          </span>
+          <Link
+            to={lp('/register')}
+            onClick={onNavigate}
+            className={cn(ui.interactive, ui.headerNavLink, 'no-underline')}
+          >
+            {t('nav.register')}
+          </Link>
+        </p>
       )
     }
 
@@ -110,6 +137,10 @@ export function HeaderAccountMenu({ variant = 'header', onOpenChange, onNavigate
 
   const user = auth.me
   const displayName = accountDisplayName(user)
+
+  if (variant === 'utilityBar') {
+    return null
+  }
 
   if (variant === 'mobileNav') {
     return (
@@ -213,7 +244,7 @@ export function HeaderAccountMenu({ variant = 'header', onOpenChange, onNavigate
         </button>
 
         {open ? (
-          <div id={menuId} role="menu" className={cn(ui.headerDropdown, 'w-[248px]')}>
+          <div id={menuId} role="menu" className={cn(ui.headerDropdown, layers.headerDropdown, 'w-[248px]')}>
             <div className="mb-1.5 flex items-center gap-2.5 border-b border-idl-tech-border px-2.5 py-2.5">
               <span
                 className="flex size-[38px] shrink-0 items-center justify-center rounded-full border border-idl-border-strong bg-idl-design font-serif text-[17px] font-semibold text-idl-glow"

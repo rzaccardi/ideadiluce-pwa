@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, type InputHTMLAttributes, type ReactNode } from 'react'
+import { type InputHTMLAttributes, type ReactNode } from 'react'
 import { Link } from '@/lib/navigation'
+import { Button } from '@/components/Button'
+import { PasswordVisibilityToggle, usePasswordVisibility } from '@/components/PasswordVisibilityToggle'
 import {
   siteAuth,
-  siteButtons,
   siteForms,
   siteLinks,
   siteTypography,
@@ -91,43 +92,6 @@ export function UserIcon() {
         <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
       </svg>
     </FieldIcon>
-  )
-}
-
-function EyeIcon({ open }: { open: boolean }) {
-  if (open) {
-    return (
-      <svg
-        viewBox="0 0 24 24"
-        className="h-[18px] w-[18px]"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.8}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-      >
-        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
-        <circle cx="12" cy="12" r="3" />
-      </svg>
-    )
-  }
-
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-[18px] w-[18px]"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.8}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
-      <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
-      <line x1="2" x2="22" y1="2" y2="22" />
-    </svg>
   )
 }
 
@@ -242,22 +206,20 @@ export function AuthPasswordInput({
   className,
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & {
-  showPasswordLabel: string
-  hidePasswordLabel: string
+  showPasswordLabel?: string
+  hidePasswordLabel?: string
 }) {
-  const [show, setShow] = useState(false)
+  const password = usePasswordVisibility()
 
   return (
     <>
-      <AuthTextInput {...props} type={show ? 'text' : 'password'} className={className} />
-      <button
-        type="button"
-        onClick={() => setShow((v) => !v)}
-        aria-label={show ? hidePasswordLabel : showPasswordLabel}
-        className="flex shrink-0 items-center justify-center rounded-idl-sm p-1 text-idl-design-subtle transition hover:text-idl-ink-soft"
-      >
-        <EyeIcon open={show} />
-      </button>
+      <AuthTextInput {...props} type={password.inputType} className={className} />
+      <PasswordVisibilityToggle
+        show={password.show}
+        onToggle={password.toggle}
+        showPasswordLabel={showPasswordLabel}
+        hidePasswordLabel={hidePasswordLabel}
+      />
     </>
   )
 }
@@ -302,13 +264,14 @@ export function AuthSubmitButton({
   disabled?: boolean
 }) {
   return (
-    <button
+    <Button
       type="submit"
+      variant="primary"
       disabled={disabled}
-      className={cn(siteButtons.block, siteButtons.primary, 'transition enabled:hover:bg-idl-cta-ink-hover')}
+      className="h-auto min-h-12 w-full rounded-idl-md px-4 py-3.5 text-center text-idl-body-lg font-bold sm:py-4 sm:text-[15.5px]"
     >
       {children}
-    </button>
+    </Button>
   )
 }
 

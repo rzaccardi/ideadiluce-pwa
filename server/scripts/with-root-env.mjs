@@ -22,6 +22,11 @@ if (!process.env.DATABASE_URL?.trim() && args[0] === 'generate') {
     'postgresql://build:build@127.0.0.1:5432/build?schema=public'
 }
 
+/** In locale DIRECT_URL coincide con DATABASE_URL; su DO è la connessione diretta (migrate). */
+if (!process.env.DIRECT_URL?.trim() && process.env.DATABASE_URL?.trim()) {
+  process.env.DIRECT_URL = process.env.DATABASE_URL
+}
+
 if (!process.env.DATABASE_URL?.trim()) {
   console.error(
     'DATABASE_URL mancante. Imposta la connection string in App Platform (api → Environment → DATABASE_URL).',

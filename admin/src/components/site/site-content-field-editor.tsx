@@ -1,7 +1,7 @@
-import { PlusIcon, Trash2Icon } from 'lucide-react'
+import { PlusIcon, Trash2Icon, ImageIcon } from 'lucide-react'
 import { fieldLabel, isTechnicalField, isTextareaField } from '@/features/site/site-content-labels'
 import { contentMatchesSearch } from '@/features/site/site-content-search'
-import { cloneContent, setAtPath } from '@/features/site/site-content-utils'
+import { immutableSetAtPath } from '@/features/site/site-content-utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
@@ -39,6 +39,7 @@ export function SiteContentFieldEditor({
     const controlLabel = label ?? (fieldKey ? fieldLabel(fieldKey) : 'Testo')
     const technical = fieldKey ? isTechnicalField(fieldKey) : false
     const multiline = fieldKey ? isTextareaField(fieldKey) || value.length > 120 : value.length > 120
+    const isImageUrl = fieldKey === 'imageUrl'
 
     return (
       <Field className="gap-1.5">
@@ -51,19 +52,34 @@ export function SiteContentFieldEditor({
               </Badge>
             ) : null}
           </FieldLabel>
-          {multiline ? (
+          {multiline && !isImageUrl ? (
             <span className="text-xs tabular-nums text-muted-foreground">{value.length} car.</span>
           ) : null}
         </div>
-        {multiline ? (
+        {isImageUrl ? (
+          <>
+            {value.trim() ? (
+              <img src={value} alt="" className="h-28 w-full rounded-md border object-cover" />
+            ) : (
+              <div className="flex h-28 items-center justify-center rounded-md border border-dashed bg-muted/30 text-muted-foreground">
+                <ImageIcon className="size-5" />
+              </div>
+            )}
+            <Input
+              value={value}
+              placeholder="/site/images/… o URL assoluto"
+              onChange={(e) => {
+                onRootChange(immutableSetAtPath(root, path, e.target.value))
+              }}
+            />
+          </>
+        ) : multiline ? (
           <Textarea
             className="min-h-24 resize-y"
             value={value}
             placeholder="Testo visibile sul sito…"
             onChange={(e) => {
-              const next = cloneContent(root)
-              setAtPath(next, path, e.target.value)
-              onRootChange(next)
+              onRootChange(immutableSetAtPath(root, path, e.target.value))
             }}
           />
         ) : (
@@ -71,9 +87,7 @@ export function SiteContentFieldEditor({
             value={value}
             placeholder="Testo breve…"
             onChange={(e) => {
-              const next = cloneContent(root)
-              setAtPath(next, path, e.target.value)
-              onRootChange(next)
+              onRootChange(immutableSetAtPath(root, path, e.target.value))
             }}
           />
         )}
@@ -92,9 +106,7 @@ export function SiteContentFieldEditor({
           type="number"
           value={value}
           onChange={(e) => {
-            const next = cloneContent(root)
-            setAtPath(next, path, Number(e.target.value))
-            onRootChange(next)
+            onRootChange(immutableSetAtPath(root, path, Number(e.target.value)))
           }}
         />
       </Field>
@@ -107,9 +119,7 @@ export function SiteContentFieldEditor({
         <Switch
           checked={value}
           onCheckedChange={(checked) => {
-            const next = cloneContent(root)
-            setAtPath(next, path, checked)
-            onRootChange(next)
+            onRootChange(immutableSetAtPath(root, path, checked))
           }}
         />
         <FieldLabel>{label ?? fieldLabel(String(key))}</FieldLabel>
@@ -135,12 +145,11 @@ export function SiteContentFieldEditor({
             variant="outline"
             size="sm"
             onClick={() => {
-              const next = cloneContent(root)
-              const current = getArrayAtPath(next, path)
+              const current = getArrayAtPath(root, path)
               if (!Array.isArray(current)) return
-              current.push(isStringArray ? '' : {})
-              setAtPath(next, path, current)
-              onRootChange(next)
+              onRootChange(
+                immutableSetAtPath(root, path, [...current, isStringArray ? '' : {}]),
+              )
             }}
           >
             <PlusIcon data-icon="inline-start" />
@@ -159,12 +168,15 @@ export function SiteContentFieldEditor({
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    const next = cloneContent(root)
-                    const current = getArrayAtPath(next, path)
+                    const current = getArrayAtPath(root, path)
                     if (!Array.isArray(current)) return
-                    current.splice(index, 1)
-                    setAtPath(next, path, current)
-                    onRootChange(next)
+                    onRootChange(
+                      immutableSetAtPath(
+                        root,
+                        path,
+                        current.filter((_, itemIndex) => itemIndex !== index),
+                      ),
+                    )
                   }}
                 >
                   <Trash2Icon data-icon="inline-start" />

@@ -1,33 +1,38 @@
 import type { ContentPageContent } from './site.types.js'
-import { getStorePickupLocation } from '../../config/store-location.js'
+import { getStorePickupLocation, SHOWROOM_MAPS_URL } from '../../config/store-location.js'
 import { getLegacyEditorialGuideContent } from '../site-guides/legacy-editorial-guides.content.js'
 import { DEFAULT_TERMINI_IT } from './site-content-termini.defaults.js'
+import { DEFAULT_PRIVACY_IT } from './site-content-privacy.defaults.js'
 
 const pickup = getStorePickupLocation()
+
+const COMPANY_ADDRESS_LINES = [`${pickup.line1},`, `${pickup.postalCode} ${pickup.city} (Italy)`]
+const COMPANY_HOURS_LINES = ['Lunedì – Venerdì', '9.00 – 13.00', '15.00 – 18.00']
 
 /** Dati aziendali condivisi (footer / contatti). */
 export const COMPANY_CONTACT = {
   company: 'TLB ITALY Srl',
   vat: 'IT17245551001',
   rea: 'RM-1705840',
-  address: `${pickup.displayAddress} (Italy)`,
+  addressLines: COMPANY_ADDRESS_LINES,
+  address: COMPANY_ADDRESS_LINES.join('\n'),
   phone: '+39 06 716 7111',
+  phoneDisplay: '(+39) 06 716 7111',
   phoneHref: 'tel:+39067167111',
   email: 'info@ideadiluce.com',
-  hours: 'Lunedì – Venerdì · 9.00 – 13.00 · 15.00 – 18.00',
+  hoursLines: COMPANY_HOURS_LINES,
+  hours: COMPANY_HOURS_LINES.join(' · '),
   whatsapp: 'https://wa.me/39067167111',
 }
 
 export const CONTENT_PAGE_KEYS = [
   'chi-siamo',
-  'showroom',
   'lavora-con-noi',
   'spedizioni',
   'pagamenti',
   'garanzia',
   'contatti',
   'privacy',
-  'cookie',
   'termini',
   'prodotto-non-trovato',
   'guide-luce-calda-naturale-fredda',
@@ -59,16 +64,30 @@ export const GUIDE_SLUG_TO_PAGE_KEY: Record<string, ContentPageKey> = {
 
 export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> = {
   'chi-siamo': {
-    title: 'Chi siamo',
-    subtitle: 'Passione per la luce, dal 1998.',
+    eyebrow: 'CHI SIAMO',
+    title: 'Passione per la luce,',
+    titleAccent: 'dal 1998.',
     intro:
       'Idea di Luce è il punto di riferimento per illuminazione d\'arredo e prodotti tecnici: showroom a Roma, e-commerce e assistenza reale per privati e professionisti.',
+    coverImage: {
+      imageUrl: '',
+      alt: 'Showroom · Roma',
+    },
     blocks: [
       {
         kind: 'prose',
         paragraphs: [
           'Da oltre 25 anni selezioniamo brand di design e componentistica tecnica, con un catalogo che unisce arredo e ricambi difficili da trovare.',
           'Il nostro team ti aiuta a scegliere lampade, lampadine e accessori — anche quando hai solo una foto dell\'attacco o un codice poco leggibile.',
+        ],
+      },
+      {
+        kind: 'stats',
+        items: [
+          { value: '25+', label: 'anni di esperienza' },
+          { value: '8.000+', label: 'prodotti a catalogo' },
+          { value: '120+', label: 'brand selezionati' },
+          { value: '1', label: 'showroom a Roma' },
         ],
       },
       {
@@ -84,33 +103,25 @@ export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> =
         kind: 'contact',
         ...COMPANY_CONTACT,
       },
-    ],
-    cta: { label: 'Visita lo showroom →', href: '/showroom' },
-  },
-
-  showroom: {
-    layout: 'hero-dark',
-    eyebrow: 'SHOWROOM · ROMA',
-    title: 'Vieni a trovarci dal vivo',
-    subtitle: 'Consulenza, prodotti esposti e supporto per privati e professionisti.',
-    blocks: [
       {
-        kind: 'prose',
-        paragraphs: [
-          'Nel nostro showroom puoi vedere lampade, materiali e campioni di attacco. Ti aiutiamo a scegliere la soluzione giusta per casa, negozio o cantiere.',
-        ],
+        kind: 'split',
+        title: 'Showroom di Roma',
+        imageUrl: '',
+        alt: 'Mappa / facciata showroom',
+        paragraphs: ['Via Appia Pignatelli 450 · su appuntamento'],
+        layout: 'image-right',
       },
-      { kind: 'contact', ...COMPANY_CONTACT },
       {
         kind: 'cta',
-        title: 'Prenota una visita',
-        description: 'Scrivici per fissare un appuntamento o passa negli orari di apertura.',
-        primaryLabel: 'Contattaci',
-        primaryHref: '/contatti',
-        secondaryLabel: 'Vai al negozio',
-        secondaryHref: '/negozio',
+        title: 'Non trovi il prodotto giusto?',
+        description:
+          'Inviaci una foto, l\'attacco o il codice: ti aiutiamo a trovare il ricambio compatibile o un\'alternativa.',
+        primaryLabel: 'Richiedi supporto →',
+        primaryHref: '/on-demand',
+        variant: 'dark',
       },
     ],
+    cta: { label: 'Visita lo showroom →', href: SHOWROOM_MAPS_URL },
   },
 
   'lavora-con-noi': {
@@ -226,40 +237,7 @@ export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> =
     ],
   },
 
-  privacy: {
-    layout: 'legal',
-    title: 'Privacy Policy',
-    subtitle: 'Informativa sul trattamento dei dati personali.',
-    intro:
-      'TLB ITALY S.r.l., titolare del trattamento, utilizza i dati forniti per gestire ordini, account e assistenza clienti.',
-    seo: { noindex: false },
-    blocks: [
-      {
-        kind: 'prose',
-        paragraphs: [
-          'TLB ITALY Srl (P.IVA IT17245551001), titolare del trattamento, utilizza i dati forniti per gestire ordini, account, assistenza clienti e — previo consenso — comunicazioni marketing.',
-          'I dati di pagamento sono trattati da Stripe secondo la propria informativa. Conserviamo i dati ordine per gli obblighi fiscali e contabili.',
-          'Puoi esercitare i diritti previsti dal GDPR (accesso, rettifica, cancellazione, limitazione, opposizione) scrivendo a info@ideadiluce.com.',
-        ],
-      },
-    ],
-  },
-
-  cookie: {
-    layout: 'legal',
-    title: 'Cookie Policy',
-    subtitle: 'Uso dei cookie e tecnologie simili.',
-    blocks: [
-      {
-        kind: 'prose',
-        paragraphs: [
-          'Utilizziamo cookie tecnici necessari al funzionamento del sito (sessione, carrello, preferenze lingua).',
-          'Cookie analitici e di marketing sono attivati solo previo consenso tramite il banner cookie.',
-          'Puoi gestire le preferenze dal browser o contattarci per maggiori informazioni.',
-        ],
-      },
-    ],
-  },
+  privacy: DEFAULT_PRIVACY_IT,
 
   termini: DEFAULT_TERMINI_IT,
 

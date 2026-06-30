@@ -36,7 +36,7 @@ export function OrdersPage() {
               </Link>
               <Link
                 to="/account"
-                className="inline-flex items-center justify-center rounded-lg border border-idl-tech-border px-[18px] py-3 text-[13.5px] font-bold text-idl-graphite"
+                className="inline-flex items-center justify-center rounded-lg border border-idl-tech-border bg-white px-[18px] py-3 text-[13.5px] font-bold text-idl-graphite dark:bg-idl-tech-panel"
               >
                 {t('account.nav.dashboard')}
               </Link>

@@ -24,7 +24,7 @@ export function AccountOverviewQuoteRow({ quote, compact }: Props) {
   const payable = isQuotePayable(quote)
 
   return (
-    <article className="overflow-hidden rounded-xl border border-idl-tech-border">
+    <article className="overflow-hidden rounded-xl border border-idl-tech-border bg-white dark:bg-idl-tech-panel">
       <div className="flex flex-wrap items-center justify-between gap-3 bg-idl-tech-panel px-[18px] py-3.5">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <Link

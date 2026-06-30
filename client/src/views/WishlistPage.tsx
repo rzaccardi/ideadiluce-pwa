@@ -19,7 +19,7 @@ import { WishlistItemCard } from '@/components/wishlist/WishlistItemCard'
 import { Button } from '@/components/Button'
 import { PageFlexBody, PageFlexShell } from '@/components/layout/PageFlexShell'
 import { SectionContainer } from '@/components/site/primitives'
-import { ProductGridSkeleton } from '@/components/Skeleton'
+import { WishlistPageSkeleton } from '@/components/site/skeletons/wishlist-page-skeleton'
 import { PageLoadTransition } from '@/components/motion'
 import { useI18n } from '@/hooks/use-i18n'
 
@@ -75,13 +75,7 @@ export function WishlistPage() {
   }
 
   const wishlistGridSkeleton = (
-    <PageFlexShell tone="paper">
-      <PageFlexBody tone="paper">
-        <SectionContainer className="py-8 sm:py-10">
-          <ProductGridSkeleton count={Math.min(Math.max(wl.items.length, 3), 6)} />
-        </SectionContainer>
-      </PageFlexBody>
-    </PageFlexShell>
+    <WishlistPageSkeleton count={Math.min(Math.max(wl.items.length, 3), 6)} />
   )
 
   return (

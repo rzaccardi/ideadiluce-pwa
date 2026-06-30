@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 import { useSnapshot } from 'valtio/react'
-import { authStore, checkoutRegister, login } from '@/features/auth'
+import { authStore, checkoutLogin, checkoutRegister } from '@/features/auth'
 import type { ClearClientSessionScope } from '@/features/auth'
 import {
   checkoutStore,
@@ -15,7 +15,6 @@ import { useForgotPasswordModal } from '@/hooks/use-forgot-password-modal'
 import { useLogoutConfirm } from '@/hooks/use-logout-confirm'
 import { useI18n } from '@/hooks/use-i18n'
 import { ApiRequestError } from '@/types/api'
-import { getRecaptchaToken, RECAPTCHA_ACTIONS } from '@/lib/recaptcha'
 import { CheckoutBusinessFieldsSection } from '@/components/checkout/stripe-ui/CheckoutBusinessFieldsSection'
 import { CheckoutRetailFiscalCodeField } from '@/components/checkout/stripe-ui/CheckoutRetailFiscalCodeField'
 import { CheckoutCustomerTypeCards } from '@/components/checkout/stripe-ui/CheckoutCustomerTypeCards'
@@ -166,7 +165,6 @@ export function InlineAccountAuthStep({
     setRegisterLoading(true)
     const trimmedEmail = email.trim()
     try {
-      const recaptchaToken = await getRecaptchaToken(RECAPTCHA_ACTIONS.register)
       await checkoutRegister({
         email: trimmedEmail,
         password,
@@ -174,7 +172,6 @@ export function InlineAccountAuthStep({
         lastName: lastName.trim(),
         phone: phone.trim() || undefined,
         customerSegment: collectCustomerTypeOnRegister ? segment : undefined,
-        recaptchaToken,
       })
       await onAuthSuccess?.({
         mode: 'register',
@@ -185,10 +182,6 @@ export function InlineAccountAuthStep({
         customerSegment: collectCustomerTypeOnRegister ? segment : undefined,
       })
     } catch (err) {
-      if (err instanceof Error && err.message.startsWith('RECAPTCHA_')) {
-        setRegisterError(t('auth.recaptchaFailed'))
-        return
-      }
       if (err instanceof ApiRequestError && err.code === 'EMAIL_TAKEN') {
         setLoginEmail(trimmedEmail)
         onEmailChange(trimmedEmail)
@@ -210,17 +203,12 @@ export function InlineAccountAuthStep({
     setLoginLoading(true)
     const trimmedEmail = loginEmail.trim()
     try {
-      const recaptchaToken = await getRecaptchaToken(RECAPTCHA_ACTIONS.login)
-      await login(trimmedEmail, loginPassword, recaptchaToken)
+      await checkoutLogin(trimmedEmail, loginPassword)
       await onAuthSuccess?.({
         mode: 'login',
         email: trimmedEmail,
       })
     } catch (err) {
-      if (err instanceof Error && err.message.startsWith('RECAPTCHA_')) {
-        setLoginError(t('auth.recaptchaFailed'))
-        return
-      }
       setLoginError(
         err instanceof ApiRequestError ? (err.userMessage ?? err.message) : t('checkout.account.loginError'),
       )

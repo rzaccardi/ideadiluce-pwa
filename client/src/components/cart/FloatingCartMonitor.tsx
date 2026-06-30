@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation } from '@/lib/navigation'
 import { useSnapshot } from 'valtio/react'
 import { cartStore, fetchCart, useCartReservationSync, useCartStockPolling } from '@/features/cart'
+import { isCartFlowPath } from '@/features/cart/cart.utils'
 import { fetchWishlist } from '@/features/wishlist'
 import { CartLineStockAlert, getCartStockIssue } from '@/components/cart/CartStockAlert'
 import { cartFeedbackStore } from '@/features/cart/cart-feedback.store'
@@ -98,7 +99,7 @@ export function FloatingCartMonitor() {
 
   const itemCount = cart?.itemCount ?? 0
   const total = cart && cart.items.length > 0 ? cartTotalCents(cart) : null
-  const isCartFlow = pathname === '/cart' || pathname.startsWith('/checkout')
+  const isCartFlow = isCartFlowPath(pathname)
 
   if (isCartFlow) return null
 

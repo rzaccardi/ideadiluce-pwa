@@ -24,6 +24,74 @@ function parseLocaleFromPath(pathname: string): { locale: PwaLocale; internalPat
   return { locale: 'IT', internalPath: pathname }
 }
 
+const SEO_REDIRECT_SKIP_EXACT = new Set([
+  '/',
+  '/negozio',
+  '/catalog',
+  '/catalogo',
+  '/cart',
+  '/checkout',
+  '/login',
+  '/register',
+  '/wishlist',
+  '/account',
+  '/professionisti',
+  '/brand',
+  '/ambienti',
+  '/acquista-ambiente',
+  '/attacco',
+  '/guide',
+  '/blog',
+  '/chi-siamo',
+  '/contatti',
+  '/spedizioni',
+  '/pagamenti',
+  '/garanzia',
+  '/privacy-policy',
+  '/privacy',
+  '/tos',
+  '/on-demand',
+  '/lavora-con-noi',
+  '/prodotto-non-trovato',
+  '/forgot-password',
+  '/reset-password',
+  '/illuminazione-arredo',
+  '/impersonate',
+])
+
+const SEO_REDIRECT_SKIP_PREFIXES = [
+  '/prodotto/',
+  '/product/',
+  '/categoria/',
+  '/category/',
+  '/categoria-prodotto/',
+  '/checkout/',
+  '/account/',
+  '/brand/',
+  '/ambienti/',
+  '/attacco/',
+  '/guide/',
+  '/impersonate/',
+]
+
+/** Lookup SEO solo per path legacy o non mappati alle route attive. */
+function shouldLookupSeoRedirect(internalPath: string): boolean {
+  const normalized = internalPath.length > 1 && internalPath.endsWith('/')
+    ? internalPath.slice(0, -1)
+    : internalPath
+
+  if (SEO_REDIRECT_SKIP_EXACT.has(normalized)) return false
+  if (SEO_REDIRECT_SKIP_PREFIXES.some((prefix) => normalized.startsWith(prefix))) return false
+
+  // Post WordPress datati: redirect gestiti anche in next.config, ma lookup resta utile se DB ha override.
+  if (/^\/\d{4}\/\d{2}\/\d{2}(\/|$)/.test(normalized)) return true
+
+  // Slug singolo non in whitelist: possibile redirect admin (es. vecchi permalink).
+  if (/^\/[^/]+$/.test(normalized)) return true
+
+  return false
+}
+
 async function lookupSeoRedirect(internalPath: string): Promise<{ toPath: string; statusCode: number } | null> {
   try {
     const url = `${SEO_REDIRECT_API.replace(/\/$/, '')}/api/v1/seo/redirect?path=${encodeURIComponent(internalPath)}`
@@ -54,7 +122,9 @@ export async function middleware(request: NextRequest) {
   }
 
   const { locale, internalPath } = parseLocaleFromPath(pathname)
-  const redirect = await lookupSeoRedirect(internalPath)
+  const redirect = shouldLookupSeoRedirect(internalPath)
+    ? await lookupSeoRedirect(internalPath)
+    : null
   if (redirect) {
     const prefix = LOCALE_PATH_PREFIX[locale]
     const destination = `${prefix}${redirect.toPath.startsWith('/') ? redirect.toPath : `/${redirect.toPath}`}`

@@ -37,6 +37,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { buildStorefrontUrl } from '@/lib/storefront-url'
 import { toast } from 'sonner'
 
 const LOCALE_LABELS: Record<SiteLocale, string> = {
@@ -173,7 +174,7 @@ export function GuideDetailPage() {
               <Button
                 variant="outline"
                 className="w-full lg:w-auto"
-                render={<a href={`/guide/${slug}`} target="_blank" rel="noreferrer" />}
+                render={<a href={buildStorefrontUrl(`/guide/${slug}`)} target="_blank" rel="noreferrer" />}
               >
                 <ExternalLinkIcon className="h-4 w-4" aria-hidden />
                 Anteprima
@@ -348,6 +349,7 @@ export function GuideDetailPage() {
                 {isDirty ? <Badge variant="outline">Modifiche non salvate</Badge> : null}
               </div>
               <CardDescription>
+                Componi la guida con blocchi modulari: testo, immagini, ispirazioni prodotti e CTA.
                 Ogni stringa traducibile mostra IT, EN, ES, FR e DE nello stesso blocco.
               </CardDescription>
             </CardHeader>

@@ -43,7 +43,7 @@ export function CheckoutQuotePage() {
   const initialNavDoneRef = useRef(false)
 
   useEffect(() => {
-    void fetchCart({ force: true })
+    void fetchCart({ force: true, reprice: true })
     void fetchMe()
   }, [])
 
@@ -91,7 +91,7 @@ export function CheckoutQuotePage() {
         phone: info.phone ?? current.phone,
       }))
     }
-    await fetchCart({ force: true })
+    await fetchCart({ force: true, reprice: true })
     setStep('details')
   }
 
@@ -120,7 +120,7 @@ export function CheckoutQuotePage() {
 
   async function handleRemoveFromQuote(itemId: string) {
     await removeItem(itemId)
-    await fetchCart({ force: true })
+    await fetchCart({ force: true, reprice: true })
   }
 
   const hasBlockedLines = c ? cartHasBlockedLines(c) : false

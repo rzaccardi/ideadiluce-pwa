@@ -7,6 +7,7 @@ import { addItem } from '@/features/cart'
 import { formatMoney } from '@/lib/format'
 import { CartLineThumb } from '@/components/cart/CartLineThumb'
 import { useI18n } from '@/hooks/use-i18n'
+import { CART_CARD_SURFACE } from '@/components/cart/cart-surfaces'
 import { cn } from '@/utils/cn'
 
 type Props = {
@@ -32,7 +33,7 @@ function RecommendationCard({ product }: { product: ProductCardDTO }) {
   }
 
   return (
-    <div className="flex items-center gap-3 rounded-[10px] border border-idl-tech-border p-3">
+    <div className="flex items-center gap-3 rounded-[10px] border border-idl-tech-border bg-white p-3 dark:bg-idl-tech-panel">
       <Link to={`/prodotto/${product.slug}`} className="shrink-0">
         <CartLineThumb
           imageUrl={product.imageUrl}
@@ -71,10 +72,7 @@ export function CartRecommendationsSection({ products, isLoading, error, classNa
 
   return (
     <section
-      className={cn(
-        'rounded-[14px] border border-idl-tech-border bg-idl-tech-panel p-[22px]',
-        className,
-      )}
+      className={cn(CART_CARD_SURFACE, 'p-[22px]', className)}
     >
       <h2 className="text-base font-extrabold tracking-tight text-idl-graphite">
         {t('cart.recommendationsTitle')}

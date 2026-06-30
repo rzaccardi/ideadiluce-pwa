@@ -7,10 +7,13 @@ import { fetchWishlist } from '@/features/wishlist'
 const POLL_MS = 30_000
 
 /** Polling carrello e preferiti quando la scheda è attiva. */
-export function useCartSync() {
-  useCartStockPolling()
-  useCartReservationSync()
+export function useCartSync(enabled = true) {
+  useCartStockPolling(enabled)
+  useCartReservationSync(enabled)
+
   useEffect(() => {
+    if (!enabled) return
+
     const refresh = () => {
       if (!document.hidden) {
         void fetchCart()
@@ -31,5 +34,5 @@ export function useCartSync() {
       document.removeEventListener('visibilitychange', onVisibilityChange)
       window.clearInterval(intervalId)
     }
-  }, [])
+  }, [enabled])
 }

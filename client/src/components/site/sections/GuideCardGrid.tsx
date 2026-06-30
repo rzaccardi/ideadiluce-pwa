@@ -30,7 +30,7 @@ export function GuideCardGrid({ items, lp, variant = 'home', stagger = 0.07 }: P
           <HoverLift>
             <Link
               to={lp(guide.href)}
-              className={`flex ${minHeight} flex-col rounded-lg border border-idl-path-design-border bg-idl-tech-panel p-5 transition hover:border-idl-brass`}
+              className={`flex ${minHeight} flex-col rounded-lg border border-idl-path-design-border bg-white p-5 transition hover:border-idl-brass dark:bg-idl-tech-panel`}
             >
               {guide.category ? (
                 <div className="font-mono text-[10.5px] tracking-widest text-idl-brass-light uppercase">

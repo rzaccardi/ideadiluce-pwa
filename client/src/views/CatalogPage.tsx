@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { useQueryParams } from '@/lib/navigation'
 import { useLocale } from '@/context/locale-context'
 import { useLocalePath } from '@/hooks/use-locale-path'
@@ -25,6 +25,7 @@ import {
   type CatalogWorldTab,
   worldTabToParam,
 } from '@/lib/catalog-filters'
+import { catalogPendingLoadCount } from '@/lib/catalog-pagination'
 
 export function CatalogPage({
   forcedBrandSlug,
@@ -54,9 +55,15 @@ export function CatalogPage({
   const selectedPriceBucket =
     priceBucketParam ?? centsToPriceBucket(minPriceFromUrl, maxPriceFromUrl)
 
-  const cat = useSnapshot(catalogStore)
-  const site = useSnapshot(siteStore)
-  const catalogCms = site.pages.catalog
+  const products = useSnapshot(catalogStore).products
+  const categories = useSnapshot(catalogStore).categories
+  const brands = useSnapshot(catalogStore).brands
+  const catalogLoading = useSnapshot(catalogStore).isLoading
+  const catalogLoadingMore = useSnapshot(catalogStore).isLoadingMore
+  const catalogError = useSnapshot(catalogStore).error
+  const catalogPagination = useSnapshot(catalogStore).pagination
+  const rawProductsLength = useSnapshot(catalogStore).rawProducts.length
+  const catalogCms = useSnapshot(siteStore).pages.catalog
   const [filtersOpen, setFiltersOpen] = useState(true)
 
   const catalogContent =
@@ -75,35 +82,35 @@ export function CatalogPage({
   )
 
   const { rootCategories, subcategories } = useMemo(
-    () => resolveCategoryGroups(cat.categories, categoryParam),
-    [cat.categories, categoryParam],
+    () => resolveCategoryGroups(categories, categoryParam),
+    [categories, categoryParam],
   )
 
   const effectiveCategory = useMemo(() => {
     if (categoryParam) return categoryParam
     if (worldTab === 'design') {
-      const match = cat.categories.find((c) => /arredo|design/i.test(`${c.slug} ${c.name}`))
+      const match = categories.find((c) => /arredo|design/i.test(`${c.slug} ${c.name}`))
       return match?.slug
     }
     if (worldTab === 'technical') {
-      const match = cat.categories.find((c) => /tecnica|tecnici|lampadine/i.test(`${c.slug} ${c.name}`))
+      const match = categories.find((c) => /tecnica|tecnici|lampadine/i.test(`${c.slug} ${c.name}`))
       return match?.slug
     }
     return undefined
-  }, [cat.categories, categoryParam, worldTab])
+  }, [categories, categoryParam, worldTab])
 
   const visibleProducts = useMemo(() => {
     if (!categoryParam && worldTab !== 'all') {
-      return filterProductsByWorld(cat.products, worldTab)
+      return filterProductsByWorld(products, worldTab)
     }
-    return cat.products
-  }, [cat.products, categoryParam, worldTab])
+    return products
+  }, [products, categoryParam, worldTab])
 
   const activeFilters = useMemo(
     () =>
       buildActiveFilters({
-        categories: cat.categories,
-        brands: cat.brands,
+        categories,
+        brands,
         categorySlug: categoryParam,
         brandSlug: brandParam,
         attacco: attaccoParam || undefined,
@@ -116,8 +123,8 @@ export function CatalogPage({
     [
       attaccoParam,
       brandParam,
-      cat.brands,
-      cat.categories,
+      brands,
+      categories,
       categoryParam,
       colorTempParam,
       inStockOnly,
@@ -135,29 +142,43 @@ export function CatalogPage({
   }, [])
 
   const loadMoreRef = useInfiniteScrollSentinel({
-    hasMore: cat.pagination.hasNextPage,
-    loading: cat.isLoading || cat.isLoadingMore,
+    hasMore: catalogPagination.hasNextPage,
+    loading: catalogLoading || catalogLoadingMore,
     onLoadMore: loadMore,
   })
 
-  useEffect(() => {
-    if (!initialProducts?.length) return
+  const pendingSkeletonCount = catalogPendingLoadCount(
+    catalogLoadingMore,
+    catalogPagination,
+    rawProductsLength,
+  )
+
+  const initialSeedKey = useMemo(() => {
+    if (!initialProducts?.length) return null
+    return catalogServerFetchKey({
+      page: 1,
+      pageSize: 24,
+      locale,
+      brandSlug: brandParam,
+      categorySlug: categoryParam,
+      q: effectiveQuery || undefined,
+    })
+  }, [initialProducts, locale, brandParam, categoryParam, effectiveQuery])
+
+  useLayoutEffect(() => {
+    if (!initialProducts?.length || !initialSeedKey) return
     seedCatalogProducts(
       initialProducts,
-      catalogServerFetchKey({
-        page: 1,
-        pageSize: 24,
-        locale,
-      }),
+      initialSeedKey,
       {
         total: initialProducts.length,
         hasNextPage: initialProducts.length >= 24,
       },
     )
-  }, [initialProducts, locale])
+  }, [initialProducts, initialSeedKey])
 
   useEffect(() => {
-    void fetchCatalogBootstrap({ locale })
+    void fetchCatalogBootstrap({ locale, skipIfFresh: true })
   }, [locale])
 
   useEffect(() => {
@@ -282,15 +303,16 @@ export function CatalogPage({
   return (
     <CatalogPageView
         lp={lp}
-        error={cat.error}
-        isLoading={cat.isLoading}
-        isLoadingMore={cat.isLoadingMore}
+        error={catalogError}
+        isLoading={catalogLoading}
+        isLoadingMore={catalogLoadingMore}
+        pendingSkeletonCount={pendingSkeletonCount}
         products={visibleProducts}
-        categories={cat.categories}
-        brands={cat.brands}
-        totalProducts={cat.pagination.total}
+        categories={categories}
+        brands={brands}
+        totalProducts={catalogPagination.total}
         shownProducts={visibleProducts.length}
-        hasMore={cat.pagination.hasNextPage}
+        hasMore={catalogPagination.hasNextPage}
         worldTab={worldTab}
         designLabel={designLabel}
         technicalLabel={technicalLabel}

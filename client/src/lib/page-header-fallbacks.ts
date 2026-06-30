@@ -10,14 +10,12 @@ const EDITORIAL_TITLES: Partial<Record<SitePageKey, string>> = {
 
 const CONTENT_PAGE_TITLES: Partial<Record<ContentPageKey, string>> = {
   'chi-siamo': 'Chi siamo',
-  showroom: 'Vieni a trovarci dal vivo',
   'lavora-con-noi': 'Lavora con noi',
   spedizioni: 'Spedizioni e resi',
   pagamenti: 'Pagamenti',
   garanzia: 'Garanzia',
   contatti: 'Contatti',
   privacy: 'Privacy Policy',
-  cookie: 'Cookie Policy',
   termini: "Termini d'Uso e Condizioni di Vendita",
   'prodotto-non-trovato': 'On Demand',
   'guide-luce-calda-naturale-fredda': 'Luce calda, naturale o fredda?',

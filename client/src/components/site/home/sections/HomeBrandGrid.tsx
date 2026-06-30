@@ -19,7 +19,7 @@ type Props = {
 export function HomeBrandGrid({ brands, lp, stagger = 0.04 }: Props) {
   return (
     <Stagger
-      className="grid grid-cols-2 overflow-hidden rounded-[10px] border border-idl-tech-border sm:grid-cols-3 lg:grid-cols-6"
+      className="grid grid-cols-2 overflow-hidden rounded-[10px] border border-idl-tech-border bg-white sm:grid-cols-3 lg:grid-cols-6 dark:bg-idl-tech-panel"
       stagger={stagger}
     >
       {brands.map((brand) => {
@@ -31,7 +31,7 @@ export function HomeBrandGrid({ brands, lp, stagger = 0.04 }: Props) {
 
         return (
           <StaggerItem key={brand.slug}>
-            <article className="flex min-h-[148px] flex-col border-b border-r border-idl-tech-border bg-idl-tech-panel transition hover:bg-idl-tech-panel">
+            <article className="flex min-h-[148px] flex-col border-b border-r border-idl-tech-border bg-white transition hover:bg-idl-cream dark:bg-idl-tech-panel dark:hover:bg-idl-tech-panel">
               <Link
                 to={lp(brand.href)}
                 className="flex flex-1 flex-col items-center px-3 py-5 text-center"

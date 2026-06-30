@@ -3,6 +3,7 @@
 import type { FreeShippingHintDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
 import { useI18n } from '@/hooks/use-i18n'
+import { CART_CARD_SURFACE } from '@/components/cart/cart-surfaces'
 import { cn } from '@/utils/cn'
 
 type Props = {
@@ -51,10 +52,7 @@ export function CartFreeShippingBanner({ hint, currencyCode = 'EUR', className }
 
   return (
     <div
-      className={cn(
-        'rounded-[14px] border border-idl-tech-border bg-idl-tech-panel px-[22px] py-[18px]',
-        className,
-      )}
+      className={cn(CART_CARD_SURFACE, 'px-[22px] py-[18px]', className)}
     >
       <div className="mb-2.5 flex items-center gap-2 text-[13.5px] text-idl-graphite">
         <TruckIcon />
@@ -65,7 +63,7 @@ export function CartFreeShippingBanner({ hint, currencyCode = 'EUR', className }
         </span>
       </div>
       <div
-        className="h-[7px] overflow-hidden rounded-full bg-idl-tech-panel"
+        className="h-[7px] overflow-hidden rounded-full bg-idl-tech-chip"
         role="progressbar"
         aria-valuenow={progress}
         aria-valuemin={0}

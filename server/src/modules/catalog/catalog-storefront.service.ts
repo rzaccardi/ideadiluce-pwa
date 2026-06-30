@@ -19,6 +19,13 @@ export type BrandListItemDTO = {
   productCount?: number
 }
 
+const arflySkuCache = new Map<string, { sku: string; until: number }>()
+const ARFLY_SKU_CACHE_TTL_MS = 5 * 60_000
+
+function arflySkuCacheKey(templateId: number, locale: HubLocale, partnerId?: number, pricelistId?: number) {
+  return `${templateId}:${locale}:${partnerId ?? 0}:${pricelistId ?? 0}`
+}
+
 async function enrichProductCardsWithSkuFromArfly(
   items: ProductCardStockHint[],
   locale: HubLocale,
@@ -27,11 +34,25 @@ async function enrichProductCardsWithSkuFromArfly(
   return Promise.all(
     items.map(async (item) => {
       if (item.sku?.trim() || item.odooTemplateId == null) return item
+      const cacheKey = arflySkuCacheKey(
+        item.odooTemplateId,
+        locale,
+        pricing.partnerId,
+        pricing.pricelistId,
+      )
+      const cached = arflySkuCache.get(cacheKey)
+      if (cached && cached.until > Date.now()) {
+        return { ...item, sku: cached.sku }
+      }
       try {
         const detail = await fetchArflyProductDetail(item.odooTemplateId, locale, pricing)
         const variant = detail.product.variants?.[0]
         const sku = variant?.manufacturer_code?.trim() || variant?.ced?.trim() || null
-        return sku ? { ...item, sku } : item
+        if (sku) {
+          arflySkuCache.set(cacheKey, { sku, until: Date.now() + ARFLY_SKU_CACHE_TTL_MS })
+          return { ...item, sku }
+        }
+        return item
       } catch {
         return item
       }

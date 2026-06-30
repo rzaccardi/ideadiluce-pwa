@@ -33,6 +33,7 @@ import {
 } from './CatalogSearchSuggestionViews'
 import { cn } from '@/utils/cn'
 import { ui } from '@/lib/ui-classes'
+import { layers } from '@/lib/layering'
 
 type Props = {
   open: boolean
@@ -128,13 +129,19 @@ export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palett
     setRecentVersion((value) => value + 1)
   }, [locale, open])
 
+  const wasOpenRef = useRef(open)
+
   useEffect(() => {
-    if (!open) {
+    if (wasOpenRef.current && !open) {
       resetAutocomplete()
       setQuery('')
       setActiveIndex(-1)
-      return
     }
+    wasOpenRef.current = open
+  }, [open, resetAutocomplete, setActiveIndex, setQuery])
+
+  useEffect(() => {
+    if (!open) return
 
     if (initialQuery) {
       setQuery(initialQuery)
@@ -149,7 +156,7 @@ export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palett
       window.cancelAnimationFrame(frame)
       document.body.style.overflow = prevOverflow
     }
-  }, [initialQuery, open, resetAutocomplete, scheduleAutocomplete, setActiveIndex, setQuery])
+  }, [initialQuery, open, scheduleAutocomplete, setQuery])
 
   useEffect(() => {
     if (!open) return
@@ -218,7 +225,7 @@ export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palett
       role="dialog"
       aria-modal="true"
       aria-label={t('catalog.searchLabel')}
-      className="relative z-10 flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-idl-border bg-idl-paper shadow-2xl"
+      className="pointer-events-auto relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-idl-border bg-idl-paper shadow-2xl"
     >
       <form onSubmit={onSearch} className="border-b border-idl-border px-4 py-3 sm:px-5">
         <div className="flex items-center gap-3">
@@ -416,15 +423,20 @@ export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palett
           animate={reduceMotion ? undefined : { opacity: 1 }}
           exit={reduceMotion ? undefined : { opacity: 0 }}
           transition={{ duration: 0.15 }}
-          className="fixed inset-0 z-[120] flex items-start justify-center bg-idl-backdrop/90 p-3 pt-[6vh] backdrop-blur-sm sm:p-4 sm:pt-[10vh]"
+          className={cn(
+            'pointer-events-none fixed inset-0 flex items-start justify-center overflow-y-auto p-3 pt-[6vh] backdrop-blur-sm sm:p-4 sm:pt-[10vh]',
+            layers.searchModal,
+          )}
         >
           <button
             type="button"
             aria-label={t('common.close')}
-            className="absolute inset-0 cursor-default"
+            className="pointer-events-auto fixed inset-0 cursor-default bg-idl-backdrop/90"
             onClick={onClose}
           />
-          {panel}
+          <div className="pointer-events-none relative z-10 flex w-full max-w-3xl shrink-0 justify-center">
+            {panel}
+          </div>
         </motion.div>
       ) : null}
     </AnimatePresence>,

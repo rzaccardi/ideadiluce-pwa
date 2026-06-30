@@ -133,8 +133,16 @@ export function seedCatalogProducts(
   catalogStore.isLoading = false
 }
 
-export function fetchCatalogBootstrap(options?: { locale?: string }) {
+export function fetchCatalogBootstrap(options?: { locale?: string; skipIfFresh?: boolean }) {
   const locale = options?.locale ?? catalogStore.filters.locale
+  if (
+    options?.skipIfFresh &&
+    catalogStore.filters.locale === locale &&
+    catalogStore.categories.length > 0 &&
+    catalogStore.brands.length > 0
+  ) {
+    return Promise.resolve()
+  }
   return dedupeAsync(`catalog:bootstrap:${locale}`, async () => {
     try {
       const data = await api.catalog.bootstrap(locale)

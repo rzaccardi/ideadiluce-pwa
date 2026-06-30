@@ -4,6 +4,7 @@ import type {
   CatalogSearchAnalyticsList,
   CatalogSearchAnalyticsStats,
 } from '@/types/search-analytics'
+import type { SearchHintsOdooPreview } from '@/types/search-hints'
 
 type State = {
   stats: CatalogSearchAnalyticsStats | null
@@ -14,6 +15,11 @@ type State = {
   listLoading: boolean
   listLoadingMore: boolean
   listError: string | null
+  odooHints: SearchHintsOdooPreview | null
+  odooHintsLoading: boolean
+  odooHintsApplying: boolean
+  odooHintsError: string | null
+  odooHintsMessage: string | null
 }
 
 export const searchAnalyticsStore = proxy<State>({
@@ -25,4 +31,9 @@ export const searchAnalyticsStore = proxy<State>({
   listLoading: false,
   listLoadingMore: false,
   listError: null,
+  odooHints: null,
+  odooHintsLoading: false,
+  odooHintsApplying: false,
+  odooHintsError: null,
+  odooHintsMessage: null,
 })

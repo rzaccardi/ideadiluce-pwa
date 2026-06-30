@@ -24,6 +24,12 @@ export function seedSitePageContent(pageKey: SitePageKey, locale: string, conten
   }
 }
 
+/** Applica contenuto SSR senza attendere useEffect — evita skeleton su navigazioni con dati già noti. */
+export function hydrateSitePageContent(pageKey: SitePageKey, locale: string, content: unknown) {
+  siteStore.pages[pageKey] = content
+  siteStore.pageLocales[pageKey] = locale
+}
+
 export function getSitePageContent(pageKey: SitePageKey): unknown {
   return siteStore.pages[pageKey] ?? null
 }

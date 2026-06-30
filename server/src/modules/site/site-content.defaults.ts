@@ -8,8 +8,11 @@ import type {
 import {
   CONTENT_PAGE_DEFAULTS,
   CONTENT_PAGE_KEYS,
+  COMPANY_CONTACT,
 } from './site-content-pages.defaults.js'
+import { SHOWROOM_MAPS_URL } from '../../config/store-location.js'
 import { DEFAULT_PROFESSIONISTI_IT } from './site-professionisti.defaults.js'
+import { enrichNavColumns } from './nav-link-visuals.js'
 
 const SOCKET_ITEMS = [
   { code: 'E27', hint: 'a vite grande', href: '/attacco/e27' },
@@ -57,7 +60,7 @@ export const DEFAULT_SHELL_IT: SiteShellContent = {
         label: 'Arredo',
         href: '/illuminazione-arredo',
         panel: {
-          columns: [
+          columns: enrichNavColumns([
             {
               title: 'PER TIPOLOGIA',
               links: [
@@ -111,7 +114,7 @@ export const DEFAULT_SHELL_IT: SiteShellContent = {
                 { label: 'Offerte', href: '/negozio?world=design&q=offerta' },
               ],
             },
-          ],
+          ]),
           promo: {
             title: 'Consulenza progetto luce',
             description: "Inviaci una foto dell'ambiente: ti aiutiamo a comporre la luce giusta.",
@@ -127,7 +130,7 @@ export const DEFAULT_SHELL_IT: SiteShellContent = {
         label: 'Tecnico',
         href: '/categoria-prodotto/illuminazione-tecnica',
         panel: {
-          columns: [
+          columns: enrichNavColumns([
             {
               title: 'TECNOLOGIA',
               links: [
@@ -178,7 +181,7 @@ export const DEFAULT_SHELL_IT: SiteShellContent = {
                 { label: 'Retrofit LED', href: '/guide/scegliere-lampadina-led' },
               ],
             },
-          ],
+          ]),
           promo: {
             title: 'Prodotto non trovato?',
             description: 'Invia foto, EAN o codice: troviamo il ricambio o un\'alternativa.',
@@ -197,6 +200,13 @@ export const DEFAULT_SHELL_IT: SiteShellContent = {
           columns: attaccoMegaMenuColumns(),
           eyebrow: 'Lampadine per attacco · ordinati per diffusione',
           allSocketsCta: 'Tutti gli attacchi →',
+          promo: {
+            title: "Non trovi l'attacco?",
+            description: 'Invia una foto o il codice prodotto: ti aiutiamo a trovare il ricambio.',
+            ctaLabel: 'Richiedi supporto →',
+            ctaHref: '/prodotto-non-trovato',
+            variant: 'technical',
+          },
         },
       },
       { kind: 'link', id: 'ambienti', label: 'Ambienti', href: '/acquista-ambiente' },
@@ -211,12 +221,28 @@ export const DEFAULT_SHELL_IT: SiteShellContent = {
     { title: 'Spedizione tracciata', subtitle: 'In tutta Italia' },
   ],
   footer: {
+    company: {
+      company: COMPANY_CONTACT.company,
+      vat: COMPANY_CONTACT.vat,
+      rea: COMPANY_CONTACT.rea,
+      addressLines: [...COMPANY_CONTACT.addressLines],
+      phone: COMPANY_CONTACT.phoneDisplay,
+      phoneHref: COMPANY_CONTACT.phoneHref,
+      email: COMPANY_CONTACT.email,
+      hoursLines: [...COMPANY_CONTACT.hoursLines],
+    },
+    social: [
+      { label: 'Instagram', href: '' },
+      { label: 'Facebook', href: '' },
+      { label: 'LinkedIn', href: '' },
+      { label: 'Pinterest', href: '' },
+    ],
     columns: [
       {
         title: 'Idea di Luce',
         links: [
           { label: 'Chi siamo', href: '/chi-siamo' },
-          { label: 'Showroom Roma', href: '/showroom' },
+          { label: 'Showroom Roma', href: SHOWROOM_MAPS_URL },
           { label: 'Professionisti', href: '/professionisti' },
           { label: 'Lavora con noi', href: '/lavora-con-noi' },
         ],
@@ -224,24 +250,8 @@ export const DEFAULT_SHELL_IT: SiteShellContent = {
       {
         title: 'Servizio clienti',
         links: [
-          { label: 'Spedizioni e resi', href: '/spedizioni' },
-          { label: 'Pagamenti', href: '/pagamenti' },
-          { label: 'Garanzia', href: '/garanzia' },
-          { label: 'Contatti', href: '/contatti' },
-        ],
-      },
-      {
-        title: 'Utilità',
-        links: [
-          { label: 'Negozio', href: '/negozio' },
-          { label: 'Guide alla luce', href: '/blog' },
-          { label: 'Scegli per attacco', href: '/attacco' },
-          { label: 'Brand', href: '/brand' },
-          { label: 'Ambienti', href: '/acquista-ambiente' },
-          { label: 'Glossario tecnico', href: '/guide/glossario' },
-          { label: 'Privacy', href: '/privacy-policy' },
-          { label: 'Termini', href: '/tos' },
-          { label: 'Cookie', href: '/cookie' },
+          { label: "Termini d'Uso e Condizioni di Vendita", href: '/tos' },
+          { label: 'Privacy Policy', href: '/privacy-policy' },
         ],
       },
     ],
@@ -351,7 +361,7 @@ export const DEFAULT_HOME_IT: HomePageContent = {
     subtitle: 'Icone, brand e prodotti selezionati per arredare con la luce.',
     linkLabel: "Tutto l'arredo →",
     linkHref: '/negozio?world=design',
-    productCount: 4,
+    productCount: 12,
     searchQuery: 'sospensione lampada',
   },
   technicalShowcase: {
@@ -360,7 +370,7 @@ export const DEFAULT_HOME_IT: HomePageContent = {
     subtitle: "Dati tecnici a colpo d'occhio, disponibilità e confronto.",
     linkLabel: 'Negozio tecnico →',
     linkHref: '/negozio?world=technical',
-    productCount: 4,
+    productCount: 12,
     searchQuery: 'alimentatore driver',
   },
   brands: {

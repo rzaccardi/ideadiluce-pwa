@@ -4,6 +4,7 @@ import type { ProductCardDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
 import { SiteImage } from '../SiteImage'
 import { HoverLift } from '@/components/motion'
+import { CatalogProductCardSkeleton } from '../catalog/CatalogProductCardSkeleton'
 import type { LocalePathFn } from '../sections/types'
 
 type Props = {
@@ -25,7 +26,7 @@ export const DesignCatalogProductCard = memo(function DesignCatalogProductCard({
     <HoverLift className="h-full">
       <Link
         to={lp(`/prodotto/${product.slug}`)}
-        className="group flex h-full flex-col overflow-hidden rounded border border-idl-path-design-border bg-idl-tech-panel transition hover:border-idl-brass hover:shadow-[0_6px_20px_rgba(0,0,0,0.06)]"
+        className="group flex h-full flex-col overflow-hidden rounded border border-idl-path-design-border bg-white transition hover:border-idl-brass hover:shadow-[0_6px_20px_rgba(0,0,0,0.06)] dark:bg-idl-tech-panel"
       >
         <div className="relative aspect-[4/5] overflow-hidden bg-idl-cream">
           {product.imageUrl ? (
@@ -60,14 +61,20 @@ export const DesignCatalogProductCard = memo(function DesignCatalogProductCard({
 type GridProps = {
   products: ReadonlyArray<ProductCardDTO>
   lp: LocalePathFn
+  pendingSkeletonCount?: number
 }
 
-export function DesignCatalogProductGrid({ products, lp }: GridProps) {
+export function DesignCatalogProductGrid({ products, lp, pendingSkeletonCount = 0 }: GridProps) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-2 xl:grid-cols-3">
       {products.map((product) => (
         <div key={product.slug} className="h-full">
           <DesignCatalogProductCard product={product} lp={lp} />
+        </div>
+      ))}
+      {Array.from({ length: pendingSkeletonCount }).map((_, index) => (
+        <div key={`design-pending-${index}`} className="h-full" aria-hidden>
+          <CatalogProductCardSkeleton variant="design" />
         </div>
       ))}
     </div>

@@ -18,7 +18,7 @@ export function DcStaticShell({ shell, activeNavId = null, children }: Props) {
   return (
     <div className="flex min-h-screen flex-col bg-idl-paper font-sans text-idl-graphite">
       <UtilityBar bar={shell.utilityBar} />
-      <SiteHeader nav={shell.nav} activeNavId={activeNavId} />
+      <SiteHeader nav={shell.nav} footer={shell.footer} activeNavId={activeNavId} />
       <main className="flex-1">{children}</main>
       <TrustBar items={shell.trustBar} />
       <SiteFooter footer={shell.footer} />

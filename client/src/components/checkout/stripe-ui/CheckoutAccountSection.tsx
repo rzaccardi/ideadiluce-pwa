@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSnapshot } from 'valtio/react'
-import { authStore, login } from '@/features/auth'
+import { authStore, checkoutLogin } from '@/features/auth'
 import { useForgotPasswordModal } from '@/hooks/use-forgot-password-modal'
 import { useLogoutConfirm } from '@/hooks/use-logout-confirm'
 import { fetchCart } from '@/features/cart'
@@ -11,16 +11,8 @@ import {
   prepareCheckoutAfterAuth,
 } from '@/features/checkout'
 import { useI18n } from '@/hooks/use-i18n'
-import { getRecaptchaToken, RECAPTCHA_ACTIONS } from '@/lib/recaptcha'
 import { ApiRequestError } from '@/types/api'
 import { StripeErrorBanner, StripeFieldGroup, StripeControlledInput } from './StripeFields'
-
-function isRecaptchaClientError(err: unknown): boolean {
-  return (
-    err instanceof Error &&
-    (err.message === 'RECAPTCHA_LOAD_FAILED' || err.message === 'RECAPTCHA_EXECUTE_FAILED')
-  )
-}
 
 /** Login email/password nel checkout (sezione compatta). */
 export function CheckoutAccountSection() {
@@ -46,17 +38,12 @@ export function CheckoutAccountSection() {
     setError(null)
     setLoading(true)
     try {
-      const recaptchaToken = await getRecaptchaToken(RECAPTCHA_ACTIONS.login)
-      await login(loginEmail.trim(), loginPassword, recaptchaToken)
+      await checkoutLogin(loginEmail.trim(), loginPassword)
       await prepareCheckoutAfterAuth()
-      await fetchCart({ force: true })
+      await fetchCart({ force: true, reprice: true })
       setShowLogin(false)
       setLoginPassword('')
     } catch (err) {
-      if (isRecaptchaClientError(err)) {
-        setError(t('auth.recaptchaFailed'))
-        return
-      }
       setError(
         err instanceof ApiRequestError ? (err.userMessage ?? err.message) : t('checkout.account.loginError'),
       )

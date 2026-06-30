@@ -4,8 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { cn } from '@/utils/cn'
 import { SiteImage } from '@/components/site/SiteImage'
 
-const TECH_THUMB_LABELS = ['FOTO', 'ATTACCO', 'MISURE', 'ACCESA'] as const
-
 type Props = {
   images: readonly string[]
   alt: string
@@ -68,7 +66,6 @@ export function ProductDetailGallery({ images, alt, activeUrl, variant = 'design
 
   const current = selected || base[0]
   const lightboxUrl = base[lightboxIndex] ?? current
-  const thumbs = base.slice(0, 4)
 
   if (!base.length) {
     return (
@@ -102,66 +99,40 @@ export function ProductDetailGallery({ images, alt, activeUrl, variant = 'design
           <SiteImage src={current} alt={alt} fill className="object-cover" sizes="50vw" priority />
         </button>
 
-        <div className={cn('grid grid-cols-4', isDesign ? 'gap-3' : 'gap-2.5')}>
-          {Array.from({ length: 4 }).map((_, index) => {
-            const url = thumbs[index]
-            const selectedThumb = url === current
-            const label = isDesign ? null : TECH_THUMB_LABELS[index]
-
-            if (isDesign) {
+        {base.length > 1 ? (
+          <div className={cn('grid grid-cols-4', isDesign ? 'gap-3' : 'gap-2.5')}>
+            {base.map((url) => {
+              const selectedThumb = url === current
               return (
                 <button
-                  key={url ?? `ph-${index}`}
+                  key={url}
                   type="button"
-                  disabled={!url}
-                  onClick={() => url && setSelected(url)}
+                  onClick={() => setSelected(url)}
+                  onDoubleClick={() => openLightbox(url)}
                   className={cn(
-                    'aspect-square overflow-hidden rounded-[3px] border transition',
-                    url
-                      ? selectedThumb
-                        ? 'border-idl-glow/30'
-                        : 'border-white/8 hover:border-white/20'
-                      : 'border-white/10 bg-idl-design-elevated opacity-50',
+                    'aspect-square overflow-hidden transition',
+                    isDesign
+                      ? cn(
+                          'rounded-[3px] border',
+                          selectedThumb
+                            ? 'border-idl-glow/30'
+                            : 'border-white/8 hover:border-white/20',
+                        )
+                      : cn(
+                          'rounded-lg border bg-idl-tech-panel',
+                          selectedThumb ? 'border-2 border-idl-amber' : 'border-idl-tech-border',
+                        ),
                   )}
-                  aria-label={url ? 'Seleziona immagine' : 'Immagine non disponibile'}
+                  aria-label="Seleziona immagine"
                 >
-                  {url ? (
-                    <div className="relative size-full">
-                      <SiteImage src={url} alt="" fill className="object-cover" sizes="15vw" />
-                    </div>
-                  ) : null}
+                  <div className="relative size-full">
+                    <SiteImage src={url} alt="" fill className="object-cover" sizes="15vw" />
+                  </div>
                 </button>
               )
-            }
-
-            return (
-              <button
-                key={url ?? `ph-${index}`}
-                type="button"
-                disabled={!url}
-                onClick={() => url && setSelected(url)}
-                className={cn(
-                  'overflow-hidden rounded-lg border bg-idl-tech-panel transition',
-                  url
-                    ? selectedThumb
-                      ? 'border-2 border-idl-amber'
-                      : 'border-idl-tech-border'
-                    : 'border-idl-tech-border bg-idl-tech-panel opacity-60',
-                )}
-                aria-label={url ? `Seleziona ${label}` : 'Immagine non disponibile'}
-              >
-                <div className="relative aspect-square">
-                  {url ? (
-                    <SiteImage src={url} alt="" fill className="object-cover" sizes="15vw" />
-                  ) : (
-                    <div className="flex size-full items-center justify-center bg-idl-tech-panel" />
-                  )}
-                </div>
-                <div className="py-0.5 text-center font-mono text-[9px] text-idl-muted">{label}</div>
-              </button>
-            )
-          })}
-        </div>
+            })}
+          </div>
+        ) : null}
       </div>
 
       {lightboxOpen ? (

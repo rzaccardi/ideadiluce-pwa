@@ -8,6 +8,8 @@ const STORAGE_KEY = 'idl-theme'
 
 const THEME_CYCLE: SiteTheme[] = ['classic', 'light', 'dark']
 
+export const SITE_THEMES = THEME_CYCLE
+
 const DEFAULT_THEME: SiteTheme = 'classic'
 
 function isSiteTheme(value: string | null): value is SiteTheme {

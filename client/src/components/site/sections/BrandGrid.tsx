@@ -41,8 +41,8 @@ function resolveBrand(item: BrandGridItem, lp: LocalePathFn) {
 export function BrandGrid({ items, lp, variant = 'home', stagger = 0.04 }: Props) {
   const gridClass =
     variant === 'home'
-      ? 'grid grid-cols-2 overflow-hidden rounded-[10px] border border-idl-tech-border sm:grid-cols-3 lg:grid-cols-6'
-      : 'grid grid-cols-2 overflow-hidden rounded-[10px] border border-idl-tech-border sm:grid-cols-3 lg:grid-cols-4'
+      ? 'grid grid-cols-2 overflow-hidden rounded-[10px] border border-idl-tech-border bg-white sm:grid-cols-3 lg:grid-cols-6 dark:bg-idl-tech-panel'
+      : 'grid grid-cols-2 overflow-hidden rounded-[10px] border border-idl-tech-border bg-white sm:grid-cols-3 lg:grid-cols-4 dark:bg-idl-tech-panel'
 
   return (
     <Stagger className={gridClass} stagger={stagger}>
@@ -54,8 +54,8 @@ export function BrandGrid({ items, lp, variant = 'home', stagger = 0.04 }: Props
               to={href}
               className={
                 variant === 'home'
-                  ? 'block border-b border-r border-idl-tech-border px-3 py-6 text-center text-sm font-bold tracking-widest text-idl-graphite-2 uppercase transition hover:bg-idl-tech-panel hover:text-idl-brass'
-                  : 'flex min-h-[88px] flex-col items-center justify-center border-b border-r border-idl-tech-border px-3 py-5 text-center transition hover:bg-idl-tech-panel hover:text-idl-brass'
+                  ? 'block border-b border-r border-idl-tech-border bg-white px-3 py-6 text-center text-sm font-bold tracking-widest text-idl-graphite-2 uppercase transition hover:bg-idl-cream hover:text-idl-brass dark:bg-idl-tech-panel dark:hover:bg-idl-tech-panel'
+                  : 'flex min-h-[88px] flex-col items-center justify-center border-b border-r border-idl-tech-border bg-white px-3 py-5 text-center transition hover:bg-idl-cream hover:text-idl-brass dark:bg-idl-tech-panel dark:hover:bg-idl-tech-panel'
               }
             >
               <span className="text-sm font-bold tracking-widest text-idl-graphite-2 uppercase">{name}</span>

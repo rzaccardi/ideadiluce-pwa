@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { api } from '@/api/endpoints'
 import { Reveal } from '@/components/motion'
 import { PageLoadTransition } from '@/components/motion/PageLoadTransition'
-import { StaticHubSectionSkeleton } from '@/components/Skeleton'
+import { BrandPageSkeleton } from '@/components/site/skeletons'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { mergeBrandCards, type BrandCategory } from '@/lib/brand.defaults'
 import type { BrandListItemDTO } from '@/types/site-content'
@@ -46,7 +46,7 @@ export function BrandView() {
       </Reveal>
 
       {loading ? (
-        <PageLoadTransition isLoading skeleton={<StaticHubSectionSkeleton count={9} />}>
+        <PageLoadTransition isLoading skeleton={<BrandPageSkeleton />}>
           {null}
         </PageLoadTransition>
       ) : (

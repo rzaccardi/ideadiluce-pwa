@@ -20,9 +20,7 @@ import { buildTechnicalCardSpecTags } from '@/lib/technical-card-spec-tags'
 import { cn } from '@/utils/cn'
 import {
   ProductDetailCard,
-  ProductDetailPlaceholder,
   ProductDetailSectionLabel,
-  ProductDetailValue,
   ProductSpecRowItem,
   buildProductMetaLine,
   buildProductSubtitle,
@@ -136,12 +134,19 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
     const re = new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
     const found = parsedSpecs.find((row) => re.test(row.label))
     return { label, value: found?.value ?? null }
-  })
+  }).filter((spec) => spec.value?.trim())
 
   const compatRows = COMPAT_LABELS.map(({ label, re }) => ({
     label,
     value: findSpecValue(parsedSpecs, re),
-  }))
+  })).filter((row) => row.value?.trim())
+
+  const incompatValue = findSpecValue(parsedSpecs, /non compatibile|incompatib/i)
+  const dimensionsValue = findSpecValue(parsedSpecs, /dimensioni|lunghezza|diametro/i)
+  const hasCompatSection =
+    compatRows.length > 0 || Boolean(product.shortDescription?.trim()) || Boolean(incompatValue?.trim())
+  const hasDescriptionOrSpecs =
+    Boolean(product.longDescription?.trim()) || highlightSpecs.length > 0
 
   const handleAddToCart = createAddToCartHandler({
     product,
@@ -172,12 +177,14 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
           <h1 className="text-[clamp(1.5rem,6vw,1.875rem)] leading-[1.1] font-extrabold tracking-[-0.02em] text-idl-graphite">
             {displayTitle}
           </h1>
-          <div className="mt-2 font-mono text-[15px] text-idl-graphite-2">
-            <ProductDetailValue value={subtitle} placeholder="Specifiche principali — in arrivo" />
-          </div>
-          <div className="mt-3.5 mb-[18px] font-mono text-[11.5px] text-idl-muted">
-            <ProductDetailValue value={metaLine} placeholder="SKU / EAN — in arrivo" />
-          </div>
+          {subtitle ? (
+            <div className="mt-2 font-mono text-[15px] text-idl-graphite-2">{subtitle}</div>
+          ) : null}
+          {metaLine ? (
+            <div className="mt-3.5 mb-[18px] font-mono text-[11.5px] text-idl-muted">{metaLine}</div>
+          ) : (
+            <div className="mb-[18px]" />
+          )}
 
           {tags.length > 0 ? (
             <div className="mb-[22px] flex flex-wrap gap-[7px]">
@@ -195,18 +202,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                 </span>
               ))}
             </div>
-          ) : (
-            <div className="mb-[22px] flex flex-wrap gap-[7px] opacity-60">
-              {['Attacco', 'Potenza', 'Tensione'].map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-[5px] border border-idl-tech-chip-border bg-[#eef1f4] px-[11px] py-1.5 font-mono text-[11.5px] text-idl-muted"
-                >
-                  {tag} —
-                </span>
-              ))}
-            </div>
-          )}
+          ) : null}
 
           {product.variants.length > 1 ? (
             <div className="mb-[22px]">
@@ -315,9 +311,10 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
         </div>
       </SectionContainer>
 
-      {/* Compatibilità */}
+      {hasCompatSection ? (
       <section className="border-y border-[#ededea] bg-[#f7f8fa]">
         <SectionContainer className="grid gap-5 py-7 sm:grid-cols-2 sm:gap-6 sm:py-[34px]">
+          {compatRows.length > 0 ? (
           <ProductDetailCard variant="technical" className="p-4 sm:p-[26px]">
             <h2 className="mb-4 text-base font-extrabold tracking-[-0.01em]">Compatibilità rapida</h2>
             <div>
@@ -333,54 +330,49 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
               ))}
             </div>
           </ProductDetailCard>
+          ) : <div />}
 
+          {(product.shortDescription?.trim() || incompatValue?.trim()) ? (
           <div className="flex flex-col gap-3.5">
+            {product.shortDescription?.trim() ? (
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
               <div className="mb-2 flex items-center gap-2 text-[15px] font-extrabold text-amber-900">
                 <span aria-hidden>⚠️</span> Controlla prima dell&apos;acquisto
               </div>
-              <p className="text-sm leading-relaxed text-amber-950/80">
-                {product.shortDescription?.trim() ? (
-                  product.shortDescription
-                ) : (
-                  <ProductDetailPlaceholder>
-                    Note di compatibilità — verifica attacco e misure prima dell&apos;acquisto.
-                  </ProductDetailPlaceholder>
-                )}
-              </p>
+              <p className="text-sm leading-relaxed text-amber-950/80">{product.shortDescription}</p>
             </div>
+            ) : null}
+            {incompatValue?.trim() ? (
             <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-4">
               <div className="flex items-center gap-2 text-sm font-bold text-red-800">
                 <span aria-hidden>⛔</span>
-                <ProductDetailValue
-                  value={compatRows.find((r) => r.label === 'Non compatibile con')?.value}
-                  placeholder="Avvertenze di incompatibilità — in arrivo"
-                />
+                {incompatValue}
               </div>
             </div>
+            ) : null}
           </div>
+          ) : null}
         </SectionContainer>
       </section>
+      ) : null}
 
-      {/* Descrizione + specs principali */}
+      {hasDescriptionOrSpecs ? (
       <SectionContainer className="grid items-start gap-10 py-10 sm:gap-12 lg:grid-cols-2 lg:py-12">
+        {product.longDescription?.trim() ? (
         <div>
           <h2 className="mb-3 text-lg font-extrabold tracking-tight">Descrizione</h2>
-          {product.longDescription?.trim() ? (
-            hasHtmlMarkup(product.longDescription) ? (
-              <ProductDescriptionHtml
-                html={product.longDescription}
-                className="product-description max-w-none text-[15px] leading-relaxed text-idl-graphite-2"
-              />
-            ) : (
-              <p className="text-[15px] leading-relaxed text-idl-graphite-2">{product.longDescription}</p>
-            )
+          {hasHtmlMarkup(product.longDescription) ? (
+            <ProductDescriptionHtml
+              html={product.longDescription}
+              className="product-description max-w-none text-[15px] leading-relaxed text-idl-graphite-2"
+            />
           ) : (
-            <p className="text-[15px] leading-relaxed text-idl-graphite-2">
-              <ProductDetailPlaceholder>Descrizione prodotto — in arrivo</ProductDetailPlaceholder>
-            </p>
+            <p className="text-[15px] leading-relaxed text-idl-graphite-2">{product.longDescription}</p>
           )}
         </div>
+        ) : <div />}
+
+        {highlightSpecs.length > 0 ? (
         <div>
           <h2 className="mb-3.5 text-lg font-extrabold tracking-tight">Specifiche principali</h2>
           <div className="grid grid-cols-1 gap-2.5 min-[420px]:grid-cols-2">
@@ -390,58 +382,50 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                 className="rounded-lg border border-idl-tech-chip bg-idl-tech-panel px-3.5 py-3"
               >
                 <div className="mb-0.5 text-[11.5px] text-idl-muted">{label}</div>
-                <ProductDetailValue
-                  value={value}
-                  mono
-                  className="font-mono text-[15px] font-semibold text-idl-graphite"
-                />
+                <span className="font-mono text-[15px] font-semibold text-idl-graphite">{value}</span>
               </div>
             ))}
           </div>
         </div>
+        ) : null}
       </SectionContainer>
+      ) : null}
 
-      {/* Scheda tecnica completa */}
+      {(specGroups.length > 0 || dimensionsValue || productDocuments.length > 0) ? (
       <section className="border-t border-idl-tech-chip bg-idl-tech-panel">
         <SectionContainer className="py-10 sm:py-12">
           <h2 className="mb-5 text-xl font-extrabold tracking-tight">Scheda tecnica completa</h2>
           <div className="grid items-start gap-10 lg:grid-cols-[1.3fr_1fr] lg:gap-11">
+            {specGroups.length > 0 ? (
             <div>
-              {specGroups.length > 0 ? (
-                specGroups.map((group) => (
-                  <div key={group.title} className="mb-5">
-                    <ProductDetailSectionLabel variant="technical" className="mb-2 tracking-wider">
-                      {group.title}
-                    </ProductDetailSectionLabel>
-                    <div className="overflow-hidden rounded-[10px] border border-idl-tech-border bg-idl-tech-panel">
-                      {group.rows.map((row, index) => (
-                        <div
-                          key={`${row.label}-${index}`}
-                          className="flex flex-col gap-1 border-b border-idl-tech-chip px-4 py-2.5 last:border-b-0 min-[480px]:flex-row min-[480px]:items-start min-[480px]:justify-between min-[480px]:gap-4"
-                        >
-                          <span className="shrink-0 text-[13px] text-idl-muted">{row.label}</span>
-                          <span className="text-left text-[13.5px] font-semibold break-words text-idl-graphite min-[480px]:max-w-[60%] min-[480px]:text-right">
-                            {row.href ? (
-                              <a href={row.href} target="_blank" rel="noopener noreferrer" className="text-idl-amber underline-offset-2 hover:underline">
-                                {row.value}
-                              </a>
-                            ) : (
-                              row.value
-                            )}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+              {specGroups.map((group) => (
+                <div key={group.title} className="mb-5">
+                  <ProductDetailSectionLabel variant="technical" className="mb-2 tracking-wider">
+                    {group.title}
+                  </ProductDetailSectionLabel>
+                  <div className="overflow-hidden rounded-[10px] border border-idl-tech-border bg-idl-tech-panel">
+                    {group.rows.map((row, index) => (
+                      <div
+                        key={`${row.label}-${index}`}
+                        className="flex flex-col gap-1 border-b border-idl-tech-chip px-4 py-2.5 last:border-b-0 min-[480px]:flex-row min-[480px]:items-start min-[480px]:justify-between min-[480px]:gap-4"
+                      >
+                        <span className="shrink-0 text-[13px] text-idl-muted">{row.label}</span>
+                        <span className="text-left text-[13.5px] font-semibold break-words text-idl-graphite min-[480px]:max-w-[60%] min-[480px]:text-right">
+                          {row.href ? (
+                            <a href={row.href} target="_blank" rel="noopener noreferrer" className="text-idl-amber underline-offset-2 hover:underline">
+                              {row.value}
+                            </a>
+                          ) : (
+                            row.value
+                          )}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                ))
-              ) : (
-                <ProductDetailCard variant="technical">
-                  <ProductDetailPlaceholder>
-                    Scheda tecnica completa — dati in preparazione.
-                  </ProductDetailPlaceholder>
-                </ProductDetailCard>
-              )}
+                </div>
+              ))}
             </div>
+            ) : <div />}
 
             <div className="flex flex-col gap-6 lg:sticky lg:top-24">
               <ProductDetailCard variant="technical">
@@ -463,62 +447,38 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                 </ol>
               </ProductDetailCard>
 
+              {dimensionsValue ? (
               <ProductDetailCard variant="technical">
                 <h3 className="mb-4 text-base font-extrabold tracking-tight">Dimensioni e ingombri</h3>
-                <div className="flex aspect-[3.5/1] items-center justify-center rounded-lg border border-dashed border-idl-tech-border bg-idl-tech-panel text-sm text-idl-muted">
-                  <ProductDetailPlaceholder>Schema dimensioni — in arrivo</ProductDetailPlaceholder>
-                </div>
-                <p className="mt-2.5 text-xs text-idl-muted">
-                  <ProductDetailValue
-                    value={findSpecValue(parsedSpecs, /dimensioni|lunghezza|diametro/i)}
-                    placeholder="Misure — in arrivo"
-                  />
-                </p>
+                <p className="text-xs text-idl-muted">{dimensionsValue}</p>
               </ProductDetailCard>
+              ) : null}
 
+              {productDocuments.length > 0 ? (
               <ProductDetailCard variant="technical">
                 <h3 className="mb-3 text-base font-extrabold tracking-tight">Documenti tecnici</h3>
-                {productDocuments.length > 0 ? (
-                  <ProductDocuments
-                    slug={product.slug}
-                    documents={productDocuments}
-                    variantRef={variantRef}
-                    variant="technical"
-                    showTitle={false}
-                  />
-                ) : (
-                  <div className="space-y-0 opacity-70">
-                    {['Scheda tecnica', 'Etichetta energetica'].map((doc, i) => (
-                      <div
-                        key={doc}
-                        className={cn(
-                          'flex items-center gap-3 py-2.5',
-                          i === 0 && 'border-b border-idl-tech-chip',
-                        )}
-                      >
-                        <span className="rounded border border-red-200 px-1.5 py-0.5 font-mono text-[10px] font-bold text-red-700">
-                          PDF
-                        </span>
-                        <ProductDetailPlaceholder className="flex-1 text-[13.5px] font-semibold not-italic text-idl-graphite">
-                          {doc} — in arrivo
-                        </ProductDetailPlaceholder>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <ProductDocuments
+                  slug={product.slug}
+                  documents={productDocuments}
+                  variantRef={variantRef}
+                  variant="technical"
+                  showTitle={false}
+                />
               </ProductDetailCard>
+              ) : null}
             </div>
           </div>
         </SectionContainer>
       </section>
+      ) : null}
 
-      {/* Alternative */}
+      {alternativeProducts.length > 0 ? (
       <SectionContainer className="py-10 sm:py-12">
         <h2 className="text-xl font-extrabold tracking-tight sm:text-[22px]">Non è quella giusta?</h2>
         <p className="mt-1.5 text-sm text-idl-muted">
           Le alternative più simili per lunghezza, colore luce e dimmerabilità.
         </p>
-        <div className="mt-5 overflow-hidden rounded-xl border border-idl-tech-border">
+        <div className="mt-5 overflow-hidden rounded-xl border border-idl-tech-border bg-white dark:bg-idl-tech-panel">
           <div className="grid grid-cols-[2fr_repeat(4,1fr)_1.1fr] border-b border-idl-tech-border bg-idl-tech-panel font-mono text-[11px] tracking-wide text-idl-muted max-lg:hidden">
             <div className="px-4 py-3">PRODOTTO</div>
             <div className="px-3 py-3">LUNGH.</div>
@@ -550,8 +510,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
             <div className="text-[13px] font-bold text-idl-muted max-lg:mt-1 lg:px-3">In pagina</div>
           </div>
 
-          {alternativeProducts.length > 0 ? (
-            alternativeProducts.slice(0, 3).map((alt) => {
+          {alternativeProducts.slice(0, 3).map((alt) => {
               const altTags = alt.specTags ?? buildTechnicalCardSpecTags({ name: alt.name, shortDescription: alt.shortDescription })
               return (
                 <div
@@ -573,14 +532,10 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                   </Link>
                 </div>
               )
-            })
-          ) : (
-            <div className="px-4 py-8 text-center text-sm text-idl-muted">
-              <ProductDetailPlaceholder>Alternative consigliate — in arrivo</ProductDetailPlaceholder>
-            </div>
-          )}
+            })}
         </div>
       </SectionContainer>
+      ) : null}
 
       {accessoryProducts.length > 0 ? (
         <SectionContainer className="border-t border-idl-tech-chip py-10 sm:py-12">
@@ -612,6 +567,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
               Le risposte ai dubbi più comuni su questo prodotto.
             </p>
             <div className="space-y-2.5">
+              {product.shortDescription?.trim() ? (
               <details className="group overflow-hidden rounded-xl border border-amber-200 bg-idl-tech-panel shadow-sm open:shadow-md" open>
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-[15px] font-bold [&::-webkit-details-marker]:hidden">
                   Come verifico che sia il ricambio giusto?
@@ -620,33 +576,10 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                   </span>
                 </summary>
                 <div className="px-5 pb-5 text-sm leading-relaxed text-idl-muted">
-                  {product.shortDescription?.trim() ? (
-                    product.shortDescription
-                  ) : (
-                    <ProductDetailPlaceholder>
-                      Controlla attacco, lunghezza e tensione. Nel dubbio inviaci una foto con un righello accanto.
-                    </ProductDetailPlaceholder>
-                  )}
+                  {product.shortDescription}
                 </div>
               </details>
-              {['Questo prodotto è dimmerabile?', 'Posso sostituire una vecchia alogena?', 'Che differenza c\'è tra le temperature colore?'].map(
-                (q) => (
-                  <details
-                    key={q}
-                    className="overflow-hidden rounded-xl border border-idl-tech-border bg-idl-tech-panel [&_summary]:flex [&_summary]:cursor-pointer [&_summary]:list-none [&_summary]:items-center [&_summary]:justify-between [&_summary]:gap-3 [&_summary]:px-5 [&_summary]:py-4 [&_summary]:text-[15px] [&_summary]:font-bold [&::-webkit-details-marker]:hidden"
-                  >
-                    <summary>
-                      {q}
-                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-idl-tech-panel text-idl-amber">
-                        +
-                      </span>
-                    </summary>
-                    <div className="px-5 pb-5 text-sm text-idl-muted">
-                      <ProductDetailPlaceholder>Risposta in preparazione — contattaci per assistenza immediata.</ProductDetailPlaceholder>
-                    </div>
-                  </details>
-                ),
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -672,13 +605,13 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
               </ProductDetailContactLink>
               <ProductDetailContactLink
                 href={lp('/negozio')}
-                className="flex items-center gap-3 rounded-[10px] border border-idl-tech-chip-border px-4 py-3 text-sm font-bold text-idl-graphite"
+                className="flex items-center gap-3 rounded-[10px] border border-idl-tech-chip-border bg-white px-4 py-3 text-sm font-bold text-idl-graphite dark:bg-idl-tech-panel"
               >
                 Cerca per EAN o codice →
               </ProductDetailContactLink>
               <ProductDetailContactLink
                 href={lp('/contatti')}
-                className="flex items-center gap-3 rounded-[10px] border border-idl-tech-chip-border px-4 py-3 text-sm font-bold text-idl-graphite"
+                className="flex items-center gap-3 rounded-[10px] border border-idl-tech-chip-border bg-white px-4 py-3 text-sm font-bold text-idl-graphite dark:bg-idl-tech-panel"
               >
                 Scrivi una domanda →
               </ProductDetailContactLink>

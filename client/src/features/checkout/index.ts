@@ -68,16 +68,3 @@ export {
   updateCheckoutOrderNotes,
 } from './checkout.actions'
 export { isPickupQuote, isRomePickupEligible } from './shipping-quotes'
-export { checkoutTestStore } from './checkoutTest.store'
-export {
-  updateField,
-  updateBillingAddressField,
-  updateShippingAddressField,
-  setSameAsBilling as setTestCheckoutSameAsBilling,
-  submitTestCheckout,
-  clearResult,
-  clearError,
-  resetCheckoutTestForm,
-  isTestCheckoutFormValid,
-  prefillCheckoutTestFormFromUser,
-} from './checkoutTest.actions'

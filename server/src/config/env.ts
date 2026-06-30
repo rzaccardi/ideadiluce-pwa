@@ -176,11 +176,11 @@ const envSchema = z.object({
   PAID_SYNC_ALERT_MINUTES: z.coerce.number().default(15),
   /** Destinatario email alert sync Odoo (se assente: solo log + banner BO). */
   PAID_SYNC_ALERT_EMAIL: z.string().email().optional(),
-  /** Google reCAPTCHA v3 — protezione login/registrazione (storefront + backoffice). */
-  RECAPTCHA_ENABLED: boolish.default(false),
-  RECAPTCHA_SECRET_KEY: z.string().optional(),
-  /** Soglia score v3 (0–1). Default 0.5 — sotto questa soglia il submit viene rifiutato. */
-  RECAPTCHA_SCORE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.5),
+  /** Aggiornamento automatico query ricerca Home da Odoo (prodotti più acquistati). */
+  SEARCH_HINTS_AUTO_SYNC_ENABLED: boolish.default(true),
+  SEARCH_HINTS_STALE_HOURS: z.coerce.number().default(72),
+  SEARCH_HINTS_LOOKBACK_DAYS: z.coerce.number().default(90),
+  SEARCH_HINTS_LIMIT: z.coerce.number().default(8),
 })
 
 export type Env = z.infer<typeof envSchema>

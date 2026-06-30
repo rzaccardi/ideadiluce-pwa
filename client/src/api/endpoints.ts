@@ -57,18 +57,26 @@ export const api = {
       lastName?: string
       phone?: string
       customerSegment?: 'retail' | 'business'
-      recaptchaToken?: string
     }) {
       return apiClient.post<{ user: UserDTO }>('/api/v1/auth/register', body)
     },
     forgotPassword(email: string) {
       return apiClient.post<{ sent: boolean }>('/api/v1/auth/forgot-password', { email })
     },
-    resetPassword(token: string, password: string) {
-      return apiClient.post<{ reset: boolean }>('/api/v1/auth/reset-password', { token, password })
+    checkoutForgotPassword(email: string) {
+      return apiClient.post<{ sent: boolean }>('/api/v1/auth/checkout-forgot-password', { email })
     },
-    login(body: { email: string; password: string; recaptchaToken?: string }) {
+    resetPassword(token: string, password: string) {
+      return apiClient.post<{ reset: boolean }>('/api/v1/auth/reset-password', {
+        token,
+        password,
+      })
+    },
+    login(body: { email: string; password: string }) {
       return apiClient.post<{ user: UserDTO }>('/api/v1/auth/login', body)
+    },
+    checkoutLogin(body: { email: string; password: string }) {
+      return apiClient.post<{ user: UserDTO }>('/api/v1/auth/checkout-login', body)
     },
     checkoutRegister(body: {
       email: string
@@ -77,7 +85,6 @@ export const api = {
       lastName: string
       phone?: string
       customerSegment?: 'retail' | 'business'
-      recaptchaToken?: string
     }) {
       return apiClient.post<{ user: UserDTO }>('/api/v1/auth/checkout-register', body)
     },
@@ -354,6 +361,12 @@ export const api = {
         `/api/v1/catalog/products/${encodeURIComponent(slug)}/social-proof`,
       )
     },
+    homeProductSliders(locale?: string) {
+      const search = locale ? `?locale=${encodeURIComponent(locale)}` : ''
+      return apiClient.get<import('@/types/home-product-sliders').HomeProductSliderDTO[]>(
+        `/api/v1/catalog/home/product-sliders${search}`,
+      )
+    },
     restockNotify(slug: string, body: RestockNotifyBody) {
       const search = body.locale ? `?locale=${encodeURIComponent(body.locale)}` : ''
       return apiClient.post<StockRestockRequestDTO>(
@@ -371,8 +384,9 @@ export const api = {
     },
   },
   cart: {
-    get() {
-      return apiClient.get<CartDTO>('/api/v1/cart')
+    get(options?: { reprice?: boolean }) {
+      const q = options?.reprice ? '?reprice=1' : ''
+      return apiClient.get<CartDTO>(`/api/v1/cart${q}`)
     },
     addItem(body: { productRef: string; variantRef?: string | null; quantity?: number }) {
       return apiClient.post<CartDTO>('/api/v1/cart/items', body)

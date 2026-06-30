@@ -40,7 +40,7 @@ export const checkoutShellClass = [
 
 /** Main checkout: colonna form bianca, scroll indipendente su desktop. */
 export const checkoutMainClass = [
-  'flex w-full min-w-0 flex-1 flex-col bg-idl-tech-panel',
+  'relative flex w-full min-w-0 flex-1 flex-col bg-idl-tech-panel',
   'lg:col-start-2 lg:row-start-1 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain',
 ].join(' ')
 
@@ -60,7 +60,7 @@ export const checkoutSummaryInnerClass = [
   'lg:py-10 xl:py-[46px]',
 ].join(' ')
 
-/** Sidebar checkout desktop — occupa la prima colonna della grid. */
+/** Sidebar checkout desktop — occupa la prima colonna della grid a tutta altezza. */
 export const checkoutSummaryAsideClass = [
   'checkout-summary-dark hidden min-h-0 min-w-0',
   'lg:col-start-1 lg:row-start-1 lg:flex lg:h-full lg:min-h-0 lg:flex-col lg:overflow-y-auto lg:overscroll-contain',
@@ -68,7 +68,15 @@ export const checkoutSummaryAsideClass = [
 
 /** Barra riepilogo mobile collassabile, sticky in cima. */
 export const checkoutMobileSummaryClass =
-  'sticky top-0 z-20 border-b border-idl-tech-border bg-idl-tech-panel lg:hidden'
+  'relative sticky top-0 z-30 border-b border-idl-tech-border bg-idl-tech-panel lg:hidden'
+
+/** Pannello riepilogo mobile aperto: absolute sotto la barra, altezza naturale fino al max viewport. */
+export const checkoutMobileSummaryPanelClass = [
+  'absolute left-0 right-0 top-full z-40',
+  'max-h-[min(70dvh,calc(100dvh-3.25rem))] overflow-y-auto overscroll-contain',
+  'border-b border-idl-tech-border bg-idl-tech-panel',
+  'shadow-[0_16px_48px_rgba(0,0,0,0.14)]',
+].join(' ')
 
 /** Pulsante indietro: stessa cap-height del titolo a ogni breakpoint. */
 export const checkoutBackButtonSizeClass = 'size-7 shrink-0 sm:size-8'

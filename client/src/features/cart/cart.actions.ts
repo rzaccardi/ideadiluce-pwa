@@ -27,11 +27,11 @@ function detectStaleCartMirror(serverCartId: string): boolean {
 // Source of truth: session cookie server-side. Il mirror `emil_cart_mirror_v1` salva solo
 // cartId + scadenza riserva (vedi cart-local-storage). POST /cart/sync-from-client resta
 // legacy per sync righe guest e non viene invocato dal client.
-async function loadCart(options?: { skipMirrorCheck?: boolean }) {
+async function loadCart(options?: { skipMirrorCheck?: boolean; reprice?: boolean }) {
   cartStore.isLoading = true
   cartStore.error = null
   try {
-    const next = await api.cart.get()
+    const next = await api.cart.get({ reprice: options?.reprice })
     if (!options?.skipMirrorCheck && detectStaleCartMirror(next.id)) {
       cartStore.reservationExpiredNotice = true
     }
@@ -54,14 +54,16 @@ export type FetchCartOptions = {
   force?: boolean
   /** Salta controllo mirror localStorage (es. dopo mutazione già sincronizzata). */
   skipMirrorCheck?: boolean
+  /** Richiede reprice Odoo lato server (cart/checkout). */
+  reprice?: boolean
 }
 
 export function fetchCart(options?: FetchCartOptions) {
   if (!options?.force && cartStore.cart) {
     return Promise.resolve()
   }
-  return dedupeAsync('cart:get', () =>
-    loadCart({ skipMirrorCheck: options?.skipMirrorCheck }),
+  return dedupeAsync(`cart:get${options?.reprice ? ':reprice' : ''}`, () =>
+    loadCart({ skipMirrorCheck: options?.skipMirrorCheck, reprice: options?.reprice }),
   )
 }
 

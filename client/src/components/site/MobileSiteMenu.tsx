@@ -3,26 +3,47 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSnapshot } from 'valtio/react'
 import { Link } from '@/lib/navigation'
+import { SHOWROOM_MAPS_URL } from '@/lib/company-contact'
+import { isExternalHref } from '@/lib/href'
 import { AttaccoSocketIcon } from '@/components/site/attacco/AttaccoIcons'
 import { HeaderAccountMenu } from '@/components/site/HeaderAccountMenu'
-import { HeaderThemeToggle } from '@/components/site/HeaderThemeToggle'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { authStore } from '@/features/auth'
 import { SiteImage } from '@/components/site/SiteImage'
-import { siteStore } from '@/features/site'
+import { api } from '@/api/endpoints'
+import { fetchSitePage, siteStore } from '@/features/site'
 import { ATTACCO_SOCKETS } from '@/lib/attacco.defaults'
 import { resolveNavDropdownHref } from '@/lib/dc-static-routes'
 import {
+  isDesignCategory,
+  primaryCategoryLabel,
+  resolveHomeBrandCards,
+} from '@/lib/brand.defaults'
+import {
+  FALLBACK_GUIDE_ITEMS,
   FALLBACK_ROOM_ITEMS,
   isVisualColumn,
+  resolveMenuLinkVisual,
+  resolveMobileNavTabId,
   resolveNavLinkVisual,
   resolveStyleLookVisual,
   shortMobileTabLabel,
 } from '@/lib/mobile-nav-visuals'
 import { useI18n } from '@/hooks/use-i18n'
+import { useLocale } from '@/context/locale-context'
 import { useLocalePath } from '@/hooks/use-locale-path'
-import type { HomePageContent, SiteMegaMenuPanel, SiteShellContent } from '@/types/site-content'
+import type {
+  BrandListItemDTO,
+  HomeGuideCard,
+  HomePageContent,
+  SiteMegaMenuPanel,
+  SiteShellContent,
+} from '@/types/site-content'
+
+type NotFoundCta = SiteShellContent['footer']['notFoundCta']
 import { cn } from '@/utils/cn'
 import { ui } from '@/lib/ui-classes'
+import { BrandNameDisplay } from './brand/BrandNameDisplay'
 import { BrandWordmark, SITE_PAGE_X_CLASS } from './primitives'
 
 const MEGA_SOCKETS = ATTACCO_SOCKETS.filter((socket) => !socket.dashed).slice(0, 5)
@@ -31,8 +52,37 @@ type NavItem = SiteShellContent['nav']['items'][number]
 
 type Props = {
   nav: SiteShellContent['nav']
+  notFoundCta: NotFoundCta
   activeNavId?: string | null
   onClose: () => void
+}
+
+function MobileMenuFooter({ notFoundCta, onClose }: { notFoundCta: NotFoundCta; onClose: () => void }) {
+  const lp = useLocalePath()
+  const auth = useSnapshot(authStore)
+
+  return (
+    <div className="mt-8 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="mb-6 rounded-xl border border-idl-promo-border bg-idl-promo-bg p-4">
+        <div className="font-serif text-[15px] font-medium text-idl-graphite">{notFoundCta.title}</div>
+        <p className="mt-1.5 text-[12px] leading-relaxed text-idl-promo-text">{notFoundCta.description}</p>
+        <Link
+          to={lp(notFoundCta.ctaHref)}
+          onClick={onClose}
+          className="mt-3 inline-block rounded-md bg-idl-amber px-3.5 py-2 text-[12.5px] font-bold text-white transition-colors hover:bg-idl-cta-amber-hover"
+        >
+          {notFoundCta.ctaLabel}
+        </Link>
+      </div>
+
+      <div className="flex flex-col gap-0.5 border-t border-idl-border pt-4">
+        <LanguageSwitcher variant="mobileNav" onLocaleChange={onClose} />
+        {!auth.isAuthenticated ? (
+          <HeaderAccountMenu variant="mobileNav" onNavigate={onClose} />
+        ) : null}
+      </div>
+    </div>
+  )
 }
 
 function MobileMenuCloseIcon({ className }: { className?: string }) {
@@ -43,64 +93,20 @@ function MobileMenuCloseIcon({ className }: { className?: string }) {
   )
 }
 
-function MobilePromoCard({
-  promo,
-  onNavigate,
-}: {
-  promo: NonNullable<SiteMegaMenuPanel['promo']>
-  onNavigate: () => void
-}) {
-  const lp = useLocalePath()
-  const design = promo.variant === 'design'
-
-  return (
-    <div
-      className={cn(
-        'mt-5 rounded-xl border p-4',
-        design ? 'border-idl-glow/25 bg-idl-design text-idl-design-fg' : 'border-idl-promo-border bg-idl-promo-bg',
-      )}
-    >
-      <div className={cn('text-[15px] font-bold', design ? 'font-serif text-idl-design-fg' : 'text-idl-graphite')}>
-        {promo.title}
-      </div>
-      <p
-        className={cn(
-          'mt-1.5 text-[13px] leading-relaxed',
-          design ? 'text-idl-design-subtle' : 'text-idl-promo-text',
-        )}
-      >
-        {promo.description}
-      </p>
-      <Link
-        to={lp(promo.ctaHref)}
-        onClick={onNavigate}
-        className={cn(
-          'mt-3 inline-block rounded-md px-4 py-2.5 text-[13px] font-bold transition-colors',
-          design
-            ? 'bg-idl-glow text-idl-design hover:bg-idl-cta-glow-hover'
-            : 'bg-idl-amber text-white hover:bg-idl-cta-amber-hover',
-        )}
-      >
-        {promo.ctaLabel}
-      </Link>
-    </div>
-  )
-}
-
 function MobileVisualLink({
   href,
   label,
   visual,
   subtitle,
-  onNavigate,
   aspect = '4/3',
+  onNavigate,
 }: {
   href: string
   label: string
   visual?: { imageUrl: string; videoUrl?: string } | null
   subtitle?: string
-  onNavigate: () => void
   aspect?: '4/3' | '1/1' | '3/4'
+  onNavigate?: () => void
 }) {
   const lp = useLocalePath()
   const aspectClass =
@@ -189,11 +195,9 @@ function MobileColumnSubTabs({
 function MobileMegaColumnContent({
   column,
   tone,
-  onNavigate,
 }: {
   column: SiteMegaMenuPanel['columns'][number]
   tone: 'design' | 'technical'
-  onNavigate: () => void
 }) {
   const lp = useLocalePath()
   const visualGrid = isVisualColumn(column.title)
@@ -202,10 +206,7 @@ function MobileMegaColumnContent({
     return (
       <div className="grid grid-cols-2 gap-2.5">
         {column.links.map((link, index) => {
-          const visual =
-            /stile/i.test(column.title)
-              ? resolveStyleLookVisual(index)
-              : resolveNavLinkVisual(link.href, link.label)
+          const visual = resolveMenuLinkVisual(link, column.title, index)
           const subtitle =
             link.label.includes(' — ') ? link.label.split(' — ').slice(1).join(' — ') : undefined
           const title = link.label.split(' — ')[0] ?? link.label
@@ -216,8 +217,7 @@ function MobileMegaColumnContent({
               href={link.href}
               label={title}
               subtitle={subtitle}
-              visual={visual?.kind === 'image' || visual?.kind === 'look' ? { imageUrl: visual.imageUrl } : null}
-              onNavigate={onNavigate}
+              visual={visual?.kind === 'image' || visual?.kind === 'look' ? { imageUrl: visual.imageUrl, videoUrl: visual.kind === 'image' ? visual.videoUrl : undefined } : null}
               aspect={/tipolog/i.test(column.title) ? '3/4' : '4/3'}
             />
           )
@@ -232,7 +232,6 @@ function MobileMegaColumnContent({
         <Link
           key={link.href + link.label}
           to={lp(link.href)}
-          onClick={onNavigate}
           className={cn(
             'rounded-lg px-2 py-2.5 text-[14px] font-medium transition-colors',
             tone === 'design'
@@ -247,13 +246,7 @@ function MobileMegaColumnContent({
   )
 }
 
-function MobileMegaDropdownPanel({
-  item,
-  onNavigate,
-}: {
-  item: Extract<NavItem, { kind: 'dropdown' }>
-  onNavigate: () => void
-}) {
+function MobileMegaDropdownPanel({ item }: { item: Extract<NavItem, { kind: 'dropdown' }> }) {
   const lp = useLocalePath()
   const [subTab, setSubTab] = useState(0)
   const tone = item.id === 'arredo' ? 'design' : 'technical'
@@ -265,14 +258,13 @@ function MobileMegaDropdownPanel({
   }, [item.id])
 
   if (item.id === 'attacco') {
-    return <MobileAttaccoPanel item={item} onNavigate={onNavigate} />
+    return <MobileAttaccoPanel item={item} />
   }
 
   return (
     <div>
       <Link
         to={lp(resolveNavDropdownHref(item.id, item.href))}
-        onClick={onNavigate}
         className={cn(
           'mb-4 inline-flex items-center gap-1.5 text-[15px] font-bold transition-colors',
           tone === 'design' ? 'text-idl-brass hover:text-idl-brass-light' : 'text-idl-amber',
@@ -289,21 +281,13 @@ function MobileMegaDropdownPanel({
       />
 
       {activeColumn ? (
-        <MobileMegaColumnContent column={activeColumn} tone={tone} onNavigate={onNavigate} />
+        <MobileMegaColumnContent column={activeColumn} tone={tone} />
       ) : null}
-
-      {item.panel.promo ? <MobilePromoCard promo={item.panel.promo} onNavigate={onNavigate} /> : null}
     </div>
   )
 }
 
-function MobileAttaccoPanel({
-  item,
-  onNavigate,
-}: {
-  item: Extract<NavItem, { kind: 'dropdown' }>
-  onNavigate: () => void
-}) {
+function MobileAttaccoPanel({ item }: { item: Extract<NavItem, { kind: 'dropdown' }> }) {
   const lp = useLocalePath()
   const panel = item.panel
 
@@ -311,7 +295,6 @@ function MobileAttaccoPanel({
     <div>
       <Link
         to={lp('/attacco')}
-        onClick={onNavigate}
         className="mb-3 inline-flex items-center gap-1.5 text-[15px] font-bold text-idl-amber"
       >
         Tutti gli attacchi →
@@ -319,12 +302,11 @@ function MobileAttaccoPanel({
       <p className="mb-4 font-mono text-[10px] tracking-[0.12em] text-idl-amber uppercase">
         {panel.eyebrow ?? 'Lampadine per attacco'}
       </p>
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="flex flex-col gap-2">
         {MEGA_SOCKETS.map((socket) => (
           <Link
             key={socket.key}
             to={lp(socket.href)}
-            onClick={onNavigate}
             className="flex items-center gap-2.5 rounded-xl border border-idl-tech-border bg-white p-3 transition hover:border-idl-amber"
           >
             <AttaccoSocketIcon icon={socket.icon} size={26} />
@@ -336,30 +318,52 @@ function MobileAttaccoPanel({
         ))}
         <Link
           to={lp('/attacco')}
-          onClick={onNavigate}
-          className="col-span-2 flex items-center justify-center rounded-xl border border-dashed border-idl-tech-border bg-idl-tech-panel p-3.5 text-center"
+          className="flex items-center justify-center rounded-xl border border-dashed border-idl-tech-border bg-idl-tech-panel p-3.5 text-center"
         >
           <span className="text-[13px] font-bold text-idl-graphite-2">
             {panel.allSocketsCta ?? 'Tutti gli attacchi →'}
           </span>
         </Link>
       </div>
-      {panel.promo ? <MobilePromoCard promo={panel.promo} onNavigate={onNavigate} /> : null}
     </div>
   )
 }
 
-function MobileAmbientiPanel({ onNavigate }: { onNavigate: () => void }) {
+function enrichMobileRoomCard(
+  item: Pick<HomePageContent['rooms']['items'][number], 'title' | 'href' | 'imageUrl' | 'videoUrl'>,
+): HomePageContent['rooms']['items'][number] {
+  const path = item.href.split('?')[0] ?? item.href
+  const fallback = FALLBACK_ROOM_ITEMS.find((room) => room.href === path)
+  const visual = resolveNavLinkVisual(item.href, item.title)
+
+  return {
+    title: item.title,
+    href: item.href,
+    imageUrl:
+      item.imageUrl ||
+      fallback?.imageUrl ||
+      (visual?.kind === 'image' || visual?.kind === 'look' ? visual.imageUrl : ''),
+    videoUrl:
+      item.videoUrl ||
+      fallback?.videoUrl ||
+      (visual?.kind === 'image' ? visual.videoUrl : undefined),
+  }
+}
+
+function MobileAmbientiPanel({ onClose }: { onClose: () => void }) {
   const lp = useLocalePath()
   const { pages } = useSnapshot(siteStore)
   const home = pages.home as HomePageContent | undefined
-  const rooms = home?.rooms.items?.length ? home.rooms.items : FALLBACK_ROOM_ITEMS
+  const rooms = useMemo(() => {
+    const source = home?.rooms.items?.length ? home.rooms.items : FALLBACK_ROOM_ITEMS
+    return source.map(enrichMobileRoomCard)
+  }, [home?.rooms.items])
 
   return (
     <div>
       <Link
         to={lp('/acquista-ambiente')}
-        onClick={onNavigate}
+        onClick={onClose}
         className="mb-4 inline-flex items-center gap-1.5 text-[15px] font-bold text-idl-brass"
       >
         Tutti gli ambienti →
@@ -370,8 +374,10 @@ function MobileAmbientiPanel({ onNavigate }: { onNavigate: () => void }) {
             key={room.href}
             href={room.href}
             label={room.title}
-            visual={{ imageUrl: room.imageUrl, videoUrl: room.videoUrl }}
-            onNavigate={onNavigate}
+            visual={
+              room.imageUrl ? { imageUrl: room.imageUrl, videoUrl: room.videoUrl } : null
+            }
+            onNavigate={onClose}
           />
         ))}
       </div>
@@ -379,52 +385,61 @@ function MobileAmbientiPanel({ onNavigate }: { onNavigate: () => void }) {
   )
 }
 
-function MobileBrandPanel({ onNavigate }: { onNavigate: () => void }) {
+function MobileBrandPanel() {
   const lp = useLocalePath()
+  const { locale } = useLocale()
   const { pages } = useSnapshot(siteStore)
   const home = pages.home as HomePageContent | undefined
-  const brands = home?.brands.items ?? []
+  const [hubBrands, setHubBrands] = useState<BrandListItemDTO[]>([])
 
-  const slugify = (name: string) =>
-    name
-      .toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^a-z0-9-]/g, '')
+  useEffect(() => {
+    void api.catalog
+      .brands()
+      .then((data) => setHubBrands(data.items))
+      .catch(() => setHubBrands([]))
+  }, [locale])
+
+  const brands = useMemo(
+    () => resolveHomeBrandCards(home?.brands.items ?? [], hubBrands),
+    [home?.brands.items, hubBrands],
+  )
 
   return (
     <div>
       <Link
         to={lp('/brand')}
-        onClick={onNavigate}
         className="mb-4 inline-flex items-center gap-1.5 text-[15px] font-bold text-idl-brass"
       >
         Tutti i brand →
       </Link>
-      <div className="grid grid-cols-2 gap-2">
-        {brands.map((brand, index) => {
-          const name = typeof brand === 'string' ? brand : brand.name
-          const href = typeof brand === 'string' ? `/brand/${slugify(name)}` : (brand.href ?? `/brand/${slugify(name)}`)
-          const look = resolveStyleLookVisual(index)
+      <div className="grid grid-cols-2 gap-2.5 overflow-hidden rounded-[10px] border border-idl-tech-border bg-white dark:bg-idl-tech-panel">
+        {brands.map((brand) => {
+          const design = isDesignCategory(brand.categories)
+          const badge = primaryCategoryLabel(brand.categories)
+          const productMeta =
+            brand.productCount > 0 ? `${brand.productCount} prodotti` : 'Catalogo disponibile'
+
           return (
             <Link
-              key={name}
-              to={lp(href)}
-              onClick={onNavigate}
-              className="group overflow-hidden rounded-xl border border-idl-border bg-white transition hover:border-idl-brass"
+              key={brand.slug}
+              to={lp(brand.href)}
+              className="flex min-h-[118px] flex-col items-center border-b border-r border-idl-tech-border bg-idl-tech-panel px-3 py-4 text-center transition hover:bg-white hover:text-idl-brass"
+              aria-label={`Scopri ${brand.name}`}
             >
-              <div className="relative aspect-[5/3] overflow-hidden bg-idl-cream">
-                <SiteImage
-                  src={look.imageUrl}
-                  alt=""
-                  fill
-                  sizes="45vw"
-                  className="object-cover opacity-80 transition duration-500 group-hover:scale-[1.03] group-hover:opacity-100"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-idl-ink/55 to-transparent" />
-                <span className="absolute inset-x-0 bottom-0 p-2.5 font-serif text-[14px] font-semibold text-white">
-                  {name}
-                </span>
+              <div className="mb-2.5 flex h-10 w-full items-center justify-center">
+                <BrandNameDisplay name={brand.name} style={brand.displayStyle} size="sm" />
               </div>
+              <span
+                className={cn(
+                  'inline-flex rounded-[5px] border px-2 py-0.5 font-mono text-[9px] tracking-[0.06em]',
+                  design
+                    ? 'border-[#ece2d2] bg-idl-path-design text-idl-brass'
+                    : 'border-idl-tech-chip-border bg-idl-tech-chip text-idl-graphite-2',
+                )}
+              >
+                {badge}
+              </span>
+              <span className="mt-1.5 text-[10.5px] text-idl-muted">{productMeta}</span>
             </Link>
           )
         })}
@@ -433,17 +448,41 @@ function MobileBrandPanel({ onNavigate }: { onNavigate: () => void }) {
   )
 }
 
-function MobileGuidePanel({ onNavigate }: { onNavigate: () => void }) {
+function MobileGuidePanel({ onClose }: { onClose: () => void }) {
   const lp = useLocalePath()
+  const { locale } = useLocale()
   const { pages } = useSnapshot(siteStore)
   const home = pages.home as HomePageContent | undefined
-  const guides = home?.guides.items ?? []
+  const [featuredGuides, setFeaturedGuides] = useState<HomeGuideCard[]>([])
+
+  useEffect(() => {
+    void api.site
+      .guides(locale, { featured: true })
+      .then((items) =>
+        setFeaturedGuides(
+          items.map((guide) => ({
+            category: guide.category,
+            title: guide.title,
+            meta: guide.meta,
+            href: guide.href,
+          })),
+        ),
+      )
+      .catch(() => setFeaturedGuides([]))
+  }, [locale])
+
+  const guides =
+    featuredGuides.length > 0
+      ? featuredGuides
+      : home?.guides.items?.length
+        ? home.guides.items
+        : [...FALLBACK_GUIDE_ITEMS]
 
   return (
     <div>
       <Link
         to={lp('/blog')}
-        onClick={onNavigate}
+        onClick={onClose}
         className="mb-4 inline-flex items-center gap-1.5 text-[15px] font-bold text-idl-brass"
       >
         Tutte le guide →
@@ -455,20 +494,22 @@ function MobileGuidePanel({ onNavigate }: { onNavigate: () => void }) {
             <Link
               key={guide.href}
               to={lp(guide.href)}
-              onClick={onNavigate}
+              onClick={onClose}
               className="group flex gap-3 overflow-hidden rounded-xl border border-idl-border bg-white p-2 transition hover:border-idl-brass"
             >
               <div className="relative size-[72px] shrink-0 overflow-hidden rounded-lg bg-idl-cream">
                 <SiteImage src={look.imageUrl} alt="" fill sizes="72px" className="object-cover" />
               </div>
               <div className="min-w-0 py-0.5">
-                <div className="font-mono text-[9px] tracking-[0.12em] text-idl-brass uppercase">
-                  {guide.category}
-                </div>
+                {guide.category ? (
+                  <div className="font-mono text-[9px] tracking-[0.12em] text-idl-brass uppercase">
+                    {guide.category}
+                  </div>
+                ) : null}
                 <div className="mt-0.5 line-clamp-2 text-[13.5px] font-semibold leading-snug text-idl-ink">
                   {guide.title}
                 </div>
-                <div className="mt-1 text-[11px] text-idl-muted">{guide.meta}</div>
+                {guide.meta ? <div className="mt-1 text-[11px] text-idl-muted">{guide.meta}</div> : null}
               </div>
             </Link>
           )
@@ -478,44 +519,53 @@ function MobileGuidePanel({ onNavigate }: { onNavigate: () => void }) {
   )
 }
 
-function MobileAltroPanel({ onNavigate }: { onNavigate: () => void }) {
+function MobileAltroPanel() {
+  const lp = useLocalePath()
   const { t } = useI18n()
 
   const quickLinks = [
-    { label: t('nav.catalog'), href: '/negozio', imageUrl: '/site/images/lamp-pendant.webp' },
-    { label: t('nav.wishlist'), href: '/wishlist', imageUrl: '/site/images/lamp-sphere.webp' },
-    { label: 'Professionisti', href: '/professionisti', imageUrl: '/site/images/room-studio.webp' },
-    { label: 'Showroom Roma', href: '/showroom', imageUrl: '/site/images/room-soggiorno.webp' },
+    { label: t('nav.catalog'), href: '/negozio' },
+    { label: t('nav.wishlist'), href: '/wishlist' },
+    { label: 'Professionisti', href: '/professionisti' },
+    { label: 'Showroom Roma', href: SHOWROOM_MAPS_URL },
   ]
 
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-2 gap-2.5">
-        {quickLinks.map((link) => (
-          <MobileVisualLink
+    <div className="flex flex-col gap-1">
+      {quickLinks.map((link) =>
+        isExternalHref(link.href) ? (
+          <a
             key={link.href}
             href={link.href}
-            label={link.label}
-            visual={{ imageUrl: link.imageUrl }}
-            onNavigate={onNavigate}
-            aspect="4/3"
-          />
-        ))}
-      </div>
-      <div className="flex flex-col gap-1 border-t border-idl-border/60 pt-4">
-        <HeaderAccountMenu variant="mobileNav" onNavigate={onNavigate} />
-        <HeaderThemeToggle variant="mobileNav" />
-        <LanguageSwitcher variant="mobileNav" onLocaleChange={onNavigate} />
-      </div>
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-lg px-2 py-2.5 text-[14px] font-medium text-idl-ink-soft transition-colors hover:bg-idl-path-design hover:text-idl-brass"
+          >
+            {link.label}
+          </a>
+        ) : (
+          <Link
+            key={link.href}
+            to={lp(link.href)}
+            className="rounded-lg px-2 py-2.5 text-[14px] font-medium text-idl-ink-soft transition-colors hover:bg-idl-path-design hover:text-idl-brass"
+          >
+            {link.label}
+          </Link>
+        ),
+      )}
     </div>
   )
 }
 
-export function MobileSiteMenu({ nav, activeNavId, onClose }: Props) {
+export function MobileSiteMenu({ nav, notFoundCta, activeNavId, onClose }: Props) {
   const lp = useLocalePath()
+  const { locale } = useLocale()
   const tabs = useMemo(
     () => [
-      ...nav.items.map((item) => ({ id: item.id, label: item.label })),
+      ...nav.items.map((item, index) => ({
+        id: resolveMobileNavTabId(item, index),
+        label: item.label,
+      })),
       { id: 'altro', label: 'Altro' },
     ],
     [nav.items],
@@ -528,7 +578,15 @@ export function MobileSiteMenu({ nav, activeNavId, onClose }: Props) {
     setActiveTab(defaultTab)
   }, [defaultTab])
 
-  const activeItem = nav.items.find((item) => item.id === activeTab)
+  useEffect(() => {
+    void fetchSitePage('home', locale, { skipIfFresh: true })
+  }, [locale])
+
+  const activeItem = useMemo(
+    () =>
+      nav.items.find((item, index) => resolveMobileNavTabId(item, index) === activeTab),
+    [nav.items, activeTab],
+  )
 
   const tabTone = (id: string): 'design' | 'technical' | 'neutral' => {
     if (id === 'arredo') return 'design'
@@ -544,17 +602,22 @@ export function MobileSiteMenu({ nav, activeNavId, onClose }: Props) {
       className={ui.mobileMenu}
     >
       <div className={cn(ui.mobileMenuBar, SITE_PAGE_X_CLASS)}>
-        <Link to={lp('/')} className="rounded-sm transition-opacity hover:opacity-80" onClick={onClose}>
+        <Link to={lp('/')} className="rounded-sm transition-opacity hover:opacity-80">
           <BrandWordmark className="text-[20px] md:text-[22px]" />
         </Link>
-        <button
-          type="button"
-          aria-label="Chiudi menu"
-          className={cn(ui.interactive, ui.mobileMenuClose)}
-          onClick={onClose}
-        >
-          <MobileMenuCloseIcon className="size-5" />
-        </button>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <div className="flex size-10 items-center justify-center">
+            <LanguageSwitcher variant="icon" onLocaleChange={onClose} />
+          </div>
+          <button
+            type="button"
+            aria-label="Chiudi menu"
+            className={cn(ui.interactive, ui.mobileMenuClose)}
+            onClick={onClose}
+          >
+            <MobileMenuCloseIcon className="size-5" />
+          </button>
+        </div>
       </div>
 
       <div
@@ -591,27 +654,28 @@ export function MobileSiteMenu({ nav, activeNavId, onClose }: Props) {
 
       <div
         role="tabpanel"
-        className={cn('flex-1 overflow-y-auto py-5', SITE_PAGE_X_CLASS)}
+        className={cn('min-h-0 flex-1 overflow-y-auto py-5', SITE_PAGE_X_CLASS)}
       >
         {activeTab === 'altro' ? (
-          <MobileAltroPanel onNavigate={onClose} />
+          <MobileAltroPanel />
+        ) : activeTab === 'ambienti' ? (
+          <MobileAmbientiPanel onClose={onClose} />
+        ) : activeTab === 'brand' ? (
+          <MobileBrandPanel />
+        ) : activeTab === 'guide' ? (
+          <MobileGuidePanel onClose={onClose} />
         ) : activeItem?.kind === 'dropdown' ? (
-          <MobileMegaDropdownPanel item={activeItem} onNavigate={onClose} />
-        ) : activeItem?.id === 'ambienti' ? (
-          <MobileAmbientiPanel onNavigate={onClose} />
-        ) : activeItem?.id === 'brand' ? (
-          <MobileBrandPanel onNavigate={onClose} />
-        ) : activeItem?.id === 'guide' ? (
-          <MobileGuidePanel onNavigate={onClose} />
+          <MobileMegaDropdownPanel item={activeItem} />
         ) : activeItem?.kind === 'link' ? (
           <Link
             to={lp(activeItem.href)}
-            onClick={onClose}
             className={cn('text-[15px] font-semibold', ui.headerNavLink)}
           >
             {activeItem.label} →
           </Link>
         ) : null}
+
+        <MobileMenuFooter notFoundCta={notFoundCta} onClose={onClose} />
       </div>
     </div>
   )

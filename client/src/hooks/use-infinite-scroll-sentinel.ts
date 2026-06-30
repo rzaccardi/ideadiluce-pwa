@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { CATALOG_INFINITE_SCROLL_ROOT_MARGIN } from '@/lib/catalog-pagination'
 
 type Options = {
   enabled?: boolean
@@ -13,7 +14,7 @@ export function useInfiniteScrollSentinel({
   hasMore = false,
   loading = false,
   onLoadMore,
-  rootMargin = '360px',
+  rootMargin = CATALOG_INFINITE_SCROLL_ROOT_MARGIN,
 }: Options) {
   const ref = useRef<HTMLDivElement>(null)
 

@@ -12,13 +12,26 @@ export function useCartReservationSync(enabled = true) {
   useEffect(() => {
     if (!enabled || !hasItems || !reservation?.enabled || !reservation.expiresAt) return
 
+    const expiresMs = new Date(reservation.expiresAt).getTime()
+    let intervalId: number | undefined
+
+    const syncAfterExpiry = () => {
+      if (intervalId != null) {
+        window.clearInterval(intervalId)
+        intervalId = undefined
+      }
+      void fetchCart({ force: true, reprice: true })
+    }
+
     const tick = () => {
-      const expiresMs = new Date(reservation.expiresAt!).getTime()
-      if (Date.now() >= expiresMs) void fetchCart({ force: true })
+      if (Date.now() >= expiresMs) syncAfterExpiry()
     }
 
     tick()
-    const id = window.setInterval(tick, 1000)
-    return () => window.clearInterval(id)
+    intervalId = window.setInterval(tick, 1000)
+
+    return () => {
+      if (intervalId != null) window.clearInterval(intervalId)
+    }
   }, [enabled, hasItems, cart?.id, reservation?.enabled, reservation?.expiresAt])
 }

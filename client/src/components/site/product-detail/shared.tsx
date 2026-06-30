@@ -17,19 +17,13 @@ export function ProductDetailValue({
   value,
   className,
   mono,
-  placeholder = PRODUCT_PLACEHOLDER,
 }: {
   value?: string | null
   className?: string
   mono?: boolean
-  placeholder?: string
 }) {
-  if (value?.trim()) {
-    return (
-      <span className={cn(mono && 'font-mono', className)}>{value}</span>
-    )
-  }
-  return <ProductDetailPlaceholder className={className}>{placeholder}</ProductDetailPlaceholder>
+  if (!value?.trim()) return null
+  return <span className={cn(mono && 'font-mono', className)}>{value}</span>
 }
 
 type SpecRowProps = {
@@ -48,6 +42,7 @@ export function ProductSpecRowItem({
   monoValue,
   compact,
 }: SpecRowProps & { compact?: boolean }) {
+  if (!value?.trim() && !href) return null
   const isDesign = variant === 'design'
 
   return (

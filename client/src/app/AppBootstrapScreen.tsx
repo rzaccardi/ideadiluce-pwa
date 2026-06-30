@@ -7,48 +7,39 @@ import { PageFlexBody, PageFlexShell } from '@/components/layout/PageFlexShell'
 import { CatalogPageSkeleton } from '@/components/site/catalog/CatalogPageSkeleton'
 import {
   AccountBootstrapSkeleton,
-  AuthFormSkeleton,
   CategoryLandingCatalogSkeleton,
   CheckoutStripeBootstrapSkeleton,
   ContentPageSkeleton,
-  EditorialPageSkeleton,
+  GuideHubPageSkeleton,
   HomePageSkeleton,
   ListSkeleton,
   ProductDetailSkeleton,
-  ProductGridSkeleton,
   ProfessionistiPageSkeleton,
   Skeleton,
-  StaticHubSectionSkeleton,
 } from '@/components/Skeleton'
+import {
+  AmbientiPageSkeleton,
+  AttaccoPageSkeleton,
+  AuthPageSkeleton,
+  BrandPageSkeleton,
+} from '@/components/site/skeletons'
+import { WishlistPageSkeleton } from '@/components/site/skeletons/wishlist-page-skeleton'
 import { CartPageSkeleton } from '@/components/cart/CartPageSkeleton'
 import { ThankYouPageSkeleton } from '@/components/checkout/thank-you/ThankYouPageSkeleton'
+import { GuideArticlePageSkeleton } from '@/components/site/content/guide-article/GuideArticlePageSkeleton'
 import { SectionContainer } from '@/components/site/primitives'
 import { resolveBootstrapRoute, type BootstrapRoute } from '@/app/bootstrapRoute'
 import { parseLocaleFromPathname } from '@/lib/locale'
 import { resolveDcActiveNavId } from '@/lib/dc-static-routes'
 
-function HubBootstrapSkeleton({ count = 6 }: { count?: number }) {
-  return (
-    <PageFlexShell tone="paper">
-      <PageFlexBody tone="paper">
-        <SectionContainer className="space-y-8 py-8 sm:py-10">
-          <StaticHubSectionSkeleton count={count} />
-        </SectionContainer>
-      </PageFlexBody>
-    </PageFlexShell>
-  )
+function HubBootstrapSkeleton({ pageKey }: { pageKey: 'brand' | 'ambienti' | 'attacco' }) {
+  if (pageKey === 'brand') return <BrandPageSkeleton />
+  if (pageKey === 'ambienti') return <AmbientiPageSkeleton />
+  return <AttaccoPageSkeleton />
 }
 
 function AuthBootstrapSkeleton({ fieldCount }: { fieldCount: number }) {
-  return (
-    <PageFlexShell tone="paper">
-      <PageFlexBody tone="paper" className="flex items-start justify-center py-8 sm:py-10">
-        <div className="mx-auto w-full max-w-md">
-          <AuthFormSkeleton fieldCount={fieldCount} />
-        </div>
-      </PageFlexBody>
-    </PageFlexShell>
-  )
+  return <AuthPageSkeleton fieldCount={fieldCount} />
 }
 
 function BootstrapPageContent({ route }: { route: BootstrapRoute }) {
@@ -60,19 +51,30 @@ function BootstrapPageContent({ route }: { route: BootstrapRoute }) {
       return <ProfessionistiPageSkeleton />
 
     case 'brand':
+      return <HubBootstrapSkeleton pageKey="brand" />
+
     case 'ambienti':
-      return <HubBootstrapSkeleton count={6} />
+      return <HubBootstrapSkeleton pageKey="ambienti" />
 
     case 'attacco':
-      return <HubBootstrapSkeleton count={8} />
+      return <HubBootstrapSkeleton pageKey="attacco" />
 
     case 'guide':
       return (
         <PageFlexShell tone="paper">
           <PageFlexBody tone="paper">
             <SectionContainer className="py-8 sm:py-10">
-              <EditorialPageSkeleton />
+              <GuideHubPageSkeleton />
             </SectionContainer>
+          </PageFlexBody>
+        </PageFlexShell>
+      )
+
+    case 'guide-article':
+      return (
+        <PageFlexShell tone="paper">
+          <PageFlexBody tone="paper">
+            <GuideArticlePageSkeleton />
           </PageFlexBody>
         </PageFlexShell>
       )
@@ -109,8 +111,8 @@ function BootstrapPageContent({ route }: { route: BootstrapRoute }) {
       return (
         <PageFlexShell tone="paper">
           <PageFlexBody tone="paper">
-            <SectionContainer className="space-y-8 py-8 sm:py-10">
-              <ProductGridSkeleton count={3} />
+            <SectionContainer className="py-8 sm:py-10">
+              <WishlistPageSkeleton count={3} />
             </SectionContainer>
           </PageFlexBody>
         </PageFlexShell>
@@ -210,8 +212,8 @@ function BootstrapPageContent({ route }: { route: BootstrapRoute }) {
       return (
         <PageFlexShell tone="paper">
           <PageFlexBody tone="paper">
-            <SectionContainer className="space-y-8 py-8 sm:py-10">
-              <ProductGridSkeleton count={3} />
+            <SectionContainer className="py-8 sm:py-10">
+              <ContentPageSkeleton />
             </SectionContainer>
           </PageFlexBody>
         </PageFlexShell>

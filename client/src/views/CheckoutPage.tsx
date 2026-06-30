@@ -51,6 +51,7 @@ import {
   resolveCheckoutLoading,
   useStableCheckoutLoading,
 } from '@/components/checkout/CheckoutLoadingOverlay'
+import { CheckoutSummarySkeleton } from '@/components/checkout/stripe-ui/CheckoutSummarySkeleton'
 import {
   checkoutColumnGutterClass,
   checkoutFormColumnClass,
@@ -90,7 +91,7 @@ export function CheckoutPage() {
     const retryOrderId = searchParams.get('retryOrder')
     const frozenOrderId = searchParams.get('orderId')
     void (async () => {
-      await fetchCart({ force: true })
+      await fetchCart({ force: true, reprice: true })
       await fetchMe()
       if (frozenOrderId) {
         try {
@@ -161,7 +162,7 @@ export function CheckoutPage() {
 
   function handleCrossSellAdded() {
     invalidateCheckoutAfterCartChange()
-    void fetchCart({ force: true })
+    void fetchCart({ force: true, reprice: true })
   }
 
   const loadingState = useStableCheckoutLoading(
@@ -288,7 +289,7 @@ export function CheckoutPage() {
     try {
       if (checkout.selectedPaymentMethod === 'bank_transfer') {
         const orderId = await completeBankTransferCheckout()
-        void fetchCart({ force: true })
+        void fetchCart({ force: true, reprice: true })
         navigate(`/checkout/result/${orderId}`, { replace: true })
         return
       }
@@ -316,11 +317,14 @@ export function CheckoutPage() {
   }
 
   function handleStripePaymentSuccess(paidOrderId: string) {
-    void fetchCart({ force: true })
+    void fetchCart({ force: true, reprice: true })
     navigate(`/checkout/result/${paidOrderId}`, { replace: true })
   }
 
-  if ((!displayCart || displayCart.items.length === 0) && !frozenCheckout && !cart.isLoading) {
+  const isCartUnresolved = !frozenCheckout && !c
+  const isCartEmpty = !frozenCheckout && c != null && c.items.length === 0
+
+  if (isCartEmpty && !cart.isLoading) {
     return (
       <div className="checkout-root flex min-h-screen items-center justify-center bg-idl-tech-panel px-4 py-12">
         <EmptyCartPrompt compact className="w-full max-w-md" />
@@ -340,7 +344,7 @@ export function CheckoutPage() {
   async function handleRemoveFromCheckout(itemId: string) {
     await removeItem(itemId)
     invalidateCheckoutAfterCartChange()
-    await fetchCart({ force: true })
+    await fetchCart({ force: true, reprice: true })
   }
 
   const shouldMountPaymentStep = step === 'payment' || step === 'review' || stripeMount !== null
@@ -400,9 +404,14 @@ export function CheckoutPage() {
             removeDisabled={cart.isLoading || frozenCheckout}
           />
         </>
+      ) : isCartUnresolved || cart.isLoading ? (
+        <CheckoutSummarySkeleton />
       ) : null}
 
       <main className={checkoutMainClass}>
+        {loadingState?.visible ? (
+          <CheckoutLoadingOverlay icon={loadingState.icon} messageKey={loadingState.messageKey} />
+        ) : null}
         <div
           className={cn(
             checkoutFormColumnClass,
@@ -493,10 +502,6 @@ export function CheckoutPage() {
           </footer>
         </div>
       </main>
-
-      {loadingState?.visible ? (
-        <CheckoutLoadingOverlay icon={loadingState.icon} messageKey={loadingState.messageKey} />
-      ) : null}
     </div>
   )
 }

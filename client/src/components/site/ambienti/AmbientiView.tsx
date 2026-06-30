@@ -2,7 +2,7 @@
 
 import { Reveal } from '@/components/motion'
 import { PageLoadTransition } from '@/components/motion/PageLoadTransition'
-import { StaticHubSectionSkeleton } from '@/components/Skeleton'
+import { AmbientiPageSkeleton } from '@/components/site/skeletons'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import type { EditorialPageContent } from '@/types/site-content'
 import { CategoryCtaBanner } from '../category/CategoryCtaBanner'
@@ -27,7 +27,7 @@ export function AmbientiView({ content, roomsLoading = false }: Props) {
       </Reveal>
 
       {roomsLoading || !content ? (
-        <PageLoadTransition isLoading skeleton={<StaticHubSectionSkeleton count={6} />}>
+        <PageLoadTransition isLoading skeleton={<AmbientiPageSkeleton />}>
           {null}
         </PageLoadTransition>
       ) : (

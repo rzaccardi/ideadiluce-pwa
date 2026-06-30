@@ -24,6 +24,7 @@ catalogRouter.get('/categories/:slug', catalogPublicController.categoryBySlug)
 catalogRouter.get('/brands', catalogPublicController.brands)
 catalogRouter.get('/brands/:slug', catalogPublicController.brandBySlug)
 catalogRouter.get('/products', catalogSearchRateLimit, catalogPublicController.products)
+catalogRouter.get('/home/product-sliders', catalogPublicController.homeProductSliders)
 catalogRouter.post('/availability/enrich-detail', catalogPublicController.enrichProductDetail)
 catalogRouter.get('/products/:slug/social-proof', storefrontController.productSocialProof)
 catalogRouter.get(

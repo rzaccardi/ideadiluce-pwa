@@ -49,7 +49,6 @@ export const SITE_PAGE_OPTIONS = [
   { key: 'brand', label: 'Landing brand' },
   { key: 'guide', label: 'Landing guide' },
   { key: 'chi-siamo', label: 'Chi siamo' },
-  { key: 'showroom', label: 'Showroom' },
   { key: 'professionisti', label: 'Professionisti B2B' },
   { key: 'lavora-con-noi', label: 'Lavora con noi' },
   { key: 'spedizioni', label: 'Spedizioni e resi' },
@@ -57,7 +56,6 @@ export const SITE_PAGE_OPTIONS = [
   { key: 'garanzia', label: 'Garanzia' },
   { key: 'contatti', label: 'Contatti' },
   { key: 'privacy', label: 'Privacy' },
-  { key: 'cookie', label: 'Cookie' },
   { key: 'termini', label: 'Termini e condizioni' },
   { key: 'prodotto-non-trovato', label: 'Prodotto non trovato' },
 ] as const

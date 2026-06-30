@@ -1,4 +1,6 @@
-import { loadStripe, type Stripe } from '@stripe/stripe-js'
+'use client'
+
+import type { Stripe } from '@stripe/stripe-js'
 import { api } from '@/api/endpoints'
 import { getStripePublishableKey } from '@/lib/env'
 
@@ -24,7 +26,7 @@ export function getStripePromise(publishableKey: string): Promise<Stripe | null>
   const cached = stripePromises.get(publishableKey)
   if (cached) return cached
 
-  const promise = loadStripe(publishableKey)
+  const promise = import('@stripe/stripe-js').then(({ loadStripe }) => loadStripe(publishableKey))
   stripePromises.set(publishableKey, promise)
   return promise
 }

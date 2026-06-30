@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react'
 import { useLocalControlledField } from '@/hooks/use-local-controlled-field'
 import { ToastOnError } from '@/components/ToastFeedback'
+import { PasswordVisibilityToggle, usePasswordVisibility } from '@/components/PasswordVisibilityToggle'
 import { useI18n } from '@/hooks/use-i18n'
 import { cn } from '@/utils/cn'
 
@@ -50,17 +51,40 @@ type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   noBorder?: boolean
 }
 
-export function StripeInput({ className, noBorder, ...props }: InputProps) {
-  return (
+export function StripeInput({ className, noBorder, type, ...props }: InputProps) {
+  const password = usePasswordVisibility()
+  const isPassword = type === 'password'
+  const resolvedType = isPassword ? password.inputType : type
+
+  const input = (
     <input
+      type={resolvedType}
       className={cn(
         'idl-field block w-full px-[15px] py-3.5 text-[15px] outline-none',
         'focus:ring-2 focus:ring-[#c9a24b]/35 focus:ring-inset',
         !noBorder && 'border-0',
+        isPassword && 'pr-11',
         className,
       )}
       {...props}
     />
+  )
+
+  if (!isPassword) {
+    return input
+  }
+
+  return (
+    <div className="relative flex items-center">
+      {input}
+      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+        <PasswordVisibilityToggle
+          show={password.show}
+          onToggle={password.toggle}
+          className="text-idl-muted hover:text-idl-graphite"
+        />
+      </div>
+    </div>
   )
 }
 

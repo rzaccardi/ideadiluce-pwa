@@ -24,14 +24,15 @@ const LOCALE_LABELS: Record<SiteLocale, string> = {
 }
 
 const BLOCK_KIND_LABELS: Record<string, string> = {
-  prose: 'Testo',
-  image: 'Immagine',
-  split: 'Immagine + testo',
-  gallery: 'Galleria',
-  bullets: 'Elenco puntato',
-  cards: 'Card prodotti',
-  features: 'Box informativi',
-  cta: 'Call to action',
+  prose: 'Testo — paragrafi nel corpo articolo',
+  image: 'Immagine — foto a tutta larghezza nel corpo',
+  split: 'Immagine + testo — layout a due colonne',
+  gallery: 'Galleria — griglia di immagini (2 colonne su mobile)',
+  bullets: 'Elenco puntato — lista stanza per stanza',
+  cards: 'Ispirazioni — sezione scura con prodotti consigliati',
+  features: 'Box informativi — griglia di highlight',
+  stats: 'Statistiche — fascia numeri in evidenza',
+  cta: 'Conversione — fascia finale con pulsante',
 }
 
 const BLOCK_TEMPLATES: Record<string, Record<string, unknown>> = {
@@ -47,6 +48,13 @@ const BLOCK_TEMPLATES: Record<string, Record<string, unknown>> = {
     items: [{ title: '', description: '', href: '/negozio?world=design&q=', imageUrl: '' }],
   },
   features: { kind: 'features', title: '', items: [{ title: '', description: '' }] },
+  stats: {
+    kind: 'stats',
+    items: [
+      { value: '25+', label: '' },
+      { value: '', label: '' },
+    ],
+  },
   cta: { kind: 'cta', title: '', primaryLabel: '', primaryHref: '', variant: 'accent' },
 }
 
@@ -310,6 +318,7 @@ function BlockEditor({
                   <ImagePreview url={typeof getAtPath(draftsByLocale.IT, [...cardPath, 'imageUrl']) === 'string' ? (getAtPath(draftsByLocale.IT, [...cardPath, 'imageUrl']) as string) : ''} />
                   <TechnicalField label="URL immagine" path={[...cardPath, 'imageUrl']} draftsByLocale={draftsByLocale} onLocaleChange={onLocaleChange} />
                   <TechnicalField label="Link prodotto" path={[...cardPath, 'href']} draftsByLocale={draftsByLocale} onLocaleChange={onLocaleChange} />
+                  <LocaleTextFields label="Brand (mono)" path={[...cardPath, 'meta']} draftsByLocale={draftsByLocale} onLocaleChange={onLocaleChange} />
                   <LocaleTextFields label="Nome prodotto" path={[...cardPath, 'title']} draftsByLocale={draftsByLocale} onLocaleChange={onLocaleChange} />
                   <LocaleTextFields label="Descrizione" path={[...cardPath, 'description']} draftsByLocale={draftsByLocale} onLocaleChange={onLocaleChange} multiline />
                 </div>
@@ -336,10 +345,55 @@ function BlockEditor({
         </FieldGroup>
       ) : null}
 
-      {kind === 'features' || kind === 'cta' ? (
-        <p className="text-sm text-muted-foreground">
-          Blocco {BLOCK_KIND_LABELS[kind]}: usa l&apos;editor JSON nella sezione sotto per modifiche avanzate.
-        </p>
+      {kind === 'stats' ? (
+        <FieldGroup className="gap-4">
+          {[0, 1, 2, 3].map((statIndex) => {
+            const statPath = [...blockPath, 'items', String(statIndex)]
+            const stat = getAtPath(draftsByLocale.IT, statPath)
+            if (!stat && statIndex > 0) return null
+            return (
+              <div key={statIndex} className="rounded-md border p-3">
+                <FieldLabel>Statistica {statIndex + 1}</FieldLabel>
+                <div className="mt-2 space-y-3">
+                  <TechnicalField label="Valore" path={[...statPath, 'value']} draftsByLocale={draftsByLocale} onLocaleChange={onLocaleChange} />
+                  <LocaleTextFields label="Etichetta" path={[...statPath, 'label']} draftsByLocale={draftsByLocale} onLocaleChange={onLocaleChange} />
+                </div>
+              </div>
+            )
+          })}
+        </FieldGroup>
+      ) : null}
+
+      {kind === 'features' ? (
+        <FieldGroup className="gap-4">
+          <LocaleTextFields label="Titolo sezione" path={[...blockPath, 'title']} draftsByLocale={draftsByLocale} onLocaleChange={onLocaleChange} />
+          {[0, 1, 2, 3].map((featureIndex) => {
+            const featurePath = [...blockPath, 'items', String(featureIndex)]
+            const feature = getAtPath(draftsByLocale.IT, featurePath)
+            if (!feature && featureIndex > 0) return null
+            return (
+              <div key={featureIndex} className="rounded-md border p-3">
+                <FieldLabel>Box {featureIndex + 1}</FieldLabel>
+                <div className="mt-2 space-y-3">
+                  <TechnicalField label="Numero (opzionale)" path={[...featurePath, 'num']} draftsByLocale={draftsByLocale} onLocaleChange={onLocaleChange} />
+                  <LocaleTextFields label="Titolo" path={[...featurePath, 'title']} draftsByLocale={draftsByLocale} onLocaleChange={onLocaleChange} />
+                  <LocaleTextFields label="Descrizione" path={[...featurePath, 'description']} draftsByLocale={draftsByLocale} onLocaleChange={onLocaleChange} multiline />
+                </div>
+              </div>
+            )
+          })}
+        </FieldGroup>
+      ) : null}
+
+      {kind === 'cta' ? (
+        <FieldGroup className="gap-4">
+          <LocaleTextFields label="Titolo fascia" path={[...blockPath, 'title']} draftsByLocale={draftsByLocale} onLocaleChange={onLocaleChange} />
+          <LocaleTextFields label="Descrizione (opzionale)" path={[...blockPath, 'description']} draftsByLocale={draftsByLocale} onLocaleChange={onLocaleChange} multiline />
+          <LocaleTextFields label="Etichetta pulsante" path={[...blockPath, 'primaryLabel']} draftsByLocale={draftsByLocale} onLocaleChange={onLocaleChange} />
+          <TechnicalField label="Link pulsante" path={[...blockPath, 'primaryHref']} draftsByLocale={draftsByLocale} onLocaleChange={onLocaleChange} />
+          <LocaleTextFields label="Etichetta secondaria (opzionale)" path={[...blockPath, 'secondaryLabel']} draftsByLocale={draftsByLocale} onLocaleChange={onLocaleChange} />
+          <TechnicalField label="Link secondario" path={[...blockPath, 'secondaryHref']} draftsByLocale={draftsByLocale} onLocaleChange={onLocaleChange} />
+        </FieldGroup>
       ) : null}
     </div>
   )

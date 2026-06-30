@@ -38,7 +38,7 @@ async function req(method, path, body) {
   } catch {
     json = { _raw: text.slice(0, 300) }
   }
-  return { status: res.status, json }
+  return { status: res.status, json, headers: res.headers }
 }
 
 const demoProductRef = process.env.API_TEST_PRODUCT_REF
@@ -157,6 +157,30 @@ await check('catalog products BFF', async () => {
   return r.status === 200 && Array.isArray(data?.items)
     ? true
     : { ok: false, note: `status ${r.status}` }
+})
+
+await check('catalog home product sliders', async () => {
+  const r = await req('GET', '/api/v1/catalog/home/product-sliders?locale=IT')
+  const sliders = r.json?.data
+  const cacheControl = r.headers?.get('cache-control')
+  const hasProducts =
+    Array.isArray(sliders) &&
+    sliders.length > 0 &&
+    sliders.every(
+      (s) =>
+        typeof s?.key === 'string' &&
+        Array.isArray(s?.products) &&
+        s.products.length > 0 &&
+        typeof s.products[0]?.slug === 'string' &&
+        typeof s.products[0]?.name === 'string',
+    )
+  const hasCache = typeof cacheControl === 'string' && cacheControl.includes('max-age=172800')
+  return r.status === 200 && hasProducts && hasCache
+    ? true
+    : {
+        ok: false,
+        note: `status ${r.status} sliders=${Array.isArray(sliders) ? sliders.length : 'n/a'} cache=${cacheControl ?? 'missing'}`,
+      }
 })
 
 await check('cart session', async () => (await req('GET', '/api/v1/cart')).status === 200)

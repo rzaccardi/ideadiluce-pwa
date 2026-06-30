@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useSnapshot } from 'valtio/react'
+import { RefreshCwIcon } from 'lucide-react'
 import { RoutePageHeader } from '@/components/route-page-header'
 import { KpiStatCard } from '@/components/kpi-stat-card'
 import { InfiniteScrollSentinel, SearchInput, TableFilters, TableSkeleton } from '@/components/shared'
 import {
+  applyOdooSearchHints,
   fetchSearchAnalyticsListDeduped,
   fetchSearchAnalyticsStatsDeduped,
+  previewOdooSearchHints,
   searchAnalyticsStore,
 } from '@/features/search-analytics'
 import { useInfiniteScrollSentinel } from '@/hooks/use-infinite-scroll-sentinel'
@@ -31,9 +34,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 const PAGE_SIZE = 25
 const DEFAULT_DAYS = 30
+const DEFAULT_ODOO_LOOKBACK_DAYS = 90
+const DEFAULT_ODOO_HINT_LIMIT = 8
 
 function buildListQuery(searchParams: URLSearchParams, page: number) {
   const params = new URLSearchParams({
@@ -70,6 +77,8 @@ function actionLabel(action: string) {
 export function SearchAnalyticsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [q, setQ] = useState(searchParams.get('q') ?? '')
+  const [odooLookbackDays, setOdooLookbackDays] = useState(String(DEFAULT_ODOO_LOOKBACK_DAYS))
+  const [odooHintLimit, setOdooHintLimit] = useState(String(DEFAULT_ODOO_HINT_LIMIT))
   const store = useSnapshot(searchAnalyticsStore)
   const page = Number(searchParams.get('page') ?? '1')
   const days = searchParams.get('days') ?? String(DEFAULT_DAYS)
@@ -83,6 +92,13 @@ export function SearchAnalyticsPage() {
   useEffect(() => {
     void fetchSearchAnalyticsStatsDeduped(statsQuery)
   }, [statsQuery])
+
+  useEffect(() => {
+    void previewOdooSearchHints(
+      Number(odooLookbackDays) || DEFAULT_ODOO_LOOKBACK_DAYS,
+      Number(odooHintLimit) || DEFAULT_ODOO_HINT_LIMIT,
+    ).catch(() => undefined)
+  }, [])
 
   useEffect(() => {
     void fetchSearchAnalyticsListDeduped(listQuery, { append: page > 1 })
@@ -117,6 +133,14 @@ export function SearchAnalyticsPage() {
     setSearchParams(p)
   }
 
+  async function handlePreviewOdooHints() {
+    await previewOdooSearchHints(Number(odooLookbackDays) || DEFAULT_ODOO_LOOKBACK_DAYS, Number(odooHintLimit) || DEFAULT_ODOO_HINT_LIMIT)
+  }
+
+  async function handleApplyOdooHints() {
+    await applyOdooSearchHints(Number(odooLookbackDays) || DEFAULT_ODOO_LOOKBACK_DAYS, Number(odooHintLimit) || DEFAULT_ODOO_HINT_LIMIT)
+  }
+
   const stats = store.stats
   const topMax = stats?.topQueries[0]?.count ?? 1
   const dailyMax = stats?.maxDaily ?? 1
@@ -148,6 +172,147 @@ export function SearchAnalyticsPage() {
               </SelectContent>
             </Select>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Query consigliate onsite</CardTitle>
+          <CardDescription>
+            Importa da Odoo i prodotti più acquistati e salvali come suggerimenti nella ricerca Home (tutte le lingue).
+            Il backend aggiorna automaticamente ogni {store.odooHints?.staleHours ?? 72} ore se Odoo è configurato.
+            {' '}
+            <Link to="/site/home" className="font-medium text-gray-900 underline-offset-2 hover:underline">
+              Modifica manualmente in Contenuti sito →
+            </Link>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {store.odooHints ? (
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <span>
+                Ultimo sync Odoo:{' '}
+                {store.odooHints.lastOdooSyncedAt
+                  ? formatDateTime(store.odooHints.lastOdooSyncedAt)
+                  : 'mai'}
+              </span>
+              {store.odooHints.isStale ? (
+                <Badge variant="outline" className="border-amber-300 text-amber-800">
+                  Da aggiornare
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="border-emerald-300 text-emerald-800">
+                  Aggiornato
+                </Badge>
+              )}
+              {!store.odooHints.autoSyncEnabled ? (
+                <Badge variant="outline">Auto-sync disattivato</Badge>
+              ) : null}
+            </div>
+          ) : null}
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="space-y-2">
+              <Label>Periodo vendite Odoo</Label>
+              <Select value={odooLookbackDays} onValueChange={(v) => v && setOdooLookbackDays(v)}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="30">30 giorni</SelectItem>
+                  <SelectItem value="90">90 giorni</SelectItem>
+                  <SelectItem value="180">180 giorni</SelectItem>
+                  <SelectItem value="365">365 giorni</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="odoo-hint-limit">N. query</Label>
+              <Input
+                id="odoo-hint-limit"
+                type="number"
+                min={1}
+                max={20}
+                className="w-[100px]"
+                value={odooHintLimit}
+                onChange={(e) => setOdooHintLimit(e.target.value)}
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2"
+              disabled={store.odooHintsLoading || store.odooHintsApplying}
+              onClick={() => void handlePreviewOdooHints()}
+            >
+              <RefreshCwIcon className={store.odooHintsLoading ? 'size-4 animate-spin' : 'size-4'} />
+              Anteprima da Odoo
+            </Button>
+            <Button
+              type="button"
+              variant="success"
+              disabled={store.odooHintsLoading || store.odooHintsApplying}
+              onClick={() => void handleApplyOdooHints()}
+            >
+              Salva in Home
+            </Button>
+          </div>
+
+          {store.odooHintsError ? (
+            <Alert variant="destructive">
+              <AlertTitle>Errore import Odoo</AlertTitle>
+              <AlertDescription>{store.odooHintsError}</AlertDescription>
+            </Alert>
+          ) : null}
+
+          {store.odooHintsMessage ? (
+            <Alert>
+              <AlertTitle>Query aggiornate</AlertTitle>
+              <AlertDescription>{store.odooHintsMessage}</AlertDescription>
+            </Alert>
+          ) : null}
+
+          {store.odooHints?.currentHints.length ? (
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-900">Query attuali in Home (IT)</p>
+              <div className="flex flex-wrap gap-2">
+                {store.odooHints.currentHints.map((hint) => (
+                  <Badge key={hint} variant="outline" className="font-mono font-normal">
+                    {hint}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {store.odooHints?.suggestions.length ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Query suggerita</TableHead>
+                  <TableHead>Prodotto Odoo</TableHead>
+                  <TableHead className="text-right">Pezzi venduti</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {store.odooHints.suggestions.map((row) => (
+                  <TableRow key={row.productTemplateId}>
+                    <TableCell className="font-mono text-sm font-medium">{row.query}</TableCell>
+                    <TableCell className="max-w-[280px] truncate text-sm text-muted-foreground">
+                      {row.productName}
+                      {row.defaultCode ? ` · ${row.defaultCode}` : ''}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{row.totalQuantity}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : store.odooHintsLoading ? (
+            <TableSkeleton rows={4} columns={['Query', 'Prodotto', 'Pezzi']} />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Carica un’anteprima per vedere i prodotti più acquistati e le query proposte.
+            </p>
+          )}
         </CardContent>
       </Card>
 

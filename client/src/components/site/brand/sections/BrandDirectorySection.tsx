@@ -155,7 +155,7 @@ export function BrandDirectorySection({
             <button
               type="button"
               onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
-              className="rounded-lg border border-idl-tech-border px-8 py-3 text-[14px] font-semibold text-idl-graphite transition hover:border-idl-brass hover:text-idl-brass"
+              className="rounded-lg border border-idl-tech-border bg-white px-8 py-3 text-[14px] font-semibold text-idl-graphite transition hover:border-idl-brass hover:text-idl-brass dark:bg-idl-tech-panel"
             >
               Carica altri brand
             </button>

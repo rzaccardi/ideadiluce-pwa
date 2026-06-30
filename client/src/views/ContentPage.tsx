@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
 import { useSnapshot } from 'valtio/react'
-import { fetchSitePage, seedSitePageContent, siteStore } from '@/features/site'
+import { fetchSitePage, hydrateSitePageContent, siteStore } from '@/features/site'
 import type { ContentPageContent, SitePageKey } from '@/types/site-content'
 import { isContentPage, isGuidePageKey } from '@/lib/site-page-keys'
 import { ContentPageView } from '@/components/site/content/ContentPageView'
 import { ContattiPageView } from '@/components/site/content/ContattiPageView'
+import { ChiSiamoPageView } from '@/components/site/content/ChiSiamoPageView'
 import { ProductNotFoundPageView } from '@/components/site/product-not-found/ProductNotFoundPageView'
 import { GuideArticlePageView } from '@/components/site/content/GuideArticlePageView'
 import { useLocale } from '@/context/locale-context'
@@ -14,10 +15,9 @@ import { ErrorState } from '@/components/ErrorState'
 import { ToastOnError } from '@/components/ToastFeedback'
 import { PageFlexBody, PageFlexShell } from '@/components/layout/PageFlexShell'
 import { ContentPageSkeleton } from '@/components/Skeleton'
-import { PageHeader } from '@/components/PageHeader'
+import { GuideArticlePageSkeleton } from '@/components/site/content/guide-article/GuideArticlePageSkeleton'
 import { SectionContainer } from '@/components/site/primitives'
 import { PageLoadTransition } from '@/components/motion'
-import { getPageHeaderFallbackTitle } from '@/lib/page-header-fallbacks'
 
 type Props = {
   pageKey: SitePageKey
@@ -30,9 +30,9 @@ export function ContentPage({ pageKey, breadcrumb, initialContent = null }: Prop
   const snap = useSnapshot(siteStore)
   const raw = snap.pages[pageKey] ?? initialContent
 
-  useEffect(() => {
-    if (initialContent && !siteStore.pages[pageKey]) {
-      seedSitePageContent(pageKey, locale, initialContent)
+  useLayoutEffect(() => {
+    if (initialContent) {
+      hydrateSitePageContent(pageKey, locale, initialContent)
     }
   }, [initialContent, pageKey, locale])
 
@@ -56,7 +56,6 @@ export function ContentPage({ pageKey, breadcrumb, initialContent = null }: Prop
     return <ErrorState message="Contenuto pagina non valido" className="mx-auto max-w-lg p-8" />
   }
 
-  const fallbackTitle = getPageHeaderFallbackTitle(pageKey)
   const isGuideArticle = isGuidePageKey(pageKey)
 
   if (pageKey === 'contatti') {
@@ -64,11 +63,19 @@ export function ContentPage({ pageKey, breadcrumb, initialContent = null }: Prop
       <PageLoadTransition
         isLoading={!content}
         skeleton={<ContentPageSkeleton />}
-        loadingHeader={
-          fallbackTitle ? <PageHeader title={fallbackTitle} /> : null
-        }
       >
         {content ? <ContattiPageView content={content} /> : null}
+      </PageLoadTransition>
+    )
+  }
+
+  if (pageKey === 'chi-siamo') {
+    return (
+      <PageLoadTransition
+        isLoading={!content}
+        skeleton={<ContentPageSkeleton />}
+      >
+        {content ? <ChiSiamoPageView content={content} /> : null}
       </PageLoadTransition>
     )
   }
@@ -78,12 +85,21 @@ export function ContentPage({ pageKey, breadcrumb, initialContent = null }: Prop
       <PageLoadTransition
         isLoading={!content}
         skeleton={<ContentPageSkeleton />}
-        loadingHeader={
-          fallbackTitle ? <PageHeader title={fallbackTitle} /> : null
-        }
       >
         {content ? <ProductNotFoundPageView content={content} /> : null}
       </PageLoadTransition>
+    )
+  }
+
+  if (isGuideArticle) {
+    return (
+      <PageFlexShell tone="paper">
+        <PageFlexBody tone="paper">
+          <PageLoadTransition isLoading={!content} skeleton={<GuideArticlePageSkeleton />}>
+            {content ? <GuideArticlePageView content={content} breadcrumb={breadcrumb} /> : null}
+          </PageLoadTransition>
+        </PageFlexBody>
+      </PageFlexShell>
     )
   }
 
@@ -94,17 +110,8 @@ export function ContentPage({ pageKey, breadcrumb, initialContent = null }: Prop
           <PageLoadTransition
             isLoading={!content}
             skeleton={<ContentPageSkeleton />}
-            loadingHeader={
-              fallbackTitle ? <PageHeader title={fallbackTitle} /> : null
-            }
           >
-            {content ? (
-              isGuideArticle ? (
-                <GuideArticlePageView content={content} breadcrumb={breadcrumb} />
-              ) : (
-                <ContentPageView content={content} breadcrumb={breadcrumb} />
-              )
-            ) : null}
+            {content ? <ContentPageView content={content} breadcrumb={breadcrumb} /> : null}
           </PageLoadTransition>
         </SectionContainer>
       </PageFlexBody>

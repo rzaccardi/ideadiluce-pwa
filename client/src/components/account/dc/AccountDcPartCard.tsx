@@ -41,7 +41,7 @@ export function AccountDcPartCard({
 
   if (unavailable || !product) {
     return (
-      <article className="rounded-[10px] border border-idl-tech-border p-3.5">
+      <article className="rounded-[10px] border border-idl-tech-border bg-white p-3.5 dark:bg-idl-tech-panel">
         <div className="mb-3 flex aspect-square items-center justify-center rounded-md bg-idl-tech-panel text-center text-xs text-idl-muted">
           {t('wishlist.item.unavailable')}
         </div>
@@ -60,7 +60,7 @@ export function AccountDcPartCard({
   const brandLine = productRef
 
   return (
-    <article className="rounded-[10px] border border-idl-tech-border p-3.5">
+    <article className="rounded-[10px] border border-idl-tech-border bg-white p-3.5 dark:bg-idl-tech-panel">
       <Link to={localize(`/prodotto/${product.slug}`)} className="block">
         <div className="relative mb-3 aspect-square overflow-hidden rounded-md bg-idl-tech-panel">
           {product.imageUrl ? (

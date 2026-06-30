@@ -6,6 +6,7 @@ export {
   getSitePageContent,
   isSitePageLoading,
   seedSitePageContent,
+  hydrateSitePageContent,
   siteStore,
   submitSiteInquiry,
   type SiteInquiryKind,

@@ -96,7 +96,7 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
   }
 
   return (
-    <article className="overflow-hidden rounded-xl border border-idl-tech-border">
+    <article className="overflow-hidden rounded-xl border border-idl-tech-border bg-white dark:bg-idl-tech-panel">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ededea] bg-idl-tech-panel px-[18px] py-3.5">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
           <span className="font-mono text-[12.5px] font-semibold text-idl-graphite">

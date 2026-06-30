@@ -28,6 +28,7 @@ type Props = {
   onToggleInStock: (enabled: boolean) => void
   onReset: () => void
   className?: string
+  showHeader?: boolean
 }
 
 function CheckboxRow({
@@ -123,17 +124,20 @@ export function CatalogFilterSidebar({
   onToggleInStock,
   onReset,
   className,
+  showHeader = true,
 }: Props) {
   const visibleBrands = brands.slice(0, 12)
 
   return (
     <aside className={className}>
-      <div className="mb-3.5 flex items-center justify-between">
-        <div className="text-[15px] font-extrabold tracking-tight">Filtri</div>
-        <button type="button" onClick={onReset} className="text-[12.5px] font-bold text-idl-amber">
-          Azzera
-        </button>
-      </div>
+      {showHeader ? (
+        <div className="mb-3.5 flex items-center justify-between">
+          <div className="text-[15px] font-extrabold tracking-tight">Filtri</div>
+          <button type="button" onClick={onReset} className="text-[12.5px] font-bold text-idl-amber">
+            Azzera
+          </button>
+        </div>
+      ) : null}
 
       {rootCategories.length > 0 ? (
         <FilterGroup label="Categoria">

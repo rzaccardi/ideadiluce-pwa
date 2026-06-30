@@ -1,7 +1,8 @@
 'use client'
 
-import { createContext, useCallback, useContext, useMemo } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { preloadLocale } from '@/i18n/messages'
 import {
   localizePath,
   parseLocaleFromPathname,
@@ -50,6 +51,10 @@ export function LocaleProvider({ children, initialLocale }: LocaleProviderProps)
     () => ({ locale, pathWithoutLocale, localize, switchLocale }),
     [locale, pathWithoutLocale, localize, switchLocale],
   )
+
+  useEffect(() => {
+    void preloadLocale(locale)
+  }, [locale])
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>
 }

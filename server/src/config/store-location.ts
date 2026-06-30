@@ -1,5 +1,8 @@
 import { env } from './env.js'
 
+/** Mappa Google dello showroom a Roma. */
+export const SHOWROOM_MAPS_URL = 'https://share.google/xwuCBBtF09NMdkKwn'
+
 export type StorePickupLocation = {
   label: string
   line1: string

@@ -3,6 +3,8 @@ import { config as loadDotenv } from 'dotenv'
 import type { NextConfig } from 'next'
 import { SEO_CANONICAL_ALIAS_REDIRECTS } from './src/lib/legacy-seo-pages.config'
 
+const SHOWROOM_MAPS_URL = 'https://share.google/xwuCBBtF09NMdkKwn'
+
 const repoRoot = path.resolve(__dirname, '..')
 loadDotenv({ path: path.join(repoRoot, '.env') })
 
@@ -43,6 +45,7 @@ function buildSeoRedirects() {
     for (const alias of SEO_CANONICAL_ALIAS_REDIRECTS) {
       withTrailingSlashVariants(rules, `${prefix}${alias.fromPath}`, `${prefix}${alias.toPath}`)
     }
+    withTrailingSlashVariants(rules, `${prefix}/showroom`, SHOWROOM_MAPS_URL)
   }
   return rules
 }
@@ -51,6 +54,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: false,
   // zod esterno evita vendor-chunks stale in dev/HMR; motion va bundlato (useContext SSR).
   serverExternalPackages: ['zod'],
+  experimental: {
+    optimizePackageImports: ['motion', 'framer-motion'],
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -58,6 +64,8 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
   images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 86400,
     remotePatterns: [
       { protocol: 'https', hostname: 'tlbdb.odoo.com', pathname: '/web/image/**' },
       { protocol: 'https', hostname: '**.odoo.com', pathname: '/web/image/**' },

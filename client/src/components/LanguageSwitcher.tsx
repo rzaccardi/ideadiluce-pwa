@@ -1,12 +1,13 @@
 'use client'
 
 import { useEffect, useId, useRef, useState } from 'react'
-import { PWA_LOCALES, LOCALE_LABEL, LOCALE_NAME, type PwaLocale } from '@/lib/locale'
+import { PWA_LOCALES, LOCALE_LABEL, LOCALE_NAME, HTML_LANG, type PwaLocale } from '@/lib/locale'
 import { localeFlagUrl } from '@/lib/locale-flags'
 import { useLocale } from '@/context/locale-context'
 import { useI18n } from '@/hooks/use-i18n'
 import { cn } from '@/utils/cn'
 import { ui } from '@/lib/ui-classes'
+import { layers } from '@/lib/layering'
 
 const FLAG_SIZE_TRIGGER = 24
 const FLAG_SIZE_OPTION = 20
@@ -16,10 +17,16 @@ function LocaleFlag({
   size,
 }: {
   locale: PwaLocale
-  size: typeof FLAG_SIZE_TRIGGER | typeof FLAG_SIZE_OPTION | 22
+  size: typeof FLAG_SIZE_TRIGGER | typeof FLAG_SIZE_OPTION | 22 | 16
 }) {
   const px =
-    size === FLAG_SIZE_TRIGGER ? 'size-6' : size === 22 ? 'size-[22px]' : 'size-5'
+    size === FLAG_SIZE_TRIGGER
+      ? 'size-6'
+      : size === 22
+        ? 'size-[22px]'
+        : size === 16
+          ? 'size-4'
+          : 'size-5'
   return (
     <img
       src={localeFlagUrl(locale)}
@@ -33,7 +40,7 @@ function LocaleFlag({
 }
 
 type Props = {
-  variant?: 'icon' | 'header' | 'mobileNav'
+  variant?: 'icon' | 'header' | 'utilityBar' | 'mobileNav'
   onOpenChange?: (open: boolean) => void
   /** Chiamato dopo la selezione di una lingua (es. chiudere il menu mobile). */
   onLocaleChange?: () => void
@@ -78,60 +85,40 @@ export function LanguageSwitcher({ variant = 'icon', onOpenChange, onLocaleChang
   }
 
   const isHeader = variant === 'header'
+  const isUtilityBar = variant === 'utilityBar'
   const isMobileNav = variant === 'mobileNav'
+  const isLabeled = isHeader || isUtilityBar
+  const otherLocales = PWA_LOCALES.filter((loc) => loc !== locale)
 
   if (isMobileNav) {
     return (
-      <div ref={rootRef}>
-        <button
-          type="button"
-          onClick={() => setMenuOpen(!open)}
-          aria-expanded={open}
-          aria-haspopup="listbox"
-          aria-controls={listId}
-          aria-label={tParams('language.switcher.current', { locale: LOCALE_NAME[locale] })}
-          className={cn(
-            ui.interactive,
-            'flex w-full items-center gap-3 rounded-md py-1 text-left',
-            ui.headerNavLink,
-          )}
-        >
-          <LocaleFlag locale={locale} size={22} />
-          <span className="flex-1">{LOCALE_NAME[locale]}</span>
-          <span className="text-[10px] opacity-60" aria-hidden>
-            {open ? '▴' : '▾'}
-          </span>
-        </button>
-
-        {open ? (
-          <div
+      <div className="flex items-center gap-3 py-1">
+        <LocaleFlag locale={locale} size={22} />
+        <div className="relative min-w-0 flex-1">
+          <select
             id={listId}
-            role="listbox"
-            aria-label={t('language.switcher.other')}
-            className="mt-2 flex flex-col gap-1"
+            value={locale}
+            onChange={(event) => selectLocale(event.target.value as PwaLocale)}
+            aria-label={tParams('language.switcher.current', { locale: LOCALE_NAME[locale] })}
+            className={cn(
+              ui.interactive,
+              'w-full appearance-none rounded-lg border border-idl-border bg-idl-tech-panel py-2.5 pr-8 pl-3 text-[14px] font-medium text-idl-ink outline-none',
+              'focus:border-idl-brass focus:ring-2 focus:ring-idl-brass/20',
+            )}
           >
-            {PWA_LOCALES.map((loc) => {
-              const selected = loc === locale
-              return (
-                <button
-                  key={loc}
-                  type="button"
-                  role="option"
-                  aria-selected={selected}
-                  onClick={() => selectLocale(loc)}
-                  className={cn(
-                    ui.navButton,
-                    'flex w-full items-center gap-3 rounded-md px-1 py-2 text-left text-[15px] font-medium transition-colors',
-                    selected ? 'text-idl-brass' : ui.headerNavLink,
-                  )}
-                >
-                  <LocaleFlag locale={loc} size={22} />
-                  <span>{LOCALE_NAME[loc]}</span>
-                </button>
-              )
-            })}
-          </div>
-        ) : null}
+            {PWA_LOCALES.map((loc) => (
+              <option key={loc} value={loc} lang={HTML_LANG[loc]}>
+                {LOCALE_NAME[loc]}
+              </option>
+            ))}
+          </select>
+          <span
+            className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-[10px] text-idl-muted"
+            aria-hidden
+          >
+            ▾
+          </span>
+        </div>
       </div>
     )
   }
@@ -147,24 +134,44 @@ export function LanguageSwitcher({ variant = 'icon', onOpenChange, onLocaleChang
         aria-label={tParams('language.switcher.current', { locale: LOCALE_NAME[locale] })}
         className={cn(
           ui.interactive,
-          ui.headerAction,
+          isUtilityBar
+            ? ui.utilityBarLink
+            : ui.headerAction,
           isHeader
             ? ui.headerActionBtn
-            : cn(
-                'size-6 rounded-full p-0 ring-2 ring-idl-ink ring-offset-2 ring-offset-idl-paper focus-visible:outline-idl-brass',
-                open && 'ring-idl-brass',
-              ),
+            : !isUtilityBar
+              ? cn(
+                  'size-6 rounded-full p-0 ring-2 ring-idl-ink ring-offset-2 ring-offset-idl-paper focus-visible:outline-idl-brass',
+                  open && 'ring-idl-brass',
+                )
+              : undefined,
         )}
       >
-        <LocaleFlag locale={locale} size={isHeader ? 22 : FLAG_SIZE_TRIGGER} />
-        {isHeader ? (
+        <LocaleFlag
+          locale={locale}
+          size={isUtilityBar ? 16 : isHeader ? 22 : FLAG_SIZE_TRIGGER}
+        />
+        {isLabeled ? (
           <>
-            <span className={cn(ui.headerActionText, 'text-[12.5px] tracking-wide')}>
-              {LOCALE_LABEL[locale]}
+            <span
+              className={cn(
+                isHeader && ui.headerActionText,
+                isHeader && 'text-[12.5px] tracking-wide',
+                isUtilityBar && 'text-[12.5px]',
+              )}
+              lang={isUtilityBar ? HTML_LANG[locale] : undefined}
+            >
+              {isUtilityBar ? LOCALE_NAME[locale] : LOCALE_LABEL[locale]}
             </span>
-            <span className={cn(ui.headerActionText, 'text-[9px] opacity-60')} aria-hidden>
+            {/* <span
+              className={cn(
+                isHeader && ui.headerActionText,
+                'text-[9px] opacity-60',
+              )}
+              aria-hidden
+            >
               ▾
-            </span>
+            </span> */}
           </>
         ) : null}
       </button>
@@ -175,29 +182,31 @@ export function LanguageSwitcher({ variant = 'icon', onOpenChange, onLocaleChang
           role="listbox"
           aria-label={t('language.switcher.other')}
           className={cn(
-            isHeader
-              ? cn(ui.headerDropdown, 'w-[188px]')
-              : 'absolute right-0 top-full z-50 mt-2 flex w-max flex-col gap-1.5 rounded-xl border border-idl-border bg-idl-tech-panel/95 p-1 shadow-lg shadow-idl-ink/10 backdrop-blur-sm',
+            isLabeled
+              ? cn(
+                  'absolute right-0 w-[188px] rounded-[14px] border border-idl-border bg-idl-paper p-2 shadow-[0_20px_54px_rgba(0,0,0,0.2)]',
+                  layers.headerDropdown,
+                  isUtilityBar ? 'bottom-full mb-1.5' : 'top-full mt-2',
+                )
+              : cn(
+                  'absolute right-0 top-full mt-2 flex w-max flex-col gap-1.5 rounded-xl border border-idl-border bg-idl-tech-panel p-1 shadow-lg shadow-idl-ink/10',
+                  layers.headerDropdown,
+                ),
           )}
         >
-          {PWA_LOCALES.map((loc) => {
-            const selected = loc === locale
-            return (
+          {otherLocales.map((loc) => (
               <button
                 key={loc}
                 type="button"
                 role="option"
-                aria-selected={selected}
+                aria-selected={false}
+                lang={HTML_LANG[loc]}
                 title={LOCALE_NAME[loc]}
                 onClick={() => selectLocale(loc)}
                 className={cn(
                   ui.navButton,
-                  isHeader
-                    ? cn(
-                        ui.headerDropdownItem,
-                        'px-2.5',
-                        selected && 'bg-idl-path-design text-idl-brass',
-                      )
+                  isLabeled
+                    ? cn(ui.headerDropdownItem, 'px-2.5')
                     : cn(
                         ui.interactive,
                         'inline-flex size-5 shrink-0 items-center justify-center rounded-full p-0 opacity-90',
@@ -206,11 +215,10 @@ export function LanguageSwitcher({ variant = 'icon', onOpenChange, onLocaleChang
                       ),
                 )}
               >
-                <LocaleFlag locale={loc} size={isHeader ? 22 : FLAG_SIZE_OPTION} />
-                {isHeader ? <span>{LOCALE_NAME[loc]}</span> : null}
+                <LocaleFlag locale={loc} size={isLabeled ? 22 : FLAG_SIZE_OPTION} />
+                {isLabeled ? <span lang={HTML_LANG[loc]}>{LOCALE_NAME[loc]}</span> : null}
               </button>
-            )
-          })}
+            ))}
         </div>
       ) : null}
     </div>

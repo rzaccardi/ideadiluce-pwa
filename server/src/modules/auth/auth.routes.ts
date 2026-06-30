@@ -1,9 +1,10 @@
 import { Router } from 'express'
 import { validateRequest } from '../../middlewares/validate-request.js'
-import { requireRecaptcha } from '../../middlewares/require-recaptcha.js'
 import { requireLogin } from '../../middlewares/session.js'
 import {
+  checkoutLoginBodySchema,
   checkoutRegisterBodySchema,
+  checkoutForgotPasswordBodySchema,
   forgotPasswordBodySchema,
   loginBodySchema,
   registerBodySchema,
@@ -17,24 +18,31 @@ export const authRouter = Router()
 authRouter.post(
   '/register',
   validateRequest({ body: registerBodySchema }),
-  requireRecaptcha('register'),
   authController.register,
 )
 authRouter.post(
   '/login',
   validateRequest({ body: loginBodySchema }),
-  requireRecaptcha('login'),
+  authController.login,
+)
+authRouter.post(
+  '/checkout-login',
+  validateRequest({ body: checkoutLoginBodySchema }),
   authController.login,
 )
 authRouter.post(
   '/checkout-register',
   validateRequest({ body: checkoutRegisterBodySchema }),
-  requireRecaptcha('register'),
   authController.checkoutRegister,
 )
 authRouter.post('/logout', authController.logout)
 authRouter.post('/refresh', authController.refresh)
 authRouter.get('/me', requireLogin, authController.me)
+authRouter.post(
+  '/checkout-forgot-password',
+  validateRequest({ body: checkoutForgotPasswordBodySchema }),
+  authController.forgotPassword,
+)
 authRouter.post(
   '/forgot-password',
   validateRequest({ body: forgotPasswordBodySchema }),

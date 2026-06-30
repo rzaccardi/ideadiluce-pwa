@@ -5,7 +5,9 @@ import { useI18n } from '@/hooks/use-i18n'
 import { SectionContainer } from '../primitives'
 import { CatalogSearchTrigger } from './CatalogSearchTrigger'
 import { CATALOG_WORLD_TAB_HREFS, type CatalogWorldTab } from '@/lib/catalog-filters'
+import { ui } from '@/lib/ui-classes'
 import { cn } from '@/utils/cn'
+import type { ReactNode } from 'react'
 
 type Props = {
   lp: (path: string) => string
@@ -14,6 +16,7 @@ type Props = {
   designLabel: string
   technicalLabel: string
   searchQuery?: string
+  afterSearch?: ReactNode
 }
 
 function TabLink({
@@ -29,8 +32,11 @@ function TabLink({
     <Link
       to={href}
       className={cn(
-        'rounded-[30px] px-[18px] py-2.5 text-[13.5px] font-bold transition',
-        active ? 'bg-idl-tech-panel text-idl-ink shadow-sm' : 'bg-transparent text-idl-muted hover:text-idl-ink',
+        ui.interactive,
+        'shrink-0 whitespace-nowrap rounded-[30px] px-[18px] py-2.5 text-[13.5px] font-bold',
+        active
+          ? 'bg-idl-white text-idl-ink shadow-sm'
+          : 'text-idl-graphite-2 hover:bg-idl-tech-panel/60 hover:text-idl-ink',
       )}
     >
       {children}
@@ -45,6 +51,7 @@ export function CatalogHeroSection({
   designLabel,
   technicalLabel,
   searchQuery = '',
+  afterSearch,
 }: Props) {
   const { t } = useI18n()
 
@@ -59,8 +66,8 @@ export function CatalogHeroSection({
           <span className="text-idl-graphite-2">Negozio</span>
         </div>
 
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <div>
+        <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-6">
+          <div className="min-w-0">
             <h1 className="text-[clamp(1.75rem,3vw,2rem)] font-extrabold tracking-tight text-idl-ink">
               Negozio
             </h1>
@@ -70,7 +77,7 @@ export function CatalogHeroSection({
             </p>
           </div>
 
-          <div className="flex gap-2 rounded-[30px] bg-idl-tech-panel p-1">
+          <div className="-mx-4 flex w-full gap-1 overflow-x-auto rounded-[30px] border border-idl-tech-chip-border bg-idl-tech-chip p-1 px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:mx-0 sm:w-auto sm:gap-1.5 sm:overflow-visible sm:px-1.5 sm:pb-1 [&::-webkit-scrollbar]:hidden">
             <TabLink active={worldTab === 'all'} href={lp(CATALOG_WORLD_TAB_HREFS.all)}>
               Tutti
             </TabLink>
@@ -97,6 +104,8 @@ export function CatalogHeroSection({
             showHints={false}
           />
         </div>
+
+        {afterSearch}
       </SectionContainer>
     </section>
   )

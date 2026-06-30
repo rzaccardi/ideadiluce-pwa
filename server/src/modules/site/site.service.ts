@@ -17,6 +17,17 @@ import {
   SITE_PAGE_KEYS,
 } from './site-content.defaults.js'
 import { DEFAULT_PROFESSIONISTI_IT } from './site-professionisti.defaults.js'
+import { TERMINI_CONTENT_VERSION } from './site-content-termini.defaults.js'
+import {
+  getTerminiDefaults,
+  isLegacyTerminiContent,
+} from './site-content-termini.i18n.js'
+import { PRIVACY_CONTENT_VERSION } from './site-content-privacy.defaults.js'
+import {
+  getPrivacyDefaults,
+  isLegacyPrivacyContent,
+} from './site-content-privacy.i18n.js'
+import { isVisualNavColumn } from './nav-link-visuals.js'
 import { siteRepository } from './site.repository.js'
 import type {
   EditorialPageContent,
@@ -365,12 +376,16 @@ export async function seedSitePages() {
   await patchShellAttaccoMenu()
   await patchShellNavCategoryLinks()
   await patchShellMegaMenuColumns()
+  await patchShellNavLinkImages()
   await patchShellNavEditorialLinks()
+  await patchShellFooterCompany()
   await patchShellItSource()
   await patchHomeHeroCategoryLinks()
   await patchAmbientiPageLinks()
   await patchLegacyCatalogPaths()
   await patchProfessionistiPageContent()
+  await patchTerminiPageContent()
+  await patchPrivacyPageContent()
 
   const { siteGuideService } = await import('../site-guides/site-guides.service.js')
   await siteGuideService.seedSiteGuides()
@@ -534,6 +549,50 @@ async function patchShellMegaMenuColumns() {
   }
 }
 
+/** Aggiunge imageUrl ai link del mega-menu se mancanti (editabili da BO). */
+async function patchShellNavLinkImages() {
+  const menuIds = ['arredo', 'tecnico'] as const
+
+  for (const locale of SITE_LOCALES) {
+    const row = await siteRepository.findByKeyLocale('shell', locale)
+    if (!row?.published) continue
+
+    const content = row.content as SiteShellContent
+    let changed = false
+
+    for (const id of menuIds) {
+      const item = content.nav.items.find((navItem) => navItem.kind === 'dropdown' && navItem.id === id)
+      const fresh = DEFAULT_SHELL_IT.nav.items.find((navItem) => navItem.kind === 'dropdown' && navItem.id === id)
+      if (item?.kind !== 'dropdown' || fresh?.kind !== 'dropdown') continue
+
+      for (const freshColumn of fresh.panel.columns) {
+        if (!isVisualNavColumn(freshColumn.title)) continue
+        const currentColumn = item.panel.columns.find((col) => col.title === freshColumn.title)
+        if (!currentColumn) continue
+
+        for (let linkIndex = 0; linkIndex < freshColumn.links.length; linkIndex += 1) {
+          const freshLink = freshColumn.links[linkIndex]
+          const currentLink = currentColumn.links[linkIndex]
+          if (!freshLink || !currentLink) continue
+
+          if (!currentLink.imageUrl && freshLink.imageUrl) {
+            currentLink.imageUrl = freshLink.imageUrl
+            changed = true
+          }
+          if (!currentLink.videoUrl && freshLink.videoUrl) {
+            currentLink.videoUrl = freshLink.videoUrl
+            changed = true
+          }
+        }
+      }
+    }
+
+    if (changed) {
+      await siteRepository.upsert('shell', locale, content, row.published)
+    }
+  }
+}
+
 /** Aggiorna mega-menu attacco se vuoto (installazioni precedenti alla patch). */
 async function patchShellAttaccoMenu() {
   const row = await siteRepository.findByKeyLocale('shell', 'IT')
@@ -580,15 +639,21 @@ async function patchShellNavEditorialLinks() {
       }
     }
 
-    const utilitaCol = content.footer.columns.find((col) => col.title === 'Utilità')
-    const utilitaFresh = DEFAULT_SHELL_IT.footer.columns.find((col) => col.title === 'Utilità')
-    if (utilitaCol && utilitaFresh) {
-      const freshJson = JSON.stringify(utilitaFresh.links)
-      const currentJson = JSON.stringify(utilitaCol.links)
+    const servizioCol = content.footer.columns.find((col) => col.title === 'Servizio clienti')
+    const servizioFresh = DEFAULT_SHELL_IT.footer.columns.find((col) => col.title === 'Servizio clienti')
+    if (servizioCol && servizioFresh) {
+      const freshJson = JSON.stringify(servizioFresh.links)
+      const currentJson = JSON.stringify(servizioCol.links)
       if (freshJson !== currentJson) {
-        utilitaCol.links = utilitaFresh.links.map((link) => ({ ...link }))
+        servizioCol.links = servizioFresh.links.map((link) => ({ ...link }))
         changed = true
       }
+    }
+
+    const utilitaIndex = content.footer.columns.findIndex((col) => col.title === 'Utilità')
+    if (utilitaIndex >= 0) {
+      content.footer.columns.splice(utilitaIndex, 1)
+      changed = true
     }
 
     const panelJson = JSON.stringify(content.nav.items)
@@ -605,6 +670,50 @@ async function patchShellNavEditorialLinks() {
           changed = true
         }
       }
+    }
+
+    if (changed) {
+      await siteRepository.upsert('shell', locale, content, row.published)
+    }
+  }
+}
+
+/** Aggiunge dati aziendali e social al footer shell pubblicate. */
+async function patchShellFooterCompany() {
+  const freshCompany = DEFAULT_SHELL_IT.footer.company
+  const freshSocial = DEFAULT_SHELL_IT.footer.social
+
+  for (const locale of SITE_LOCALES) {
+    const row = await siteRepository.findByKeyLocale('shell', locale)
+    if (!row?.published) continue
+
+    const content = row.content as SiteShellContent
+    let changed = false
+
+    if (!content.footer.company && freshCompany) {
+      content.footer.company = structuredClone(freshCompany)
+      changed = true
+    }
+
+    if (!content.footer.social?.length && freshSocial?.length) {
+      content.footer.social = freshSocial.map((link) => ({ ...link }))
+      changed = true
+    }
+
+    const freshColumnsJson = JSON.stringify(DEFAULT_SHELL_IT.footer.columns)
+    const currentColumnsJson = JSON.stringify(content.footer.columns)
+    if (freshColumnsJson !== currentColumnsJson) {
+      content.footer.columns = structuredClone(DEFAULT_SHELL_IT.footer.columns)
+      changed = true
+    }
+
+    const notFoundFresh = DEFAULT_SHELL_IT.footer.notFoundCta
+    if (
+      content.footer.notFoundCta.ctaHref !== notFoundFresh.ctaHref ||
+      content.footer.notFoundCta.ctaLabel !== notFoundFresh.ctaLabel
+    ) {
+      content.footer.notFoundCta = { ...content.footer.notFoundCta, ...notFoundFresh }
+      changed = true
     }
 
     if (changed) {
@@ -636,6 +745,60 @@ async function patchProfessionistiPageContent() {
       DEFAULT_PROFESSIONISTI_IT,
       row.published,
     )
+  }
+}
+
+/** Aggiorna Termini d'Uso: sostituisce import WordPress legacy e seed traduzioni mancanti. */
+async function patchTerminiPageContent() {
+  for (const locale of SITE_LOCALES) {
+    const row = await siteRepository.findByKeyLocale('termini', locale)
+    const defaults = withTerminiVersion(getTerminiDefaults(locale))
+
+    if (!row) {
+      await siteRepository.upsert('termini', locale, defaults, true)
+      continue
+    }
+
+    const contentVersion = (row.content as { seo?: { terminiVersion?: number } })?.seo?.terminiVersion
+    if (!isLegacyTerminiContent(row.content) && contentVersion === TERMINI_CONTENT_VERSION) {
+      continue
+    }
+
+    await siteRepository.upsert('termini', locale, defaults, row.published)
+  }
+}
+
+function withTerminiVersion(content: import('./site.types.js').ContentPageContent) {
+  return {
+    ...content,
+    seo: { ...content.seo, terminiVersion: TERMINI_CONTENT_VERSION },
+  }
+}
+
+/** Aggiorna Privacy Policy: sostituisce placeholder legacy e seed traduzioni mancanti. */
+async function patchPrivacyPageContent() {
+  for (const locale of SITE_LOCALES) {
+    const row = await siteRepository.findByKeyLocale('privacy', locale)
+    const defaults = withPrivacyVersion(getPrivacyDefaults(locale))
+
+    if (!row) {
+      await siteRepository.upsert('privacy', locale, defaults, true)
+      continue
+    }
+
+    const contentVersion = (row.content as { seo?: { privacyVersion?: number } })?.seo?.privacyVersion
+    if (!isLegacyPrivacyContent(row.content) && contentVersion === PRIVACY_CONTENT_VERSION) {
+      continue
+    }
+
+    await siteRepository.upsert('privacy', locale, defaults, row.published)
+  }
+}
+
+function withPrivacyVersion(content: import('./site.types.js').ContentPageContent) {
+  return {
+    ...content,
+    seo: { ...content.seo, privacyVersion: PRIVACY_CONTENT_VERSION },
   }
 }
 

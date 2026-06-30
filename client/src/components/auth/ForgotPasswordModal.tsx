@@ -61,7 +61,7 @@ export function ForgotPasswordModal({ open, initialEmail = '', onClose }: Props)
     setError(null)
     setLoading(true)
     try {
-      await api.auth.forgotPassword(email.trim())
+      await api.auth.checkoutForgotPassword(email.trim())
       setSent(true)
     } catch {
       setError(t('forgot.error'))

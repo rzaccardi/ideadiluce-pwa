@@ -60,7 +60,6 @@ export function isHomePageContent(content: unknown): content is HomePageContent 
 /** Route pathname → CMS pageKey */
 export const STATIC_ROUTE_PAGE_KEYS: Record<string, SitePageKey> = {
   '/chi-siamo': 'chi-siamo',
-  '/showroom': 'showroom',
   '/professionisti': 'professionisti',
   '/lavora-con-noi': 'lavora-con-noi',
   '/spedizioni': 'spedizioni',
@@ -68,7 +67,6 @@ export const STATIC_ROUTE_PAGE_KEYS: Record<string, SitePageKey> = {
   '/garanzia': 'garanzia',
   '/contatti': 'contatti',
   '/privacy-policy': 'privacy',
-  '/cookie': 'cookie',
   '/tos': 'termini',
   '/on-demand': 'prodotto-non-trovato',
   '/acquista-ambiente': 'ambienti',

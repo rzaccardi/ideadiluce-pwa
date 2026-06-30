@@ -19,6 +19,7 @@ type CatalogSectionProps = {
   totalCount?: number
   loading?: boolean
   isLoadingMore?: boolean
+  pendingSkeletonCount?: number
   hasMore?: boolean
   onLoadMore?: () => void
   selectedFilterValues: ReadonlySet<string>
@@ -37,6 +38,7 @@ export function TechnicalCategoryView({
   totalCount,
   loading,
   isLoadingMore,
+  pendingSkeletonCount,
   hasMore,
   onLoadMore,
   selectedFilterValues,
@@ -67,6 +69,7 @@ export function TechnicalCategoryView({
           variant="technical"
           loading={loading}
           isLoadingMore={isLoadingMore}
+          pendingSkeletonCount={pendingSkeletonCount}
           hasMore={hasMore}
           onLoadMore={onLoadMore}
           selectedFilterValues={selectedFilterValues}

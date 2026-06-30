@@ -19,9 +19,7 @@ import {
 } from '@/lib/product-specs-parse'
 import {
   ProductDetailCard,
-  ProductDetailPlaceholder,
   ProductDetailSectionLabel,
-  ProductDetailValue,
   ProductSpecRowItem,
   buildProductMetaLine,
   buildProductSubtitle,
@@ -110,6 +108,15 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
   }, [product.documents, selectedVariant?.documents])
 
   const accessories = product.accessories ?? []
+  const dimensionsValue = specRows.find((r) => r.label === 'Dimensioni')?.value
+  const designerName = specRows.find((r) => r.label === 'Designer')?.value
+  const storyBody =
+    product.longDescription?.trim() && !hasHtmlMarkup(product.longDescription)
+      ? product.longDescription.trim()
+      : null
+  const hasStorySection = Boolean(storyQuote || storyBody)
+  const lifestyleGridImages = lifestyleImages.slice(1).filter(Boolean)
+  const specRowsWithValues = specRows.filter((row) => row.value?.trim())
 
   const handleAddToCart = createAddToCartHandler({
     product,
@@ -145,19 +152,15 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
             <h1 className="font-serif text-[clamp(2rem,8vw,3.375rem)] leading-none font-medium tracking-[-0.01em]">
               {displayTitle}
             </h1>
-            <div className="mt-3 text-base text-idl-design-muted">
-              {titleRest ? (
-                <span>{titleRest}</span>
-              ) : (
-                <ProductDetailValue value={subtitle} placeholder="Tipologia e designer — in arrivo" />
-              )}
-            </div>
+            {(titleRest || subtitle) ? (
+              <div className="mt-3 text-base text-idl-design-muted">
+                {titleRest ? <span>{titleRest}</span> : subtitle ? <span>{subtitle}</span> : null}
+              </div>
+            ) : null}
             {metaLine ? (
               <div className="mt-2 mb-7 font-mono text-xs text-idl-design-dim">{metaLine}</div>
             ) : (
-              <div className="mt-2 mb-7 font-mono text-xs text-idl-design-dim">
-                <ProductDetailPlaceholder>Premi e riconoscimenti — in arrivo</ProductDetailPlaceholder>
-              </div>
+              <div className="mb-7" />
             )}
 
             <div className="flex flex-wrap items-baseline gap-2 sm:gap-3.5">
@@ -168,25 +171,21 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
                 <span className="text-[13.5px] text-idl-design-dim">{priceModeLabel}</span>
               ) : null}
             </div>
-            <div className="mt-2 mb-[30px] flex flex-col gap-1 text-[13.5px]">
-              <div className="flex items-center gap-2">
-                <span className="size-2 rounded-full bg-[#5fb98a]" aria-hidden />
-                <span className="text-idl-design-muted">
-                  <ProductDetailValue
-                    value={
-                      availability
-                        ? formatAvailabilityPrimaryLabel(availability)
-                        : undefined
-                    }
-                    placeholder="Disponibilità — contattaci per tempi di consegna"
-                    className="not-italic text-idl-design-muted"
-                  />
-                </span>
+            {availability ? (
+              <div className="mt-2 mb-[30px] flex flex-col gap-1 text-[13.5px]">
+                <div className="flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-[#5fb98a]" aria-hidden />
+                  <span className="text-idl-design-muted not-italic">
+                    {formatAvailabilityPrimaryLabel(availability)}
+                  </span>
+                </div>
+                {availability.detail ? (
+                  <p className="pl-4 text-idl-design-dim">{availability.detail}</p>
+                ) : null}
               </div>
-              {availability?.detail ? (
-                <p className="pl-4 text-idl-design-dim">{availability.detail}</p>
-              ) : null}
-            </div>
+            ) : (
+              <div className="mb-[30px]" />
+            )}
 
             <DesignHeroVariantPicker
               variants={product.variants}
@@ -241,70 +240,53 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
             <div className="flex flex-wrap gap-3 border-t border-white/10 pt-4 text-[12px] text-idl-design-dim sm:gap-5 sm:pt-[18px] sm:text-[12.5px]">
               <span>✓ Reso entro 50 giorni</span>
               <span>✓ Garanzia ufficiale</span>
-              <span>
-                ✓ Prodotto originale{' '}
-                {product.brand?.name ?? <ProductDetailPlaceholder>brand</ProductDetailPlaceholder>}
-              </span>
+              {product.brand?.name ? <span>✓ Prodotto originale {product.brand.name}</span> : null}
             </div>
           </div>
         </SectionContainer>
       </section>
 
-      {/* STORIA */}
+      {hasStorySection ? (
       <section className="border-t border-white/6 bg-[#0c0c0d]">
         <SectionContainer narrow className="py-12 text-center sm:py-16">
           <ProductDetailSectionLabel variant="design" className="mb-6 tracking-[0.22em]">
             LA STORIA
           </ProductDetailSectionLabel>
-          <blockquote className="font-serif text-[clamp(1.375rem,5vw,2rem)] leading-[1.32] font-normal italic text-idl-design-fg">
-            {storyQuote ? `"${storyQuote}"` : <ProductDetailPlaceholder>Citazione editoriale — in arrivo</ProductDetailPlaceholder>}
-          </blockquote>
-          <div className="mx-auto mt-7 max-w-3xl text-base leading-[1.7] text-idl-design-muted">
-            {product.longDescription?.trim() && !hasHtmlMarkup(product.longDescription) ? (
-              <p>{product.longDescription}</p>
-            ) : (
-              <ProductDetailPlaceholder>
-                Racconto del prodotto e del designer — contenuto in preparazione.
-              </ProductDetailPlaceholder>
-            )}
-          </div>
+          {storyQuote ? (
+            <blockquote className="font-serif text-[clamp(1.375rem,5vw,2rem)] leading-[1.32] font-normal italic text-idl-design-fg">
+              &ldquo;{storyQuote}&rdquo;
+            </blockquote>
+          ) : null}
+          {storyBody ? (
+            <div className="mx-auto mt-7 max-w-3xl text-base leading-[1.7] text-idl-design-muted">
+              <p>{storyBody}</p>
+            </div>
+          ) : null}
         </SectionContainer>
       </section>
+      ) : null}
 
-      {/* Lifestyle hero */}
+      {lifestyleImages[0] ? (
       <section className="bg-idl-design">
-        {lifestyleImages[0] ? (
           <div className="relative h-[420px] sm:h-[560px] lg:h-[680px]">
             <SiteImage src={lifestyleImages[0]} alt="" fill className="object-cover" sizes="100vw" />
           </div>
-        ) : (
-          <div className="flex h-[320px] items-center justify-center bg-idl-design-elevated text-sm text-idl-design-dim sm:h-[420px]">
-            <ProductDetailPlaceholder>Immagine ambiente — in arrivo</ProductDetailPlaceholder>
-          </div>
-        )}
       </section>
+      ) : null}
 
-      {/* DESCRIZIONE */}
+      {product.longDescription?.trim() ? (
       <section className="border-t border-idl-border bg-idl-path-design">
         <SectionContainer narrow className="py-12 sm:py-16">
           <ProductDetailSectionLabel variant="design" className="mb-[18px] text-idl-brass tracking-[0.18em]">
             DESCRIZIONE
           </ProductDetailSectionLabel>
-          {product.longDescription?.trim() ? (
-            hasHtmlMarkup(product.longDescription) ? (
-              <ProductDescriptionHtml
-                html={product.longDescription}
-                className="product-description max-w-none [&_p:first-child]:font-serif [&_p:first-child]:text-[23px] [&_p:first-child]:leading-[1.5] [&_p:first-child]:text-[#2a241c] [&_p]:mb-[18px] [&_p]:text-base [&_p]:leading-[1.85] [&_p]:text-[#5c5447]"
-              />
-            ) : (
-              <>
-                <p className="mb-[26px] font-serif text-[23px] leading-[1.5] text-[#2a241c]">{product.longDescription}</p>
-              </>
-            )
+          {hasHtmlMarkup(product.longDescription) ? (
+            <ProductDescriptionHtml
+              html={product.longDescription}
+              className="product-description max-w-none [&_p:first-child]:font-serif [&_p:first-child]:text-[23px] [&_p:first-child]:leading-[1.5] [&_p:first-child]:text-[#2a241c] [&_p]:mb-[18px] [&_p]:text-base [&_p]:leading-[1.85] [&_p]:text-[#5c5447]"
+            />
           ) : (
-            <p className="mb-[26px] font-serif text-[23px] leading-[1.5] text-[#2a241c]">
-              <ProductDetailPlaceholder>Descrizione completa — in arrivo</ProductDetailPlaceholder>
-            </p>
+            <p className="mb-[26px] font-serif text-[23px] leading-[1.5] text-[#2a241c]">{product.longDescription}</p>
           )}
           <div className="mt-7 flex flex-col gap-3 border-t border-idl-border pt-[22px] sm:flex-row sm:flex-wrap sm:items-center">
             <span className="font-mono text-[11px] tracking-wide text-idl-placeholder uppercase">
@@ -320,10 +302,12 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
           </div>
         </SectionContainer>
       </section>
+      ) : null}
 
-      {/* CARATTERISTICHE TECNICHE */}
+      {(specRowsWithValues.length > 0 || dimensionsValue || productDocuments.length > 0) ? (
       <section className="bg-idl-paper">
         <SectionContainer className="grid min-w-0 items-start gap-8 py-10 sm:gap-14 sm:py-14 lg:grid-cols-2 lg:py-14">
+          {specRowsWithValues.length > 0 ? (
           <div>
             <ProductDetailSectionLabel variant="design" className="mb-4 text-idl-brass tracking-[0.18em]">
               CARATTERISTICHE TECNICHE
@@ -333,7 +317,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
               {product.brand ? ` · ${product.brand.name}` : ''}
             </h2>
             <div>
-              {specRows.map((row) => (
+              {specRowsWithValues.map((row) => (
                 <ProductSpecRowItem
                   key={row.label}
                   label={row.label}
@@ -345,70 +329,49 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
               ))}
             </div>
           </div>
+          ) : <div />}
 
+          {(dimensionsValue || productDocuments.length > 0) ? (
           <div className="flex flex-col gap-[22px]">
+            {dimensionsValue ? (
             <ProductDetailCard variant="design">
               <h3 className="mb-[18px] font-serif text-xl font-medium text-idl-ink">Dimensioni</h3>
-              <div className="flex aspect-[2/1] items-center justify-center rounded-lg border border-dashed border-idl-border bg-idl-cream/50 text-sm text-idl-placeholder">
-                <ProductDetailPlaceholder>Schema dimensioni — in arrivo</ProductDetailPlaceholder>
-              </div>
-              <p className="mt-3 text-sm text-idl-ink-muted">
-                <ProductDetailValue
-                  value={specRows.find((r) => r.label === 'Dimensioni')?.value}
-                  placeholder="Misure e peso — in arrivo"
-                />
-              </p>
+              <p className="text-sm text-idl-ink-muted">{dimensionsValue}</p>
             </ProductDetailCard>
+            ) : null}
 
+            {productDocuments.length > 0 ? (
             <ProductDetailCard variant="design">
               <h3 className="mb-4 font-serif text-xl font-medium text-idl-ink">Download</h3>
-              {productDocuments.length > 0 ? (
-                <ProductDocuments
-                  slug={product.slug}
-                  documents={productDocuments}
-                  variantRef={variantRef}
-                  variant="design"
-                  showTitle={false}
-                  className="space-y-0"
-                />
-              ) : (
-                <div className="space-y-0">
-                  <div className="flex items-center gap-3 border-b border-idl-cream py-3 opacity-60">
-                    <span className="rounded border border-red-200 px-1.5 py-0.5 font-mono text-[10px] font-bold text-red-700">
-                      PDF
-                    </span>
-                    <ProductDetailPlaceholder className="flex-1 text-sm font-semibold not-italic text-idl-ink">
-                      Scheda prodotto — in arrivo
-                    </ProductDetailPlaceholder>
-                  </div>
-                </div>
-              )}
+              <ProductDocuments
+                slug={product.slug}
+                documents={productDocuments}
+                variantRef={variantRef}
+                variant="design"
+                showTitle={false}
+                className="space-y-0"
+              />
             </ProductDetailCard>
+            ) : null}
           </div>
+          ) : null}
         </SectionContainer>
       </section>
+      ) : null}
 
-      {/* Lifestyle doppio */}
+      {lifestyleGridImages.length > 0 ? (
       <section className="bg-idl-design">
         <div className="grid sm:grid-cols-2">
-          {[0, 1].map((i) =>
-            lifestyleImages[i + 1] ? (
-              <div key={i} className="relative h-[360px] sm:h-[480px] lg:h-[600px]">
-                <SiteImage src={lifestyleImages[i + 1]!} alt="" fill className="object-cover" sizes="50vw" />
-              </div>
-            ) : (
-              <div
-                key={i}
-                className="flex h-[280px] items-center justify-center bg-idl-design-elevated text-sm text-idl-design-dim sm:h-[360px]"
-              >
-                <ProductDetailPlaceholder>Immagine lifestyle — in arrivo</ProductDetailPlaceholder>
-              </div>
-            ),
-          )}
+          {lifestyleGridImages.map((src) => (
+            <div key={src} className="relative h-[360px] sm:h-[480px] lg:h-[600px]">
+              <SiteImage src={src} alt="" fill className="object-cover" sizes="50vw" />
+            </div>
+          ))}
         </div>
       </section>
+      ) : null}
 
-      {/* Correlati */}
+      {relatedProducts.length > 0 ? (
       <section className="border-t border-white/6 bg-idl-design">
         <SectionContainer className="py-12 sm:py-16">
           <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
@@ -424,19 +387,14 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
               </Link>
             ) : null}
           </div>
-          {relatedProducts.length > 0 ? (
-            <DesignRelatedProducts
-              products={relatedProducts.slice(0, 4)}
-              lp={lp}
-              brandName={product.brand?.name}
-            />
-          ) : (
-            <div className="rounded-lg border border-dashed border-white/15 py-12 text-center text-sm text-idl-design-dim">
-              <ProductDetailPlaceholder>Prodotti correlati — in arrivo</ProductDetailPlaceholder>
-            </div>
-          )}
+          <DesignRelatedProducts
+            products={relatedProducts.slice(0, 4)}
+            lp={lp}
+            brandName={product.brand?.name}
+          />
         </SectionContainer>
       </section>
+      ) : null}
 
       {accessories.length > 0 ? (
         <section className="border-t border-white/6 bg-idl-design">
@@ -454,63 +412,14 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
 
       <CategoryCtaBanner banner={DESIGN_CTA} lp={lp} variant="design" />
 
-      {/* Recensioni placeholder */}
-      <section className="border-t border-idl-border bg-idl-paper">
-        <SectionContainer className="py-12 sm:py-16">
-          <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <ProductDetailSectionLabel variant="design" className="mb-3 text-idl-brass">
-                RECENSIONI
-              </ProductDetailSectionLabel>
-              <h2 className="font-serif text-2xl font-medium text-idl-ink sm:text-[30px]">Cosa dicono i clienti</h2>
-            </div>
-            <div className="text-right opacity-60">
-              <div className="font-serif text-2xl font-medium text-idl-ink sm:text-[30px]">
-                <ProductDetailPlaceholder>—</ProductDetailPlaceholder>
-                <span className="text-lg text-idl-placeholder">/5</span>
-              </div>
-              <div className="text-xs text-idl-placeholder">recensioni — in arrivo</div>
-            </div>
-          </div>
-          <div className="grid gap-[22px] md:grid-cols-3">
-            {[1, 2, 3].map((n) => (
-              <div
-                key={n}
-                className="rounded-xl border border-idl-path-design-border bg-idl-tech-panel p-[26px] opacity-70"
-              >
-                <div className="mb-3.5 text-[15px] tracking-[2px] text-[#e0a85a]">★★★★★</div>
-                <ProductDetailPlaceholder className="block font-serif text-[17px] leading-[1.55] not-italic text-[#2a241c]">
-                  Recensione cliente — in arrivo
-                </ProductDetailPlaceholder>
-              </div>
-            ))}
-          </div>
-        </SectionContainer>
-      </section>
-
-      {/* Designer placeholder */}
+      {designerName ? (
       <section className="border-t border-white/6 bg-idl-design">
         <SectionContainer className="grid items-center gap-10 py-14 sm:gap-14 lg:grid-cols-[0.8fr_1.2fr] lg:py-16">
-          <div className="relative aspect-[4/5] overflow-hidden rounded bg-idl-design-elevated shadow-[0_0_70px_rgba(201, 162, 75,0.08)]">
-            <div className="flex h-full items-center justify-center text-sm text-idl-design-dim">
-              <ProductDetailPlaceholder>Ritratto designer — in arrivo</ProductDetailPlaceholder>
-            </div>
-          </div>
           <div>
             <ProductDetailSectionLabel variant="design" className="mb-4">
               IL DESIGNER
             </ProductDetailSectionLabel>
-            <h2 className="mb-4 font-serif text-3xl font-medium sm:text-[38px]">
-              <ProductDetailValue
-                value={specRows.find((r) => r.label === 'Designer')?.value}
-                placeholder="Nome designer — in arrivo"
-              />
-            </h2>
-            <p className="max-w-xl text-base leading-relaxed text-idl-design-muted">
-              <ProductDetailPlaceholder>
-                Biografia del designer e curiosità sul progetto — contenuto in preparazione.
-              </ProductDetailPlaceholder>
-            </p>
+            <h2 className="mb-4 font-serif text-3xl font-medium sm:text-[38px]">{designerName}</h2>
             <Link
               to={lp('/negozio')}
               className="mt-6 inline-flex items-center gap-2 rounded-lg border border-white/20 px-5 py-3 text-sm font-semibold transition hover:border-idl-glow hover:text-idl-glow"
@@ -520,6 +429,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
           </div>
         </SectionContainer>
       </section>
+      ) : null}
 
       <ProductProfessionalBanner variant="design" />
 

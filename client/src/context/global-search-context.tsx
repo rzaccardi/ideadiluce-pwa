@@ -1,9 +1,17 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 import { useGlobalSearchShortcut } from '@/hooks/use-global-search-shortcut'
-import { GlobalSearchPalette } from '@/components/site/catalog/GlobalSearchPalette'
 import type { CatalogSearchSource } from '@/types/catalog-search-events'
+
+const GlobalSearchPalette = dynamic(
+  () =>
+    import('@/components/site/catalog/GlobalSearchPalette').then((m) => ({
+      default: m.GlobalSearchPalette,
+    })),
+  { ssr: false },
+)
 
 type GlobalSearchContextValue = {
   open: boolean
@@ -49,12 +57,14 @@ export function GlobalSearchProvider({ children }: { children: ReactNode }) {
   return (
     <GlobalSearchContext.Provider value={value}>
       {children}
-      <GlobalSearchPalette
-        open={open}
-        initialQuery={initialQuery}
-        searchSource={searchSource}
-        onClose={closeSearch}
-      />
+      {open ? (
+        <GlobalSearchPalette
+          open={open}
+          initialQuery={initialQuery}
+          searchSource={searchSource}
+          onClose={closeSearch}
+        />
+      ) : null}
     </GlobalSearchContext.Provider>
   )
 }

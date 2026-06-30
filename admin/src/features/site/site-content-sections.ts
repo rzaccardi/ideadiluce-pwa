@@ -18,7 +18,7 @@ const ARTICLE_PAGE_SECTIONS: SiteContentSection[] = [
 ]
 
 const CONTENT_PAGE_SECTIONS: SiteContentSection[] = [
-  { id: 'header', label: 'Intestazione', pick: ['layout', 'eyebrow', 'title', 'subtitle', 'intro', 'heroBadges', 'coverImage'] },
+  { id: 'header', label: 'Intestazione', pick: ['layout', 'eyebrow', 'title', 'titleAccent', 'subtitle', 'intro', 'heroBadges', 'coverImage'] },
   { id: 'blocks', label: 'Blocchi contenuto', pick: ['blocks'] },
   { id: 'footer', label: 'Chiusura e SEO', pick: ['cta', 'seo'] },
 ]
@@ -64,14 +64,12 @@ const SITE_CONTENT_SECTIONS: Record<string, SiteContentSection[]> = {
 
 const CONTENT_PAGE_KEYS = new Set([
   'chi-siamo',
-  'showroom',
   'lavora-con-noi',
   'spedizioni',
   'pagamenti',
   'garanzia',
   'contatti',
   'privacy',
-  'cookie',
   'termini',
   'prodotto-non-trovato',
 ])

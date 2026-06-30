@@ -5,6 +5,53 @@ import { mapArflyListResponse, mapArflyProductDetail } from '@/lib/arfly/mapper'
 import type { PwaLocale } from '@/lib/locale'
 import type { ProductCardDTO, ProductDetailDTO } from '@/types/dto'
 import type { ArflyProductDetailResponse, ArflyProductListResponse } from '@/lib/arfly/types'
+import type { HomeProductSliderDTO } from '@/types/home-product-sliders'
+
+export const fetchHomeProductSlidersServer = cache(async function fetchHomeProductSlidersServer(
+  locale: PwaLocale,
+): Promise<HomeProductSliderDTO[]> {
+  try {
+    const search = new URLSearchParams({ locale })
+    return await serverApiClient.get<HomeProductSliderDTO[]>(
+      `/api/v1/catalog/home/product-sliders?${search.toString()}`,
+    )
+  } catch {
+    return []
+  }
+})
+
+export type HomeFeaturedGuideDTO = {
+  slug: string
+  category: string
+  meta: string
+  title: string
+  href: string
+  featured: boolean
+  sortOrder: number
+}
+
+export const fetchHomeBrandsServer = cache(async function fetchHomeBrandsServer(locale: PwaLocale) {
+  try {
+    const search = new URLSearchParams({ locale })
+    const res = await serverApiClient.get<{ items: import('@/types/site-content').BrandListItemDTO[] }>(
+      `/api/v1/catalog/brands?${search.toString()}`,
+    )
+    return res.items ?? []
+  } catch {
+    return []
+  }
+})
+
+export const fetchFeaturedGuidesServer = cache(async function fetchFeaturedGuidesServer(locale: PwaLocale) {
+  try {
+    const search = new URLSearchParams({ locale, featured: 'true' })
+    return await serverApiClient.get<HomeFeaturedGuideDTO[]>(
+      `/api/v1/site/guides?${search.toString()}`,
+    )
+  } catch {
+    return []
+  }
+})
 
 export async function fetchFeaturedProducts(locale: PwaLocale, pageSize = 3): Promise<ProductCardDTO[]> {
   const search = new URLSearchParams({ lang: toArflyLang(locale), page: '1', per_page: String(pageSize) })

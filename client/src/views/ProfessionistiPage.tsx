@@ -10,9 +10,7 @@ import { ProfessionistiPageView } from '@/components/site/professionisti/Profess
 import { ErrorState } from '@/components/ErrorState'
 import { ToastOnError } from '@/components/ToastFeedback'
 import { ProfessionistiPageSkeleton } from '@/components/Skeleton'
-import { PageHeader } from '@/components/PageHeader'
 import { PageLoadTransition } from '@/components/motion'
-import { getPageHeaderFallbackTitle } from '@/lib/page-header-fallbacks'
 
 type Props = {
   initialContent?: ProfessionistiPageContent | null
@@ -51,15 +49,10 @@ export function ProfessionistiPage({ initialContent = null }: Props) {
     return <ErrorState message="Contenuto pagina non valido" className="mx-auto max-w-lg p-8" />
   }
 
-  const fallbackTitle = getPageHeaderFallbackTitle('professionisti')
-
   return (
     <PageLoadTransition
       isLoading={!content}
       skeleton={<ProfessionistiPageSkeleton />}
-      loadingHeader={
-        fallbackTitle ? <PageHeader title={fallbackTitle} /> : null
-      }
     >
       {content ? <ProfessionistiPageView content={content} /> : null}
     </PageLoadTransition>

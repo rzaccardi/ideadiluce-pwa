@@ -1,0 +1,233 @@
+import { fetchArflyProductDetail, isArflyConfigured } from '../../adapters/arfly/arflyClient.js'
+import { mapArflyListItem } from '../../adapters/arfly/arflyMapper.js'
+import {
+  fetchTopPurchasedProducts,
+  odooSearchHintsAvailable,
+  type TopPurchasedSegment,
+} from '../../adapters/odoo/odooTopPurchasedSearchHints.js'
+import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { parseHubLocale, type HubLocale } from '../../lib/hub-locale.js'
+import type { ProductCardDTO } from '../../types/dto.js'
+import { enrichProductCardsWithStock, type ProductCardStockHint } from './catalog-stock.enrich.js'
+import { catalogStorefrontService } from './catalog-storefront.service.js'
+import {
+  buildHomeProductSlidersCacheKey,
+  clearHomeProductSlidersInflight,
+  getHomeProductSlidersInflight,
+  readHomeProductSlidersCache,
+  setHomeProductSlidersInflight,
+  writeHomeProductSlidersCache,
+} from './home-product-sliders.cache.js'
+import type { HomeProductSliderDTO, HomeProductSliderKey } from './home-product-sliders.types.js'
+import { HOME_SLIDER_PRODUCT_COUNT } from './home-product-sliders.types.js'
+
+export type { HomeProductSliderDTO, HomeProductSliderKey } from './home-product-sliders.types.js'
+export { HOME_SLIDER_PRODUCT_COUNT } from './home-product-sliders.types.js'
+
+const LOOKBACK_DAYS = 90
+const SLIDER_LIMIT = HOME_SLIDER_PRODUCT_COUNT
+
+const ROOM_QUERIES: Record<Extract<HomeProductSliderKey, `room-${string}`>, string> = {
+  'room-soggiorno': 'soggiorno lampada sospensione',
+  'room-cucina': 'cucina illuminazione faretto',
+  'room-bagno': 'bagno applique specchio',
+}
+
+async function resolveCardsFromTemplateIds(
+  ctx: OdooCallContext,
+  templateIds: number[],
+  locale: HubLocale,
+  pricing: { partnerId?: number; pricelistId?: number },
+): Promise<ProductCardDTO[]> {
+  if (!isArflyConfigured() || templateIds.length === 0) return []
+
+  const hints: ProductCardStockHint[] = []
+  for (const templateId of templateIds) {
+    try {
+      const detail = await fetchArflyProductDetail(templateId, locale, pricing)
+      const card = mapArflyListItem(detail.product, locale)
+      hints.push({ ...card, odooTemplateId: templateId })
+    } catch {
+      // prodotto non pubblicato su Arfly
+    }
+  }
+
+  if (hints.length === 0) return []
+  return enrichProductCardsWithStock(ctx, hints)
+}
+
+async function topPurchasedSlider(
+  ctx: OdooCallContext,
+  locale: HubLocale,
+  pricing: { partnerId?: number; pricelistId?: number },
+  segment: TopPurchasedSegment,
+  fallbackQuery: string,
+): Promise<ProductCardDTO[]> {
+  if (!odooSearchHintsAvailable()) {
+    const list = await catalogStorefrontService.listProducts(ctx, {
+      locale,
+      page: 1,
+      pageSize: SLIDER_LIMIT,
+      q: fallbackQuery,
+      partnerId: pricing.partnerId,
+      pricelistId: pricing.pricelistId,
+    })
+    return list.items.slice(0, SLIDER_LIMIT)
+  }
+
+  const ranked = await fetchTopPurchasedProducts(ctx, {
+    lookbackDays: LOOKBACK_DAYS,
+    limit: SLIDER_LIMIT,
+    segment,
+    fetchMultiplier: 12,
+  })
+  const cards = await resolveCardsFromTemplateIds(
+    ctx,
+    ranked.map((item) => item.productTemplateId),
+    locale,
+    pricing,
+  )
+  if (cards.length >= SLIDER_LIMIT) return cards.slice(0, SLIDER_LIMIT)
+
+  const list = await catalogStorefrontService.listProducts(ctx, {
+    locale,
+    page: 1,
+    pageSize: SLIDER_LIMIT,
+    q: fallbackQuery,
+    partnerId: pricing.partnerId,
+    pricelistId: pricing.pricelistId,
+  })
+  const merged = [...cards]
+  for (const item of list.items) {
+    if (merged.length >= SLIDER_LIMIT) break
+    if (merged.some((existing) => existing.slug === item.slug)) continue
+    merged.push(item)
+  }
+  return merged.slice(0, SLIDER_LIMIT)
+}
+
+async function inStockTopSlider(
+  ctx: OdooCallContext,
+  locale: HubLocale,
+  pricing: { partnerId?: number; pricelistId?: number },
+): Promise<ProductCardDTO[]> {
+  if (!odooSearchHintsAvailable()) return []
+
+  const ranked = await fetchTopPurchasedProducts(ctx, {
+    lookbackDays: LOOKBACK_DAYS,
+    limit: SLIDER_LIMIT * 3,
+    fetchMultiplier: 8,
+  })
+  const cards = await resolveCardsFromTemplateIds(
+    ctx,
+    ranked.map((item) => item.productTemplateId),
+    locale,
+    pricing,
+  )
+  const inStock = cards.filter((card) => card.inStock)
+  if (inStock.length >= SLIDER_LIMIT) return inStock.slice(0, SLIDER_LIMIT)
+
+  const fallback = await catalogStorefrontService.listProducts(ctx, {
+    locale,
+    page: 1,
+    pageSize: SLIDER_LIMIT,
+    q: 'lampada',
+    partnerId: pricing.partnerId,
+    pricelistId: pricing.pricelistId,
+  })
+  const merged = [...inStock]
+  for (const item of fallback.items) {
+    if (merged.length >= SLIDER_LIMIT) break
+    if (!item.inStock) continue
+    if (merged.some((existing) => existing.slug === item.slug)) continue
+    merged.push(item)
+  }
+  return merged.slice(0, SLIDER_LIMIT)
+}
+
+async function roomQuerySlider(
+  ctx: OdooCallContext,
+  locale: HubLocale,
+  pricing: { partnerId?: number; pricelistId?: number },
+  key: Extract<HomeProductSliderKey, `room-${string}`>,
+): Promise<ProductCardDTO[]> {
+  const q = ROOM_QUERIES[key]
+  const list = await catalogStorefrontService.listProducts(ctx, {
+    locale,
+    page: 1,
+    pageSize: SLIDER_LIMIT,
+    q,
+    partnerId: pricing.partnerId,
+    pricelistId: pricing.pricelistId,
+  })
+  return list.items.slice(0, SLIDER_LIMIT)
+}
+
+export const homeProductSlidersService = {
+  async load(
+    ctx: OdooCallContext,
+    options: {
+      locale?: string
+      partnerId?: number
+      pricelistId?: number
+    },
+  ): Promise<HomeProductSliderDTO[]> {
+    const locale = parseHubLocale(options.locale)
+    const pricing = {
+      partnerId: options.partnerId,
+      pricelistId: options.pricelistId,
+    }
+
+    const entries: Array<{ key: HomeProductSliderKey; load: () => Promise<ProductCardDTO[]> }> = [
+      { key: 'top-design', load: () => topPurchasedSlider(ctx, locale, pricing, 'design', 'sospensione lampada') },
+      { key: 'top-technical', load: () => topPurchasedSlider(ctx, locale, pricing, 'technical', 'alimentatore driver') },
+      { key: 'in-stock', load: () => inStockTopSlider(ctx, locale, pricing) },
+      { key: 'room-soggiorno', load: () => roomQuerySlider(ctx, locale, pricing, 'room-soggiorno') },
+      { key: 'room-cucina', load: () => roomQuerySlider(ctx, locale, pricing, 'room-cucina') },
+      { key: 'room-bagno', load: () => roomQuerySlider(ctx, locale, pricing, 'room-bagno') },
+    ]
+
+    const sliders = await Promise.all(
+      entries.map(async ({ key, load }) => ({
+        key,
+        products: await load(),
+      })),
+    )
+
+    return sliders.filter((slider) => slider.products.length > 0)
+  },
+
+  async list(
+    ctx: OdooCallContext,
+    options: {
+      locale?: string
+      partnerId?: number
+      pricelistId?: number
+    },
+  ): Promise<HomeProductSliderDTO[]> {
+    const locale = parseHubLocale(options.locale)
+    const cacheKey = buildHomeProductSlidersCacheKey({
+      locale,
+      partnerId: options.partnerId,
+      pricelistId: options.pricelistId,
+    })
+
+    const cached = readHomeProductSlidersCache(cacheKey)
+    if (cached) return cached
+
+    const pending = getHomeProductSlidersInflight(cacheKey)
+    if (pending) return pending
+
+    const promise = this.load(ctx, options)
+      .then((data) => {
+        writeHomeProductSlidersCache(cacheKey, data)
+        return data
+      })
+      .finally(() => {
+        clearHomeProductSlidersInflight(cacheKey)
+      })
+
+    setHomeProductSlidersInflight(cacheKey, promise)
+    return promise
+  },
+}

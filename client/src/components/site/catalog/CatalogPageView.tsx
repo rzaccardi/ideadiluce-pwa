@@ -1,9 +1,11 @@
 'use client'
 
+import { useMemo, useState } from 'react'
 import type { CategoryDTO, ProductCardDTO } from '@/types/dto'
 import type { BrandListItemDTO } from '@/types/site-content'
 import type { CatalogSort } from '@/features/catalog/catalog.store'
 import type { CatalogActiveFilter, CatalogPriceBucket, CatalogWorldTab } from '@/lib/catalog-filters'
+import { TechnicalCatalogSelectionProvider } from '@/context/technical-catalog-selection-context'
 import { SectionContainer } from '../primitives'
 import { CatalogHeroSection } from './CatalogHeroSection'
 import { CatalogFilterSidebar } from './CatalogFilterSidebar'
@@ -17,13 +19,24 @@ import { cn } from '@/utils/cn'
 import { CatalogFiltersSkeleton, ProductGridSkeleton } from '@/components/Skeleton'
 import { PageLoadTransition } from '@/components/motion'
 import { CatalogLoadMoreFooter } from './CatalogLoadMoreFooter'
-import { CatalogLoadMoreIndicator } from './CatalogLoadMoreIndicator'
+import dynamic from 'next/dynamic'
+import { CatalogMobileToolbar } from './CatalogMobileToolbar'
+import { TechnicalCatalogBulkBar } from '../category/TechnicalCatalogBulkBar'
+
+const CatalogFiltersModal = dynamic(
+  () => import('./CatalogFiltersModal').then((m) => ({ default: m.CatalogFiltersModal })),
+  { ssr: false },
+)
+import { TechnicalCatalogSelectionToggle } from '../category/TechnicalCatalogSelectionToggle'
+import { useTechnicalCatalogSelectionContext } from '@/context/technical-catalog-selection-context'
+import { resolveProductCardCatalogKind } from '@/lib/product-catalog-kind'
 
 type Props = {
   lp: LocalePathFn
   error: string | null
   isLoading: boolean
   isLoadingMore: boolean
+  pendingSkeletonCount: number
   products: ReadonlyArray<ProductCardDTO>
   categories: ReadonlyArray<CategoryDTO>
   brands: ReadonlyArray<BrandListItemDTO>
@@ -78,11 +91,104 @@ function CatalogGridSkeleton({
   return <ProductGridSkeleton count={8} className={cols} />
 }
 
+function CatalogTechnicalSelectionToggleRow() {
+  const selection = useTechnicalCatalogSelectionContext()
+  if (!selection) return null
+
+  return (
+    <div className="mb-4 flex justify-end lg:hidden">
+      <TechnicalCatalogSelectionToggle
+        enabled={selection.selectionEnabled}
+        onChange={selection.setSelectionMode}
+      />
+    </div>
+  )
+}
+
+function CatalogTechnicalSelectionToolbar() {
+  const selection = useTechnicalCatalogSelectionContext()
+  if (!selection) return null
+
+  return (
+    <div className="mb-4 hidden justify-end lg:flex">
+      <TechnicalCatalogSelectionToggle
+        enabled={selection.selectionEnabled}
+        onChange={selection.setSelectionMode}
+      />
+    </div>
+  )
+}
+
+function CatalogProductResults({
+  products,
+  categories,
+  lp,
+  worldTab,
+  filtersOpen,
+  pendingSkeletonCount,
+  isLoading,
+}: {
+  products: ReadonlyArray<ProductCardDTO>
+  categories: ReadonlyArray<CategoryDTO>
+  lp: LocalePathFn
+  worldTab: CatalogWorldTab
+  filtersOpen: boolean
+  pendingSkeletonCount: number
+  isLoading: boolean
+}) {
+  const supportsSelection = worldTab === 'technical' || worldTab === 'all'
+  const selectableProducts = useMemo(
+    () =>
+      worldTab === 'technical'
+        ? products
+        : products.filter((product) => resolveProductCardCatalogKind(product) === 'technical'),
+    [products, worldTab],
+  )
+  const grid = (
+    <>
+      {supportsSelection ? <CatalogTechnicalSelectionToggleRow /> : null}
+      {pendingSkeletonCount > 0 ? (
+        <p className="sr-only" role="status" aria-live="polite">
+          Caricamento di altri {pendingSkeletonCount} prodotti
+        </p>
+      ) : null}
+      <div
+        className={cn(
+          'transition-opacity duration-200',
+          isLoading && products.length > 0 && 'pointer-events-none opacity-60',
+        )}
+      >
+        <CatalogProductGrid
+          products={products}
+          categories={categories}
+          lp={lp}
+          worldTab={worldTab}
+          filtersOpen={filtersOpen}
+          pendingSkeletonCount={pendingSkeletonCount}
+        />
+      </div>
+    </>
+  )
+
+  if (!supportsSelection) {
+    return grid
+  }
+
+  return (
+    <TechnicalCatalogSelectionProvider products={selectableProducts}>
+      <CatalogTechnicalSelectionToolbar />
+      {grid}
+      <TechnicalCatalogBulkBar products={selectableProducts} lp={lp} />
+    </TechnicalCatalogSelectionProvider>
+  )
+}
+
 export function CatalogPageView({
   lp,
   error,
   isLoading,
   isLoadingMore,
+  pendingSkeletonCount,
   products,
   categories,
   brands,
@@ -119,6 +225,8 @@ export function CatalogPageView({
   emptyDescription,
   searchQuery,
 }: Props) {
+  const [filtersModalOpen, setFiltersModalOpen] = useState(false)
+
   const sidebarProps = {
     rootCategories,
     subcategories,
@@ -147,7 +255,24 @@ export function CatalogPageView({
         designLabel={designLabel}
         technicalLabel={technicalLabel}
         searchQuery={searchQuery}
+        afterSearch={
+          <CatalogMobileToolbar
+            activeFilterCount={activeFilters.length}
+            sort={sort}
+            onOpenFilters={() => setFiltersModalOpen(true)}
+            onSelectSort={onSelectSort}
+          />
+        }
       />
+
+      {filtersModalOpen ? (
+        <CatalogFiltersModal
+          open={filtersModalOpen}
+          onClose={() => setFiltersModalOpen(false)}
+          totalProducts={totalProducts}
+          {...sidebarProps}
+        />
+      ) : null}
 
       <CatalogCategoryNavSection lp={lp} worldTab={worldTab} searchQuery={searchQuery} />
 
@@ -167,14 +292,6 @@ export function CatalogPageView({
           ) : null}
 
           <div className="min-w-0">
-            {filtersOpen ? (
-              <div className="mb-4 lg:hidden">
-                <div className="rounded-[14px] border border-idl-tech-border bg-idl-tech-panel p-4">
-                  <CatalogFilterSidebar {...sidebarProps} />
-                </div>
-              </div>
-            ) : null}
-
             <CatalogActiveFiltersBar
               filtersOpen={filtersOpen}
               onToggleFilters={onToggleFilters}
@@ -203,29 +320,23 @@ export function CatalogPageView({
               <EmptyState title={emptyTitle} description={emptyDescription} />
             ) : (
               <>
-                <div
-                  className={cn(
-                    'transition-opacity duration-200',
-                    isLoading && products.length > 0 && 'pointer-events-none opacity-60',
-                  )}
-                >
-                  <CatalogProductGrid
-                    products={products}
-                    categories={categories}
-                    lp={lp}
-                    worldTab={worldTab}
-                    filtersOpen={filtersOpen}
-                  />
-                </div>
+                <CatalogProductResults
+                  products={products}
+                  categories={categories}
+                  lp={lp}
+                  worldTab={worldTab}
+                  filtersOpen={filtersOpen}
+                  pendingSkeletonCount={pendingSkeletonCount}
+                  isLoading={isLoading}
+                />
 
-                {isLoadingMore ? <CatalogLoadMoreIndicator /> : null}
+                <div ref={loadMoreRef} className="h-px" aria-hidden />
 
                 <CatalogLoadMoreFooter
                   shownProducts={shownProducts}
                   totalProducts={totalProducts}
                   hasMore={hasMore}
                   isLoadingMore={isLoadingMore}
-                  loadMoreRef={loadMoreRef}
                   onLoadMore={onLoadMore}
                   variant="catalog"
                 />

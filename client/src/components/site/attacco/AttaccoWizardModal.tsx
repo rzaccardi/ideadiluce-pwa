@@ -6,6 +6,7 @@ import { ATTACCO_WIZARD_SOCKETS, type AttaccoSocketKey } from '@/lib/attacco.def
 import { AttaccoSocketIcon, WizardSocketIcon } from './AttaccoIcons'
 import type { LocalePathFn } from '../sections/types'
 import { cn } from '@/utils/cn'
+import { layers } from '@/lib/layering'
 
 type Props = {
   open: boolean
@@ -71,7 +72,10 @@ export function AttaccoWizardModal({
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(20,16,9,0.55)] p-4 sm:p-6"
+      className={cn(
+        'fixed inset-0 flex items-center justify-center bg-[rgba(20,16,9,0.55)] p-4 sm:p-6',
+        layers.modal,
+      )}
       onClick={onClose}
       role="dialog"
       aria-modal="true"

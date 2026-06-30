@@ -1,55 +1,60 @@
 'use client'
 
+import { useEffect } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from '@/lib/motion-client'
 import { usePathname } from '@/lib/navigation'
 import {
-  pageTransitionTiming,
   pageTransitionVariants,
   resolvePageTransitionKind,
 } from '@/lib/motion/page-transitions'
 
+const PAGE_LAYOUT_CLASS = 'flex min-h-full w-full flex-1 flex-col'
+
 /**
- * Wrapper persistente nel layout: deve avvolgere direttamente il template
- * (motion.div keyed) per far funzionare le exit animation con App Router.
+ * Wrapper persistente nel layout: AnimatePresence con `popLayout` anima l'uscita
+ * senza bloccare l'ingresso (a differenza di `mode="wait"` con App Router).
  */
 export function PageTransitionShell({ children }: { children: React.ReactNode }) {
   const reduceMotion = useReducedMotion()
 
   if (reduceMotion) {
-    return <>{children}</>
+    return <div className={`page-transition-root ${PAGE_LAYOUT_CLASS}`}>{children}</div>
   }
 
   return (
-    <AnimatePresence initial={false} mode="wait">
-      {children}
-    </AnimatePresence>
+    <div className="page-transition-root relative flex min-h-0 flex-1 flex-col">
+      <AnimatePresence initial={false} mode="popLayout">
+        {children}
+      </AnimatePresence>
+    </div>
   )
 }
 
 /**
- * Wrapper nel template.tsx: si remonta a ogni navigazione così AnimatePresence
- * può animare l'uscita della pagina precedente senza flicker sui children.
+ * Wrapper nel template.tsx: varianti per contesto (editorial, catalogo, prodotto…).
  */
 export function PageTransitionPage({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const reduceMotion = useReducedMotion()
   const kind = resolvePageTransitionKind(pathname)
   const variants = pageTransitionVariants[kind]
-  const transition = pageTransitionTiming[kind]
 
-  if (reduceMotion || kind === 'catalog' || kind === 'checkout') {
-    return <div className="flex min-h-full flex-1 flex-col">{children}</div>
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }, [pathname])
+
+  if (reduceMotion) {
+    return <div className={PAGE_LAYOUT_CLASS}>{children}</div>
   }
 
   return (
     <motion.div
       key={pathname}
-      className="flex min-h-full flex-1 flex-col will-change-[opacity,transform]"
+      className={`${PAGE_LAYOUT_CLASS} will-change-[opacity,transform]`}
       initial="initial"
       animate="animate"
       exit="exit"
       variants={variants}
-      transition={transition}
     >
       {children}
     </motion.div>

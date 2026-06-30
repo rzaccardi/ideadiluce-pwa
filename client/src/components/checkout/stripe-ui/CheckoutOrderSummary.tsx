@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from '@/lib/navigation'
 import type { CartDTO, CartItemDTO, FreeShippingHintDTO, ProductCardDTO, ShippingQuoteDTO, TaxBreakdownDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
@@ -10,10 +10,11 @@ import { cn } from '@/utils/cn'
 import { FreeShippingNudge } from '@/components/cart/FreeShippingNudge'
 import { BrandWordmark } from '@/components/site/primitives'
 import { CheckoutCrossSellSection } from '@/components/checkout/CheckoutCrossSellSection'
-import { CheckoutReturnsIcon, CheckoutSecureIcon } from '@/components/checkout/CheckoutIllustrations'
+import { CheckoutTrustSignals } from '@/components/checkout/stripe-ui/CheckoutTrustSignals'
 import {
   CHECKOUT_STORE_NAME,
   checkoutMobileSummaryClass,
+  checkoutMobileSummaryPanelClass,
   checkoutSummaryAsideClass,
   checkoutSummaryInnerClass,
   checkoutTitleTypographyClass,
@@ -204,40 +205,62 @@ export function CheckoutOrderSummary({
   const [mobileOpen, setMobileOpen] = useState(false)
   const total = cartTotalCents(cart, selectedShipping?.amountCents, taxBreakdown)
 
+  useEffect(() => {
+    if (!mobileOnly || !mobileOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [mobileOnly, mobileOpen])
+
   if (mobileOnly) {
     return (
-      <div className={checkoutMobileSummaryClass}>
-        <button
-          type="button"
-          onClick={() => setMobileOpen((v) => !v)}
-          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left sm:px-5 sm:py-3.5"
-        >
-          <span className="flex min-w-0 items-center gap-2 text-sm text-idl-graphite underline decoration-idl-muted/50 underline-offset-2">
-            <ChevronIcon open={mobileOpen} />
-            <span className="truncate">
-              {mobileOpen ? t('checkout.summary.hideOrderSummary') : t('checkout.summary.showOrderSummary')}
-            </span>
-          </span>
-          <span className="shrink-0 text-base font-bold tabular-nums text-idl-graphite">
-            {formatMoney(total, cart.currencyCode)}
-          </span>
-        </button>
+      <>
         {mobileOpen ? (
-          <div className="max-h-[min(60dvh,28rem)] overflow-y-auto border-t border-idl-tech-border px-4 pb-5 pt-4 sm:px-5">
-            <SummaryContent
-              cart={cart}
-              selectedShipping={selectedShipping}
-              freeShippingHint={freeShippingHint}
-              taxBreakdown={taxBreakdown}
-              onRemoveItem={onRemoveItem}
-              removeDisabled={removeDisabled}
-              recommendations={recommendations}
-              recommendationsLoading={recommendationsLoading}
-              onCrossSellAdded={onCrossSellAdded}
-            />
-          </div>
+          <button
+            type="button"
+            className="fixed inset-0 z-20 bg-[rgba(22,19,13,0.35)] lg:hidden"
+            onClick={() => setMobileOpen(false)}
+            aria-label={t('checkout.summary.hideOrderSummary')}
+          />
         ) : null}
-      </div>
+        <div className={checkoutMobileSummaryClass}>
+          <button
+            type="button"
+            onClick={() => setMobileOpen((v) => !v)}
+            className="relative z-40 flex w-full items-center justify-between gap-3 px-4 py-3 text-left sm:px-5 sm:py-3.5"
+            aria-expanded={mobileOpen}
+          >
+            <span className="flex min-w-0 items-center gap-2 text-sm text-idl-graphite underline decoration-idl-muted/50 underline-offset-2">
+              <ChevronIcon open={mobileOpen} />
+              <span className="truncate">
+                {mobileOpen ? t('checkout.summary.hideOrderSummary') : t('checkout.summary.showOrderSummary')}
+              </span>
+            </span>
+            <span className="shrink-0 text-base font-bold tabular-nums text-idl-graphite">
+              {formatMoney(total, cart.currencyCode)}
+            </span>
+          </button>
+          {mobileOpen ? (
+            <div className={checkoutMobileSummaryPanelClass}>
+              <div className="px-4 pb-5 pt-4 sm:px-5">
+                <SummaryContent
+                  cart={cart}
+                  selectedShipping={selectedShipping}
+                  freeShippingHint={freeShippingHint}
+                  taxBreakdown={taxBreakdown}
+                  onRemoveItem={onRemoveItem}
+                  removeDisabled={removeDisabled}
+                  recommendations={recommendations}
+                  recommendationsLoading={recommendationsLoading}
+                  onCrossSellAdded={onCrossSellAdded}
+                />
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </>
     )
   }
 
@@ -265,7 +288,7 @@ export function CheckoutOrderSummary({
             onCrossSellAdded={onCrossSellAdded}
           />
         </div>
-        <CheckoutSummaryFooter theme="dark" />
+        <CheckoutSummaryFooter theme="dark" cartItems={cart.items} />
       </div>
     </aside>
   )
@@ -356,27 +379,19 @@ export function CheckoutSummaryHeader({
   )
 }
 
-export function CheckoutSummaryFooter({ theme = 'light' }: { theme?: SummaryTheme }) {
+export function CheckoutSummaryFooter({
+  theme = 'light',
+  cartItems,
+}: {
+  theme?: SummaryTheme
+  cartItems?: ReadonlyArray<Pick<CartItemDTO, 'productSlug' | 'productName'>>
+}) {
   const { t } = useI18n()
   const dark = theme === 'dark'
 
   return (
     <footer className="mt-8 space-y-4">
-      <div
-        className={cn(
-          'flex flex-wrap items-center gap-x-5 gap-y-2 border-t pt-5 text-[11.5px] font-bold',
-          dark ? 'border-white/[0.07] text-[#b0b0b4]' : 'border-[#e2e6eb] text-[#6c727c]',
-        )}
-      >
-        <span className="inline-flex items-center gap-2">
-          <CheckoutSecureIcon />
-          {t('checkout.summary.securePayment')}
-        </span>
-        <span className="inline-flex items-center gap-2">
-          <CheckoutReturnsIcon />
-          {t('checkout.summary.returns')}
-        </span>
-      </div>
+      <CheckoutTrustSignals theme={theme} cartItems={cartItems} />
       <div
         className={cn(
           'flex flex-wrap items-center gap-x-2 gap-y-1 text-xs',

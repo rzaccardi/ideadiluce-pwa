@@ -7,9 +7,7 @@ import { authStore, login } from '@/features/auth'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { notify } from '@/lib/notify'
-import { getRecaptchaToken, RECAPTCHA_ACTIONS } from '@/lib/recaptcha'
 import { ApiRequestError } from '@/types/api'
-import { AuthRecaptchaBanner } from '@/components/auth/RecaptchaNotice'
 import {
   AuthBrassLink,
   AuthCard,
@@ -28,13 +26,6 @@ import {
   EmailIcon,
   LockIcon,
 } from '@/components/site/auth/auth-ui'
-
-function isRecaptchaClientError(err: unknown): boolean {
-  return (
-    err instanceof Error &&
-    (err.message === 'RECAPTCHA_LOAD_FAILED' || err.message === 'RECAPTCHA_EXECUTE_FAILED')
-  )
-}
 
 export function LoginPageView() {
   const { t } = useI18n()
@@ -55,15 +46,10 @@ export function LoginPageView() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     try {
-      const recaptchaToken = await getRecaptchaToken(RECAPTCHA_ACTIONS.login)
-      await login(email, password, recaptchaToken)
+      await login(email, password)
       notify.success(t('auth.loggedIn'))
       navigate(from, { replace: true })
     } catch (err) {
-      if (isRecaptchaClientError(err)) {
-        notify.error(t('auth.recaptchaFailed'))
-        return
-      }
       notify.error(
         err instanceof ApiRequestError
           ? (err.userMessage ?? err.message)
@@ -135,8 +121,6 @@ export function LoginPageView() {
           <AuthCheckbox checked={rememberMe} onChange={setRememberMe}>
             {t('login.rememberMe')}
           </AuthCheckbox>
-
-          <AuthRecaptchaBanner className="mb-4" />
 
           <AuthSubmitButton disabled={auth.isLoading}>
             {auth.isLoading ? t('auth.loggingIn') : t('auth.loginSubmit')}

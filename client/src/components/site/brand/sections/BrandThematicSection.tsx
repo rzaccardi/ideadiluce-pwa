@@ -36,7 +36,7 @@ function BrandWall({
       </Eyebrow>
       <h3 className="text-[20px] font-extrabold tracking-tight text-idl-graphite">{title}</h3>
       <p className="mt-1.5 text-[13.5px] text-idl-graphite-2">{subtitle}</p>
-      <div className="mt-5 grid grid-cols-3 overflow-hidden rounded-lg border border-idl-tech-border">
+      <div className="mt-5 grid grid-cols-3 overflow-hidden rounded-lg border border-idl-tech-border bg-white dark:bg-idl-tech-panel">
         {slugs.map((slug) => {
           const brand = bySlug.get(slug)
           if (!brand) return null
@@ -44,7 +44,7 @@ function BrandWall({
             <Link
               key={slug}
               to={lp(brand.href)}
-              className="border-b border-r border-idl-tech-border px-2 py-5 text-center font-serif text-[14px] text-idl-graphite-2 transition hover:bg-idl-tech-panel hover:text-idl-graphite sm:text-base"
+              className="border-b border-r border-idl-tech-border bg-white px-2 py-5 text-center font-serif text-[14px] text-idl-graphite-2 transition hover:bg-idl-cream hover:text-idl-graphite dark:bg-idl-tech-panel dark:hover:bg-idl-tech-panel sm:text-base"
             >
               {brand.name}
             </Link>
@@ -52,7 +52,7 @@ function BrandWall({
         })}
         <Link
           to={lp(allHref)}
-          className="border-b border-r border-idl-tech-border px-2 py-5 text-center text-[13px] font-bold text-idl-brass transition hover:bg-idl-tech-panel"
+          className="border-b border-r border-idl-tech-border bg-white px-2 py-5 text-center text-[13px] font-bold text-idl-brass transition hover:bg-idl-cream dark:bg-idl-tech-panel dark:hover:bg-idl-tech-panel"
         >
           Tutti →
         </Link>

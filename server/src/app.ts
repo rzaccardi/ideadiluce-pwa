@@ -1,5 +1,6 @@
 import express from 'express'
 import cors from 'cors'
+import compression from 'compression'
 import cookieParser from 'cookie-parser'
 import rateLimit from 'express-rate-limit'
 import { env } from './config/env.js'
@@ -31,6 +32,7 @@ export function createApp() {
   app.set('trust proxy', 1)
 
   app.use(correlationMiddleware)
+  app.use(compression())
   app.use(
     rateLimit({
       windowMs: 60_000,

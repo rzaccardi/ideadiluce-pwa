@@ -12,7 +12,7 @@ export function AccountDcQuoteLines({ lines, currencyCode, tParams }: Props) {
   if (lines.length === 0) return null
 
   return (
-    <ul className="divide-y divide-[#ededea] rounded-xl border border-idl-tech-border">
+    <ul className="divide-y divide-[#ededea] rounded-xl border border-idl-tech-border bg-white dark:bg-idl-tech-panel">
       {lines.map((line) => (
         <li
           key={`${line.productRef}-${line.variantRef ?? ''}-${line.quantity}`}

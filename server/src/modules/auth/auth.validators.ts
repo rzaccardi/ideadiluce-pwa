@@ -1,9 +1,5 @@
 import { z } from 'zod'
 
-const recaptchaTokenField = {
-  recaptchaToken: z.string().min(1).optional(),
-}
-
 export const registerBodySchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
@@ -12,10 +8,13 @@ export const registerBodySchema = z.object({
   phone: z.string().optional(),
   /** `business` per account B2B (listino dedicato). */
   customerSegment: z.enum(['retail', 'business']).optional(),
-  ...recaptchaTokenField,
 })
 
 export const forgotPasswordBodySchema = z.object({
+  email: z.string().email(),
+})
+
+export const checkoutForgotPasswordBodySchema = z.object({
   email: z.string().email(),
 })
 
@@ -27,7 +26,11 @@ export const resetPasswordBodySchema = z.object({
 export const loginBodySchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
-  ...recaptchaTokenField,
+})
+
+export const checkoutLoginBodySchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
 })
 
 export const checkoutRegisterBodySchema = z.object({
@@ -37,5 +40,4 @@ export const checkoutRegisterBodySchema = z.object({
   lastName: z.string().min(1),
   phone: z.string().optional(),
   customerSegment: z.enum(['retail', 'business']).optional(),
-  ...recaptchaTokenField,
 })

@@ -3,7 +3,6 @@
 import { useMemo } from 'react'
 import type { ProductVariantDTO } from '@/types/dto'
 import { cn } from '@/utils/cn'
-import { ProductDetailPlaceholder } from './shared'
 
 const SWATCH_COLORS: Record<string, string> = {
   bianco: '#f3efe7',
@@ -83,27 +82,7 @@ export function DesignHeroVariantPicker({ variants, selectedRef, onChange }: Pro
   }
 
   if (variants.length <= 1) {
-    return (
-      <div className="mb-[26px]">
-        <div className="mb-3 flex items-baseline justify-between">
-          <span className="text-sm font-semibold text-idl-design-fg">Finitura</span>
-          <ProductDetailPlaceholder className="text-[13px] not-italic">In arrivo</ProductDetailPlaceholder>
-        </div>
-        <div className="flex gap-3">
-          {['#f3efe7', '#d36a3d', '#b3322f', '#1f1c17'].map((color, i) => (
-            <span
-              key={color}
-              aria-hidden
-              className={cn(
-                'size-[38px] rounded-full border-2',
-                i === 0 ? 'border-idl-glow opacity-50' : 'border-white/20 opacity-30',
-              )}
-              style={{ background: color }}
-            />
-          ))}
-        </div>
-      </div>
-    )
+    return null
   }
 
   const attrName = variants[0]?.attributes[0]?.name ?? 'Variante'

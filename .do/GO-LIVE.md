@@ -213,6 +213,7 @@ Legenda scope DO: **R** = RUN_TIME, **B** = BUILD_TIME, **RB** = RUN_AND_BUILD_T
 | Variabile | Scope | Note |
 |-----------|-------|------|
 | `VITE_API_URL` | B | `${api.PUBLIC_URL}` |
+| `VITE_STOREFRONT_URL` | B | `${shop.PUBLIC_URL}` — link anteprima guide e pagine storefront dal BO |
 
 Elenco secret completo: [`secrets.production.env.example`](secrets.production.env.example).
 

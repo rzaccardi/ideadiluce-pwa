@@ -1,4 +1,6 @@
 import type { SiteShellContent } from '@/types/site-content'
+import { enrichNavColumns } from '@/lib/mobile-nav-visuals'
+import { COMPANY_CONTACT, SHOWROOM_MAPS_URL } from '@/lib/company-contact'
 
 const SOCKET_ITEMS = [
   { code: 'E27', hint: 'a vite grande', href: '/attacco/e27' },
@@ -47,7 +49,7 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
         label: 'Arredo',
         href: '/categoria-prodotto/illuminazione-arredo',
         panel: {
-          columns: [
+          columns: enrichNavColumns([
             {
               title: 'PER TIPOLOGIA',
               links: [
@@ -101,7 +103,7 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
                 { label: 'Offerte', href: '/negozio?world=design&q=offerta' },
               ],
             },
-          ],
+          ]),
           promo: {
             title: 'Consulenza progetto luce',
             description: "Inviaci una foto dell'ambiente: ti aiutiamo a comporre la luce giusta.",
@@ -117,7 +119,7 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
         label: 'Tecnico',
         href: '/categoria-prodotto/illuminazione-tecnica',
         panel: {
-          columns: [
+          columns: enrichNavColumns([
             {
               title: 'TECNOLOGIA',
               links: [
@@ -168,7 +170,7 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
                 { label: 'Retrofit LED', href: '/guide/scegliere-lampadina-led' },
               ],
             },
-          ],
+          ]),
           promo: {
             title: 'Prodotto non trovato?',
             description: "Invia foto, EAN o codice: troviamo il ricambio o un'alternativa.",
@@ -187,6 +189,13 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
           columns: attaccoMegaMenuColumns(),
           eyebrow: 'Lampadine per attacco · ordinati per diffusione',
           allSocketsCta: 'Tutti gli attacchi →',
+          promo: {
+            title: "Non trovi l'attacco?",
+            description: 'Invia una foto o il codice prodotto: ti aiutiamo a trovare il ricambio.',
+            ctaLabel: 'Richiedi supporto →',
+            ctaHref: '/prodotto-non-trovato',
+            variant: 'technical',
+          },
         },
       },
       { kind: 'link', id: 'ambienti', label: 'Ambienti', href: '/ambienti' },
@@ -201,12 +210,28 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
     { title: 'Spedizione tracciata', subtitle: 'In tutta Italia' },
   ],
   footer: {
+    company: {
+      company: COMPANY_CONTACT.company,
+      vat: COMPANY_CONTACT.vat,
+      rea: COMPANY_CONTACT.rea,
+      addressLines: [...COMPANY_CONTACT.addressLines],
+      phone: COMPANY_CONTACT.phone,
+      phoneHref: COMPANY_CONTACT.phoneHref,
+      email: COMPANY_CONTACT.email,
+      hoursLines: [...COMPANY_CONTACT.hoursLines],
+    },
+    social: [
+      { label: 'Instagram', href: '' },
+      { label: 'Facebook', href: '' },
+      { label: 'LinkedIn', href: '' },
+      { label: 'Pinterest', href: '' },
+    ],
     columns: [
       {
         title: 'Idea di Luce',
         links: [
           { label: 'Chi siamo', href: '/chi-siamo' },
-          { label: 'Showroom Roma', href: '/showroom' },
+          { label: 'Showroom Roma', href: SHOWROOM_MAPS_URL },
           { label: 'Professionisti', href: '/professionisti' },
           { label: 'Lavora con noi', href: '/lavora-con-noi' },
         ],
@@ -214,24 +239,8 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
       {
         title: 'Servizio clienti',
         links: [
-          { label: 'Spedizioni e resi', href: '/spedizioni' },
-          { label: 'Pagamenti', href: '/pagamenti' },
-          { label: 'Garanzia', href: '/garanzia' },
-          { label: 'Contatti', href: '/contatti' },
-        ],
-      },
-      {
-        title: 'Utilità',
-        links: [
-          { label: 'Negozio', href: '/negozio' },
-          { label: 'Guide alla luce', href: '/blog' },
-          { label: 'Scegli per attacco', href: '/attacco' },
-          { label: 'Brand', href: '/brand' },
-          { label: 'Ambienti', href: '/acquista-ambiente' },
-          { label: 'Glossario tecnico', href: '/guide/glossario' },
-          { label: 'Privacy', href: '/privacy-policy' },
-          { label: 'Termini', href: '/tos' },
-          { label: 'Cookie', href: '/cookie' },
+          { label: "Termini d'Uso e Condizioni di Vendita", href: '/tos' },
+          { label: 'Privacy Policy', href: '/privacy-policy' },
         ],
       },
     ],
@@ -239,7 +248,7 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
       title: 'Non trovi il prodotto?',
       description: "Invia una foto dell'attacco o il codice: ti aiutiamo noi.",
       ctaLabel: 'Richiedi supporto →',
-      ctaHref: '/prodotto-non-trovato',
+      ctaHref: '/on-demand',
     },
     legalNote: '© TLB ITALY Srl · P.IVA IT17245551001',
   },

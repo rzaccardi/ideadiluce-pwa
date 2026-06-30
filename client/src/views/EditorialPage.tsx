@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { useSnapshot } from 'valtio/react'
 import { api } from '@/api/endpoints'
-import { fetchSitePage, siteStore } from '@/features/site'
+import { fetchSitePage, hydrateSitePageContent, siteStore } from '@/features/site'
 import type { BrandListItemDTO, EditorialPageContent, SitePageKey } from '@/types/site-content'
 import { isEditorialPage } from '@/lib/site-page-keys'
 import { EditorialPageView } from '@/components/site/editorial/EditorialPageView'
@@ -11,11 +11,9 @@ import { useLocale } from '@/context/locale-context'
 import { ErrorState } from '@/components/ErrorState'
 import { ToastOnError } from '@/components/ToastFeedback'
 import { PageFlexBody, PageFlexShell } from '@/components/layout/PageFlexShell'
-import { EditorialPageSkeleton } from '@/components/Skeleton'
-import { PageHeader } from '@/components/PageHeader'
+import { EditorialHubSkeleton, GuideHubPageSkeleton } from '@/components/Skeleton'
 import { SectionContainer } from '@/components/site/primitives'
 import { PageLoadTransition } from '@/components/motion'
-import { getPageHeaderFallbackTitle } from '@/lib/page-header-fallbacks'
 
 type EditorialKey = Extract<SitePageKey, 'attacco' | 'ambienti' | 'brand' | 'guide'>
 
@@ -60,17 +58,29 @@ function mergeBrandContent(
   return { ...base, items: cmsItems }
 }
 
-export function EditorialPage({ pageKey }: { pageKey: EditorialKey }) {
+export function EditorialPage({
+  pageKey,
+  initialContent = null,
+}: {
+  pageKey: EditorialKey
+  initialContent?: EditorialPageContent | null
+}) {
   const { locale } = useLocale()
   const snap = useSnapshot(siteStore)
-  const raw = snap.pages[pageKey]
+  const raw = snap.pages[pageKey] ?? initialContent
   const [hubBrands, setHubBrands] = useState<BrandListItemDTO[]>([])
   const [indexedGuides, setIndexedGuides] = useState<
     Array<{ title: string; href: string; meta: string; category: string }>
   >([])
 
+  useLayoutEffect(() => {
+    if (initialContent && isEditorialPage(initialContent)) {
+      hydrateSitePageContent(pageKey, locale, initialContent)
+    }
+  }, [initialContent, pageKey, locale])
+
   useEffect(() => {
-    void fetchSitePage(pageKey, locale)
+    void fetchSitePage(pageKey, locale, { skipIfFresh: true })
   }, [pageKey, locale])
 
   useEffect(() => {
@@ -110,17 +120,18 @@ export function EditorialPage({ pageKey }: { pageKey: EditorialKey }) {
     return <ErrorState message="Contenuto pagina non valido" className="mx-auto max-w-lg p-8" />
   }
 
-  const fallbackTitle = getPageHeaderFallbackTitle(pageKey)
-
   return (
     <PageFlexShell tone="paper">
       <PageFlexBody tone="paper">
         <SectionContainer className="py-8 sm:py-10">
           <PageLoadTransition
             isLoading={!viewContent}
-            skeleton={<EditorialPageSkeleton />}
-            loadingHeader={
-              fallbackTitle ? <PageHeader title={fallbackTitle} /> : null
+            skeleton={
+              pageKey === 'guide' ? (
+                <GuideHubPageSkeleton />
+              ) : (
+                <EditorialHubSkeleton pageKey={pageKey} />
+              )
             }
           >
             {viewContent ? (

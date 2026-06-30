@@ -27,11 +27,16 @@ export function CatalogActiveFiltersBar({
   onResetFilters,
 }: Props) {
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-2 sm:gap-2.5">
+    <div
+      className={cn(
+        'mb-4 flex flex-wrap items-center gap-2 sm:gap-2.5',
+        activeFilters.length === 0 && 'hidden lg:flex',
+      )}
+    >
       <button
         type="button"
         onClick={onToggleFilters}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-idl-tech-border bg-idl-tech-panel px-3 py-2 text-[13px] font-bold text-idl-ink transition hover:border-idl-ink"
+        className="hidden items-center gap-1.5 rounded-lg border border-idl-tech-border bg-idl-tech-panel px-3 py-2 text-[13px] font-bold text-idl-ink transition hover:border-idl-ink lg:inline-flex"
       >
         <span aria-hidden>{filtersOpen ? '⟨' : '☰'}</span>
         {filtersOpen ? 'Nascondi filtri' : 'Mostra filtri'}
@@ -67,7 +72,7 @@ export function CatalogActiveFiltersBar({
         </>
       ) : null}
 
-      <div className="relative ml-auto w-full sm:w-auto">
+      <div className="relative ml-auto hidden w-auto lg:block">
         <label className="sr-only" htmlFor="catalog-sort">
           Ordina risultati
         </label>
@@ -76,7 +81,7 @@ export function CatalogActiveFiltersBar({
           value={sort}
           onChange={(e) => onSelectSort(e.target.value as CatalogSort)}
           className={cn(
-            'w-full rounded-lg border border-idl-tech-border bg-idl-tech-panel px-3.5 py-2 text-[13.5px] font-semibold text-idl-ink sm:w-auto',
+            'rounded-lg border border-idl-tech-border bg-idl-tech-panel px-3.5 py-2 text-[13.5px] font-semibold text-idl-ink',
           )}
         >
           {SORT_OPTIONS.map((option) => (

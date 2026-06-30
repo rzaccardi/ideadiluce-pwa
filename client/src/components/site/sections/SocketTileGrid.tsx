@@ -50,7 +50,7 @@ export function SocketTileGrid({ items, lp, variant = 'home', stagger = 0.04 }: 
           <HoverLift>
             <Link
               to={lp(tile.href)}
-              className="block rounded-lg border border-idl-tech-border px-2 py-4 text-center transition hover:border-idl-amber hover:bg-idl-tech-panel"
+              className="block rounded-lg border border-idl-tech-border bg-white px-2 py-4 text-center transition hover:border-idl-amber hover:bg-idl-cream dark:bg-idl-tech-panel dark:hover:bg-idl-tech-panel"
             >
               <div className="font-mono text-lg font-medium">{tile.code}</div>
               {tile.hint ? <div className="mt-1.5 text-[11px] text-idl-muted">{tile.hint}</div> : null}

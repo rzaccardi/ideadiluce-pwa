@@ -17,6 +17,52 @@ function sessionExpiry(): Date {
 
 export { sessionExpiry }
 
+const AUTH_MERGE_TRANSACTION = { timeout: 15_000 } as const
+
+function cartLineKey(productRef: string, variantRef: string | null) {
+  return `${productRef}\0${variantRef ?? ''}`
+}
+
+type MergedCartLine = {
+  productRef: string
+  variantRef: string | null
+  quantity: number
+  clientUnitPriceEstimate: number | null
+  metadataJson: unknown
+}
+
+function absorbCartLines(
+  merged: Map<string, MergedCartLine>,
+  lines: Array<{
+    productRef: string
+    variantRef: string | null
+    quantity: number
+    clientUnitPriceEstimate: number | null
+    metadataJson: unknown
+  }>,
+) {
+  for (const line of lines) {
+    const key = cartLineKey(line.productRef, line.variantRef)
+    const existing = merged.get(key)
+    if (existing) {
+      existing.quantity += line.quantity
+      if (line.clientUnitPriceEstimate != null) {
+        existing.clientUnitPriceEstimate = line.clientUnitPriceEstimate
+      }
+      if (line.metadataJson != null) {
+        existing.metadataJson = line.metadataJson
+      }
+      continue
+    }
+    merged.set(key, {
+      productRef: line.productRef,
+      variantRef: line.variantRef,
+      quantity: line.quantity,
+      clientUnitPriceEstimate: line.clientUnitPriceEstimate,
+      metadataJson: line.metadataJson,
+    })
+  }
+}
 
 async function mergeCartsForUser(sessionId: string, userId: string) {
   await prisma.cart.updateMany({
@@ -36,44 +82,37 @@ async function mergeCartsForUser(sessionId: string, userId: string) {
   if (unique.length <= 1) return
 
   const [primary, ...rest] = unique
-  await prisma.$transaction(async (tx) => {
-    for (const other of rest) {
-      for (const line of other.items) {
-        const existing = await tx.cartItem.findFirst({
-          where: {
+  const merged = new Map<string, MergedCartLine>()
+  absorbCartLines(merged, primary.items)
+  for (const other of rest) {
+    absorbCartLines(merged, other.items)
+  }
+
+  const restIds = rest.map((cart) => cart.id)
+  await prisma.$transaction(
+    async (tx) => {
+      if (restIds.length > 0) {
+        await tx.cart.deleteMany({ where: { id: { in: restIds } } })
+      }
+      await tx.cartItem.deleteMany({ where: { cartId: primary.id } })
+      const lines = [...merged.values()]
+      if (lines.length > 0) {
+        await tx.cartItem.createMany({
+          data: lines.map((line) => ({
             cartId: primary.id,
             productRef: line.productRef,
-            variantRef: line.variantRef ?? null,
-          },
+            variantRef: line.variantRef,
+            quantity: line.quantity,
+            clientUnitPriceEstimate: line.clientUnitPriceEstimate,
+            metadataJson: line.metadataJson ?? undefined,
+          })),
         })
-        if (existing) {
-          await tx.cartItem.update({
-            where: { id: existing.id },
-            data: { quantity: existing.quantity + line.quantity },
-          })
-        } else {
-          await tx.cartItem.create({
-            data: {
-              cartId: primary.id,
-              productRef: line.productRef,
-              variantRef: line.variantRef,
-              quantity: line.quantity,
-              clientUnitPriceEstimate: line.clientUnitPriceEstimate,
-              metadataJson: line.metadataJson ?? undefined,
-            },
-          })
-        }
       }
-      await tx.cart.delete({ where: { id: other.id } })
-    }
-    const merged = await tx.cart.findUnique({
-      where: { id: primary.id },
-      include: { items: true },
-    })
-    if (merged) {
-      await bumpCartReservation(primary.id, merged.items.length > 0)
-    }
-  })
+    },
+    AUTH_MERGE_TRANSACTION,
+  )
+
+  await bumpCartReservation(primary.id, merged.size > 0)
 }
 
 /** Al logout: il carrello dell'utente resta sulla nuova sessione guest (stesso id, senza userId). */
@@ -101,20 +140,30 @@ async function mergeWishlistForUser(sessionId: string, userId: string) {
   const sessionItems = await prisma.wishlistItem.findMany({ where: { sessionId } })
   if (sessionItems.length === 0) return
 
-  await prisma.$transaction(async (tx) => {
-    for (const item of sessionItems) {
-      const variantRef = item.variantRef ?? null
-      const existing = await tx.wishlistItem.findFirst({
-        where: { userId, productRef: item.productRef, variantRef },
-      })
-      if (!existing) {
-        await tx.wishlistItem.create({
-          data: { userId, productRef: item.productRef, variantRef },
+  const userItems = await prisma.wishlistItem.findMany({
+    where: { userId },
+    select: { productRef: true, variantRef: true },
+  })
+  const userKeys = new Set(userItems.map((item) => cartLineKey(item.productRef, item.variantRef)))
+  const toCreate = sessionItems.filter(
+    (item) => !userKeys.has(cartLineKey(item.productRef, item.variantRef)),
+  )
+
+  await prisma.$transaction(
+    async (tx) => {
+      if (toCreate.length > 0) {
+        await tx.wishlistItem.createMany({
+          data: toCreate.map((item) => ({
+            userId,
+            productRef: item.productRef,
+            variantRef: item.variantRef,
+          })),
         })
       }
-      await tx.wishlistItem.delete({ where: { id: item.id } })
-    }
-  })
+      await tx.wishlistItem.deleteMany({ where: { sessionId } })
+    },
+    AUTH_MERGE_TRANSACTION,
+  )
 }
 
 export const authService = {

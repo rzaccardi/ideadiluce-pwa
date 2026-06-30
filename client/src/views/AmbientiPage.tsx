@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
 import { useSnapshot } from 'valtio/react'
-import { fetchSitePage, siteStore } from '@/features/site'
+import { fetchSitePage, hydrateSitePageContent, siteStore } from '@/features/site'
 import { isEditorialPage } from '@/lib/site-page-keys'
 import { AmbientiView } from '@/components/site/ambienti'
 import { useLocale } from '@/context/locale-context'
@@ -10,14 +10,24 @@ import { ErrorState } from '@/components/ErrorState'
 import { ToastOnError } from '@/components/ToastFeedback'
 import type { EditorialPageContent } from '@/types/site-content'
 
-export function AmbientiPage() {
+type Props = {
+  initialContent?: EditorialPageContent | null
+}
+
+export function AmbientiPage({ initialContent = null }: Props) {
   const { locale } = useLocale()
   const snap = useSnapshot(siteStore)
-  const raw = snap.pages.ambienti
+  const raw = snap.pages.ambienti ?? initialContent
   const loading = !raw && Boolean(snap.loading.ambienti)
 
+  useLayoutEffect(() => {
+    if (initialContent && isEditorialPage(initialContent)) {
+      hydrateSitePageContent('ambienti', locale, initialContent)
+    }
+  }, [initialContent, locale])
+
   useEffect(() => {
-    void fetchSitePage('ambienti', locale)
+    void fetchSitePage('ambienti', locale, { skipIfFresh: true })
   }, [locale])
 
   if (snap.error && !raw) {

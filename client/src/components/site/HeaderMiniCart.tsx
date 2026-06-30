@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation } from '@/lib/navigation'
 import { useSnapshot } from 'valtio/react'
 import { cartStore } from '@/features/cart'
+import { isCartFlowPath } from '@/features/cart/cart.utils'
 import { cartFeedbackStore } from '@/features/cart/cart-feedback.store'
 import { CartLineStockAlert, getCartStockIssue } from '@/components/cart/CartStockAlert'
 import { CartFlyIn } from '@/components/cart/CartFlyIn'
@@ -21,6 +22,7 @@ import { AnimatePresence, motion, useReducedMotion } from '@/lib/motion-client'
 import { transitionBase } from '@/lib/motion/presets'
 import { cn } from '@/utils/cn'
 import { ui } from '@/lib/ui-classes'
+import { layers } from '@/lib/layering'
 import type { CartDTO, CartStockInsufficientDTO } from '@/types/dto'
 
 function CartIcon({ className }: { className?: string }) {
@@ -145,7 +147,6 @@ function MiniCartPanel({
                   <Link
                     to={lp(`/prodotto/${item.productSlug ?? item.productRef}`)}
                     className="shrink-0"
-                    onClick={onClose}
                   >
                     <CartLineThumb imageUrl={item.imageUrl} name={item.productName} size="sm" />
                   </Link>
@@ -153,7 +154,6 @@ function MiniCartPanel({
                     <Link
                       to={lp(`/prodotto/${item.productSlug ?? item.productRef}`)}
                       className="block truncate font-medium text-idl-graphite hover:underline"
-                      onClick={onClose}
                     >
                       {item.productName ?? item.productSlug ?? item.productRef}
                     </Link>
@@ -178,14 +178,14 @@ function MiniCartPanel({
           ) : null}
         </ul>
       ) : (
-        <EmptyCartPrompt compact className="mt-4" onNavigate={onClose} />
+        <EmptyCartPrompt compact className="mt-4" />
       )}
 
       {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
 
       {cart && cart.items.length > 0 ? (
         <div className={cn('mt-4', isSheet && 'shrink-0 border-t border-idl-border pt-4')}>
-          <Link to={lp('/cart')} onClick={onClose}>
+          <Link to={lp('/cart')}>
             <Button className="w-full">{t('cart.floating.openCart')}</Button>
           </Link>
         </div>
@@ -204,16 +204,21 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
   const { cart, error, isLoading, stockInsufficient } = useSnapshot(cartStore)
   const { cartPulse, miniCartOpenRequest } = useSnapshot(cartFeedbackStore)
   const { pathname } = useLocation()
+  const isCartFlow = isCartFlowPath(pathname)
   const [open, setOpen] = useState(false)
   const [isBouncing, setIsBouncing] = useState(false)
   const [badgePop, setBadgePop] = useState(false)
 
-  useCartSync()
+  useCartSync(isCartFlow || open)
 
   const setCartOpen = (value: boolean) => {
     setOpen(value)
     onOpenChange?.(value)
   }
+
+  useEffect(() => {
+    setCartOpen(false)
+  }, [pathname])
 
   useEffect(() => {
     if (cartPulse === 0) return
@@ -259,7 +264,6 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
 
   const itemCount = cart?.itemCount ?? 0
   const total = cart && cart.items.length > 0 ? cartTotalCents(cart) : null
-  const isCartFlow = pathname === '/cart' || pathname.startsWith('/checkout')
 
   if (isCartFlow) return null
 
@@ -284,20 +288,20 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
         aria-label={t('cart.floating.openMiniCart')}
         className={cn(
           ui.interactive,
-          cn(ui.headerAction, ui.headerActionBtn, isBouncing && 'cart-bounce'),
+          cn(
+            ui.headerAction,
+            ui.headerActionBtn,
+            'relative lg:gap-1.5 lg:px-3 lg:py-1.5 lg:text-[13px]',
+            isBouncing && 'cart-bounce',
+          ),
         )}
       >
-        <CartIcon className="size-[17px] shrink-0" />
+        <CartIcon className="size-[17px] shrink-0 lg:size-4" />
         <span className={ui.headerActionText}>{t('nav.cart')}</span>
-        {isLoading && !cart ? (
-          <span
-            aria-hidden
-            className="inline-flex size-[18px] animate-pulse rounded-full bg-idl-border/80"
-          />
-        ) : itemCount > 0 ? (
+        {itemCount > 0 ? (
           <span
             className={cn(
-              'inline-flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-idl-amber px-1.5 text-[11px] font-bold text-white',
+              'absolute bottom-0 right-0 inline-flex min-h-[18px] min-w-[18px] translate-x-1/4 translate-y-1/4 items-center justify-center rounded-full bg-idl-amber px-1.5 text-[11px] font-bold text-white lg:static lg:translate-x-0 lg:translate-y-0',
               badgePop && 'cart-badge-pop',
             )}
           >
@@ -314,7 +318,7 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
               key="mini-cart-backdrop"
               type="button"
               aria-label={t('cart.floating.close')}
-              className="fixed inset-0 z-[60] bg-idl-backdrop lg:hidden"
+              className={cn('fixed inset-0 bg-idl-backdrop lg:hidden', layers.sheetBackdrop)}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -327,7 +331,8 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
               aria-modal="true"
               aria-label={t('cart.title')}
               className={cn(
-                'fixed inset-x-0 bottom-0 z-[60] flex max-h-[min(96dvh,100%)] flex-col rounded-t-[20px] border border-idl-border border-t bg-idl-paper p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl shadow-zinc-950/20 lg:hidden',
+                'fixed inset-x-0 bottom-0 flex max-h-[min(96dvh,100%)] flex-col rounded-t-[20px] border border-idl-border border-t bg-idl-paper p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl shadow-zinc-950/20 lg:hidden',
+                layers.sheet,
                 SITE_PAGE_X_CLASS,
               )}
               initial={reduceMotion ? false : { y: '100%' }}
@@ -343,7 +348,10 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
               key="mini-cart-dropdown"
               role="dialog"
               aria-label={t('cart.title')}
-              className="absolute right-0 top-full z-50 mt-2 hidden w-[min(calc(100vw-2.5rem),380px)] rounded-2xl border border-idl-border bg-idl-tech-panel p-4 shadow-2xl shadow-zinc-950/20 lg:block"
+              className={cn(
+                'absolute right-0 top-full mt-2 hidden w-[min(calc(100vw-2.5rem),380px)] rounded-2xl border border-idl-border bg-idl-tech-panel p-4 shadow-2xl shadow-zinc-950/20 lg:block',
+                layers.headerDropdown,
+              )}
             >
               <MiniCartPanel {...panelProps} layout="dropdown" />
             </section>

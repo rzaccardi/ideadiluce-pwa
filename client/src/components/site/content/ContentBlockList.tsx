@@ -29,10 +29,22 @@ function BlockRenderer({
     case 'prose':
       return (
         <div className="max-w-3xl space-y-4 text-[15px] leading-relaxed text-idl-ink-muted">
+          {block.title ? <h2 className="text-lg font-bold text-idl-ink">{block.title}</h2> : null}
           {block.paragraphs.map((p) => (
             <p key={p.slice(0, 40)}>{p}</p>
           ))}
         </div>
+      )
+    case 'stats':
+      return (
+        <Stagger className="grid grid-cols-2 gap-6 text-center lg:grid-cols-4" stagger={0.05}>
+          {block.items.map((item) => (
+            <StaggerItem key={item.label}>
+              <div className="font-serif text-3xl font-medium text-idl-brass">{item.value}</div>
+              <p className="mt-1 text-sm text-idl-muted">{item.label}</p>
+            </StaggerItem>
+          ))}
+        </Stagger>
       )
     case 'features':
       return (

@@ -20,18 +20,17 @@ export type BootstrapRoute =
   | 'ambienti'
   | 'attacco'
   | 'guide'
+  | 'guide-article'
   | 'category-landing'
   | 'content'
 
 const CONTENT_PATHS = new Set([
   '/chi-siamo',
   '/contatti',
-  '/showroom',
   '/spedizioni',
   '/pagamenti',
   '/garanzia',
   '/privacy-policy',
-  '/cookie',
   '/tos',
   '/on-demand',
   '/acquista-ambiente',
@@ -64,7 +63,8 @@ export function resolveBootstrapRoute(pathname: string): BootstrapRoute {
     return 'ambienti'
   }
   if (normalized === '/attacco' || normalized.startsWith('/attacco/')) return 'attacco'
-  if (normalized === '/guide' || normalized.startsWith('/guide/') || normalized === '/blog') return 'guide'
+  if (/^\/guide\/[^/]+/.test(normalized)) return 'guide-article'
+  if (normalized === '/guide' || normalized === '/blog') return 'guide'
   if (
     normalized.startsWith('/categoria-prodotto/') ||
     normalized === '/illuminazione-arredo' ||

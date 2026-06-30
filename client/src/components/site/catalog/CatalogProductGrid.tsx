@@ -7,6 +7,7 @@ import { designCardBrandLabel } from '@/lib/catalog-filters'
 import { resolveProductCardCatalogKind } from '@/lib/product-catalog-kind'
 import { DesignCatalogProductCard, DesignCatalogProductGrid } from '../category/DesignCatalogProductGrid'
 import { TechnicalCatalogProductCard, TechnicalCatalogProductGrid } from '../category/TechnicalCatalogProductGrid'
+import { CatalogProductCardSkeleton } from './CatalogProductCardSkeleton'
 import type { LocalePathFn } from '../sections/types'
 import { cn } from '@/utils/cn'
 
@@ -16,6 +17,7 @@ type Props = {
   lp: LocalePathFn
   worldTab: CatalogWorldTab
   filtersOpen: boolean
+  pendingSkeletonCount?: number
 }
 
 const MixedCatalogCard = memo(function MixedCatalogCard({
@@ -42,13 +44,32 @@ const MixedCatalogCard = memo(function MixedCatalogCard({
   )
 })
 
-export function CatalogProductGrid({ products, categories, lp, worldTab, filtersOpen }: Props) {
+export function CatalogProductGrid({
+  products,
+  categories,
+  lp,
+  worldTab,
+  filtersOpen,
+  pendingSkeletonCount = 0,
+}: Props) {
   if (worldTab === 'design') {
-    return <DesignCatalogProductGrid products={products} lp={lp} />
+    return (
+      <DesignCatalogProductGrid
+        products={products}
+        lp={lp}
+        pendingSkeletonCount={pendingSkeletonCount}
+      />
+    )
   }
 
   if (worldTab === 'technical') {
-    return <TechnicalCatalogProductGrid products={products} lp={lp} />
+    return (
+      <TechnicalCatalogProductGrid
+        products={products}
+        lp={lp}
+        pendingSkeletonCount={pendingSkeletonCount}
+      />
+    )
   }
 
   const columnClass = filtersOpen
@@ -60,6 +81,11 @@ export function CatalogProductGrid({ products, categories, lp, worldTab, filters
       {products.map((product) => (
         <div key={product.slug} className="h-full">
           <MixedCatalogCard product={product} categories={categories} lp={lp} />
+        </div>
+      ))}
+      {Array.from({ length: pendingSkeletonCount }).map((_, index) => (
+        <div key={`catalog-pending-${index}`} className="h-full" aria-hidden>
+          <CatalogProductCardSkeleton variant="catalog" />
         </div>
       ))}
     </div>

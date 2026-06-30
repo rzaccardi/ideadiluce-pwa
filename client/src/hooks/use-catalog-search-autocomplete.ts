@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from '@/lib/navigation'
 import { useSnapshot } from 'valtio/react'
 import { useLocale } from '@/context/locale-context'
@@ -97,7 +97,7 @@ export function useCatalogSearchAutocomplete({
   const [productTotal, setProductTotal] = useState<number | null>(null)
   const lastResultCountRef = useRef(0)
 
-  const { strings: hintStrings } = normalizeCatalogSearchHints(hints)
+  const hintStrings = useMemo(() => normalizeCatalogSearchHints(hints).strings, [hints])
   const effectiveBrands = brands.length ? brands : cat.brands
   const effectiveCategories = categories.length ? categories : cat.categories
   const flatSuggestions = flattenCatalogSearchGroups(groups)

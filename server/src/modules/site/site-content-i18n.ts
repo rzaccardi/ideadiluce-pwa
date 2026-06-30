@@ -5,6 +5,7 @@ const SKIP_TRANSLATE_KEYS = new Set([
   'ctaHref',
   'linkHref',
   'imageUrl',
+  'videoUrl',
   'phoneHref',
   'whatsapp',
   'kind',

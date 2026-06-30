@@ -6,6 +6,8 @@ import { useLocalePath } from '@/hooks/use-locale-path'
 import type { DcActiveNavId } from '@/lib/dc-static-routes'
 import type { SiteShellContent } from '@/types/site-content'
 import { FALLBACK_SITE_SHELL } from '@/lib/site-shell-fallback'
+import { layers } from '@/lib/layering'
+import { cn } from '@/utils/cn'
 import { BrandWordmark, SectionContainer } from './primitives'
 import { SiteHeader } from './SiteHeader'
 import { SiteFooter } from './SiteFooter'
@@ -23,10 +25,12 @@ export function SiteShell({ shell, activeNavId = null, children }: Props) {
 
   return (
     <LayoutGroup id="site-shell">
-      <div className="site-shell flex min-h-screen min-w-0 flex-col overflow-x-clip bg-idl-paper font-sans text-idl-graphite">
-        <UtilityBar bar={resolvedShell.utilityBar} />
-        <SiteHeader nav={resolvedShell.nav} activeNavId={activeNavId} />
-        <main className="site-page-canvas relative flex min-h-0 flex-1 flex-col">{children}</main>
+      <div className="site-shell flex min-h-screen min-w-0 flex-col bg-idl-paper font-sans text-idl-graphite">
+        <div className={cn('site-chrome sticky top-0 isolate overflow-visible', layers.headerBar)}>
+          <UtilityBar bar={resolvedShell.utilityBar} />
+          <SiteHeader nav={resolvedShell.nav} footer={resolvedShell.footer} activeNavId={activeNavId} />
+        </div>
+        <main className="site-page-canvas relative flex min-h-0 flex-1 flex-col overflow-x-clip">{children}</main>
         <TrustBar items={resolvedShell.trustBar} />
         <SiteFooter footer={resolvedShell.footer} />
       </div>

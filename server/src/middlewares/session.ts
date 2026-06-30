@@ -5,6 +5,47 @@ import { hashSessionToken, generateSessionToken } from '../lib/token-hash.js'
 import { setSessionCookie } from '../lib/cookies.js'
 import { AppError } from '../types/errors.js'
 
+const SESSION_LOOKUP_TTL_MS = 5_000
+type CachedSession = {
+  record: NonNullable<Request['sessionRecord']>
+  raw: string
+  until: number
+}
+const sessionLookupCache = new Map<string, CachedSession>()
+
+function readSessionCache(tokenHash: string): CachedSession | null {
+  const hit = sessionLookupCache.get(tokenHash)
+  if (!hit || hit.until <= Date.now()) {
+    if (hit) sessionLookupCache.delete(tokenHash)
+    return null
+  }
+  return hit
+}
+
+function writeSessionCache(tokenHash: string, record: NonNullable<Request['sessionRecord']>, raw: string) {
+  sessionLookupCache.set(tokenHash, {
+    record,
+    raw,
+    until: Date.now() + SESSION_LOOKUP_TTL_MS,
+  })
+}
+
+async function loadValidSession(raw: string) {
+  const tokenHash = hashSessionToken(raw)
+  const cached = readSessionCache(tokenHash)
+  if (cached) return cached
+
+  const row = await prisma.session.findUnique({
+    where: { tokenHash },
+    include: { user: true },
+  })
+  if (!row || row.expiresAt <= new Date()) return null
+
+  const record = { ...row, user: row.user }
+  writeSessionCache(tokenHash, record, raw)
+  return { record, raw }
+}
+
 function sessionExpiry(): Date {
   return new Date(Date.now() + env.SESSION_DAYS * 24 * 60 * 60 * 1000)
 }
@@ -21,13 +62,10 @@ export function loadSessionIfPresent(req: Request, _res: Response, next: NextFun
       next()
       return
     }
-    const row = await prisma.session.findUnique({
-      where: { tokenHash: hashSessionToken(raw) },
-      include: { user: true },
-    })
-    if (row && row.expiresAt > new Date()) {
-      req.sessionRecord = { ...row, user: row.user }
-      req.sessionTokenRaw = raw
+    const loaded = await loadValidSession(raw)
+    if (loaded) {
+      req.sessionRecord = loaded.record
+      req.sessionTokenRaw = loaded.raw
     }
     next()
   })().catch(next)
@@ -40,14 +78,10 @@ export function loadOrCreateSession(req: Request, res: Response, next: NextFunct
     const raw = req.cookies?.[cookieName] as string | undefined
 
     if (raw) {
-      const tokenHash = hashSessionToken(raw)
-      const row = await prisma.session.findUnique({
-        where: { tokenHash },
-        include: { user: true },
-      })
-      if (row && row.expiresAt > new Date()) {
-        req.sessionRecord = { ...row, user: row.user }
-        req.sessionTokenRaw = raw
+      const loaded = await loadValidSession(raw)
+      if (loaded) {
+        req.sessionRecord = loaded.record
+        req.sessionTokenRaw = loaded.raw
         next()
         return
       }
@@ -62,8 +96,10 @@ export function loadOrCreateSession(req: Request, res: Response, next: NextFunct
       include: { user: true },
     })
     setSessionCookie(res, token)
-    req.sessionRecord = { ...created, user: null }
+    const record = { ...created, user: null }
+    req.sessionRecord = record
     req.sessionTokenRaw = token
+    writeSessionCache(hashSessionToken(token), record, token)
     next()
   })().catch(next)
 }

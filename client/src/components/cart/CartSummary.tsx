@@ -20,6 +20,7 @@ import { Button } from '@/components/Button'
 import { ProfessionalCartBanner } from '@/components/cart/PricelistBadge'
 import { useI18n } from '@/hooks/use-i18n'
 import { preloadStripe } from '@/lib/stripe-loader'
+import { CART_CARD_SURFACE } from '@/components/cart/cart-surfaces'
 import { cn } from '@/utils/cn'
 
 type Props = {
@@ -78,7 +79,7 @@ export function CartSummary({
 
   return (
     <aside className={cn('flex flex-col gap-4', className)}>
-      <div className="rounded-[14px] border border-idl-tech-border bg-idl-tech-panel p-[22px]">
+      <div className={cn(CART_CARD_SURFACE, 'p-[22px]')}>
         <h2 className="mb-4 text-base font-extrabold tracking-tight text-idl-graphite">
           {t('cart.summary.title')}
         </h2>

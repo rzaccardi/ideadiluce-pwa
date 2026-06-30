@@ -8,6 +8,7 @@ import { Button } from '@/components/Button'
 import { ProductGrid } from '@/components/product/ProductGrid'
 import { ProductGridSkeleton } from '@/components/Skeleton'
 import { useI18n } from '@/hooks/use-i18n'
+import { CART_CARD_SURFACE } from '@/components/cart/cart-surfaces'
 import { cn } from '@/utils/cn'
 import { ui } from '@/lib/ui-classes'
 
@@ -104,7 +105,7 @@ export function EmptyCartPrompt({ className, compact = false, showSuggestions = 
   if (showSuggestions) {
     return (
       <div className={className}>
-        <div className={cn(ui.panel, 'border-dashed px-6 py-10 text-center')}>
+        <div className={cn(CART_CARD_SURFACE, 'border-dashed px-6 py-10 text-center')}>
           {body}
         </div>
         <section className="mt-10">
@@ -128,7 +129,7 @@ export function EmptyCartPrompt({ className, compact = false, showSuggestions = 
         'text-center',
         compact
           ? 'rounded-lg border border-idl-border/60 bg-idl-tech-panel px-4 py-5'
-          : 'rounded-xl border border-dashed border-idl-border bg-idl-tech-panel px-6 py-12',
+          : cn(CART_CARD_SURFACE, 'border-dashed px-6 py-12'),
         className,
       )}
     >

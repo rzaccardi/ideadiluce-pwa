@@ -29,6 +29,7 @@ import {
   CATEGORY_LANDING_CATALOG_CONFIG,
 } from '@/lib/category-landing-filters'
 import type { CatalogPriceBucket } from '@/lib/catalog-filters'
+import { catalogPendingLoadCount } from '@/lib/catalog-pagination'
 import { DesignCategoryView, TechnicalCategoryView } from '@/components/site/category'
 import type { CategoryLandingKey } from '@/types/category-landing'
 
@@ -80,6 +81,12 @@ export function ProductCategoryLandingPage({ pageKey }: Props) {
   )
 
   const sortLabel = categoryLandingSortLabel(sortParam)
+
+  const pendingSkeletonCount = catalogPendingLoadCount(
+    cat.isLoadingMore,
+    cat.pagination,
+    cat.rawProducts.length,
+  )
 
   const loadMore = useCallback(() => {
     void fetchNextProductsPage()
@@ -148,6 +155,7 @@ export function ProductCategoryLandingPage({ pageKey }: Props) {
     totalCount: cat.pagination.total,
     loading: cat.isLoading,
     isLoadingMore: cat.isLoadingMore,
+    pendingSkeletonCount,
     hasMore: cat.pagination.hasNextPage,
     onLoadMore: loadMore,
     selectedFilterValues,

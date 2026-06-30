@@ -269,3 +269,6 @@ static_sites:
       - key: VITE_API_URL
         value: ${api.PUBLIC_URL}
         scope: BUILD_TIME
+      - key: VITE_STOREFRONT_URL
+        value: ${shop.PUBLIC_URL}
+        scope: BUILD_TIME

@@ -1,4 +1,7 @@
 import type { CatalogSort } from '@/features/catalog/catalog.store'
+import { Skeleton } from '@/components/Skeleton'
+import { useTechnicalCatalogSelectionContext } from '@/context/technical-catalog-selection-context'
+import { TechnicalCatalogSelectionToggle } from './TechnicalCatalogSelectionToggle'
 import { cn } from '@/utils/cn'
 
 type ActiveFilter = {
@@ -9,6 +12,7 @@ type ActiveFilter = {
 type Props = {
   shownCount: number
   totalCount?: number
+  loading?: boolean
   activeFilters?: ReadonlyArray<ActiveFilter>
   sortLabel: string
   sortValue: string
@@ -29,6 +33,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSort; label: string }> = [
 export function CategoryResultsToolbar({
   shownCount,
   totalCount,
+  loading = false,
   activeFilters = [],
   sortLabel,
   sortValue,
@@ -39,25 +44,30 @@ export function CategoryResultsToolbar({
   compareEnabled,
 }: Props) {
   const isDesign = variant === 'design'
+  const selection = useTechnicalCatalogSelectionContext()
 
   return (
     <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
       <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-2.5">
-        <span className={cn('text-[13.5px]', isDesign ? 'text-idl-ink-muted' : 'text-idl-muted')}>
-          {totalCount != null ? (
-            <>
-              <span className={cn('font-bold', isDesign ? 'text-idl-ink' : 'font-extrabold text-idl-ink')}>
-                {shownCount}
-              </span>{' '}
-              prodotti su {totalCount}
-            </>
-          ) : (
-            <>
-              <span className={cn('font-extrabold', isDesign ? 'text-idl-ink' : 'text-idl-ink')}>{shownCount}</span>{' '}
-              prodotti
-            </>
-          )}
-        </span>
+        {loading && shownCount === 0 ? (
+          <Skeleton className="h-[13.5px] w-36 rounded" aria-hidden />
+        ) : (
+          <span className={cn('text-[13.5px]', isDesign ? 'text-idl-ink-muted' : 'text-idl-muted')}>
+            {totalCount != null ? (
+              <>
+                <span className={cn('font-bold', isDesign ? 'text-idl-ink' : 'font-extrabold text-idl-ink')}>
+                  {shownCount}
+                </span>{' '}
+                prodotti su {totalCount}
+              </>
+            ) : (
+              <>
+                <span className={cn('font-extrabold', isDesign ? 'text-idl-ink' : 'text-idl-ink')}>{shownCount}</span>{' '}
+                prodotti
+              </>
+            )}
+          </span>
+        )}
         {activeFilters.map((filter) => (
           <button
             key={filter.key}
@@ -75,13 +85,11 @@ export function CategoryResultsToolbar({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-start">
-        {!isDesign && compareEnabled ? (
-          <span className="hidden items-center gap-1.5 text-[13px] text-idl-muted sm:inline-flex">
-            <span className="relative inline-block h-[18px] w-[34px] rounded-full bg-idl-amber">
-              <span className="absolute top-0.5 right-0.5 size-3.5 rounded-full bg-idl-tech-panel" />
-            </span>
-            Confronta
-          </span>
+        {!isDesign && compareEnabled && selection ? (
+          <TechnicalCatalogSelectionToggle
+            enabled={selection.selectionEnabled}
+            onChange={selection.setSelectionMode}
+          />
         ) : null}
         <div className="flex items-center gap-2">
           <span className={cn('text-[13.5px]', isDesign ? 'text-idl-ink-muted' : 'text-idl-muted')}>{sortLabel}</span>

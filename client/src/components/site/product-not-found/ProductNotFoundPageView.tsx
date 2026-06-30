@@ -3,6 +3,7 @@
 import { Link } from '@/lib/navigation'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
+import { SHOWROOM_MAPS_URL } from '@/lib/company-contact'
 import type { ContentBlock, ContentPageContent } from '@/types/site-content'
 import { PageFlexBody, PageFlexShell } from '@/components/layout/PageFlexShell'
 import { SectionContainer } from '@/components/site/primitives'
@@ -182,12 +183,14 @@ export function ProductNotFoundPageView({ content }: Props) {
                     <p className="mt-1 text-[12.5px] leading-relaxed text-idl-muted">
                       {t('productNotFound.showroomBody')}
                     </p>
-                    <Link
-                      to={lp('/showroom')}
+                    <a
+                      href={SHOWROOM_MAPS_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="mt-2.5 inline-flex text-sm font-bold text-idl-brass hover:text-idl-amber"
                     >
                       {t('productNotFound.showroomCta')} →
-                    </Link>
+                    </a>
                   </div>
                 </div>
               </Reveal>

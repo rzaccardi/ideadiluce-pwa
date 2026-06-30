@@ -18,5 +18,5 @@ export function DcStaticHeader({ activeNavId = null }: Props) {
     return <div className="h-[72px] animate-pulse border-b border-idl-border bg-idl-paper" aria-hidden />
   }
 
-  return <SiteHeader nav={shell.nav} activeNavId={activeNavId} />
+  return <SiteHeader nav={shell.nav} footer={shell.footer} activeNavId={activeNavId} />
 }

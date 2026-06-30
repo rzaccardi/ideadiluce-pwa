@@ -101,6 +101,11 @@
   border-radius: var(--radius-idl-lg);
 }
 
+html[data-theme='light'] .idl-surface-card,
+html[data-theme='light'] .idl-surface-panel {
+  background: #ffffff;
+}
+
 .idl-surface-card--interactive {
   transition:
     border-color 0.15s ease,
@@ -254,12 +259,15 @@
 
 .idl-btn--block {
   display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   min-height: 3rem;
   border-radius: var(--radius-idl-md);
   padding: 0.875rem 1rem;
   font-size: var(--text-idl-body-lg);
   font-weight: 700;
+  text-align: center;
 }
 
 /* ── Link ── */
@@ -280,6 +288,8 @@
   position: relative;
   display: flex;
   flex: 1;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
   overflow: hidden;
   background: var(--idl-bg-page);

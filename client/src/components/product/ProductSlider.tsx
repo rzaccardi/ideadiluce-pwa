@@ -79,33 +79,35 @@ export function ProductSlider({
   const showNav = products.length > 1
   const isContained = variant === 'contained'
 
+  const navButtons = showNav ? (
+    <div className="flex shrink-0 items-center gap-2">
+      <button
+        type="button"
+        aria-label={t('product.slider.prev')}
+        disabled={!canScrollPrev}
+        onClick={() => scrollBy(-1)}
+        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-idl-border bg-idl-tech-panel text-idl-ink-soft transition hover:border-idl-border-strong hover:bg-idl-cream disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <ChevronIcon direction="left" />
+      </button>
+      <button
+        type="button"
+        aria-label={t('product.slider.next')}
+        disabled={!canScrollNext}
+        onClick={() => scrollBy(1)}
+        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-idl-border bg-idl-tech-panel text-idl-ink-soft transition hover:border-idl-border-strong hover:bg-idl-cream disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <ChevronIcon direction="right" />
+      </button>
+    </div>
+  ) : null
+
   return (
     <section className={cn(isContained ? 'min-w-0 overflow-hidden' : 'overflow-visible', className)}>
-      {title ? (
+      {title || showNav ? (
         <div className="mb-4 flex items-center justify-between gap-4">
-          <h2 className="text-lg font-semibold text-idl-graphite">{title}</h2>
-          {showNav ? (
-            <div className="flex shrink-0 items-center gap-2">
-              <button
-                type="button"
-                aria-label={t('product.slider.prev')}
-                disabled={!canScrollPrev}
-                onClick={() => scrollBy(-1)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-idl-border bg-idl-tech-panel text-idl-ink-soft transition hover:border-idl-border-strong hover:bg-idl-cream disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <ChevronIcon direction="left" />
-              </button>
-              <button
-                type="button"
-                aria-label={t('product.slider.next')}
-                disabled={!canScrollNext}
-                onClick={() => scrollBy(1)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-idl-border bg-idl-tech-panel text-idl-ink-soft transition hover:border-idl-border-strong hover:bg-idl-cream disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <ChevronIcon direction="right" />
-              </button>
-            </div>
-          ) : null}
+          {title ? <h2 className="text-lg font-semibold text-idl-graphite">{title}</h2> : <span />}
+          {navButtons}
         </div>
       ) : null}
 

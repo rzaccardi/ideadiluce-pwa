@@ -9,6 +9,7 @@ import { attachSessionRefreshListener } from '@/features/auth'
 import { parseLocaleFromPathname } from '@/lib/locale'
 import { cleanupLegacyServiceWorkers } from '@/lib/legacy-sw-cleanup'
 import { AppToaster } from '@/components/ui/AppToaster'
+import { WhatsAppFloatingButton } from '@/components/site/WhatsAppFloatingButton'
 
 function BootstrapGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -28,7 +29,10 @@ function LocaleProviders({ children }: { children: React.ReactNode }) {
 
   return (
     <LocaleProvider initialLocale={locale}>
-      <BootstrapGate>{children}</BootstrapGate>
+      <BootstrapGate>
+        {children}
+        <WhatsAppFloatingButton />
+      </BootstrapGate>
     </LocaleProvider>
   )
 }

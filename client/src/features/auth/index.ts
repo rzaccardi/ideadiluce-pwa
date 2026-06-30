@@ -3,6 +3,7 @@ export type { LogoutOptions, LogoutResult } from './auth.actions'
 export {
   fetchMe,
   login,
+  checkoutLogin,
   checkoutRegister,
   register,
   logout,

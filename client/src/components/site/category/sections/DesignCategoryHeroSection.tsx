@@ -49,12 +49,12 @@ export function DesignCategoryTypeGridSection({
   return (
     <section className="border-b border-idl-border bg-idl-path-design">
       <SectionContainer className="py-6 sm:py-8">
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6">
+        <div className="-mx-4 flex gap-2.5 overflow-x-auto scroll-smooth snap-x snap-mandatory px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:px-0 sm:pb-0 sm:snap-none lg:grid-cols-6">
           {tiles.map((tile) => (
             <Link
               key={tile.key}
               to={lp(tile.href)}
-              className="flex flex-col items-center gap-1.5 rounded-lg border border-idl-path-design-border bg-idl-tech-panel px-1.5 py-3 transition hover:border-idl-brass sm:gap-2 sm:px-2 sm:py-4"
+              className="flex w-[calc(50%-5px)] shrink-0 snap-start flex-col items-center gap-1.5 rounded-lg border border-idl-path-design-border bg-idl-tech-panel px-1.5 py-3 transition hover:border-idl-brass sm:w-auto sm:shrink sm:gap-2 sm:px-2 sm:py-4"
             >
               <CategoryTypeIcon tile={tile} />
               <div className="text-center">

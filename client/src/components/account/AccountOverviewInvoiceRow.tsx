@@ -15,7 +15,7 @@ export function AccountOverviewInvoiceRow({ invoice }: Props) {
   const { t } = useI18n()
 
   return (
-    <article className="overflow-hidden rounded-xl border border-idl-tech-border">
+    <article className="overflow-hidden rounded-xl border border-idl-tech-border bg-white dark:bg-idl-tech-panel">
       <div className="flex flex-wrap items-center justify-between gap-3 bg-idl-tech-panel px-[18px] py-3.5">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <span className="font-mono text-[12.5px] font-semibold text-idl-graphite">{invoice.name}</span>

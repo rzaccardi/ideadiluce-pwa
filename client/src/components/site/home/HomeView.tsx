@@ -11,12 +11,14 @@ import {
   NewsletterSection,
   TechnicalProductShowcase,
 } from '../sections'
+import type { HomeProductSliderDTO } from '@/types/home-product-sliders'
 import {
   HomeB2bSection,
   HomeBrandsSection,
   HomeGuidesSection,
   HomeHeroSection,
   HomePathsSection,
+  HomeProductSlidersSection,
   HomeRoomsSection,
   HomeSocketsSection,
 } from './sections'
@@ -25,10 +27,17 @@ type Props = {
   content: Readonly<HomePageContent>
   designProducts: ProductCardDTO[]
   technicalProducts: ProductCardDTO[]
+  extraSliders: HomeProductSliderDTO[]
   homeBrands: BrandCard[]
 }
 
-export function HomeView({ content, designProducts, technicalProducts, homeBrands }: Props) {
+export function HomeView({
+  content,
+  designProducts,
+  technicalProducts,
+  extraSliders,
+  homeBrands,
+}: Props) {
   const lp = useLocalePath()
 
   return (
@@ -81,6 +90,10 @@ export function HomeView({ content, designProducts, technicalProducts, homeBrand
           productCount={content.technicalShowcase.productCount}
           lp={lp}
         />
+      </Reveal>
+
+      <Reveal>
+        <HomeProductSlidersSection sliders={extraSliders} lp={lp} />
       </Reveal>
 
       <Reveal>

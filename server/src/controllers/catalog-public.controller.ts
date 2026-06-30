@@ -6,6 +6,8 @@ import { enrichProductDetailWithOdooPricing } from '../modules/catalog/catalog-p
 import { resolvePricingContext } from '../modules/pricing/pricelist.service.js'
 import { siteService } from '../modules/site/site.service.js'
 import { cartQuickReorderService } from '../modules/cart/cart-quick-reorder.service.js'
+import { homeProductSlidersService } from '../modules/catalog/home-product-sliders.service.js'
+import { HOME_PRODUCT_SLIDERS_CACHE_MAX_AGE_SEC } from '../modules/catalog/home-product-sliders.cache.js'
 import type { ProductDetailDTO } from '../types/dto.js'
 import { asyncHandler } from '../utils/async-handler.js'
 import {
@@ -21,6 +23,7 @@ export const catalogPublicController = {
       catalogStorefrontService.listBrands(locale),
       siteService.getPublicPage('catalog', locale ?? 'IT'),
     ])
+    res.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
     res.json(
       ok({
         categories,
@@ -33,6 +36,7 @@ export const catalogPublicController = {
   categories: asyncHandler(async (req: Request, res: Response) => {
     const locale = typeof req.query.locale === 'string' ? req.query.locale : undefined
     const items = await catalogStorefrontService.listCategories(locale)
+    res.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
     res.json(ok({ items }))
   }),
 
@@ -96,6 +100,21 @@ export const catalogPublicController = {
   resolveCodes: asyncHandler(async (req: Request, res: Response) => {
     const body = req.body as { text?: string; lines?: Array<{ code: string; quantity: number }>; locale?: string }
     const data = await cartQuickReorderService.resolveCodes(req, body)
+    res.json(ok(data))
+  }),
+
+  homeProductSliders: asyncHandler(async (req: Request, res: Response) => {
+    const ctx = { correlationId: req.correlationId, req }
+    const pricing = await resolvePricingContext(req)
+    const data = await homeProductSlidersService.list(ctx, {
+      locale: typeof req.query.locale === 'string' ? req.query.locale : undefined,
+      partnerId: pricing.partnerId ?? undefined,
+      pricelistId: pricing.pricelistId ?? undefined,
+    })
+    res.setHeader(
+      'Cache-Control',
+      `public, max-age=${HOME_PRODUCT_SLIDERS_CACHE_MAX_AGE_SEC}, s-maxage=${HOME_PRODUCT_SLIDERS_CACHE_MAX_AGE_SEC}`,
+    )
     res.json(ok(data))
   }),
 }

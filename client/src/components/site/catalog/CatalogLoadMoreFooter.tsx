@@ -7,7 +7,6 @@ type Props = {
   totalProducts: number
   hasMore: boolean
   isLoadingMore: boolean
-  loadMoreRef: React.RefObject<HTMLDivElement | null>
   onLoadMore: () => void
   loadMoreLabel?: string
   variant?: 'catalog' | 'design' | 'technical'
@@ -18,7 +17,6 @@ export function CatalogLoadMoreFooter({
   totalProducts,
   hasMore,
   isLoadingMore,
-  loadMoreRef,
   onLoadMore,
   loadMoreLabel = 'Carica altri prodotti',
   variant = 'catalog',
@@ -53,7 +51,6 @@ export function CatalogLoadMoreFooter({
           Hai visto tutti i prodotti di questa selezione.
         </p>
       ) : null}
-      <div ref={loadMoreRef} className="h-px" aria-hidden />
     </>
   )
 }

@@ -10,11 +10,14 @@ import {
   catalogSearchEventBodySchema,
   searchAnalyticsListQuerySchema,
   searchAnalyticsStatsQuerySchema,
+  searchHintsOdooApplySchema,
+  searchHintsOdooQuerySchema,
 } from './catalog-search-events.validators.js'
 import {
   catalogSearchEventsService,
   searchAnalyticsAdminService,
 } from './catalog-search-events.service.js'
+import { searchHintsAdminService } from './search-hints-admin.service.js'
 
 const ingestLimiter = rateLimit({
   windowMs: 60_000,
@@ -63,5 +66,37 @@ searchAnalyticsAdminRouter.get(
   asyncHandler(async (req, res) => {
     const query = searchAnalyticsListQuerySchema.parse(req.query)
     res.json(ok(await searchAnalyticsAdminService.list(query)))
+  }),
+)
+
+searchAnalyticsAdminRouter.get(
+  '/odoo-hints',
+  validateRequest({ query: searchHintsOdooQuerySchema }),
+  asyncHandler(async (req, res) => {
+    const query = searchHintsOdooQuerySchema.parse(req.query)
+    res.json(
+      ok(
+        await searchHintsAdminService.previewFromOdoo(
+          { correlationId: req.correlationId },
+          query,
+        ),
+      ),
+    )
+  }),
+)
+
+searchAnalyticsAdminRouter.post(
+  '/apply-odoo-hints',
+  validateRequest({ body: searchHintsOdooApplySchema }),
+  asyncHandler(async (req, res) => {
+    const body = searchHintsOdooApplySchema.parse(req.body)
+    res.json(
+      ok(
+        await searchHintsAdminService.applyFromOdoo(
+          { correlationId: req.correlationId },
+          body,
+        ),
+      ),
+    )
   }),
 )

@@ -2,6 +2,7 @@
 
 import { useI18n } from '@/hooks/use-i18n'
 import { useGlobalSearch } from '@/context/global-search-context'
+import { CatalogSearchTrigger } from '@/components/site/catalog/CatalogSearchTrigger'
 import { cn } from '@/utils/cn'
 import { ui } from '@/lib/ui-classes'
 
@@ -14,9 +15,32 @@ function SearchIcon({ className }: { className?: string }) {
   )
 }
 
-export function HeaderCatalogSearch() {
+type Props = {
+  variant?: 'icon' | 'bar'
+  className?: string
+}
+
+export function HeaderCatalogSearch({ variant = 'icon', className }: Props) {
   const { t } = useI18n()
   const { openSearch } = useGlobalSearch()
+
+  if (variant === 'bar') {
+    return (
+      <div className={cn('relative', className)}>
+        <SearchIcon className="pointer-events-none absolute top-1/2 left-3 z-10 size-4 -translate-y-1/2 text-idl-ink-soft" />
+        <CatalogSearchTrigger
+          searchSource="palette"
+          variant="header"
+          placeholder={t('catalog.searchPlaceholder')}
+          ctaLabel={t('catalog.search')}
+          showCta={false}
+          showHints={false}
+          aria-label={t('header.openSearch')}
+          className="w-full"
+        />
+      </div>
+    )
+  }
 
   return (
     <button

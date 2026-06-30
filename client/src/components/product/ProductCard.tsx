@@ -49,10 +49,10 @@ export function ProductCard({ product, className }: Props) {
   useProductCardStores()
   const { localize, locale } = useLocale()
   const { t, tParams } = useI18n()
-  const { cart } = useSnapshot(cartStore)
+  const cartItems = useSnapshot(cartStore).cart?.items
   const productHref = localize(`/prodotto/${product.slug}`)
   const [pendingAction, setPendingAction] = useState<QuickAction | null>(null)
-  const cartQuantity = getProductCartQuantity(cart?.items, product.slug)
+  const cartQuantity = getProductCartQuantity(cartItems, product.slug)
   const inCart = cartQuantity > 0
   const availability = useMemo(
     () =>
@@ -85,7 +85,7 @@ export function ProductCard({ product, className }: Props) {
   return (
     <article
       className={cn(
-        'relative flex h-full flex-col overflow-hidden rounded-lg border border-idl-tech-border bg-idl-tech-panel transition hover:border-idl-border-strong',
+        'relative flex h-full flex-col overflow-hidden rounded-lg border border-idl-tech-border bg-white transition hover:border-idl-border-strong dark:bg-idl-tech-panel',
         className,
       )}
     >

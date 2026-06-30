@@ -3,6 +3,8 @@ import {
   catalogSearchEventBodySchema,
   searchAnalyticsListQuerySchema,
   searchAnalyticsStatsQuerySchema,
+  searchHintsOdooApplySchema,
+  searchHintsOdooQuerySchema,
 } from './catalog-search-events.validators.js'
 
 describe('catalogSearchEventBodySchema', () => {
@@ -33,5 +35,30 @@ describe('searchAnalyticsListQuerySchema', () => {
 describe('searchAnalyticsStatsQuerySchema', () => {
   it('applica default giorni', () => {
     expect(searchAnalyticsStatsQuerySchema.parse({})).toMatchObject({ days: 30 })
+  })
+})
+
+describe('searchHintsOdooQuerySchema', () => {
+  it('applica default lookback e limit', () => {
+    expect(searchHintsOdooQuerySchema.parse({})).toMatchObject({
+      lookbackDays: 90,
+      limit: 8,
+    })
+  })
+
+  it('accetta parametri custom', () => {
+    expect(searchHintsOdooQuerySchema.parse({ lookbackDays: '30', limit: '5' })).toMatchObject({
+      lookbackDays: 30,
+      limit: 5,
+    })
+  })
+})
+
+describe('searchHintsOdooApplySchema', () => {
+  it('applica default nel body', () => {
+    expect(searchHintsOdooApplySchema.parse({})).toMatchObject({
+      lookbackDays: 90,
+      limit: 8,
+    })
   })
 })

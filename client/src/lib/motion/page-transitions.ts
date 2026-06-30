@@ -1,4 +1,4 @@
-import type { Transition, Variants } from 'motion/react'
+import type { Transition, Variants } from 'framer-motion'
 import { stripLocalePrefix } from '@/lib/locale'
 import { isDcStaticPath } from '@/lib/dc-static-routes'
 import { EASE_OUT, transitionBase, transitionFast } from '@/lib/motion/presets'
@@ -26,43 +26,51 @@ function pageVariants(
   }
 }
 
-/** Editorial: fade + leggero slide-up — pagine istituzionali e home. */
+/** Editorial: fade morbido — home e pagine istituzionali. */
 const editorialVariants = pageVariants(
   { opacity: 0, y: 14 },
-  { opacity: 0, y: -8 },
-  0.32,
+  { opacity: 0, y: -6 },
+  0.34,
   0.18,
 )
 
-/** Catalogo: slide-up più marcato — griglia prodotti e filtri. */
+/** Catalogo: rapido e leggero — navigazione frequente tra liste e filtri. */
 const catalogVariants = pageVariants(
-  { opacity: 0, y: 20 },
-  { opacity: 0, y: -10 },
-  0.28,
-  0.16,
-)
-
-/** Prodotto: transizione rapida — focus sul contenuto. */
-const productVariants = pageVariants(
   { opacity: 0, y: 10 },
   { opacity: 0 },
-  0.18,
-  0.1,
+  0.22,
+  0.11,
 )
 
-/** Checkout/account: rapido e discreto. */
-const checkoutVariants: Variants = {
-  initial: { opacity: 0, y: 6 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.2, ease: EASE_OUT } },
-  exit: { opacity: 0, transition: { duration: 0.12, ease: EASE_OUT } },
+/** Prodotto: sottile profondità — focus sul contenuto. */
+const productVariants: Variants = {
+  initial: { opacity: 0, y: 8, scale: 0.992 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.22, ease: EASE_OUT },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.1, ease: EASE_OUT },
+  },
 }
+
+/** Checkout/account: discreto, senza movimento verticale. */
+const checkoutVariants = pageVariants(
+  { opacity: 0 },
+  { opacity: 0 },
+  0.16,
+  0.1,
+)
 
 /** Default: fade-up equilibrato. */
 const defaultVariants = pageVariants(
   { opacity: 0, y: 10 },
-  { opacity: 0, y: -6 },
-  0.28,
-  0.16,
+  { opacity: 0, y: -4 },
+  0.26,
+  0.14,
 )
 
 export const pageTransitionVariants: Record<PageTransitionKind, Variants> = {
@@ -74,9 +82,9 @@ export const pageTransitionVariants: Record<PageTransitionKind, Variants> = {
 }
 
 export const pageTransitionTiming: Record<PageTransitionKind, Transition> = {
-  editorial: { duration: 0.32, ease: EASE_OUT },
-  catalog: { duration: 0.28, ease: EASE_OUT },
-  product: { duration: 0.18, ease: EASE_OUT },
+  editorial: { duration: 0.34, ease: EASE_OUT },
+  catalog: { duration: 0.22, ease: EASE_OUT },
+  product: { duration: 0.22, ease: EASE_OUT },
   checkout: transitionFast,
   default: transitionBase,
 }

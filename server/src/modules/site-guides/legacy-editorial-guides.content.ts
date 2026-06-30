@@ -31,9 +31,9 @@ export const LEGACY_EDITORIAL_GUIDE_REDIRECTS: Array<{ fromPath: string; toPath:
 const IT_CONTENT: Record<LegacyEditorialGuideSlug, ContentPageContent> = {
   'luce-calda-o-fredda': {
     layout: 'article',
-    eyebrow: 'ARREDO · SHOP THE LOOK · GIUGNO 2024',
-    title: 'Luce CALDA o FREDDA: la scelta illuminante',
-    subtitle: 'Giochi di ruolo: come scegliere tra luce calda e fredda stanza per stanza.',
+    eyebrow: 'ARREDO · SHOP THE LOOK · 5 MIN',
+    title: 'Luce calda o fredda: la scelta illuminante',
+    subtitle: 'Giochi di ruolo: come scegliere tra luce calda e fredda, stanza per stanza.',
     intro:
       'La luce calda (2400–2700K) crea atmosfera accogliente; la fredda (4000–6500K) è più brillante e adatta a compiti visivi. In camera e soggiorno privilegia il caldo; in ufficio e cucina il neutro/freddo.',
     coverImage: {
@@ -89,24 +89,28 @@ const IT_CONTENT: Record<LegacyEditorialGuideSlug, ContentPageContent> = {
         items: [
           {
             title: 'Alphabet of light',
+            meta: 'ARTEMIDE',
             description: 'Composizione modulare Artemide per luce scenografica nel living.',
             href: '/negozio?world=design&q=Alphabet+of+light',
             imageUrl: 'https://ideadiluce.com/wp-content/uploads/2024/07/alpha.jpg',
           },
           {
             title: 'Captain Flint',
+            meta: 'FLOS',
             description: 'Piantana Flos con luce calda regolabile per angoli lettura.',
             href: '/negozio?world=design&q=Captain+Flint',
             imageUrl: 'https://ideadiluce.com/wp-content/uploads/2024/07/capflin.jpg',
           },
           {
             title: 'Lampara',
+            meta: 'FONTANAARTE',
             description: 'Sospensione dal carattere caldo per zona pranzo o ingresso.',
             href: '/negozio?world=design&q=Lampara',
             imageUrl: 'https://ideadiluce.com/wp-content/uploads/2024/07/lampara.jpg',
           },
           {
             title: 'Bolla',
+            meta: 'FONTANAARTE',
             description: 'Vetro soffiato e luce diffusa per atmosfere morbide.',
             href: '/negozio?world=design&q=Bolla',
             imageUrl: 'https://ideadiluce.com/wp-content/uploads/2024/07/bolla1.jpg',

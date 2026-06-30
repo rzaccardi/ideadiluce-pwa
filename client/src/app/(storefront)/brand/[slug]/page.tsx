@@ -36,7 +36,7 @@ export default async function BrandSlugPage({ params }: PageProps) {
   const locale = await getRequestLocale()
   const [brand, productsRes] = await Promise.all([
     fetchBrandMetaServer(slug, locale),
-    fetchCatalogProductsServer(locale, { brand: slug, pageSize: 48 }),
+    fetchCatalogProductsServer(locale, { brand: slug, pageSize: 24 }),
   ])
   const name = brand?.name ?? slug
   const { canonical } = buildLocalizedPageSeo({

@@ -7,8 +7,6 @@ import { authStore, register } from '@/features/auth'
 import { ToastOnError } from '@/components/ToastFeedback'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
-import { getRecaptchaToken, RECAPTCHA_ACTIONS } from '@/lib/recaptcha'
-import { AuthRecaptchaBanner } from '@/components/auth/RecaptchaNotice'
 import {
   AuthBrassLink,
   AuthCard,
@@ -26,13 +24,6 @@ import {
   LockIcon,
   UserIcon,
 } from '@/components/site/auth/auth-ui'
-
-function isRecaptchaClientError(err: unknown): boolean {
-  return (
-    err instanceof Error &&
-    (err.message === 'RECAPTCHA_LOAD_FAILED' || err.message === 'RECAPTCHA_EXECUTE_FAILED')
-  )
-}
 
 export function RegisterPageView() {
   const { t } = useI18n()
@@ -55,18 +46,14 @@ export function RegisterPageView() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     try {
-      const recaptchaToken = await getRecaptchaToken(RECAPTCHA_ACTIONS.register)
       await register(email, password, {
         firstName: firstName || undefined,
         lastName: lastName || undefined,
         customerSegment: isBusiness ? 'business' : 'retail',
-        recaptchaToken,
       })
       navigate(from, { replace: true })
-    } catch (err) {
-      if (isRecaptchaClientError(err)) {
-        authStore.error = t('auth.recaptchaFailed')
-      }
+    } catch {
+      // error shown via ToastOnError
     }
   }
 
@@ -149,8 +136,6 @@ export function RegisterPageView() {
           <AuthCheckbox checked={isBusiness} onChange={setIsBusiness}>
             {t('register.business')}
           </AuthCheckbox>
-
-          <AuthRecaptchaBanner className="mb-4" />
 
           <AuthSubmitButton disabled={auth.isLoading}>
             {auth.isLoading ? t('auth.registering') : t('auth.registerSubmit')}

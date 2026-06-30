@@ -64,7 +64,7 @@ export function AccountInvoicesPage() {
         {list && list.length > 0 ? (
           <div className="flex flex-col gap-3.5">
             {list.map((inv) => (
-              <article key={inv.id} className="overflow-hidden rounded-xl border border-idl-tech-border">
+              <article key={inv.id} className="overflow-hidden rounded-xl border border-idl-tech-border bg-white dark:bg-idl-tech-panel">
                 <div className="flex flex-wrap items-center justify-between gap-3 bg-idl-tech-panel px-[18px] py-3.5">
                   <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
                     <span className="font-mono text-[12.5px] font-semibold text-idl-graphite">{inv.name}</span>

@@ -25,7 +25,7 @@ export function CartPage() {
   useCartReservationSync()
 
   useEffect(() => {
-    void fetchCart()
+    void fetchCart({ force: true, reprice: true })
   }, [])
 
   useEffect(() => {

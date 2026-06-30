@@ -9,11 +9,12 @@ import { CategoryLandingCatalogSkeleton } from '@/components/Skeleton'
 import { PageLoadTransition } from '@/components/motion'
 import { useInfiniteScrollSentinel } from '@/hooks/use-infinite-scroll-sentinel'
 import { CatalogLoadMoreFooter } from '@/components/site/catalog/CatalogLoadMoreFooter'
-import { CatalogLoadMoreIndicator } from '@/components/site/catalog/CatalogLoadMoreIndicator'
 import { SectionContainer } from '../../primitives'
 import { CategoryFilterSidebar } from '../CategoryFilterSidebar'
 import { CategoryResultsToolbar } from '../CategoryResultsToolbar'
 import { DesignCatalogProductGrid } from '../DesignCatalogProductGrid'
+import { TechnicalCatalogSelectionProvider } from '@/context/technical-catalog-selection-context'
+import { TechnicalCatalogBulkBar } from '../TechnicalCatalogBulkBar'
 import { TechnicalCatalogProductGrid } from '../TechnicalCatalogProductGrid'
 import type { LocalePathFn } from '../../sections/types'
 
@@ -28,6 +29,7 @@ type Props = {
   variant: 'design' | 'technical'
   loading?: boolean
   isLoadingMore?: boolean
+  pendingSkeletonCount?: number
   hasMore?: boolean
   onLoadMore?: () => void
   selectedFilterValues: ReadonlySet<string>
@@ -47,6 +49,7 @@ export function CategoryCatalogSection({
   variant,
   loading,
   isLoadingMore = false,
+  pendingSkeletonCount = 0,
   hasMore = false,
   onLoadMore,
   selectedFilterValues,
@@ -112,47 +115,86 @@ export function CategoryCatalogSection({
           ) : null}
         </div>
 
-        <CategoryResultsToolbar
-          shownCount={products.length}
-          totalCount={totalCount}
-          activeFilters={activeFilters}
-          sortLabel={content.sortLabel}
-          sortValue={content.sortValue}
-          sort={sort}
-          onSelectSort={onSelectSort}
-          onRemoveFilter={onRemoveFilter}
-          variant={variant}
-          compareEnabled={!isDesign}
-        />
+        {isDesign ? (
+          <>
+            <CategoryResultsToolbar
+              shownCount={products.length}
+              totalCount={totalCount}
+              loading={loading}
+              activeFilters={activeFilters}
+              sortLabel={content.sortLabel}
+              sortValue={content.sortValue}
+              sort={sort}
+              onSelectSort={onSelectSort}
+              onRemoveFilter={onRemoveFilter}
+              variant={variant}
+            />
 
-        {loading && products.length === 0 ? (
-          <PageLoadTransition
-            isLoading
-            skeleton={<CategoryLandingCatalogSkeleton variant={variant} />}
-          >
-            {null}
-          </PageLoadTransition>
-        ) : isDesign ? (
-          <div
-            className={cn(
-              'transition-opacity duration-200',
-              loading && products.length > 0 && 'pointer-events-none opacity-60',
+            {loading && products.length === 0 ? (
+              <PageLoadTransition
+                isLoading
+                skeleton={<CategoryLandingCatalogSkeleton variant={variant} />}
+              >
+                {null}
+              </PageLoadTransition>
+            ) : (
+              <div
+                className={cn(
+                  'transition-opacity duration-200',
+                  loading && products.length > 0 && 'pointer-events-none opacity-60',
+                )}
+              >
+                <DesignCatalogProductGrid
+                  products={products}
+                  lp={lp}
+                  pendingSkeletonCount={pendingSkeletonCount}
+                />
+              </div>
             )}
-          >
-            <DesignCatalogProductGrid products={products} lp={lp} />
-          </div>
+          </>
         ) : (
-          <div
-            className={cn(
-              'transition-opacity duration-200',
-              loading && products.length > 0 && 'pointer-events-none opacity-60',
+          <TechnicalCatalogSelectionProvider products={products}>
+            <CategoryResultsToolbar
+              shownCount={products.length}
+              totalCount={totalCount}
+              loading={loading}
+              activeFilters={activeFilters}
+              sortLabel={content.sortLabel}
+              sortValue={content.sortValue}
+              sort={sort}
+              onSelectSort={onSelectSort}
+              onRemoveFilter={onRemoveFilter}
+              variant={variant}
+              compareEnabled
+            />
+
+            {loading && products.length === 0 ? (
+              <PageLoadTransition
+                isLoading
+                skeleton={<CategoryLandingCatalogSkeleton variant={variant} />}
+              >
+                {null}
+              </PageLoadTransition>
+            ) : (
+              <div
+                className={cn(
+                  'transition-opacity duration-200',
+                  loading && products.length > 0 && 'pointer-events-none opacity-60',
+                )}
+              >
+                <TechnicalCatalogProductGrid
+                  products={products}
+                  lp={lp}
+                  pendingSkeletonCount={pendingSkeletonCount}
+                />
+              </div>
             )}
-          >
-            <TechnicalCatalogProductGrid products={products} lp={lp} />
-          </div>
+
+            <TechnicalCatalogBulkBar products={products} lp={lp} />
+          </TechnicalCatalogSelectionProvider>
         )}
 
-        {isLoadingMore ? <CatalogLoadMoreIndicator /> : null}
+        <div ref={loadMoreRef} className="h-px" aria-hidden />
 
         {!loading || products.length > 0 ? (
           <CatalogLoadMoreFooter
@@ -160,7 +202,6 @@ export function CategoryCatalogSection({
             totalProducts={totalCount ?? products.length}
             hasMore={hasMore}
             isLoadingMore={isLoadingMore}
-            loadMoreRef={loadMoreRef}
             onLoadMore={loadMore}
             loadMoreLabel={content.loadMoreLabel}
             variant={variant}

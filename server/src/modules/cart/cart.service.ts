@@ -171,7 +171,7 @@ async function dtoFromCartId(
     if (refreshed) full = refreshed
   }
 
-  if (options?.reprice !== false && full.items.length > 0) {
+  if (options?.reprice === true && full.items.length > 0) {
     priceChangedIds = await syncCartPricing(req, full.id)
     const repriced = await cartRepository.getWithItems(cartId)
     if (repriced) full = repriced
@@ -331,7 +331,8 @@ async function assertLineStock(
 export const cartService = {
   async get(req: Request) {
     const cart = await resolveOrCreateCart(req)
-    const { dto } = await dtoFromCartId(req, cart.id)
+    const reprice = req.query.reprice === '1' || req.query.reprice === 'true'
+    const { dto } = await dtoFromCartId(req, cart.id, { reprice })
     return dto
   },
 
@@ -368,7 +369,7 @@ export const cartService = {
       })
     }
     await syncReservationAfterItemsChange(cart.id)
-    const { dto } = await dtoFromCartId(req, cart.id)
+    const { dto } = await dtoFromCartId(req, cart.id, { reprice: true })
     return dto
   },
 
@@ -385,7 +386,7 @@ export const cartService = {
     }
     await cartRepository.updateItem(itemId, { quantity })
     await syncReservationAfterItemsChange(cart.id)
-    const { dto } = await dtoFromCartId(req, cart.id)
+    const { dto } = await dtoFromCartId(req, cart.id, { reprice: true })
     return dto
   },
 

@@ -12,6 +12,7 @@ import { CartReservationExpiredBanner } from '@/components/cart/CartReservationE
 import { CartSummary } from '@/components/cart/CartSummary'
 import { EmptyCartPrompt } from '@/components/cart/EmptyCartPrompt'
 import { CartPageBody, CartPageShell } from '@/components/cart/CartPageShell'
+import { CART_CARD_SURFACE_OVERFLOW } from '@/components/cart/cart-surfaces'
 import { SectionContainer } from '@/components/site/primitives'
 import { ToastOnError } from '@/components/ToastFeedback'
 import { cartHasBlockedLines, cartPurchasableItemCount } from '@/lib/cartTotals'
@@ -72,7 +73,7 @@ export function CartPageView({ state }: Props) {
           <div className="flex min-w-0 flex-col gap-[18px]">
             <CartFreeShippingBanner hint={cart.freeShippingHint} currencyCode={cart.currencyCode} />
 
-            <div className="overflow-hidden rounded-[14px] border border-idl-tech-border bg-idl-tech-panel">
+            <div className={CART_CARD_SURFACE_OVERFLOW}>
               {cart.items.map((line, index) => (
                 <CartLineItem
                   key={line.id}

@@ -4,10 +4,65 @@ import type {
   CatalogSearchAnalyticsList,
   CatalogSearchAnalyticsStats,
 } from '@/types/search-analytics'
+import type { SearchHintsOdooApplyResult, SearchHintsOdooPreview } from '@/types/search-hints'
 import { searchAnalyticsStore } from './search-analytics.store'
 
 function errMessage(e: unknown) {
   return String(e)
+}
+
+export async function previewOdooSearchHints(lookbackDays: number, limit: number) {
+  searchAnalyticsStore.odooHintsLoading = true
+  searchAnalyticsStore.odooHintsError = null
+  searchAnalyticsStore.odooHintsMessage = null
+  try {
+    const params = new URLSearchParams({
+      lookbackDays: String(lookbackDays),
+      limit: String(limit),
+    })
+    searchAnalyticsStore.odooHints = await adminApi<SearchHintsOdooPreview>(
+      `/admin/search-analytics/odoo-hints?${params}`,
+    )
+  } catch (e) {
+    searchAnalyticsStore.odooHintsError = errMessage(e)
+    searchAnalyticsStore.odooHints = null
+    throw e
+  } finally {
+    searchAnalyticsStore.odooHintsLoading = false
+  }
+}
+
+export async function applyOdooSearchHints(lookbackDays: number, limit: number) {
+  searchAnalyticsStore.odooHintsApplying = true
+  searchAnalyticsStore.odooHintsError = null
+  searchAnalyticsStore.odooHintsMessage = null
+  try {
+    const result = await adminApi<SearchHintsOdooApplyResult>(
+      '/admin/search-analytics/apply-odoo-hints',
+      {
+        method: 'POST',
+        body: JSON.stringify({ lookbackDays, limit }),
+      },
+    )
+    searchAnalyticsStore.odooHints = {
+      odooConfigured: true,
+      autoSyncEnabled: true,
+      staleHours: 72,
+      lookbackDays: result.lookbackDays,
+      limit: result.limit,
+      currentHints: result.hints,
+      lastOdooSyncedAt: result.updatedAt,
+      isStale: false,
+      suggestions: result.suggestions,
+    }
+    searchAnalyticsStore.odooHintsMessage = `Salvate ${result.hints.length} query in Home (${result.updatedLocales.join(', ')}).`
+    return result
+  } catch (e) {
+    searchAnalyticsStore.odooHintsError = errMessage(e)
+    throw e
+  } finally {
+    searchAnalyticsStore.odooHintsApplying = false
+  }
 }
 
 export async function fetchSearchAnalyticsStats(query: string) {

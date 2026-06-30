@@ -21,7 +21,7 @@ import {
   CatalogSearchSuggestionRow,
 } from './CatalogSearchSuggestionViews'
 
-export type CatalogSearchFieldVariant = 'design' | 'technical' | 'catalog' | 'compact'
+export type CatalogSearchFieldVariant = 'design' | 'technical' | 'catalog' | 'compact' | 'header'
 
 type HintItem = string | { label: string; query: string }
 
@@ -77,6 +77,15 @@ const VARIANT_STYLES: Record<
     form: 'rounded-lg border border-idl-tech-chip-border bg-idl-tech-panel py-1.5 pl-4 pr-1.5',
     input: 'text-[15px] placeholder:text-idl-muted',
     cta: cn(ui.ctaInk, 'rounded-md bg-idl-graphite px-4 py-2 text-[13px] font-bold text-white'),
+  },
+  header: {
+    form: cn(
+      ui.interactive,
+      ui.headerActionBtn,
+      'w-full gap-1.5 rounded-full border py-1.5 pl-8 pr-3 shadow-none',
+    ),
+    input: 'text-[13px] font-bold',
+    cta: cn(ui.ctaInk, 'rounded-full bg-idl-graphite px-4 py-2 text-[13px] font-bold text-white'),
   },
 }
 

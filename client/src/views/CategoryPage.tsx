@@ -32,8 +32,16 @@ export function CategoryPage({ initialProducts, initialCategoryName = null }: Pr
 
   useEffect(() => {
     if (!slug) return
+
+    if (initialProducts?.length) {
+      setProducts(initialProducts)
+      if (initialCategoryName) setCategoryName(initialCategoryName)
+      setLoading(false)
+      return
+    }
+
     let cancelled = false
-    if (!initialProducts?.length) setLoading(true)
+    setLoading(true)
     void (async () => {
       try {
         const pwaLocale = toPwaLocale(locale)
@@ -52,7 +60,7 @@ export function CategoryPage({ initialProducts, initialCategoryName = null }: Pr
     return () => {
       cancelled = true
     }
-  }, [slug, locale, initialProducts?.length])
+  }, [slug, locale, initialProducts, initialCategoryName])
 
   if (!slug) return null
 
@@ -66,17 +74,6 @@ export function CategoryPage({ initialProducts, initialCategoryName = null }: Pr
           <PageLoadTransition
             isLoading={loading}
             skeleton={<CategoryPageSkeleton />}
-            loadingHeader={
-              <>
-                <Breadcrumb
-                  items={[
-                    { label: t('catalog.title'), to: lp('/negozio') },
-                    { label: title },
-                  ]}
-                />
-                <PageHeader title={title} />
-              </>
-            }
           >
             <>
               <Breadcrumb

@@ -36,7 +36,7 @@ export function CheckoutRegistrationStep() {
       if (info.lastName) updateCheckoutAddress('billing', 'lastName', info.lastName)
       if (info.phone) updateCheckoutAddress('billing', 'phone', info.phone)
     }
-    await fetchCart({ force: true })
+    await fetchCart({ force: true, reprice: true })
     await prepareCheckoutAfterAuth()
   }
 

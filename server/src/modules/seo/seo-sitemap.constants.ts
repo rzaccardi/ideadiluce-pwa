@@ -24,7 +24,6 @@ export const STATIC_SITEMAP_PATHS = [
   '/attacco',
   '/professionisti',
   '/contatti',
-  '/showroom',
   '/chi-siamo',
   '/categoria-prodotto/illuminazione-arredo',
   '/categoria-prodotto/illuminazione-tecnica',

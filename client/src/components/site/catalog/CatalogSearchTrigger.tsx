@@ -49,6 +49,15 @@ const VARIANT_STYLES: Record<
     input: 'text-[15px] placeholder:text-idl-muted',
     cta: cn(ui.ctaInk, 'rounded-md bg-idl-graphite px-4 py-2 text-[13px] font-bold text-white'),
   },
+  header: {
+    form: cn(
+      ui.interactive,
+      ui.headerActionBtn,
+      'w-full gap-1.5 rounded-full border py-1.5 pl-8 pr-3 shadow-none',
+    ),
+    input: 'text-[13px] font-bold',
+    cta: cn(ui.ctaInk, 'rounded-full bg-idl-graphite px-4 py-2 text-[13px] font-bold text-white'),
+  },
 }
 
 export function CatalogSearchTrigger({
@@ -96,7 +105,11 @@ export function CatalogSearchTrigger({
           className={cn(
             'min-w-0 flex-1 truncate',
             styles.input,
-            hasValue ? 'text-idl-ink' : 'text-idl-placeholder',
+            hasValue
+              ? 'text-idl-ink'
+              : variant === 'header'
+                ? 'text-idl-ink-soft'
+                : 'text-idl-placeholder',
           )}
         >
           {hasValue ? displayValue : placeholder}

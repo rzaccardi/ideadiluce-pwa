@@ -44,7 +44,7 @@ export function BrandHeroSection({ lp, activeFilter, onFilterChange }: Props) {
             formClassName="rounded-[10px] border-[1.5px] border-idl-tech-chip-border bg-idl-tech-panel py-1.5 pl-5 pr-1.5"
           />
         </div>
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0 [&::-webkit-scrollbar]:hidden">
           {BRAND_HERO_FILTERS.map((filter) => {
             const active = activeFilter === filter.id
             return (
@@ -54,7 +54,7 @@ export function BrandHeroSection({ lp, activeFilter, onFilterChange }: Props) {
                 onClick={() => onFilterChange(filter.id)}
                 className={cn(
                   ui.interactive,
-                  'rounded-[30px] px-4 py-2 text-[13px] font-semibold',
+                  'shrink-0 rounded-[30px] px-4 py-2 text-[13px] font-semibold whitespace-nowrap',
                   active
                     ? 'bg-idl-graphite font-bold text-white hover:bg-[#2a2d35]'
                     : 'border border-idl-tech-chip-border bg-idl-tech-panel text-idl-graphite-2 hover:border-idl-amber hover:text-idl-amber',

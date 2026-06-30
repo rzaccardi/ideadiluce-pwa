@@ -1,10 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
 import type { CheckoutStep } from '@/features/checkout'
 import { useI18n } from '@/hooks/use-i18n'
-import { useIsClient } from '@/hooks/use-is-client'
 import type { MessageKey } from '@/i18n/messages'
 import {
   CheckoutLoadingBulb,
@@ -140,21 +138,20 @@ type Props = {
 
 export function CheckoutLoadingOverlay({ icon, messageKey }: Props) {
   const { t } = useI18n()
-  const isClient = useIsClient()
 
   useEffect(() => {
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    const main = document.querySelector('.checkout-shell > main')
+    if (!(main instanceof HTMLElement)) return
+    const prev = main.style.overflow
+    main.style.overflow = 'hidden'
     return () => {
-      document.body.style.overflow = prev
+      main.style.overflow = prev
     }
   }, [])
 
-  if (!isClient) return null
-
-  const overlay = (
+  return (
     <div
-      className="checkout-root checkout-loading-overlay fixed inset-0 z-[9999] flex h-[100dvh] w-screen touch-none items-center justify-center bg-[rgba(22,19,13,0.62)] p-4"
+      className="checkout-loading-overlay absolute inset-0 z-50 flex touch-none items-center justify-center bg-[rgba(22,19,13,0.62)] p-4"
       role="status"
       aria-live="polite"
       aria-busy="true"
@@ -171,6 +168,4 @@ export function CheckoutLoadingOverlay({ icon, messageKey }: Props) {
       </div>
     </div>
   )
-
-  return createPortal(overlay, document.body)
 }

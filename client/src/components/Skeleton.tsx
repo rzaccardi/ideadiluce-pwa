@@ -1,11 +1,16 @@
 'use client'
 
 import { AUTH_FORM_CONTAINER_CLASS, SITE_CONTENT_CLASS } from '@/components/Container'
+import { CART_CARD_SURFACE, CART_CARD_SURFACE_OVERFLOW } from '@/components/cart/cart-surfaces'
 import { checkoutMainClass, checkoutShellClass } from '@/components/checkout/stripe-ui/constants'
+import { CheckoutSummarySkeleton } from '@/components/checkout/stripe-ui/CheckoutSummarySkeleton'
 import { useI18n } from '@/hooks/use-i18n'
 import type { MessageKey } from '@/i18n/messages'
 import { PageFlexBody, PageFlexShell } from '@/components/layout/PageFlexShell'
 import { SectionContainer } from '@/components/site/primitives'
+import { GuideCardSkeleton } from '@/components/site/skeletons/guide-hub-skeleton'
+import { CatalogProductCardSkeleton } from '@/components/site/catalog/CatalogProductCardSkeleton'
+import { Skeleton as SkeletonPrimitive } from '@/components/skeleton-primitive'
 import { cn } from '@/utils/cn'
 
 type SkeletonProps = {
@@ -18,12 +23,7 @@ function SrOnlyStatus({ messageKey, as: Tag = 'span' }: { messageKey: MessageKey
 }
 
 export function Skeleton({ className }: SkeletonProps) {
-  return (
-    <span
-      aria-hidden="true"
-      className={cn('block animate-pulse rounded-md bg-idl-cream', className)}
-    />
-  )
+  return <SkeletonPrimitive className={className} />
 }
 
 export function ProductCardSkeleton({ className }: SkeletonProps) {
@@ -114,7 +114,7 @@ export function CartItemsSkeleton({
       <div className={cn('flex flex-col gap-[18px]', className)} role="status">
         <SrOnlyStatus messageKey="skeleton.loadingCart" />
         <Skeleton className="h-[74px] rounded-[14px]" />
-        <ul className="overflow-hidden rounded-[14px] border border-idl-tech-border bg-idl-tech-panel">
+        <ul className={CART_CARD_SURFACE_OVERFLOW}>
           {Array.from({ length: count }).map((_, index) => (
             <CartLineSkeleton key={index} variant="page" />
           ))}
@@ -143,7 +143,7 @@ export function CartSummarySkeleton({
     <aside
       className={cn(
         variant === 'page'
-          ? 'sticky top-6 rounded-[14px] border border-idl-tech-border bg-idl-tech-panel p-[22px]'
+          ? cn('sticky top-6 p-[22px]', CART_CARD_SURFACE)
           : 'h-fit rounded-xl border border-idl-border bg-idl-tech-panel p-6 shadow-sm shadow-idl-ink/5',
         className,
       )}
@@ -170,48 +170,7 @@ export function CartSummarySkeleton({
   )
 }
 
-export function ProductDetailSkeleton() {
-  const { t } = useI18n()
-  return (
-    <PageFlexShell tone="white">
-      <div className="space-y-12" role="status">
-        <span className="sr-only">{t('skeleton.loadingProduct')}</span>
-        <SectionContainer className="py-6 sm:py-8">
-          <div className="grid min-w-0 gap-8 sm:gap-10 lg:grid-cols-2">
-            <Skeleton className="aspect-square rounded-xl" />
-            <div className="min-w-0 text-left">
-              <Skeleton className="h-8 w-3/4" />
-              <Skeleton className="mt-4 h-8 w-32" />
-              <Skeleton className="mt-3 h-4 w-24" />
-              <Skeleton className="mt-3 h-4 w-28" />
-              <div className="mt-6 space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-11/12" />
-                <Skeleton className="h-4 w-2/3" />
-              </div>
-              <div className="mt-6 max-w-md space-y-4">
-                <Skeleton className="h-16 w-full rounded-lg" />
-                <Skeleton className="h-16 w-40 rounded-lg" />
-              </div>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Skeleton className="h-10 w-40 rounded-lg" />
-                <Skeleton className="h-10 w-28 rounded-lg" />
-              </div>
-            </div>
-          </div>
-        </SectionContainer>
-        <PageFlexBody tone="white">
-          <SectionContainer className="space-y-8 pb-10">
-            <Skeleton className="h-4 w-full max-w-3xl" />
-            <Skeleton className="h-4 w-full max-w-3xl" />
-            <Skeleton className="h-4 w-4/5 max-w-3xl" />
-            <Skeleton className="h-48 w-full max-w-2xl rounded-lg" />
-          </SectionContainer>
-        </PageFlexBody>
-      </div>
-    </PageFlexShell>
-  )
-}
+export { ProductDetailPageSkeleton as ProductDetailSkeleton } from '@/components/site/skeletons/product-detail-page-skeleton'
 
 export function CheckoutCartSectionSkeleton() {
   return (
@@ -363,50 +322,78 @@ export function CatalogFiltersSkeleton() {
 export function ContentPageSkeleton() {
   const { t } = useI18n()
   return (
-    <div className="space-y-8" role="status" aria-label={t('skeleton.loadingPageHeader')}>
-      <div className="space-y-4">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-5/6" />
-        <Skeleton className="h-4 w-4/5" />
+    <div className="space-y-10" role="status" aria-label={t('skeleton.loadingPageHeader')}>
+      <Skeleton className="h-4 w-40" />
+      <div className="space-y-3">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-9 w-full max-w-xl" />
+        <Skeleton className="h-4 w-full max-w-2xl" />
+        <Skeleton className="h-4 w-5/6 max-w-xl" />
       </div>
-      <Skeleton className="h-56 w-full rounded-xl" />
+      <div className="space-y-10">
+        <div className="space-y-4">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-4/5" />
+        </div>
+        <Skeleton className="aspect-[16/10] w-full max-w-3xl rounded-lg" />
+        <div className="space-y-3">
+          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-4 w-full max-w-2xl" />
+          <Skeleton className="h-4 w-full max-w-2xl" />
+        </div>
+      </div>
+      <Skeleton className="h-4 w-36" />
     </div>
   )
 }
 
-export function EditorialPageSkeleton() {
-  const { t } = useI18n()
-  return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="status" aria-label={t('skeleton.loadingProducts')}>
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="space-y-3 rounded-xl border border-idl-border bg-idl-tech-panel p-5">
-          <Skeleton className="aspect-[4/3] w-full rounded-lg" />
-          <Skeleton className="h-5 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-        </div>
-      ))}
-    </div>
-  )
-}
+export { GuideCardSkeleton, GuideHubPageSkeleton } from '@/components/site/skeletons/guide-hub-skeleton'
 
 export function ProfessionistiPageSkeleton() {
   const { t } = useI18n()
   return (
-    <PageFlexShell tone="white">
-      <PageFlexBody tone="white">
-        <SectionContainer className="space-y-10 py-8 sm:py-10">
-          <div className="grid gap-8 lg:grid-cols-2" role="status" aria-label={t('skeleton.loadingForm')}>
-            <div className="space-y-4">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-14 w-full rounded-lg" />
-              ))}
+    <div className="bg-idl-tech-panel" role="status" aria-label={t('skeleton.loadingForm')}>
+      <div className="bg-idl-graphite">
+        <SectionContainer className="grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-12">
+          <div className="space-y-4">
+            <Skeleton className="h-3 w-48 bg-idl-graphite-2" />
+            <Skeleton className="h-12 w-full max-w-lg bg-idl-graphite-2" />
+            <Skeleton className="h-20 w-full max-w-xl bg-idl-graphite-2" />
+            <div className="flex flex-wrap gap-3 pt-2">
+              <Skeleton className="h-12 w-40 rounded-lg bg-idl-graphite-2" />
+              <Skeleton className="h-12 w-40 rounded-lg bg-idl-graphite-2" />
             </div>
-            <Skeleton className="min-h-80 w-full rounded-xl" />
           </div>
+          <Skeleton className="min-h-64 w-full rounded-[14px] bg-idl-graphite-2" />
         </SectionContainer>
-      </PageFlexBody>
-    </PageFlexShell>
+      </div>
+      <SectionContainer className="py-12 sm:py-14">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="space-y-3 rounded-xl border border-idl-tech-border bg-idl-tech-panel p-6">
+              <Skeleton className="h-3 w-8" />
+              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          ))}
+        </div>
+      </SectionContainer>
+      <SectionContainer className="grid gap-10 py-12 sm:py-14 lg:grid-cols-2 lg:items-start">
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-16 w-full" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-5 w-full" />
+          ))}
+        </div>
+        <div className="space-y-4 rounded-2xl border border-idl-tech-border bg-idl-tech-panel p-7 sm:p-8">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-14 w-full rounded-lg" />
+          ))}
+        </div>
+      </SectionContainer>
+    </div>
   )
 }
 
@@ -426,82 +413,170 @@ export function ImpersonatePageSkeleton() {
 }
 
 export function CategoryPageSkeleton() {
-  return <ProductGridSkeleton count={6} />
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-4 w-3" />
+        <Skeleton className="h-4 w-28" />
+      </div>
+      <PageHeaderSkeleton />
+      <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <li key={i} className="h-full">
+            <CatalogProductCardSkeleton variant="catalog" />
+          </li>
+        ))}
+      </ul>
+      <Skeleton className="h-4 w-40" />
+    </div>
+  )
 }
 
 export function HomePageSkeleton() {
   const { t } = useI18n()
   return (
-    <PageFlexShell tone="paper">
-      <div className="grid border-b border-idl-border bg-idl-tech-panel lg:grid-cols-2" role="status" aria-label={t('skeleton.loadingPageHeader')}>
-        <Skeleton className="min-h-[320px] rounded-none sm:min-h-[380px] lg:min-h-[420px]" />
-        <Skeleton className="min-h-[320px] rounded-none sm:min-h-[380px] lg:min-h-[420px]" />
-      </div>
-      <PageFlexBody tone="paper">
-        <div className="mx-auto max-w-6xl space-y-10 px-4 py-10 sm:px-6 lg:px-8">
-          <Skeleton className="mx-auto h-12 w-full max-w-2xl rounded-lg" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="bg-idl-tech-panel" role="status" aria-label={t('skeleton.loadingPageHeader')}>
+      <div className="grid border-b border-idl-border lg:grid-cols-2">
+        <div className="space-y-4 bg-idl-design px-6 py-10 sm:px-12 sm:py-16 lg:px-16 lg:py-[74px]">
+          <Skeleton className="h-3 w-28 bg-idl-graphite-2" />
+          <Skeleton className="h-12 w-full max-w-lg bg-idl-graphite-2" />
+          <Skeleton className="h-16 w-full max-w-xl bg-idl-graphite-2" />
+          <Skeleton className="h-12 w-40 rounded-[3px] bg-idl-graphite-2" />
+        </div>
+        <div className="space-y-4 border-idl-border bg-idl-tech-panel px-6 py-10 sm:px-12 sm:py-16 lg:border-l lg:px-16 lg:py-[74px]">
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-11 w-full max-w-lg" />
+          <Skeleton className="h-16 w-full max-w-xl" />
+          <Skeleton className="h-12 w-44 rounded-md" />
+          <div className="flex flex-wrap gap-2 pt-2">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-40 rounded-xl" />
-            ))}
-          </div>
-          <div className="grid gap-6 lg:grid-cols-2">
-            {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="space-y-4 rounded-xl border border-idl-border p-5">
-                <Skeleton className="h-6 w-40" />
-                <ProductGridSkeleton count={2} className="sm:grid-cols-2" />
-              </div>
+              <Skeleton key={i} className="h-8 w-14 rounded-md" />
             ))}
           </div>
         </div>
-      </PageFlexBody>
-    </PageFlexShell>
-  )
-}
+      </div>
 
-/** Griglia hub editoriali: brand, ambienti, guide. */
-export function StaticHubSectionSkeleton({ count = 6 }: { count?: number }) {
-  const { t } = useI18n()
-  return (
-    <div
-      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-      role="status"
-      aria-label={t('skeleton.loadingPageHeader')}
-    >
-      {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="space-y-3 rounded-xl border border-idl-border bg-idl-tech-panel p-4">
-          <Skeleton className="aspect-[4/3] w-full rounded-lg" />
-          <Skeleton className="h-5 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
+      <SectionContainer className="py-10 sm:py-12">
+        <Skeleton className="mx-auto h-12 w-full max-w-2xl rounded-lg" />
+      </SectionContainer>
+
+      <SectionContainer className="border-b border-idl-tech-border py-10 sm:py-12">
+        <div className="mb-5 space-y-2">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-7 w-64" />
         </div>
-      ))}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 rounded-lg" />
+          ))}
+        </div>
+      </SectionContainer>
+
+      <SectionContainer className="py-10 sm:py-12">
+        <div className="mb-5 space-y-2">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-7 w-56" />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="aspect-[4/3] rounded-lg" />
+          ))}
+        </div>
+      </SectionContainer>
+
+      <SectionContainer className="space-y-10 py-10 sm:py-12">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <div key={i} className="space-y-4">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-7 w-72" />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, j) => (
+                <ProductCardSkeleton key={j} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </SectionContainer>
+
+      <SectionContainer className="border-t border-idl-border py-10 sm:py-12">
+        <div className="mb-6 space-y-2">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-7 w-48" />
+        </div>
+        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[10px] border border-idl-tech-border sm:grid-cols-3 lg:grid-cols-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 rounded-none" />
+          ))}
+        </div>
+      </SectionContainer>
+
+      <SectionContainer className="border-t border-idl-border py-10 sm:py-12">
+        <div className="mb-6 space-y-2">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-7 w-40" />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <GuideCardSkeleton key={i} variant="home" />
+          ))}
+        </div>
+      </SectionContainer>
     </div>
   )
 }
 
+export { EditorialHubSkeleton } from '@/components/site/skeletons/editorial-hub-skeleton'
+export { StaticHubSectionSkeleton } from '@/components/site/skeletons/editorial-hub-skeleton'
+
 export function CategoryLandingCatalogSkeleton({ variant = 'design' }: { variant?: 'design' | 'technical' }) {
   const isDesign = variant === 'design'
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="grid gap-6 lg:grid-cols-[248px_1fr]">
-        <Skeleton className="hidden h-80 rounded-lg lg:block" />
-        <div className="space-y-4">
-          <Skeleton className="h-10 w-full rounded-lg" />
-          <div
-            className={cn(
-              'grid gap-3 sm:gap-4',
-              isDesign ? 'sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-2 xl:grid-cols-3',
-            )}
-          >
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton
-                key={i}
-                className={cn('rounded-lg', isDesign ? 'h-72 sm:h-80' : 'h-64 sm:h-72')}
-              />
+    <div className="bg-idl-tech-panel">
+      <div className="border-b border-idl-tech-border">
+        <SectionContainer className="py-10 sm:py-12">
+          <Skeleton className="mb-4 h-4 w-56" />
+          <Skeleton className="h-3 w-28" />
+          <Skeleton className="mt-4 h-10 w-full max-w-xl" />
+          <Skeleton className="mt-3 h-5 w-full max-w-2xl" />
+        </SectionContainer>
+      </div>
+
+      {isDesign ? (
+        <SectionContainer className="py-8">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-28 rounded-lg" />
             ))}
           </div>
+        </SectionContainer>
+      ) : null}
+
+      <SectionContainer className="py-8 sm:py-10">
+        <div className="grid gap-6 lg:grid-cols-[248px_1fr]">
+          <Skeleton className="hidden h-80 rounded-lg lg:block" />
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-full rounded-lg" />
+            <div
+              className={cn(
+                'grid gap-3 sm:gap-4',
+                isDesign ? 'sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-2 xl:grid-cols-3',
+              )}
+            >
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton
+                  key={i}
+                  className={cn('rounded-lg', isDesign ? 'h-72 sm:h-80' : 'h-64 sm:h-72')}
+                />
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      </SectionContainer>
+
+      <SectionContainer className="pb-10">
+        <Skeleton className="h-32 w-full rounded-xl" />
+      </SectionContainer>
     </div>
   )
 }
@@ -527,9 +602,6 @@ export function OrderDetailSkeleton() {
   )
 }
 
-function DarkSkeleton({ className }: SkeletonProps) {
-  return <span aria-hidden="true" className={cn('block animate-pulse rounded-md bg-idl-cream', className)} />
-}
 
 export function CheckoutStripeBootstrapSkeleton() {
   const { t } = useI18n()
@@ -539,30 +611,7 @@ export function CheckoutStripeBootstrapSkeleton() {
       role="status"
       aria-label={t('skeleton.loadingCheckout')}
     >
-      <aside className="checkout-summary-dark hidden min-w-0 lg:col-start-1 lg:row-start-1 lg:block lg:min-h-dvh lg:w-auto lg:max-w-none lg:shrink">
-        <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-10 xl:px-12">
-          <DarkSkeleton className="h-5 w-32" />
-          {Array.from({ length: 2 }).map((_, index) => (
-            <div key={index} className="flex gap-4">
-              <DarkSkeleton className="size-16 shrink-0 rounded-md" />
-              <div className="flex-1 space-y-2">
-                <DarkSkeleton className="h-4 w-full" />
-                <DarkSkeleton className="h-3 w-20" />
-              </div>
-            </div>
-          ))}
-          <div className="space-y-3 border-t border-white/10 pt-6">
-            <div className="flex justify-between">
-              <DarkSkeleton className="h-4 w-24" />
-              <DarkSkeleton className="h-4 w-16" />
-            </div>
-            <div className="flex justify-between">
-              <DarkSkeleton className="h-5 w-16" />
-              <DarkSkeleton className="h-5 w-20" />
-            </div>
-          </div>
-        </div>
-      </aside>
+      <CheckoutSummarySkeleton />
       <main className={checkoutMainClass}>
         <div className="mx-auto w-full max-w-[540px] flex-1 space-y-8 px-4 py-5 sm:px-5 sm:py-6 md:px-6 lg:py-10 xl:px-12">
           <div className="flex gap-2 lg:hidden">

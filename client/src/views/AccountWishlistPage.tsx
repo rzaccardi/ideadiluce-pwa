@@ -10,7 +10,7 @@ import {
 } from '@/features/wishlist'
 import { AccountDcPanel } from '@/components/account/dc/AccountDcPanel'
 import { AccountDcPartCard } from '@/components/account/dc/AccountDcPartCard'
-import { ProductGridSkeleton } from '@/components/Skeleton'
+import { AccountWishlistSkeleton } from '@/components/site/skeletons/account-wishlist-skeleton'
 import { PageLoadTransition } from '@/components/motion'
 import { ToastOnError } from '@/components/ToastFeedback'
 import { useI18n } from '@/hooks/use-i18n'
@@ -56,7 +56,7 @@ export function AccountWishlistPage() {
 
       <PageLoadTransition
         isLoading={showProductsSkeleton}
-        skeleton={<ProductGridSkeleton count={Math.min(Math.max(wl.items.length, 4), 8)} />}
+        skeleton={<AccountWishlistSkeleton count={Math.min(Math.max(wl.items.length, 4), 8)} />}
       >
         {wl.items.length === 0 ? (
           <p className="py-8 text-center text-sm text-[#6c727c]">{t('wishlist.emptyDescription')}</p>

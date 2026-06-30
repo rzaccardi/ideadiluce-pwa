@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Toaster } from '@/components/ui/sonner'
 import { AdminAuthProvider } from '@/context/admin-auth'
@@ -6,19 +7,10 @@ import { ProtectedRoute } from '@/components/protected-route'
 import { LoginPage } from '@/pages/login/login-page'
 import { ShippingPage } from '@/pages/shipping/shipping-page'
 import { SocialProofPage } from '@/pages/social-proof/social-proof-page'
-import { OrdersPage } from '@/pages/orders/orders-page'
-import { OrderDetailPage } from '@/pages/orders/order-detail-page'
 import { RestockDetailPage } from '@/pages/restock/restock-detail-page'
 import { RestockPage } from '@/pages/restock/restock-page'
 import { AbandonedCartsPage } from '@/pages/abandoned-carts/abandoned-carts-page'
 import { AbandonedCartDetailPage } from '@/pages/abandoned-carts/abandoned-cart-detail-page'
-import { GuidesListPage } from '@/pages/guides/guides-list-page'
-import { GuideDetailPage } from '@/pages/guides/guide-detail-page'
-import { SeoPage } from '@/pages/seo/seo-page'
-import { SeoMigrationListPage } from '@/pages/seo/seo-migration-list-page'
-import { SeoMigrationDetailPage } from '@/pages/seo/seo-migration-detail-page'
-import { SitePagesListPage } from '@/pages/site/site-pages-list-page'
-import { SitePageDetailPage } from '@/pages/site/site-page-detail-page'
 import { ProfessionalRequestsPage } from '@/pages/professional-requests/professional-requests-page'
 import { ProfessionalRequestDetailPage } from '@/pages/professional-requests/professional-request-detail-page'
 import { TaxRulesPage } from '@/pages/tax-rules/tax-rules-page'
@@ -26,9 +18,53 @@ import { IntegrationLogsPage } from '@/pages/integration-logs/integration-logs-p
 import { DocumentDownloadsPage } from '@/pages/document-downloads/document-downloads-page'
 import { SearchAnalyticsPage } from '@/pages/search-analytics/search-analytics-page'
 import { SyncQueuePage } from '@/pages/sync-queue/sync-queue-page'
-import { OdooPricelistsPage } from '@/pages/odoo/pricelists-page'
-import { OdooQuotationDetailPage } from '@/pages/odoo/quotation-detail-page'
-import { OdooQuotationsPage } from '@/pages/odoo/quotations-page'
+
+const OrdersPage = lazy(() =>
+  import('@/pages/orders/orders-page').then((m) => ({ default: m.OrdersPage })),
+)
+const OrderDetailPage = lazy(() =>
+  import('@/pages/orders/order-detail-page').then((m) => ({ default: m.OrderDetailPage })),
+)
+const GuidesListPage = lazy(() =>
+  import('@/pages/guides/guides-list-page').then((m) => ({ default: m.GuidesListPage })),
+)
+const GuideDetailPage = lazy(() =>
+  import('@/pages/guides/guide-detail-page').then((m) => ({ default: m.GuideDetailPage })),
+)
+const SeoPage = lazy(() => import('@/pages/seo/seo-page').then((m) => ({ default: m.SeoPage })))
+const SeoMigrationListPage = lazy(() =>
+  import('@/pages/seo/seo-migration-list-page').then((m) => ({ default: m.SeoMigrationListPage })),
+)
+const SeoMigrationDetailPage = lazy(() =>
+  import('@/pages/seo/seo-migration-detail-page').then((m) => ({ default: m.SeoMigrationDetailPage })),
+)
+const SitePagesListPage = lazy(() =>
+  import('@/pages/site/site-pages-list-page').then((m) => ({ default: m.SitePagesListPage })),
+)
+const SitePageDetailPage = lazy(() =>
+  import('@/pages/site/site-page-detail-page').then((m) => ({ default: m.SitePageDetailPage })),
+)
+const OdooPricelistsPage = lazy(() =>
+  import('@/pages/odoo/pricelists-page').then((m) => ({ default: m.OdooPricelistsPage })),
+)
+const OdooQuotationDetailPage = lazy(() =>
+  import('@/pages/odoo/quotation-detail-page').then((m) => ({ default: m.OdooQuotationDetailPage })),
+)
+const OdooQuotationsPage = lazy(() =>
+  import('@/pages/odoo/quotations-page').then((m) => ({ default: m.OdooQuotationsPage })),
+)
+
+function RouteFallback() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground">
+      Caricamento…
+    </div>
+  )
+}
+
+function LazyPage({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<RouteFallback />}>{children}</Suspense>
+}
 
 export function App() {
   return (
@@ -40,8 +76,22 @@ export function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route index element={<Navigate to="/orders" replace />} />
-              <Route path="orders" element={<OrdersPage />} />
-              <Route path="orders/:id" element={<OrderDetailPage />} />
+              <Route
+                path="orders"
+                element={
+                  <LazyPage>
+                    <OrdersPage />
+                  </LazyPage>
+                }
+              />
+              <Route
+                path="orders/:id"
+                element={
+                  <LazyPage>
+                    <OrderDetailPage />
+                  </LazyPage>
+                }
+              />
               <Route path="abandoned-carts" element={<AbandonedCartsPage />} />
               <Route path="abandoned-carts/:id" element={<AbandonedCartDetailPage />} />
               <Route path="restock" element={<RestockPage />} />
@@ -51,18 +101,88 @@ export function App() {
               <Route path="integration-logs" element={<IntegrationLogsPage />} />
               <Route path="document-downloads" element={<DocumentDownloadsPage />} />
               <Route path="search-analytics" element={<SearchAnalyticsPage />} />
-              <Route path="odoo/quotations" element={<OdooQuotationsPage />} />
-              <Route path="odoo/quotations/:id" element={<OdooQuotationDetailPage />} />
-              <Route path="odoo/pricelists" element={<OdooPricelistsPage />} />
+              <Route
+                path="odoo/quotations"
+                element={
+                  <LazyPage>
+                    <OdooQuotationsPage />
+                  </LazyPage>
+                }
+              />
+              <Route
+                path="odoo/quotations/:id"
+                element={
+                  <LazyPage>
+                    <OdooQuotationDetailPage />
+                  </LazyPage>
+                }
+              />
+              <Route
+                path="odoo/pricelists"
+                element={
+                  <LazyPage>
+                    <OdooPricelistsPage />
+                  </LazyPage>
+                }
+              />
               <Route path="sync-queue" element={<SyncQueuePage />} />
               <Route path="social-proof" element={<SocialProofPage />} />
-              <Route path="site" element={<SitePagesListPage />} />
-              <Route path="site/:pageKey" element={<SitePageDetailPage />} />
-              <Route path="guides" element={<GuidesListPage />} />
-              <Route path="guides/:slug" element={<GuideDetailPage />} />
-              <Route path="seo" element={<SeoPage />} />
-              <Route path="seo/migration" element={<SeoMigrationListPage />} />
-              <Route path="seo/migration/:id" element={<SeoMigrationDetailPage />} />
+              <Route
+                path="site"
+                element={
+                  <LazyPage>
+                    <SitePagesListPage />
+                  </LazyPage>
+                }
+              />
+              <Route
+                path="site/:pageKey"
+                element={
+                  <LazyPage>
+                    <SitePageDetailPage />
+                  </LazyPage>
+                }
+              />
+              <Route
+                path="guides"
+                element={
+                  <LazyPage>
+                    <GuidesListPage />
+                  </LazyPage>
+                }
+              />
+              <Route
+                path="guides/:slug"
+                element={
+                  <LazyPage>
+                    <GuideDetailPage />
+                  </LazyPage>
+                }
+              />
+              <Route
+                path="seo"
+                element={
+                  <LazyPage>
+                    <SeoPage />
+                  </LazyPage>
+                }
+              />
+              <Route
+                path="seo/migration"
+                element={
+                  <LazyPage>
+                    <SeoMigrationListPage />
+                  </LazyPage>
+                }
+              />
+              <Route
+                path="seo/migration/:id"
+                element={
+                  <LazyPage>
+                    <SeoMigrationDetailPage />
+                  </LazyPage>
+                }
+              />
               <Route path="professional-requests" element={<ProfessionalRequestsPage />} />
               <Route path="professional-requests/:id" element={<ProfessionalRequestDetailPage />} />
             </Route>

@@ -220,7 +220,10 @@ html[data-theme='light'] {
   --color-idl-design-accent-bg: #1a1a1b;
   --color-idl-brass: #9a7b33;
   --color-idl-glow: #c9a24b;
-  --color-idl-path-design: #f8f8f6;
+  /* Card e panel: bianco opaco (non trasparente sul fondo pagina). */
+  --color-idl-tech-panel: #ffffff;
+  --color-idl-path-design: #ffffff;
+  --color-idl-path-tech: #ffffff;
   --color-idl-path-design-border: #e4e3de;
   --color-idl-cta-amber-hover: #b08e3e;
 

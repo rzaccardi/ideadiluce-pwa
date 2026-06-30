@@ -1,6 +1,8 @@
 export type SiteLink = {
   label: string
   href: string
+  imageUrl?: string
+  videoUrl?: string
 }
 
 export type SiteNavColumn = {
@@ -21,6 +23,17 @@ export type SiteMegaMenuPanel = {
   }
 }
 
+export type SiteFooterCompany = {
+  company: string
+  vat: string
+  rea: string
+  addressLines: string[]
+  phone: string
+  phoneHref: string
+  email: string
+  hoursLines: string[]
+}
+
 export type SiteShellContent = {
   utilityBar: {
     messages: string[]
@@ -34,6 +47,8 @@ export type SiteShellContent = {
   }
   trustBar: Array<{ title: string; subtitle: string }>
   footer: {
+    company?: SiteFooterCompany
+    social?: SiteLink[]
     columns: Array<{ title: string; links: SiteLink[] }>
     notFoundCta: { title: string; description: string; ctaLabel: string; ctaHref: string }
     legalNote: string
@@ -174,7 +189,11 @@ export type EditorialPageContent = {
 export type ArticleImageLayout = 'inline' | 'wide' | 'full' | 'portrait'
 
 export type ContentBlock =
-  | { kind: 'prose'; paragraphs: string[] }
+  | { kind: 'prose'; paragraphs: string[]; title?: string }
+  | {
+      kind: 'stats'
+      items: Array<{ value: string; label: string }>
+    }
   | {
       kind: 'features'
       title?: string
@@ -242,13 +261,14 @@ export type ContentPageContent = {
   layout?: 'default' | 'hero-dark' | 'legal' | 'article'
   eyebrow?: string
   title: string
+  titleAccent?: string
   subtitle?: string
   intro?: string
   heroBadges?: string[]
   coverImage?: { imageUrl: string; alt?: string; caption?: string }
   blocks: ContentBlock[]
   cta?: SiteLink
-  seo?: { noindex?: boolean }
+  seo?: { noindex?: boolean; terminiVersion?: number; privacyVersion?: number }
 }
 
 export type ProfessionistiPageContent = {
@@ -296,7 +316,7 @@ export type ProfessionistiPageContent = {
       phone: string
     }
   }
-  seo?: { noindex?: boolean }
+  seo?: { noindex?: boolean; terminiVersion?: number; privacyVersion?: number }
 }
 
 export type CatalogWorldConfig = {
@@ -321,7 +341,6 @@ export type SitePageKey =
   | 'guide'
   | 'catalog'
   | 'chi-siamo'
-  | 'showroom'
   | 'professionisti'
   | 'lavora-con-noi'
   | 'spedizioni'
@@ -329,7 +348,6 @@ export type SitePageKey =
   | 'garanzia'
   | 'contatti'
   | 'privacy'
-  | 'cookie'
   | 'termini'
   | 'prodotto-non-trovato'
   | 'guide-luce-calda-naturale-fredda'
@@ -351,14 +369,12 @@ export type EditorialPageKey = Extract<
 export type ContentPageKey = Extract<
   SitePageKey,
   | 'chi-siamo'
-  | 'showroom'
   | 'lavora-con-noi'
   | 'spedizioni'
   | 'pagamenti'
   | 'garanzia'
   | 'contatti'
   | 'privacy'
-  | 'cookie'
   | 'termini'
   | 'prodotto-non-trovato'
   | 'guide-luce-calda-naturale-fredda'

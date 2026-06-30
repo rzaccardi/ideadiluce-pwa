@@ -2,16 +2,21 @@
 
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from '@/lib/motion-client'
-import { Link } from '@/lib/navigation'
+import { Link, usePathname } from '@/lib/navigation'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import type { DcActiveNavId } from '@/lib/dc-static-routes'
 import type { SiteMegaMenuPanel, SiteShellContent } from '@/types/site-content'
 import { cn } from '@/utils/cn'
 import { ui } from '@/lib/ui-classes'
+import { layers } from '@/lib/layering'
 import { slideDownVariants, transitionBase } from '@/lib/motion/presets'
+import dynamic from 'next/dynamic'
 import { AttaccoMegaPanel } from './AttaccoMegaPanel'
-import { MobileSiteMenu } from './MobileSiteMenu'
-import { SiteHeaderActions } from './SiteHeaderActions'
+import { SiteHeaderActions, SiteHeaderSearch } from './SiteHeaderActions'
+
+const MobileSiteMenu = dynamic(() => import('./MobileSiteMenu').then((m) => ({ default: m.MobileSiteMenu })), {
+  ssr: false,
+})
 import { BrandWordmark, SectionContainer } from './primitives'
 
 function NavActiveBar({ tone }: { tone: 'design' | 'technical' | 'neutral' }) {
@@ -30,11 +35,9 @@ function NavActiveBar({ tone }: { tone: 'design' | 'technical' | 'neutral' }) {
 function MegaPanel({
   panel,
   variant,
-  onLinkClick,
 }: {
   panel: SiteMegaMenuPanel
   variant: 'design' | 'technical'
-  onLinkClick?: () => void
 }) {
   const lp = useLocalePath()
   const reduceMotion = useReducedMotion()
@@ -62,7 +65,6 @@ function MegaPanel({
                 <Link
                   key={link.href + link.label}
                   to={lp(link.href)}
-                  onClick={onLinkClick}
                   className={cn(
                     'transition-colors hover:underline',
                     dark ? 'text-idl-design-muted hover:text-idl-glow' : 'text-idl-graphite-2 hover:text-idl-amber',
@@ -102,7 +104,6 @@ function MegaPanel({
           </p>
           <Link
             to={lp(panel.promo.ctaHref)}
-            onClick={onLinkClick}
             className={cn(
               'inline-block rounded-md px-4 py-2.5 text-[13px] font-bold whitespace-nowrap transition-colors',
               panel.promo.variant === 'design'
@@ -119,6 +120,7 @@ function MegaPanel({
 
   const panelClass = cn(
     'absolute inset-x-0 top-full border-t shadow-2xl',
+    layers.megaPanel,
     dark ? 'border-idl-glow/20 bg-idl-design text-idl-design-fg' : 'border-idl-tech-border bg-idl-tech-panel',
   )
 
@@ -142,15 +144,23 @@ function MegaPanel({
 
 export function SiteHeader({
   nav,
+  footer,
   activeNavId = null,
 }: {
   nav: SiteShellContent['nav']
+  footer: SiteShellContent['footer']
   activeNavId?: DcActiveNavId | null
 }) {
   const lp = useLocalePath()
+  const pathname = usePathname()
   const reduceMotion = useReducedMotion()
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  useEffect(() => {
+    setOpenMenu(null)
+    setMobileOpen(false)
+  }, [pathname])
 
   useEffect(() => {
     if (!openMenu) return
@@ -193,6 +203,7 @@ export function SiteHeader({
   )
 
   const closeMenu = () => setOpenMenu(null)
+  const closeMobileMenu = () => setMobileOpen(false)
 
   return (
     <>
@@ -202,7 +213,7 @@ export function SiteHeader({
             key="menu-backdrop"
             type="button"
             aria-label="Chiudi menu"
-            className="fixed inset-0 z-20 bg-idl-backdrop"
+            className={cn('fixed inset-0 bg-idl-backdrop', layers.megaBackdrop)}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -212,13 +223,13 @@ export function SiteHeader({
         ) : null}
       </AnimatePresence>
       <motion.header
-        className={cn('sticky top-0 z-50', ui.headerBar)}
+        className={cn('relative', ui.headerBar)}
         initial={reduceMotion ? false : 'hidden'}
         animate="visible"
         variants={slideDownVariants}
         transition={transitionBase}
       >
-        <SectionContainer className="relative flex items-center justify-between gap-2 py-3 md:gap-3 md:py-4 lg:gap-4 lg:py-[18px]">
+        <SectionContainer className="relative flex items-center justify-between gap-2 py-3 md:gap-3 md:py-4 lg:gap-2 lg:py-4">
           <div className="flex min-w-0 items-center gap-3 md:gap-6 lg:gap-10">
             <button
               type="button"
@@ -234,7 +245,7 @@ export function SiteHeader({
               <span className={cn('w-5', ui.hamburgerBar)} />
               <span className={cn('w-3', ui.hamburgerBar)} />
             </button>
-            <Link to={lp('/')} className="rounded-sm transition-opacity hover:opacity-80" onClick={closeMenu}>
+            <Link to={lp('/')} className="rounded-sm transition-opacity hover:opacity-80">
               <BrandWordmark className="text-[20px] md:text-[22px] lg:text-[25px]" />
             </Link>
             <nav className="hidden items-center gap-5 text-[14.5px] font-medium lg:flex">
@@ -243,16 +254,22 @@ export function SiteHeader({
                   <Link
                     key={item.id}
                     to={lp(item.href)}
-                    onClick={closeMenu}
                     className={cn(
-                      'relative py-1.5 transition-colors',
+                      'group relative py-1.5',
                       activeNavId === item.id
                         ? ui.headerNavLinkActive
                         : ui.headerNavLink,
                     )}
                   >
                     {item.label}
-                    {activeNavId === item.id ? <NavActiveBar tone="neutral" /> : null}
+                    <span
+                      className={cn(
+                        'absolute inset-x-0 -bottom-px h-0.5 bg-idl-ink-soft transition-opacity duration-150',
+                        activeNavId === item.id
+                          ? 'opacity-100'
+                          : 'opacity-0 group-hover:opacity-100',
+                      )}
+                    />
                   </Link>
                 ) : (
                   <button
@@ -277,16 +294,18 @@ export function SiteHeader({
               )}
             </nav>
           </div>
-          <SiteHeaderActions />
+          <div className="flex shrink-0 items-center lg:gap-4">
+            <SiteHeaderSearch />
+            <SiteHeaderActions />
+          </div>
           <AnimatePresence>
             {activeDropdown?.id === 'attacco' ? (
-              <AttaccoMegaPanel key="attacco" onLinkClick={closeMenu} />
+              <AttaccoMegaPanel key="attacco" />
             ) : activeDropdown && activeDropdown.panel.columns.length > 0 ? (
               <MegaPanel
                 key={activeDropdown.id}
                 panel={activeDropdown.panel}
                 variant={activeDropdown.id === 'arredo' ? 'design' : 'technical'}
-                onLinkClick={closeMenu}
               />
             ) : null}
           </AnimatePresence>
@@ -300,12 +319,13 @@ export function SiteHeader({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={transitionBase}
-            className="fixed inset-0 z-[60] lg:hidden"
+            className={cn('fixed inset-0 lg:hidden', layers.mobileNav)}
           >
             <MobileSiteMenu
               nav={nav}
+              notFoundCta={footer.notFoundCta}
               activeNavId={activeNavId}
-              onClose={() => setMobileOpen(false)}
+              onClose={closeMobileMenu}
             />
           </motion.div>
         ) : null}
