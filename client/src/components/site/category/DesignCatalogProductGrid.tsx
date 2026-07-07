@@ -2,6 +2,7 @@ import { memo } from 'react'
 import { Link } from '@/lib/navigation'
 import type { ProductCardDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
+import { productSeoPath } from '@/lib/seo-paths'
 import { SiteImage } from '../SiteImage'
 import { HoverLift } from '@/components/motion'
 import { CatalogProductCardSkeleton } from '../catalog/CatalogProductCardSkeleton'
@@ -25,7 +26,7 @@ export const DesignCatalogProductCard = memo(function DesignCatalogProductCard({
   return (
     <HoverLift className="h-full">
       <Link
-        to={lp(`/prodotto/${product.slug}`)}
+        to={lp(productSeoPath(product.slug))}
         className="group flex h-full flex-col overflow-hidden rounded border border-idl-path-design-border bg-white transition hover:border-idl-brass hover:shadow-[0_6px_20px_rgba(0,0,0,0.06)] dark:bg-idl-tech-panel"
       >
         <div className="relative aspect-[4/5] overflow-hidden bg-idl-cream">

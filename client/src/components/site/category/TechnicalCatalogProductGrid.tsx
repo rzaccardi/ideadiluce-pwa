@@ -5,6 +5,7 @@ import { Link } from '@/lib/navigation'
 import { useLocale } from '@/context/locale-context'
 import type { ProductCardDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
+import { productSeoPath } from '@/lib/seo-paths'
 import { formatTechnicalProductRefLine } from '@/lib/technical-product-ref'
 import { buildTechnicalCardSpecTags } from '@/lib/technical-card-spec-tags'
 import {
@@ -91,7 +92,7 @@ export const TechnicalCatalogProductCard = memo(function TechnicalCatalogProduct
           checked ? 'border-idl-amber ring-1 ring-idl-amber/30' : 'border-idl-tech-border',
         )}
       >
-        <Link to={lp(`/prodotto/${product.slug}`)} className="block">
+        <Link to={lp(productSeoPath(product.slug))} className="block">
           <div className="mb-2 flex items-center justify-between">
             <span className={`text-[11px] font-bold ${stock.className}`}>{stock.label}</span>
             {showSelection && selection ? (

@@ -5,6 +5,7 @@ import {
 } from '@/lib/product-availability'
 import { getSiteUrl } from '@/lib/env'
 import { localizePath, type PwaLocale } from '@/lib/locale'
+import { productSeoPath } from '@/lib/seo-paths'
 
 export type BreadcrumbItem = {
   name: string
@@ -52,7 +53,7 @@ export function buildProductJsonLd(
 
 export function buildProductPageUrl(slug: string, locale: PwaLocale): string {
   const site = getSiteUrl().replace(/\/$/, '')
-  return `${site}${localizePath(`/prodotto/${encodeURIComponent(slug)}`, locale)}`
+  return `${site}${localizePath(productSeoPath(slug), locale)}`
 }
 
 export function buildBreadcrumbJsonLd(items: BreadcrumbItem[]) {
@@ -122,7 +123,7 @@ export function buildCollectionPageJsonLd(input: {
           itemListElement: input.products.map((product, index) => ({
             '@type': 'ListItem',
             position: index + 1,
-            url: `${site}${localizePath(`/prodotto/${encodeURIComponent(product.slug)}`, 'IT')}`,
+            url: `${site}${localizePath(productSeoPath(product.slug), 'IT')}`,
             name: product.name,
           })),
         }

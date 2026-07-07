@@ -1,5 +1,6 @@
 import { ATTACCO_SEARCH, ATTACCO_SOCKETS } from '@/lib/attacco.defaults'
 import { CATALOG_SEARCH_LIMITS, sanitizeCatalogSearchInput } from '@/lib/catalog-search-limits'
+import { productSeoPath } from '@/lib/seo-paths'
 import type { CategoryDTO, PriceDisplayModeDTO } from '@/types/dto'
 import type { BrandListItemDTO } from '@/types/site-content'
 
@@ -205,7 +206,7 @@ export function productToSearchSuggestion(product: {
     kind: 'product',
     label: product.name,
     sublabel,
-    path: `/prodotto/${encodeURIComponent(product.slug)}`,
+    path: productSeoPath(product.slug),
     product: {
       imageUrl: product.imageUrl,
       priceCents: product.priceCents,
