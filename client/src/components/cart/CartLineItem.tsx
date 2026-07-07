@@ -3,6 +3,7 @@
 import { Link } from '@/lib/navigation'
 import type { CartItemDTO, CartStockInsufficientDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
+import { productSeoPath } from '@/lib/seo-paths'
 import { moveLineToWishlist, removeItem, updateItem } from '@/features/cart'
 import { CartLineStockAlert, getCartStockIssue } from '@/components/cart/CartStockAlert'
 import { CartLineThumb } from '@/components/cart/CartLineThumb'
@@ -30,7 +31,7 @@ export function CartLineItem({ line, currencyCode, stockInsufficient, isLoading,
   const unpurchasable = blocked || line.purchasable === false
   const availability = getCartLineAvailabilityDisplay(line)
   const chips = cartLineVariantChips(line)
-  const productHref = `/prodotto/${line.productSlug ?? line.productRef}`
+  const productHref = productSeoPath(line.productSlug ?? line.productRef)
 
   const unitPrice =
     line.clientUnitPriceEstimateCents != null

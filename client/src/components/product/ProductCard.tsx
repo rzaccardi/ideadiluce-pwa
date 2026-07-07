@@ -6,6 +6,7 @@ import { useSnapshot } from 'valtio/react'
 import { useLocale } from '@/context/locale-context'
 import { useI18n } from '@/hooks/use-i18n'
 import type { ProductCardDTO } from '@/types/dto'
+import { productSeoPath } from '@/lib/seo-paths'
 import { addItem, cartStore, getProductCartQuantity } from '@/features/cart'
 import { buildCartAddHintFromCard } from '@/features/cart/cart-add-hint'
 import { useProductCardStores } from '@/features/product/useProductCardStores'
@@ -51,7 +52,7 @@ export function ProductCard({ product, className }: Props) {
   const { localize, locale } = useLocale()
   const { t, tParams } = useI18n()
   const cartItems = useSnapshot(cartStore).cart?.items
-  const productHref = localize(`/prodotto/${product.slug}`)
+  const productHref = localize(productSeoPath(product.slug))
   const [pendingAction, setPendingAction] = useState<QuickAction | null>(null)
   const cartQuantity = getProductCartQuantity(cartItems, product.slug)
   const inCart = cartQuantity > 0

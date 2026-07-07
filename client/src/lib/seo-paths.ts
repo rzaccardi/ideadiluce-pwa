@@ -24,6 +24,10 @@ export function buildLocalizedPageSeo(input: {
   return { canonical, alternates }
 }
 
+export function productSeoPath(slug: string): string {
+  return `/prodotto/${slug}`
+}
+
 export function categorySeoPath(slug: string): string {
   return `/categoria/${slug}`
 }

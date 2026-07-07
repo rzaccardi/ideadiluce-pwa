@@ -4,6 +4,7 @@ import { Link } from '@/lib/navigation'
 import { toast } from 'sonner'
 import type { ProductCardDTO } from '@/types/dto'
 import { useLocale } from '@/context/locale-context'
+import { productSeoPath } from '@/lib/seo-paths'
 import { addItem } from '@/features/cart'
 import { buildCartAddHintFromCard } from '@/features/cart/cart-add-hint'
 import { removeWishlistItem } from '@/features/wishlist'
@@ -92,7 +93,7 @@ export function WishlistItemCard({
         className,
       )}
     >
-      <Link to={localize(`/prodotto/${product.slug}`)} className="block">
+      <Link to={localize(productSeoPath(product.slug))} className="block">
         <div className="aspect-square overflow-hidden bg-idl-cream">
           {product.imageUrl ? (
             <img
@@ -109,7 +110,7 @@ export function WishlistItemCard({
       </Link>
       <div className="flex flex-1 flex-col p-4">
         <Link
-          to={localize(`/prodotto/${product.slug}`)}
+          to={localize(productSeoPath(product.slug))}
           className="font-medium text-idl-graphite hover:underline"
         >
           {product.name}
