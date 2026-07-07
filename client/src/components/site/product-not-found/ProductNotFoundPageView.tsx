@@ -1,5 +1,6 @@
 'use client'
 
+import { ExternalLink } from '@/lib/link-title'
 import { Link } from '@/lib/navigation'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
@@ -124,7 +125,7 @@ export function ProductNotFoundPageView({ content }: Props) {
                     </div>
                     <div className="flex flex-col gap-2.5">
                       {contact.whatsapp ? (
-                        <a
+                        <ExternalLink
                           href={contact.whatsapp}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -132,23 +133,23 @@ export function ProductNotFoundPageView({ content }: Props) {
                         >
                           <WhatsAppIcon />
                           {t('productNotFound.whatsapp')}
-                        </a>
+                        </ExternalLink>
                       ) : null}
                       {contact.phone ? (
-                        <a
+                        <ExternalLink
                           href={contact.phoneHref ?? `tel:${contact.phone}`}
                           className="flex items-center gap-3 rounded-[9px] border border-white/20 px-4 py-3 text-sm font-semibold text-idl-cream transition hover:border-idl-brass/50"
                         >
                           Tel: {contact.phone}
-                        </a>
+                        </ExternalLink>
                       ) : null}
                       {contact.email ? (
-                        <a
+                        <ExternalLink
                           href={`mailto:${contact.email}`}
                           className="flex items-center gap-3 rounded-[9px] border border-white/20 px-4 py-3 text-sm font-semibold text-idl-cream transition hover:border-idl-brass/50"
                         >
                           {contact.email}
-                        </a>
+                        </ExternalLink>
                       ) : null}
                     </div>
                   </div>
@@ -183,14 +184,14 @@ export function ProductNotFoundPageView({ content }: Props) {
                     <p className="mt-1 text-[12.5px] leading-relaxed text-idl-muted">
                       {t('productNotFound.showroomBody')}
                     </p>
-                    <a
+                    <ExternalLink
                       href={SHOWROOM_MAPS_URL}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="mt-2.5 inline-flex text-sm font-bold text-idl-brass hover:text-idl-amber"
                     >
                       {t('productNotFound.showroomCta')} →
-                    </a>
+                    </ExternalLink>
                   </div>
                 </div>
               </Reveal>

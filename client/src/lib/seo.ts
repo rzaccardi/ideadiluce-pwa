@@ -1,6 +1,12 @@
 import type { Metadata } from 'next'
 import type { ProductAlternateDTO, ProductSeoDTO } from '@/types/dto'
 import { getSiteUrl } from '@/lib/env'
+import {
+  DEFAULT_OG_IMAGE_ALT,
+  DEFAULT_OG_IMAGE_HEIGHT,
+  DEFAULT_OG_IMAGE_WIDTH,
+  resolveOgImageUrl,
+} from '@/lib/seo/og-image'
 
 export {
   buildArticleJsonLd,
@@ -50,6 +56,7 @@ export function buildMetadata(input: {
   ogType?: string
 }): Metadata {
   const { title, description, canonical, noindex, alternates = [], ogImage, ogType } = input
+  const resolvedOgImage = resolveOgImageUrl(ogImage)
 
   const languages: Record<string, string> = {}
   for (const alt of alternates) {
@@ -73,13 +80,22 @@ export function buildMetadata(input: {
       description: description ?? undefined,
       type: resolveOpenGraphType(ogType),
       url: canonical ?? undefined,
-      images: ogImage ? [{ url: ogImage }] : undefined,
+      images: [
+        ogImage
+          ? { url: resolvedOgImage }
+          : {
+              url: resolvedOgImage,
+              width: DEFAULT_OG_IMAGE_WIDTH,
+              height: DEFAULT_OG_IMAGE_HEIGHT,
+              alt: DEFAULT_OG_IMAGE_ALT,
+            },
+      ],
     },
     twitter: {
-      card: ogImage ? 'summary_large_image' : 'summary',
+      card: 'summary_large_image',
       title,
       description: description ?? undefined,
-      images: ogImage ? [ogImage] : undefined,
+      images: [resolvedOgImage],
     },
   }
 }

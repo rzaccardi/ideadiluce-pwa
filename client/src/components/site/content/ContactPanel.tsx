@@ -1,4 +1,5 @@
 import type { ContentBlock } from '@/types/site-content'
+import { ExternalLink } from '@/lib/link-title'
 import { cn } from '@/utils/cn'
 import { ui } from '@/lib/ui-classes'
 
@@ -35,12 +36,12 @@ export function ContactPanel({ block, className }: Props) {
             <div>
               <span className={ui.labelSm}>Telefono</span>
               <p className="mt-1">
-                <a
+                <ExternalLink
                   href={block.phoneHref ?? `tel:${block.phone}`}
                   className="font-semibold text-idl-brass transition hover:text-idl-amber"
                 >
                   {block.phone}
-                </a>
+                </ExternalLink>
               </p>
             </div>
           ) : null}
@@ -48,12 +49,12 @@ export function ContactPanel({ block, className }: Props) {
             <div>
               <span className={ui.labelSm}>Email</span>
               <p className="mt-1">
-                <a
+                <ExternalLink
                   href={`mailto:${block.email}`}
                   className="font-semibold text-idl-brass transition hover:text-idl-amber"
                 >
                   {block.email}
-                </a>
+                </ExternalLink>
               </p>
             </div>
           ) : null}
@@ -67,14 +68,14 @@ export function ContactPanel({ block, className }: Props) {
 
         {block.whatsapp ? (
           <div className="flex flex-wrap gap-3 border-t border-idl-border/80 pt-5">
-            <a
+            <ExternalLink
               href={block.whatsapp}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-lg bg-[#1f9d57] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#188a4a]"
             >
               WhatsApp
-            </a>
+            </ExternalLink>
           </div>
         ) : null}
       </div>

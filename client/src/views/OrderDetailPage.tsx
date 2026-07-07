@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { ExternalLink } from '@/lib/link-title'
 import { Link, useNavigate, useParam } from '@/lib/navigation'
 import { useSnapshot } from 'valtio/react'
 import { toast } from 'sonner'
@@ -192,14 +193,14 @@ export function OrderDetailPage() {
 
       <div className="flex flex-wrap gap-3">
         {order.odooPortalUrl ? (
-          <a
+          <ExternalLink
             href={order.odooPortalUrl}
             target="_blank"
             rel="noreferrer"
             className={accountDcPrimaryBtnClass}
           >
             {t('orders.detail.invoicePortal')}
-          </a>
+          </ExternalLink>
         ) : (
           <p className="w-full text-sm text-[#6c727c]">{t('paymentResult.syncNote')}</p>
         )}

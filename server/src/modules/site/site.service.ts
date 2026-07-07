@@ -407,6 +407,7 @@ export async function seedSitePages() {
   await patchShellFooterCompany()
   await patchShellItSource()
   await patchHomeHeroCategoryLinks()
+  await patchHomeSeoHeroCopy()
   await patchAmbientiPageLinks()
   await patchLegacyCatalogPaths()
   await patchProfessionistiPageContent()
@@ -441,6 +442,32 @@ async function patchHomeHeroCategoryLinks() {
 
     if (legacyDesign) content.hero.design.ctaHref = nextDesign
     if (legacyTechnical) content.hero.technical.ctaHref = nextTechnical
+    await siteRepository.upsert('home', locale, content, row.published)
+  }
+}
+
+/** Hero home: allinea H1 e intro al title tag SEO (Illumina con stile · Idea di Luce). */
+async function patchHomeSeoHeroCopy() {
+  const nextTitle = DEFAULT_HOME_IT.hero.design.title
+  const nextDescription = DEFAULT_HOME_IT.hero.design.description
+  const legacyTitles = new Set(["Illuminazione d'arredo", 'Illuminazione d’arredo'])
+  const legacyDescription =
+    "Lampade, sospensioni e applique d'autore. Brand, designer e ambienti per dare carattere ai tuoi spazi."
+
+  for (const locale of SITE_LOCALES) {
+    const row = await siteRepository.findByKeyLocale('home', locale)
+    if (!row?.published) continue
+
+    const content = row.content as HomePageContent
+    const design = content.hero?.design
+    if (!design) continue
+    if (design.title === nextTitle && design.description === nextDescription) continue
+    if (!legacyTitles.has(design.title)) continue
+
+    design.title = nextTitle
+    if (design.description === legacyDescription) {
+      design.description = nextDescription
+    }
     await siteRepository.upsert('home', locale, content, row.published)
   }
 }

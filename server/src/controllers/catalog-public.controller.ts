@@ -82,8 +82,16 @@ export const catalogPublicController = {
       q: searchQ,
       categorySlug: typeof req.query.category === 'string' ? req.query.category : undefined,
       brandSlug: typeof req.query.brand === 'string' ? req.query.brand : undefined,
+      attacco: typeof req.query.attacco === 'string' ? req.query.attacco : undefined,
+      colorTemp:
+        typeof req.query.colorTemp === 'string'
+          ? req.query.colorTemp
+          : typeof req.query.color_temp === 'string'
+            ? req.query.color_temp
+            : undefined,
       partnerId: pricing.partnerId ?? undefined,
       pricelistId: pricing.pricelistId ?? undefined,
+      pricing,
     })
     res.json(ok(data))
   }),

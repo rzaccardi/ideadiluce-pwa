@@ -6,12 +6,15 @@ import {
   isArflyConfigured,
 } from '../../adapters/arfly/arflyClient.js'
 import { mapArflyListResponse } from '../../adapters/arfly/arflyMapper.js'
+import { env } from '../../config/env.js'
 import type { HubLocale } from '../../lib/hub-locale.js'
 import { parseHubLocale } from '../../lib/hub-locale.js'
 import type { CategoryDTO, ProductListDTO } from '../../types/dto.js'
-import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { enrichProductCardsWithStock, type ProductCardStockHint } from './catalog-stock.enrich.js'
 import { sanitizeCatalogSearchQuery } from './catalog-search-guard.js'
+import { searchOdooCatalogProducts } from './odoo-catalog-search.service.js'
+import type { PricingContext } from '../pricing/pricelist.service.js'
 
 export type BrandListItemDTO = {
   slug: string
@@ -202,13 +205,41 @@ export const catalogStorefrontService = {
     q?: string
     categorySlug?: string
     brandSlug?: string
+    attacco?: string
+    colorTemp?: string
     partnerId?: number
     pricelistId?: number
+    pricing?: PricingContext | null
   }): Promise<ProductListDTO> {
     const locale = parseHubLocale(options.locale)
     const page = Math.max(1, Number(options.page) || 1)
     const pageSize = Math.min(60, Math.max(1, Number(options.pageSize) || 24))
     const effectiveQ = sanitizeCatalogSearchQuery(options.q) ?? ''
+    const pricing =
+      options.pricing ??
+      (options.partnerId != null || options.pricelistId != null
+        ? {
+            segment: 'RETAIL' as const,
+            partnerId: options.partnerId ?? null,
+            pricelistId: options.pricelistId ?? null,
+          }
+        : null)
+
+    if (env.ODOO_ENABLED && isOdooConfigured()) {
+      const listed = await searchOdooCatalogProducts(ctx, {
+        locale,
+        page,
+        pageSize,
+        q: effectiveQ || undefined,
+        categorySlug: options.categorySlug,
+        brandSlug: options.brandSlug,
+        attacco: options.attacco,
+        colorTemp: options.colorTemp,
+        pricing,
+      })
+      const enrichedItems = await enrichProductCardsWithStock(ctx, listed.items)
+      return { ...listed, items: enrichedItems }
+    }
 
     if (!isArflyConfigured()) {
       return {

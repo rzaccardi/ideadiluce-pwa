@@ -4,5 +4,5 @@ import { proxySeoAsset } from '@/lib/seo-public-routes'
 export const revalidate = 21600
 
 export async function GET() {
-  return proxySeoAsset('/llms.txt', 'text/plain; charset=utf-8')
+  return proxySeoAsset('/llms.txt', 'text/markdown; charset=utf-8')
 }

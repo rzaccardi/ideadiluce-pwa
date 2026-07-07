@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "docker compose -f ../docker-compose.yml up -d --wait && node ../scripts/free-port.mjs 4000 && npx tsx watch src/server.ts",
+    "dev": "node scripts/dev.mjs",
     "dev:nodemon": "nodemon --watch src --ext ts --exec npx tsx src/server.ts",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",

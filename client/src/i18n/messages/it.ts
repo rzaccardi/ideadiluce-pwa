@@ -121,7 +121,8 @@ export const messages: Record<MessageKey, string> = {
   'auth.loginError': 'Errore di accesso',
   'home.title': 'Idea di Luce',
   'home.subtitle': 'Illuminazione per casa e professionisti',
-  'home.metaDescription': 'La luce pensata. Illuminazione per casa e professionisti.',
+  'home.metaDescription':
+    'Idea di Luce: illuminazione d\'arredo, lampadine e prodotti tecnici per casa e professionisti. Showroom a Roma, spedizione in tutta Italia.',
   'home.featuredTitle': 'Prodotti in evidenza',
   'home.featuredDescription': 'Una selezione dal negozio disponibile.',
   'home.goToCatalog': 'Vai al negozio',

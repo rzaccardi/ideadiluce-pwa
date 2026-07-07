@@ -1,7 +1,7 @@
 import type { CatalogSort } from '@/features/catalog/catalog.store'
 import type { CategoryFilterGroup, CategoryLandingKey } from '@/types/category-landing'
 import type { BrandListItemDTO } from '@/types/site-content'
-import { centsToPriceBucket, priceBucketToCents, type CatalogPriceBucket } from '@/lib/catalog-filters'
+import { centsToPriceBucket, priceBucketToCents, type CatalogPriceBucket, type CatalogSpecFilters } from '@/lib/catalog-filters'
 
 export type CategoryLandingCatalogConfig = {
   categorySlug: string
@@ -77,6 +77,16 @@ export function toggleCategoryLandingFilter(
   if (value.startsWith('stock-')) {
     for (const existing of next) {
       if (existing.startsWith('stock-')) next.delete(existing)
+    }
+  }
+  if (value.startsWith('attacco-')) {
+    for (const existing of next) {
+      if (existing.startsWith('attacco-')) next.delete(existing)
+    }
+  }
+  if (value.startsWith('kelvin-')) {
+    for (const existing of next) {
+      if (existing.startsWith('kelvin-')) next.delete(existing)
     }
   }
 
@@ -160,6 +170,51 @@ export function resolveCategoryLandingBrandSlug(
   return fuzzy?.slug
 }
 
+const ATTACCO_FILTER_TO_CODE: Record<string, string> = {
+  'attacco-gu10': 'GU10',
+  'attacco-e27': 'E27',
+  'attacco-e14': 'E14',
+  'attacco-gu53': 'GU5.3',
+  'attacco-r7s': 'R7s',
+  'attacco-g9': 'G9',
+  'attacco-t8': 'T8',
+}
+
+const KELVIN_FILTER_TO_CODE: Record<string, string> = {
+  'kelvin-2700k': '2700K',
+  'kelvin-3000k': '3000K',
+  'kelvin-4000k': '4000K',
+  'kelvin-6500k': '6500K',
+}
+
+export function resolveCategoryLandingSpecFilters(
+  selected: ReadonlySet<string>,
+  urlParams?: URLSearchParams,
+): CatalogSpecFilters {
+  const attaccoFromUrl = urlParams?.get('attacco')?.trim()
+  const colorTempFromUrl = urlParams?.get('colorTemp')?.trim()
+  if (attaccoFromUrl || colorTempFromUrl) {
+    return {
+      attacco: attaccoFromUrl || undefined,
+      colorTemp: colorTempFromUrl || undefined,
+    }
+  }
+
+  let attacco: string | undefined
+  let colorTemp: string | undefined
+
+  for (const value of selected) {
+    if (!attacco && value.startsWith('attacco-')) {
+      attacco = ATTACCO_FILTER_TO_CODE[value]
+    }
+    if (!colorTemp && value.startsWith('kelvin-')) {
+      colorTemp = KELVIN_FILTER_TO_CODE[value]
+    }
+  }
+
+  return { attacco, colorTemp }
+}
+
 export function buildCategoryLandingSearchQuery(input: {
   pageKey: CategoryLandingKey
   baseQuery?: string
@@ -176,6 +231,7 @@ export function buildCategoryLandingSearchQuery(input: {
   for (const { option, value } of allFilterOptions(input.groups)) {
     if (!input.selected.has(value)) continue
     if (value.startsWith('price-') || value.startsWith('stock-')) continue
+    if (value.startsWith('attacco-') || value.startsWith('kelvin-')) continue
     if (value.startsWith('brand-')) {
       if (!input.brandSlug) tokens.push(option.queryToken ?? option.label)
       continue

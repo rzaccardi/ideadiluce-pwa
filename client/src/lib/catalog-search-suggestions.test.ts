@@ -27,10 +27,20 @@ describe('searchLocalCatalogSuggestions', () => {
 })
 
 describe('buildCatalogSubmitPath', () => {
-  it('costruisce URL catalogo tecnico con query', () => {
+  it('costruisce URL catalogo tecnico con attacco GU10', () => {
     expect(buildCatalogSubmitPath('GU10', { world: 'technical' })).toBe(
-      '/negozio?world=technical&q=GU10',
+      '/negozio?world=technical&attacco=GU10',
     )
+  })
+
+  it('preserva filtri attivi nel submit', () => {
+    expect(
+      buildCatalogSubmitPath('lampadina', {
+        world: 'technical',
+        attacco: 'E27',
+        colorTemp: '3000K',
+      }),
+    ).toBe('/negozio?world=technical&attacco=E27&colorTemp=3000K&q=lampadina')
   })
 
   it('tronca query troppo lunga nel path', () => {

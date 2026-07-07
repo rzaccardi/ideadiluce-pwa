@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useSnapshot } from 'valtio/react'
+import { ExternalLink } from '@/lib/link-title'
 import { Link } from '@/lib/navigation'
 import { SHOWROOM_MAPS_URL } from '@/lib/company-contact'
 import { isExternalHref } from '@/lib/href'
@@ -534,7 +535,7 @@ function MobileAltroPanel() {
     <div className="flex flex-col gap-1">
       {quickLinks.map((link) =>
         isExternalHref(link.href) ? (
-          <a
+          <ExternalLink
             key={link.href}
             href={link.href}
             target="_blank"
@@ -542,7 +543,7 @@ function MobileAltroPanel() {
             className="rounded-lg px-2 py-2.5 text-[14px] font-medium text-idl-ink-soft transition-colors hover:bg-idl-path-design hover:text-idl-brass"
           >
             {link.label}
-          </a>
+          </ExternalLink>
         ) : (
           <Link
             key={link.href}

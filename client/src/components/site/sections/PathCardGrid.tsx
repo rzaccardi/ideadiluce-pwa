@@ -1,6 +1,7 @@
 import { Link } from '@/lib/navigation'
 import type { HomePathCard } from '@/types/site-content'
 import { HoverLift, Stagger, StaggerItem } from '@/components/motion'
+import { SiteCardHeading } from '@/components/site/SiteHeading'
 import { cn } from '@/utils/cn'
 import type { LocalePathFn } from './types'
 
@@ -25,7 +26,7 @@ export function PathCardGrid({ cards, lp, stagger = 0.06 }: Props) {
                 card.variant === 'dark' && 'border-transparent bg-idl-design text-idl-design-fg',
               )}
             >
-              <div className="text-base font-bold">{card.title}</div>
+              <SiteCardHeading className="text-base">{card.title}</SiteCardHeading>
               <p
                 className={cn(
                   'mt-1.5 flex-1 text-[13px] leading-snug',

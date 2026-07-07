@@ -1,3 +1,4 @@
+import { ExternalLink } from '@/lib/link-title'
 import { CategoryBreadcrumb } from '../../category/CategoryBreadcrumb'
 import { Eyebrow, SectionContainer } from '../../primitives'
 import { AMBIENTI_HERO } from '@/lib/ambienti.defaults'
@@ -29,18 +30,18 @@ export function AmbientiHeroSection({ lp }: Props) {
             {AMBIENTI_HERO.subtitle}
           </p>
           <div className="mt-6 flex flex-col items-stretch justify-center gap-3 sm:mt-8 sm:flex-row sm:items-center">
-            <a
+            <ExternalLink
               href={AMBIENTI_HERO.primaryCta.href}
               className="rounded-[7px] bg-idl-glow px-6 py-3.5 text-center text-[15px] font-bold text-idl-design transition hover:bg-[#f7bd6f]"
             >
               {AMBIENTI_HERO.primaryCta.label}
-            </a>
-            <a
+            </ExternalLink>
+            <ExternalLink
               href={AMBIENTI_HERO.secondaryCta.href}
               className="rounded-[7px] border border-white/20 px-6 py-3 text-center text-[15px] font-semibold text-idl-design-fg transition hover:border-idl-glow hover:text-idl-glow"
             >
               {AMBIENTI_HERO.secondaryCta.label}
-            </a>
+            </ExternalLink>
           </div>
         </div>
       </SectionContainer>

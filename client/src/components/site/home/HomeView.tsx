@@ -41,7 +41,7 @@ export function HomeView({
   const lp = useLocalePath()
 
   return (
-    <div className="bg-idl-tech-panel">
+    <main className="bg-idl-tech-panel">
       <Reveal immediate>
         <HomeHeroSection design={content.hero.design} technical={content.hero.technical} lp={lp} />
       </Reveal>
@@ -116,6 +116,6 @@ export function HomeView({
           privacyNote={content.newsletter.privacyNote}
         />
       </Reveal>
-    </div>
+    </main>
   )
 }

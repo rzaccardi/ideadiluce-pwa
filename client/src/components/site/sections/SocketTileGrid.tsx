@@ -1,5 +1,6 @@
 import { Link } from '@/lib/navigation'
 import { HoverLift, Stagger, StaggerItem } from '@/components/motion'
+import { SiteHeading } from '@/components/site/SiteHeading'
 import type { LocalePathFn } from './types'
 
 export type SocketTileItem = {
@@ -28,9 +29,9 @@ export function SocketTileGrid({ items, lp, variant = 'home', stagger = 0.04 }: 
                 to={lp(tile.href)}
                 className="flex min-h-[120px] flex-col rounded-lg border border-idl-tech-border bg-idl-tech-panel p-5 transition hover:border-idl-brass"
               >
-                <div className="font-mono text-2xl font-bold tracking-tight text-idl-ink">
+                <SiteHeading level={3} className="font-mono text-2xl font-bold tracking-tight text-idl-ink">
                   {tile.code ?? tile.title}
-                </div>
+                </SiteHeading>
                 {tile.description ? (
                   <p className="mt-2 text-sm text-idl-muted">{tile.description}</p>
                 ) : null}

@@ -1,6 +1,7 @@
 'use client'
 
 import type { ThankYouOrderDTO } from '@/types/dto'
+import { ExternalLink } from '@/lib/link-title'
 import { Link } from '@/lib/navigation'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { useI18n } from '@/hooks/use-i18n'
@@ -99,9 +100,9 @@ export function PurchaseErrorPageView({ order }: Props) {
             <LockIcon />
             {t('purchaseError.securePayment')}
           </div>
-          <a href="tel:+39067167111" className="text-[13px] text-[#3a3a3d] no-underline">
+          <ExternalLink href="tel:+39067167111" className="text-[13px] text-[#3a3a3d] no-underline">
             {t('purchaseError.supportPhone')}
-          </a>
+          </ExternalLink>
         </SectionContainer>
       </div>
 
@@ -316,9 +317,9 @@ export function PurchaseErrorPageView({ order }: Props) {
           <div className="text-[12.5px]">{t('purchaseError.footer.company')}</div>
           <div className="text-[12.5px]">
             {t('purchaseError.footer.help')}{' '}
-            <a href="mailto:info@ideadiluce.com" className="font-bold text-[#c9a24b] no-underline">
+            <ExternalLink href="mailto:info@ideadiluce.com" className="font-bold text-[#c9a24b] no-underline">
               info@ideadiluce.com
-            </a>
+            </ExternalLink>
           </div>
         </SectionContainer>
       </div>

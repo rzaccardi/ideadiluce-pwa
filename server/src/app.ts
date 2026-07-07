@@ -15,6 +15,7 @@ import {
   getCachedMerchantFeedXml,
   getCachedSitemapXml,
 } from './modules/seo/seo-cache.service.js'
+import { LLMS_TXT_CONTENT_TYPE } from './modules/seo/llms.service.js'
 import { sendSeoPublicAsset } from './modules/seo/seo-response.js'
 import { arflyProxyRouter } from './modules/arfly-proxy/arfly-proxy.routes.js'
 import { asyncHandler } from './utils/async-handler.js'
@@ -77,7 +78,7 @@ export function createApp() {
     '/llms.txt',
     asyncHandler(async (_req, res) => {
       const { body, builtAt } = await getCachedLlmsTxt()
-      sendSeoPublicAsset(res, 'text/plain; charset=utf-8', body, builtAt)
+      sendSeoPublicAsset(res, LLMS_TXT_CONTENT_TYPE, body, builtAt)
     }),
   )
   app.get(

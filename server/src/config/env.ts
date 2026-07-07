@@ -145,8 +145,14 @@ const envSchema = z.object({
    * Se assente, si usano le stesse regole di `requireLogin`.
    */
   INTEGRATIONS_TOKEN: z.string().optional(),
-  /** URL pubblico PWA per preview SEO (es. https://www.ideadiluce.it). */
-  PUBLIC_SITE_URL: z.string().default('https://www.ideadiluce.it'),
+  /** URL pubblico PWA per preview SEO (es. https://www.ideadiluce.com). */
+  PUBLIC_SITE_URL: z.string().default('https://www.ideadiluce.com'),
+  /** Fase 2: URL pubblico piattaforma tecnica (es. https://www.rfly.com). */
+  TECHNICAL_SITE_URL: z.string().optional(),
+  /** Fase 2: website Odoo dedicato al catalogo tecnico (default: ARFLY_WEBSITE_ID). */
+  TECHNICAL_ARFLY_WEBSITE_ID: z.coerce.number().optional(),
+  /** Meta tag google-site-verification per Search Console. */
+  GOOGLE_SITE_VERIFICATION: z.string().optional(),
   /** Feed "Marco *** ha acquistato …" da ordini PWA/Odoo pagati. */
   SOCIAL_PROOF_ENABLED: boolish.default(true),
   SOCIAL_PROOF_LOOKBACK_DAYS: z.coerce.number().default(30),

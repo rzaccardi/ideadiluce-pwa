@@ -7,6 +7,7 @@ import type { ContentBlock } from '@/types/site-content'
 import { SiteLeadForm } from '@/components/site/content/SiteLeadForm'
 import { ContactPanel } from '@/components/site/content/ContactPanel'
 import { Stagger, StaggerItem } from '@/components/motion'
+import { SiteCardHeading } from '@/components/site/SiteHeading'
 import { ui } from '@/lib/ui-classes'
 import { cn } from '@/utils/cn'
 
@@ -63,16 +64,16 @@ function BlockRenderer({
                   {item.num ? (
                     <div className="font-mono text-[11px] text-idl-amber">{item.num}</div>
                   ) : null}
-                  <div
+                  <SiteCardHeading
                     className={cn(
                       tone === 'guide' && !item.num
                         ? 'font-mono text-[13px] font-semibold text-idl-brass'
-                        : 'text-base font-bold text-idl-graphite',
+                        : 'text-idl-graphite',
                       item.num && 'mt-2',
                     )}
                   >
                     {item.title}
-                  </div>
+                  </SiteCardHeading>
                   <p className="mt-1.5 text-[13px] leading-relaxed text-idl-muted sm:text-sm">{item.description}</p>
                 </div>
               </StaggerItem>

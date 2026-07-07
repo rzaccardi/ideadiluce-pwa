@@ -1,6 +1,7 @@
 'use client'
 
 import type { ProductDocumentDTO } from '@/types/dto'
+import { ExternalLink } from '@/lib/link-title'
 import { getBrowserApiBase } from '@/lib/env'
 import { cn } from '@/utils/cn'
 
@@ -58,7 +59,7 @@ export function ProductDocuments({
           const meta = [doc.type, doc.format?.toUpperCase(), size].filter(Boolean).join(' · ')
           return (
             <li key={doc.id}>
-              <a
+              <ExternalLink
                 href={downloadHref(slug, doc.id, variantRef)}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -66,7 +67,7 @@ export function ProductDocuments({
               >
                 <span className="font-medium text-idl-ink">{doc.name}</span>
                 {meta ? <span className="text-idl-muted">{meta}</span> : null}
-              </a>
+              </ExternalLink>
             </li>
           )
         })}

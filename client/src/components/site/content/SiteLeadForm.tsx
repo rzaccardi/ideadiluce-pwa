@@ -7,6 +7,7 @@ import { useLocale } from '@/context/locale-context'
 import { Button } from '@/components/Button'
 import { PhotoUploadSlot } from '@/components/site/forms/PhotoUploadSlot'
 import { ui } from '@/lib/ui-classes'
+import { ExternalLink } from '@/lib/link-title'
 import { cn } from '@/utils/cn'
 
 type FormKind = 'product-not-found' | 'contact' | 'b2b'
@@ -195,9 +196,9 @@ export function SiteLeadForm({ kind, title, description, embedded = false, class
         </Button>
         <p className="text-xs text-idl-muted">
           Inviando accetti la{' '}
-          <a href="/privacy" className="text-idl-brass underline">
+          <ExternalLink href="/privacy" className="text-idl-brass underline">
             Privacy Policy
-          </a>
+          </ExternalLink>
           . Ti rispondiamo via email o telefono, di solito in giornata lavorativa.
         </p>
       </form>

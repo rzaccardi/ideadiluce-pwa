@@ -150,6 +150,29 @@ const TECHNICAL_BASE: Omit<CategoryLandingContent, 'breadcrumb' | 'title' | 'sub
   filtersResetLabel: 'Azzera',
   filterGroups: [
     {
+      kind: 'chips',
+      label: 'Attacco',
+      options: [
+        { label: 'GU10', value: 'attacco-gu10' },
+        { label: 'E27', value: 'attacco-e27' },
+        { label: 'E14', value: 'attacco-e14' },
+        { label: 'GU5.3', value: 'attacco-gu53' },
+        { label: 'R7s', value: 'attacco-r7s' },
+        { label: 'G9', value: 'attacco-g9' },
+        { label: 'T8', value: 'attacco-t8' },
+      ],
+    },
+    {
+      kind: 'chips',
+      label: 'Kelvin',
+      options: [
+        { label: '2700K', value: 'kelvin-2700k' },
+        { label: '3000K', value: 'kelvin-3000k' },
+        { label: '4000K', value: 'kelvin-4000k' },
+        { label: '6500K', value: 'kelvin-6500k' },
+      ],
+    },
+    {
       kind: 'checkbox',
       label: 'Tecnologia',
       options: [

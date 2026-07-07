@@ -1,3 +1,5 @@
+import { HOME_SEO_DESCRIPTION, HOME_SEO_H1, HOME_SEO_TITLE } from './seo/home-metadata'
+
 /** Pagine indicizzate sul sito WordPress legacy (ideadiluce.com). */
 export type LegacySeoPageId =
   | 'home'
@@ -20,9 +22,9 @@ export type LegacySeoPageConfig = {
 export const LEGACY_SEO_PAGES: Record<LegacySeoPageId, LegacySeoPageConfig> = {
   home: {
     canonicalPath: '/',
-    title: 'Home',
-    description: 'La luce pensata',
-    h1: 'Illumina con stile',
+    title: HOME_SEO_TITLE,
+    description: HOME_SEO_DESCRIPTION,
+    h1: HOME_SEO_H1,
     ogType: 'website',
   },
   'illuminazione-arredo': {

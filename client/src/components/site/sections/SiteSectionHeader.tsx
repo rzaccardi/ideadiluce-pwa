@@ -1,5 +1,6 @@
 import { Link } from '@/lib/navigation'
 import { Eyebrow } from '../primitives'
+import { SiteHeading, type SiteHeadingLevel } from '../SiteHeading'
 import { cn } from '@/utils/cn'
 import type { LocalePathFn } from './types'
 
@@ -30,6 +31,8 @@ type Props = {
   layout?: 'stacked' | 'split'
   className?: string
   lp: LocalePathFn
+  /** Livello heading del titolo sezione (default h2, sotto l'h1 di pagina). */
+  level?: SiteHeadingLevel
 }
 
 export function SiteSectionHeader({
@@ -45,11 +48,14 @@ export function SiteSectionHeader({
   layout = 'stacked',
   className,
   lp,
+  level = 2,
 }: Props) {
   const heading = (
     <div>
       {eyebrow ? <Eyebrow variant={eyebrowVariant}>{eyebrow}</Eyebrow> : null}
-      <h2 className={cn('mt-3', TITLE_STYLE_CLASS[titleStyle])}>{title}</h2>
+      <SiteHeading level={level} className={cn('mt-3', TITLE_STYLE_CLASS[titleStyle])}>
+        {title}
+      </SiteHeading>
       {subtitle ? (
         <p className={cn('mt-1 text-sm text-idl-muted', subtitleClassName)}>{subtitle}</p>
       ) : null}

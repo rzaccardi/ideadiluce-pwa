@@ -1,6 +1,11 @@
 import { api } from '@/api/endpoints'
 import { dedupeAsync } from '@/lib/async-cache'
 import { isCatalogProductPurchasable } from '@/lib/product-availability'
+import {
+  filterProductsBySpec,
+  filterProductsByWorld,
+  type CatalogSpecFilters,
+} from '@/lib/catalog-filters'
 import type { PwaLocale } from '@/lib/locale'
 import type { ProductCardDTO } from '@/types/dto'
 import type { CatalogSort } from './catalog.store'
@@ -50,10 +55,37 @@ function applyClientFilters(
   return list
 }
 
+function applyCatalogClientFilters(
+  products: ProductCardDTO[],
+  filters: {
+    inStockOnly?: boolean
+    minPriceCents?: number
+    maxPriceCents?: number
+    sort?: CatalogSort
+    locale?: string
+    attacco?: string
+    colorTemp?: string
+    world?: 'design' | 'technical'
+  },
+) {
+  let list = applyClientFilters(products, filters)
+  const specFilters: CatalogSpecFilters = {
+    attacco: filters.attacco,
+    colorTemp: filters.colorTemp,
+  }
+  list = filterProductsBySpec(list, specFilters)
+  if (filters.world) {
+    list = filterProductsByWorld(list, filters.world)
+  }
+  return list
+}
+
 export function catalogServerFetchKey(filters: {
   q?: string
   categorySlug?: string
   brandSlug?: string
+  attacco?: string
+  colorTemp?: string
   page: number
   pageSize: number
   locale: string
@@ -62,6 +94,8 @@ export function catalogServerFetchKey(filters: {
     filters.q ?? '',
     filters.categorySlug ?? '',
     filters.brandSlug ?? '',
+    filters.attacco ?? '',
+    filters.colorTemp ?? '',
     filters.page,
     filters.pageSize,
     filters.locale,
@@ -77,6 +111,9 @@ function syncFilterStore(partialFilters?: {
   minPriceCents?: number
   maxPriceCents?: number
   sort?: CatalogSort
+  attacco?: string
+  colorTemp?: string
+  world?: 'design' | 'technical'
 }) {
   if (partialFilters && 'categorySlug' in partialFilters) {
     catalogStore.filters.categorySlug = partialFilters.categorySlug
@@ -102,6 +139,15 @@ function syncFilterStore(partialFilters?: {
   if (partialFilters?.sort) {
     catalogStore.filters.sort = partialFilters.sort
   }
+  if (partialFilters && 'attacco' in partialFilters) {
+    catalogStore.filters.attacco = partialFilters.attacco
+  }
+  if (partialFilters && 'colorTemp' in partialFilters) {
+    catalogStore.filters.colorTemp = partialFilters.colorTemp
+  }
+  if (partialFilters && 'world' in partialFilters) {
+    catalogStore.filters.world = partialFilters.world
+  }
 }
 
 function currentClientFilters() {
@@ -111,12 +157,15 @@ function currentClientFilters() {
     maxPriceCents: catalogStore.filters.maxPriceCents,
     sort: catalogStore.filters.sort,
     locale: catalogStore.filters.locale,
+    attacco: catalogStore.filters.attacco,
+    colorTemp: catalogStore.filters.colorTemp,
+    world: catalogStore.filters.world,
   }
 }
 
 export function reapplyCatalogClientFilters() {
   if (!catalogStore.rawProducts.length) return
-  catalogStore.products = applyClientFilters(catalogStore.rawProducts, currentClientFilters())
+  catalogStore.products = applyCatalogClientFilters(catalogStore.rawProducts, currentClientFilters())
 }
 
 export function seedCatalogProducts(
@@ -126,7 +175,7 @@ export function seedCatalogProducts(
 ) {
   catalogStore.rawProducts = items
   catalogStore.serverFetchKey = serverKey
-  catalogStore.products = applyClientFilters(items, currentClientFilters())
+  catalogStore.products = applyCatalogClientFilters(items, currentClientFilters())
   if (pagination) {
     catalogStore.pagination = { ...catalogStore.pagination, ...pagination }
   }
@@ -209,6 +258,9 @@ async function loadProducts(filters: {
   minPriceCents?: number
   maxPriceCents?: number
   sort?: CatalogSort
+  attacco?: string
+  colorTemp?: string
+  world?: 'design' | 'technical'
 }) {
   catalogStore.isLoading = true
   catalogStore.error = null
@@ -217,13 +269,15 @@ async function loadProducts(filters: {
       q: filters.q,
       category: filters.categorySlug,
       brand: filters.brandSlug,
+      attacco: filters.attacco,
+      colorTemp: filters.colorTemp,
       page: filters.page,
       pageSize: filters.pageSize,
       locale: filters.locale,
     })
     catalogStore.rawProducts = result.items
     catalogStore.serverFetchKey = catalogServerFetchKey(filters)
-    catalogStore.products = applyClientFilters(result.items, filters)
+    catalogStore.products = applyCatalogClientFilters(result.items, filters)
     catalogStore.pagination = {
       page: result.page,
       pageSize: result.pageSize,
@@ -250,6 +304,9 @@ export function fetchProducts(partialFilters?: {
   minPriceCents?: number
   maxPriceCents?: number
   sort?: CatalogSort
+  attacco?: string
+  colorTemp?: string
+  world?: 'design' | 'technical'
 }) {
   syncFilterStore(partialFilters)
 
@@ -259,6 +316,8 @@ export function fetchProducts(partialFilters?: {
     q: catalogStore.filters.q,
     categorySlug: catalogStore.filters.categorySlug,
     brandSlug: catalogStore.filters.brandSlug,
+    attacco: catalogStore.filters.attacco,
+    colorTemp: catalogStore.filters.colorTemp,
     page,
     pageSize,
     locale: catalogStore.filters.locale,
@@ -284,6 +343,9 @@ export function fetchProducts(partialFilters?: {
     minPriceCents: catalogStore.filters.minPriceCents,
     maxPriceCents: catalogStore.filters.maxPriceCents,
     sort: catalogStore.filters.sort,
+    attacco: catalogStore.filters.attacco,
+    colorTemp: catalogStore.filters.colorTemp,
+    world: catalogStore.filters.world,
   }
 
   return dedupeAsync(`catalog:products:${serverKey}`, () => loadProducts(filters))
@@ -300,12 +362,14 @@ export async function fetchNextProductsPage() {
       q: catalogStore.filters.q,
       category: catalogStore.filters.categorySlug,
       brand: catalogStore.filters.brandSlug,
+      attacco: catalogStore.filters.attacco,
+      colorTemp: catalogStore.filters.colorTemp,
       page: catalogStore.pagination.page + 1,
       pageSize: catalogStore.pagination.pageSize,
       locale: catalogStore.filters.locale,
     })
     catalogStore.rawProducts = [...catalogStore.rawProducts, ...result.items]
-    catalogStore.products = applyClientFilters(catalogStore.rawProducts, currentClientFilters())
+    catalogStore.products = applyCatalogClientFilters(catalogStore.rawProducts, currentClientFilters())
     catalogStore.pagination = {
       page: result.page,
       pageSize: result.pageSize,

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { ExternalLink } from '@/lib/link-title'
 import { cn } from '@/utils/cn'
 
 export const PRODUCT_PLACEHOLDER = 'Informazione non disponibile'
@@ -56,7 +57,7 @@ export function ProductSpecRowItem({
     >
       <span className={cn('shrink-0 text-[14px]', isDesign ? 'text-[#8f8f93]' : 'text-idl-muted')}>{label}</span>
       {href && value?.trim() ? (
-        <a
+        <ExternalLink
           href={href}
           target="_blank"
           rel="noopener noreferrer"
@@ -66,7 +67,7 @@ export function ProductSpecRowItem({
           )}
         >
           {value}
-        </a>
+        </ExternalLink>
       ) : (
         <ProductDetailValue
           value={value}

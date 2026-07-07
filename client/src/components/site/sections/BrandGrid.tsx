@@ -1,5 +1,6 @@
 import { Link } from '@/lib/navigation'
 import { Stagger, StaggerItem } from '@/components/motion'
+import { SiteHeading } from '@/components/site/SiteHeading'
 import { brandHref, brandSlugFromDisplayName } from '@/lib/brand.defaults'
 import type { LocalePathFn } from './types'
 
@@ -58,7 +59,12 @@ export function BrandGrid({ items, lp, variant = 'home', stagger = 0.04 }: Props
                   : 'flex min-h-[88px] flex-col items-center justify-center border-b border-r border-idl-tech-border bg-white px-3 py-5 text-center transition hover:bg-idl-cream hover:text-idl-brass dark:bg-idl-tech-panel dark:hover:bg-idl-tech-panel'
               }
             >
-              <span className="text-sm font-bold tracking-widest text-idl-graphite-2 uppercase">{name}</span>
+              <SiteHeading
+                level={3}
+                className="text-sm font-bold tracking-widest text-idl-graphite-2 uppercase"
+              >
+                {name}
+              </SiteHeading>
               {meta ? <span className="mt-1 text-[11px] text-idl-muted">{meta}</span> : null}
             </Link>
           </StaggerItem>

@@ -62,7 +62,7 @@ export function BrandWordmark({
 }) {
   return (
     <span className={cn(siteTypography.wordmark, className)}>
-      Idea<span className={cn(siteTypography.wordmarkAccent, accentClassName)}>di</span>Luce
+      Idea <span className={cn(siteTypography.wordmarkAccent, accentClassName)}>di</span> Luce
     </span>
   )
 }

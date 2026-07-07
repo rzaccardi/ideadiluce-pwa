@@ -1,5 +1,6 @@
 import { Link } from '@/lib/navigation'
 import { HoverLift, Stagger, StaggerItem } from '@/components/motion'
+import { SiteHeading } from '@/components/site/SiteHeading'
 import { RoomCardMedia } from './RoomCardMedia'
 import type { LocalePathFn } from './types'
 
@@ -66,7 +67,9 @@ export function RoomCardGrid({ items, lp, variant = 'home', stagger = 0.08 }: Pr
                 />
               ) : null}
               <div className="mt-3 flex items-center justify-between">
-                <span className="font-serif text-[19px] font-medium text-idl-ink">{room.title}</span>
+                <SiteHeading level={3} className="font-serif text-[19px] font-medium text-idl-ink">
+                  {room.title}
+                </SiteHeading>
                 <span className="text-[13px] font-bold text-idl-brass">Scopri →</span>
               </div>
             </Link>

@@ -3,6 +3,10 @@ import type { ProductCardDTO } from '@/types/dto'
 import type { CatalogSort } from '@/features/catalog/catalog.store'
 import type { ProductCatalogKind } from '@/lib/product-catalog-kind'
 import { resolveProductCardCatalogKind } from '@/lib/product-catalog-kind'
+import { buildTechnicalCardSpecTags } from '@/lib/technical-card-spec-tags'
+
+export const CATALOG_DESIGN_CATEGORY_SLUG = 'illuminazione-arredo'
+export const CATALOG_TECHNICAL_CATEGORY_SLUG = 'illuminazione-tecnica'
 
 export type CatalogWorldTab = 'all' | 'design' | 'technical'
 
@@ -55,14 +59,107 @@ export function worldTabToParam(tab: CatalogWorldTab): 'design' | 'technical' | 
   return null
 }
 
+/** Query testuale inviata all'API catalogo (solo testo libero, non filtri strutturati). */
+export function buildCatalogApiQuery(q?: string): string | undefined {
+  const trimmed = q?.trim()
+  return trimmed || undefined
+}
+
+/** @deprecated Usare buildCatalogApiQuery + filterProductsBySpec per attacco/Kelvin. */
 export function buildCatalogSearchQuery(parts: {
   q?: string
   attacco?: string
   colorTemp?: string
 }): string | undefined {
-  const tokens = [parts.q, parts.attacco, parts.colorTemp].map((v) => v?.trim()).filter(Boolean)
-  if (!tokens.length) return undefined
-  return tokens.join(' ')
+  return buildCatalogApiQuery(parts.q)
+}
+
+export type CatalogSpecFilters = {
+  attacco?: string
+  colorTemp?: string
+}
+
+export type CatalogPreserveParams = CatalogSpecFilters & {
+  world?: 'technical' | 'design'
+  brand?: string
+  category?: string
+}
+
+function normalizeSocketFilter(value: string): string {
+  return value.replace(/GU5[.-]3/i, 'GU5.3').replace(/^r7s$/i, 'R7s').toUpperCase()
+}
+
+function normalizeKelvinFilter(value: string): string {
+  return value.replace(/\s/g, '').toUpperCase()
+}
+
+export function productMatchesSpecFilter(
+  product: ProductCardDTO,
+  filters: CatalogSpecFilters,
+): boolean {
+  if (!filters.attacco?.trim() && !filters.colorTemp?.trim()) return true
+
+  const tags = buildTechnicalCardSpecTags({
+    name: product.name,
+    shortDescription: product.shortDescription,
+    specTags: product.specTags,
+  })
+  const haystack = [...tags, product.name, product.shortDescription ?? '']
+    .join(' ')
+    .replace(/GU5[.-]3/gi, 'GU5.3')
+
+  if (filters.attacco?.trim()) {
+    const needle = normalizeSocketFilter(filters.attacco)
+    if (!haystack.toUpperCase().includes(needle)) return false
+  }
+
+  if (filters.colorTemp?.trim()) {
+    const needle = normalizeKelvinFilter(filters.colorTemp)
+    if (!haystack.toUpperCase().includes(needle)) return false
+  }
+
+  return true
+}
+
+export function filterProductsBySpec(
+  products: ReadonlyArray<ProductCardDTO>,
+  filters: CatalogSpecFilters,
+): ProductCardDTO[] {
+  if (!filters.attacco?.trim() && !filters.colorTemp?.trim()) return [...products]
+  return products.filter((product) => productMatchesSpecFilter(product, filters))
+}
+
+export function resolveEffectiveCatalogCategory(input: {
+  categoryParam?: string
+  worldTab: CatalogWorldTab
+  attacco?: string
+  colorTemp?: string
+}): string | undefined {
+  if (input.categoryParam) return input.categoryParam
+  if (input.worldTab === 'design') return CATALOG_DESIGN_CATEGORY_SLUG
+  if (input.worldTab === 'technical') return CATALOG_TECHNICAL_CATEGORY_SLUG
+  if (input.attacco?.trim() || input.colorTemp?.trim()) return CATALOG_TECHNICAL_CATEGORY_SLUG
+  return undefined
+}
+
+export function parseCatalogPreserveParams(params: URLSearchParams): CatalogPreserveParams {
+  const preserve: CatalogPreserveParams = {}
+  const world = params.get('world')
+  if (world === 'technical' || world === 'design') preserve.world = world
+
+  const attacco = params.get('attacco')?.trim()
+  if (attacco) preserve.attacco = attacco
+
+  const colorTemp = params.get('colorTemp')?.trim()
+  if (colorTemp) preserve.colorTemp = colorTemp
+
+  const brand = params.get('brand')?.trim()
+  if (brand) preserve.brand = brand
+
+  const category = params.get('category')?.trim()
+  if (category) preserve.category = category
+
+  return preserve
 }
 
 export function priceBucketToCents(bucket: CatalogPriceBucket | null | undefined): {

@@ -1,0 +1,6 @@
+export { Home2HeroSection } from './Home2HeroSection'
+export { Home2PromoStrip } from './Home2PromoStrip'
+export { Home2CategorySplit } from './Home2CategorySplit'
+export { Home2VisualCategories } from './Home2VisualCategories'
+export { Home2BestSellersSection } from './Home2BestSellersSection'
+export { Home2InspirationGrid } from './Home2InspirationGrid'

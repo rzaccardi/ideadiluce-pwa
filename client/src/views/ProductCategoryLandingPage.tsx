@@ -27,9 +27,11 @@ import {
   resolveCategoryLandingBrandSlug,
   resolveCategoryLandingInStock,
   resolveCategoryLandingPriceCents,
+  resolveCategoryLandingSpecFilters,
   toggleCategoryLandingFilter,
   CATEGORY_LANDING_CATALOG_CONFIG,
 } from '@/lib/category-landing-filters'
+import { filterProductsBySpec } from '@/lib/catalog-filters'
 import type { CatalogPriceBucket } from '@/lib/catalog-filters'
 import { catalogPendingLoadCount } from '@/lib/catalog-pagination'
 import { DesignCategoryView, TechnicalCategoryView } from '@/components/site/category'
@@ -66,6 +68,10 @@ export function ProductCategoryLandingPage({ pageKey, initialBootstrap }: Props)
     maxPriceFromUrl,
   )
   const brandSlug = resolveCategoryLandingBrandSlug(selectedFilterValues, cat.brands, brandParam)
+  const specFilters = useMemo(
+    () => resolveCategoryLandingSpecFilters(selectedFilterValues, params),
+    [params, selectedFilterValues],
+  )
   const effectiveQuery = buildCategoryLandingSearchQuery({
     pageKey,
     baseQuery: content.searchQuery ?? catalogConfig.baseQuery,
@@ -81,6 +87,11 @@ export function ProductCategoryLandingPage({ pageKey, initialBootstrap }: Props)
         selected: selectedFilterValues,
       }),
     [content.filterGroups, selectedFilterValues],
+  )
+
+  const visibleProducts = useMemo(
+    () => filterProductsBySpec(cat.products, specFilters),
+    [cat.products, specFilters],
   )
 
   const sortLabel = categoryLandingSortLabel(sortParam)
@@ -112,6 +123,8 @@ export function ProductCategoryLandingPage({ pageKey, initialBootstrap }: Props)
       page: 1,
       pageSize: content.pageSize,
       locale,
+      attacco: specFilters.attacco,
+      colorTemp: specFilters.colorTemp,
     })
   }, [
     brandSlug,
@@ -119,6 +132,8 @@ export function ProductCategoryLandingPage({ pageKey, initialBootstrap }: Props)
     content.pageSize,
     effectiveQuery,
     locale,
+    specFilters.attacco,
+    specFilters.colorTemp,
   ])
 
   useEffect(() => {
@@ -126,8 +141,10 @@ export function ProductCategoryLandingPage({ pageKey, initialBootstrap }: Props)
     catalogStore.filters.sort = sortParam
     catalogStore.filters.minPriceCents = minPriceCents
     catalogStore.filters.maxPriceCents = maxPriceCents
+    catalogStore.filters.attacco = specFilters.attacco
+    catalogStore.filters.colorTemp = specFilters.colorTemp
     reapplyCatalogClientFilters()
-  }, [inStockOnly, sortParam, minPriceCents, maxPriceCents])
+  }, [inStockOnly, sortParam, minPriceCents, maxPriceCents, specFilters.attacco, specFilters.colorTemp])
 
   function setFilterParams(nextValues: Set<string>) {
     setParams(patchCategoryLandingFilterParams(params, nextValues))
@@ -159,8 +176,8 @@ export function ProductCategoryLandingPage({ pageKey, initialBootstrap }: Props)
       ...content,
       sortValue: sortLabel,
     },
-    products: cat.products,
-    totalCount: cat.pagination.total,
+    products: visibleProducts,
+    totalCount: visibleProducts.length > 0 ? visibleProducts.length : cat.pagination.total,
     loading: cat.isLoading,
     isLoadingMore: cat.isLoadingMore,
     pendingSkeletonCount,

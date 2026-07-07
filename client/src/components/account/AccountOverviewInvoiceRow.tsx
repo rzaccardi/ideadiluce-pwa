@@ -1,5 +1,6 @@
 'use client'
 
+import { ExternalLink } from '@/lib/link-title'
 import { Link } from '@/lib/navigation'
 import { formatMoney } from '@/lib/format'
 import { invoiceStateTone } from '@/lib/invoice-display'
@@ -38,14 +39,14 @@ export function AccountOverviewInvoiceRow({ invoice }: Props) {
               {t('account.invoices.download')} →
             </Link>
           ) : invoice.portalUrl ? (
-            <a
+            <ExternalLink
               href={invoice.portalUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-[13px] font-bold text-[#d9831a] no-underline hover:underline"
             >
               {t('account.invoices.portalLink')} →
-            </a>
+            </ExternalLink>
           ) : (
             <Link
               to="/account/invoices"

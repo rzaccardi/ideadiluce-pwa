@@ -5,6 +5,7 @@ import { useLocalePath } from '@/hooks/use-locale-path'
 import type { EditorialPageContent, SitePageKey } from '@/types/site-content'
 import { Breadcrumb } from '@/components/Breadcrumb'
 import { PageHeader } from '@/components/PageHeader'
+import { SiteSectionSrTitle } from '@/components/site/SiteHeading'
 import { Reveal } from '@/components/motion'
 import {
   BrandGrid,
@@ -50,7 +51,7 @@ export function EditorialPageView({ pageKey, content }: Props) {
   const layout = LAYOUT_BY_PAGE[pageKey] ?? 'tiles'
 
   return (
-    <div>
+    <main>
       <Reveal immediate>
         <Breadcrumb items={[{ label: content.title }]} />
         {content.eyebrow ? <EditorialEyebrow>{content.eyebrow}</EditorialEyebrow> : null}
@@ -63,9 +64,19 @@ export function EditorialPageView({ pageKey, content }: Props) {
       ) : null}
 
       {layout === 'guides' ? (
-        <GuideCardGrid items={content.items} lp={lp} variant="editorial" />
+        <>
+          <SiteSectionSrTitle>Guide in evidenza</SiteSectionSrTitle>
+          <GuideCardGrid items={content.items} lp={lp} variant="editorial" />
+        </>
       ) : (
         <Reveal immediate delay={0.05}>
+          <SiteSectionSrTitle>
+            {layout === 'tiles'
+              ? 'Attacchi disponibili'
+              : layout === 'rooms'
+                ? 'Ambienti'
+                : 'Brand in evidenza'}
+          </SiteSectionSrTitle>
           {layout === 'tiles' ? <SocketTileGrid items={toSocketItems(content.items)} lp={lp} variant="editorial" /> : null}
           {layout === 'rooms' ? <RoomCardGrid items={content.items} lp={lp} variant="editorial" /> : null}
           {layout === 'brands' ? <BrandGrid items={content.items} lp={lp} variant="editorial" stagger={0.03} /> : null}
@@ -82,6 +93,6 @@ export function EditorialPageView({ pageKey, content }: Props) {
       {content.footerNote ? (
         <p className="mt-6 text-xs text-idl-muted">{content.footerNote}</p>
       ) : null}
-    </div>
+    </main>
   )
 }

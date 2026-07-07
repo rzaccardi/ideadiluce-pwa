@@ -56,6 +56,7 @@ const SEO_REDIRECT_SKIP_EXACT = new Set([
   '/forgot-password',
   '/reset-password',
   '/illuminazione-arredo',
+  '/homepage2',
   '/impersonate',
 ])
 
@@ -126,6 +127,9 @@ export async function middleware(request: NextRequest) {
     ? await lookupSeoRedirect(internalPath)
     : null
   if (redirect) {
+    if (/^https?:\/\//i.test(redirect.toPath)) {
+      return NextResponse.redirect(redirect.toPath, redirect.statusCode === 302 ? 302 : 301)
+    }
     const prefix = LOCALE_PATH_PREFIX[locale]
     const destination = `${prefix}${redirect.toPath.startsWith('/') ? redirect.toPath : `/${redirect.toPath}`}`
     const target = request.nextUrl.clone()

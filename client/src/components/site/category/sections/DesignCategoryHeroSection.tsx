@@ -1,6 +1,7 @@
 import type { CategoryLandingContent } from '@/types/category-landing'
 import { Link } from '@/lib/navigation'
 import { Eyebrow, SectionContainer } from '../../primitives'
+import { SiteHeading, SiteSectionSrTitle } from '../../SiteHeading'
 import { CategoryBreadcrumb } from '../CategoryBreadcrumb'
 import { CategoryTypeIcon } from '../CategoryTypeIcons'
 import type { LocalePathFn } from '../../sections/types'
@@ -49,6 +50,7 @@ export function DesignCategoryTypeGridSection({
   return (
     <section className="border-b border-idl-border bg-idl-path-design">
       <SectionContainer className="py-6 sm:py-8">
+        <SiteSectionSrTitle>Tipologie di prodotto</SiteSectionSrTitle>
         <div className="-mx-4 flex gap-2.5 overflow-x-auto scroll-smooth snap-x snap-mandatory px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:px-0 sm:pb-0 sm:snap-none lg:grid-cols-6">
           {tiles.map((tile) => (
             <Link
@@ -58,7 +60,9 @@ export function DesignCategoryTypeGridSection({
             >
               <CategoryTypeIcon tile={tile} />
               <div className="text-center">
-                <div className="font-serif text-[14px] text-idl-ink sm:text-base">{tile.label}</div>
+                <SiteHeading level={3} className="font-serif text-[14px] text-idl-ink sm:text-base">
+                  {tile.label}
+                </SiteHeading>
                 {tile.count ? <div className="mt-0.5 text-[11.5px] text-idl-ink-muted">{tile.count}</div> : null}
               </div>
             </Link>

@@ -26,6 +26,7 @@ import { trackCatalogSearchEvent } from '@/lib/catalog-search-events'
 import type { CatalogSearchSource, CatalogSearchTrackAction } from '@/types/catalog-search-events'
 import type { CategoryDTO } from '@/types/dto'
 import type { BrandListItemDTO } from '@/types/site-content'
+import type { CatalogPreserveParams } from '@/lib/catalog-filters'
 import type { LocalePathFn } from '@/components/site/sections/types'
 
 export function flattenCatalogSearchGroups(groups: CatalogSearchSuggestionGroup[]): CatalogSearchSuggestion[] {
@@ -60,6 +61,8 @@ export type UseCatalogSearchAutocompleteOptions = {
   searchSource?: CatalogSearchSource
   onSubmitQuery?: (query: string) => void
   onAfterSubmit?: () => void
+  /** Filtri catalogo da preservare nel submit (attacco, world, …). */
+  preserveParams?: CatalogPreserveParams
 }
 
 export function useCatalogSearchAutocomplete({
@@ -77,6 +80,7 @@ export function useCatalogSearchAutocomplete({
   searchSource = 'inline',
   onSubmitQuery,
   onAfterSubmit,
+  preserveParams,
 }: UseCatalogSearchAutocompleteOptions) {
   const navigate = useNavigate()
   const { locale } = useLocale()
@@ -154,12 +158,13 @@ export function useCatalogSearchAutocomplete({
       } else {
         const path = buildCatalogSubmitPath(trimmed, {
           world: world === 'all' ? undefined : world,
+          ...preserveParams,
         })
         navigate(lp(path))
       }
       onAfterSubmit?.()
     },
-    [locale, lp, navigate, onAfterSubmit, onSubmitQuery, productTotal, recordRecentOnSubmit, searchSource, world],
+    [locale, lp, navigate, onAfterSubmit, onSubmitQuery, preserveParams, productTotal, recordRecentOnSubmit, searchSource, world],
   )
 
   const pickSuggestion = useCallback(

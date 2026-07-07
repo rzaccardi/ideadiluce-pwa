@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation'
 import { useI18n } from '@/hooks/use-i18n'
 import { shouldShowWhatsAppBubble, WHATSAPP_COLORS, WHATSAPP_URL } from '@/lib/whatsapp'
+import { ExternalLink } from '@/lib/link-title'
 import { cn } from '@/utils/cn'
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -21,7 +22,7 @@ export function WhatsAppFloatingButton() {
 
   return (
     <div className="pointer-events-none fixed bottom-5 right-4 z-40 flex justify-end sm:right-5">
-      <a
+      <ExternalLink
         href={WHATSAPP_URL}
         target="_blank"
         rel="noopener noreferrer"
@@ -34,7 +35,7 @@ export function WhatsAppFloatingButton() {
         aria-label={t('whatsapp.floating.label')}
       >
         <WhatsAppIcon />
-      </a>
+      </ExternalLink>
     </div>
   )
 }

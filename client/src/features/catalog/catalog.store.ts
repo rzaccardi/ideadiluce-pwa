@@ -13,6 +13,8 @@ export type CatalogFilters = {
   minPriceCents?: number
   maxPriceCents?: number
   sort?: CatalogSort
+  attacco?: string
+  colorTemp?: string
   world?: 'design' | 'technical'
 }
 

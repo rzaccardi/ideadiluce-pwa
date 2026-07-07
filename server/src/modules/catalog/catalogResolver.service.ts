@@ -6,12 +6,14 @@ import {
 } from '../../adapters/arfly/arflyClient.js'
 import { findArflyProductIdBySlug } from '../../adapters/arfly/arflySlugIndex.js'
 import { mapArflyProductDetail } from '../../adapters/arfly/arflyMapper.js'
+import { env } from '../../config/env.js'
 import type { HubLocale } from '../../lib/hub-locale.js'
 import type { ProductDetailDTO } from '../../types/dto.js'
+import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { enrichProductDetailWithStock } from './catalog-stock.enrich.js'
 import { enrichProductDetailWithOdooPricing } from './catalog-pricing.enrich.js'
 import { resolvePricingContext } from '../pricing/pricelist.service.js'
-import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { listOdooStorefrontProductSlugs } from './odoo-catalog-search.service.js'
 
 export async function resolveCatalogProduct(
   _ctx: OdooCallContext,
@@ -52,7 +54,14 @@ export async function resolveCatalogProductEnriched(
   return enriched
 }
 
-export async function listArflyProductSlugs(locale: HubLocale = 'IT'): Promise<string[]> {
+export async function listArflyProductSlugs(
+  locale: HubLocale = 'IT',
+  ctx: OdooCallContext = { correlationId: 'catalog-slugs' },
+): Promise<string[]> {
+  if (env.ODOO_ENABLED && isOdooConfigured()) {
+    return listOdooStorefrontProductSlugs(ctx)
+  }
+
   if (!isArflyConfigured()) return []
   const slugs: string[] = []
   let page = 1

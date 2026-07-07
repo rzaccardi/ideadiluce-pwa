@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { getSiteUrl } from '@/lib/env'
 import { getRequestLocale } from '@/lib/locale-server'
 import { buildLegacySeoMetadata } from '@/lib/legacy-seo-pages'
+import { HOME_SEO_DESCRIPTION, HOME_SEO_TITLE } from '@/lib/seo/home-metadata'
 import { fetchHomeContentServer } from '@/lib/server-site'
 import { fetchHomeBrandsServer, fetchHomeProductSlidersServer, fetchFeaturedGuidesServer } from '@/lib/server-catalog'
 import { buildOrganizationJsonLd, buildWebSiteJsonLd } from '@/lib/seo'
@@ -10,8 +11,8 @@ import { HomePage } from '@/views/HomePage'
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildLegacySeoMetadata('home', {
-    title: 'Home — Illumina con stile',
-    description: 'La luce pensata. Illuminazione per casa e professionisti.',
+    title: HOME_SEO_TITLE,
+    description: HOME_SEO_DESCRIPTION,
   })
 }
 

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Link } from '@/lib/navigation'
 import { SiteImage } from '../../SiteImage'
 import { Eyebrow, SectionContainer } from '../../primitives'
+import { SiteHeading } from '../../SiteHeading'
 import { AMBIENTI_SHOP_THE_LOOK } from '@/lib/ambienti.defaults'
 import type { LocalePathFn } from '../../sections/types'
 import { cn } from '@/utils/cn'
@@ -66,7 +67,12 @@ export function ShopTheLookSection({ lp }: Props) {
                     >
                       {activeHotspot.badge}
                     </span>
-                    <div className="font-serif text-[18px] text-idl-design-fg sm:text-[20px]">{activeHotspot.title}</div>
+                    <SiteHeading
+                      level={3}
+                      className="font-serif text-[18px] text-idl-design-fg sm:text-[20px]"
+                    >
+                      {activeHotspot.title}
+                    </SiteHeading>
                     <div className="mt-1 text-[13px] text-idl-design-muted">{activeHotspot.subtitle}</div>
                     <div className="mt-1.5 font-mono text-[11.5px] text-idl-glow">{activeHotspot.spec}</div>
                   </div>
@@ -104,7 +110,9 @@ export function ShopTheLookSection({ lp }: Props) {
                     {product.id}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="text-[14px] font-bold text-idl-design-fg">{product.title}</div>
+                    <SiteHeading level={4} className="text-[14px] font-bold text-idl-design-fg">
+                      {product.title}
+                    </SiteHeading>
                     <div className={cn('text-[11.5px]', product.visible ? 'text-idl-design-dim' : 'text-idl-amber')}>
                       {product.subtitle}
                     </div>

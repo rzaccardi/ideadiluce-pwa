@@ -11,6 +11,7 @@ import { formatMoney } from '@/lib/format'
 import { ListSkeleton } from '@/components/Skeleton'
 import { PageLoadTransition } from '@/components/motion'
 import { StripeErrorBanner } from '@/components/checkout/stripe-ui/StripeFields'
+import { ExternalLink } from '@/lib/link-title'
 import { useI18n } from '@/hooks/use-i18n'
 
 export function AccountInvoicesPage() {
@@ -94,14 +95,14 @@ export function AccountInvoicesPage() {
                           : `${t('account.invoices.download')} →`}
                       </button>
                     ) : inv.portalUrl ? (
-                      <a
+                      <ExternalLink
                         href={inv.portalUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[13px] font-bold text-[#d9831a] no-underline hover:underline"
                       >
                         {t('account.invoices.portalLink')} →
-                      </a>
+                      </ExternalLink>
                     ) : (
                       <span className="text-[13px] text-[#9298a3]">{t('account.invoices.pdfPending')}</span>
                     )}

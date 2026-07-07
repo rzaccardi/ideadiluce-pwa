@@ -4,6 +4,7 @@ import {
   resolveAvailabilityData,
 } from '@/lib/product-availability'
 import { getSiteUrl } from '@/lib/env'
+import { HOME_SEO_DESCRIPTION } from '@/lib/seo/home-metadata'
 import { localizePath, type PwaLocale } from '@/lib/locale'
 
 export type BreadcrumbItem = {
@@ -90,7 +91,7 @@ export function buildWebSiteJsonLd(siteUrl: string) {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Idea di Luce',
-    description: 'La luce pensata',
+    description: HOME_SEO_DESCRIPTION,
     url: site,
     potentialAction: {
       '@type': 'SearchAction',

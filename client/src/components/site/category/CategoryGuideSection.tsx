@@ -20,7 +20,7 @@ export function CategoryGuideSection({ section }: Props) {
               key={item.question}
               className="flex items-start justify-between gap-3 border-b border-idl-border py-4 first:pt-0 sm:items-center sm:gap-4"
             >
-              <span className="min-w-0 text-[14.5px] font-semibold text-idl-ink sm:text-[15px]">{item.question}</span>
+              <h3 className="min-w-0 text-[14.5px] font-semibold text-idl-ink sm:text-[15px]">{item.question}</h3>
               <span className="shrink-0 text-lg text-idl-brass">+</span>
             </div>
           ))}

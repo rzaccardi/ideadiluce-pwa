@@ -12,11 +12,15 @@ type Props = {
 export function HomePathsSection({ section, lp }: Props) {
   return (
     <Reveal>
-      <SectionContainer className="py-12 sm:py-14">
-        <h2 className="text-[26px] font-extrabold tracking-tight">{section.title}</h2>
+      <section aria-labelledby="home-paths-title">
+        <SectionContainer className="py-12 sm:py-14">
+          <h2 id="home-paths-title" className="text-[26px] font-extrabold tracking-tight">
+            {section.title}
+          </h2>
         <p className="mt-1.5 text-[14.5px] text-idl-muted">{section.subtitle}</p>
         <PathCardGrid cards={section.cards} lp={lp} />
-      </SectionContainer>
+        </SectionContainer>
+      </section>
     </Reveal>
   )
 }

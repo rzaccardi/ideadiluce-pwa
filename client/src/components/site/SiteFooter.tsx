@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { ExternalLink } from '@/lib/link-title'
 import { Link } from '@/lib/navigation'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { Reveal, Stagger, StaggerItem } from '@/components/motion'
@@ -51,14 +52,14 @@ function FooterLinkList({ links, lp }: { links: SiteLink[]; lp: (href: string) =
       {links.map((link) => (
         <li key={`${link.href}-${link.label}`}>
           {isExternalHref(link.href) ? (
-            <a
+            <ExternalLink
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-idl-design-fg"
             >
               {link.label}
-            </a>
+            </ExternalLink>
           ) : (
             <Link to={lp(link.href)} className="hover:text-idl-design-fg">
               {link.label}
@@ -95,7 +96,7 @@ function FooterSocial({ links }: { links: SiteLink[] }) {
           }
 
           return (
-            <a
+            <ExternalLink
               key={link.label}
               href={link.href}
               target="_blank"
@@ -104,7 +105,7 @@ function FooterSocial({ links }: { links: SiteLink[] }) {
               aria-label={link.label}
             >
               <SocialBrandIcon label={link.label} className={iconClassName} />
-            </a>
+            </ExternalLink>
           )
         })}
       </div>
@@ -165,15 +166,15 @@ export function SiteFooter({ footer }: { footer: SiteShellContent['footer'] }) {
             <FooterHeading>Servizio clienti</FooterHeading>
             <div className="space-y-1 text-[13px] leading-relaxed text-idl-design-muted">
               <p>
-                <a href={company.phoneHref} className="hover:text-idl-design-fg">
+                <ExternalLink href={company.phoneHref} className="hover:text-idl-design-fg">
                   Tel: {company.phone}
-                </a>
+                </ExternalLink>
               </p>
               <p>
                 Email:{' '}
-                <a href={`mailto:${company.email}`} className="text-idl-glow hover:text-idl-design-fg">
+                <ExternalLink href={`mailto:${company.email}`} className="text-idl-glow hover:text-idl-design-fg">
                   {company.email}
-                </a>
+                </ExternalLink>
               </p>
             </div>
             <div className="mt-5">

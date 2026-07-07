@@ -26,7 +26,7 @@ export function ContentPageView({ content, breadcrumb }: Props) {
   const isLegal = content.layout === 'legal'
 
   return (
-    <div>
+    <main>
       {breadcrumb?.length ? <Breadcrumb items={breadcrumb} /> : null}
 
       {isHero ? (
@@ -82,6 +82,6 @@ export function ContentPageView({ content, breadcrumb }: Props) {
           </Link>
         </Reveal>
       ) : null}
-    </div>
+    </main>
   )
 }

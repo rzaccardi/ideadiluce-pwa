@@ -135,7 +135,7 @@ await check('sitemap v1 + llms.txt', async () => {
   ])
   const smText = await sm.text()
   const llmsText = await llms.text()
-  return sm.status === 200 && smText.includes('<urlset') && llms.status === 200 && llmsText.includes('Idea di Luce')
+  return sm.status === 200 && smText.includes('<urlset') && llms.status === 200 && llmsText.startsWith('# Idea di Luce') && llmsText.includes('](http')
     ? true
     : { ok: false, note: `sitemap=${sm.status} llms=${llms.status}` }
 })

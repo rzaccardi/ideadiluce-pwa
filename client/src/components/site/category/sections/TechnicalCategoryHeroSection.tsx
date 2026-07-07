@@ -1,13 +1,14 @@
 import type { CategoryLandingContent, CategorySupportCard } from '@/types/category-landing'
 import { Link } from '@/lib/navigation'
 import { Eyebrow, SectionContainer } from '../../primitives'
+import { SiteCardHeading } from '../../SiteHeading'
 import { CategoryBreadcrumb } from '../CategoryBreadcrumb'
 import type { LocalePathFn } from '../../sections/types'
 
 function SupportCard({ card, lp }: { card: CategorySupportCard; lp: LocalePathFn }) {
   return (
     <div className="w-full rounded-[10px] border border-idl-amber/20 bg-idl-paper p-4 sm:p-5 lg:max-w-[340px] lg:shrink-0">
-      <div className="text-[15px] font-extrabold text-idl-ink">{card.title}</div>
+      <SiteCardHeading className="text-[15px] font-extrabold text-idl-ink">{card.title}</SiteCardHeading>
       <p className="mt-1.5 text-[13px] leading-snug text-idl-ink-muted">{card.description}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         <Link

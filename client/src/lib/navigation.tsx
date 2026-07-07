@@ -3,6 +3,7 @@
 import NextLink from 'next/link'
 import { useEffect } from 'react'
 import { usePathname, useRouter, useSearchParams, useParams as useNextParams } from 'next/navigation'
+import { resolveLinkTitle } from '@/lib/link-title'
 import { cn } from '@/utils/cn'
 
 type LinkProps = Omit<React.ComponentProps<typeof NextLink>, 'href'> & {
@@ -10,9 +11,23 @@ type LinkProps = Omit<React.ComponentProps<typeof NextLink>, 'href'> & {
   to?: string
 }
 
-export function Link({ className, href, to, ...props }: LinkProps) {
+export function Link({
+  className,
+  href,
+  to,
+  title,
+  'aria-label': ariaLabel,
+  children,
+  ...props
+}: LinkProps) {
   const resolvedHref = href ?? to ?? '/'
-  return <NextLink href={resolvedHref} className={className} {...props} />
+  const resolvedTitle = resolveLinkTitle(children, title, ariaLabel)
+
+  return (
+    <NextLink href={resolvedHref} className={className} title={resolvedTitle} aria-label={ariaLabel} {...props}>
+      {children}
+    </NextLink>
+  )
 }
 
 type NavLinkProps = Omit<LinkProps, 'className'> & {
@@ -29,6 +44,9 @@ export function NavLink({
   activeClassName,
   inactiveClassName,
   end = false,
+  title,
+  'aria-label': ariaLabel,
+  children,
   ...props
 }: NavLinkProps) {
   const pathname = usePathname()
@@ -43,7 +61,19 @@ export function NavLink({
       ? className({ isActive })
       : cn(isActive ? activeClassName : inactiveClassName, className)
 
-  return <NextLink href={href ?? to ?? '/'} className={resolvedClassName} {...props} />
+  const resolvedTitle = resolveLinkTitle(children, title, ariaLabel)
+
+  return (
+    <NextLink
+      href={href ?? to ?? '/'}
+      className={resolvedClassName}
+      title={resolvedTitle}
+      aria-label={ariaLabel}
+      {...props}
+    >
+      {children}
+    </NextLink>
+  )
 }
 
 export { useRouter, usePathname, useParams, useSearchParams } from 'next/navigation'

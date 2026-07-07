@@ -73,3 +73,7 @@ export function getSiteUrl(): string {
     (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173')
   )
 }
+
+export function getGoogleSiteVerification(): string | undefined {
+  return process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim() || undefined
+}

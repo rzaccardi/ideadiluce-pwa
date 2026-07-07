@@ -16,12 +16,12 @@ import { useInfiniteScrollSentinel } from '@/hooks/use-infinite-scroll-sentinel'
 import type { ProductCardDTO } from '@/types/dto'
 import {
   buildActiveFilters,
-  buildCatalogSearchQuery,
+  buildCatalogApiQuery,
   centsToPriceBucket,
-  filterProductsByWorld,
   parseCatalogWorld,
   priceBucketToCents,
   resolveCategoryGroups,
+  resolveEffectiveCatalogCategory,
   type CatalogPriceBucket,
   type CatalogWorldTab,
   worldTabToParam,
@@ -75,39 +75,29 @@ export function CatalogPage({
       : null
 
   const effectiveQuery = useMemo(
+    () => buildCatalogApiQuery(queryParam),
+    [queryParam],
+  )
+
+  const effectiveCategory = useMemo(
     () =>
-      buildCatalogSearchQuery({
-        q: queryParam,
+      resolveEffectiveCatalogCategory({
+        categoryParam,
+        worldTab,
         attacco: attaccoParam,
         colorTemp: colorTempParam,
       }),
-    [attaccoParam, colorTempParam, queryParam],
+    [attaccoParam, categoryParam, colorTempParam, worldTab],
   )
+
+  const visibleProducts = products
 
   const { rootCategories, subcategories } = useMemo(
     () => resolveCategoryGroups(categories, categoryParam),
     [categories, categoryParam],
   )
 
-  const effectiveCategory = useMemo(() => {
-    if (categoryParam) return categoryParam
-    if (worldTab === 'design') {
-      const match = categories.find((c) => /arredo|design/i.test(`${c.slug} ${c.name}`))
-      return match?.slug
-    }
-    if (worldTab === 'technical') {
-      const match = categories.find((c) => /tecnica|tecnici|lampadine/i.test(`${c.slug} ${c.name}`))
-      return match?.slug
-    }
-    return undefined
-  }, [categories, categoryParam, worldTab])
-
-  const visibleProducts = useMemo(() => {
-    if (!categoryParam && worldTab !== 'all') {
-      return filterProductsByWorld(products, worldTab)
-    }
-    return products
-  }, [products, categoryParam, worldTab])
+  const clientWorld = worldTab === 'all' ? undefined : worldTab
 
   const activeFilters = useMemo(
     () =>
@@ -163,10 +153,20 @@ export function CatalogPage({
       pageSize: 24,
       locale,
       brandSlug: brandParam,
-      categorySlug: categoryParam,
+      categorySlug: effectiveCategory,
+      attacco: attaccoParam || undefined,
+      colorTemp: colorTempParam || undefined,
       q: effectiveQuery || undefined,
     })
-  }, [initialProducts, locale, brandParam, categoryParam, effectiveQuery])
+  }, [
+    initialProducts,
+    locale,
+    brandParam,
+    effectiveCategory,
+    attaccoParam,
+    colorTempParam,
+    effectiveQuery,
+  ])
 
   useLayoutEffect(() => {
     if (!initialBootstrap) return
@@ -197,16 +197,22 @@ export function CatalogPage({
       page: 1,
       pageSize: 24,
       locale,
+      attacco: attaccoParam || undefined,
+      colorTemp: colorTempParam || undefined,
+      world: clientWorld,
     })
-  }, [brandParam, effectiveCategory, effectiveQuery, locale])
+  }, [attaccoParam, brandParam, clientWorld, colorTempParam, effectiveCategory, effectiveQuery, locale])
 
   useEffect(() => {
     catalogStore.filters.inStockOnly = inStockOnly
     catalogStore.filters.sort = sortParam
     catalogStore.filters.minPriceCents = minPrice
     catalogStore.filters.maxPriceCents = maxPrice
+    catalogStore.filters.attacco = attaccoParam || undefined
+    catalogStore.filters.colorTemp = colorTempParam || undefined
+    catalogStore.filters.world = clientWorld
     reapplyCatalogClientFilters()
-  }, [inStockOnly, sortParam, minPrice, maxPrice])
+  }, [attaccoParam, clientWorld, colorTempParam, inStockOnly, sortParam, minPrice, maxPrice])
 
   function patchParams(mutate: (next: URLSearchParams) => void) {
     const next = new URLSearchParams(params)

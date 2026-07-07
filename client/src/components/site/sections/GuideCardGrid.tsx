@@ -1,5 +1,6 @@
 import { Link } from '@/lib/navigation'
 import { HoverLift, Stagger, StaggerItem } from '@/components/motion'
+import { SiteHeading } from '@/components/site/SiteHeading'
 import type { LocalePathFn } from './types'
 
 export type GuideCardItem = {
@@ -37,7 +38,12 @@ export function GuideCardGrid({ items, lp, variant = 'home', stagger = 0.07 }: P
                   {guide.category}
                 </div>
               ) : null}
-              <div className="mt-3 font-serif text-xl leading-snug font-medium text-idl-ink">{guide.title}</div>
+              <SiteHeading
+                level={3}
+                className="mt-3 font-serif text-xl leading-snug font-medium text-idl-ink"
+              >
+                {guide.title}
+              </SiteHeading>
               <div className="flex-1" />
               {guide.meta ? (
                 <div className="mt-4 text-[13px] font-bold text-idl-brass">

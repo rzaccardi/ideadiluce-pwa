@@ -6,6 +6,7 @@ import {
   getCachedMerchantFeedXml,
   getCachedSitemapXml,
 } from './seo-cache.service.js'
+import { LLMS_TXT_CONTENT_TYPE } from './llms.service.js'
 import { sendSeoPublicAsset } from './seo-response.js'
 import { findSeoRedirect } from './seo-redirect.service.js'
 
@@ -23,7 +24,7 @@ seoRouter.get(
   '/llms.txt',
   asyncHandler(async (_req, res) => {
     const { body, builtAt } = await getCachedLlmsTxt()
-    sendSeoPublicAsset(res, 'text/plain; charset=utf-8', body, builtAt)
+    sendSeoPublicAsset(res, LLMS_TXT_CONTENT_TYPE, body, builtAt)
   }),
 )
 

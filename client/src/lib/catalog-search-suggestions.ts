@@ -1,5 +1,6 @@
 import { ATTACCO_SEARCH, ATTACCO_SOCKETS } from '@/lib/attacco.defaults'
 import { CATALOG_SEARCH_LIMITS, sanitizeCatalogSearchInput } from '@/lib/catalog-search-limits'
+import type { CatalogPreserveParams } from '@/lib/catalog-filters'
 import type { CategoryDTO, PriceDisplayModeDTO } from '@/types/dto'
 import type { BrandListItemDTO } from '@/types/site-content'
 
@@ -216,15 +217,40 @@ export function productToSearchSuggestion(product: {
   }
 }
 
+const SOCKET_QUERY_RE =
+  /^(GU10|GU5[.-]3|E27|E14|G9|G13|GX53|R7s|T8|MR16|AR111)$/i
+
+function normalizeSocketQuery(value: string): string {
+  return value.replace(/GU5[.-]3/i, 'GU5.3').replace(/^r7s$/i, 'R7s').toUpperCase()
+}
+
+function isSocketSearchQuery(query: string): boolean {
+  return SOCKET_QUERY_RE.test(query.trim())
+}
+
 export function buildCatalogSubmitPath(
   query: string,
-  options?: { world?: 'technical' | 'design' | 'all' },
+  options?: CatalogPreserveParams & { world?: 'technical' | 'design' | 'all' },
 ): string {
   const trimmed = sanitizeCatalogSearchInput(query)
   const params = new URLSearchParams()
-  if (options?.world === 'technical') params.set('world', 'technical')
-  if (options?.world === 'design') params.set('world', 'design')
-  if (trimmed) params.set('q', trimmed)
+
+  const world = options?.world
+  if (world === 'technical' || world === 'design') params.set('world', world)
+  if (options?.brand) params.set('brand', options.brand)
+  if (options?.category) params.set('category', options.category)
+  if (options?.attacco) params.set('attacco', options.attacco)
+  if (options?.colorTemp) params.set('colorTemp', options.colorTemp)
+
+  if (trimmed) {
+    if (isSocketSearchQuery(trimmed)) {
+      params.set('attacco', normalizeSocketQuery(trimmed))
+      if (!params.has('world')) params.set('world', 'technical')
+    } else {
+      params.set('q', trimmed)
+    }
+  }
+
   const qs = params.toString()
   return qs ? `/negozio?${qs}` : '/negozio'
 }

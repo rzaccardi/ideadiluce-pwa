@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { ExternalLink } from '@/lib/link-title'
 import { Link } from '@/lib/navigation'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
@@ -15,6 +16,7 @@ import {
   CHI_SIAMO_STATS,
   CHI_SIAMO_SUPPORT_CTA,
 } from '@/components/site/content/chi-siamo-fallbacks'
+import { SiteCardHeading, SiteHeading, SiteSectionSrTitle } from '@/components/site/SiteHeading'
 import { cn } from '@/utils/cn'
 
 function findBlock<K extends ContentBlock['kind']>(
@@ -109,7 +111,11 @@ function ShowroomMapCard({
         sizes="(max-width: 1024px) 100vw, 640px"
       />
       <div className="absolute right-5 bottom-5 left-5 max-w-[calc(100%-2.5rem)] rounded-[10px] bg-idl-ink/90 px-5 py-4 text-idl-cream backdrop-blur-sm sm:left-auto sm:max-w-[18rem]">
-        {showroom.title ? <div className="font-serif text-lg">{showroom.title}</div> : null}
+        {showroom.title ? (
+          <SiteHeading level={3} className="font-serif text-lg">
+            {showroom.title}
+          </SiteHeading>
+        ) : null}
         {showroom.paragraphs[0] ? (
           <p className="mt-1 text-[12.5px] text-idl-cream/75">{showroom.paragraphs[0]}</p>
         ) : null}
@@ -200,6 +206,7 @@ export function ChiSiamoPageView({ content }: Props) {
         {/* Value cards 01–04 */}
         {features?.items.length ? (
           <SectionContainer className="py-10 sm:py-14">
+            <SiteSectionSrTitle>{features.title ?? 'Cosa ci distingue'}</SiteSectionSrTitle>
             <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" stagger={0.05}>
               {features.items.map((item) => (
                 <StaggerItem key={item.title}>
@@ -207,9 +214,9 @@ export function ChiSiamoPageView({ content }: Props) {
                     {item.num ? (
                       <div className="font-mono text-xs text-idl-brass">{item.num}</div>
                     ) : null}
-                    <div className={cn('text-base font-bold text-idl-ink', item.num && 'mt-4')}>
+                    <SiteCardHeading className={cn('text-idl-ink', item.num && 'mt-4')}>
                       {item.title}
-                    </div>
+                    </SiteCardHeading>
                     <p className="mt-2 text-[13.5px] leading-relaxed text-idl-muted">{item.description}</p>
                   </div>
                 </StaggerItem>
@@ -247,23 +254,23 @@ export function ChiSiamoPageView({ content }: Props) {
                     {contact.phone ? (
                       <div>
                         <div className="text-xs text-idl-muted">{t('common.phone')}</div>
-                        <a
+                        <ExternalLink
                           href={contact.phoneHref ?? `tel:${contact.phone.replace(/\s/g, '')}`}
                           className="mt-1 block text-sm font-bold text-idl-brass transition hover:text-idl-amber"
                         >
                           {contact.phone}
-                        </a>
+                        </ExternalLink>
                       </div>
                     ) : null}
                     {contact.email ? (
                       <div>
                         <div className="text-xs text-idl-muted">{t('common.email')}</div>
-                        <a
+                        <ExternalLink
                           href={`mailto:${contact.email}`}
                           className="mt-1 block text-sm font-bold text-idl-brass transition hover:text-idl-amber"
                         >
                           {contact.email}
-                        </a>
+                        </ExternalLink>
                       </div>
                     ) : null}
                   </div>
@@ -277,14 +284,14 @@ export function ChiSiamoPageView({ content }: Props) {
 
                   <div className="mt-6 flex flex-wrap gap-2.5">
                     {contact.whatsapp ? (
-                      <a
+                      <ExternalLink
                         href={contact.whatsapp}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex rounded-lg bg-[#1f9d57] px-5 py-3 text-[13.5px] font-bold text-white transition hover:bg-[#188a4a]"
                       >
                         {t('chiSiamo.whatsapp')}
-                      </a>
+                      </ExternalLink>
                     ) : null}
                     <Link
                       to={lp('/contatti')}
@@ -304,14 +311,14 @@ export function ChiSiamoPageView({ content }: Props) {
 
           <Reveal className="mt-8 text-center">
             {isExternalHref(showroomCta.href) ? (
-              <a
+              <ExternalLink
                 href={showroomCta.href}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm font-bold text-idl-brass transition hover:text-idl-amber"
               >
                 {showroomCta.label}
-              </a>
+              </ExternalLink>
             ) : (
               <Link
                 to={lp(showroomCta.href)}

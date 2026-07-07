@@ -12,6 +12,7 @@ import { ApiRequestError } from '@/types/api'
 import type { ProfessionistiPageContent } from '@/types/site-content'
 import { ProfessionalAccountForm } from './ProfessionalAccountForm'
 import { SectionContainer } from '../primitives'
+import { SiteCardHeading, SiteHeading, SiteSectionSrTitle } from '../SiteHeading'
 import { Reveal, Stagger, StaggerItem } from '@/components/motion'
 import { cn } from '@/utils/cn'
 
@@ -151,9 +152,12 @@ export function ProfessionistiPageView({ content }: Props) {
           </div>
 
           <div className="rounded-[14px] border border-[#2a2f37] bg-[#1b1e24] p-6">
-            <div className="font-mono text-[10.5px] tracking-[0.14em] text-[#8b919b]">
+            <SiteHeading
+              level={2}
+              className="font-mono text-[10.5px] tracking-[0.14em] text-[#8b919b]"
+            >
               {content.quickReorder.title}
-            </div>
+            </SiteHeading>
             <textarea
               value={reorderText}
               onChange={(e) => setReorderText(e.target.value)}
@@ -175,12 +179,13 @@ export function ProfessionistiPageView({ content }: Props) {
       </Reveal>
 
       <SectionContainer className="py-12 sm:py-14">
+        <SiteSectionSrTitle>Vantaggi per professionisti</SiteSectionSrTitle>
         <Stagger immediate className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" stagger={0.05}>
           {content.features.map((item) => (
             <StaggerItem key={item.num}>
               <div className="h-full rounded-xl border border-idl-tech-border bg-idl-tech-panel p-6">
                 <div className="font-mono text-[11px] text-idl-amber">{item.num}</div>
-                <div className="mt-2 text-base font-bold text-idl-graphite">{item.title}</div>
+                <SiteCardHeading className="mt-2 text-idl-graphite">{item.title}</SiteCardHeading>
                 <p className="mt-1.5 text-sm leading-relaxed text-idl-muted">{item.description}</p>
               </div>
             </StaggerItem>
@@ -199,7 +204,7 @@ export function ProfessionistiPageView({ content }: Props) {
                 key={item.title}
                 className="rounded-xl border border-idl-path-design-border bg-idl-tech-panel p-6"
               >
-                <div className="text-[17px] font-bold text-idl-ink">{item.title}</div>
+                <SiteCardHeading className="text-[17px] text-idl-ink">{item.title}</SiteCardHeading>
                 <p className="mt-2 text-sm leading-relaxed text-[#6b6157]">
                   {item.description}
                 </p>

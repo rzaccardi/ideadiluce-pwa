@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { ExternalLink } from '@/lib/link-title'
 import { Link } from '@/lib/navigation'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { formatMoney } from '@/lib/format'
@@ -418,9 +419,9 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                         <span className="shrink-0 text-[13px] text-idl-muted">{row.label}</span>
                         <span className="text-left text-[13.5px] font-semibold break-words text-idl-graphite min-[480px]:max-w-[60%] min-[480px]:text-right">
                           {row.href ? (
-                            <a href={row.href} target="_blank" rel="noopener noreferrer" className="text-idl-amber underline-offset-2 hover:underline">
+                            <ExternalLink href={row.href} target="_blank" rel="noopener noreferrer" className="text-idl-amber underline-offset-2 hover:underline">
                               {row.value}
-                            </a>
+                            </ExternalLink>
                           ) : (
                             row.value
                           )}

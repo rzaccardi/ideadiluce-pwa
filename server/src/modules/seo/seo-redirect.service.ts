@@ -2,6 +2,7 @@ import { prisma } from '../../lib/prisma.js'
 
 function normalizePath(path: string): string {
   const trimmed = path.trim()
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
   if (!trimmed) return '/'
   const withSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
   return withSlash.length > 1 && withSlash.endsWith('/') ? withSlash.slice(0, -1) : withSlash

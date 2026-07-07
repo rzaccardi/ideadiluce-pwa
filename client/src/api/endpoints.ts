@@ -350,6 +350,8 @@ export const api = {
       q?: string
       category?: string
       brand?: string
+      attacco?: string
+      colorTemp?: string
     },
       init?: Pick<RequestInit, 'signal'>,
     ) {
@@ -360,6 +362,8 @@ export const api = {
       if (params.q) search.set('q', params.q)
       if (params.category) search.set('category', params.category)
       if (params.brand) search.set('brand', params.brand)
+      if (params.attacco) search.set('attacco', params.attacco)
+      if (params.colorTemp) search.set('colorTemp', params.colorTemp)
       return apiClient.get<import('@/types/dto').ProductListDTO>(
         `/api/v1/catalog/products?${search.toString()}`,
         init,

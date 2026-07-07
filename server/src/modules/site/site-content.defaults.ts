@@ -269,9 +269,9 @@ export const DEFAULT_HOME_IT: HomePageContent = {
   hero: {
     design: {
       eyebrow: 'IL DESIGN',
-      title: "Illuminazione d'arredo",
+      title: 'Illumina con stile',
       description:
-        "Lampade, sospensioni e applique d'autore. Brand, designer e ambienti per dare carattere ai tuoi spazi.",
+        "Idea di Luce — illuminazione d'arredo: lampade, sospensioni e applique d'autore. Brand, designer e ambienti per dare carattere e stile ai tuoi spazi.",
       ctaLabel: "Esplora l'arredo →",
       ctaHref: '/illuminazione-arredo',
       footerLine: 'ARTEMIDE · FLOS · TLB ITALY · VOSSLOH',
