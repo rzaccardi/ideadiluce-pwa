@@ -89,7 +89,12 @@ export function CheckoutAddressFields({
           </StripeFieldGroup>
         </FieldBlock>
 
-        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+        <div
+          className={cn(
+            'grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end',
+            focusStreetNumber && 'rounded-[12px] ring-2 ring-amber-300/70 ring-offset-2',
+          )}
+        >
           <FieldBlock label={t('checkout.address.streetNumber')}>
             <StripeFieldGroup>
               <StripeControlledInput
@@ -107,9 +112,10 @@ export function CheckoutAddressFields({
           </FieldBlock>
           <label
             className={cn(
-              'flex min-h-[52px] cursor-pointer items-center gap-2.5 rounded-[11px] border border-idl-tech-border bg-idl-tech-panel px-3.5 py-3 text-sm font-medium text-idl-muted sm:min-w-[7.5rem]',
+              'flex min-h-[52px] cursor-pointer items-center gap-2.5 rounded-[11px] border border-idl-tech-border bg-idl-tech-panel px-3.5 py-3 text-sm font-medium text-idl-muted sm:min-w-[9.5rem]',
               locked && 'cursor-default bg-idl-tech-panel',
               address.isSnc && 'border-[#14161b] bg-[#f8f8f6] text-idl-graphite',
+              focusStreetNumber && !address.isSnc && 'border-amber-300 bg-amber-50/70',
             )}
           >
             <input
@@ -296,17 +302,19 @@ function FieldBlock({ label, children }: { label: string; children: ReactNode })
   )
 }
 
-function CourierNotesField({
+export function CourierNotesField({
+  id,
   name,
   value,
-  locked,
+  locked = false,
   lockedClass,
   placeholder,
   onValueChange,
 }: {
+  id?: string
   name: string
   value: string
-  locked: boolean
+  locked?: boolean
   lockedClass?: string
   placeholder: string
   onValueChange: (value: string) => void
@@ -315,6 +323,7 @@ function CourierNotesField({
 
   return (
     <textarea
+      id={id}
       name={name}
       placeholder={placeholder}
       value={field.value}

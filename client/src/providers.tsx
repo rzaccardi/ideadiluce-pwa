@@ -10,6 +10,7 @@ import { parseLocaleFromPathname } from '@/lib/locale'
 import { cleanupLegacyServiceWorkers } from '@/lib/legacy-sw-cleanup'
 import { initValtioDevtools } from '@/lib/valtio-devtools'
 import { AppToaster } from '@/components/ui/AppToaster'
+import { CookiebotRouteSync } from '@/components/CookiebotRouteSync'
 import { WhatsAppFloatingButton } from '@/components/site/WhatsAppFloatingButton'
 
 function BootstrapGate({ children }: { children: React.ReactNode }) {
@@ -36,6 +37,7 @@ function LocaleProviders({ children }: { children: React.ReactNode }) {
     <LocaleProvider initialLocale={locale}>
       <BootstrapGate>
         {children}
+        <CookiebotRouteSync />
         <WhatsAppFloatingButton />
       </BootstrapGate>
     </LocaleProvider>

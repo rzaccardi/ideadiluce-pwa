@@ -2,13 +2,26 @@
 
 import { Link } from '@/lib/navigation'
 import { useLocale } from '@/context/locale-context'
-import type { ProductCategoryRefDTO } from '@/types/dto'
+import type { ProductCategoryRefDTO, ProductDetailDTO, ProductVariantDTO } from '@/types/dto'
 import { useI18n } from '@/hooks/use-i18n'
 import type { ProductAvailabilityStatus } from '@/lib/product-availability'
+import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMeta'
 import { cn } from '@/utils/cn'
 
 type Props = {
-  sku: string | null
+  product: Pick<
+    ProductDetailDTO,
+    | 'brand'
+    | 'sku'
+    | 'ced'
+    | 'manufacturerCode'
+    | 'defaultCode'
+    | 'ean'
+    | 'weightKg'
+    | 'lengthMeters'
+    | 'dimensions'
+  >
+  variant?: Pick<ProductVariantDTO, 'ean' | 'ced' | 'manufacturerCode'> | null
   categories?: ProductCategoryRefDTO[]
   availabilityLabel: string
   availabilityStatus?: ProductAvailabilityStatus
@@ -18,7 +31,8 @@ type Props = {
 }
 
 export function ProductBuyBoxMeta({
-  sku,
+  product,
+  variant = null,
   categories = [],
   availabilityLabel,
   availabilityStatus,
@@ -37,18 +51,16 @@ export function ProductBuyBoxMeta({
     ? statusStyles[availabilityStatus]
     : 'bg-idl-cream text-idl-muted'
 
-  if (!sku && categories.length === 0) return null
-
   return (
-    <dl className={cn('mt-4 space-y-2 text-sm text-idl-muted', className)}>
-      {sku ? (
-        <div className="flex flex-wrap gap-x-2">
-          <dt className="font-medium text-idl-ink-soft">{t('product.meta.sku')}</dt>
-          <dd>{sku}</dd>
-        </div>
-      ) : null}
+    <div className={cn('mt-4 space-y-2 text-sm text-idl-muted', className)}>
+      <ProductIdentifierMeta
+        product={product}
+        variant={variant}
+        includeBrand={false}
+        layout="rows"
+      />
       {categories.length > 0 ? (
-        <div>
+        <dl>
           <dt className="mb-1 font-medium text-idl-ink-soft">{t('product.meta.categories')}</dt>
           <dd className="flex flex-wrap gap-1">
             {categories.map((cat, i) => (
@@ -63,11 +75,11 @@ export function ProductBuyBoxMeta({
               </span>
             ))}
           </dd>
-        </div>
+        </dl>
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
-        <dt className="sr-only">{t('product.meta.availability')}</dt>
-        <dd className="flex flex-wrap items-center gap-2">
+        <span className="sr-only">{t('product.meta.availability')}</span>
+        <div className="flex flex-wrap items-center gap-2">
           <span
             className={cn(
               'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
@@ -80,8 +92,8 @@ export function ProductBuyBoxMeta({
             <span className="text-xs text-idl-muted">{availabilityDetail}</span>
           ) : null}
           {restockAction}
-        </dd>
+        </div>
       </div>
-    </dl>
+    </div>
   )
 }

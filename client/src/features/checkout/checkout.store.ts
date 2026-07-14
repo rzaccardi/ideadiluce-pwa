@@ -80,6 +80,8 @@ export const checkoutStore = proxy({
   initLoadingPhase: null as CheckoutInitLoadingPhase | null,
   /** true mentre si precompila e geocodifica l'indirizzo salvato (utente loggato) */
   addressPrefillLoading: false,
+  /** true mentre si sincronizzano indirizzi/ordine prima dello step pagamento. */
+  transitionToPaymentLoading: false,
   error: null as string | null,
   selectedPaymentMethod: 'stripe' as CheckoutPaymentMethodDTO,
   shippingQuotes: [] as ShippingQuoteDTO[],
@@ -129,7 +131,7 @@ export const checkoutStore = proxy({
   draft: {
     email: '',
     orderNotes: '',
-    billingSameAsShipping: false,
+    billingSameAsShipping: true,
     billing: emptyCheckoutAddress(),
     shipping: emptyCheckoutAddress(),
   },

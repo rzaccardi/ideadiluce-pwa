@@ -10,10 +10,11 @@ import type { LocalePathFn } from '@/components/site/sections/types'
 type Props = {
   section: Home2PageContent['bestSellers']
   products: ReadonlyArray<ProductCardDTO>
+  placeholderHrefs?: Record<string, string>
   lp: LocalePathFn
 }
 
-export function Home2BestSellersSection({ section, products, lp }: Props) {
+export function Home2BestSellersSection({ section, products, placeholderHrefs = {}, lp }: Props) {
   const items = products.slice(0, 8)
 
   return (
@@ -33,7 +34,13 @@ export function Home2BestSellersSection({ section, products, lp }: Props) {
         />
         <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
           {items.map((product) => (
-            <DesignCatalogProductCard key={product.slug} product={product} lp={lp} />
+            <DesignCatalogProductCard
+              key={product.slug}
+              product={product}
+              to={placeholderHrefs[product.slug] ? lp(placeholderHrefs[product.slug]!) : undefined}
+              hidePrice={Boolean(placeholderHrefs[product.slug])}
+              lp={lp}
+            />
           ))}
         </div>
       </SectionContainer>

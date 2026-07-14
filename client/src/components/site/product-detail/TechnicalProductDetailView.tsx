@@ -23,9 +23,9 @@ import {
   ProductDetailCard,
   ProductDetailSectionLabel,
   ProductSpecRowItem,
-  buildProductMetaLine,
   buildProductSubtitle,
 } from './shared'
+import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMeta'
 import {
   ProductDetailBreadcrumb,
   buildProductBreadcrumbItems,
@@ -126,7 +126,6 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
 
   const { title: displayTitle } = extractProductDisplayTitle(product.name)
   const subtitle = buildProductSubtitle(product)
-  const metaLine = buildProductMetaLine(product)
   const brandEyebrow = product.brand?.name?.toUpperCase() ?? 'PRODOTTO TECNICO'
   const priceModeLabel = formatPriceDisplayModeLabel(
     selectedVariant?.priceDisplayMode ?? product.priceDisplayMode,
@@ -182,11 +181,14 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
           {subtitle ? (
             <div className="mt-2 font-mono text-[15px] text-idl-graphite-2">{subtitle}</div>
           ) : null}
-          {metaLine ? (
-            <div className="mt-3.5 mb-[18px] font-mono text-[11.5px] text-idl-muted">{metaLine}</div>
-          ) : (
-            <div className="mb-[18px]" />
-          )}
+          <div className="mb-[18px]">
+            <ProductIdentifierMeta
+              product={product}
+              variant={selectedVariant}
+              includeBrand={false}
+              className="mt-3.5 text-[11.5px] text-idl-muted"
+            />
+          </div>
 
           {tags.length > 0 ? (
             <div className="mb-[22px] flex flex-wrap gap-[7px]">

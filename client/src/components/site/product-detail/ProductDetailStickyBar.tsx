@@ -8,7 +8,8 @@ import type { ProductDetailDTO } from '@/types/dto'
 import { SectionContainer } from '@/components/site/primitives'
 import { cn } from '@/utils/cn'
 import { SiteImage } from '@/components/site/SiteImage'
-import { buildProductMetaLine, buildProductSubtitle } from './shared'
+import { buildProductSubtitle } from './shared'
+import { useProductIdentifierInline } from '@/components/product/ProductIdentifierMeta'
 
 type Props = {
   product: ProductDetailDTO
@@ -42,10 +43,14 @@ export function ProductDetailStickyBar({
   addLabelShort,
   addingLabel,
   variant = 'design',
+  variantRef,
 }: Props) {
   const isDesign = variant === 'design'
   const subtitle = buildProductSubtitle(product)
-  const meta = buildProductMetaLine(product)
+  const selectedVariant = variantRef
+    ? product.variants.find((v) => v.ref === variantRef)
+    : product.variants[0]
+  const identifierLine = useProductIdentifierInline(product, selectedVariant, { includeBrand: false })
 
   return (
     <div
@@ -81,7 +86,7 @@ export function ProductDetailStickyBar({
                 isDesign ? 'text-idl-design-dim' : 'font-mono text-idl-muted',
               )}
             >
-              {subtitle ?? meta ?? product.brand?.name ?? '—'}
+              {subtitle ?? identifierLine ?? product.brand?.name ?? '—'}
             </div>
           </div>
         </div>

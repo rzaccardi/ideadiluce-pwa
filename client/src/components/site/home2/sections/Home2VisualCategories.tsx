@@ -8,7 +8,7 @@ import type { LocalePathFn } from '@/components/site/sections/types'
 
 type Props = {
   tiles: ReadonlyArray<Home2CategoryTile>
-  imageUrls: ReadonlyArray<string | undefined>
+  imageUrls: ReadonlyArray<string>
   lp: LocalePathFn
 }
 
@@ -26,15 +26,13 @@ export function Home2VisualCategories({ tiles, imageUrls, lp }: Props) {
                   className="group block overflow-hidden rounded-lg border border-idl-border bg-idl-cream"
                 >
                   <div className="relative aspect-square overflow-hidden bg-idl-cream">
-                    {imageUrl ? (
-                      <SiteImage
-                        src={imageUrl}
-                        alt=""
-                        fill
-                        sizes="(max-width:640px) 45vw, 16vw"
-                        className="object-cover transition duration-500 group-hover:scale-[1.04]"
-                      />
-                    ) : null}
+                    <SiteImage
+                      src={imageUrl}
+                      alt=""
+                      fill
+                      sizes="(max-width:640px) 45vw, 16vw"
+                      className="object-cover transition duration-500 group-hover:scale-[1.04]"
+                    />
                   </div>
                   <div className="px-2 py-3 text-center">
                     <span className="font-serif text-[14px] font-medium text-idl-ink sm:text-[15px]">{tile.label}</span>

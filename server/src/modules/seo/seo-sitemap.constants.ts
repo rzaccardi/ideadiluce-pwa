@@ -19,13 +19,16 @@ export const AMBIENTI_ROOM_SLUGS = [
 ] as const
 
 export const STATIC_SITEMAP_PATHS = [
-  '/guide',
+  '/blog',
+  '/negozio',
+  '/illuminazione-arredo',
+  '/acquista-ambiente',
+  '/privacy-policy',
+  '/tos',
+  '/on-demand',
   '/ambienti',
   '/attacco',
   '/professionisti',
   '/contatti',
   '/chi-siamo',
-  '/categoria-prodotto/illuminazione-arredo',
-  '/categoria-prodotto/illuminazione-tecnica',
-  '/categoria-prodotto/illuminazione-tecnica/prodotti-tecnici',
 ] as const

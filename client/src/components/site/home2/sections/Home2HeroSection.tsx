@@ -9,28 +9,24 @@ import type { LocalePathFn } from '@/components/site/sections/types'
 
 type Props = {
   content: Home2PageContent['hero']
-  heroImageUrl?: string | null
+  heroImageUrl: string
   lp: LocalePathFn
 }
 
 export function Home2HeroSection({ content, heroImageUrl, lp }: Props) {
   return (
     <section className="relative min-h-[min(88vh,720px)] overflow-hidden bg-idl-design text-idl-design-fg">
-      {heroImageUrl ? (
-        <div className="absolute inset-0">
-          <SiteImage
-            src={heroImageUrl}
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-center"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-idl-design/95 via-idl-design/72 to-idl-design/20" />
-        </div>
-      ) : (
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_40%,rgba(201,162,75,0.22)_0%,transparent_55%)]" />
-      )}
+      <div className="absolute inset-0">
+        <SiteImage
+          src={heroImageUrl}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-idl-design/95 via-idl-design/72 to-idl-design/20" />
+      </div>
 
       <div className="relative z-[2] mx-auto flex min-h-[min(88vh,720px)] max-w-[1440px] items-end px-5 pb-14 pt-28 sm:px-10 sm:pb-20 lg:px-14">
         <FadeIn className="max-w-xl lg:max-w-2xl">

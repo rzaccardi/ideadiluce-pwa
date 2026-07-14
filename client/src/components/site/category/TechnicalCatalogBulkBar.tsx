@@ -4,30 +4,25 @@ import { useState } from 'react'
 import type { ProductCardDTO } from '@/types/dto'
 import { addItem } from '@/features/cart'
 import { buildCartAddHintFromCard } from '@/features/cart/cart-add-hint'
-import { formatTechnicalProductRefLine } from '@/lib/technical-product-ref'
 import {
   getProductAvailabilityStatus,
   resolveAvailabilityData,
 } from '@/lib/product-availability'
 import { useLocale } from '@/context/locale-context'
 import { notify } from '@/lib/notify'
+import { buildProductPageUrl } from '@/lib/seo'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { cn } from '@/utils/cn'
 import { useTechnicalCatalogSelectionContext } from '@/context/technical-catalog-selection-context'
-import { TECHNICAL_CATALOG_MAX_COMPARE } from '@/hooks/use-technical-catalog-selection'
-import type { LocalePathFn } from '../sections/types'
-import { TechnicalCatalogCompareSheet } from './TechnicalCatalogCompareSheet'
 
 type Props = {
   products: ReadonlyArray<ProductCardDTO>
-  lp: LocalePathFn
 }
 
-export function TechnicalCatalogBulkBar({ products: _products, lp }: Props) {
+export function TechnicalCatalogBulkBar({ products: _products }: Props) {
   const { locale } = useLocale()
   const selection = useTechnicalCatalogSelectionContext()
   const [cartLoading, setCartLoading] = useState(false)
-  const [compareOpen, setCompareOpen] = useState(false)
 
   if (!selection) return null
 
@@ -35,13 +30,7 @@ export function TechnicalCatalogBulkBar({ products: _products, lp }: Props) {
     selection
 
   if (!selectionEnabled || selectedCount === 0) {
-    return compareOpen ? (
-      <TechnicalCatalogCompareSheet
-        products={selectedProducts}
-        lp={lp}
-        onClose={() => setCompareOpen(false)}
-      />
-    ) : null
+    return null
   }
 
   async function addSelectedToCart() {
@@ -93,20 +82,18 @@ export function TechnicalCatalogBulkBar({ products: _products, lp }: Props) {
     }
   }
 
-  async function copySelectedCodes() {
-    const lines = selectedProducts
-      .map((product) => formatTechnicalProductRefLine(product) ?? product.slug)
+  async function copySelectedProductLinks() {
+    const links = selectedProducts
+      .map((product) => buildProductPageUrl(product.slug, locale))
       .join('\n')
 
     try {
-      await navigator.clipboard.writeText(lines)
-      notify.success('Codici copiati negli appunti')
+      await navigator.clipboard.writeText(links)
+      notify.success('Lista prodotti copiata negli appunti')
     } catch {
-      notify.error('Impossibile copiare i codici')
+      notify.error('Impossibile copiare la lista prodotti')
     }
   }
-
-  const canCompare = selectedCount >= 2
 
   return (
     <>
@@ -122,9 +109,6 @@ export function TechnicalCatalogBulkBar({ products: _products, lp }: Props) {
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[13.5px] font-extrabold text-idl-ink">
               {selectedCount} selezionat{selectedCount === 1 ? 'o' : 'i'}
-            </span>
-            <span className="hidden text-[12px] text-idl-muted sm:inline">
-              (max {TECHNICAL_CATALOG_MAX_COMPARE})
             </span>
             <button
               type="button"
@@ -145,18 +129,10 @@ export function TechnicalCatalogBulkBar({ products: _products, lp }: Props) {
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => void copySelectedCodes()}
+              onClick={() => void copySelectedProductLinks()}
               className="rounded-md border border-idl-tech-border px-3 py-2 text-[12.5px] font-bold text-idl-ink transition hover:border-idl-ink"
             >
-              Copia codici
-            </button>
-            <button
-              type="button"
-              disabled={!canCompare}
-              onClick={() => setCompareOpen(true)}
-              className="rounded-md border border-idl-tech-border px-3 py-2 text-[12.5px] font-bold text-idl-ink transition hover:border-idl-ink disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Confronta
+              Copia lista prodotti
             </button>
             <button
               type="button"
@@ -170,14 +146,6 @@ export function TechnicalCatalogBulkBar({ products: _products, lp }: Props) {
           </div>
         </div>
       </div>
-
-      {compareOpen ? (
-        <TechnicalCatalogCompareSheet
-          products={selectedProducts}
-          lp={lp}
-          onClose={() => setCompareOpen(false)}
-        />
-      ) : null}
     </>
   )
 }

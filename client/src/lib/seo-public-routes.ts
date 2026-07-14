@@ -1,10 +1,10 @@
 import { getServerApiUrl } from '@/lib/env'
 
-/** Allineato allo scheduler SEO (6 ore). */
-export const SEO_ASSET_REVALIDATE_SECONDS = 6 * 60 * 60
+/** Allineato allo scheduler SEO (1 ora). */
+export const SEO_ASSET_REVALIDATE_SECONDS = 60 * 60
 
 export const SEO_ASSET_CACHE_CONTROL =
-  'public, max-age=300, s-maxage=21600, stale-while-revalidate=86400'
+  'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400'
 
 export async function proxySeoAsset(
   path: string,

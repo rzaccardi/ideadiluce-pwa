@@ -1,4 +1,21 @@
 import type { ProductBrandDTO } from '@/types/dto'
+import {
+  collectProductIdentifierFields,
+  formatProductIdentifierInline,
+  type ProductIdentifierFieldKey,
+} from '@/lib/product-identifier-fields'
+
+const REF_LINE_LABELS: Record<ProductIdentifierFieldKey, string> = {
+  brand: 'Marca',
+  manufacturerCode: 'MPN',
+  ced: 'CED',
+  sku: 'COD',
+  defaultCode: 'Codice',
+  ean: 'EAN',
+  weightKg: 'Peso',
+  lengthMeters: 'Lunghezza',
+  dimensions: 'Dimensioni',
+}
 
 const KNOWN_BRANDS: ReadonlyArray<{ pattern: RegExp; label: string; slug: string }> = [
   { pattern: /\bTLB(?:\s+Italy)?\b/i, label: 'TLB', slug: 'tlb-italy' },
@@ -33,15 +50,25 @@ export function formatTechnicalProductBrandLabel(name: string): string {
 export function formatTechnicalProductRefLine(product: {
   brand?: ProductBrandDTO | null
   sku?: string | null
+  ced?: string | null
+  manufacturerCode?: string | null
+  defaultCode?: string | null
+  ean?: string | null
   name?: string
 }): string | null {
-  const brandName = product.brand?.name?.trim() || inferTechnicalProductBrandFromName(product.name ?? '')?.name
-  const code = product.sku?.trim()
+  const brand =
+    product.brand ?? (product.name ? inferTechnicalProductBrandFromName(product.name) : null)
 
-  if (brandName && code) {
-    return `${formatTechnicalProductBrandLabel(brandName)} · ${code}`
-  }
-  if (brandName) return formatTechnicalProductBrandLabel(brandName)
-  if (code) return code
-  return null
+  return formatProductIdentifierInline(
+    collectProductIdentifierFields(
+      {
+        ...product,
+        brand,
+      },
+      null,
+      { includeBrand: true },
+    ),
+    REF_LINE_LABELS,
+    { compactBrand: true, formatBrand: formatTechnicalProductBrandLabel },
+  )
 }

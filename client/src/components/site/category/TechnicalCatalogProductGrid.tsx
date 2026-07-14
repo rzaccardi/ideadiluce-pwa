@@ -13,8 +13,6 @@ import {
   resolveAvailabilityData,
 } from '@/lib/product-availability'
 import { useTechnicalCatalogSelectionContext } from '@/context/technical-catalog-selection-context'
-import { notify } from '@/lib/notify'
-import { TECHNICAL_CATALOG_MAX_COMPARE } from '@/hooks/use-technical-catalog-selection'
 import { cn } from '@/utils/cn'
 import { SiteImage } from '../SiteImage'
 import { HoverLift } from '@/components/motion'
@@ -67,17 +65,12 @@ export const TechnicalCatalogProductCard = memo(function TechnicalCatalogProduct
 
   const checked = selection?.isSelected(product.slug) ?? false
   const selectionActive = selection?.selectionEnabled ?? false
-  const checkboxDisabled = selectionActive && !checked && !(selection?.canSelectMore ?? false)
 
   function handleToggleSelection() {
     if (!selection) return
     if (!selection.selectionEnabled) {
       selection.setSelectionMode(true)
       selection.toggleProduct(product.slug)
-      return
-    }
-    if (!checked && !selection.canSelectMore) {
-      notify.message(`Puoi selezionare al massimo ${TECHNICAL_CATALOG_MAX_COMPARE} prodotti.`)
       return
     }
     selection.toggleProduct(product.slug)
@@ -97,7 +90,6 @@ export const TechnicalCatalogProductCard = memo(function TechnicalCatalogProduct
             {showSelection && selection ? (
               <TechnicalCatalogSelectionCheckbox
                 checked={checked}
-                disabled={checkboxDisabled}
                 onChange={handleToggleSelection}
                 productName={product.name}
                 className={!selectionActive && !checked ? 'opacity-70' : undefined}

@@ -31,7 +31,10 @@
     "smoke:prod": "node server/scripts/smoke-production.mjs",
     "test:api": "node server/scripts/api-integration-test.mjs",
     "stripe:setup": "node server/scripts/stripe-setup.mjs",
-    "stripe:webhook": "stripe listen --forward-to localhost:4000/api/v1/payments/webhook/stripe"
+    "stripe:webhook": "stripe listen --forward-to localhost:4000/api/v1/payments/webhook/stripe",
+    "seo:extract-wp": "node scripts/extract-wp-sitemap-urls.mjs",
+    "seo:generate-paths": "node scripts/generate-wordpress-indexed-paths.mjs",
+    "seo:apply-wp-redirects": "npx tsx server/scripts/apply-wp-sitemap-redirects.ts"
   },
   "engines": {
     "node": ">=20"

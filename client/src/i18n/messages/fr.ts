@@ -35,6 +35,7 @@ export const messages: Record<MessageKey, string> = {
   'footer.legal.heading': 'Mentions légales',
   'footer.legal.terms': 'Conditions générales',
   'footer.legal.privacy': 'Politique de confidentialité',
+  'footer.legal.cookies': 'Paramètres des cookies',
   'error.genericTitle': 'Une erreur est survenue',
   'notFound.metaTitle': 'Page introuvable',
   'notFound.eyebrow': 'ERREUR 404',
@@ -390,6 +391,7 @@ export const messages: Record<MessageKey, string> = {
   'checkout.steps.details': 'Détails',
   'checkout.steps.payment': 'Paiement',
   'checkout.steps.shipping': 'Livraison',
+  'checkout.steps.addressesAndShipping': 'Adresse et livraison',
   'checkout.stepProgress': 'Étape {current} sur {total}',
   'checkout.summary.subtotal': 'Sous-total',
   'checkout.summary.tax': 'TVA',
@@ -413,10 +415,16 @@ export const messages: Record<MessageKey, string> = {
   'checkout.shipping.pickupRomeOnly':
     'Le retrait en magasin est disponible uniquement pour les clients basés à Rome.',
   'checkout.shipping.methodSubtitle': 'Choisissez comment recevoir votre commande.',
+  'checkout.shipping.diffFromBilling':
+    'L’adresse de livraison est identique à celle de facturation',
+  'checkout.shipping.sameAsBillingHint':
+    'Nous livrons à votre adresse de facturation. Complétez les informations ci-dessus pour voir les modes de livraison.',
   'checkout.shipping.paidLocked': 'Non sélectionnable avec la livraison gratuite active.',
   'checkout.shipping.freeShippingLockedHint':
     'Vous bénéficiez de la livraison gratuite : vous pouvez choisir la livraison gratuite ou le retrait en magasin. Les options payantes ne sont pas sélectionnables.',
   'checkout.addresses.subtitle': 'Données de facturation et adresse de facturation.',
+  'checkout.addresses.subtitleUnified':
+    'Saisissez les adresses de facturation et de livraison, puis choisissez le mode de réception.',
   'paymentResult.loading': 'Vérification du paiement…',
   'paymentResult.notFound': 'Commande introuvable',
   'paymentResult.fetchError': 'Erreur lors de la récupération de la commande',
@@ -669,8 +677,8 @@ export const messages: Record<MessageKey, string> = {
   'category.products': 'produits',
   'legal.terms': 'Conditions',
   'legal.privacy': 'Confidentialité',
-  'paymentMethod.stripe': 'Carte de crédit / débit',
-  'paymentMethod.stripeDescription': 'Visa, Mastercard, Amex, Apple Pay et Google Pay',
+  'paymentMethod.stripe': 'Carte, PayPal et wallets',
+  'paymentMethod.stripeDescription': 'Visa, Mastercard, Amex, Apple Pay, Google Pay et PayPal',
   'paymentMethod.bankTransfer': 'Virement bancaire',
   'paymentMethod.bankTransferDescription': 'Confirmez la commande et recevez immédiatement IBAN et libellé de virement',
   'orderStatus.cart_created': 'Panier créé',
@@ -692,7 +700,7 @@ export const messages: Record<MessageKey, string> = {
   'paymentStatus.failed': 'Échoué',
   'paymentStatus.cancelled': 'Annulé',
   'paymentStatus.refunded': 'Remboursé',
-  'checkout.payment.orPayWithCard': 'Ou payer par carte',
+  'checkout.payment.orPayWithCard': 'Ou payer par carte ou PayPal',
   'checkout.payment.orderSr': 'Commande {orderId}',
   'checkout.payment.prepareError': 'Impossible de préparer le paiement.',
   'checkout.payment.failed': 'Paiement échoué',

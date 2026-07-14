@@ -24,6 +24,15 @@ describe('mergeSiteContentWithDefaults', () => {
     expect(merged.trustBar).toHaveLength(1)
     expect(merged.trustBar[0]?.title).toBe('Solo titolo custom')
   })
+
+  it('mantiene i default quando un array salvato è vuoto', () => {
+    const merged = mergeSiteContentWithDefaults('home', {
+      rooms: { items: [] },
+    }) as { rooms: { items: Array<{ title: string }> } }
+
+    expect(merged.rooms.items.length).toBeGreaterThan(0)
+    expect(merged.rooms.items[0]?.title).toBe('Soggiorno')
+  })
 })
 
 describe('site-content-i18n', () => {

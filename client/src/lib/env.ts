@@ -77,3 +77,7 @@ export function getSiteUrl(): string {
 export function getGoogleSiteVerification(): string | undefined {
   return process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim() || undefined
 }
+
+export function getCookiebotCbid(): string | undefined {
+  return process.env.NEXT_PUBLIC_COOKIEBOT_CBID?.trim() || undefined
+}

@@ -1,22 +1,21 @@
 'use client'
 
 import { Link } from '@/lib/navigation'
-import { SiteImage } from '@/components/site/SiteImage'
 import { SectionContainer } from '@/components/site/primitives'
 import { SiteSectionHeader } from '@/components/site/sections/SiteSectionHeader'
-import type { ProductCardDTO } from '@/types/dto'
+import { RoomCardMedia } from '@/components/site/sections/RoomCardMedia'
+import type { HomeRoomCard } from '@/types/site-content'
 import type { Home2PageContent } from '@/lib/homepage2.defaults'
 import type { LocalePathFn } from '@/components/site/sections/types'
-import { formatMoney } from '@/lib/format'
 
 type Props = {
   section: Home2PageContent['inspiration']
-  products: ReadonlyArray<ProductCardDTO>
+  rooms: ReadonlyArray<HomeRoomCard>
   lp: LocalePathFn
 }
 
-export function Home2InspirationGrid({ section, products, lp }: Props) {
-  const items = products.filter((p) => p.imageUrl).slice(0, 8)
+export function Home2InspirationGrid({ section, rooms, lp }: Props) {
+  const items = rooms.filter((room) => room.imageUrl?.trim()).slice(0, 8)
 
   return (
     <section className="border-t border-idl-border bg-white py-12 sm:py-16 dark:bg-idl-tech-panel">
@@ -32,30 +31,29 @@ export function Home2InspirationGrid({ section, products, lp }: Props) {
           layout="split"
           lp={lp}
         />
-        <div className="mt-8 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-          {items.map((product) => (
+        <div className="mt-8 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-3">
+          {items.map((room) => (
             <Link
-              key={product.slug}
-              to={lp(`/prodotto/${product.slug}`)}
-              className="group relative aspect-[4/5] overflow-hidden rounded-md bg-idl-cream"
+              key={room.href}
+              to={lp(room.href)}
+              className="group relative block aspect-[4/5] overflow-hidden rounded-md bg-idl-cream"
             >
-                {product.imageUrl ? (
-                  <SiteImage
-                    src={product.imageUrl}
-                    alt={product.name}
-                    fill
-                    sizes="(max-width:640px) 50vw, 25vw"
-                    className="object-cover transition duration-700 group-hover:scale-[1.03]"
-                  />
-                ) : null}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
-                <div className="absolute inset-x-0 bottom-0 translate-y-2 p-3 opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">
-                  <p className="line-clamp-2 font-serif text-[13px] leading-snug text-white">{product.name}</p>
-                  <p className="mt-1 text-[12px] font-bold text-idl-glow">
-                    {formatMoney(product.priceCents, product.currency)}
-                  </p>
-                </div>
-              </Link>
+              <RoomCardMedia
+                imageUrl={room.imageUrl}
+                videoUrl={room.videoUrl}
+                alt={room.title}
+                aspectClass="aspect-[4/5]"
+                sizes="(max-width:640px) 50vw, 33vw"
+                hoverScaleClass="transition duration-700 group-hover:scale-[1.03]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+                <p className="font-serif text-[15px] leading-snug text-white sm:text-[16px]">{room.title}</p>
+                <span className="mt-1 inline-flex text-[12px] font-bold text-idl-glow opacity-0 transition group-hover:opacity-100">
+                  Scopri →
+                </span>
+              </div>
+            </Link>
           ))}
         </div>
       </SectionContainer>

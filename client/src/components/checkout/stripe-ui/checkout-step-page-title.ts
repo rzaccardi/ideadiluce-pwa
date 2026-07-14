@@ -16,7 +16,7 @@ export function checkoutStepPageTitleKey(
     case 'addresses':
     case 'billing':
     case 'details':
-      return 'checkout.steps.addresses'
+      return 'checkout.steps.addressesAndShipping'
     case 'shipping':
       return 'checkout.shippingAddress'
     case 'delivery_recipient':

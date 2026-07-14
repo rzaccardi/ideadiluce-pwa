@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Script from 'next/script'
 import { Providers } from '@/providers'
 import { hanken } from '@/lib/fonts'
-import { getSiteUrl, getGoogleSiteVerification } from '@/lib/env'
+import { getCookiebotCbid, getSiteUrl, getGoogleSiteVerification } from '@/lib/env'
 import { HTML_LANG } from '@/lib/locale'
 import { getRequestLocale } from '@/lib/locale-server'
 import { HOME_SEO_DESCRIPTION } from '@/lib/seo/home-metadata'
@@ -56,6 +56,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getRequestLocale()
   const lang = HTML_LANG[locale]
+  const cookiebotCbid = getCookiebotCbid()
 
   return (
     <html
@@ -64,6 +65,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       suppressHydrationWarning
     >
       <body className="flex min-h-screen flex-col" suppressHydrationWarning>
+        {cookiebotCbid ? (
+          <Script
+            id="Cookiebot"
+            src="https://consent.cookiebot.com/uc.js"
+            data-cbid={cookiebotCbid}
+            data-culture={locale}
+            data-blockingmode="auto"
+            strategy="beforeInteractive"
+          />
+        ) : null}
         <Script id="idl-theme-init" strategy="beforeInteractive">
           {THEME_INIT_SCRIPT}
         </Script>

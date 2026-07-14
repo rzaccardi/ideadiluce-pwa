@@ -6,7 +6,7 @@ import { StripePaymentForm, type StripePaymentFormHandle } from './StripePayment
 import { checkoutStripeAppearance } from './stripe-ui/constants'
 import { getStripePublishableKey } from '@/lib/env'
 import { normalizeStripeClientSecret } from '@/lib/stripe-client-secret'
-import { getStripePromise, preloadStripe, resolvePublishableKey } from '@/lib/stripe-loader'
+import { getStripePromise, preloadStripe, preloadStripeCheckoutModule, resolvePublishableKey } from '@/lib/stripe-loader'
 
 type Props = {
   clientSecret: string
@@ -35,6 +35,7 @@ export function StripePaymentShell({
 
   useEffect(() => {
     preloadStripe(publishableKeyProp)
+    preloadStripeCheckoutModule()
   }, [publishableKeyProp])
 
   useEffect(() => {

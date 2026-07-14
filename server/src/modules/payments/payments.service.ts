@@ -112,22 +112,40 @@ async function stripeLineItemsForOrder(
   cart: Awaited<ReturnType<typeof activeCartForRequest>>,
   currencyCode: string,
 ): Promise<StripeLineItemInput[]> {
-  const lines: StripeLineItemInput[] = []
-  for (const item of cart.items) {
-    const p = await resolveCatalogProduct(req, item.productRef)
-    const unit = item.clientUnitPriceEstimate ?? p?.priceCents ?? 0
-    if (unit <= 0) continue
-    lines.push({
-      name: p?.name ?? item.productRef,
-      amountCents: unit,
-      quantity: item.quantity,
-      currencyCode,
-      metadata: {
-        product_ref: item.productRef,
-        variant_ref: item.variantRef ?? '',
-      },
-    })
-  }
+  const productLines = (
+    await Promise.all(
+      cart.items.map(async (item): Promise<StripeLineItemInput | null> => {
+        const unit = item.clientUnitPriceEstimate ?? 0
+        if (unit <= 0) {
+          const p = await resolveCatalogProduct(req, item.productRef)
+          const resolvedUnit = p?.priceCents ?? 0
+          if (resolvedUnit <= 0) return null
+          return {
+            name: p?.name ?? item.productRef,
+            amountCents: resolvedUnit,
+            quantity: item.quantity,
+            currencyCode,
+            metadata: {
+              product_ref: item.productRef,
+              variant_ref: item.variantRef ?? '',
+            },
+          } satisfies StripeLineItemInput
+        }
+        return {
+          name: item.productRef,
+          amountCents: unit,
+          quantity: item.quantity,
+          currencyCode,
+          metadata: {
+            product_ref: item.productRef,
+            variant_ref: item.variantRef ?? '',
+          },
+        } satisfies StripeLineItemInput
+      }),
+    )
+  ).filter((line): line is StripeLineItemInput => line != null)
+
+  const lines: StripeLineItemInput[] = [...productLines]
   const ship = cart.shippingSelection
   if (ship && ship.amountCents > 0) {
     lines.push({
@@ -801,7 +819,7 @@ export const paymentsService = {
       }))
 
     const stripeLines =
-      body.paymentMethod === 'stripe'
+      body.paymentMethod === 'stripe' && !priceLocked
         ? await stripeLineItemsForOrder(req, cartPriced, order.currencyCode)
         : undefined
 

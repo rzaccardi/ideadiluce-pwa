@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Link, useNavigate } from '@/lib/navigation'
+import { useNavigate } from '@/lib/navigation'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import type { CartDTO, CartItemDTO, FreeShippingHintDTO, ProductCardDTO, ShippingQuoteDTO, TaxBreakdownDTO } from '@/types/dto'
@@ -13,10 +13,12 @@ import { FreeShippingNudge } from '@/components/cart/FreeShippingNudge'
 import { BrandWordmark } from '@/components/site/primitives'
 import { CheckoutCrossSellSection } from '@/components/checkout/CheckoutCrossSellSection'
 import { CheckoutTrustSignals } from '@/components/checkout/stripe-ui/CheckoutTrustSignals'
+import { CheckoutLegalLinks } from '@/components/checkout/stripe-ui/CheckoutLegalLinks'
 import {
   CHECKOUT_STORE_NAME,
   checkoutMobileSummaryClass,
   checkoutMobileSummaryPanelClass,
+  checkoutMobileSummarySpacerClass,
   checkoutSummaryAsideClass,
   checkoutSummaryInnerClass,
   checkoutTitleTypographyClass,
@@ -48,13 +50,13 @@ type Props = {
 
 const summaryThemeClasses = {
   light: {
-    itemTitle: 'text-[#14161b]',
-    itemMeta: 'text-[#6c727c]',
-    row: 'text-[#14161b]',
-    rowMuted: 'text-[#b0b0b4]',
-    border: 'border-[#e2e6eb]',
+    itemTitle: 'text-idl-graphite',
+    itemMeta: 'text-idl-muted',
+    row: 'text-idl-graphite',
+    rowMuted: 'text-idl-muted',
+    border: 'border-idl-tech-chip-border',
     qtyBadge: 'bg-[#3a332a] text-[#f1e8d8]',
-    thumbBorder: 'border-white/10',
+    thumbBorder: 'border-idl-tech-border',
   },
   dark: {
     itemTitle: 'text-[#f1e8d8]',
@@ -209,34 +211,43 @@ export function CheckoutOrderSummary({
   const total = cartTotalCents(cart, selectedShipping?.amountCents, taxBreakdown)
 
   if (mobileOnly) {
+    const mobileToggle = (
+      <button
+        type="button"
+        onClick={() => setMobileOpen((v) => !v)}
+        className="relative z-10 flex w-full items-center justify-between gap-3 px-4 py-3 text-left sm:px-5 sm:py-3.5"
+        aria-expanded={mobileOpen}
+      >
+        <span className="flex min-w-0 items-center gap-2 text-sm text-idl-graphite underline decoration-idl-muted/50 underline-offset-2">
+          <ChevronIcon open={mobileOpen} />
+          <span className="truncate">
+            {mobileOpen ? t('checkout.summary.hideOrderSummary') : t('checkout.summary.showOrderSummary')}
+          </span>
+        </span>
+        <span className="shrink-0 text-base font-bold tabular-nums text-idl-graphite">
+          {formatMoney(total, cart.currencyCode)}
+        </span>
+      </button>
+    )
+
     return (
       <>
+        <div className={checkoutMobileSummarySpacerClass} aria-hidden />
+        <div
+          className={cn(checkoutMobileSummaryClass, mobileOpen && 'pointer-events-none invisible')}
+          aria-hidden={mobileOpen}
+        >
+          {mobileToggle}
+        </div>
         <ViewportPortal open={mobileOpen} lockScroll>
           <button
             type="button"
-            className="fixed inset-0 z-20 h-[100dvh] w-screen bg-[rgba(22,19,13,0.35)] lg:hidden"
+            className="fixed inset-0 z-[60] h-[100dvh] w-screen bg-[rgba(22,19,13,0.35)] lg:hidden"
             onClick={() => setMobileOpen(false)}
             aria-label={t('checkout.summary.hideOrderSummary')}
           />
-        </ViewportPortal>
-        <div className={checkoutMobileSummaryClass}>
-          <button
-            type="button"
-            onClick={() => setMobileOpen((v) => !v)}
-            className="relative z-40 flex w-full items-center justify-between gap-3 px-4 py-3 text-left sm:px-5 sm:py-3.5"
-            aria-expanded={mobileOpen}
-          >
-            <span className="flex min-w-0 items-center gap-2 text-sm text-idl-graphite underline decoration-idl-muted/50 underline-offset-2">
-              <ChevronIcon open={mobileOpen} />
-              <span className="truncate">
-                {mobileOpen ? t('checkout.summary.hideOrderSummary') : t('checkout.summary.showOrderSummary')}
-              </span>
-            </span>
-            <span className="shrink-0 text-base font-bold tabular-nums text-idl-graphite">
-              {formatMoney(total, cart.currencyCode)}
-            </span>
-          </button>
-          {mobileOpen ? (
+          <div className={cn(checkoutMobileSummaryClass, 'z-[70] shadow-[0_16px_48px_rgba(0,0,0,0.14)]')}>
+            {mobileToggle}
             <div className={checkoutMobileSummaryPanelClass}>
               <div className="px-4 pb-5 pt-4 sm:px-5">
                 <SummaryContent
@@ -252,8 +263,8 @@ export function CheckoutOrderSummary({
                 />
               </div>
             </div>
-          ) : null}
-        </div>
+          </div>
+        </ViewportPortal>
       </>
     )
   }
@@ -398,28 +409,10 @@ export function CheckoutSummaryFooter({
   theme?: SummaryTheme
   cartItems?: ReadonlyArray<Pick<CartItemDTO, 'productSlug' | 'productName'>>
 }) {
-  const { t } = useI18n()
-  const dark = theme === 'dark'
-
   return (
     <footer className="mt-8 space-y-4">
       <CheckoutTrustSignals theme={theme} cartItems={cartItems} />
-      <div
-        className={cn(
-          'flex flex-wrap items-center gap-x-2 gap-y-1 text-xs',
-          dark ? 'text-[#6f6450]' : 'text-[#9298a3]',
-        )}
-      >
-        <span>{t('checkout.poweredByStripe')}</span>
-        <span aria-hidden>·</span>
-        <Link to="/tos" className={dark ? 'hover:text-[#f1e8d8]' : 'hover:text-[#14161b]'}>
-          {t('legal.terms')}
-        </Link>
-        <span aria-hidden>·</span>
-        <Link to="/privacy-policy" className={dark ? 'hover:text-[#f1e8d8]' : 'hover:text-[#14161b]'}>
-          {t('legal.privacy')}
-        </Link>
-      </div>
+      <CheckoutLegalLinks theme={theme} />
     </footer>
   )
 }

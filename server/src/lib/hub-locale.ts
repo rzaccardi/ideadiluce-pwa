@@ -63,6 +63,12 @@ export function guideIndexPath(locale: HubLocale): string {
   return `${prefix}/guide`
 }
 
+/** Indice blog legacy WordPress (canonical indicizzato). */
+export function blogIndexPath(locale: HubLocale): string {
+  const prefix = LOCALE_PATH[locale]
+  return `${prefix}/blog`
+}
+
 export function guideArticlePath(slug: string, locale: HubLocale): string {
   const prefix = LOCALE_PATH[locale]
   return `${prefix}/guide/${slug}`

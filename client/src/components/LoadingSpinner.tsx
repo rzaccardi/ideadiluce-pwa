@@ -9,8 +9,8 @@ export function LoadingSpinner({ className }: Props) {
     <span
       aria-hidden="true"
       className={cn(
-        'inline-block shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent',
-        className ?? 'h-4 w-4',
+        'inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent',
+        className,
       )}
     />
   )

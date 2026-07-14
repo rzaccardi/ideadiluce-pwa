@@ -13,6 +13,7 @@ import { SocialBrandIcon, hasSocialBrandIcon } from '@/components/site/social-br
 import { cn } from '@/utils/cn'
 import { BrandWordmark, SectionContainer } from './primitives'
 import { FooterThemeSelect } from './FooterThemeSelect'
+import { CookiebotConsentLink } from './CookiebotConsentLink'
 import { useI18n } from '@/hooks/use-i18n'
 
 function FooterLegalLinks({ className }: { className?: string }) {
@@ -35,6 +36,7 @@ function FooterLegalLinks({ className }: { className?: string }) {
             {t('footer.legal.privacy')}
           </Link>
         </li>
+        <CookiebotConsentLink />
       </ul>
     </nav>
   )

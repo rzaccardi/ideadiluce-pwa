@@ -3,7 +3,7 @@ import { config as loadDotenv } from 'dotenv'
 import type { NextConfig } from 'next'
 import { SEO_CANONICAL_ALIAS_REDIRECTS } from './src/lib/legacy-seo-pages.config'
 
-const SHOWROOM_MAPS_URL = 'https://share.google/xwuCBBtF09NMdkKwn'
+const SHOWROOM_MAPS_URL = 'https://share.google/k0SAIICa1mlkcPpBf'
 
 const repoRoot = path.resolve(__dirname, '..')
 loadDotenv({ path: path.join(repoRoot, '.env') })

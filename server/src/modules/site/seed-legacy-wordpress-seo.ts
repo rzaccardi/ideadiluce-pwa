@@ -8,11 +8,6 @@ export const SEO_CANONICAL_ALIAS_REDIRECTS: Array<{
   reason: string
 }> = [
   {
-    fromPath: '/categoria-prodotto/illuminazione-arredo',
-    toPath: '/illuminazione-arredo',
-    reason: 'Alias PWA → slug WordPress indicizzato',
-  },
-  {
     fromPath: '/ambienti',
     toPath: '/acquista-ambiente',
     reason: 'Alias PWA → slug WordPress indicizzato',

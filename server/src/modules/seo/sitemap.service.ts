@@ -3,14 +3,14 @@ import {
   absoluteUrl,
   ambienteRoomPath,
   ambientiIndexPath,
+  blogIndexPath,
   brandPath,
   brandsIndexPath,
   catalogPath,
   categoryPath,
   guideArticlePath,
-  guideIndexPath,
-  HREFLANG_CODE,
   homePath,
+  HREFLANG_CODE,
   HUB_LOCALES,
   productPath,
   staticContentPath,
@@ -18,10 +18,15 @@ import {
 } from '../../lib/hub-locale.js'
 import { catalogStorefrontService } from '../catalog/catalog-storefront.service.js'
 import { listArflyProductSlugs } from '../catalog/catalogResolver.service.js'
-import {
-  STATIC_SITEMAP_PATHS,
-} from './seo-sitemap.constants.js'
+import { STATIC_SITEMAP_PATHS } from './seo-sitemap.constants.js'
 import { listAmbienteRoomSlugs, listIndexedGuideSlugs } from './seo-guide-slugs.js'
+import {
+  isPathInWordpressIndex,
+  listWordpressIndexedBrandSlugs,
+  listWordpressIndexedProductSlugs,
+  listWordpressSitemapPaths,
+  normalizeSitemapPathKey,
+} from './wordpress-sitemap-paths.js'
 
 function escapeXml(s: string): string {
   return s
@@ -51,20 +56,6 @@ function localizedPaths(paths: Record<HubLocale, string>): Record<HubLocale, str
   return paths
 }
 
-function pushLocalizedGroup(entries: SitemapEntry[], siteBase: string, paths: Record<HubLocale, string>) {
-  for (const loc of HUB_LOCALES) {
-    const alternates = HUB_LOCALES.map((altLoc) => ({
-      hreflang: HREFLANG_CODE[altLoc],
-      href: absoluteUrl(siteBase, paths[altLoc]),
-    }))
-    alternates.push({ hreflang: 'x-default', href: absoluteUrl(siteBase, paths.IT) })
-    entries.push({
-      loc: absoluteUrl(siteBase, paths[loc]),
-      alternates,
-    })
-  }
-}
-
 function pathsForSlug(
   slug: string,
   pathFn: (slug: string, locale: HubLocale) => string,
@@ -80,6 +71,52 @@ function pathsForStatic(pathFn: (locale: HubLocale) => string): Record<HubLocale
   )
 }
 
+function italianAlternates(siteBase: string, path: string): SitemapEntry['alternates'] {
+  const href = absoluteUrl(siteBase, path)
+  return [
+    { hreflang: 'it', href },
+    { hreflang: 'x-default', href },
+  ]
+}
+
+function pushItalianPath(
+  seen: Set<string>,
+  entries: SitemapEntry[],
+  siteBase: string,
+  path: string,
+) {
+  const key = normalizeSitemapPathKey(path)
+  if (seen.has(key)) return
+  seen.add(key)
+  entries.push({
+    loc: absoluteUrl(siteBase, path),
+    alternates: italianAlternates(siteBase, path),
+  })
+}
+
+function pushLocalizedGroup(
+  seen: Set<string>,
+  entries: SitemapEntry[],
+  siteBase: string,
+  paths: Record<HubLocale, string>,
+) {
+  const itKey = normalizeSitemapPathKey(paths.IT)
+  if (seen.has(itKey)) return
+  seen.add(itKey)
+
+  for (const loc of HUB_LOCALES) {
+    const alternates = HUB_LOCALES.map((altLoc) => ({
+      hreflang: HREFLANG_CODE[altLoc],
+      href: absoluteUrl(siteBase, paths[altLoc]),
+    }))
+    alternates.push({ hreflang: 'x-default', href: absoluteUrl(siteBase, paths.IT) })
+    entries.push({
+      loc: absoluteUrl(siteBase, paths[loc]),
+      alternates,
+    })
+  }
+}
+
 export async function buildProductSitemapXml(): Promise<string> {
   const siteBase = env.PUBLIC_SITE_URL
   const [productSlugs, categories, brands, guideSlugs] = await Promise.all([
@@ -89,45 +126,76 @@ export async function buildProductSitemapXml(): Promise<string> {
     listIndexedGuideSlugs(),
   ])
   const roomSlugs = listAmbienteRoomSlugs()
+  const wpProductSlugs = listWordpressIndexedProductSlugs()
+  const wpBrandSlugs = listWordpressIndexedBrandSlugs()
 
+  const seen = new Set<string>()
   const entries: SitemapEntry[] = []
 
-  pushLocalizedGroup(entries, siteBase, pathsForStatic(homePath))
-  pushLocalizedGroup(entries, siteBase, pathsForStatic(catalogPath))
-  pushLocalizedGroup(entries, siteBase, pathsForStatic(brandsIndexPath))
-  pushLocalizedGroup(entries, siteBase, pathsForStatic(guideIndexPath))
-  pushLocalizedGroup(entries, siteBase, pathsForStatic(ambientiIndexPath))
+  // 1. Base completa: tutti gli URL WordPress indicizzati (1180+)
+  for (const path of listWordpressSitemapPaths()) {
+    pushItalianPath(seen, entries, siteBase, path)
+  }
+
+  // 2. Hub PWA non presenti nell'export WordPress (multilingua)
+  pushLocalizedGroup(seen, entries, siteBase, pathsForStatic(homePath))
+  pushLocalizedGroup(seen, entries, siteBase, pathsForStatic(catalogPath))
+  pushLocalizedGroup(seen, entries, siteBase, pathsForStatic(brandsIndexPath))
+  pushLocalizedGroup(seen, entries, siteBase, pathsForStatic(blogIndexPath))
+  pushLocalizedGroup(seen, entries, siteBase, pathsForStatic(ambientiIndexPath))
 
   for (const staticPath of STATIC_SITEMAP_PATHS) {
+    if (isPathInWordpressIndex(staticPath)) continue
     pushLocalizedGroup(
+      seen,
       entries,
       siteBase,
       pathsForStatic((locale) => staticContentPath(staticPath, locale)),
     )
   }
 
+  // 3. Guide editoriali PWA (nuovi URL /guide/...)
   for (const guideSlug of guideSlugs) {
-    pushLocalizedGroup(entries, siteBase, pathsForSlug(guideSlug, guideArticlePath))
+    pushLocalizedGroup(seen, entries, siteBase, pathsForSlug(guideSlug, guideArticlePath))
   }
 
+  // 4. Ambienti PWA (/ambienti/{room})
   for (const room of roomSlugs) {
-    pushLocalizedGroup(entries, siteBase, pathsForSlug(room, ambienteRoomPath))
+    pushLocalizedGroup(seen, entries, siteBase, pathsForSlug(room, ambienteRoomPath))
   }
 
+  // 5. Prodotti Odoo aggiunti dopo il cutover (non in sitemap WP)
   for (const slug of productSlugs) {
-    pushLocalizedGroup(entries, siteBase, pathsForSlug(slug, productPath))
+    if (wpProductSlugs.has(slug)) continue
+    pushLocalizedGroup(seen, entries, siteBase, pathsForSlug(slug, productPath))
   }
 
+  // 6. Categorie catalogo PWA (/categoria/{slug}) — link interni nuovi
   for (const category of categories) {
     if (!category.slug) continue
-    pushLocalizedGroup(entries, siteBase, pathsForSlug(category.slug, categoryPath))
+    pushLocalizedGroup(seen, entries, siteBase, pathsForSlug(category.slug, categoryPath))
   }
 
+  // 7. Brand Odoo non presenti nell'export WordPress
   for (const brand of brands) {
-    if (!brand.slug) continue
-    pushLocalizedGroup(entries, siteBase, pathsForSlug(brand.slug, brandPath))
+    if (!brand.slug || wpBrandSlugs.has(brand.slug)) continue
+    pushLocalizedGroup(seen, entries, siteBase, pathsForSlug(brand.slug, brandPath))
   }
 
   const body = entries.map(urlEntry).join('\n')
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${body}\n</urlset>`
+}
+
+/** Conteggio URL unici IT (per admin/status). */
+export function countUniqueItalianSitemapUrls(entries: SitemapEntry[]): number {
+  const keys = new Set<string>()
+  for (const entry of entries) {
+    const itAlt = entry.alternates.find((a) => a.hreflang === 'it')?.href ?? entry.loc
+    try {
+      keys.add(normalizeSitemapPathKey(new URL(itAlt).pathname))
+    } catch {
+      keys.add(normalizeSitemapPathKey(itAlt))
+    }
+  }
+  return keys.size
 }

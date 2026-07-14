@@ -1,7 +1,5 @@
 import type { CatalogSort } from '@/features/catalog/catalog.store'
 import { Skeleton } from '@/components/Skeleton'
-import { useTechnicalCatalogSelectionContext } from '@/context/technical-catalog-selection-context'
-import { TechnicalCatalogSelectionToggle } from './TechnicalCatalogSelectionToggle'
 import { cn } from '@/utils/cn'
 
 type ActiveFilter = {
@@ -20,7 +18,6 @@ type Props = {
   onSelectSort?: (sort: CatalogSort) => void
   onRemoveFilter?: (key: string) => void
   variant?: 'design' | 'technical'
-  compareEnabled?: boolean
 }
 
 const SORT_OPTIONS: Array<{ value: CatalogSort; label: string }> = [
@@ -41,10 +38,8 @@ export function CategoryResultsToolbar({
   onSelectSort,
   onRemoveFilter,
   variant = 'design',
-  compareEnabled,
 }: Props) {
   const isDesign = variant === 'design'
-  const selection = useTechnicalCatalogSelectionContext()
 
   return (
     <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
@@ -85,12 +80,6 @@ export function CategoryResultsToolbar({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-start">
-        {!isDesign && compareEnabled && selection ? (
-          <TechnicalCatalogSelectionToggle
-            enabled={selection.selectionEnabled}
-            onChange={selection.setSelectionMode}
-          />
-        ) : null}
         <div className="flex items-center gap-2">
           <span className={cn('text-[13.5px]', isDesign ? 'text-idl-ink-muted' : 'text-idl-muted')}>{sortLabel}</span>
           {onSelectSort && sort ? (

@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from '@/lib/navigation'
+import { useNavigate, useSearchParams } from '@/lib/navigation'
+import { CheckoutLegalLinks } from '@/components/checkout/stripe-ui/CheckoutLegalLinks'
 import { useSnapshot } from 'valtio/react'
 import { cartStore, fetchCart, fetchRecommendations, removeItem } from '@/features/cart'
 import { authStore, fetchMe } from '@/features/auth'
 import {
+  canAdvanceFromStep,
   canStartCheckout,
   cartFromFrozenQuoteSummary,
   checkoutStore,
@@ -15,6 +17,8 @@ import {
   refreshCheckoutAfterCartChange,
   isFrozenQuoteCheckout,
   prepareCheckoutPayment,
+  prefetchCheckoutPayment,
+  prefetchCheckoutTransitionToPayment,
   resumeCheckoutForOrder,
   resumeFrozenQuoteCheckout,
   resetCheckout,
@@ -61,7 +65,7 @@ import {
 } from '@/components/checkout/stripe-ui/constants'
 import { useI18n } from '@/hooks/use-i18n'
 import { ApiRequestError } from '@/types/api'
-import { preloadStripe } from '@/lib/stripe-loader'
+import { preloadStripe, preloadStripeCheckoutModule } from '@/lib/stripe-loader'
 import { checkoutDbg } from '@/features/checkout/checkout-debug'
 
 export function CheckoutPage() {
@@ -94,6 +98,7 @@ export function CheckoutPage() {
       frozenOrderId: searchParams.get('orderId'),
     })
     preloadStripe()
+    preloadStripeCheckoutModule()
     const retryOrderId = searchParams.get('retryOrder')
     const frozenOrderId = searchParams.get('orderId')
     const isResumeFlow = Boolean(frozenOrderId || retryOrderId)
@@ -195,6 +200,7 @@ export function CheckoutPage() {
       cartRefreshing: checkout.cartRefreshing,
       initLoadingPhase: checkout.initLoadingPhase,
       addressPrefillLoading: checkout.addressPrefillLoading,
+      transitionToPaymentLoading: checkout.transitionToPaymentLoading,
       shippingQuotesLoading: checkout.shippingQuotesLoading,
       shippingSelecting: Boolean(checkout.shippingSelectingRef),
       cartLoading: cart.isLoading && !c,
@@ -203,10 +209,9 @@ export function CheckoutPage() {
 
   useEffect(() => {
     if (isFrozenQuoteCheckout()) return
-    if (step === 'shipping_method' || step === 'payment' || step === 'review') {
+    if (step === 'addresses' || step === 'payment' || step === 'review') {
       checkoutDbg.effect('refreshTaxBreakdown', {
         step,
-        shippingRef: checkout.selectedShippingMethodRef,
         vatValidated: checkout.business.vatValidated,
       })
       void refreshTaxBreakdown()
@@ -215,7 +220,6 @@ export function CheckoutPage() {
     step,
     checkout.draft.shipping,
     checkout.draft.billing,
-    checkout.selectedShippingMethodRef,
     checkout.business.vatValidated,
     checkout.business.vatForceAccepted,
     checkout.customerSegment,
@@ -263,6 +267,47 @@ export function CheckoutPage() {
   }, [checkout.selectedPaymentMethod])
 
   useEffect(() => {
+    if (isFrozenQuoteCheckout()) return
+    if (step !== 'addresses') return
+    if (!canAdvanceFromStep('addresses')) return
+    prefetchCheckoutTransitionToPayment()
+  }, [
+    step,
+    checkout.draft.email,
+    checkout.draft.shipping,
+    checkout.draft.billing,
+    checkout.draft.billingSameAsShipping,
+    checkout.selectedShippingMethodRef,
+    checkout.shippingSelectionPersisted,
+    checkout.shippingSelectingRef,
+    checkout.selectedPaymentMethod,
+    checkout.clientOrderRef,
+    checkout.business.vatNumber,
+    checkout.business.fiscalCode,
+    checkout.business.companyName,
+    checkout.deliveryRecipient.mode,
+  ])
+
+  useEffect(() => {
+    if (isFrozenQuoteCheckout()) return
+    if (step !== 'addresses' && step !== 'payment' && step !== 'review') return
+    prefetchCheckoutPayment()
+  }, [
+    step,
+    checkout.draft.email,
+    checkout.draft.shipping,
+    checkout.draft.billing,
+    checkout.draft.billingSameAsShipping,
+    checkout.selectedShippingMethodRef,
+    checkout.shippingSelectionPersisted,
+    checkout.shippingSelectingRef,
+    checkout.selectedPaymentMethod,
+    checkout.cartRefreshing,
+    checkout.payment,
+    checkout.order,
+  ])
+
+  useEffect(() => {
     const guards = {
       step,
       method: checkout.selectedPaymentMethod,
@@ -290,7 +335,7 @@ export function CheckoutPage() {
       checkoutDbg.fn('prepareStripeSession', 'skip', { reason: 'guards failed', guards })
       return
     }
-    if (checkout.payment) {
+    if (checkout.payment?.method === 'stripe' && checkout.payment.clientSecret) {
       checkoutDbg.fn('prepareStripeSession', 'skip', { reason: 'payment already exists' })
       return
     }
@@ -310,32 +355,24 @@ export function CheckoutPage() {
       return
     }
 
-    checkoutDbg.schedule('prepareStripeSession', 400, { prepareKey })
-    const timer = setTimeout(() => {
-      void (async () => {
-        checkoutPrepareKeyRef.current = prepareKey
-        checkoutDbg.fn('prepareStripeSession', 'enter', { prepareKey })
-        try {
-          if (!checkoutStore.order) await startCheckout({ silent: true })
-          if (!checkoutStore.payment) await createPaymentSession({ silent: true })
-          checkoutPrepareBlockedRef.current = false
-          checkoutDbg.fn('prepareStripeSession', 'exit', {
-            orderId: checkoutStore.order?.orderId,
-            hasClientSecret: Boolean(checkoutStore.payment?.clientSecret),
-          })
-        } catch (e) {
-          checkoutPrepareBlockedRef.current = true
-          checkoutDbg.fn('prepareStripeSession', 'error', {
-            message: e instanceof Error ? e.message : String(e),
-          })
-        }
-      })()
-    }, 400)
-
-    return () => {
-      checkoutDbg.fn('prepareStripeSession', 'skip', { reason: 'effect cleanup (deps changed)' })
-      clearTimeout(timer)
-    }
+    checkoutDbg.fn('prepareStripeSession', 'enter', { prepareKey })
+    void (async () => {
+      checkoutPrepareKeyRef.current = prepareKey
+      try {
+        if (!checkoutStore.order) await startCheckout({ silent: true })
+        if (!checkoutStore.payment?.clientSecret) await createPaymentSession({ silent: true })
+        checkoutPrepareBlockedRef.current = false
+        checkoutDbg.fn('prepareStripeSession', 'exit', {
+          orderId: checkoutStore.order?.orderId,
+          hasClientSecret: Boolean(checkoutStore.payment?.clientSecret),
+        })
+      } catch (e) {
+        checkoutPrepareBlockedRef.current = true
+        checkoutDbg.fn('prepareStripeSession', 'error', {
+          message: e instanceof Error ? e.message : String(e),
+        })
+      }
+    })()
   }, [
     step,
     checkout.draft.email,
@@ -417,8 +454,6 @@ export function CheckoutPage() {
     await refreshCheckoutAfterCartChange()
   }
 
-  const shouldMountPaymentStep = step === 'payment' || step === 'review' || stripeMount !== null
-
   const activeStripeSession =
     stripeMount ??
     (checkout.payment?.method === 'stripe' && checkout.payment.clientSecret
@@ -428,6 +463,11 @@ export function CheckoutPage() {
           orderId: checkout.payment.orderId,
         }
       : null)
+
+  const shouldMountPaymentStep =
+    step === 'payment' ||
+    step === 'review' ||
+    (checkout.selectedPaymentMethod === 'stripe' && Boolean(activeStripeSession?.clientSecret))
 
   const stripeCardDetails = activeStripeSession ? (
     <StripePaymentShell
@@ -480,7 +520,11 @@ export function CheckoutPage() {
 
       <main className={checkoutMainClass}>
         {loadingState?.visible ? (
-          <CheckoutLoadingOverlay icon={loadingState.icon} messageKey={loadingState.messageKey} />
+          <CheckoutLoadingOverlay
+            icon={loadingState.icon}
+            messageKey={loadingState.messageKey}
+            scope={loadingState.scope}
+          />
         ) : null}
         <div
           className={cn(
@@ -531,8 +575,10 @@ export function CheckoutPage() {
           {shouldMountPaymentStep ? (
             <div
               className={cn(
-                step !== 'payment' && 'pointer-events-none hidden h-0 overflow-hidden opacity-0',
+                step !== 'payment' &&
+                  'pointer-events-none fixed -left-[10000px] top-0 z-[-1] h-[520px] w-[min(100%,24rem)] overflow-hidden opacity-0',
               )}
+              aria-hidden={step !== 'payment'}
             >
               <CheckoutStepBody>
                 <CheckoutPaymentStep stripeCardDetails={stripeCardDetails} />
@@ -559,16 +605,8 @@ export function CheckoutPage() {
             </CheckoutStepBody>
           ) : null}
 
-          <footer className="mt-10 flex flex-wrap items-center justify-center gap-x-2 text-xs text-[#9298a3] lg:hidden">
-            <span>{t('checkout.poweredByStripe')}</span>
-            <span aria-hidden>·</span>
-            <Link to="/tos" className="hover:text-idl-graphite">
-              {t('legal.terms')}
-            </Link>
-            <span aria-hidden>·</span>
-            <Link to="/privacy-policy" className="hover:text-idl-graphite">
-              {t('legal.privacy')}
-            </Link>
+          <footer className="mt-10 lg:hidden">
+            <CheckoutLegalLinks theme="light" className="justify-center" />
           </footer>
         </div>
       </main>

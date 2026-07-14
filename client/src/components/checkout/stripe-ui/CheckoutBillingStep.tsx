@@ -31,12 +31,8 @@ export function CheckoutBillingStep() {
   const checkout = useSnapshot(checkoutStore)
   const auth = useSnapshot(authStore)
   const business = isBusinessCheckout()
-  const b = checkout.business
   const hideBusinessFields = business && checkout.anagraficaCollectedAtAccount
-  const hideRetailFiscalCode =
-    !business &&
-    checkout.anagraficaCollectedAtAccount &&
-    Boolean(b.fiscalCode.trim())
+  const hideRetailFiscalCode = !business && auth.isAuthenticated
   const stepBusy =
     checkout.isLoading || checkout.initLoadingPhase != null || checkout.addressPrefillLoading
 

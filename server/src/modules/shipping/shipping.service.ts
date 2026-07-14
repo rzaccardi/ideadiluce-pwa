@@ -73,6 +73,157 @@ function mergeEtaWithLeadDays(etaDays: number | null | undefined, leadDays: numb
   return Math.max(etaDays ?? 0, leadDays ?? 0) || null
 }
 
+function zoneHasLiveCarrierMethods(
+  methods: Array<{ type: ShippingMethodType }>,
+): boolean {
+  return methods.some(
+    (m) => m.type === ShippingMethodType.LIVE_DHL || m.type === ShippingMethodType.LIVE_FEDEX,
+  )
+}
+
+const FIXED_METHOD_PREFIX: Record<string, ShippingMethodType> = {
+  flat: ShippingMethodType.FLAT_RATE,
+  free: ShippingMethodType.FREE_SHIPPING,
+  pickup: ShippingMethodType.PICKUP,
+}
+
+function parseFixedMethodRef(
+  methodRef: string,
+): { prefix: keyof typeof FIXED_METHOD_PREFIX; methodId: string } | null {
+  for (const prefix of Object.keys(FIXED_METHOD_PREFIX) as Array<keyof typeof FIXED_METHOD_PREFIX>) {
+    const token = `${prefix}:`
+    if (methodRef.startsWith(token)) {
+      const methodId = methodRef.slice(token.length)
+      return methodId ? { prefix, methodId } : null
+    }
+  }
+  return null
+}
+
+async function resolveFixedMethodQuote(
+  methodRef: string,
+  address: ShippingAddressInput,
+  subtotalCents: number,
+): Promise<ShippingQuoteLine | null> {
+  const parsed = parseFixedMethodRef(methodRef)
+  if (!parsed) return null
+
+  const method = await prisma.shippingMethod.findFirst({
+    where: {
+      id: parsed.methodId,
+      enabled: true,
+      type: FIXED_METHOD_PREFIX[parsed.prefix],
+      zone: { enabled: true },
+    },
+    include: { zone: true },
+  })
+  if (!method) return null
+
+  const zone = method.zone
+  if (!zone.countries.map((c) => c.toUpperCase()).includes(address.country.toUpperCase())) return null
+  if (!zoneMatches(address.country, zone.postcodes, address.postalCode)) return null
+  if (method.minOrderCents != null && subtotalCents < method.minOrderCents) return null
+
+  if (method.type === ShippingMethodType.FREE_SHIPPING) {
+    if (method.freeAboveCents == null || subtotalCents < method.freeAboveCents) return null
+    return {
+      methodRef,
+      carrierCode: 'internal',
+      serviceCode: 'free',
+      label: method.name,
+      amountCents: 0,
+      currencyCode: 'EUR',
+      etaDays: null,
+      source: 'free',
+    }
+  }
+
+  if (method.type === ShippingMethodType.PICKUP) {
+    if (!isRomePickupEligible(address)) return null
+    return {
+      methodRef,
+      carrierCode: 'internal',
+      serviceCode: 'pickup_roma',
+      label: method.name || PICKUP_ROMA_LABEL,
+      amountCents: 0,
+      currencyCode: 'EUR',
+      etaDays: null,
+      source: 'pickup',
+    }
+  }
+
+  if (method.type === ShippingMethodType.FLAT_RATE && method.flatAmountCents != null) {
+    return {
+      methodRef,
+      carrierCode: 'internal',
+      serviceCode: 'flat',
+      label: method.name,
+      amountCents: applySurcharge(method.flatAmountCents, method.surchargePct),
+      currencyCode: 'EUR',
+      etaDays: null,
+      source: 'flat',
+    }
+  }
+
+  return null
+}
+
+async function persistShippingSelection(
+  cartId: string,
+  pick: ShippingQuoteLine,
+  subtotal: number,
+  shippingCountry: string,
+  existingTax: number | null | undefined,
+  pricingSegment: Awaited<ReturnType<typeof resolvePricingContext>>['segment'],
+) {
+  await prisma.cartShippingSelection.upsert({
+    where: { cartId },
+    create: {
+      cartId,
+      methodRef: pick.methodRef,
+      carrierCode: pick.carrierCode,
+      serviceCode: pick.serviceCode,
+      label: pick.label,
+      amountCents: pick.amountCents,
+      currencyCode: pick.currencyCode,
+      etaDays: pick.etaDays ?? undefined,
+      rawJson: pick as object,
+    },
+    update: {
+      methodRef: pick.methodRef,
+      carrierCode: pick.carrierCode,
+      serviceCode: pick.serviceCode,
+      label: pick.label,
+      amountCents: pick.amountCents,
+      currencyCode: pick.currencyCode,
+      etaDays: pick.etaDays ?? undefined,
+      rawJson: pick as object,
+    },
+  })
+
+  const shipping = pick.amountCents
+  const tax =
+    existingTax ??
+    (
+      await computeCartTaxCents(subtotal, shippingCountry, {
+        customerSegment: pricingSegment,
+        isProfessional: pricingSegment === 'PROFESSIONAL',
+        isEstimate: true,
+      })
+    ).taxCents
+
+  await prisma.cart.update({
+    where: { id: cartId },
+    data: {
+      estimatedSubtotal: subtotal,
+      estimatedTax: tax,
+      estimatedShipping: shipping,
+      estimatedTotal: subtotal + tax + shipping,
+      lastPricedAt: new Date(),
+    },
+  })
+}
+
 async function quotesFromDb(
   ctx: OdooCallContext,
   address: ShippingAddressInput,
@@ -84,18 +235,26 @@ async function quotesFromDb(
   surchargesApplied: ShippingSurchargeAppliedDTO[]
   deliveryEstimateDays: number | null
 }> {
-  const [weightKg, maxLengthMeters, maxLeadDays, surchargeRules] = await Promise.all([
-    estimateCartWeightKg(ctx, cartItems),
-    estimateCartMaxLengthMeters(ctx, cartItems),
-    estimateCartMaxLeadDays(ctx, cartItems),
-    loadShippingSurchargeRules(),
-  ])
-
   const zones = await prisma.shippingZone.findMany({
     where: { enabled: true },
     include: { methods: { where: { enabled: true }, orderBy: { priority: 'asc' } } },
     orderBy: { priority: 'desc' },
   })
+
+  const matchingZone = zones.find(
+    (zone) =>
+      zone.countries.map((c) => c.toUpperCase()).includes(address.country.toUpperCase()) &&
+      zoneMatches(address.country, zone.postcodes, address.postalCode),
+  )
+  const zoneMethods = matchingZone?.methods ?? []
+  const needsLiveRates = zoneHasLiveCarrierMethods(zoneMethods)
+
+  const [weightKg, maxLengthMeters, maxLeadDays, surchargeRules] = await Promise.all([
+    needsLiveRates ? estimateCartWeightKg(ctx, cartItems) : Promise.resolve(1),
+    needsLiveRates ? estimateCartMaxLengthMeters(ctx, cartItems) : Promise.resolve(0),
+    needsLiveRates ? estimateCartMaxLeadDays(ctx, cartItems) : Promise.resolve(null),
+    needsLiveRates ? loadShippingSurchargeRules() : Promise.resolve(null),
+  ])
 
   const lines: ShippingQuoteLine[] = []
   for (const zone of zones) {
@@ -184,12 +343,14 @@ async function quotesFromDb(
   }
 
   const exclusive = applyFreeShippingExclusive(lines)
-  const { quotes: withSurcharges, applied } = applyOrderSurcharges(
-    exclusive,
-    maxLengthMeters,
-    surchargeRules,
-    freeShippingEligible,
-  )
+  const { quotes: withSurcharges, applied } = needsLiveRates
+    ? applyOrderSurcharges(
+        exclusive,
+        maxLengthMeters,
+        surchargeRules ?? (await loadShippingSurchargeRules()),
+        freeShippingEligible,
+      )
+    : { quotes: exclusive, applied: [] as ShippingSurchargeAppliedDTO[] }
 
   return {
     lines: withSurcharges,
@@ -255,67 +416,40 @@ export const shippingService = {
 
   async select(req: Request, body: SelectBody): Promise<{ selected: true; amountCents: number }> {
     const cart = await activeCart(req)
-    const ctx: OdooCallContext = { correlationId: req.correlationId, req }
     const subtotal = effectiveSubtotalCents(cart)
-    const freeShippingHint = await resolveFreeShippingHint({
-      subtotalCents: subtotal,
-      country: body.shippingAddress.country,
-      postalCode: body.shippingAddress.postalCode,
-    })
-    const { lines } = await quotesFromDb(
-      ctx,
-      body.shippingAddress,
-      subtotal,
-      cart.items,
-      Boolean(freeShippingHint?.eligible),
-    )
-    const pick = lines.find((l) => l.methodRef === body.methodRef)
+    const pricing = await resolvePricingContext(req)
+
+    let pick = await resolveFixedMethodQuote(body.methodRef, body.shippingAddress, subtotal)
+
+    if (!pick) {
+      const ctx: OdooCallContext = { correlationId: req.correlationId, req }
+      const freeShippingHint = await resolveFreeShippingHint({
+        subtotalCents: subtotal,
+        country: body.shippingAddress.country,
+        postalCode: body.shippingAddress.postalCode,
+      })
+      const { lines } = await quotesFromDb(
+        ctx,
+        body.shippingAddress,
+        subtotal,
+        cart.items,
+        Boolean(freeShippingHint?.eligible),
+      )
+      pick = lines.find((l) => l.methodRef === body.methodRef) ?? null
+    }
+
     if (!pick) {
       throw new AppError('SHIPPING_METHOD_INVALID', 'Invalid method', 'Metodo di spedizione non valido.', 400, false)
     }
 
-    await prisma.cartShippingSelection.upsert({
-      where: { cartId: cart.id },
-      create: {
-        cartId: cart.id,
-        methodRef: pick.methodRef,
-        carrierCode: pick.carrierCode,
-        serviceCode: pick.serviceCode,
-        label: pick.label,
-        amountCents: pick.amountCents,
-        currencyCode: pick.currencyCode,
-        etaDays: pick.etaDays ?? undefined,
-        rawJson: pick as object,
-      },
-      update: {
-        methodRef: pick.methodRef,
-        carrierCode: pick.carrierCode,
-        serviceCode: pick.serviceCode,
-        label: pick.label,
-        amountCents: pick.amountCents,
-        currencyCode: pick.currencyCode,
-        etaDays: pick.etaDays ?? undefined,
-        rawJson: pick as object,
-      },
-    })
-
-    const shipping = pick.amountCents
-    const pricing = await resolvePricingContext(req)
-    const { taxCents: tax } = await computeCartTaxCents(subtotal, body.shippingAddress.country, {
-      customerSegment: pricing.segment,
-      isProfessional: pricing.segment === 'PROFESSIONAL',
-      isEstimate: true,
-    })
-    await prisma.cart.update({
-      where: { id: cart.id },
-      data: {
-        estimatedSubtotal: subtotal,
-        estimatedTax: tax,
-        estimatedShipping: shipping,
-        estimatedTotal: subtotal + tax + shipping,
-        lastPricedAt: new Date(),
-      },
-    })
+    await persistShippingSelection(
+      cart.id,
+      pick,
+      subtotal,
+      body.shippingAddress.country,
+      cart.estimatedTax,
+      pricing.segment,
+    )
 
     return { selected: true, amountCents: pick.amountCents }
   },

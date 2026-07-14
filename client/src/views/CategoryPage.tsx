@@ -19,10 +19,13 @@ import type { ProductCardDTO } from '@/types/dto'
 type Props = {
   initialProducts?: ProductCardDTO[]
   initialCategoryName?: string | null
+  /** Override slug quando la pagina non è su /categoria/[slug]. */
+  categorySlug?: string
 }
 
-export function CategoryPage({ initialProducts, initialCategoryName = null }: Props) {
-  const slug = useParam('slug')
+export function CategoryPage({ initialProducts, initialCategoryName = null, categorySlug: slugOverride }: Props) {
+  const slugParam = useParam('slug')
+  const slug = slugOverride ?? slugParam
   const { locale } = useLocale()
   const { t } = useI18n()
   const lp = useLocalePath()

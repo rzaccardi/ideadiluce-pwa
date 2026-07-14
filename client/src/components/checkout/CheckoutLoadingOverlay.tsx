@@ -16,10 +16,13 @@ import {
 
 export type CheckoutLoadingIcon = 'pin' | 'truck' | 'shield' | 'bulb'
 
+export type CheckoutLoadingScope = 'fullscreen' | 'step'
+
 type LoadingState = {
   visible: boolean
   icon: CheckoutLoadingIcon
   messageKey: MessageKey
+  scope: CheckoutLoadingScope
 }
 
 const ADDRESS_STEPS: CheckoutStep[] = [
@@ -42,6 +45,7 @@ export function resolveCheckoutLoading(params: {
   cartRefreshing: boolean
   initLoadingPhase: CheckoutInitLoadingPhase | null
   addressPrefillLoading: boolean
+  transitionToPaymentLoading: boolean
   shippingQuotesLoading: boolean
   shippingSelecting: boolean
   cartLoading: boolean
@@ -53,50 +57,78 @@ export function resolveCheckoutLoading(params: {
     cartRefreshing,
     initLoadingPhase,
     addressPrefillLoading,
+    transitionToPaymentLoading,
     shippingQuotesLoading,
     shippingSelecting,
     cartLoading,
   } = params
 
+  const accountInitScope: CheckoutLoadingScope =
+    step === 'account' || step === 'customer_type' ? 'step' : 'fullscreen'
+
   if (isPaying) {
-    return { visible: true, icon: 'shield', messageKey: 'checkout.loading.payment' }
+    return { visible: true, icon: 'shield', messageKey: 'checkout.loading.payment', scope: 'fullscreen' }
   }
 
   if (cartRefreshing) {
-    return { visible: true, icon: 'bulb', messageKey: 'checkout.loading.cart' }
+    return { visible: true, icon: 'bulb', messageKey: 'checkout.loading.cart', scope: 'fullscreen' }
   }
 
   if (initLoadingPhase === 'anagrafica') {
-    return { visible: true, icon: 'bulb', messageKey: 'checkout.loading.profile' }
+    return {
+      visible: true,
+      icon: 'bulb',
+      messageKey: 'checkout.loading.profile',
+      scope: accountInitScope,
+    }
   }
 
   if (initLoadingPhase === 'indirizzi' || addressPrefillLoading) {
-    return { visible: true, icon: 'pin', messageKey: 'checkout.loading.addresses' }
+    return {
+      visible: true,
+      icon: 'pin',
+      messageKey: 'checkout.loading.addresses',
+      scope: accountInitScope,
+    }
+  }
+
+  if (transitionToPaymentLoading) {
+    return {
+      visible: true,
+      icon: 'pin',
+      messageKey: 'checkout.loading.addresses',
+      scope: 'fullscreen',
+    }
   }
 
   if (initLoadingPhase === 'spedizioni' || shippingQuotesLoading || shippingSelecting) {
-    return { visible: true, icon: 'truck', messageKey: 'checkout.loading.shipping' }
+    return {
+      visible: true,
+      icon: 'truck',
+      messageKey: 'checkout.loading.shipping',
+      scope: accountInitScope,
+    }
   }
 
   if (cartLoading) {
-    return { visible: true, icon: 'bulb', messageKey: 'skeleton.loadingCheckout' }
+    return { visible: true, icon: 'bulb', messageKey: 'skeleton.loadingCheckout', scope: 'fullscreen' }
   }
 
   if (!isLoading) return null
 
   if (step === 'shipping_method' || step === 'delivery_recipient') {
-    return { visible: true, icon: 'truck', messageKey: 'checkout.loading.shipping' }
+    return { visible: true, icon: 'truck', messageKey: 'checkout.loading.shipping', scope: 'fullscreen' }
   }
 
   if (step === 'payment' || step === 'review') {
-    return { visible: true, icon: 'shield', messageKey: 'checkout.loading.payment' }
+    return { visible: true, icon: 'shield', messageKey: 'checkout.loading.payment', scope: 'fullscreen' }
   }
 
   if (ADDRESS_STEPS.includes(step)) {
-    return { visible: true, icon: 'pin', messageKey: 'checkout.loading.addresses' }
+    return { visible: true, icon: 'pin', messageKey: 'checkout.loading.addresses', scope: 'fullscreen' }
   }
 
-  return { visible: true, icon: 'bulb', messageKey: 'checkout.processing' }
+  return { visible: true, icon: 'bulb', messageKey: 'checkout.processing', scope: 'fullscreen' }
 }
 
 export function useStableCheckoutLoading(state: LoadingState | null): LoadingState | null {
@@ -123,7 +155,7 @@ export function useStableCheckoutLoading(state: LoadingState | null): LoadingSta
     }, delay)
 
     return () => clearTimeout(timer)
-  }, [state?.visible, state?.icon, state?.messageKey, stable?.visible])
+  }, [state?.visible, state?.icon, state?.messageKey, state?.scope, stable?.visible])
 
   return stable
 }
@@ -144,10 +176,33 @@ function LoadingIcon({ icon }: { icon: CheckoutLoadingIcon }) {
 type Props = {
   icon: CheckoutLoadingIcon
   messageKey: MessageKey
+  scope?: CheckoutLoadingScope
 }
 
-export function CheckoutLoadingOverlay({ icon, messageKey }: Props) {
+function CheckoutLoadingCard({
+  icon,
+  messageKey,
+}: {
+  icon: CheckoutLoadingIcon
+  messageKey: MessageKey
+}) {
   const { t } = useI18n()
+
+  return (
+    <div className="flex w-full max-w-[min(100%,20rem)] flex-col items-center gap-4 rounded-[20px] bg-idl-tech-panel px-6 py-8 shadow-[0_30px_80px_rgba(0,0,0,0.34)] sm:max-w-xs sm:gap-5 sm:px-10 sm:py-9">
+      <div className="relative flex size-[76px] items-center justify-center">
+        <CheckoutLoadingRing />
+        <LoadingIcon icon={icon} />
+      </div>
+      <div className="text-center">
+        <p className="text-[14.5px] font-bold text-idl-graphite">{t(messageKey)}</p>
+        <p className="mt-1 text-xs text-[#9298a3]">{t('checkout.loading.dontClose')}</p>
+      </div>
+    </div>
+  )
+}
+
+export function CheckoutLoadingOverlay({ icon, messageKey, scope = 'fullscreen' }: Props) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -155,6 +210,8 @@ export function CheckoutLoadingOverlay({ icon, messageKey }: Props) {
   }, [])
 
   useEffect(() => {
+    if (scope !== 'fullscreen') return
+
     const main = document.querySelector('.checkout-shell > main')
     const prevBodyOverflow = document.body.style.overflow
     const prevMainOverflow = main instanceof HTMLElement ? main.style.overflow : ''
@@ -166,9 +223,22 @@ export function CheckoutLoadingOverlay({ icon, messageKey }: Props) {
       document.body.style.overflow = prevBodyOverflow
       if (main instanceof HTMLElement) main.style.overflow = prevMainOverflow
     }
-  }, [])
+  }, [scope])
 
   if (!mounted) return null
+
+  if (scope === 'step') {
+    return (
+      <div
+        className="checkout-loading-overlay absolute inset-0 z-[50] flex items-center justify-center bg-idl-tech-panel/72 p-4 backdrop-blur-[1.5px]"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <CheckoutLoadingCard icon={icon} messageKey={messageKey} />
+      </div>
+    )
+  }
 
   return createPortal(
     <div
@@ -177,16 +247,7 @@ export function CheckoutLoadingOverlay({ icon, messageKey }: Props) {
       aria-live="polite"
       aria-busy="true"
     >
-      <div className="flex w-full max-w-[min(100%,20rem)] flex-col items-center gap-4 rounded-[20px] bg-idl-tech-panel px-6 py-8 shadow-[0_30px_80px_rgba(0,0,0,0.34)] sm:max-w-xs sm:gap-5 sm:px-10 sm:py-9">
-        <div className="relative flex size-[76px] items-center justify-center">
-          <CheckoutLoadingRing />
-          <LoadingIcon icon={icon} />
-        </div>
-        <div className="text-center">
-          <p className="text-[14.5px] font-bold text-idl-graphite">{t(messageKey)}</p>
-          <p className="mt-1 text-xs text-[#9298a3]">{t('checkout.loading.dontClose')}</p>
-        </div>
-      </div>
+      <CheckoutLoadingCard icon={icon} messageKey={messageKey} />
     </div>,
     document.body,
   )

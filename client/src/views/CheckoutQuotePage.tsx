@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Link } from '@/lib/navigation'
+import { CheckoutLegalLinks } from '@/components/checkout/stripe-ui/CheckoutLegalLinks'
 import { useSnapshot } from 'valtio/react'
 import { EmptyCartPrompt } from '@/components/cart/EmptyCartPrompt'
 import {
@@ -214,16 +214,8 @@ export function CheckoutQuotePage() {
             </CheckoutStepBody>
           ) : null}
 
-          <footer className="mt-10 flex flex-wrap items-center justify-center gap-x-2 text-xs text-[#9298a3] lg:hidden">
-            <span>{t('checkout.poweredByStripe')}</span>
-            <span aria-hidden>·</span>
-            <Link to="/tos" className="hover:text-idl-graphite">
-              {t('legal.terms')}
-            </Link>
-            <span aria-hidden>·</span>
-            <Link to="/privacy-policy" className="hover:text-idl-graphite">
-              {t('legal.privacy')}
-            </Link>
+          <footer className="mt-10 lg:hidden">
+            <CheckoutLegalLinks theme="light" className="justify-center" />
           </footer>
         </div>
       </main>

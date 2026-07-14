@@ -112,6 +112,7 @@ export type ArflyProductListItem = {
   default_code?: string | null
   manufacturer_code?: string | null
   ced?: string | null
+  ean?: string | null
 }
 
 export type ArflyProductDetail = ArflyProductListItem & {

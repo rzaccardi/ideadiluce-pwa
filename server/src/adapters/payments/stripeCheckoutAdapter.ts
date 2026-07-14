@@ -78,7 +78,6 @@ export async function createStripeCheckoutSession(
       return_url: checkoutReturnUrl(input.pwaOrderId),
       customer: input.stripeCustomerId ?? undefined,
       customer_email: input.stripeCustomerId ? undefined : input.email,
-      payment_method_types: ['card'],
       payment_intent_data: {
         capture_method: 'automatic',
         metadata: sessionMetadata,

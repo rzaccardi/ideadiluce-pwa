@@ -21,9 +21,9 @@ import {
   ProductDetailCard,
   ProductDetailSectionLabel,
   ProductSpecRowItem,
-  buildProductMetaLine,
   buildProductSubtitle,
 } from './shared'
+import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMeta'
 import {
   ProductDetailBreadcrumb,
   buildProductBreadcrumbItems,
@@ -89,7 +89,6 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
   const specRows = mergeDesignSpecRows(parseProductSpecRows(product.specsTableHtml))
   const { title: displayTitle, rest: titleRest } = extractProductDisplayTitle(product.name)
   const subtitle = buildProductSubtitle(product)
-  const metaLine = buildProductMetaLine(product)
   const brandLabel = product.brand?.name?.toUpperCase() ?? 'BRAND'
   const lifestyleImages = galleryImages.slice(1, 4)
   const storyQuote = subtitle ?? product.shortDescription
@@ -158,11 +157,14 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
                 {titleRest ? <span>{titleRest}</span> : subtitle ? <span>{subtitle}</span> : null}
               </div>
             ) : null}
-            {metaLine ? (
-              <div className="mt-2 mb-7 font-mono text-xs text-idl-design-dim">{metaLine}</div>
-            ) : (
-              <div className="mb-7" />
-            )}
+            <div className="mb-7">
+              <ProductIdentifierMeta
+                product={product}
+                variant={selectedVariant}
+                includeBrand={false}
+                className="mt-2 text-xs text-idl-design-dim"
+              />
+            </div>
 
             <div className="flex flex-wrap items-baseline gap-2 sm:gap-3.5">
               <span className="font-serif text-[26px] font-medium sm:text-[34px]">

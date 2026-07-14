@@ -408,6 +408,7 @@ export async function seedSitePages() {
   await patchShellItSource()
   await patchHomeHeroCategoryLinks()
   await patchHomeSeoHeroCopy()
+  await patchHomeVisualSections()
   await patchAmbientiPageLinks()
   await patchLegacyCatalogPaths()
   await patchProfessionistiPageContent()
@@ -420,6 +421,8 @@ export async function seedSitePages() {
   await seedLegacyEditorialGuides()
   const { seedLegacyWordpressSeoRedirects } = await import('./seed-legacy-wordpress-seo.js')
   await seedLegacyWordpressSeoRedirects()
+  const { seedWordpressIndexedSeoRedirects } = await import('../seo/seed-wordpress-indexed-seo.js')
+  await seedWordpressIndexedSeoRedirects()
 }
 
 /** Hero home: catalogo generico → landing categoria prodotto. */
@@ -469,6 +472,64 @@ async function patchHomeSeoHeroCopy() {
       design.description = nextDescription
     }
     await siteRepository.upsert('home', locale, content, row.published)
+  }
+}
+
+/** Ripristina ambienti e vetrina design se salvati vuoti dal BO. */
+async function patchHomeVisualSections() {
+  const defaultRooms = DEFAULT_HOME_IT.rooms
+  const defaultDesignShowcase = DEFAULT_HOME_IT.designShowcase
+
+  for (const locale of SITE_LOCALES) {
+    const row = await siteRepository.findByKeyLocale('home', locale)
+    if (!row?.published) continue
+
+    const content = row.content as HomePageContent
+    let changed = false
+
+    if (!content.rooms) {
+      content.rooms = structuredClone(defaultRooms)
+      changed = true
+    } else {
+      if (!content.rooms.items?.length) {
+        content.rooms.items = structuredClone(defaultRooms.items)
+        changed = true
+      }
+      if (!content.rooms.title?.trim()) {
+        content.rooms.title = defaultRooms.title
+        changed = true
+      }
+      if (!content.rooms.subtitle?.trim()) {
+        content.rooms.subtitle = defaultRooms.subtitle
+        changed = true
+      }
+    }
+
+    if (!content.designShowcase) {
+      content.designShowcase = structuredClone(defaultDesignShowcase)
+      changed = true
+    } else {
+      if (!content.designShowcase.title?.trim()) {
+        content.designShowcase.title = defaultDesignShowcase.title
+        changed = true
+      }
+      if (!content.designShowcase.subtitle?.trim()) {
+        content.designShowcase.subtitle = defaultDesignShowcase.subtitle
+        changed = true
+      }
+      if (!content.designShowcase.searchQuery?.trim()) {
+        content.designShowcase.searchQuery = defaultDesignShowcase.searchQuery
+        changed = true
+      }
+      if (!content.designShowcase.productCount) {
+        content.designShowcase.productCount = defaultDesignShowcase.productCount
+        changed = true
+      }
+    }
+
+    if (changed) {
+      await siteRepository.upsert('home', locale, content, row.published)
+    }
   }
 }
 

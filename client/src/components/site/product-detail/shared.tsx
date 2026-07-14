@@ -138,12 +138,3 @@ export function buildProductSubtitle(product: {
   if (product.specTags?.length) return product.specTags.join(' · ')
   return null
 }
-
-export function buildProductMetaLine(product: {
-  sku?: string | null
-  specTags?: readonly string[]
-}): string | null {
-  const parts: string[] = []
-  if (product.sku?.trim()) parts.push(`SKU ${product.sku.trim()}`)
-  return parts.length ? parts.join(' · ') : null
-}

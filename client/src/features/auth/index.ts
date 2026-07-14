@@ -1,5 +1,5 @@
 export { authStore, setAuthUser } from './auth.store'
-export type { LogoutOptions, LogoutResult } from './auth.actions'
+export type { HydrateSessionStoresScope, LogoutOptions, LogoutResult } from './auth.actions'
 export {
   fetchMe,
   login,

@@ -1,7 +1,7 @@
 'use client'
 
 import type { CheckoutStep } from '@/features/checkout'
-import { CHECKOUT_STEP_ORDER, checkoutStore, shouldSkipCheckoutStep } from '@/features/checkout'
+import { checkoutStore } from '@/features/checkout'
 import { authStore } from '@/features/auth'
 import { useSnapshot } from 'valtio/react'
 import { checkoutFormTitleClass } from '@/components/checkout/stripe-ui/constants'
@@ -17,22 +17,17 @@ type StepGroup = {
   steps: CheckoutStep[]
 }
 
-/** Quattro macro-step: Account · Indirizzi · Spedizione · Pagamento */
+/** Tre macro-step: Anagrafica · Spedizione · Pagamento */
 const STEP_GROUPS: StepGroup[] = [
   {
     id: 'account',
-    labelKey: 'checkout.steps.group.account',
+    labelKey: 'checkout.steps.group.anagrafica',
     steps: ['account', 'customer_type'],
   },
   {
     id: 'addresses',
-    labelKey: 'checkout.steps.group.indirizzi',
-    steps: ['addresses'],
-  },
-  {
-    id: 'shipping',
     labelKey: 'checkout.steps.group.shipping',
-    steps: ['delivery_recipient', 'shipping_method'],
+    steps: ['addresses', 'delivery_recipient', 'shipping_method'],
   },
   {
     id: 'payment',
@@ -41,10 +36,6 @@ const STEP_GROUPS: StepGroup[] = [
   },
 ]
 
-function visibleSteps(): CheckoutStep[] {
-  return CHECKOUT_STEP_ORDER.filter((step) => !shouldSkipCheckoutStep(step))
-}
-
 function normalizeStep(step: CheckoutStep): CheckoutStep {
   if (step === 'details' || step === 'billing' || step === 'shipping') return 'addresses'
   if (step === 'payment_method') return 'payment'
@@ -52,20 +43,9 @@ function normalizeStep(step: CheckoutStep): CheckoutStep {
 }
 
 function groupIndex(currentStep: CheckoutStep) {
-  const visible = visibleSteps()
-  const currentIdx = visible.indexOf(normalizeStep(currentStep))
-  if (currentIdx < 0) return 0
-
-  let idx = 0
-  for (const group of STEP_GROUPS) {
-    const groupSteps = group.steps.filter((s) => visible.includes(s))
-    if (groupSteps.length === 0) continue
-    const lastInGroup = groupSteps[groupSteps.length - 1]!
-    const lastIdx = visible.indexOf(lastInGroup)
-    if (currentIdx <= lastIdx) return idx
-    idx += 1
-  }
-  return STEP_GROUPS.length - 1
+  const normalized = normalizeStep(currentStep)
+  const idx = STEP_GROUPS.findIndex((group) => group.steps.includes(normalized))
+  return idx >= 0 ? idx : 0
 }
 
 type Props = {
@@ -77,7 +57,6 @@ export function CheckoutStepIndicator({ currentStep }: Props) {
   const auth = useSnapshot(authStore)
   const checkout = useSnapshot(checkoutStore)
   const activeGroup = groupIndex(currentStep)
-  const groups = STEP_GROUPS.filter((g) => g.steps.some((s) => visibleSteps().includes(s)))
   const accountConfirmed = currentStep === 'account' && auth.isAuthenticated
   const pageTitle = t(
     checkoutStepPageTitleKey(currentStep, { accountConfirmed }),
@@ -105,8 +84,8 @@ export function CheckoutStepIndicator({ currentStep }: Props) {
       </header>
 
       <nav aria-label={t('checkout.steps.navLabel')}>
-        <ol className="grid grid-cols-4 gap-2 sm:gap-3.5 md:gap-4">
-          {groups.map((group, index) => {
+        <ol className="grid grid-cols-3 gap-2 sm:gap-3.5 md:gap-4">
+          {STEP_GROUPS.map((group, index) => {
             const done = index < activeGroup
             const isCurrent = index === activeGroup
             return (

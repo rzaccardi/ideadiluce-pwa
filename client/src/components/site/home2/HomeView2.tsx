@@ -6,7 +6,7 @@ import { useLocalePath } from '@/hooks/use-locale-path'
 import type { HomePageContent } from '@/types/site-content'
 import type { ProductCardDTO } from '@/types/dto'
 import type { BrandCard } from '@/lib/brand.defaults'
-import { mergeHome2Content, pickCatalogImages } from '@/lib/homepage2.defaults'
+import { mergeHome2Content, pickCatalogImages, resolveHome2CategoryPlaceholder, resolveHome2HeroImage, resolveHome2Rooms, resolveHome2ShowcaseProducts, HOME2_PLACEHOLDER_IMAGES } from '@/lib/homepage2.defaults'
 import {
   Home2BestSellersSection,
   Home2CategorySplit,
@@ -29,10 +29,18 @@ export function HomeView2({ cmsContent, designProducts, homeBrands, featuredGuid
   const lp = useLocalePath()
   const content = useMemo(() => mergeHome2Content(cmsContent), [cmsContent])
 
-  const heroImage = designProducts[0]?.imageUrl ?? null
-  const splitImages = pickCatalogImages(designProducts.slice(1), 2) as [string | undefined, string | undefined]
-  const categoryImages = pickCatalogImages(designProducts.slice(3), content.categoryTiles.length)
-  const gridProducts = designProducts.length ? designProducts : []
+  const heroImage = resolveHome2HeroImage(designProducts)
+  const splitImages = pickCatalogImages(designProducts.slice(1), 2, HOME2_PLACEHOLDER_IMAGES.split) as [
+    string,
+    string,
+  ]
+  const categoryImages = pickCatalogImages(
+    designProducts.slice(3),
+    content.categoryTiles.length,
+    content.categoryTiles.map((tile, index) => resolveHome2CategoryPlaceholder(tile.key, index)),
+  )
+  const showcase = useMemo(() => resolveHome2ShowcaseProducts(designProducts, 8), [designProducts])
+  const roomItems = useMemo(() => resolveHome2Rooms(cmsContent), [cmsContent])
 
   const cmsWithGuides = useMemo(
     () => ({
@@ -61,11 +69,16 @@ export function HomeView2({ cmsContent, designProducts, homeBrands, featuredGuid
       </Reveal>
 
       <Reveal>
-        <Home2BestSellersSection section={content.bestSellers} products={gridProducts} lp={lp} />
+        <Home2BestSellersSection
+          section={content.bestSellers}
+          products={showcase.products}
+          placeholderHrefs={showcase.placeholderHrefs}
+          lp={lp}
+        />
       </Reveal>
 
       <Reveal>
-        <Home2InspirationGrid section={content.inspiration} products={gridProducts} lp={lp} />
+        <Home2InspirationGrid section={content.inspiration} rooms={roomItems} lp={lp} />
       </Reveal>
 
       <Reveal>

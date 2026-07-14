@@ -38,6 +38,11 @@ export function preloadStripe(publishableKey?: string | null): void {
   })
 }
 
+/** Precarica il bundle React di Stripe Checkout Elements (Payment Element, PayPal, ecc.). */
+export function preloadStripeCheckoutModule(): void {
+  void import('@stripe/react-stripe-js/checkout')
+}
+
 export async function resolveStripePromise(
   publishableKey?: string | null,
 ): Promise<Promise<Stripe | null> | null> {

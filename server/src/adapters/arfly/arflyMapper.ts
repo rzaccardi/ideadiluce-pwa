@@ -122,6 +122,25 @@ function mapRelatedProduct(
   }
 }
 
+function trimOrNull(value: string | null | undefined): string | null {
+  const trimmed = value?.trim()
+  return trimmed || null
+}
+
+function resolveListCodes(product: ArflyProductListItem) {
+  return {
+    sku:
+      trimOrNull(product.sku) ??
+      trimOrNull(product.manufacturer_code) ??
+      trimOrNull(product.default_code) ??
+      trimOrNull(product.ced),
+    ced: trimOrNull(product.ced),
+    manufacturerCode: trimOrNull(product.manufacturer_code),
+    defaultCode: trimOrNull(product.default_code),
+    ean: trimOrNull(product.ean),
+  }
+}
+
 export function mapArflyListItem(product: ArflyProductListItem, locale: HubLocale): ProductCardDTO {
   const availability = parseArflyAvailability(
     product.availability,
@@ -135,6 +154,7 @@ export function mapArflyListItem(product: ArflyProductListItem, locale: HubLocal
     specTags: product.spec_tags,
   })
   const { brand, sku } = resolveTechnicalProductCardMeta(product)
+  const codes = resolveListCodes(product)
 
   return {
     slug: product.slug,
@@ -148,7 +168,11 @@ export function mapArflyListItem(product: ArflyProductListItem, locale: HubLocal
     imageUrl: mediaUrl(product.image?.url),
     categorySlug: categories[0]?.slug ?? product.category_slug ?? null,
     brand,
-    sku,
+    sku: sku ?? codes.sku,
+    ced: codes.ced,
+    manufacturerCode: codes.manufacturerCode,
+    defaultCode: codes.defaultCode,
+    ean: codes.ean,
     availability,
     inStock: deriveInStockFromAvailability(availability),
   }
@@ -185,7 +209,9 @@ export function mapArflyProductDetail(
       priceDisplayMode: 'ex_vat',
       stockQty: availability?.qtyAvailable ?? null,
       availability,
-      ean: v.ean ?? null,
+      ean: trimOrNull(v.ean),
+      ced: trimOrNull(v.ced),
+      manufacturerCode: trimOrNull(v.manufacturer_code),
       documents: parseArflyDocuments(v.documents),
       inStock: deriveInStockFromAvailability(availability),
     }
@@ -206,10 +232,14 @@ export function mapArflyProductDetail(
     ...card,
     longDescription: product.description || null,
     sku:
-      product.variants[0]?.manufacturer_code ??
-      product.variants[0]?.ced ??
+      trimOrNull(product.variants[0]?.manufacturer_code) ??
+      trimOrNull(product.variants[0]?.ced) ??
       card.sku ??
       null,
+    ced: trimOrNull(product.variants[0]?.ced) ?? card.ced ?? null,
+    manufacturerCode:
+      trimOrNull(product.variants[0]?.manufacturer_code) ?? card.manufacturerCode ?? null,
+    defaultCode: card.defaultCode ?? null,
     inStock: deriveInStockFromAvailability(templateAvailability),
     images,
     categories: mapCategories(product.categories),
@@ -221,7 +251,11 @@ export function mapArflyProductDetail(
     relatedProducts,
     accessories,
     alternatives,
-    ean: product.ean ?? product.variants[0]?.ean ?? null,
+    ean:
+      trimOrNull(product.ean) ??
+      trimOrNull(product.variants[0]?.ean) ??
+      card.ean ??
+      null,
     weightKg: product.weight_kg ?? null,
     lengthMeters:
       product.length_meters ??

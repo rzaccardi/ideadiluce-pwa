@@ -78,12 +78,27 @@ function mapCategories(
     .map((c) => ({ slug: c.slug!, name: c.name! }))
 }
 
-function resolveListSku(product: ArflyProductListItem): string | null {
-  for (const value of [product.sku, product.manufacturer_code, product.default_code, product.ced]) {
-    const trimmed = value?.trim()
-    if (trimmed) return trimmed
+function trimOrNull(value: string | null | undefined): string | null {
+  const trimmed = value?.trim()
+  return trimmed || null
+}
+
+function resolveListCodes(product: ArflyProductListItem) {
+  return {
+    sku:
+      trimOrNull(product.sku) ??
+      trimOrNull(product.manufacturer_code) ??
+      trimOrNull(product.default_code) ??
+      trimOrNull(product.ced),
+    ced: trimOrNull(product.ced),
+    manufacturerCode: trimOrNull(product.manufacturer_code),
+    defaultCode: trimOrNull(product.default_code),
+    ean: trimOrNull(product.ean),
   }
-  return null
+}
+
+function resolveListSku(product: ArflyProductListItem): string | null {
+  return resolveListCodes(product).sku
 }
 
 function mapBrand(brand: ArflyProductListItem['brand']): ProductBrandDTO | null {
@@ -164,6 +179,8 @@ export function mapArflyListItem(product: ArflyProductListItem, locale: PwaLocal
     specTags: product.spec_tags,
   })
 
+  const codes = resolveListCodes(product)
+
   return {
     slug: product.slug,
     locale,
@@ -177,6 +194,10 @@ export function mapArflyListItem(product: ArflyProductListItem, locale: PwaLocal
     categorySlug: categories[0]?.slug ?? product.category_slug ?? null,
     brand: resolveCardBrand(product),
     sku: resolveListSku(product),
+    ced: codes.ced,
+    manufacturerCode: codes.manufacturerCode,
+    defaultCode: codes.defaultCode,
+    ean: codes.ean,
     availability,
     inStock: deriveInStockFromAvailability(availability),
   }
@@ -213,15 +234,17 @@ export function mapArflyProductDetail(
       priceDisplayMode: 'ex_vat',
       stockQty: availability?.qtyAvailable ?? null,
       availability,
-      ean: v.ean ?? null,
+      ean: trimOrNull(v.ean),
+      ced: trimOrNull(v.ced),
+      manufacturerCode: trimOrNull(v.manufacturer_code),
       documents: parseArflyDocuments(v.documents),
       inStock: deriveInStockFromAvailability(availability),
     }
   })
 
   const primarySku =
-    product.variants[0]?.manufacturer_code ??
-    product.variants[0]?.ced ??
+    trimOrNull(product.variants[0]?.manufacturer_code) ??
+    trimOrNull(product.variants[0]?.ced) ??
     resolveListSku(product)
   const related = product.related_products ?? []
   const relatedProducts = related
@@ -240,6 +263,10 @@ export function mapArflyProductDetail(
     additionalInfoTableHtml: null,
     specsTableHtml: specsTableHtml(product.specs),
     sku: primarySku,
+    ced: trimOrNull(product.variants[0]?.ced) ?? card.ced ?? null,
+    manufacturerCode:
+      trimOrNull(product.variants[0]?.manufacturer_code) ?? card.manufacturerCode ?? null,
+    defaultCode: card.defaultCode ?? null,
     inStock: deriveInStockFromAvailability(templateAvailability),
     images,
     categories: mapCategories(product.categories),
@@ -251,7 +278,11 @@ export function mapArflyProductDetail(
     relatedProducts,
     accessories,
     alternatives,
-    ean: product.ean ?? product.variants[0]?.ean ?? null,
+    ean:
+      trimOrNull(product.ean) ??
+      trimOrNull(product.variants[0]?.ean) ??
+      card.ean ??
+      null,
     weightKg: product.weight_kg ?? null,
     lengthMeters:
       product.length_meters ??

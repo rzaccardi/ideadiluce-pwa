@@ -205,6 +205,7 @@ export const StripePaymentForm = forwardRef<StripePaymentFormHandle, Props>(func
             paymentMethods: {
               applePay: 'always',
               googlePay: 'always',
+              paypal: 'auto',
               link: 'never',
             },
             layout: { maxColumns: 2, maxRows: 1 },
@@ -216,26 +217,10 @@ export const StripePaymentForm = forwardRef<StripePaymentFormHandle, Props>(func
         }
         onReady={({ availablePaymentMethods }) => {
           const wallets = availablePaymentMethods
-          const hasExpress = Boolean(wallets?.applePay || wallets?.googlePay)
+          const hasExpress = Boolean(wallets?.applePay || wallets?.googlePay || wallets?.paypal)
           setExpressAvailable(hasExpress)
         }}
         onConfirm={async (event) => {
-          if (!cardholderName.trim()) {
-            event.paymentFailed({
-              reason: 'fail',
-              message: t('checkout.payment.cardholderNameRequired'),
-            })
-            onError(t('checkout.payment.cardholderNameRequired'))
-            return
-          }
-          if (!paymentComplete) {
-            event.paymentFailed({
-              reason: 'fail',
-              message: t('checkout.payment.cardIncomplete'),
-            })
-            onError(t('checkout.payment.cardIncomplete'))
-            return
-          }
           setBusy(true)
           onError('')
           try {

@@ -102,20 +102,24 @@ export function CheckoutToggleCheckbox({
   onChange,
   label,
   className,
+  disabled = false,
 }: {
   checked: boolean
   onChange: (checked: boolean) => void
   label: string
   className?: string
+  disabled?: boolean
 }) {
   return (
     <button
       type="button"
       role="checkbox"
       aria-checked={checked}
+      disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cn(
         'flex w-full items-start gap-2.5 bg-transparent p-0 text-left text-[13.5px] text-[#3f4651]',
+        disabled && 'cursor-not-allowed opacity-50',
         className,
       )}
     >
@@ -215,8 +219,8 @@ export function CheckoutSegmentControl<T extends string>({
           className={cn(
             'rounded-[10px] px-2 py-2.5 text-xs font-bold leading-tight transition sm:px-3 sm:text-sm',
             value === option.value
-              ? 'bg-idl-tech-panel text-idl-graphite shadow-sm'
-              : 'text-idl-muted hover:text-idl-graphite',
+              ? 'bg-[#c9a24b] text-black shadow-[0_2px_8px_rgba(201,162,75,0.35)]'
+              : 'text-idl-muted hover:bg-idl-tech-panel/60 hover:text-idl-graphite',
           )}
         >
           {option.label}

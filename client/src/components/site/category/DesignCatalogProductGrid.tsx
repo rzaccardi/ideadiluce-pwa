@@ -5,11 +5,14 @@ import { formatMoney } from '@/lib/format'
 import { SiteImage } from '../SiteImage'
 import { HoverLift } from '@/components/motion'
 import { CatalogProductCardSkeleton } from '../catalog/CatalogProductCardSkeleton'
+import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMeta'
 import type { LocalePathFn } from '../sections/types'
 
 type Props = {
   product: ProductCardDTO
   lp: LocalePathFn
+  to?: string
+  hidePrice?: boolean
   discoverLabel?: string
   brandLabel?: string
 }
@@ -17,6 +20,8 @@ type Props = {
 export const DesignCatalogProductCard = memo(function DesignCatalogProductCard({
   product,
   lp,
+  to,
+  hidePrice = false,
   discoverLabel = 'Scopri →',
   brandLabel,
 }: Props) {
@@ -25,7 +30,7 @@ export const DesignCatalogProductCard = memo(function DesignCatalogProductCard({
   return (
     <HoverLift className="h-full">
       <Link
-        to={lp(`/prodotto/${product.slug}`)}
+        to={to ?? lp(`/prodotto/${product.slug}`)}
         className="group flex h-full flex-col overflow-hidden rounded border border-idl-path-design-border bg-white transition hover:border-idl-brass hover:shadow-[0_6px_20px_rgba(0,0,0,0.06)] dark:bg-idl-tech-panel"
       >
         <div className="relative aspect-[4/5] overflow-hidden bg-idl-cream">
@@ -47,10 +52,21 @@ export const DesignCatalogProductCard = memo(function DesignCatalogProductCard({
           <div className="mt-1 line-clamp-2 min-h-[2lh] text-xs leading-normal text-idl-ink-muted">
             {product.shortDescription ?? '\u00A0'}
           </div>
+          <ProductIdentifierMeta
+            product={product}
+            includeBrand={false}
+            className="mt-1 text-[10px] tracking-[0.04em] text-idl-ink-muted"
+          />
           <div className="mt-auto flex items-center justify-between pt-3">
-            <span className="text-base font-bold text-idl-ink">{formatMoney(product.priceCents, product.currency)}</span>
-            <span className="hidden text-[12.5px] font-bold text-idl-brass sm:inline">{discoverLabel}</span>
-            <span className="text-[12.5px] font-bold text-idl-brass sm:hidden">→</span>
+            {hidePrice ? (
+              <span className="text-[12.5px] font-bold text-idl-brass">{discoverLabel}</span>
+            ) : (
+              <>
+                <span className="text-base font-bold text-idl-ink">{formatMoney(product.priceCents, product.currency)}</span>
+                <span className="hidden text-[12.5px] font-bold text-idl-brass sm:inline">{discoverLabel}</span>
+                <span className="text-[12.5px] font-bold text-idl-brass sm:hidden">→</span>
+              </>
+            )}
           </div>
         </div>
       </Link>

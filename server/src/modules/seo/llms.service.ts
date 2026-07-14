@@ -62,7 +62,7 @@ Le pagine prodotto usano \`/prodotto/{slug}/\`; categorie, brand, guide e ambien
 ${mdLink('Home', `${site}/`, 'Homepage italiana')}
 ${mdLink('Negozio', `${site}/negozio`, 'Catalogo prodotti')}
 ${mdLink('Brand', `${site}/brand`, 'Elenco brand')}
-${mdLink('Guide', `${site}/guide`, 'Guide e contenuti editoriali')}
+${mdLink('Blog', `${site}/blog`, 'Guide e contenuti editoriali')}
 ${mdLink('Ambienti', `${site}/ambienti`, 'Illuminazione per stanza')}
 ${mdLink('Professionisti', `${site}/professionisti`, 'Area professionisti')}
 ${mdLink('Contatti', `${site}/contatti`, 'Contatti e showroom')}
@@ -73,7 +73,7 @@ ${localeLines}
 
 ## Guide
 
-${guideLines || mdLink('Guide', `${site}/guide`, 'Elenco guide editoriali')}
+${guideLines || mdLink('Blog', `${site}/blog`, 'Elenco guide editoriali')}
 
 ## Ambienti
 

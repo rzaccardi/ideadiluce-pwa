@@ -108,6 +108,7 @@ export function InlineAccountAuthStep({
   const [loginPassword, setLoginPassword] = useState('')
   const [typeChoice, setTypeChoice] = useState<'retail' | 'business'>('retail')
   const [postAuthPending, setPostAuthPending] = useState(false)
+  const formsLocked = postAuthPending || authenticatedContinueLoading
 
   useEffect(() => {
     if (email && !loginEmail) setLoginEmail(email)
@@ -146,11 +147,7 @@ export function InlineAccountAuthStep({
       }
     }
 
-    if (collectCustomerTypeOnRegister && segment === 'retail') {
-      if (!checkoutStore.business.fiscalCode.trim()) {
-        setRegisterError(t('checkout.error.incompleteStep'))
-        return
-      }
+    if (collectCustomerTypeOnRegister && segment === 'retail' && checkoutStore.business.fiscalCode.trim()) {
       try {
         await validateTaxFields()
       } catch {
@@ -229,10 +226,9 @@ export function InlineAccountAuthStep({
   }
 
   if (auth.isAuthenticated && auth.me) {
-    const displayName =
-      [auth.me.firstName, auth.me.lastName].filter(Boolean).join(' ') || auth.me.email
-
-    if (postAuthPending || authenticatedContinueLoading) {
+    if (formsLocked && collectCustomerTypeOnRegister) {
+      // Mantieni il form anagrafica visibile sotto il loader checkout.
+    } else if (formsLocked) {
       return (
         <section className="space-y-4">
           <CheckoutActionRow>
@@ -242,48 +238,49 @@ export function InlineAccountAuthStep({
           </CheckoutActionRow>
         </section>
       )
-    }
-
-    if (!showAuthenticatedContinue) {
+    } else if (!showAuthenticatedContinue) {
       return null
-    }
+    } else {
+      const displayName =
+        [auth.me.firstName, auth.me.lastName].filter(Boolean).join(' ') || auth.me.email
 
-    return (
-      <section className="space-y-4">
-        {title ? <StripeSectionTitle>{title}</StripeSectionTitle> : null}
-        <div className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="font-medium text-zinc-900">{displayName}</p>
-              <p className="truncate text-zinc-500">{auth.me.email}</p>
+      return (
+        <section className="space-y-4">
+          {title ? <StripeSectionTitle>{title}</StripeSectionTitle> : null}
+          <div className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-medium text-zinc-900">{displayName}</p>
+                <p className="truncate text-zinc-500">{auth.me.email}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setLoginError(null)
+                  setRegisterError(null)
+                  requestLogout()
+                }}
+                className="shrink-0 text-zinc-900 underline decoration-zinc-300 underline-offset-2 hover:decoration-zinc-900"
+              >
+                {t('nav.logout')}
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setLoginError(null)
-                setRegisterError(null)
-                requestLogout()
-              }}
-              className="shrink-0 text-zinc-900 underline decoration-zinc-300 underline-offset-2 hover:decoration-zinc-900"
-            >
-              {t('nav.logout')}
-            </button>
           </div>
-        </div>
-        <CheckoutActionRow>
-          <StripePayButton
-            className="w-full"
-            loading={authenticatedContinueLoading}
-            disabled={authenticatedContinueLoading}
-            onClick={() => void onAuthenticatedContinue?.()}
-          >
-            {authenticatedContinueLabel ?? t('checkout.continue')}
-          </StripePayButton>
-        </CheckoutActionRow>
-        {logoutDialog}
-        {forgotPasswordModal}
-      </section>
-    )
+          <CheckoutActionRow>
+            <StripePayButton
+              className="w-full"
+              loading={authenticatedContinueLoading}
+              disabled={authenticatedContinueLoading}
+              onClick={() => void onAuthenticatedContinue?.()}
+            >
+              {authenticatedContinueLabel ?? t('checkout.continue')}
+            </StripePayButton>
+          </CheckoutActionRow>
+          {logoutDialog}
+          {forgotPasswordModal}
+        </section>
+      )
+    }
   }
 
   const loginForm = (
@@ -297,6 +294,7 @@ export function InlineAccountAuthStep({
           value={loginEmail}
           onChange={(e) => setLoginEmail(e.target.value)}
           required
+          disabled={formsLocked}
         />
       </StripeFieldGroup>
       <StripeFieldGroup>
@@ -308,6 +306,7 @@ export function InlineAccountAuthStep({
           value={loginPassword}
           onChange={(e) => setLoginPassword(e.target.value)}
           required
+          disabled={formsLocked}
         />
       </StripeFieldGroup>
       <p className="text-right text-sm">
@@ -322,7 +321,7 @@ export function InlineAccountAuthStep({
       <CheckoutActionRow>
         <StripePayButton
           className="w-full"
-          disabled={loginLoading}
+          disabled={loginLoading || formsLocked}
           loading={loginLoading}
           onClick={() => void handleLogin({ preventDefault: () => {} } as React.FormEvent)}
         >
@@ -343,6 +342,7 @@ export function InlineAccountAuthStep({
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             required
+            disabled={formsLocked}
           />
         </StripeFieldGroup>
         <StripeFieldGroup>
@@ -353,14 +353,15 @@ export function InlineAccountAuthStep({
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
             required
+            disabled={formsLocked}
           />
         </StripeFieldGroup>
       </div>
       {collectCustomerTypeOnRegister && typeChoice === 'business' ? (
-        <CheckoutBusinessFieldsSection disabled={registerLoading} embedded />
+        <CheckoutBusinessFieldsSection disabled={registerLoading || formsLocked} embedded />
       ) : null}
       {collectCustomerTypeOnRegister && typeChoice === 'retail' ? (
-        <CheckoutRetailFiscalCodeField disabled={registerLoading} />
+        <CheckoutRetailFiscalCodeField disabled={registerLoading || formsLocked} />
       ) : null}
       <StripeFieldGroup>
         <StripeControlledInput
@@ -371,6 +372,7 @@ export function InlineAccountAuthStep({
           value={email}
           onValueChange={onEmailChange}
           required
+          disabled={formsLocked}
         />
       </StripeFieldGroup>
       <StripeFieldGroup>
@@ -381,6 +383,7 @@ export function InlineAccountAuthStep({
           autoComplete="tel"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
+          disabled={formsLocked}
         />
       </StripeFieldGroup>
       <StripeFieldGroup>
@@ -393,12 +396,13 @@ export function InlineAccountAuthStep({
           onChange={(e) => setPassword(e.target.value)}
           required
           minLength={8}
+          disabled={formsLocked}
         />
       </StripeFieldGroup>
       <CheckoutActionRow>
         <StripePayButton
           className="w-full"
-          disabled={registerLoading || !email.includes('@') || password.length < 8}
+          disabled={registerLoading || formsLocked || !email.includes('@') || password.length < 8}
           loading={registerLoading}
           onClick={() => void handleRegister({ preventDefault: () => {} } as React.FormEvent)}
         >
@@ -410,7 +414,7 @@ export function InlineAccountAuthStep({
 
   if (collectCustomerTypeOnRegister) {
     return (
-      <section className="space-y-6">
+      <section className="space-y-6" aria-busy={formsLocked}>
         <div className="space-y-3">
           <AuthSubheading>{t('checkout.account.loginTab')}</AuthSubheading>
           {loginError ? <StripeErrorBanner message={loginError} /> : null}
@@ -425,7 +429,7 @@ export function InlineAccountAuthStep({
             variant="tabs"
             value={typeChoice}
             onChange={handleTypeChange}
-            disabled={registerLoading}
+            disabled={registerLoading || formsLocked}
           />
           {registerError ? <StripeErrorBanner message={registerError} /> : null}
           {registerForm}

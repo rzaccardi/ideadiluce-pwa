@@ -57,6 +57,7 @@ export function WalletExpressCheckout({
             paymentMethods: {
               applePay: 'always',
               googlePay: 'always',
+              paypal: 'auto',
               link: 'never',
             },
             layout: { maxColumns: 2, maxRows: 1 },
@@ -68,7 +69,7 @@ export function WalletExpressCheckout({
         }
         onReady={({ availablePaymentMethods }) => {
           const wallets = availablePaymentMethods
-          const hasExpress = Boolean(wallets?.applePay || wallets?.googlePay)
+          const hasExpress = Boolean(wallets?.applePay || wallets?.googlePay || wallets?.paypal)
           setVisible(hasExpress)
           onAvailableChange?.(hasExpress)
         }}

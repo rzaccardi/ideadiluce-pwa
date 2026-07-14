@@ -15,22 +15,27 @@ import type { UserDTO } from '@/types/dto'
 import { authStore, setAuthUser } from './auth.store'
 import { clearClientSessionState, type ClearClientSessionScope } from './clear-client-session'
 
+export type HydrateSessionStoresScope = 'full' | 'checkout'
+
 function refreshSessionStores() {
   return hydrateSessionStores()
 }
 
-async function hydrateSessionStores() {
+async function hydrateSessionStores(scope: HydrateSessionStoresScope = 'full') {
   authStore.isHydrating = true
   resetCartForAuthChange()
   try {
-    await Promise.allSettled([
-      fetchCart({ force: true, reprice: true }),
-      fetchWishlist({ force: true }),
-      fetchOrdersList({ force: true }),
-      fetchQuotesList().catch(() => {
-        /* errori già in quotesStore.listError */
-      }),
-    ])
+    const tasks: Promise<unknown>[] = [fetchCart({ force: true, reprice: true })]
+    if (scope === 'full') {
+      tasks.push(
+        fetchWishlist({ force: true }),
+        fetchOrdersList({ force: true }),
+        fetchQuotesList().catch(() => {
+          /* errori già in quotesStore.listError */
+        }),
+      )
+    }
+    await Promise.allSettled(tasks)
   } finally {
     authStore.isHydrating = false
   }
@@ -62,7 +67,10 @@ async function applyRefreshResult(fallbackUser?: UserDTO) {
   return resolvedUser
 }
 
-async function establishAuthenticatedSession(fallbackUser?: UserDTO) {
+async function establishAuthenticatedSession(
+  fallbackUser?: UserDTO,
+  options?: { hydrateScope?: HydrateSessionStoresScope },
+) {
   const user = await applyRefreshResult(fallbackUser)
   if (!user) {
     throw new ApiRequestError(
@@ -74,7 +82,7 @@ async function establishAuthenticatedSession(fallbackUser?: UserDTO) {
       false,
     )
   }
-  await hydrateSessionStores()
+  await hydrateSessionStores(options?.hydrateScope ?? 'full')
   return user
 }
 
@@ -155,7 +163,7 @@ export async function checkoutRegister(input: {
   authStore.error = null
   try {
     const { user } = await api.auth.checkoutRegister(input)
-    await establishAuthenticatedSession(user)
+    await establishAuthenticatedSession(user, { hydrateScope: 'checkout' })
   } catch (e) {
     authStore.error = errMessage(e)
     throw e
@@ -169,7 +177,7 @@ export async function checkoutLogin(email: string, password: string) {
   authStore.error = null
   try {
     const { user } = await api.auth.checkoutLogin({ email, password })
-    await establishAuthenticatedSession(user)
+    await establishAuthenticatedSession(user, { hydrateScope: 'checkout' })
   } catch (e) {
     authStore.error = errMessage(e)
     throw e

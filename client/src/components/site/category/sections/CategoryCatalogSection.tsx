@@ -165,7 +165,6 @@ export function CategoryCatalogSection({
               onSelectSort={onSelectSort}
               onRemoveFilter={onRemoveFilter}
               variant={variant}
-              compareEnabled
             />
 
             {loading && products.length === 0 ? (
@@ -190,7 +189,7 @@ export function CategoryCatalogSection({
               </div>
             )}
 
-            <TechnicalCatalogBulkBar products={products} lp={lp} />
+            <TechnicalCatalogBulkBar products={products} />
           </TechnicalCatalogSelectionProvider>
         )}
 

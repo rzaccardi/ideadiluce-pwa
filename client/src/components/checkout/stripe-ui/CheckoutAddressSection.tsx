@@ -35,6 +35,19 @@ type Props = {
   onAddressResolved?: (resolved: ResolvedAddress) => void
 }
 
+function hasResolvedAddressCore(address: AddressInput): boolean {
+  return (
+    address.line1.trim().length >= 3 &&
+    address.city.trim().length >= 2 &&
+    address.postalCode.trim().length >= 1 &&
+    address.country.trim().length === 2
+  )
+}
+
+function needsStreetNumberChoice(address: AddressInput): boolean {
+  return hasResolvedAddressCore(address) && !address.streetNumber.trim() && !address.isSnc
+}
+
 export function CheckoutAddressSection({
   title,
   prefix,
@@ -49,9 +62,11 @@ export function CheckoutAddressSection({
   const [autocompleteEnabled, setAutocompleteEnabled] = useState(isAddressAutocompleteEnabled())
   const [addressProvider, setAddressProvider] = useState<'google' | 'mapbox' | null>(null)
   const [setupHint, setSetupHint] = useState<string | null>(null)
-  const [addressSelected, setAddressSelected] = useState(() => isCheckoutAddressValid(address))
-  const [detailsUnlocked, setDetailsUnlocked] = useState(false)
-  const [focusStreetNumber, setFocusStreetNumber] = useState(false)
+  const [addressPicked, setAddressPicked] = useState(
+    () => isCheckoutAddressValid(address) || hasResolvedAddressCore(address),
+  )
+  const [detailsUnlocked, setDetailsUnlocked] = useState(() => needsStreetNumberChoice(address))
+  const [focusStreetNumber, setFocusStreetNumber] = useState(() => needsStreetNumberChoice(address))
   const prefillAttemptedRef = useRef(false)
   const addressPrefillKey = [
     address.line1,
@@ -67,8 +82,16 @@ export function CheckoutAddressSection({
   }, [addressPrefillKey])
 
   useEffect(() => {
-    setAddressSelected(isCheckoutAddressValid(address))
-  }, [addressPrefillKey])
+    if (isCheckoutAddressValid(address) || hasResolvedAddressCore(address)) {
+      setAddressPicked(true)
+    }
+    if (address.streetNumber.trim() || address.isSnc) {
+      setFocusStreetNumber(false)
+    } else if (hasResolvedAddressCore(address)) {
+      setFocusStreetNumber(true)
+      setDetailsUnlocked(true)
+    }
+  }, [addressPrefillKey, address.streetNumber, address.isSnc])
 
   useEffect(() => {
     void (async () => {
@@ -87,8 +110,10 @@ export function CheckoutAddressSection({
   }, [])
 
   function applyResolved(resolved: ResolvedAddress) {
-    setDetailsUnlocked(false)
-    setFocusStreetNumber(!resolved.streetNumber?.trim())
+    const missingStreetNumber = !resolved.streetNumber?.trim()
+    setAddressPicked(true)
+    setDetailsUnlocked(true)
+    setFocusStreetNumber(missingStreetNumber)
     if (onAddressResolved) {
       onAddressResolved(resolved)
       return
@@ -107,8 +132,12 @@ export function CheckoutAddressSection({
   }
 
   useEffect(() => {
-    if (!autocompleteEnabled || addressSelected || prefillAttemptedRef.current) return
+    if (!autocompleteEnabled || prefillAttemptedRef.current) return
     if (!hasPrefilledAddress(address)) return
+    if (isCheckoutAddressValid(address)) {
+      setAddressPicked(true)
+      return
+    }
 
     prefillAttemptedRef.current = true
     checkoutStore.addressPrefillLoading = true
@@ -118,19 +147,20 @@ export function CheckoutAddressSection({
         const resolved = await resolvePrefilledAddress(address)
         if (resolved) {
           applyResolved(resolved)
-        } else if (isCheckoutAddressValid(address)) {
-          setAddressSelected(true)
-          setFocusStreetNumber(!address.streetNumber?.trim() && !address.isSnc)
+        } else if (hasResolvedAddressCore(address)) {
+          setAddressPicked(true)
+          setDetailsUnlocked(true)
+          setFocusStreetNumber(needsStreetNumberChoice(address))
         }
       } finally {
         checkoutStore.addressPrefillLoading = false
       }
     })()
-  }, [autocompleteEnabled, addressSelected, addressPrefillKey])
+  }, [autocompleteEnabled, addressPrefillKey])
 
   function handleChangeAddress() {
     prefillAttemptedRef.current = true
-    setAddressSelected(false)
+    setAddressPicked(false)
     setDetailsUnlocked(false)
     setFocusStreetNumber(false)
     onChange('line1', '')
@@ -140,6 +170,9 @@ export function CheckoutAddressSection({
     onChange('city', '')
     onChange('postalCode', '')
   }
+
+  const civicoRequired = needsStreetNumberChoice(address)
+  const showAddressDetails = detailsUnlocked || civicoRequired
 
   return (
     <section className="space-y-4">
@@ -196,11 +229,12 @@ export function CheckoutAddressSection({
       <div>
         <StripeFieldLabel htmlFor={`${prefix}-search`}>{t('checkout.address.label')}</StripeFieldLabel>
         {autocompleteEnabled ? (
-          addressSelected ? (
+          addressPicked ? (
             <CheckoutAddressCard
               prefix={prefix}
               address={address}
-              detailsUnlocked={detailsUnlocked}
+              detailsUnlocked={showAddressDetails}
+              civicoRequired={civicoRequired}
               showCourierNotes={showCourierNotes}
               focusStreetNumber={focusStreetNumber}
               onChange={onChange}
@@ -235,7 +269,7 @@ export function CheckoutAddressSection({
             />
           </div>
         )}
-        {autocompleteEnabled && !addressSelected && addressProvider === 'google' ? (
+        {autocompleteEnabled && !addressPicked && addressProvider === 'google' ? (
           <p className="mt-1.5 text-xs text-[#9298a3]">{t('checkout.address.googleHint')}</p>
         ) : null}
         {setupHint ? <p className="mt-1.5 text-xs text-amber-700">{setupHint}</p> : null}

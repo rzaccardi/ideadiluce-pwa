@@ -66,9 +66,15 @@ export const checkoutSummaryAsideClass = [
   'lg:col-start-1 lg:row-start-1 lg:flex lg:h-full lg:min-h-0 lg:flex-col lg:overflow-y-auto lg:overscroll-contain',
 ].join(' ')
 
-/** Barra riepilogo mobile collassabile, sticky in cima. */
-export const checkoutMobileSummaryClass =
-  'relative sticky top-0 z-30 border-b border-idl-tech-border bg-idl-tech-panel lg:hidden'
+/** Spacer sotto la barra fixed — evita che il form finisca sotto il toggle. */
+export const checkoutMobileSummarySpacerClass =
+  'h-[calc(3.25rem+env(safe-area-inset-top,0px))] shrink-0 lg:hidden'
+
+/** Barra riepilogo mobile collassabile, fixed in cima (sticky non funziona con PageTransition). */
+export const checkoutMobileSummaryClass = [
+  'fixed inset-x-0 top-0 z-30 border-b border-idl-tech-border bg-idl-tech-panel lg:hidden',
+  'pt-[env(safe-area-inset-top,0px)]',
+].join(' ')
 
 /** Pannello riepilogo mobile aperto: absolute sotto la barra, altezza naturale fino al max viewport. */
 export const checkoutMobileSummaryPanelClass = [

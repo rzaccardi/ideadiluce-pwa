@@ -4,6 +4,7 @@ import { useSnapshot } from 'valtio/react'
 import { fetchCart } from '@/features/cart'
 import {
   checkoutStore,
+  initShippingFromBilling,
   markAnagraficaCollectedAtAccount,
   prepareCheckoutAfterAuth,
   setCustomerSegment,
@@ -35,6 +36,7 @@ export function CheckoutRegistrationStep() {
       if (info.firstName) updateCheckoutAddress('billing', 'firstName', info.firstName)
       if (info.lastName) updateCheckoutAddress('billing', 'lastName', info.lastName)
       if (info.phone) updateCheckoutAddress('billing', 'phone', info.phone)
+      initShippingFromBilling()
     }
     await fetchCart({ force: true, reprice: true })
     await prepareCheckoutAfterAuth()

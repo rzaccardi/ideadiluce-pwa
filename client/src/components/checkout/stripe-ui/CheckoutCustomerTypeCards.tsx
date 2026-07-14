@@ -73,8 +73,8 @@ export function CheckoutCustomerTypeCards({
               className={cn(
                 'flex items-center justify-center gap-2 rounded-[10px] px-3 py-3.5 text-sm font-bold transition sm:py-4',
                 selected
-                  ? 'bg-idl-tech-panel text-idl-graphite shadow-sm'
-                  : 'text-idl-muted hover:text-idl-graphite',
+                  ? 'bg-[#c9a24b] text-black shadow-[0_2px_8px_rgba(201,162,75,0.35)]'
+                  : 'text-idl-muted hover:bg-idl-tech-panel/60 hover:text-idl-graphite',
                 disabled && 'pointer-events-none opacity-60',
               )}
             >

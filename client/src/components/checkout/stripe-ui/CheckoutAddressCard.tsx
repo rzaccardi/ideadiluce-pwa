@@ -11,6 +11,7 @@ type Props = {
   prefix: string
   address: AddressInput
   detailsUnlocked: boolean
+  civicoRequired?: boolean
   showCourierNotes?: boolean
   focusStreetNumber?: boolean
   onChange: <K extends keyof AddressInput>(key: K, value: AddressInput[K]) => void
@@ -36,6 +37,7 @@ export function CheckoutAddressCard({
   prefix,
   address,
   detailsUnlocked,
+  civicoRequired = false,
   showCourierNotes,
   focusStreetNumber,
   onChange,
@@ -67,6 +69,11 @@ export function CheckoutAddressCard({
       {detailsUnlocked ? (
         <div className="border-b border-[#ededea] px-4 py-4 sm:px-5">
           <p className="mb-3 text-[13px] font-semibold text-idl-graphite">{t('checkout.address.detailsTitle')}</p>
+          {civicoRequired ? (
+            <p className="mb-3 rounded-[10px] border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm leading-relaxed text-amber-900">
+              {t('checkout.address.streetNumberHint')}
+            </p>
+          ) : null}
           <CheckoutAddressFields
             layout="card"
             prefix={prefix}
@@ -88,7 +95,11 @@ export function CheckoutAddressCard({
         <button
           type="button"
           onClick={onToggleDetails}
-          className="text-sm font-semibold text-idl-graphite underline decoration-[#d0d5dc] underline-offset-2 hover:decoration-[#14161b]"
+          disabled={civicoRequired}
+          className={cn(
+            'text-sm font-semibold text-idl-graphite underline decoration-[#d0d5dc] underline-offset-2 hover:decoration-[#14161b]',
+            civicoRequired && 'cursor-not-allowed opacity-40 no-underline',
+          )}
         >
           {detailsUnlocked ? t('checkout.address.lockEdits') : t('checkout.address.unlockEdits')}
         </button>

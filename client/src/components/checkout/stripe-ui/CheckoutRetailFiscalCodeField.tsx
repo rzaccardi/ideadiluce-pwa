@@ -37,7 +37,7 @@ export function CheckoutRetailFiscalCodeField({ disabled = false }: Props) {
 
   return (
     <div>
-      <StripeFieldLabel htmlFor="fiscalCode">{t('checkout.billing.fiscalCode')}</StripeFieldLabel>
+      <StripeFieldLabel htmlFor="fiscalCode">{t('checkout.billing.fiscalCodeOptional')}</StripeFieldLabel>
       <div className="flex items-stretch gap-2">
         <StripeFieldGroup className="min-w-0 flex-1">
           <StripeControlledInput
@@ -50,7 +50,6 @@ export function CheckoutRetailFiscalCodeField({ disabled = false }: Props) {
             normalize={(v) => v.toUpperCase()}
             onValueChange={(value) => updateBusinessField('fiscalCode', value)}
             onBlur={() => void handleTaxBlur()}
-            required
           />
         </StripeFieldGroup>
         <TaxVerifyButton

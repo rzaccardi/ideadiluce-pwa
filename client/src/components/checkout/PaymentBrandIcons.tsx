@@ -5,6 +5,7 @@ import {
   BonificoBancarioLogo,
   GooglePayLogo,
   MastercardLogo,
+  PayPalLogo,
   VisaLogo,
 } from '@/components/payment-method-logos'
 
@@ -29,6 +30,7 @@ export function PaymentBrandIcons({ method, className }: Props) {
       <AmexLogo />
       <ApplePayLogo />
       <GooglePayLogo />
+      <PayPalLogo />
     </div>
   )
 }

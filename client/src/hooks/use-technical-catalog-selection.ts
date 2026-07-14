@@ -3,8 +3,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { ProductCardDTO } from '@/types/dto'
 
-export const TECHNICAL_CATALOG_MAX_COMPARE = 4
-
 export function useTechnicalCatalogSelection(products: ReadonlyArray<ProductCardDTO>) {
   const [selectionEnabled, setSelectionEnabled] = useState(false)
   const [selectedSlugs, setSelectedSlugs] = useState<ReadonlySet<string>>(() => new Set())
@@ -32,9 +30,6 @@ export function useTechnicalCatalogSelection(products: ReadonlyArray<ProductCard
         next.delete(slug)
         return next
       }
-      if (next.size >= TECHNICAL_CATALOG_MAX_COMPARE) {
-        return current
-      }
       next.add(slug)
       return next
     })
@@ -42,10 +37,8 @@ export function useTechnicalCatalogSelection(products: ReadonlyArray<ProductCard
 
   const isSelected = useCallback((slug: string) => selectedSlugs.has(slug), [selectedSlugs])
 
-  const canSelectMore = selectedCount < TECHNICAL_CATALOG_MAX_COMPARE
-
   const selectAllVisible = useCallback(() => {
-    setSelectedSlugs(new Set(products.slice(0, TECHNICAL_CATALOG_MAX_COMPARE).map((product) => product.slug)))
+    setSelectedSlugs(new Set(products.map((product) => product.slug)))
   }, [products])
 
   const clearSelection = useCallback(() => {
@@ -58,7 +51,6 @@ export function useTechnicalCatalogSelection(products: ReadonlyArray<ProductCard
     selectedCount,
     selectedProducts,
     allVisibleSelected,
-    canSelectMore,
     setSelectionMode,
     toggleProduct,
     isSelected,

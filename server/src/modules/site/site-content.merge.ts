@@ -28,7 +28,11 @@ function deepMergeDefaults<T>(defaults: T, saved: unknown, key?: string): T {
     if (key === 'blocks') {
       return mergeContentBlocks(defaults as unknown[], saved) as T
     }
-    return (Array.isArray(saved) ? saved : defaults) as T
+    if (Array.isArray(saved)) {
+      if (saved.length === 0) return structuredClone(defaults) as T
+      return saved as T
+    }
+    return structuredClone(defaults) as T
   }
 
   if (typeof saved !== 'object' || saved === null || Array.isArray(saved)) {

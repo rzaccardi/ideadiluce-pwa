@@ -8,7 +8,7 @@ describe('formatTechnicalProductRefLine', () => {
         brand: { slug: 'tlb-italy', name: 'TLB Italy' },
         sku: '322805',
       }),
-    ).toBe('TLB · 322805')
+    ).toBe('TLB · COD 322805')
   })
 
   it('inferisce il brand dal titolo prodotto', () => {
@@ -17,6 +17,6 @@ describe('formatTechnicalProductRefLine', () => {
         name: 'Driver Elettronico AC 12V 35-105W TLB Dimmerabile',
         sku: '322805',
       }),
-    ).toBe('TLB · 322805')
+    ).toBe('TLB · COD 322805')
   })
 })

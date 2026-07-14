@@ -1,0 +1,30 @@
+{
+  "source": "https://ideadiluce.com/sitemap_index.xml",
+  "extractedAt": "2026-07-08T17:15:09.311Z",
+  "totalRaw": 1187,
+  "totalUnique": 1187,
+  "byType": {
+    "home": 1,
+    "shipping_class": 2,
+    "post": 3,
+    "page": 8,
+    "author": 1,
+    "brand": 26,
+    "product_category": 83,
+    "blog_category": 3,
+    "divi_template": 1,
+    "product": 1059
+  },
+  "bySource": {
+    "/page-sitemap.xml": 9,
+    "/product_shipping_class-sitemap.xml": 2,
+    "/post-sitemap.xml": 3,
+    "/author-sitemap.xml": 1,
+    "/pwb-brand-sitemap.xml": 26,
+    "/product_cat-sitemap.xml": 83,
+    "/category-sitemap.xml": 3,
+    "/et_tb_item_type-sitemap.xml": 1,
+    "/product-sitemap.xml": 1000,
+    "/product-sitemap2.xml": 59
+  }
+}

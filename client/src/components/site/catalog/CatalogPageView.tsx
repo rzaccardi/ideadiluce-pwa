@@ -27,8 +27,6 @@ const CatalogFiltersModal = dynamic(
   () => import('./CatalogFiltersModal').then((m) => ({ default: m.CatalogFiltersModal })),
   { ssr: false },
 )
-import { TechnicalCatalogSelectionToggle } from '../category/TechnicalCatalogSelectionToggle'
-import { useTechnicalCatalogSelectionContext } from '@/context/technical-catalog-selection-context'
 import { resolveProductCardCatalogKind } from '@/lib/product-catalog-kind'
 
 type Props = {
@@ -91,34 +89,6 @@ function CatalogGridSkeleton({
   return <ProductGridSkeleton count={8} className={cols} />
 }
 
-function CatalogTechnicalSelectionToggleRow() {
-  const selection = useTechnicalCatalogSelectionContext()
-  if (!selection) return null
-
-  return (
-    <div className="mb-4 flex justify-end lg:hidden">
-      <TechnicalCatalogSelectionToggle
-        enabled={selection.selectionEnabled}
-        onChange={selection.setSelectionMode}
-      />
-    </div>
-  )
-}
-
-function CatalogTechnicalSelectionToolbar() {
-  const selection = useTechnicalCatalogSelectionContext()
-  if (!selection) return null
-
-  return (
-    <div className="mb-4 hidden justify-end lg:flex">
-      <TechnicalCatalogSelectionToggle
-        enabled={selection.selectionEnabled}
-        onChange={selection.setSelectionMode}
-      />
-    </div>
-  )
-}
-
 function CatalogProductResults({
   products,
   categories,
@@ -146,7 +116,6 @@ function CatalogProductResults({
   )
   const grid = (
     <>
-      {supportsSelection ? <CatalogTechnicalSelectionToggleRow /> : null}
       {pendingSkeletonCount > 0 ? (
         <p className="sr-only" role="status" aria-live="polite">
           Caricamento di altri {pendingSkeletonCount} prodotti
@@ -176,9 +145,8 @@ function CatalogProductResults({
 
   return (
     <TechnicalCatalogSelectionProvider products={selectableProducts}>
-      <CatalogTechnicalSelectionToolbar />
       {grid}
-      <TechnicalCatalogBulkBar products={selectableProducts} lp={lp} />
+      <TechnicalCatalogBulkBar products={selectableProducts} />
     </TechnicalCatalogSelectionProvider>
   )
 }

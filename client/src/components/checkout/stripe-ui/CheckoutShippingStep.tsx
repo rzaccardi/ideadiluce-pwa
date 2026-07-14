@@ -19,7 +19,6 @@ export function CheckoutShippingStep() {
   const { t } = useI18n()
   const checkout = useSnapshot(checkoutStore)
   const form = checkout.draft
-  const billingDiffers = !form.billingSameAsShipping
 
   return (
     <section className="space-y-5">
@@ -36,8 +35,8 @@ export function CheckoutShippingStep() {
       />
 
       <CheckoutToggleCheckbox
-        checked={billingDiffers}
-        onChange={(checked) => setBillingSameAsShipping(!checked)}
+        checked={form.billingSameAsShipping}
+        onChange={(checked) => setBillingSameAsShipping(checked)}
         label={t('checkout.shipping.diffFromBilling')}
         className="mt-2"
       />

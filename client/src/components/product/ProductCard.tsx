@@ -19,6 +19,7 @@ import {
 import { formatMoney } from '@/lib/format'
 import { formatPriceDisplayModeLabel } from '@/lib/price-display'
 import { SiteImage } from '@/components/site/SiteImage'
+import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMeta'
 import { cn } from '@/utils/cn'
 
 type Props = {
@@ -127,6 +128,11 @@ export function ProductCard({ product, className }: Props) {
           <p className="mt-1 line-clamp-2 min-h-[2lh] text-sm leading-normal text-idl-muted">
             {product.shortDescription ?? '\u00A0'}
           </p>
+          <ProductIdentifierMeta
+            product={product}
+            includeBrand={false}
+            className="mt-1 text-[11px] text-idl-muted"
+          />
         </Link>
         <div className="mt-4 flex shrink-0 items-center justify-between gap-3">
           <div>

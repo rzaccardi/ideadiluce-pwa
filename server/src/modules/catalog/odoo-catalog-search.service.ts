@@ -349,10 +349,9 @@ function buildTextSearchDomain(query: string): unknown[] {
   const token = query.trim()
   if (!token) return []
 
+  // idl_ecom_slug / idl_ecom_title con ilike matchano l'intero catalogo su Odoo: escluderli.
   return orDomain([
     ['name', 'ilike', token],
-    ['idl_ecom_slug', 'ilike', token],
-    ['idl_ecom_title', 'ilike', token],
     ['ecom_title', 'ilike', token],
     ['default_code', 'ilike', token],
     ['ced', 'ilike', token],
@@ -395,7 +394,7 @@ async function buildSearchDomain(
 
   const textDomain = buildTextSearchDomain(input.q ?? '')
   if (textDomain.length > 0) {
-    domain = [...domain, textDomain]
+    domain = [...domain, ...textDomain]
   }
 
   const specTemplateIds = await resolveTemplateIdsBySpecFilters(ctx, input.specFilters)

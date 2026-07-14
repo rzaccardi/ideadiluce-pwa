@@ -89,6 +89,108 @@ function shippingFingerprint(address: AddressInput) {
 
 let shippingQuotesDebounce: ReturnType<typeof setTimeout> | null = null
 let taxRecalcDebounce: ReturnType<typeof setTimeout> | null = null
+let checkoutPaymentPrefetchPromise: Promise<void> | null = null
+let checkoutPaymentPrefetchKey: string | null = null
+let checkoutTransitionPrefetchPromise: Promise<void> | null = null
+let checkoutTransitionPrefetchKey: string | null = null
+let checkoutTransitionPrefetchCompletedKey: string | null = null
+
+function invalidateCheckoutTransitionPrefetch() {
+  checkoutTransitionPrefetchCompletedKey = null
+  checkoutTransitionPrefetchKey = null
+  checkoutTransitionPrefetchPromise = null
+  checkoutStore.transitionToPaymentLoading = false
+}
+
+function checkoutTransitionPrefetchFingerprint(): string {
+  const recipient = checkoutStore.deliveryRecipient
+  return [
+    checkoutStore.selectedShippingMethodRef ?? '',
+    checkoutStore.selectedPaymentMethod,
+    checkoutStore.draft.email,
+    checkoutStore.draft.billingSameAsShipping ? 'same' : 'diff',
+    recipient.mode ?? 'self',
+    shippingFingerprint(shippingAddressPayload()),
+    shippingFingerprint(billingAddressPayload()),
+    checkoutStore.clientOrderRef.trim(),
+    checkoutStore.business.vatNumber.trim(),
+    checkoutStore.business.fiscalCode.trim(),
+    checkoutStore.business.companyName.trim(),
+  ].join('|')
+}
+
+function canPrefetchCheckoutTransition(): boolean {
+  if (!authStore.isAuthenticated) return false
+  if (isFrozenQuoteCheckout()) return false
+  if (checkoutStore.cartRefreshing || checkoutStore.shippingSelectingRef) return false
+  return canAdvanceFromStep('addresses')
+}
+
+async function syncCheckoutBeforePaymentStep() {
+  syncCheckoutContactFromProfile()
+  syncShippingDestinationFromBillingIfNeeded()
+  syncShippingContactFromBillingIfNeeded()
+  syncShippingFromDeliveryRecipient()
+  await validateTaxFields()
+  if (checkoutStore.shippingQuotes.length === 0 && canFetchShippingQuotes()) {
+    await fetchShippingQuotes()
+  }
+  if (!isSpedizioneCompartmentComplete()) {
+    throw new Error(localeMessage('checkout.error.incompleteStep'))
+  }
+  await syncCheckoutDraft('details', { silent: true })
+  await syncCheckoutDraft('shipping', { silent: true })
+}
+
+async function ensureCheckoutOrderAndPaymentSession() {
+  if (!checkoutStore.order?.orderId) {
+    await startCheckout({ silent: true })
+  }
+  if (
+    checkoutStore.selectedPaymentMethod === 'stripe' &&
+    (!checkoutStore.payment?.clientSecret ||
+      checkoutStore.payment.method !== checkoutStore.selectedPaymentMethod)
+  ) {
+    await createPaymentSession({ silent: true })
+  }
+}
+
+/** Precarica sync indirizzi + ordine + sessione pagamento dopo la scelta spedizione. */
+export function prefetchCheckoutTransitionToPayment(): void {
+  if (!canPrefetchCheckoutTransition()) return
+
+  const key = checkoutTransitionPrefetchFingerprint()
+  if (checkoutTransitionPrefetchCompletedKey === key) return
+  if (checkoutTransitionPrefetchPromise && checkoutTransitionPrefetchKey === key) return
+
+  checkoutTransitionPrefetchKey = key
+  checkoutDbg.fn('prefetchCheckoutTransitionToPayment', 'enter', { key })
+  checkoutStore.transitionToPaymentLoading = true
+
+  checkoutTransitionPrefetchPromise = (async () => {
+    try {
+      await syncCheckoutBeforePaymentStep()
+      await ensureCheckoutOrderAndPaymentSession()
+      checkoutTransitionPrefetchCompletedKey = key
+      checkoutDbg.fn('prefetchCheckoutTransitionToPayment', 'exit', {
+        orderId: checkoutStore.order?.orderId,
+        hasClientSecret: Boolean(checkoutStore.payment?.clientSecret),
+      })
+    } catch (e) {
+      checkoutTransitionPrefetchCompletedKey = null
+      checkoutDbg.fn('prefetchCheckoutTransitionToPayment', 'error', { message: errMessage(e) })
+    } finally {
+      checkoutStore.transitionToPaymentLoading = false
+      if (checkoutTransitionPrefetchKey === key) {
+        checkoutTransitionPrefetchPromise = null
+      }
+    }
+  })()
+}
+
+export function awaitCheckoutTransitionPrefetch(): Promise<void> {
+  return checkoutTransitionPrefetchPromise ?? Promise.resolve()
+}
 
 function checkoutNetCents(): number {
   const cart = cartStore.cart
@@ -96,6 +198,19 @@ function checkoutNetCents(): number {
   if (cart.taxBreakdown?.netCents != null) return cart.taxBreakdown.netCents
   if (cart.estimatedSubtotal != null) return cart.estimatedSubtotal
   return cart.items.reduce((s, i) => s + (i.lineTotalEstimateCents ?? 0), 0)
+}
+
+function applyCartShippingTotals(amountCents: number) {
+  const cart = cartStore.cart
+  if (!cart) return
+  const subtotal =
+    cart.estimatedSubtotal ?? cart.items.reduce((s, i) => s + (i.lineTotalEstimateCents ?? 0), 0)
+  const tax = cart.estimatedTax ?? cart.taxBreakdown?.taxCents ?? 0
+  cartStore.cart = {
+    ...cart,
+    estimatedShipping: amountCents,
+    estimatedTotal: subtotal + tax + amountCents,
+  }
 }
 
 function scheduleTaxRecalculate(delayMs = 450) {
@@ -455,22 +570,13 @@ function syncShippingContactFromBillingIfNeeded() {
 }
 
 function syncShippingDestinationFromBillingIfNeeded() {
-  const ship = checkoutStore.draft.shipping
-  if (addressComplete(ship)) return
+  if ((checkoutStore.deliveryRecipient.mode ?? 'self') === 'other') return
+  if (!checkoutStore.draft.billingSameAsShipping) return
   const bill = checkoutStore.draft.billing
-  if (!addressComplete(bill)) return
+  const ship = checkoutStore.draft.shipping
   checkoutStore.draft.shipping = {
-    ...ship,
-    line1: bill.line1,
-    streetNumber: bill.streetNumber,
-    isSnc: bill.isSnc,
-    line2: bill.line2,
-    city: bill.city,
-    postalCode: bill.postalCode,
-    country: bill.country,
-    firstName: ship.firstName.trim() || bill.firstName,
-    lastName: ship.lastName.trim() || bill.lastName,
-    phone: (ship.phone ?? '').trim() || bill.phone,
+    ...bill,
+    courierNotes: ship.courierNotes?.trim() ? ship.courierNotes : bill.courierNotes,
   }
 }
 
@@ -481,10 +587,19 @@ export function isAnagraficaCompartmentComplete(): boolean {
   return addressComplete(checkoutStore.draft.billing) && businessBillingComplete()
 }
 
+function isDeliveryRecipientComplete(): boolean {
+  const mode = checkoutStore.deliveryRecipient.mode ?? 'self'
+  if (mode === 'self') return addressComplete(checkoutStore.draft.shipping)
+  if (mode === 'other') {
+    const addr = dropshipPayload()
+    return Boolean(addr && addressComplete(addr))
+  }
+  return false
+}
+
 export function isSpedizioneCompartmentComplete(): boolean {
   if (!isAnagraficaCompartmentComplete()) return false
-  if (!addressComplete(checkoutStore.draft.shipping)) return false
-  if (!canAdvanceFromStep('delivery_recipient')) return false
+  if (!isDeliveryRecipientComplete()) return false
   return Boolean(checkoutStore.selectedShippingMethodRef && checkoutStore.shippingSelectionPersisted)
 }
 
@@ -519,7 +634,7 @@ function businessBillingComplete(): boolean {
   if (!isBusinessCheckout()) {
     const fc = b.fiscalCode.trim()
     if (country === 'IT') {
-      if (!fc) return false
+      if (!fc) return true
       return b.fiscalCodeValid === true
     }
     return true
@@ -611,6 +726,7 @@ export function cartFromFrozenQuoteSummary(detail: ThankYouOrderDTO): CartDTO {
 
 export function shouldSkipCheckoutStep(step: CheckoutStep): boolean {
   if (step === 'billing' || step === 'shipping') return true
+  if (step === 'delivery_recipient' || step === 'shipping_method') return true
   if (isFrozenQuoteCheckout()) {
     return step !== 'payment' && step !== 'review'
   }
@@ -709,6 +825,7 @@ export function prefillCheckoutFromAuthUser() {
 
   syncCheckoutContactFromProfile()
   syncAnagraficaCollectedFromAuthProfile()
+  initShippingFromBilling()
 }
 
 export function setCheckoutStep(step: CheckoutStep) {
@@ -763,6 +880,7 @@ async function runAddressPrefillInit() {
     if (destinationComplete(shippingAddressPayload())) {
       checkoutStore.initLoadingPhase = 'spedizioni'
       try {
+        initShippingFromBilling()
         await fetchShippingQuotes()
       } catch {
         /* errore già in checkoutStore.error */
@@ -816,16 +934,12 @@ function clearCheckoutPricingState() {
   checkoutStore.selectedShippingMethodRef = null
   checkoutStore.shippingSelectionPersisted = false
   checkoutStore.taxBreakdown = null
+  checkoutPaymentPrefetchKey = null
+  invalidateCheckoutTransitionPrefetch()
 }
 
 function checkoutStepNeedsShippingRefresh(step: CheckoutStep): boolean {
-  return (
-    step !== 'account' &&
-    step !== 'customer_type' &&
-    step !== 'addresses' &&
-    step !== 'billing' &&
-    step !== 'shipping'
-  )
+  return step !== 'account' && step !== 'customer_type' && step !== 'billing' && step !== 'shipping'
 }
 
 let checkoutCartRefreshPromise: Promise<void> | null = null
@@ -915,6 +1029,7 @@ export function resetCheckout(options?: { legacyLayout?: boolean }) {
   checkoutStore.error = null
   checkoutStore.isPaying = false
   checkoutStore.addressPrefillLoading = false
+  checkoutStore.transitionToPaymentLoading = false
   checkoutStore.initLoadingPhase = null
   checkoutStore.cartRefreshing = false
   checkoutStore.selectedPaymentMethod = 'stripe'
@@ -961,10 +1076,11 @@ export function resetCheckout(options?: { legacyLayout?: boolean }) {
   checkoutStore.anagraficaCollectedAtAccount = false
   checkoutStore.checkoutMode = 'standard'
   checkoutStore.frozenOrderSummary = null
+  invalidateCheckoutTransitionPrefetch()
   checkoutStore.draft = {
     email: '',
     orderNotes: '',
-    billingSameAsShipping: false,
+    billingSameAsShipping: true,
     billing: emptyCheckoutAddress(),
     shipping: emptyCheckoutAddress(),
   }
@@ -986,6 +1102,7 @@ export function clearCheckoutAfterLogout() {
   checkoutStore.isPaying = false
   checkoutStore.isLoading = false
   checkoutStore.addressPrefillLoading = false
+  checkoutStore.transitionToPaymentLoading = false
   checkoutStore.initLoadingPhase = null
   checkoutStore.cartRefreshing = false
   checkoutStore.shippingSelectionPersisted = false
@@ -1000,6 +1117,7 @@ export function clearCheckoutAfterLogout() {
   checkoutStore.clientOrderRef = ''
   checkoutStore.anagraficaCollectedAtAccount = false
   checkoutStore.termsAccepted = false
+  invalidateCheckoutTransitionPrefetch()
   checkoutStore.deliveryRecipient = {
     mode: 'self',
     firstName: '',
@@ -1033,6 +1151,7 @@ export function clearCheckoutAfterLogout() {
 export function setPaymentMethod(method: CheckoutPaymentMethodDTO) {
   checkoutDbg.state('setPaymentMethod', { from: checkoutStore.selectedPaymentMethod, to: method })
   checkoutStore.selectedPaymentMethod = method
+  if (method === 'stripe') prefetchCheckoutPayment()
 }
 
 export function setCustomerSegment(segment: CustomerSegmentChoice) {
@@ -1045,6 +1164,13 @@ export function markAnagraficaCollectedAtAccount() {
 
 export function setDeliveryRecipientMode(mode: DeliveryRecipientMode) {
   checkoutStore.deliveryRecipient.mode = mode
+  if (mode === 'other') {
+    checkoutStore.draft.billingSameAsShipping = false
+    invalidateShippingIfDestinationChanged()
+    scheduleShippingQuotesFetch(0)
+    return
+  }
+  initShippingFromBilling()
 }
 
 export function updateDeliveryRecipientField(
@@ -1056,6 +1182,10 @@ export function updateDeliveryRecipientField(
 
 export function updateDropshipAddress<K extends keyof AddressInput>(key: K, value: AddressInput[K]) {
   checkoutStore.dropshipAddress[key] = value as never
+  if ((checkoutStore.deliveryRecipient.mode ?? 'self') === 'other') {
+    invalidateShippingIfDestinationChanged()
+    scheduleShippingQuotesFetch()
+  }
 }
 
 export function updateBusinessField(
@@ -1106,14 +1236,11 @@ export function updateCheckoutAddress<K extends AddressKey>(
   value: AddressInput[K],
 ) {
   checkoutStore.draft[kind][key] = value
-  if (kind === 'billing' && checkoutStore.draft.billingSameAsShipping) {
-    checkoutStore.draft.shipping[key] = value
-  }
-  if (kind === 'shipping' && checkoutStore.draft.billingSameAsShipping) {
-    checkoutStore.draft.billing[key] = value
-  }
   if (kind === 'billing') {
     syncShippingDestinationFromBillingIfNeeded()
+    if (destinationComplete(shippingAddressPayload())) {
+      scheduleShippingQuotesFetch()
+    }
   }
   invalidateShippingIfDestinationChanged()
   if (kind === 'shipping') {
@@ -1134,16 +1261,19 @@ export function setCheckoutAddressFields(
     if (value == null) continue
     ;(target as Record<string, unknown>)[key] = value
   }
-  if (kind === 'shipping' && checkoutStore.draft.billingSameAsShipping) {
-    checkoutStore.draft.billing = { ...checkoutStore.draft.shipping }
-  }
   if (kind === 'billing' && checkoutStore.draft.billingSameAsShipping) {
-    checkoutStore.draft.shipping = { ...checkoutStore.draft.billing }
+    syncShippingDestinationFromBillingIfNeeded()
   }
   if (!options?.skipInvalidation) {
     invalidateShippingIfDestinationChanged()
   }
   if (kind === 'shipping') {
+    scheduleShippingQuotesFetch(options?.skipInvalidation ? 0 : 450)
+  } else if (
+    kind === 'billing' &&
+    checkoutStore.draft.billingSameAsShipping &&
+    destinationComplete(shippingAddressPayload())
+  ) {
     scheduleShippingQuotesFetch(options?.skipInvalidation ? 0 : 450)
   }
   checkoutDbg.fn('setCheckoutAddressFields', 'state', { kind, fields: Object.keys(fields) })
@@ -1174,6 +1304,9 @@ export async function applyResolvedAddress(kind: 'billing' | 'shipping', resolve
   }
   if (kind === 'billing') {
     syncShippingDestinationFromBillingIfNeeded()
+    if (destinationComplete(shippingAddressPayload())) {
+      scheduleShippingQuotesFetch(0)
+    }
   }
 }
 
@@ -1181,6 +1314,38 @@ export function setBillingSameAsShipping(value: boolean) {
   checkoutStore.draft.billingSameAsShipping = value
   if (value) checkoutStore.draft.shipping = { ...checkoutStore.draft.billing }
   invalidateShippingIfDestinationChanged()
+  if (value && destinationComplete(shippingAddressPayload())) {
+    scheduleShippingQuotesFetch(0)
+  }
+}
+
+/** Retail: spedizione separata da fatturazione (default = stesso indirizzo). */
+export function setShipToDifferentAddress(different: boolean) {
+  setBillingSameAsShipping(!different)
+}
+
+/** Imposta spedizione = fatturazione di default (destinatario «self»). */
+export function initShippingFromBilling() {
+  if ((checkoutStore.deliveryRecipient.mode ?? 'self') === 'other') {
+    checkoutStore.draft.billingSameAsShipping = false
+    return
+  }
+
+  const bill = checkoutStore.draft.billing
+  const ship = checkoutStore.draft.shipping
+  checkoutStore.draft.billingSameAsShipping = true
+  checkoutStore.draft.shipping = {
+    ...bill,
+    courierNotes: ship.courierNotes?.trim() ? ship.courierNotes : bill.courierNotes,
+  }
+  if (destinationComplete(shippingAddressPayload())) {
+    scheduleShippingQuotesFetch(0)
+  }
+}
+
+/** @deprecated usa initShippingFromBilling */
+export function initRetailShippingFromBilling() {
+  initShippingFromBilling()
 }
 
 /** @deprecated usa setBillingSameAsShipping */
@@ -1201,7 +1366,13 @@ export function canAdvanceFromStep(step: CheckoutStep): boolean {
       return effectiveCustomerSegment() != null
     case 'addresses':
     case 'billing': {
-      return addressComplete(checkoutStore.draft.billing) && businessBillingComplete()
+      return (
+        addressComplete(checkoutStore.draft.billing) &&
+        businessBillingComplete() &&
+        isDeliveryRecipientComplete() &&
+        Boolean(checkoutStore.selectedShippingMethodRef) &&
+        checkoutStore.shippingSelectionPersisted
+      )
     }
     case 'delivery_recipient': {
       const mode = checkoutStore.deliveryRecipient.mode ?? 'self'
@@ -1287,15 +1458,8 @@ export async function advanceCheckoutStep() {
 
   try {
     if (step === 'addresses' || step === 'billing') {
-      syncCheckoutContactFromProfile()
-      syncShippingDestinationFromBillingIfNeeded()
-      syncShippingContactFromBillingIfNeeded()
-      await validateTaxFields()
-      if (!addressComplete(checkoutStore.draft.shipping)) {
-        checkoutStore.error = localeMessage('checkout.error.incompleteAddress')
-        return
-      }
-      if (!canAdvanceFromStep(step === 'billing' ? 'addresses' : step)) {
+      ensureCheckoutEmailInDraft()
+      if (!canAdvanceFromStep('addresses')) {
         checkoutStore.error = localeMessage('checkout.error.incompleteStep')
         return
       }
@@ -1303,8 +1467,24 @@ export async function advanceCheckoutStep() {
         checkoutStore.error = localeMessage('checkout.error.incompleteStep')
         return
       }
-      ensureCheckoutEmailInDraft()
-      await syncCheckoutDraft('details', { silent: true })
+      if (!isSpedizioneCompartmentComplete()) {
+        checkoutStore.error = localeMessage('checkout.selectShipping')
+        return
+      }
+
+      prefetchCheckoutTransitionToPayment()
+      await awaitCheckoutTransitionPrefetch()
+
+      const transitionKey = checkoutTransitionPrefetchFingerprint()
+      const prefetchReady =
+        checkoutTransitionPrefetchCompletedKey === transitionKey &&
+        Boolean(checkoutStore.order?.orderId)
+
+      if (!prefetchReady) {
+        await syncCheckoutBeforePaymentStep()
+        await ensureCheckoutOrderAndPaymentSession()
+        checkoutTransitionPrefetchCompletedKey = transitionKey
+      }
     }
 
     if (step === 'delivery_recipient') {
@@ -1415,29 +1595,54 @@ export async function selectShippingMethod(methodRef: string, options?: { silent
   }
 
   const previousRef = checkoutStore.selectedShippingMethodRef
+  const wasPersisted = checkoutStore.shippingSelectionPersisted
+  const quote = checkoutStore.shippingQuotes.find((q) => q.methodRef === methodRef)
+  if (!quote) {
+    checkoutDbg.fn('selectShippingMethod', 'skip', { reason: 'quote not in cache', methodRef })
+    if (!options?.silent) checkoutStore.error = localeMessage('checkout.selectShipping')
+    return
+  }
+
   checkoutStore.shippingSelectingRef = methodRef
   checkoutStore.error = null
-  let shouldSyncDraft = false
+  checkoutStore.selectedShippingMethodRef = methodRef
+  checkoutStore.shippingSelectionPersisted = false
+  applyCartShippingTotals(quote.amountCents)
+  if (previousRef !== methodRef) {
+    checkoutStore.order = null
+    checkoutStore.payment = null
+    invalidateCheckoutTransitionPrefetch()
+    checkoutDbg.state('selectShippingMethod:clearedPayment', { previousRef, methodRef })
+  }
+
+  let shouldPrefetchTransition = false
   try {
     checkoutDbg.api('shipping.select', { methodRef })
-    await api.shipping.select({
+    const res = await api.shipping.select({
       shippingAddress: shippingAddressForQuotes(),
       methodRef,
     })
-    if (previousRef !== methodRef) {
-      checkoutStore.order = null
-      checkoutStore.payment = null
-      checkoutDbg.state('selectShippingMethod:clearedPayment', { previousRef, methodRef })
-    }
     checkoutStore.selectedShippingMethodRef = methodRef
     checkoutStore.shippingSelectionPersisted = true
-    await fetchCart()
-    shouldSyncDraft = isSpedizioneCompartmentComplete()
-    scheduleTaxRecalculate(0)
+    applyCartShippingTotals(res.amountCents)
+    shouldPrefetchTransition = isSpedizioneCompartmentComplete()
     checkoutDbg.fn('selectShippingMethod', 'exit', { methodRef })
   } catch (e) {
-    if (checkoutStore.selectedShippingMethodRef === methodRef) {
-      checkoutStore.shippingSelectionPersisted = false
+    checkoutStore.selectedShippingMethodRef = previousRef
+    checkoutStore.shippingSelectionPersisted = wasPersisted
+    if (previousRef) {
+      const previousQuote = checkoutStore.shippingQuotes.find((q) => q.methodRef === previousRef)
+      if (previousQuote) applyCartShippingTotals(previousQuote.amountCents)
+    } else if (cartStore.cart) {
+      const subtotal =
+        cartStore.cart.estimatedSubtotal ??
+        cartStore.cart.items.reduce((s, i) => s + (i.lineTotalEstimateCents ?? 0), 0)
+      const tax = cartStore.cart.estimatedTax ?? cartStore.cart.taxBreakdown?.taxCents ?? 0
+      cartStore.cart = {
+        ...cartStore.cart,
+        estimatedShipping: null,
+        estimatedTotal: subtotal + tax,
+      }
     }
     if (!options?.silent) checkoutStore.error = errMessage(e)
     throw e
@@ -1445,11 +1650,8 @@ export async function selectShippingMethod(methodRef: string, options?: { silent
     checkoutStore.shippingSelectingRef = null
   }
 
-  if (shouldSyncDraft) {
-    checkoutDbg.fn('selectShippingMethod', 'state', { action: 'syncCheckoutDraft shipping' })
-    void syncCheckoutDraft('shipping', { silent: true }).catch((e) => {
-      checkoutStore.error = errMessage(e)
-    })
+  if (shouldPrefetchTransition) {
+    prefetchCheckoutTransitionToPayment()
   }
 }
 
@@ -1484,6 +1686,55 @@ function checkoutBusinessPayload() {
 type CheckoutDraftStep = 'details' | 'shipping' | 'payment_method' | 'lock'
 
 let checkoutDraftSyncPromise: Promise<void> | null = null
+
+function checkoutPaymentPrefetchFingerprint(): string {
+  return [
+    checkoutStore.selectedShippingMethodRef ?? '',
+    checkoutStore.selectedPaymentMethod ?? '',
+    checkoutStore.order?.orderId ?? '',
+    checkoutStore.draft.email,
+    checkoutStore.draft.billingSameAsShipping ? 'same' : 'diff',
+    shippingFingerprint(shippingAddressPayload()),
+    shippingFingerprint(billingAddressPayload()),
+  ].join('|')
+}
+
+/** Precarica ordine + sessione Stripe appena spedizione e dati sono completi. */
+export function prefetchCheckoutPayment(): void {
+  if (!authStore.isAuthenticated) return
+  if (checkoutStore.checkoutMode === 'frozen_quote') return
+  if (checkoutStore.selectedPaymentMethod !== 'stripe') return
+  if (!canStartCheckout()) return
+  if (!isSpedizioneCompartmentComplete()) return
+  if (checkoutStore.payment?.method === 'stripe' && checkoutStore.payment.clientSecret) return
+  if (checkoutStore.cartRefreshing || checkoutStore.shippingSelectingRef) return
+
+  const key = checkoutPaymentPrefetchFingerprint()
+  if (checkoutPaymentPrefetchPromise && checkoutPaymentPrefetchKey === key) return
+
+  checkoutPaymentPrefetchKey = key
+  checkoutDbg.fn('prefetchCheckoutPayment', 'enter', { key })
+  checkoutPaymentPrefetchPromise = (async () => {
+    try {
+      if (!checkoutStore.order) await startCheckout({ silent: true })
+      if (
+        !checkoutStore.payment ||
+        checkoutStore.payment.method !== checkoutStore.selectedPaymentMethod ||
+        !checkoutStore.payment.clientSecret
+      ) {
+        await createPaymentSession({ silent: true })
+      }
+      checkoutDbg.fn('prefetchCheckoutPayment', 'exit', {
+        orderId: checkoutStore.order?.orderId,
+        hasClientSecret: Boolean(checkoutStore.payment?.clientSecret),
+      })
+    } catch (e) {
+      checkoutDbg.fn('prefetchCheckoutPayment', 'error', { message: errMessage(e) })
+    } finally {
+      checkoutPaymentPrefetchPromise = null
+    }
+  })()
+}
 
 function canSyncCheckoutDraft(step: CheckoutDraftStep): boolean {
   if (!authStore.isAuthenticated) return false
@@ -1779,8 +2030,10 @@ export async function advanceToShippingStep() {
     checkoutStore.error = localeMessage('checkout.error.incompleteAddress')
     return
   }
-  checkoutStore.currentStep = 'delivery_recipient'
-  await fetchShippingQuotes()
+  checkoutStore.currentStep = 'addresses'
+  if (canFetchShippingQuotes()) {
+    await fetchShippingQuotes()
+  }
 }
 
 /** @deprecated usa advanceCheckoutStep */

@@ -113,15 +113,7 @@ function validateRetailFiscalCode(
   if (isBusinessCheckout(data)) return
   const country = normalizeCountryCode(data.billingAddress.country)
   const fiscalCode = data.business?.fiscalCode?.trim()
-  if (country === 'IT') {
-    if (!fiscalCode) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['business', 'fiscalCode'],
-        message: 'Codice fiscale obbligatorio.',
-      })
-      return
-    }
+  if (country === 'IT' && fiscalCode) {
     const cf = validateFiscalCode(fiscalCode)
     if (!cf.valid) {
       ctx.addIssue({

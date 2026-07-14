@@ -1,8 +1,8 @@
 import { logger } from '../lib/logger.js'
 import { refreshSeoCaches } from '../modules/seo/seo-cache.service.js'
 
-/** Rigenera sitemap, merchant feed e llms.txt ogni 6 ore (+ al primo avvio). */
-const SEO_CACHE_INTERVAL_MS = 6 * 60 * 60 * 1000
+/** Rigenera sitemap, merchant feed e llms.txt ogni ora (+ al primo avvio). */
+const SEO_CACHE_INTERVAL_MS = 60 * 60 * 1000
 const SEO_CACHE_STARTUP_DELAY_MS = 45_000
 
 export function startSeoCacheScheduler(): void {

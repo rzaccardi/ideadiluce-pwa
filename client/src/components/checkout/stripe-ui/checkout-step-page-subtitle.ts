@@ -19,7 +19,7 @@ export function checkoutStepPageSubtitleKey(
     case 'addresses':
     case 'billing':
     case 'details':
-      return 'checkout.addresses.subtitle'
+      return 'checkout.addresses.subtitleUnified'
     case 'shipping':
       return options?.billingSameAsShipping
         ? 'checkout.shipping.addressSubtitle'
