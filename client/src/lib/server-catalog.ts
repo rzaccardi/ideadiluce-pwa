@@ -3,7 +3,7 @@ import { serverApiClient } from '@/api/server'
 import { toArflyLang } from '@/lib/arfly/locale'
 import { mapArflyListResponse, mapArflyProductDetail } from '@/lib/arfly/mapper'
 import type { PwaLocale } from '@/lib/locale'
-import type { ProductCardDTO, ProductDetailDTO } from '@/types/dto'
+import type { ProductCardDTO, ProductDetailDTO, ProductListDTO } from '@/types/dto'
 import type { ArflyProductDetailResponse, ArflyProductListResponse } from '@/lib/arfly/types'
 import type { HomeProductSliderDTO } from '@/types/home-product-sliders'
 import type { CatalogPageContent } from '@/types/site-content'
@@ -81,18 +81,11 @@ export async function fetchFeaturedProducts(locale: PwaLocale, pageSize = 3): Pr
   return mapArflyListResponse(raw, locale).items
 }
 
-async function loadRelatedProducts(
-  slug: string,
-  locale: PwaLocale,
+/** Related SSR: solo quelli già sul prodotto — evita un secondo round-trip catalogo sul TTFB. */
+function loadRelatedProducts(
   relatedFromProduct: ProductCardDTO[],
-): Promise<ProductCardDTO[]> {
-  if (relatedFromProduct.length > 0) {
-    return relatedFromProduct.slice(0, 4)
-  }
-  const lang = toArflyLang(locale)
-  const listSearch = new URLSearchParams({ lang, page: '1', per_page: '5' })
-  const list = await serverApiClient.get<ArflyProductListResponse>(`/api/v2/products?${listSearch}`)
-  return mapArflyListResponse(list, locale).items.filter((item) => item.slug !== slug).slice(0, 4)
+): ProductCardDTO[] {
+  return relatedFromProduct.slice(0, 4)
 }
 
 /**
@@ -118,24 +111,57 @@ export const fetchProductDetailServer = cache(async function fetchProductDetailS
   if (!res?.product) return null
 
   const product = mapArflyProductDetail(res.product, locale)
-  const relatedProducts = await loadRelatedProducts(slug, locale, product.relatedProducts ?? [])
+  const relatedProducts = loadRelatedProducts(product.relatedProducts ?? [])
 
   return { product, relatedProducts }
 })
 
 export async function fetchCatalogProductsServer(
   locale: PwaLocale,
-  params: { page?: number; pageSize?: number; q?: string; category?: string; brand?: string } = {},
-): Promise<ReturnType<typeof mapArflyListResponse>> {
-  const search = new URLSearchParams({ lang: toArflyLang(locale) })
-  search.set('page', String(params.page ?? 1))
-  search.set('per_page', String(params.pageSize ?? 24))
-  if (params.q) search.set('q', params.q)
-  if (params.category) search.set('category', params.category)
-  if (params.brand) search.set('brand', params.brand)
-  const raw = await serverApiClient.get<ArflyProductListResponse>(`/api/v2/products?${search}`)
-  return mapArflyListResponse(raw, locale)
+  params: {
+    page?: number
+    pageSize?: number
+    q?: string
+    category?: string
+    brand?: string
+    attacco?: string
+    colorTemp?: string
+  } = {},
+): Promise<ProductListDTO> {
+  return fetchCatalogProductsServerCached(
+    locale,
+    params.page ?? 1,
+    params.pageSize ?? 24,
+    params.q ?? '',
+    params.category ?? '',
+    params.brand ?? '',
+    params.attacco ?? '',
+    params.colorTemp ?? '',
+  )
 }
+
+const fetchCatalogProductsServerCached = cache(
+  async function fetchCatalogProductsServerCached(
+    locale: PwaLocale,
+    page: number,
+    pageSize: number,
+    q: string,
+    category: string,
+    brand: string,
+    attacco: string,
+    colorTemp: string,
+  ): Promise<ProductListDTO> {
+    const search = new URLSearchParams({ locale })
+    search.set('page', String(page))
+    search.set('pageSize', String(pageSize))
+    if (q) search.set('q', q)
+    if (category) search.set('category', category)
+    if (brand) search.set('brand', brand)
+    if (attacco) search.set('attacco', attacco)
+    if (colorTemp) search.set('colorTemp', colorTemp)
+    return serverApiClient.get<ProductListDTO>(`/api/v1/catalog/products?${search}`)
+  },
+)
 
 export async function fetchCategoryMetaServer(slug: string, locale: PwaLocale) {
   const search = new URLSearchParams({ locale })

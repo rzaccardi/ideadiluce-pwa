@@ -1,5 +1,6 @@
 import { api } from '@/api/endpoints'
 import { dedupeAsync } from '@/lib/async-cache'
+import { ApiRequestError } from '@/types/api'
 import type { SitePageDTO, SitePageKey } from '@/types/site-content'
 import { proxy } from 'valtio'
 
@@ -51,6 +52,12 @@ export function getCatalogContent() {
   return siteStore.pages.catalog ?? null
 }
 
+function siteErrorMessage(e: unknown): string {
+  if (e instanceof ApiRequestError) return e.userMessage ?? e.message
+  if (e instanceof Error) return e.message
+  return 'Errore contenuti sito'
+}
+
 export function fetchSitePage<K extends SitePageKey>(
   pageKey: K,
   locale: string,
@@ -74,8 +81,10 @@ export function fetchSitePage<K extends SitePageKey>(
       siteStore.pageLocales[pageKey] = locale
       return data as SitePageDTO<K>
     } catch (e) {
-      siteStore.error = e instanceof Error ? e.message : 'Errore contenuti sito'
-      throw e
+      siteStore.error = siteErrorMessage(e)
+      const cached = siteStore.pages[pageKey]
+      // Soft-fail: i caller usano `void fetchSitePage` — non propagare all'overlay Next.
+      return { content: cached ?? null } as SitePageDTO<K>
     } finally {
       siteStore.loading[pageKey] = false
     }

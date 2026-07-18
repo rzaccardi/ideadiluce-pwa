@@ -5,7 +5,6 @@ import { useNavigate, useSearchParams } from '@/lib/navigation'
 import { useSnapshot } from 'valtio/react'
 import { authStore, login } from '@/features/auth'
 import { AuthLoadingOverlay } from '@/components/site/auth/AuthLoadingOverlay'
-import { AuthFormSkeleton } from '@/components/site/skeletons'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { notify } from '@/lib/notify'
@@ -56,6 +55,7 @@ export function LoginPageView() {
       notify.success(t('auth.loggedIn'))
       navigate(from, { replace: true })
     } catch (err) {
+      setPassword('')
       notify.error(
         err instanceof ApiRequestError
           ? (err.userMessage ?? err.message)
@@ -79,15 +79,6 @@ export function LoginPageView() {
         </>
       }
     >
-      {isBusy ? (
-        <>
-          <AuthFormSkeleton fieldCount={2} />
-          <AuthLoadingOverlay
-            icon={auth.isHydrating ? 'bulb' : 'shield'}
-            messageKey={auth.isHydrating ? 'auth.preparingAccount' : 'auth.loggingIn'}
-          />
-        </>
-      ) : (
       <AuthCard>
         <AuthCardHeader title={t('login.welcomeTitle')} subtitle={t('login.subtitle')} />
 
@@ -104,6 +95,7 @@ export function LoginPageView() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isBusy}
               />
             </AuthField>
           </AuthFieldGroup>
@@ -127,6 +119,7 @@ export function LoginPageView() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={isBusy}
                 showPasswordLabel={t('login.showPassword')}
                 hidePasswordLabel={t('login.hidePassword')}
               />
@@ -142,7 +135,12 @@ export function LoginPageView() {
           </AuthSubmitButton>
         </form>
       </AuthCard>
-      )}
+      {isBusy ? (
+        <AuthLoadingOverlay
+          icon={auth.isHydrating ? 'bulb' : 'shield'}
+          messageKey={auth.isHydrating ? 'auth.preparingAccount' : 'auth.loggingIn'}
+        />
+      ) : null}
     </AuthPageShell>
   )
 }

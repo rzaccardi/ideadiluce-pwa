@@ -13,7 +13,7 @@ export function AccountLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!user?.id) return
-    void fetchOrdersList({ force: true })
+    void fetchOrdersList()
   }, [user?.id])
 
   if (!user) {

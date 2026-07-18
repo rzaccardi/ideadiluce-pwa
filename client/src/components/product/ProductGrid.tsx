@@ -2,7 +2,7 @@
 
 import type { ProductCardDTO } from '@/types/dto'
 import { ProductCard } from '@/components/product/ProductCard'
-import { useI18n } from '@/hooks/use-i18n'
+import { CatalogEmptyAlternatives } from '@/components/catalog/CatalogEmptyAlternatives'
 
 type Props = {
   products: ReadonlyArray<ProductCardDTO>
@@ -10,11 +10,8 @@ type Props = {
 }
 
 export function ProductGrid({ products, emptyMessage }: Props) {
-  const { t } = useI18n()
-  const message = emptyMessage ?? t('product.grid.empty')
-
   if (products.length === 0) {
-    return <p className="py-12 text-center text-sm text-idl-muted">{message}</p>
+    return <CatalogEmptyAlternatives compact title={emptyMessage} />
   }
 
   return (

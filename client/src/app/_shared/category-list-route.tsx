@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import { CategoryPage } from '@/views/CategoryPage'
 import { JsonLdGraph } from '@/components/JsonLdGraph'
 import { getSiteUrl } from '@/lib/env'
@@ -21,7 +22,10 @@ export async function generateCategoryMetadata({ params }: PageProps): Promise<M
   const { slug } = await params
   const locale = await getRequestLocale()
   const category = await fetchCategoryMetaServer(slug, locale)
-  const name = category?.name ?? slug
+  if (!category) {
+    return { title: 'Categoria non trovata', robots: { index: false, follow: false } }
+  }
+  const name = category.name
   const { canonical, alternates } = buildLocalizedPageSeo({
     currentLocale: locale,
     pathForLocale: () => categorySeoPath(slug),
@@ -41,7 +45,8 @@ export async function CategoryListRoute({ params }: PageProps) {
     fetchCategoryMetaServer(slug, locale),
     fetchCatalogProductsServer(locale, { category: slug, pageSize: 48 }),
   ])
-  const name = category?.name ?? slug
+  if (!category) notFound()
+  const name = category.name
   const { canonical } = buildLocalizedPageSeo({
     currentLocale: locale,
     pathForLocale: () => categorySeoPath(slug),

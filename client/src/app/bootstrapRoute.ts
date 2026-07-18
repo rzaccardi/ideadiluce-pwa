@@ -22,6 +22,7 @@ export type BootstrapRoute =
   | 'guide'
   | 'guide-article'
   | 'category-landing'
+  | 'category'
   | 'content'
 
 const CONTENT_PATHS = new Set([
@@ -31,20 +32,27 @@ const CONTENT_PATHS = new Set([
   '/pagamenti',
   '/garanzia',
   '/privacy-policy',
+  '/privacy',
   '/tos',
   '/on-demand',
-  '/acquista-ambiente',
   '/lavora-con-noi',
   '/prodotto-non-trovato',
+  '/homepage2',
 ])
 
-/** Route logica (senza prefisso lingua) per lo skeleton di bootstrap. */
+/** Route logica (senza prefisso lingua) per lo skeleton di bootstrap / loading. */
 export function resolveBootstrapRoute(pathname: string): BootstrapRoute {
   const path = stripLocalePrefix(pathname)
   const normalized = path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path
 
   if (normalized === '/' || normalized === '') return 'home'
-  if (normalized === '/negozio' || normalized === '/catalog' || normalized === '/negozio') return 'catalog'
+  if (
+    normalized === '/negozio' ||
+    normalized === '/catalog' ||
+    normalized === '/catalogo'
+  ) {
+    return 'catalog'
+  }
   if (/^\/(product|prodotto)\/[^/]+/.test(normalized)) return 'product'
   if (normalized === '/wishlist') return 'wishlist'
   if (normalized === '/cart') return 'cart'
@@ -53,27 +61,36 @@ export function resolveBootstrapRoute(pathname: string): BootstrapRoute {
   if (normalized === '/checkout') return 'checkout'
   if (/^\/checkout\/return\/[^/]+/.test(normalized)) return 'checkout-return'
   if (/^\/checkout\/result\/[^/]+/.test(normalized)) return 'checkout-result'
-  if (normalized === '/account' || normalized === '/account/') return 'account'
+  if (/^\/checkout\//.test(normalized)) return 'checkout'
+
   if (normalized === '/account/profile') return 'account-profile'
   if (normalized === '/account/orders') return 'account-orders'
   if (/^\/account\/orders\/[^/]+/.test(normalized)) return 'account-order-detail'
+  if (normalized === '/account' || normalized.startsWith('/account/')) return 'account'
+
   if (normalized === '/professionisti') return 'professionisti'
   if (normalized === '/brand' || normalized.startsWith('/brand/')) return 'brand'
-  if (normalized === '/ambienti' || normalized.startsWith('/ambienti/') || normalized === '/acquista-ambiente') {
+  if (
+    normalized === '/ambienti' ||
+    normalized.startsWith('/ambienti/') ||
+    normalized === '/acquista-ambiente'
+  ) {
     return 'ambienti'
   }
   if (normalized === '/attacco' || normalized.startsWith('/attacco/')) return 'attacco'
   if (/^\/guide\/[^/]+/.test(normalized)) return 'guide-article'
   if (normalized === '/guide' || normalized === '/blog') return 'guide'
+
   if (
     normalized.startsWith('/categoria-prodotto/') ||
-    normalized === '/illuminazione-arredo' ||
-    normalized === '/categoria-prodotto/illuminazione-arredo' ||
-    normalized === '/categoria-prodotto/illuminazione-tecnica'
+    normalized === '/illuminazione-arredo'
   ) {
     return 'category-landing'
   }
-  if (CONTENT_PATHS.has(normalized) || normalized.startsWith('/guide/')) return 'content'
+
+  if (/^\/(categoria|category)\/[^/]+/.test(normalized)) return 'category'
+
+  if (CONTENT_PATHS.has(normalized)) return 'content'
 
   return 'content'
 }

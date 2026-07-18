@@ -41,19 +41,27 @@ async function resolveCardsFromTemplateIds(
 ): Promise<ProductCardDTO[]> {
   if (!isArflyConfigured() || templateIds.length === 0) return []
 
-  const hints: ProductCardStockHint[] = []
-  for (const templateId of templateIds) {
-    try {
-      const detail = await fetchArflyProductDetail(templateId, locale, pricing)
-      const card = mapArflyListItem(detail.product, locale)
-      hints.push({ ...card, odooTemplateId: templateId })
-    } catch {
-      // prodotto non pubblicato su Arfly
-    }
-  }
+  const resolved = await Promise.all(
+    templateIds.map(async (templateId): Promise<ProductCardStockHint | null> => {
+      try {
+        const detail = await fetchArflyProductDetail(templateId, locale, pricing)
+        const card = mapArflyListItem(detail.product, locale)
+        return { ...card, odooTemplateId: templateId }
+      } catch {
+        // prodotto non pubblicato su Arfly
+        return null
+      }
+    }),
+  )
+  const hints = resolved.filter((item): item is ProductCardStockHint => item != null)
 
   if (hints.length === 0) return []
   return enrichProductCardsWithStock(ctx, hints)
+}
+
+const SEGMENT_CATEGORY_SLUG: Record<TopPurchasedSegment, string> = {
+  design: 'arredo',
+  technical: 'illuminazione-tecnica',
 }
 
 async function topPurchasedSlider(
@@ -63,12 +71,14 @@ async function topPurchasedSlider(
   segment: TopPurchasedSegment,
   fallbackQuery: string,
 ): Promise<ProductCardDTO[]> {
+  const categorySlug = SEGMENT_CATEGORY_SLUG[segment]
+
   if (!odooSearchHintsAvailable()) {
     const list = await catalogStorefrontService.listProducts(ctx, {
       locale,
       page: 1,
       pageSize: SLIDER_LIMIT,
-      q: fallbackQuery,
+      categorySlug,
       partnerId: pricing.partnerId,
       pricelistId: pricing.pricelistId,
     })
@@ -89,14 +99,25 @@ async function topPurchasedSlider(
   )
   if (cards.length >= SLIDER_LIMIT) return cards.slice(0, SLIDER_LIMIT)
 
-  const list = await catalogStorefrontService.listProducts(ctx, {
+  let list = await catalogStorefrontService.listProducts(ctx, {
     locale,
     page: 1,
     pageSize: SLIDER_LIMIT,
     q: fallbackQuery,
+    categorySlug,
     partnerId: pricing.partnerId,
     pricelistId: pricing.pricelistId,
   })
+  if (list.items.length === 0) {
+    list = await catalogStorefrontService.listProducts(ctx, {
+      locale,
+      page: 1,
+      pageSize: SLIDER_LIMIT,
+      categorySlug,
+      partnerId: pricing.partnerId,
+      pricelistId: pricing.pricelistId,
+    })
+  }
   const merged = [...cards]
   for (const item of list.items) {
     if (merged.length >= SLIDER_LIMIT) break

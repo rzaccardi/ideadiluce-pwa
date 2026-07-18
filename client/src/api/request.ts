@@ -37,7 +37,17 @@ function headerCorrelationId(res: Response): string | undefined {
 
 async function parseResponse<T>(res: Response): Promise<T> {
   const fallbackCorr = headerCorrelationId(res)
-  const json: unknown = await res.json().catch(() => null)
+  const contentType = res.headers.get('content-type') ?? ''
+  const rawText = await res.text().catch(() => '')
+
+  let json: unknown = null
+  if (rawText) {
+    try {
+      json = JSON.parse(rawText)
+    } catch {
+      json = null
+    }
+  }
 
   if (json && typeof json === 'object' && 'error' in json) {
     const e = (json as ApiFailureBody).error
@@ -56,13 +66,25 @@ async function parseResponse<T>(res: Response): Promise<T> {
     return (json as { data: T }).data
   }
 
+  const looksLikeHtml =
+    contentType.includes('text/html') ||
+    /^\s*<(!doctype|html|pre)\b/i.test(rawText)
+  const backendDown =
+    res.status === 0 ||
+    res.status === 502 ||
+    res.status === 503 ||
+    res.status === 504 ||
+    looksLikeHtml
+
   throw new ApiRequestError(
-    'INVALID_RESPONSE',
-    'Risposta API non valida o non JSON',
+    backendDown ? 'NETWORK_ERROR' : 'INVALID_RESPONSE',
+    backendDown ? 'Backend unreachable or non-JSON response' : 'Risposta API non valida o non JSON',
     res.status,
     undefined,
-    'Il server ha restituito una risposta inattesa. Controlla i log del backend.',
-    false,
+    backendDown
+      ? networkErrorMessage()
+      : 'Il server ha restituito una risposta inattesa. Controlla i log del backend.',
+    backendDown,
     fallbackCorr,
   )
 }

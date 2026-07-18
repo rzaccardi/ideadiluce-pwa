@@ -153,7 +153,7 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
     : t('thankYou.hero.confirmedEyebrow')
 
   const registerHref = `${lp('/register')}?email=${encodeURIComponent(order.email)}`
-  const ordersHref = lp(`/account/orders/${order.orderId}`)
+  const ordersHref = lp('/account/orders')
 
   return (
     <div className="-mx-4 bg-idl-tech-panel sm:-mx-6 lg:-mx-12">

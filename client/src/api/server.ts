@@ -1,18 +1,25 @@
 import { cookies } from 'next/headers'
 import { getServerApiUrl } from '@/lib/env'
+import { isPrivateApiPath, serverApiFetchInit } from '@/lib/api-cache-policy'
 
 async function serverFetch(path: string, init: RequestInit = {}) {
-  const cookieStore = await cookies()
-  const cookieHeader = cookieStore.toString()
   const base = getServerApiUrl().replace(/\/$/, '')
+  const cacheInit = serverApiFetchInit(path)
+
+  // Cookie solo sulle API private: evita di forzare dynamic rendering e round-trip inutili.
+  let cookieHeader = ''
+  if (isPrivateApiPath(path)) {
+    const cookieStore = await cookies()
+    cookieHeader = cookieStore.toString()
+  }
 
   return fetch(`${base}${path}`, {
     ...init,
+    ...cacheInit,
     headers: {
       ...(init.headers ?? {}),
       ...(cookieHeader ? { Cookie: cookieHeader } : {}),
     },
-    cache: 'no-store',
   })
 }
 

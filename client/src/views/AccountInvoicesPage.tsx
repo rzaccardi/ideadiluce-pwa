@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { useSnapshot } from 'valtio/react'
 import { api } from '@/api/endpoints'
+import { fetchInvoicesList, invoicesStore } from '@/features/invoices'
 import { invoiceStateTone } from '@/lib/invoice-display'
 import type { InvoiceDTO } from '@/types/dto'
 import { AccountDcPanel } from '@/components/account/dc/AccountDcPanel'
@@ -16,24 +18,12 @@ import { useI18n } from '@/hooks/use-i18n'
 
 export function AccountInvoicesPage() {
   const { t } = useI18n()
-  const [list, setList] = useState<InvoiceDTO[] | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const invoices = useSnapshot(invoicesStore)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
 
   useEffect(() => {
-    void (async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        setList(await api.invoices.list())
-      } catch (e) {
-        setError(e instanceof Error ? e.message : t('account.invoices.loadError'))
-      } finally {
-        setLoading(false)
-      }
-    })()
-  }, [t])
+    void fetchInvoicesList()
+  }, [])
 
   async function handleDownload(inv: InvoiceDTO) {
     if (!inv.pdfAvailable) return
@@ -53,11 +43,16 @@ export function AccountInvoicesPage() {
     }
   }
 
+  const list = invoices.list
+
   return (
     <AccountDcPanel title={t('account.invoices.title')} description={t('account.invoices.description')}>
-      {error ? <StripeErrorBanner message={error} /> : null}
+      {invoices.listError ? <StripeErrorBanner message={invoices.listError} /> : null}
 
-      <PageLoadTransition isLoading={loading} skeleton={<ListSkeleton />}>
+      <PageLoadTransition
+        isLoading={invoices.isListLoading || list === null}
+        skeleton={<ListSkeleton />}
+      >
         {list && list.length === 0 ? (
           <p className="py-8 text-center text-sm text-idl-muted">{t('account.invoices.empty')}</p>
         ) : null}

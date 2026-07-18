@@ -3,6 +3,8 @@ import {
   IlluminazioneArredoRoutePage,
 } from '@/app/_shared/illuminazione-arredo-route'
 
+export const revalidate = 300
+
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }

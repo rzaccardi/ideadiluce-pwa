@@ -142,20 +142,16 @@ async function syncCheckoutBeforePaymentStep() {
   await syncCheckoutDraft('shipping', { silent: true })
 }
 
-async function ensureCheckoutOrderAndPaymentSession() {
+async function ensureCheckoutOrder() {
   if (!checkoutStore.order?.orderId) {
     await startCheckout({ silent: true })
   }
-  if (
-    checkoutStore.selectedPaymentMethod === 'stripe' &&
-    (!checkoutStore.payment?.clientSecret ||
-      checkoutStore.payment.method !== checkoutStore.selectedPaymentMethod)
-  ) {
-    await createPaymentSession({ silent: true })
-  }
 }
 
-/** Precarica sync indirizzi + ordine + sessione pagamento dopo la scelta spedizione. */
+/**
+ * Precarica sync indirizzi + ordine dopo la scelta spedizione.
+ * La sessione Stripe resta allo step pagamento (niente download JS / Payment Element qui).
+ */
 export function prefetchCheckoutTransitionToPayment(): void {
   if (!canPrefetchCheckoutTransition()) return
 
@@ -170,11 +166,10 @@ export function prefetchCheckoutTransitionToPayment(): void {
   checkoutTransitionPrefetchPromise = (async () => {
     try {
       await syncCheckoutBeforePaymentStep()
-      await ensureCheckoutOrderAndPaymentSession()
+      await ensureCheckoutOrder()
       checkoutTransitionPrefetchCompletedKey = key
       checkoutDbg.fn('prefetchCheckoutTransitionToPayment', 'exit', {
         orderId: checkoutStore.order?.orderId,
-        hasClientSecret: Boolean(checkoutStore.payment?.clientSecret),
       })
     } catch (e) {
       checkoutTransitionPrefetchCompletedKey = null
@@ -859,12 +854,16 @@ async function resolvePrefilledCheckoutAddressesFromAuth() {
 
 async function runAddressPrefillInit() {
   checkoutDbg.fn('runAddressPrefillInit', 'enter')
-  checkoutStore.initLoadingPhase = 'anagrafica'
+
+  // Prefill sync + step subito: niente overlay «Recupero indirizzi…».
+  // Geocode e spedizioni partono in background mentre l'utente vede il form.
+  prefillCheckoutFromAuthUser()
+  syncAnagraficaCollectedFromAuthProfile()
+  checkoutStore.currentStep = resolveInitialCheckoutStep()
+  checkoutStore.initLoadingPhase = null
+  checkoutStore.addressPrefillLoading = false
 
   try {
-    prefillCheckoutFromAuthUser()
-    syncAnagraficaCollectedFromAuthProfile()
-
     const shipping = checkoutStore.draft.shipping
     const billing = checkoutStore.draft.billing
     const needsGeocode =
@@ -872,13 +871,16 @@ async function runAddressPrefillInit() {
       (!checkoutStore.draft.billingSameAsShipping && hasPrefilledAddress(billing))
 
     if (needsGeocode) {
-      checkoutStore.initLoadingPhase = 'indirizzi'
-      await refreshAddressAutocompleteStatus()
-      await resolvePrefilledCheckoutAddressesFromAuth()
+      checkoutStore.addressPrefillLoading = true
+      try {
+        await refreshAddressAutocompleteStatus()
+        await resolvePrefilledCheckoutAddressesFromAuth()
+      } finally {
+        checkoutStore.addressPrefillLoading = false
+      }
     }
 
     if (destinationComplete(shippingAddressPayload())) {
-      checkoutStore.initLoadingPhase = 'spedizioni'
       try {
         initShippingFromBilling()
         await fetchShippingQuotes()
@@ -890,7 +892,6 @@ async function runAddressPrefillInit() {
     checkoutStore.initLoadingPhase = null
     checkoutStore.addressPrefillLoading = false
     syncAnagraficaCollectedFromAuthProfile()
-    checkoutStore.currentStep = resolveInitialCheckoutStep()
     checkoutDbg.fn('runAddressPrefillInit', 'exit', { step: checkoutStore.currentStep })
   }
 }
@@ -1151,7 +1152,12 @@ export function clearCheckoutAfterLogout() {
 export function setPaymentMethod(method: CheckoutPaymentMethodDTO) {
   checkoutDbg.state('setPaymentMethod', { from: checkoutStore.selectedPaymentMethod, to: method })
   checkoutStore.selectedPaymentMethod = method
-  if (method === 'stripe') prefetchCheckoutPayment()
+  if (
+    method === 'stripe' &&
+    (checkoutStore.currentStep === 'payment' || checkoutStore.currentStep === 'review')
+  ) {
+    prefetchCheckoutPayment()
+  }
 }
 
 export function setCustomerSegment(segment: CustomerSegmentChoice) {
@@ -1390,7 +1396,7 @@ export function canAdvanceFromStep(step: CheckoutStep): boolean {
     case 'payment':
       return Boolean(checkoutStore.selectedPaymentMethod)
     case 'review':
-      return checkoutStore.termsAccepted && canStartCheckout()
+      return canStartCheckout()
     default:
       return false
   }
@@ -1472,6 +1478,7 @@ export async function advanceCheckoutStep() {
         return
       }
 
+      // Sync + ordine in background; Stripe solo dopo lo step pagamento.
       prefetchCheckoutTransitionToPayment()
       await awaitCheckoutTransitionPrefetch()
 
@@ -1482,7 +1489,7 @@ export async function advanceCheckoutStep() {
 
       if (!prefetchReady) {
         await syncCheckoutBeforePaymentStep()
-        await ensureCheckoutOrderAndPaymentSession()
+        await ensureCheckoutOrder()
         checkoutTransitionPrefetchCompletedKey = transitionKey
       }
     }

@@ -7,7 +7,6 @@ import { useSnapshot } from 'valtio/react'
 import { cartStore, fetchCart, fetchRecommendations, removeItem } from '@/features/cart'
 import { authStore, fetchMe } from '@/features/auth'
 import {
-  canAdvanceFromStep,
   canStartCheckout,
   cartFromFrozenQuoteSummary,
   checkoutStore,
@@ -18,7 +17,6 @@ import {
   isFrozenQuoteCheckout,
   prepareCheckoutPayment,
   prefetchCheckoutPayment,
-  prefetchCheckoutTransitionToPayment,
   resumeCheckoutForOrder,
   resumeFrozenQuoteCheckout,
   resetCheckout,
@@ -65,7 +63,6 @@ import {
 } from '@/components/checkout/stripe-ui/constants'
 import { useI18n } from '@/hooks/use-i18n'
 import { ApiRequestError } from '@/types/api'
-import { preloadStripe, preloadStripeCheckoutModule } from '@/lib/stripe-loader'
 import { checkoutDbg } from '@/features/checkout/checkout-debug'
 
 export function CheckoutPage() {
@@ -97,8 +94,6 @@ export function CheckoutPage() {
       retryOrder: searchParams.get('retryOrder'),
       frozenOrderId: searchParams.get('orderId'),
     })
-    preloadStripe()
-    preloadStripeCheckoutModule()
     const retryOrderId = searchParams.get('retryOrder')
     const frozenOrderId = searchParams.get('orderId')
     const isResumeFlow = Boolean(frozenOrderId || retryOrderId)
@@ -172,8 +167,7 @@ export function CheckoutPage() {
     canStartCheckout() &&
     !checkout.isLoading &&
     !checkout.isPaying &&
-    !checkout.cartRefreshing &&
-    checkout.termsAccepted
+    !checkout.cartRefreshing
   const totalCents = displayCart
     ? checkoutTotalCents(displayCart, shippingQuote, checkout.taxBreakdown)
     : checkout.order?.amountTotal ?? 0
@@ -200,9 +194,7 @@ export function CheckoutPage() {
       cartRefreshing: checkout.cartRefreshing,
       initLoadingPhase: checkout.initLoadingPhase,
       addressPrefillLoading: checkout.addressPrefillLoading,
-      transitionToPaymentLoading: checkout.transitionToPaymentLoading,
       shippingQuotesLoading: checkout.shippingQuotesLoading,
-      shippingSelecting: Boolean(checkout.shippingSelectingRef),
       cartLoading: cart.isLoading && !c,
     }),
   )
@@ -268,29 +260,8 @@ export function CheckoutPage() {
 
   useEffect(() => {
     if (isFrozenQuoteCheckout()) return
-    if (step !== 'addresses') return
-    if (!canAdvanceFromStep('addresses')) return
-    prefetchCheckoutTransitionToPayment()
-  }, [
-    step,
-    checkout.draft.email,
-    checkout.draft.shipping,
-    checkout.draft.billing,
-    checkout.draft.billingSameAsShipping,
-    checkout.selectedShippingMethodRef,
-    checkout.shippingSelectionPersisted,
-    checkout.shippingSelectingRef,
-    checkout.selectedPaymentMethod,
-    checkout.clientOrderRef,
-    checkout.business.vatNumber,
-    checkout.business.fiscalCode,
-    checkout.business.companyName,
-    checkout.deliveryRecipient.mode,
-  ])
-
-  useEffect(() => {
-    if (isFrozenQuoteCheckout()) return
-    if (step !== 'addresses' && step !== 'payment' && step !== 'review') return
+    // Stripe/sessione pagamento solo quando l'utente è sullo step pagamento (non in indirizzi).
+    if (step !== 'payment' && step !== 'review') return
     prefetchCheckoutPayment()
   }, [
     step,
@@ -464,10 +435,7 @@ export function CheckoutPage() {
         }
       : null)
 
-  const shouldMountPaymentStep =
-    step === 'payment' ||
-    step === 'review' ||
-    (checkout.selectedPaymentMethod === 'stripe' && Boolean(activeStripeSession?.clientSecret))
+  const shouldMountPaymentStep = step === 'payment' || step === 'review'
 
   const stripeCardDetails = activeStripeSession ? (
     <StripePaymentShell
@@ -524,6 +492,7 @@ export function CheckoutPage() {
             icon={loadingState.icon}
             messageKey={loadingState.messageKey}
             scope={loadingState.scope}
+            blockInteraction={loadingState.blockInteraction}
           />
         ) : null}
         <div

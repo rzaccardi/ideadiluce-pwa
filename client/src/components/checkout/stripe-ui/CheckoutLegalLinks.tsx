@@ -40,6 +40,8 @@ export function CheckoutLegalLinks({
         <li>
           <Link
             to={lp('/tos')}
+            target="_blank"
+            rel="noopener noreferrer"
             className={cn(dark ? 'hover:text-[#f1e8d8]' : 'hover:text-idl-graphite')}
           >
             {t('legal.terms')}
@@ -51,6 +53,8 @@ export function CheckoutLegalLinks({
         <li>
           <Link
             to={lp('/privacy-policy')}
+            target="_blank"
+            rel="noopener noreferrer"
             className={cn(dark ? 'hover:text-[#f1e8d8]' : 'hover:text-idl-graphite')}
           >
             {t('legal.privacy')}

@@ -32,10 +32,19 @@ export function CatalogPage({
   forcedBrandSlug,
   initialProducts,
   initialBootstrap,
+  initialPagination,
 }: {
   forcedBrandSlug?: string
   initialProducts?: ProductCardDTO[]
   initialBootstrap?: CatalogBootstrapServerData
+  initialPagination?: {
+    page: number
+    pageSize: number
+    total: number
+    totalPages: number
+    hasNextPage: boolean
+    hasPreviousPage: boolean
+  }
 } = {}) {
   const { locale } = useLocale()
   const lp = useLocalePath()
@@ -174,16 +183,35 @@ export function CatalogPage({
   }, [initialBootstrap, locale])
 
   useLayoutEffect(() => {
-    if (!initialProducts?.length || !initialSeedKey) return
+    if (!initialProducts || !initialSeedKey) return
+    // Allinea i filtri server prima dello seed, così fetchProducts non rifà il round-trip.
+    catalogStore.filters.locale = locale
+    catalogStore.filters.categorySlug = effectiveCategory
+    catalogStore.filters.brandSlug = brandParam
+    catalogStore.filters.q = effectiveQuery
+    catalogStore.filters.attacco = attaccoParam || undefined
+    catalogStore.filters.colorTemp = colorTempParam || undefined
+    catalogStore.filters.world = clientWorld
     seedCatalogProducts(
       initialProducts,
       initialSeedKey,
-      {
+      initialPagination ?? {
         total: initialProducts.length,
         hasNextPage: initialProducts.length >= 24,
       },
     )
-  }, [initialProducts, initialSeedKey])
+  }, [
+    initialProducts,
+    initialSeedKey,
+    initialPagination,
+    locale,
+    effectiveCategory,
+    brandParam,
+    effectiveQuery,
+    attaccoParam,
+    colorTempParam,
+    clientWorld,
+  ])
 
   useEffect(() => {
     void fetchCatalogBootstrap({ locale, skipIfFresh: true })

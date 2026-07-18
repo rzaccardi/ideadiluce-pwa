@@ -8,7 +8,7 @@ export function getPublicApiUrl(): string {
     process.env.NEXT_PUBLIC_API_BASE_URL ??
     process.env.VITE_API_URL ??
     process.env.VITE_API_BASE_URL ??
-    'http://localhost:4000'
+    'http://localhost:4100'
   )
 }
 
@@ -19,7 +19,7 @@ export function getServerApiUrl(): string {
     process.env.NEXT_PUBLIC_API_BASE_URL ??
     process.env.VITE_API_URL ??
     process.env.VITE_API_BASE_URL ??
-    'http://localhost:4000'
+    'http://localhost:4100'
   )
 }
 
@@ -70,7 +70,7 @@ export function getArflyMediaBaseUrl(): string | undefined {
 export function getSiteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
-    (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173')
+    (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5273')
   )
 }
 

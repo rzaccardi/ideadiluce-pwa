@@ -26,7 +26,7 @@ export function getDesignTenant(): SiteTenantConfig {
     host: hostFromUrl(publicUrl),
     publicUrl,
     arflyWebsiteId: env.ARFLY_WEBSITE_ID,
-    catalogRootCategorySlug: 'illuminazione-arredo',
+    catalogRootCategorySlug: 'arredo',
   }
 }
 

@@ -12,7 +12,7 @@ const SEO_REDIRECT_API =
   process.env.API_URL ??
   process.env.NEXT_PUBLIC_API_URL ??
   process.env.NEXT_PUBLIC_API_BASE_URL ??
-  'http://localhost:4000'
+  'http://localhost:4100'
 
 function parseLocaleFromPath(pathname: string): { locale: PwaLocale; internalPath: string } {
   for (const [prefix, locale] of PREFIX_TO_LOCALE) {

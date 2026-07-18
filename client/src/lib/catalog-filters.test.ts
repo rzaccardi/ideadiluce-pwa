@@ -60,10 +60,10 @@ describe('resolveEffectiveCatalogCategory', () => {
     ).toBe('illuminazione-tecnica')
   })
 
-  it('forza illuminazione-arredo con world=design', () => {
+  it('forza arredo con world=design', () => {
     expect(
       resolveEffectiveCatalogCategory({ worldTab: 'design' }),
-    ).toBe('illuminazione-arredo')
+    ).toBe('arredo')
   })
 
   it('usa categoria tecnica quando c’è filtro attacco', () => {

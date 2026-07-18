@@ -57,8 +57,7 @@ export function CheckoutAddressesStep() {
   const stepBusy =
     checkout.isLoading ||
     checkout.initLoadingPhase != null ||
-    checkout.addressPrefillLoading ||
-    checkout.transitionToPaymentLoading
+    checkout.addressPrefillLoading
   const recipient = checkout.deliveryRecipient
   const deliveryMode = recipient.mode ?? 'self'
   const shipToDifferentAddress = !checkout.draft.billingSameAsShipping

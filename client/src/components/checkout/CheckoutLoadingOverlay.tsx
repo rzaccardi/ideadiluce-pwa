@@ -6,6 +6,7 @@ import type { CheckoutStep } from '@/features/checkout'
 import type { CheckoutInitLoadingPhase } from '@/features/checkout/checkout.store'
 import { useI18n } from '@/hooks/use-i18n'
 import type { MessageKey } from '@/i18n/messages'
+import { cn } from '@/utils/cn'
 import {
   CheckoutLoadingBulb,
   CheckoutLoadingPin,
@@ -23,6 +24,11 @@ type LoadingState = {
   icon: CheckoutLoadingIcon
   messageKey: MessageKey
   scope: CheckoutLoadingScope
+  /**
+   * Se false, lo sfondo non intercetta i click (es. «Torna al carrello» resta usabile).
+   * True solo per stati critici (pagamento in corso).
+   */
+  blockInteraction?: boolean
 }
 
 const ADDRESS_STEPS: CheckoutStep[] = [
@@ -45,9 +51,7 @@ export function resolveCheckoutLoading(params: {
   cartRefreshing: boolean
   initLoadingPhase: CheckoutInitLoadingPhase | null
   addressPrefillLoading: boolean
-  transitionToPaymentLoading: boolean
   shippingQuotesLoading: boolean
-  shippingSelecting: boolean
   cartLoading: boolean
 }): LoadingState | null {
   const {
@@ -57,9 +61,7 @@ export function resolveCheckoutLoading(params: {
     cartRefreshing,
     initLoadingPhase,
     addressPrefillLoading,
-    transitionToPaymentLoading,
     shippingQuotesLoading,
-    shippingSelecting,
     cartLoading,
   } = params
 
@@ -67,68 +69,101 @@ export function resolveCheckoutLoading(params: {
     step === 'account' || step === 'customer_type' ? 'step' : 'fullscreen'
 
   if (isPaying) {
-    return { visible: true, icon: 'shield', messageKey: 'checkout.loading.payment', scope: 'fullscreen' }
+    return {
+      visible: true,
+      icon: 'shield',
+      messageKey: 'checkout.loading.payment',
+      scope: 'fullscreen',
+      blockInteraction: true,
+    }
   }
 
   if (cartRefreshing) {
-    return { visible: true, icon: 'bulb', messageKey: 'checkout.loading.cart', scope: 'fullscreen' }
-  }
-
-  if (initLoadingPhase === 'anagrafica') {
     return {
       visible: true,
       icon: 'bulb',
-      messageKey: 'checkout.loading.profile',
-      scope: accountInitScope,
-    }
-  }
-
-  if (initLoadingPhase === 'indirizzi' || addressPrefillLoading) {
-    return {
-      visible: true,
-      icon: 'pin',
-      messageKey: 'checkout.loading.addresses',
-      scope: accountInitScope,
-    }
-  }
-
-  if (transitionToPaymentLoading) {
-    return {
-      visible: true,
-      icon: 'pin',
-      messageKey: 'checkout.loading.addresses',
+      messageKey: 'checkout.loading.cart',
       scope: 'fullscreen',
+      blockInteraction: false,
     }
   }
 
-  if (initLoadingPhase === 'spedizioni' || shippingQuotesLoading || shippingSelecting) {
+  if (initLoadingPhase === 'account') {
+    return {
+      visible: true,
+      icon: 'bulb',
+      messageKey: 'checkout.loading.account',
+      scope: accountInitScope,
+      blockInteraction: false,
+    }
+  }
+
+  // Prefill indirizzi / anagrafica / quote spedizione: in background sulla form,
+  // senza overlay «Non chiudere questa pagina».
+  if (
+    initLoadingPhase === 'anagrafica' ||
+    initLoadingPhase === 'indirizzi' ||
+    initLoadingPhase === 'spedizioni' ||
+    addressPrefillLoading
+  ) {
+    return null
+  }
+
+  // Quote spedizione sullo step indirizzi: loading locale nelle opzioni, non fullscreen.
+  if (shippingQuotesLoading && !ADDRESS_STEPS.includes(step)) {
     return {
       visible: true,
       icon: 'truck',
       messageKey: 'checkout.loading.shipping',
-      scope: accountInitScope,
+      scope: 'fullscreen',
+      blockInteraction: false,
     }
   }
 
   if (cartLoading) {
-    return { visible: true, icon: 'bulb', messageKey: 'skeleton.loadingCheckout', scope: 'fullscreen' }
+    return {
+      visible: true,
+      icon: 'bulb',
+      messageKey: 'skeleton.loadingCheckout',
+      scope: 'fullscreen',
+      blockInteraction: false,
+    }
   }
 
   if (!isLoading) return null
 
   if (step === 'shipping_method' || step === 'delivery_recipient') {
-    return { visible: true, icon: 'truck', messageKey: 'checkout.loading.shipping', scope: 'fullscreen' }
+    return {
+      visible: true,
+      icon: 'truck',
+      messageKey: 'checkout.loading.shipping',
+      scope: 'fullscreen',
+      blockInteraction: false,
+    }
   }
 
   if (step === 'payment' || step === 'review') {
-    return { visible: true, icon: 'shield', messageKey: 'checkout.loading.payment', scope: 'fullscreen' }
+    return {
+      visible: true,
+      icon: 'shield',
+      messageKey: 'checkout.loading.payment',
+      scope: 'fullscreen',
+      blockInteraction: false,
+    }
   }
 
   if (ADDRESS_STEPS.includes(step)) {
-    return { visible: true, icon: 'pin', messageKey: 'checkout.loading.addresses', scope: 'fullscreen' }
+    // Avanzamento verso pagamento: sync ordine, non geocode. Loading sul bottone Continua.
+    return null
   }
 
-  return { visible: true, icon: 'bulb', messageKey: 'checkout.processing', scope: 'fullscreen' }
+  return {
+    visible: true,
+    icon: 'bulb',
+    messageKey: 'checkout.processing',
+    scope: 'fullscreen',
+    blockInteraction: false,
+  }
 }
 
 export function useStableCheckoutLoading(state: LoadingState | null): LoadingState | null {
@@ -155,7 +190,14 @@ export function useStableCheckoutLoading(state: LoadingState | null): LoadingSta
     }, delay)
 
     return () => clearTimeout(timer)
-  }, [state?.visible, state?.icon, state?.messageKey, state?.scope, stable?.visible])
+  }, [
+    state?.visible,
+    state?.icon,
+    state?.messageKey,
+    state?.scope,
+    state?.blockInteraction,
+    stable?.visible,
+  ])
 
   return stable
 }
@@ -177,14 +219,18 @@ type Props = {
   icon: CheckoutLoadingIcon
   messageKey: MessageKey
   scope?: CheckoutLoadingScope
+  /** Default false: lo sfondo non blocca «Torna al carrello» e altri controlli. */
+  blockInteraction?: boolean
 }
 
 function CheckoutLoadingCard({
   icon,
   messageKey,
+  showDontClose = false,
 }: {
   icon: CheckoutLoadingIcon
   messageKey: MessageKey
+  showDontClose?: boolean
 }) {
   const { t } = useI18n()
 
@@ -196,13 +242,20 @@ function CheckoutLoadingCard({
       </div>
       <div className="text-center">
         <p className="text-[14.5px] font-bold text-idl-graphite">{t(messageKey)}</p>
-        <p className="mt-1 text-xs text-[#9298a3]">{t('checkout.loading.dontClose')}</p>
+        {showDontClose ? (
+          <p className="mt-1 text-xs text-[#9298a3]">{t('checkout.loading.dontClose')}</p>
+        ) : null}
       </div>
     </div>
   )
 }
 
-export function CheckoutLoadingOverlay({ icon, messageKey, scope = 'fullscreen' }: Props) {
+export function CheckoutLoadingOverlay({
+  icon,
+  messageKey,
+  scope = 'fullscreen',
+  blockInteraction = false,
+}: Props) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -210,7 +263,7 @@ export function CheckoutLoadingOverlay({ icon, messageKey, scope = 'fullscreen' 
   }, [])
 
   useEffect(() => {
-    if (scope !== 'fullscreen') return
+    if (scope !== 'fullscreen' || !blockInteraction) return
 
     const main = document.querySelector('.checkout-shell > main')
     const prevBodyOverflow = document.body.style.overflow
@@ -223,31 +276,49 @@ export function CheckoutLoadingOverlay({ icon, messageKey, scope = 'fullscreen' 
       document.body.style.overflow = prevBodyOverflow
       if (main instanceof HTMLElement) main.style.overflow = prevMainOverflow
     }
-  }, [scope])
+  }, [scope, blockInteraction])
 
   if (!mounted) return null
 
   if (scope === 'step') {
     return (
       <div
-        className="checkout-loading-overlay absolute inset-0 z-[50] flex items-center justify-center bg-idl-tech-panel/72 p-4 backdrop-blur-[1.5px]"
+        className={cn(
+          'checkout-loading-overlay absolute inset-0 z-[50] flex items-center justify-center bg-idl-tech-panel/72 p-4 backdrop-blur-[1.5px]',
+          !blockInteraction && 'pointer-events-none',
+        )}
         role="status"
         aria-live="polite"
         aria-busy="true"
       >
-        <CheckoutLoadingCard icon={icon} messageKey={messageKey} />
+        <div className={cn(!blockInteraction && 'pointer-events-auto')}>
+          <CheckoutLoadingCard
+            icon={icon}
+            messageKey={messageKey}
+            showDontClose={blockInteraction}
+          />
+        </div>
       </div>
     )
   }
 
   return createPortal(
     <div
-      className="checkout-loading-overlay fixed inset-0 z-[200] flex h-dvh max-h-dvh w-full touch-none items-center justify-center bg-[rgba(22,19,13,0.62)] p-4"
+      className={cn(
+        'checkout-loading-overlay fixed inset-0 z-[200] flex h-dvh max-h-dvh w-full items-center justify-center bg-[rgba(22,19,13,0.62)] p-4',
+        blockInteraction ? 'touch-none' : 'pointer-events-none',
+      )}
       role="status"
       aria-live="polite"
       aria-busy="true"
     >
-      <CheckoutLoadingCard icon={icon} messageKey={messageKey} />
+      <div className={cn(!blockInteraction && 'pointer-events-auto')}>
+        <CheckoutLoadingCard
+          icon={icon}
+          messageKey={messageKey}
+          showDontClose={blockInteraction}
+        />
+      </div>
     </div>,
     document.body,
   )

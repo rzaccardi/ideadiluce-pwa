@@ -14,5 +14,6 @@ export const ODOO_CATEGORY_SLUG_ROOT_ALIASES: Record<string, number> = {
   'illuminazione-tecnica': ODOO_INTERNAL_CATEGORY_TECNICO,
   'prodotti-tecnici': ODOO_INTERNAL_CATEGORY_TECNICO,
   arredo: ODOO_INTERNAL_CATEGORY_ARREDO,
+  'illuminazione-arredo': ODOO_INTERNAL_CATEGORY_ARREDO,
   'illuminazione-design': ODOO_INTERNAL_CATEGORY_ARREDO,
 }

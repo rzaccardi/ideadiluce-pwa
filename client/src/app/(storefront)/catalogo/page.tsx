@@ -1,10 +1,10 @@
-import { redirect } from 'next/navigation'
+import { permanentRedirect } from 'next/navigation'
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
-/** Redirect legacy /catalogo → /negozio (301 via Next redirect). */
+/** Redirect legacy permanente /catalogo → /negozio (308). */
 export default async function CatalogoLegacyRedirectPage({ searchParams }: PageProps) {
   const params = await searchParams
   const qs = new URLSearchParams()
@@ -17,5 +17,5 @@ export default async function CatalogoLegacyRedirectPage({ searchParams }: PageP
     }
   }
   const query = qs.toString()
-  redirect(query ? `/negozio?${query}` : '/negozio')
+  permanentRedirect(query ? `/negozio?${query}` : '/negozio')
 }

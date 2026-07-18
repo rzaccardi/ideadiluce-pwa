@@ -9,7 +9,7 @@ const repoRoot = join(serverRoot, '..')
 
 await ensurePostgresForDev()
 
-const freePort = spawn('node', [join(repoRoot, 'scripts/free-port.mjs'), '4000'], {
+const freePort = spawn('node', [join(repoRoot, 'scripts/free-port.mjs'), '4100'], {
   cwd: serverRoot,
   stdio: 'inherit',
   env: process.env,

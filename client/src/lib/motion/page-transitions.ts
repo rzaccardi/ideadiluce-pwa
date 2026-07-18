@@ -26,34 +26,34 @@ function pageVariants(
   }
 }
 
-/** Editorial: fade morbido — home e pagine istituzionali. */
+/** Editorial: fade breve — home e pagine istituzionali. */
 const editorialVariants = pageVariants(
-  { opacity: 0, y: 14 },
-  { opacity: 0, y: -6 },
-  0.34,
+  { opacity: 0, y: 8 },
+  { opacity: 0 },
   0.18,
+  0.1,
 )
 
 /** Catalogo: rapido e leggero — navigazione frequente tra liste e filtri. */
 const catalogVariants = pageVariants(
-  { opacity: 0, y: 10 },
+  { opacity: 0, y: 6 },
   { opacity: 0 },
-  0.22,
-  0.11,
+  0.14,
+  0.08,
 )
 
 /** Prodotto: sottile profondità — focus sul contenuto. */
 const productVariants: Variants = {
-  initial: { opacity: 0, y: 8, scale: 0.992 },
+  initial: { opacity: 0, y: 6, scale: 0.995 },
   animate: {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { duration: 0.22, ease: EASE_OUT },
+    transition: { duration: 0.16, ease: EASE_OUT },
   },
   exit: {
     opacity: 0,
-    transition: { duration: 0.1, ease: EASE_OUT },
+    transition: { duration: 0.08, ease: EASE_OUT },
   },
 }
 
@@ -82,9 +82,9 @@ export const pageTransitionVariants: Record<PageTransitionKind, Variants> = {
 }
 
 export const pageTransitionTiming: Record<PageTransitionKind, Transition> = {
-  editorial: { duration: 0.34, ease: EASE_OUT },
-  catalog: { duration: 0.22, ease: EASE_OUT },
-  product: { duration: 0.22, ease: EASE_OUT },
+  editorial: { duration: 0.18, ease: EASE_OUT },
+  catalog: { duration: 0.14, ease: EASE_OUT },
+  product: { duration: 0.16, ease: EASE_OUT },
   checkout: transitionFast,
   default: transitionBase,
 }

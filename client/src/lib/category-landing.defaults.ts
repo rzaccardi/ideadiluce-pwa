@@ -272,7 +272,6 @@ const TECHNICAL_BASE: Omit<CategoryLandingContent, 'breadcrumb' | 'title' | 'sub
     primaryCta: { label: 'Invia una foto', href: '/prodotto-non-trovato' },
     secondaryCta: { label: 'Cerca per EAN', href: '/negozio?world=technical' },
   },
-  searchQuery: 'alimentatore driver',
   pageSize: 8,
 }
 

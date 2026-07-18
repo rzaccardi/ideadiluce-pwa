@@ -43,18 +43,21 @@ export const catalogPublicController = {
   categoryBySlug: asyncHandler(async (req: Request, res: Response) => {
     const locale = typeof req.query.locale === 'string' ? req.query.locale : undefined
     const item = await catalogStorefrontService.getCategoryBySlug(req.params.slug, locale)
+    res.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
     res.json(ok({ item }))
   }),
 
   brands: asyncHandler(async (req: Request, res: Response) => {
     const locale = typeof req.query.locale === 'string' ? req.query.locale : undefined
     const items = await catalogStorefrontService.listBrands(locale)
+    res.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
     res.json(ok({ items }))
   }),
 
   brandBySlug: asyncHandler(async (req: Request, res: Response) => {
     const locale = typeof req.query.locale === 'string' ? req.query.locale : undefined
     const item = await catalogStorefrontService.getBrandBySlug(req.params.slug, locale)
+    res.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
     res.json(ok({ item }))
   }),
 
@@ -93,6 +96,12 @@ export const catalogPublicController = {
       pricelistId: pricing.pricelistId ?? undefined,
       pricing,
     })
+    // Lista anonima: cacheabile. Con listino partner resta privata.
+    if (pricing.partnerId == null && pricing.pricelistId == null) {
+      res.set('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300')
+    } else {
+      res.set('Cache-Control', 'private, no-store')
+    }
     res.json(ok(data))
   }),
 
@@ -119,10 +128,15 @@ export const catalogPublicController = {
       partnerId: pricing.partnerId ?? undefined,
       pricelistId: pricing.pricelistId ?? undefined,
     })
-    res.setHeader(
-      'Cache-Control',
-      `public, max-age=${HOME_PRODUCT_SLIDERS_CACHE_MAX_AGE_SEC}, s-maxage=${HOME_PRODUCT_SLIDERS_CACHE_MAX_AGE_SEC}`,
-    )
+    if (pricing.partnerId == null && pricing.pricelistId == null) {
+      res.setHeader(
+        'Cache-Control',
+        `public, max-age=${HOME_PRODUCT_SLIDERS_CACHE_MAX_AGE_SEC}, s-maxage=${HOME_PRODUCT_SLIDERS_CACHE_MAX_AGE_SEC}`,
+      )
+    } else {
+      // Prezzi/listini partner non devono mai finire in cache condivise CDN/browser.
+      res.setHeader('Cache-Control', 'private, no-store')
+    }
     res.json(ok(data))
   }),
 }

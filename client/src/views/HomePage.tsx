@@ -18,6 +18,7 @@ import {
   writeHomeProductSlidersClientCache,
 } from '@/lib/home-product-sliders-cache'
 import { extraHomeProductSliders, HOME_SLIDER_PRODUCT_COUNT, resolveShowcaseProducts } from '@/lib/home-product-sliders'
+import { CATALOG_DESIGN_CATEGORY_SLUG, CATALOG_TECHNICAL_CATEGORY_SLUG } from '@/lib/catalog-filters'
 import { HomePageSkeleton } from '@/components/Skeleton'
 import { PageLoadTransition } from '@/components/motion'
 
@@ -155,16 +156,18 @@ export function HomePage({
     const technicalQuery = showcaseSource.technicalShowcase.searchQuery?.trim()
 
     void Promise.all([
-      designFromSlider.length === 0 && designQuery
-        ? fetchProductsByQuery(designQuery, {
+      designFromSlider.length === 0
+        ? fetchProductsByQuery(designQuery ?? '', {
             pageSize: Math.max(showcaseSource.designShowcase.productCount, HOME_SLIDER_PRODUCT_COUNT),
             locale,
+            category: CATALOG_DESIGN_CATEGORY_SLUG,
           })
         : Promise.resolve([]),
-      technicalFromSlider.length === 0 && technicalQuery
-        ? fetchProductsByQuery(technicalQuery, {
+      technicalFromSlider.length === 0
+        ? fetchProductsByQuery(technicalQuery ?? '', {
             pageSize: Math.max(showcaseSource.technicalShowcase.productCount, HOME_SLIDER_PRODUCT_COUNT),
             locale,
+            category: CATALOG_TECHNICAL_CATEGORY_SLUG,
           })
         : Promise.resolve([]),
     ]).then(([design, technical]) => {

@@ -130,6 +130,17 @@ export function InlineAccountAuthStep({
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
     setRegisterError(null)
+    setRegisterLoading(true)
+    if (collectCustomerTypeOnRegister) {
+      checkoutStore.initLoadingPhase = 'account'
+    }
+
+    const clearAuthLoading = () => {
+      setRegisterLoading(false)
+      if (collectCustomerTypeOnRegister && checkoutStore.initLoadingPhase === 'account') {
+        checkoutStore.initLoadingPhase = null
+      }
+    }
 
     const segment = typeChoice
     setCustomerSegment(segment)
@@ -139,10 +150,12 @@ export function InlineAccountAuthStep({
         await validateTaxFields()
       } catch {
         setRegisterError(t('checkout.error.incompleteStep'))
+        clearAuthLoading()
         return
       }
       if (!isBusinessAnagraficaComplete()) {
         setRegisterError(t('checkout.error.incompleteStep'))
+        clearAuthLoading()
         return
       }
     }
@@ -152,15 +165,16 @@ export function InlineAccountAuthStep({
         await validateTaxFields()
       } catch {
         setRegisterError(t('checkout.error.incompleteStep'))
+        clearAuthLoading()
         return
       }
       if (!isBusinessAnagraficaComplete()) {
         setRegisterError(t('checkout.error.incompleteStep'))
+        clearAuthLoading()
         return
       }
     }
 
-    setRegisterLoading(true)
     const trimmedEmail = email.trim()
     try {
       await checkoutRegister({
@@ -185,6 +199,7 @@ export function InlineAccountAuthStep({
         setPostAuthPending(false)
       }
     } catch (err) {
+      clearAuthLoading()
       if (err instanceof ApiRequestError && err.code === 'EMAIL_TAKEN') {
         setLoginEmail(trimmedEmail)
         onEmailChange(trimmedEmail)
@@ -195,6 +210,7 @@ export function InlineAccountAuthStep({
           err instanceof ApiRequestError ? (err.userMessage ?? err.message) : t('checkout.account.registerError'),
         )
       }
+      return
     } finally {
       setRegisterLoading(false)
     }
@@ -204,6 +220,9 @@ export function InlineAccountAuthStep({
     e.preventDefault()
     setLoginError(null)
     setLoginLoading(true)
+    if (collectCustomerTypeOnRegister) {
+      checkoutStore.initLoadingPhase = 'account'
+    }
     const trimmedEmail = loginEmail.trim()
     try {
       await checkoutLogin(trimmedEmail, loginPassword)
@@ -217,6 +236,11 @@ export function InlineAccountAuthStep({
         setPostAuthPending(false)
       }
     } catch (err) {
+      if (collectCustomerTypeOnRegister && checkoutStore.initLoadingPhase === 'account') {
+        checkoutStore.initLoadingPhase = null
+      }
+      setLoginPassword('')
+      onEmailChange(trimmedEmail)
       setLoginError(
         err instanceof ApiRequestError ? (err.userMessage ?? err.message) : t('checkout.account.loginError'),
       )
@@ -292,7 +316,11 @@ export function InlineAccountAuthStep({
           placeholder={t('common.email')}
           autoComplete="email"
           value={loginEmail}
-          onChange={(e) => setLoginEmail(e.target.value)}
+          onChange={(e) => {
+            const next = e.target.value
+            setLoginEmail(next)
+            onEmailChange(next)
+          }}
           required
           disabled={formsLocked}
         />
@@ -386,19 +414,30 @@ export function InlineAccountAuthStep({
           disabled={formsLocked}
         />
       </StripeFieldGroup>
-      <StripeFieldGroup>
-        <StripeInput
-          type="password"
-          name="password"
-          placeholder={t('register.passwordHint')}
-          autoComplete="new-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={8}
-          disabled={formsLocked}
-        />
-      </StripeFieldGroup>
+      <div className="space-y-1.5">
+        <StripeFieldGroup>
+          <StripeInput
+            type="password"
+            name="password"
+            placeholder={t('register.passwordHint')}
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={8}
+            disabled={formsLocked}
+            aria-invalid={password.length > 0 && password.length < 8}
+            aria-describedby={
+              password.length > 0 && password.length < 8 ? 'checkout-password-too-short' : undefined
+            }
+          />
+        </StripeFieldGroup>
+        {password.length > 0 && password.length < 8 ? (
+          <p id="checkout-password-too-short" className="px-1 text-xs text-red-700" role="alert">
+            {t('register.passwordTooShort')}
+          </p>
+        ) : null}
+      </div>
       <CheckoutActionRow>
         <StripePayButton
           className="w-full"

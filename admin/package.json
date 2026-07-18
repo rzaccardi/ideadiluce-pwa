@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node ../scripts/free-port.mjs 5174 && vite --port 5174",
-    "dev:clean": "rm -rf node_modules/.vite && vite --port 5174",
+    "dev": "node ../scripts/free-port.mjs 5274 && vite --port 5274",
+    "dev:clean": "rm -rf node_modules/.vite && vite --port 5274",
     "build": "tsc -b && vite build",
     "preview": "vite preview"
   },

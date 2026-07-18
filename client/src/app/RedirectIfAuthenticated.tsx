@@ -22,29 +22,17 @@ export function RedirectIfAuthenticated({ children }: { children: React.ReactNod
     }
   }, [auth.isLoading, auth.isHydrating, auth.isAuthenticated, accountPath, router])
 
-  if (auth.isHydrating) {
+  // Non smontare i children su isLoading: login/register impostano isLoading e
+  // unmount cancellerebbe email/password dopo un errore di credenziali.
+  // Il controllo sessione iniziale e il loading del form restano gestiti dalla pagina.
+  if (auth.isHydrating || auth.isAuthenticated) {
     return (
       <>
         <AuthPageSkeleton fieldCount={2} />
-        <AuthLoadingOverlay icon="bulb" messageKey="auth.preparingAccount" />
-      </>
-    )
-  }
-
-  if (auth.isLoading && !auth.me && auth.error == null) {
-    return (
-      <>
-        <AuthPageSkeleton fieldCount={2} />
-        <AuthLoadingOverlay icon="shield" messageKey="auth.sessionChecking" />
-      </>
-    )
-  }
-
-  if (auth.isAuthenticated) {
-    return (
-      <>
-        <AuthPageSkeleton fieldCount={2} />
-        <AuthLoadingOverlay icon="bulb" messageKey="auth.redirectingToAccount" />
+        <AuthLoadingOverlay
+          icon="bulb"
+          messageKey={auth.isHydrating ? 'auth.preparingAccount' : 'auth.redirectingToAccount'}
+        />
       </>
     )
   }

@@ -6,7 +6,6 @@ import { useSnapshot } from 'valtio/react'
 import { authStore, register } from '@/features/auth'
 import { ApiRequestError } from '@/types/api'
 import { AuthLoadingOverlay } from '@/components/site/auth/AuthLoadingOverlay'
-import { AuthFormSkeleton } from '@/components/site/skeletons'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import {
@@ -74,98 +73,96 @@ export function RegisterPageView() {
         </AuthFooterText>
       }
     >
+      {auth.error ? (
+        <p className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900">
+          {auth.error}
+        </p>
+      ) : null}
+      <AuthCard>
+        <AuthCardHeader title={t('register.title')} subtitle={t('register.subtitle')} />
+
+        <form onSubmit={(e) => void onSubmit(e)}>
+          <AuthFieldGroup>
+            <AuthLabel htmlFor="register-first-name">{t('common.firstName')}</AuthLabel>
+            <AuthField icon={<UserIcon />}>
+              <AuthTextInput
+                id="register-first-name"
+                name="firstName"
+                autoComplete="given-name"
+                placeholder={t('auth.firstNamePlaceholder')}
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                disabled={isBusy}
+              />
+            </AuthField>
+          </AuthFieldGroup>
+
+          <AuthFieldGroup>
+            <AuthLabel htmlFor="register-last-name">{t('common.lastName')}</AuthLabel>
+            <AuthField icon={<UserIcon />}>
+              <AuthTextInput
+                id="register-last-name"
+                name="lastName"
+                autoComplete="family-name"
+                placeholder={t('auth.lastNamePlaceholder')}
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                disabled={isBusy}
+              />
+            </AuthField>
+          </AuthFieldGroup>
+
+          <AuthFieldGroup>
+            <AuthLabel htmlFor="register-email">{t('common.email')}</AuthLabel>
+            <AuthField icon={<EmailIcon />}>
+              <AuthTextInput
+                id="register-email"
+                type="email"
+                name="email"
+                autoComplete="email"
+                placeholder={t('auth.emailPlaceholder')}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isBusy}
+              />
+            </AuthField>
+          </AuthFieldGroup>
+
+          <AuthFieldGroup className="mb-5 sm:mb-[22px]">
+            <AuthLabel htmlFor="register-password">{t('register.passwordHint')}</AuthLabel>
+            <AuthField icon={<LockIcon />}>
+              <AuthPasswordInput
+                id="register-password"
+                name="password"
+                autoComplete="new-password"
+                placeholder={t('register.passwordPlaceholder')}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={8}
+                disabled={isBusy}
+                showPasswordLabel={t('login.showPassword')}
+                hidePasswordLabel={t('login.hidePassword')}
+              />
+            </AuthField>
+          </AuthFieldGroup>
+
+          <AuthCheckbox checked={isBusiness} onChange={setIsBusiness}>
+            {t('register.business')}
+          </AuthCheckbox>
+
+          <AuthSubmitButton disabled={isBusy}>
+            {isBusy ? busyMessage : t('auth.registerSubmit')}
+          </AuthSubmitButton>
+        </form>
+      </AuthCard>
       {isBusy ? (
-        <>
-          <AuthFormSkeleton fieldCount={4} />
-          <AuthLoadingOverlay
-            icon={auth.isHydrating ? 'bulb' : 'shield'}
-            messageKey={auth.isHydrating ? 'auth.preparingAccount' : 'auth.registering'}
-          />
-        </>
-      ) : (
-        <>
-          {auth.error ? (
-            <p className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900">
-              {auth.error}
-            </p>
-          ) : null}
-          <AuthCard>
-            <AuthCardHeader title={t('register.title')} subtitle={t('register.subtitle')} />
-
-            <form onSubmit={(e) => void onSubmit(e)}>
-              <AuthFieldGroup>
-                <AuthLabel htmlFor="register-first-name">{t('common.firstName')}</AuthLabel>
-                <AuthField icon={<UserIcon />}>
-                  <AuthTextInput
-                    id="register-first-name"
-                    name="firstName"
-                    autoComplete="given-name"
-                    placeholder={t('auth.firstNamePlaceholder')}
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                  />
-                </AuthField>
-              </AuthFieldGroup>
-
-              <AuthFieldGroup>
-                <AuthLabel htmlFor="register-last-name">{t('common.lastName')}</AuthLabel>
-                <AuthField icon={<UserIcon />}>
-                  <AuthTextInput
-                    id="register-last-name"
-                    name="lastName"
-                    autoComplete="family-name"
-                    placeholder={t('auth.lastNamePlaceholder')}
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                  />
-                </AuthField>
-              </AuthFieldGroup>
-
-              <AuthFieldGroup>
-                <AuthLabel htmlFor="register-email">{t('common.email')}</AuthLabel>
-                <AuthField icon={<EmailIcon />}>
-                  <AuthTextInput
-                    id="register-email"
-                    type="email"
-                    name="email"
-                    autoComplete="email"
-                    placeholder={t('auth.emailPlaceholder')}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </AuthField>
-              </AuthFieldGroup>
-
-              <AuthFieldGroup className="mb-5 sm:mb-[22px]">
-                <AuthLabel htmlFor="register-password">{t('register.passwordHint')}</AuthLabel>
-                <AuthField icon={<LockIcon />}>
-                  <AuthPasswordInput
-                    id="register-password"
-                    name="password"
-                    autoComplete="new-password"
-                    placeholder={t('register.passwordPlaceholder')}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={8}
-                    showPasswordLabel={t('login.showPassword')}
-                    hidePasswordLabel={t('login.hidePassword')}
-                  />
-                </AuthField>
-              </AuthFieldGroup>
-
-              <AuthCheckbox checked={isBusiness} onChange={setIsBusiness}>
-                {t('register.business')}
-              </AuthCheckbox>
-
-              <AuthSubmitButton disabled={isBusy}>
-                {isBusy ? busyMessage : t('auth.registerSubmit')}
-              </AuthSubmitButton>
-            </form>
-          </AuthCard>
-        </>
-      )}
+        <AuthLoadingOverlay
+          icon={auth.isHydrating ? 'bulb' : 'shield'}
+          messageKey={auth.isHydrating ? 'auth.preparingAccount' : 'auth.registering'}
+        />
+      ) : null}
     </AuthPageShell>
   )
 }

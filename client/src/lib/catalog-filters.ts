@@ -5,7 +5,7 @@ import type { ProductCatalogKind } from '@/lib/product-catalog-kind'
 import { resolveProductCardCatalogKind } from '@/lib/product-catalog-kind'
 import { buildTechnicalCardSpecTags } from '@/lib/technical-card-spec-tags'
 
-export const CATALOG_DESIGN_CATEGORY_SLUG = 'illuminazione-arredo'
+export const CATALOG_DESIGN_CATEGORY_SLUG = 'arredo'
 export const CATALOG_TECHNICAL_CATEGORY_SLUG = 'illuminazione-tecnica'
 
 export type CatalogWorldTab = 'all' | 'design' | 'technical'

@@ -31,12 +31,12 @@ export function CategoryPage({ initialProducts, initialCategoryName = null, cate
   const lp = useLocalePath()
   const [products, setProducts] = useState<ProductCardDTO[]>(initialProducts ?? [])
   const [categoryName, setCategoryName] = useState<string | null>(initialCategoryName)
-  const [loading, setLoading] = useState(!initialProducts?.length && !initialCategoryName)
+  const [loading, setLoading] = useState(initialProducts === undefined && !initialCategoryName)
 
   useEffect(() => {
     if (!slug) return
 
-    if (initialProducts?.length) {
+    if (initialProducts !== undefined) {
       setProducts(initialProducts)
       if (initialCategoryName) setCategoryName(initialCategoryName)
       setLoading(false)

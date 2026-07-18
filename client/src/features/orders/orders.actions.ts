@@ -3,6 +3,9 @@ import { dedupeAsync } from '@/lib/async-cache'
 import { ApiRequestError } from '@/types/api'
 import { ordersStore } from './orders.store'
 
+const ORDERS_LIST_TTL_MS = 60_000
+let ordersListFetchedAt = 0
+
 function errMessage(e: unknown) {
   return e instanceof ApiRequestError ? (e.userMessage ?? e.message) : 'Errore ordini'
 }
@@ -12,6 +15,7 @@ async function loadOrdersList() {
   ordersStore.listError = null
   try {
     ordersStore.list = await api.orders.list()
+    ordersListFetchedAt = Date.now()
   } catch (e) {
     ordersStore.listError = errMessage(e)
     ordersStore.list = null
@@ -21,7 +25,12 @@ async function loadOrdersList() {
 }
 
 export function fetchOrdersList(options?: { force?: boolean }) {
-  if (!options?.force && ordersStore.list != null && !ordersStore.listError) {
+  if (
+    !options?.force &&
+    ordersStore.list != null &&
+    !ordersStore.listError &&
+    Date.now() - ordersListFetchedAt < ORDERS_LIST_TTL_MS
+  ) {
     return Promise.resolve()
   }
   return dedupeAsync('orders:list', loadOrdersList)
@@ -59,11 +68,13 @@ export function resetOrderDetail() {
   ordersStore.detailError = null
   ordersStore.isDetailLoading = false
   ordersStore.recommendations = []
+  ordersStore.recommendationsOrderId = null
   ordersStore.recommendationsError = null
   ordersStore.recommendationsLoading = false
 }
 
 export function resetOrdersStore() {
+  ordersListFetchedAt = 0
   ordersStore.list = null
   ordersStore.isListLoading = false
   ordersStore.listError = null
@@ -74,9 +85,10 @@ export async function reorderOrder(id: string) {
   return api.orders.reorder(id)
 }
 
-export async function fetchOrderRecommendations(id: string) {
+async function loadOrderRecommendations(id: string) {
   ordersStore.recommendationsLoading = true
   ordersStore.recommendationsError = null
+  ordersStore.recommendationsOrderId = id
   try {
     ordersStore.recommendations = await api.orders.recommendations(id)
   } catch (e) {
@@ -85,4 +97,16 @@ export async function fetchOrderRecommendations(id: string) {
   } finally {
     ordersStore.recommendationsLoading = false
   }
+}
+
+export function fetchOrderRecommendations(id: string) {
+  if (!id) return Promise.resolve()
+  if (
+    ordersStore.recommendationsOrderId === id &&
+    !ordersStore.recommendationsError &&
+    !ordersStore.recommendationsLoading
+  ) {
+    return Promise.resolve()
+  }
+  return dedupeAsync(`orders:recommendations:${id}`, () => loadOrderRecommendations(id))
 }

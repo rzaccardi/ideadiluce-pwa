@@ -3,8 +3,8 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "dev": "node scripts/ensure-next-dev.mjs && node ../scripts/free-port.mjs 5173 && next dev --port 5173",
-    "dev:clean": "rm -rf .next && node ../scripts/free-port.mjs 5173 && next dev --port 5173",
+    "dev": "node scripts/ensure-next-dev.mjs && node ../scripts/free-port.mjs 5273 && next dev --port 5273",
+    "dev:clean": "rm -rf .next && node ../scripts/free-port.mjs 5273 && next dev --port 5273",
     "build": "node scripts/ensure-next-build.mjs && next build",
     "start": "next start --port 3000",
     "lint": "eslint .",
@@ -35,6 +35,7 @@
     "eslint-config-next": "^15.5.0",
     "eslint-plugin-react-hooks": "^7.0.1",
     "globals": "^17.4.0",
+    "playwright": "^1.61.1",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.57.0",
     "vitest": "^3.2.6"

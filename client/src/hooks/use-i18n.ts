@@ -1,14 +1,16 @@
 'use client'
 
+import { useCallback } from 'react'
 import { useLocale } from '@/context/locale-context'
-import { t, tParams, type MessageKey } from '@/i18n/messages'
+import { t as translate, tParams as translateParams, type MessageKey } from '@/i18n/messages'
 
 export function useI18n() {
   const { locale } = useLocale()
-  return {
-    locale,
-    t: (key: MessageKey) => t(locale, key),
-    tParams: (key: MessageKey, params: Record<string, string | number>) =>
-      tParams(locale, key, params),
-  }
+  const t = useCallback((key: MessageKey) => translate(locale, key), [locale])
+  const tParams = useCallback(
+    (key: MessageKey, params: Record<string, string | number>) =>
+      translateParams(locale, key, params),
+    [locale],
+  )
+  return { locale, t, tParams }
 }

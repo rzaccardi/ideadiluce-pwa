@@ -8,8 +8,6 @@ import {
 } from '@/lib/auth-local-storage'
 import { ApiRequestError } from '@/types/api'
 import { fetchCart, resetCartForAuthChange } from '@/features/cart'
-import { fetchOrdersList } from '@/features/orders'
-import { fetchQuotesList } from '@/features/quotes'
 import { fetchWishlist } from '@/features/wishlist'
 import type { UserDTO } from '@/types/dto'
 import { authStore, setAuthUser } from './auth.store'
@@ -27,13 +25,9 @@ async function hydrateSessionStores(scope: HydrateSessionStoresScope = 'full') {
   try {
     const tasks: Promise<unknown>[] = [fetchCart({ force: true, reprice: true })]
     if (scope === 'full') {
-      tasks.push(
-        fetchWishlist({ force: true }),
-        fetchOrdersList({ force: true }),
-        fetchQuotesList().catch(() => {
-          /* errori già in quotesStore.listError */
-        }),
-      )
+      // La wishlist alimenta l'header globale; ordini/preventivi/fatture restano lazy
+      // nelle rispettive route account per non allungare login e registrazione.
+      tasks.push(fetchWishlist({ force: true }))
     }
     await Promise.allSettled(tasks)
   } finally {

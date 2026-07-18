@@ -18,6 +18,7 @@ import {
   writeHomeProductSlidersClientCache,
 } from '@/lib/home-product-sliders-cache'
 import { HOME_SLIDER_PRODUCT_COUNT, resolveShowcaseProducts } from '@/lib/home-product-sliders'
+import { CATALOG_DESIGN_CATEGORY_SLUG } from '@/lib/catalog-filters'
 import { HomePageSkeleton } from '@/components/Skeleton'
 import { PageLoadTransition } from '@/components/motion'
 
@@ -113,10 +114,11 @@ export function HomePage2({
     const fromSlider = productSliders.find((s) => s.key === 'top-design')?.products ?? []
     if (fromSlider.length > 0) return
 
-    const designQuery = cmsContent.designShowcase.searchQuery?.trim() || 'sospensione design'
+    const designQuery = cmsContent.designShowcase.searchQuery?.trim() ?? ''
     void fetchProductsByQuery(designQuery, {
       pageSize: Math.max(cmsContent.designShowcase.productCount, HOME_SLIDER_PRODUCT_COUNT, 12),
       locale,
+      category: CATALOG_DESIGN_CATEGORY_SLUG,
     })
       .then(setQueryDesignProducts)
       .catch(() => setQueryDesignProducts([]))

@@ -10,6 +10,7 @@ export const ordersStore = proxy({
   isDetailLoading: false,
   detailError: null as string | null,
   recommendations: [] as ProductCardDTO[],
+  recommendationsOrderId: null as string | null,
   recommendationsLoading: false,
   recommendationsError: null as string | null,
 })

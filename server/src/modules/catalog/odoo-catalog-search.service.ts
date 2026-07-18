@@ -139,75 +139,89 @@ function orDomain(conditions: unknown[][]): unknown[] {
 }
 
 function categorySlugFromMap(
-  categMap: Map<number, { slug: string; parentId: number | null }>,
+  categMap: Map<number, { slug: string; parentId: number | null }> | null,
   categoryId: number | null,
+  categValue?: unknown,
 ): string | null {
   if (categoryId == null) return null
-  return categMap.get(categoryId)?.slug ?? null
+  const fromMap = categMap?.get(categoryId)?.slug
+  if (fromMap) return fromMap
+  const name = m2oLabel(categValue)
+  if (name) return `${slugifyCatalogToken(name)}-${categoryId}`
+  return null
 }
 
-async function loadCategorySlugMap(ctx: OdooCallContext): Promise<
-  Map<number, { slug: string; parentId: number | null }>
-> {
+type CategoryMap = Map<number, { slug: string; parentId: number | null }>
+
+const CATEGORY_MAP_TTL_MS = 5 * 60 * 1000
+let categoryMapCache: { at: number; map: CategoryMap } | null = null
+const BRAND_MAP_TTL_MS = 5 * 60 * 1000
+let brandMapCache: { at: number; bySlug: Map<string, number> } | null = null
+
+async function loadCategorySlugMap(ctx: OdooCallContext): Promise<CategoryMap> {
+  if (categoryMapCache && Date.now() - categoryMapCache.at < CATEGORY_MAP_TTL_MS) {
+    return categoryMapCache.map
+  }
+
   const rows = await odooExecuteKw<CategoryRow[]>(ctx, 'product.category', 'search_read', [[]], {
     fields: ['name', 'parent_id'],
     context: catalogContext(),
   })
-  const map = new Map<number, { slug: string; parentId: number | null }>()
+  const map: CategoryMap = new Map()
   for (const row of rows) {
     map.set(row.id, {
       slug: `${slugifyCatalogToken(row.name)}-${row.id}`,
       parentId: m2oId(row.parent_id),
     })
   }
+  categoryMapCache = { at: Date.now(), map }
   return map
 }
 
-function descendantCategoryIds(
-  categMap: Map<number, { slug: string; parentId: number | null }>,
-  rootId: number,
-): number[] {
-  const ids = new Set<number>([rootId])
-  let changed = true
-  while (changed) {
-    changed = false
-    for (const [id, info] of categMap) {
-      if (info.parentId != null && ids.has(info.parentId) && !ids.has(id)) {
-        ids.add(id)
-        changed = true
-      }
-    }
-  }
-  return [...ids]
-}
-
-async function resolveCategoryFilterIds(
-  categorySlug: string,
-  categMap: Map<number, { slug: string; parentId: number | null }>,
-): Promise<number[]> {
+/** Alias Odoo o slug `nome-123` → id radice (per `child_of`). */
+function resolveCategoryRootIdFast(categorySlug: string): number | null {
   const normalized = categorySlug.trim().toLowerCase()
   const aliasRoot = ODOO_CATEGORY_SLUG_ROOT_ALIASES[normalized]
-  if (aliasRoot != null) return descendantCategoryIds(categMap, aliasRoot)
+  if (aliasRoot != null) return aliasRoot
+  const trailing = normalized.match(/-(\d+)$/)
+  if (trailing) {
+    const id = Number(trailing[1])
+    return Number.isInteger(id) && id > 0 ? id : null
+  }
+  return null
+}
 
+async function resolveCategoryRootId(
+  categorySlug: string,
+  categMap: CategoryMap | null,
+): Promise<number | null> {
+  const fast = resolveCategoryRootIdFast(categorySlug)
+  if (fast != null) return fast
+  if (!categMap) return null
+
+  const normalized = categorySlug.trim().toLowerCase()
   const direct = [...categMap.entries()].find(([, info]) => info.slug === normalized)?.[0]
-  if (direct != null) return descendantCategoryIds(categMap, direct)
+  if (direct != null) return direct
 
   const byName = [...categMap.entries()].find(([, info]) => info.slug.startsWith(`${normalized}-`))?.[0]
-  if (byName != null) return descendantCategoryIds(categMap, byName)
-
-  return []
+  return byName ?? null
 }
 
 async function resolveBrandIdBySlug(ctx: OdooCallContext, brandSlug: string): Promise<number | null> {
   const normalized = brandSlug.trim().toLowerCase()
+  if (brandMapCache && Date.now() - brandMapCache.at < BRAND_MAP_TTL_MS) {
+    return brandMapCache.bySlug.get(normalized) ?? null
+  }
   const rows = await odooExecuteKw<BrandRow[]>(ctx, 'product.brand', 'search_read', [[]], {
     fields: ['name'],
     context: catalogContext(),
   })
+  const bySlug = new Map<string, number>()
   for (const row of rows) {
-    if (slugifyBrandName(row.name) === normalized) return row.id
+    bySlug.set(slugifyBrandName(row.name), row.id)
   }
-  return null
+  brandMapCache = { at: Date.now(), bySlug }
+  return bySlug.get(normalized) ?? null
 }
 
 async function resolveAttaccoOptionId(ctx: OdooCallContext, attacco: string): Promise<number | null> {
@@ -305,7 +319,7 @@ async function loadSpecsByTemplateIds(
 function mapTemplateToCard(
   row: TemplateRow,
   locale: HubLocale,
-  categMap: Map<number, { slug: string; parentId: number | null }>,
+  categMap: CategoryMap | null,
   specs: SpecRow[] | undefined,
 ): ProductCardDTO | null {
   const slug = slugForTemplate(row)
@@ -338,7 +352,7 @@ function mapTemplateToCard(
     priceDisplayMode: 'ex_vat',
     currency,
     imageUrl: imageUrlForTemplate(row.id),
-    categorySlug: categorySlugFromMap(categMap, categoryId),
+    categorySlug: categorySlugFromMap(categMap, categoryId, row.categ_id),
     brand,
     sku: skuForTemplate(row),
     odooTemplateId: row.id,
@@ -367,8 +381,7 @@ async function buildSearchDomain(
     brandSlug?: string
     specFilters: CatalogSpecFilters
   },
-): Promise<{ domain: unknown[]; categMap: Map<number, { slug: string; parentId: number | null }> }> {
-  const categMap = await loadCategorySlugMap(ctx)
+): Promise<{ domain: unknown[]; categMap: CategoryMap | null }> {
   let domain: unknown[] = [
     ...parseProductDomain(env.ODOO_PRODUCT_DOMAIN),
     ['website_published', '=', true],
@@ -376,12 +389,19 @@ async function buildSearchDomain(
     ['idl_ecom_slug', '!=', false],
   ]
 
-  if (input.categorySlug?.trim()) {
-    const categoryIds = await resolveCategoryFilterIds(input.categorySlug, categMap)
-    if (categoryIds.length === 0) {
+  let categMap: CategoryMap | null = null
+  const categorySlug = input.categorySlug?.trim()
+  if (categorySlug) {
+    let rootId = resolveCategoryRootIdFast(categorySlug)
+    if (rootId == null) {
+      categMap = await loadCategorySlugMap(ctx)
+      rootId = await resolveCategoryRootId(categorySlug, categMap)
+    }
+    if (rootId == null) {
       return { domain: [['id', '=', 0]], categMap }
     }
-    domain = andDomain(domain, ['categ_id', 'in', categoryIds])
+    // child_of nativo Odoo: evita search_read di tutte le categorie + `in` gigante.
+    domain = andDomain(domain, ['categ_id', 'child_of', rootId])
   }
 
   if (input.brandSlug?.trim()) {
@@ -440,17 +460,18 @@ export async function searchOdooCatalogProducts(
 
   const odooContext = catalogContext(input.pricing)
 
-  const total = await odooExecuteKw<number>(ctx, 'product.template', 'search_count', [domain], {
-    context: odooContext,
-  })
-
-  const rows = await odooExecuteKw<TemplateRow[]>(ctx, 'product.template', 'search_read', [domain], {
-    fields: [...TEMPLATE_LIST_FIELDS],
-    limit: pageSize,
-    offset,
-    order: 'name asc',
-    context: odooContext,
-  })
+  const [total, rows] = await Promise.all([
+    odooExecuteKw<number>(ctx, 'product.template', 'search_count', [domain], {
+      context: odooContext,
+    }),
+    odooExecuteKw<TemplateRow[]>(ctx, 'product.template', 'search_read', [domain], {
+      fields: [...TEMPLATE_LIST_FIELDS],
+      limit: pageSize,
+      offset,
+      order: 'name asc',
+      context: odooContext,
+    }),
+  ])
 
   const templateIds = rows.map((row) => row.id)
   const specsByTemplate = await loadSpecsByTemplateIds(ctx, templateIds)

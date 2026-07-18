@@ -38,7 +38,7 @@ export function AccountQuoteDetailPage() {
     void fetchQuoteDetail(quoteId)
   }, [quoteId])
 
-  const detail = quotes.detail
+  const detail = quotes.detailId === quoteId ? quotes.detail : null
   const payable = detail ? isQuotePayable(detail) : false
   const title = detail ? quoteDisplayReference(detail) : t('account.quotes.title')
 

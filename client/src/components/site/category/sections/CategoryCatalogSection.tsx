@@ -9,6 +9,7 @@ import { CategoryLandingCatalogSkeleton } from '@/components/Skeleton'
 import { PageLoadTransition } from '@/components/motion'
 import { useInfiniteScrollSentinel } from '@/hooks/use-infinite-scroll-sentinel'
 import { CatalogLoadMoreFooter } from '@/components/site/catalog/CatalogLoadMoreFooter'
+import { CatalogEmptyAlternatives } from '@/components/catalog/CatalogEmptyAlternatives'
 import { SectionContainer } from '../../primitives'
 import { CategoryFilterSidebar } from '../CategoryFilterSidebar'
 import { CategoryResultsToolbar } from '../CategoryResultsToolbar'
@@ -149,6 +150,9 @@ export function CategoryCatalogSection({
                   lp={lp}
                   pendingSkeletonCount={pendingSkeletonCount}
                 />
+                {products.length === 0 && pendingSkeletonCount === 0 ? (
+                  <CatalogEmptyAlternatives className="mt-2" />
+                ) : null}
               </div>
             )}
           </>
@@ -186,6 +190,9 @@ export function CategoryCatalogSection({
                   lp={lp}
                   pendingSkeletonCount={pendingSkeletonCount}
                 />
+                {products.length === 0 && pendingSkeletonCount === 0 ? (
+                  <CatalogEmptyAlternatives className="mt-2" />
+                ) : null}
               </div>
             )}
 

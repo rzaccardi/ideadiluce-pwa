@@ -7,6 +7,7 @@ import { DesignCatalogProductCard } from '@/components/site/category/DesignCatal
 import { TechnicalCatalogProductCard } from '@/components/site/category/TechnicalCatalogProductGrid'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
+import { CatalogEmptyAlternatives } from '@/components/catalog/CatalogEmptyAlternatives'
 import {
   resolveProductCardCatalogKind,
   type ProductCatalogKind,
@@ -76,7 +77,6 @@ export function ProductSlider({
   const { t } = useI18n()
   const lpFromHook = useLocalePath()
   const lp = lpProp ?? lpFromHook
-  const message = emptyMessage ?? t('product.grid.empty')
   const scrollRef = useRef<HTMLUListElement>(null)
   const [canScrollPrev, setCanScrollPrev] = useState(false)
   const [canScrollNext, setCanScrollNext] = useState(false)
@@ -127,7 +127,7 @@ export function ProductSlider({
   }
 
   if (products.length === 0) {
-    return <p className="py-12 text-center text-sm text-idl-muted">{message}</p>
+    return <CatalogEmptyAlternatives compact title={emptyMessage} />
   }
 
   const showNav = products.length > 1

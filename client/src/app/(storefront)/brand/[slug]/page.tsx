@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import { CatalogPage } from '@/views/CatalogPage'
 import { JsonLdGraph } from '@/components/JsonLdGraph'
 import { getSiteUrl } from '@/lib/env'
@@ -18,7 +19,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params
   const locale = await getRequestLocale()
   const brand = await fetchBrandMetaServer(slug, locale)
-  const name = brand?.name ?? slug
+  if (!brand) {
+    return { title: 'Brand non trovato', robots: { index: false, follow: false } }
+  }
+  const name = brand.name
   const { canonical, alternates } = buildLocalizedPageSeo({
     currentLocale: locale,
     pathForLocale: () => brandSeoPath(slug),
@@ -38,7 +42,8 @@ export default async function BrandSlugPage({ params }: PageProps) {
     fetchBrandMetaServer(slug, locale),
     fetchCatalogProductsServer(locale, { brand: slug, pageSize: 24 }),
   ])
-  const name = brand?.name ?? slug
+  if (!brand) notFound()
+  const name = brand.name
   const { canonical } = buildLocalizedPageSeo({
     currentLocale: locale,
     pathForLocale: () => brandSeoPath(slug),

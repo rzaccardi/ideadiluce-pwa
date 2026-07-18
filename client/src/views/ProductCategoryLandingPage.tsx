@@ -8,13 +8,16 @@ import type { CatalogSort } from '@/features/catalog/catalog.store'
 import { useSnapshot } from 'valtio/react'
 import {
   catalogStore,
+  catalogServerFetchKey,
   fetchCatalogBootstrap,
   fetchNextProductsPage,
   fetchProducts,
   reapplyCatalogClientFilters,
   seedCatalogBootstrap,
+  seedCatalogProducts,
 } from '@/features/catalog'
 import type { CatalogBootstrapServerData } from '@/lib/server-catalog'
+import type { ProductCardDTO } from '@/types/dto'
 import { getCategoryLandingContent } from '@/lib/category-landing.defaults'
 import {
   buildCategoryLandingActiveFilters,
@@ -40,9 +43,23 @@ import type { CategoryLandingKey } from '@/types/category-landing'
 type Props = {
   pageKey: CategoryLandingKey
   initialBootstrap?: CatalogBootstrapServerData
+  initialProducts?: ProductCardDTO[]
+  initialPagination?: {
+    page: number
+    pageSize: number
+    total: number
+    totalPages: number
+    hasNextPage: boolean
+    hasPreviousPage: boolean
+  }
 }
 
-export function ProductCategoryLandingPage({ pageKey, initialBootstrap }: Props) {
+export function ProductCategoryLandingPage({
+  pageKey,
+  initialBootstrap,
+  initialProducts,
+  initialPagination,
+}: Props) {
   const { locale } = useLocale()
   const lp = useLocalePath()
   const [params, setParams] = useQueryParams()
@@ -110,6 +127,50 @@ export function ProductCategoryLandingPage({ pageKey, initialBootstrap }: Props)
     if (!initialBootstrap) return
     seedCatalogBootstrap(initialBootstrap, locale)
   }, [initialBootstrap, locale])
+
+  const initialSeedKey = useMemo(() => {
+    if (!initialProducts?.length) return null
+    return catalogServerFetchKey({
+      page: 1,
+      pageSize: content.pageSize,
+      locale,
+      brandSlug,
+      categorySlug: catalogConfig.categorySlug,
+      attacco: specFilters.attacco,
+      colorTemp: specFilters.colorTemp,
+      q: effectiveQuery || undefined,
+    })
+  }, [
+    initialProducts,
+    content.pageSize,
+    locale,
+    brandSlug,
+    catalogConfig.categorySlug,
+    specFilters.attacco,
+    specFilters.colorTemp,
+    effectiveQuery,
+  ])
+
+  useLayoutEffect(() => {
+    if (!initialProducts || !initialSeedKey) return
+    catalogStore.filters.locale = locale
+    catalogStore.filters.categorySlug = catalogConfig.categorySlug
+    catalogStore.filters.brandSlug = brandSlug
+    catalogStore.filters.q = effectiveQuery
+    catalogStore.filters.attacco = specFilters.attacco
+    catalogStore.filters.colorTemp = specFilters.colorTemp
+    seedCatalogProducts(initialProducts, initialSeedKey, initialPagination)
+  }, [
+    initialProducts,
+    initialSeedKey,
+    initialPagination,
+    locale,
+    catalogConfig.categorySlug,
+    brandSlug,
+    effectiveQuery,
+    specFilters.attacco,
+    specFilters.colorTemp,
+  ])
 
   useEffect(() => {
     void fetchCatalogBootstrap({ locale, skipIfFresh: true })

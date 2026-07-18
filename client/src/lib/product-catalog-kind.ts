@@ -14,9 +14,9 @@ const CATALOG_KIND_CATEGORY: Record<
   { slug: string; name: string; categorySlug: string }
 > = {
   design: {
-    slug: 'illuminazione-arredo',
+    slug: 'arredo',
     name: "Illuminazione d'arredo",
-    categorySlug: 'illuminazione-arredo',
+    categorySlug: 'arredo',
   },
   technical: {
     slug: 'illuminazione-tecnica',

@@ -1,4 +1,5 @@
 import { api } from '@/api/endpoints'
+import { dedupeAsync } from '@/lib/async-cache'
 import { ApiRequestError } from '@/types/api'
 import { professionalRequestStore } from './professional-request.store'
 
@@ -6,7 +7,7 @@ function errMessage(e: unknown) {
   return e instanceof ApiRequestError ? (e.userMessage ?? e.message) : 'Operazione non riuscita'
 }
 
-export async function fetchMyProfessionalRequest() {
+async function loadMyProfessionalRequest() {
   professionalRequestStore.isLoading = true
   professionalRequestStore.error = null
   try {
@@ -19,6 +20,13 @@ export async function fetchMyProfessionalRequest() {
   } finally {
     professionalRequestStore.isLoading = false
   }
+}
+
+export function fetchMyProfessionalRequest(options?: { force?: boolean }) {
+  if (!options?.force && professionalRequestStore.loaded && !professionalRequestStore.error) {
+    return Promise.resolve(professionalRequestStore.summary)
+  }
+  return dedupeAsync('professional-request:me', loadMyProfessionalRequest)
 }
 
 export function isProfessionalRequestPending(status: string | undefined) {

@@ -9,6 +9,9 @@ import { buildOrganizationJsonLd, buildWebSiteJsonLd } from '@/lib/seo'
 import { JsonLdGraph } from '@/components/JsonLdGraph'
 import { HomePage } from '@/views/HomePage'
 
+/** ISR home: shell indexabile + dati pubblici in Data Cache. */
+export const revalidate = 300
+
 export async function generateMetadata(): Promise<Metadata> {
   return buildLegacySeoMetadata('home', {
     title: HOME_SEO_TITLE,

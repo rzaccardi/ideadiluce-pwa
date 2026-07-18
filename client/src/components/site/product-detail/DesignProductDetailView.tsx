@@ -296,10 +296,10 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
           {hasHtmlMarkup(product.longDescription) ? (
             <ProductDescriptionHtml
               html={product.longDescription}
-              className="product-description max-w-none [&_p:first-child]:font-serif [&_p:first-child]:text-[23px] [&_p:first-child]:leading-[1.5] [&_p:first-child]:text-[#2a241c] [&_p]:mb-[18px] [&_p]:text-base [&_p]:leading-[1.85] [&_p]:text-[#5c5447]"
+              className="product-description max-w-none text-base leading-[1.85] text-idl-ink-soft [&_p:first-child]:font-serif [&_p:first-child]:text-[23px] [&_p:first-child]:leading-[1.5] [&_p:first-child]:text-idl-ink [&_p]:mb-[18px] [&_ul]:my-[18px] [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5 [&_ol]:my-[18px] [&_ol]:list-decimal [&_ol]:space-y-1.5 [&_ol]:pl-5 [&_li]:text-idl-ink-soft [&_strong]:text-idl-ink"
             />
           ) : (
-            <p className="mb-[26px] font-serif text-[23px] leading-[1.5] text-[#2a241c]">{product.longDescription}</p>
+            <p className="mb-[26px] font-serif text-[23px] leading-[1.5] text-idl-ink">{product.longDescription}</p>
           )}
           <div className="mt-7 flex flex-col gap-3 border-t border-idl-border pt-[22px] sm:flex-row sm:flex-wrap sm:items-center">
             <span className="font-mono text-[11px] tracking-wide text-idl-placeholder uppercase">

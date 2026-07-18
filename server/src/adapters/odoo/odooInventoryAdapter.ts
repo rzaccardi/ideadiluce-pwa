@@ -32,6 +32,23 @@ function pickQtyField(fields: Record<string, unknown>): string | null {
   return null
 }
 
+const FIELDS_GET_TTL_MS = 30 * 60 * 1000
+const fieldsGetCache = new Map<string, { at: number; fields: Record<string, unknown> }>()
+
+async function cachedFieldsGet(
+  ctx: OdooCallContext,
+  model: string,
+): Promise<Record<string, unknown>> {
+  const hit = fieldsGetCache.get(model)
+  if (hit && Date.now() - hit.at < FIELDS_GET_TTL_MS) return hit.fields
+
+  const fields = await odooExecuteKw<Record<string, unknown>>(ctx, model, 'fields_get', [], {
+    attributes: ['string'],
+  })
+  fieldsGetCache.set(model, { at: Date.now(), fields })
+  return fields
+}
+
 function readBoolField(row: Record<string, unknown>, field: string, fallback = true): boolean {
   const value = row[field]
   if (typeof value === 'boolean') return value
@@ -72,9 +89,7 @@ export async function fetchVariantStockByIds(
   const uniqueIds = [...new Set(variantIds.filter((id) => Number.isInteger(id) && id > 0))]
   if (uniqueIds.length === 0) return result
 
-  const fields = await odooExecuteKw<Record<string, unknown>>(ctx, 'product.product', 'fields_get', [], {
-    attributes: ['string'],
-  })
+  const fields = await cachedFieldsGet(ctx, 'product.product')
   const qtyField = pickQtyField(fields)
   const readFields = ['sale_ok', 'product_tmpl_id']
   if ('default_code' in fields) readFields.push('default_code')
@@ -102,13 +117,7 @@ export async function fetchVariantStockByIds(
 
   const templateOrderable = new Map<number, boolean>()
   if (templateIds.length > 0) {
-    const templateFields = await odooExecuteKw<Record<string, unknown>>(
-      ctx,
-      'product.template',
-      'fields_get',
-      [],
-      { attributes: ['string'] },
-    )
+    const templateFields = await cachedFieldsGet(ctx, 'product.template')
     const templateReadFields = ['sale_ok']
     if ('allow_out_of_stock_order' in templateFields) {
       templateReadFields.push('allow_out_of_stock_order')
@@ -191,23 +200,27 @@ export async function fetchFirstVariantIdsForTemplates(
   return map
 }
 
-async function resolveVariantId(
+async function resolveVariantIds(
   ctx: OdooCallContext,
-  productRef: string,
-  variantRef?: string | null,
-): Promise<number | null> {
-  const vid = parseOdooVariantId(variantRef)
-  if (vid != null) return vid
-  const productId = parseOdooTemplateId(productRef)
-  if (productId == null) return null
-  const rows = await odooExecuteKw<Array<{ product_variant_ids: number[] }>>(
-    ctx,
-    'product.template',
-    'read',
-    [[productId]],
-    { fields: ['product_variant_ids'] },
-  )
-  return rows[0]?.product_variant_ids?.[0] ?? null
+  lines: Array<{ productRef: string; variantRef?: string | null }>,
+): Promise<Array<number | null>> {
+  const resolved = lines.map((line) => parseOdooVariantId(line.variantRef))
+  const templateIds = [
+    ...new Set(
+      lines
+        .map((line, index) => (resolved[index] == null ? parseOdooTemplateId(line.productRef) : null))
+        .filter((id): id is number => id != null),
+    ),
+  ]
+  if (templateIds.length === 0) return resolved
+
+  const firstVariants = await fetchFirstVariantIdsForTemplates(ctx, templateIds)
+  return lines.map((line, index) => {
+    const direct = resolved[index]
+    if (direct != null) return direct
+    const templateId = parseOdooTemplateId(line.productRef)
+    return templateId == null ? null : (firstVariants.get(templateId) ?? null)
+  })
 }
 
 export async function checkCartStock(
@@ -219,12 +232,8 @@ export async function checkCartStock(
   }
 
   const insufficient: StockCheckResult['insufficient'] = []
-  const resolved: Array<{ line: (typeof lines)[number]; variantId: number | null }> = []
-
-  for (const line of lines) {
-    const variantId = await resolveVariantId(ctx, line.productRef, line.variantRef)
-    resolved.push({ line, variantId })
-  }
+  const variantIdsByLine = await resolveVariantIds(ctx, lines)
+  const resolved = lines.map((line, index) => ({ line, variantId: variantIdsByLine[index] ?? null }))
 
   const variantIds = resolved
     .map((entry) => entry.variantId)
@@ -267,31 +276,29 @@ export async function estimateCartWeightKg(
     return Math.max(0.5, lines.reduce((s, l) => s + l.quantity * 0.8, 0))
   }
 
-  const fields = await odooExecuteKw<Record<string, unknown>>(ctx, 'product.product', 'fields_get', [], {
-    attributes: ['string'],
-  })
+  const fields = await cachedFieldsGet(ctx, 'product.product')
   const weightField = 'weight' in fields ? 'weight' : null
   if (!weightField) {
     return Math.max(0.5, lines.reduce((s, l) => s + l.quantity * 0.8, 0))
   }
 
-  let total = 0
-  for (const line of lines) {
-    const variantId = await resolveVariantId(ctx, line.productRef, line.variantRef)
-    if (variantId == null) {
-      total += line.quantity * 0.8
-      continue
-    }
-    const rows = await odooExecuteKw<Array<{ weight: number }>>(
-      ctx,
-      'product.product',
-      'read',
-      [[variantId]],
-      { fields: ['weight'] },
-    )
-    const w = Number(rows[0]?.weight ?? 0.8)
-    total += w * line.quantity
-  }
+  const variantIds = await resolveVariantIds(ctx, lines)
+  const uniqueIds = [...new Set(variantIds.filter((id): id is number => id != null))]
+  const rows = uniqueIds.length
+    ? await odooExecuteKw<Array<{ id: number; weight: number }>>(
+        ctx,
+        'product.product',
+        'read',
+        [uniqueIds],
+        { fields: ['weight'] },
+      )
+    : []
+  const weightById = new Map(rows.map((row) => [row.id, Number(row.weight ?? 0.8)]))
+  const total = lines.reduce((sum, line, index) => {
+    const variantId = variantIds[index]
+    const weight = variantId == null ? 0.8 : (weightById.get(variantId) ?? 0.8)
+    return sum + weight * line.quantity
+  }, 0)
   return Math.max(0.2, total)
 }
 
@@ -316,9 +323,7 @@ export async function estimateCartMaxLengthMeters(
     return 0
   }
 
-  const fields = await odooExecuteKw<Record<string, unknown>>(ctx, 'product.product', 'fields_get', [], {
-    attributes: ['string'],
-  })
+  const fields = await cachedFieldsGet(ctx, 'product.product')
   const lengthFields = ['x_length_m', 'x_length_meters', 'x_length_cm'].filter((f) => f in fields)
   if (lengthFields.length === 0 && 'product_length' in fields) {
     lengthFields.push('product_length')
@@ -327,18 +332,20 @@ export async function estimateCartMaxLengthMeters(
     return 0
   }
 
+  const variantIds = await resolveVariantIds(ctx, lines)
+  const uniqueIds = [...new Set(variantIds.filter((id): id is number => id != null))]
+  const rows = uniqueIds.length
+    ? await odooExecuteKw<Array<Record<string, unknown>>>(
+        ctx,
+        'product.product',
+        'read',
+        [uniqueIds],
+        { fields: lengthFields },
+      )
+    : []
   let maxLength = 0
-  for (const line of lines) {
-    const variantId = await resolveVariantId(ctx, line.productRef, line.variantRef)
-    if (variantId == null) continue
-    const rows = await odooExecuteKw<Array<Record<string, unknown>>>(
-      ctx,
-      'product.product',
-      'read',
-      [[variantId]],
-      { fields: lengthFields },
-    )
-    const meters = readLengthMetersFromRow(rows[0] ?? {}, lengthFields)
+  for (const row of rows) {
+    const meters = readLengthMetersFromRow(row, lengthFields)
     if (meters != null) {
       maxLength = Math.max(maxLength, meters)
     }
@@ -355,23 +362,23 @@ export async function estimateCartMaxLeadDays(
     return null
   }
 
-  const fields = await odooExecuteKw<Record<string, unknown>>(ctx, 'product.product', 'fields_get', [], {
-    attributes: ['string'],
-  })
+  const fields = await cachedFieldsGet(ctx, 'product.product')
   if (!('sale_delay' in fields)) return null
 
+  const variantIds = await resolveVariantIds(ctx, lines)
+  const uniqueIds = [...new Set(variantIds.filter((id): id is number => id != null))]
+  const rows = uniqueIds.length
+    ? await odooExecuteKw<Array<Record<string, unknown>>>(
+        ctx,
+        'product.product',
+        'read',
+        [uniqueIds],
+        { fields: ['sale_delay'] },
+      )
+    : []
   const leadDays: number[] = []
-  for (const line of lines) {
-    const variantId = await resolveVariantId(ctx, line.productRef, line.variantRef)
-    if (variantId == null) continue
-    const rows = await odooExecuteKw<Array<Record<string, unknown>>>(
-      ctx,
-      'product.product',
-      'read',
-      [[variantId]],
-      { fields: ['sale_delay'] },
-    )
-    const days = readNumberField(rows[0] ?? {}, 'sale_delay')
+  for (const row of rows) {
+    const days = readNumberField(row, 'sale_delay')
     if (days != null && days > 0) {
       leadDays.push(days)
     }

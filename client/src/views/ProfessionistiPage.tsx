@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useLayoutEffect, useMemo } from 'react'
 import { useSnapshot } from 'valtio/react'
-import { fetchSitePage, siteStore } from '@/features/site'
+import { fetchSitePage, hydrateSitePageContent, siteStore } from '@/features/site'
 import { useLocale } from '@/context/locale-context'
 import { isProfessionistiPageContent } from '@/lib/site-page-keys'
 import type { ProfessionistiPageContent } from '@/types/site-content'
@@ -26,14 +26,12 @@ export function ProfessionistiPage({ initialContent = null }: Props) {
     return raw as ProfessionistiPageContent
   }, [raw])
 
-  useEffect(() => {
-    if (initialContent && !siteStore.pages.professionisti) {
-      siteStore.pages.professionisti = initialContent
-    }
-  }, [initialContent])
+  useLayoutEffect(() => {
+    if (initialContent) hydrateSitePageContent('professionisti', locale, initialContent)
+  }, [initialContent, locale])
 
   useEffect(() => {
-    void fetchSitePage('professionisti', locale)
+    void fetchSitePage('professionisti', locale, { skipIfFresh: true })
   }, [locale])
 
   if (snap.error && !content) {

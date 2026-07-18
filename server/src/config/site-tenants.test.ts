@@ -5,7 +5,7 @@ describe('site-tenants', () => {
   it('espone tenant design con slug arredo', () => {
     const design = getDesignTenant()
     expect(design.id).toBe('design')
-    expect(design.catalogRootCategorySlug).toBe('illuminazione-arredo')
+    expect(design.catalogRootCategorySlug).toBe('arredo')
     expect(design.publicUrl).toMatch(/^https:\/\//)
   })
 

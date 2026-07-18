@@ -9,6 +9,7 @@ import { fetchCart } from '@/features/cart'
 import {
   checkoutStore,
   prepareCheckoutAfterAuth,
+  updateCheckoutEmail,
 } from '@/features/checkout'
 import { useI18n } from '@/hooks/use-i18n'
 import { ApiRequestError } from '@/types/api'
@@ -44,6 +45,10 @@ export function CheckoutAccountSection() {
       setShowLogin(false)
       setLoginPassword('')
     } catch (err) {
+      setLoginPassword('')
+      if (loginEmail.trim()) {
+        updateCheckoutEmail(loginEmail.trim())
+      }
       setError(
         err instanceof ApiRequestError ? (err.userMessage ?? err.message) : t('checkout.account.loginError'),
       )
@@ -97,7 +102,10 @@ export function CheckoutAccountSection() {
               placeholder={t('common.email')}
               autoComplete="email"
               value={loginEmail}
-              onValueChange={setLoginEmail}
+              onValueChange={(next) => {
+                setLoginEmail(next)
+                updateCheckoutEmail(next)
+              }}
               required
             />
           </StripeFieldGroup>

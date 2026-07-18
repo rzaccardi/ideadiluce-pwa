@@ -13,7 +13,7 @@ import { CatalogActiveFiltersBar } from './CatalogActiveFiltersBar'
 import { CatalogCategoryNavSection } from './CatalogCategoryNavSection'
 import { CatalogProductGrid } from './CatalogProductGrid'
 import { ToastOnError } from '@/components/ToastFeedback'
-import { EmptyState } from '@/components/EmptyState'
+import { CatalogEmptyAlternatives } from '@/components/catalog/CatalogEmptyAlternatives'
 import type { LocalePathFn } from '../sections/types'
 import { cn } from '@/utils/cn'
 import { CatalogFiltersSkeleton, ProductGridSkeleton } from '@/components/Skeleton'
@@ -285,7 +285,7 @@ export function CatalogPageView({
                 {null}
               </PageLoadTransition>
             ) : products.length === 0 ? (
-              <EmptyState title={emptyTitle} description={emptyDescription} />
+              <CatalogEmptyAlternatives title={emptyTitle} description={emptyDescription} />
             ) : (
               <>
                 <CatalogProductResults

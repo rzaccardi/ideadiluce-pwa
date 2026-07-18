@@ -55,7 +55,7 @@ export function ProductSpecRowItem({
           : cn('border-b border-[#f0f2f5]', compact ? 'py-2.5' : 'px-4 py-2.5'),
       )}
     >
-      <span className={cn('shrink-0 text-[14px]', isDesign ? 'text-[#8f8f93]' : 'text-idl-muted')}>{label}</span>
+      <span className={cn('shrink-0 text-[14px]', isDesign ? 'text-idl-ink-muted' : 'text-idl-muted')}>{label}</span>
       {href && value?.trim() ? (
         <ExternalLink
           href={href}

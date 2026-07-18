@@ -34,10 +34,10 @@ const boolish = z.preprocess((v) => {
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.coerce.number().default(4000),
-  CLIENT_ORIGIN: z.string().default('http://localhost:5173'),
-  /** Origine Vite del backoffice admin (:5174). */
-  ADMIN_ORIGIN: z.string().default('http://localhost:5174'),
+  PORT: z.coerce.number().default(4100),
+  CLIENT_ORIGIN: z.string().default('http://localhost:5273'),
+  /** Origine Vite del backoffice admin (:5274). */
+  ADMIN_ORIGIN: z.string().default('http://localhost:5274'),
   ADMIN_SESSION_COOKIE_NAME: z.string().default('admin_sid'),
   ADMIN_SESSION_DAYS: z.coerce.number().default(7),
   DATABASE_URL: z.string().min(1),

@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation'
+import { permanentRedirect } from 'next/navigation'
 
 const CODE_ALIASES: Record<string, string> = {
   'gu5-3': 'GU5.3',
@@ -19,5 +19,5 @@ export default async function AttaccoCodePage({ params }: PageProps) {
   const { code } = await params
   const key = code.trim().toLowerCase()
   const query = CODE_ALIASES[key] ?? code.toUpperCase()
-  redirect(`/negozio?world=technical&q=${encodeURIComponent(query)}`)
+  permanentRedirect(`/negozio?world=technical&q=${encodeURIComponent(query)}`)
 }

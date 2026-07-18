@@ -31,7 +31,7 @@ export function getStripePromise(publishableKey: string): Promise<Stripe | null>
   return promise
 }
 
-/** Avvia il download di Stripe.js il prima possibile (es. all'ingresso nel checkout). */
+/** Avvia il download di Stripe.js (es. allo step pagamento o hover sul CTA carrello). */
 export function preloadStripe(publishableKey?: string | null): void {
   void resolvePublishableKey(publishableKey).then((key) => {
     if (key) getStripePromise(key)

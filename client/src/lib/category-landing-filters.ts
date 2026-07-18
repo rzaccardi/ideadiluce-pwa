@@ -9,8 +9,8 @@ export type CategoryLandingCatalogConfig = {
 }
 
 export const CATEGORY_LANDING_CATALOG_CONFIG: Record<CategoryLandingKey, CategoryLandingCatalogConfig> = {
-  design: { categorySlug: 'illuminazione-arredo' },
-  technical: { categorySlug: 'illuminazione-tecnica', baseQuery: 'lampadina driver alimentatore' },
+  design: { categorySlug: 'arredo' },
+  technical: { categorySlug: 'illuminazione-tecnica' },
   'technical-products': { categorySlug: 'illuminazione-tecnica', baseQuery: 'alimentatore driver trasformatore' },
 }
 

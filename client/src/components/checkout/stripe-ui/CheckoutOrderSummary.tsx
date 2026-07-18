@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useNavigate } from '@/lib/navigation'
+import { useRouter } from '@/lib/navigation'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import type { CartDTO, CartItemDTO, FreeShippingHintDTO, ProductCardDTO, ShippingQuoteDTO, TaxBreakdownDTO } from '@/types/dto'
@@ -311,7 +311,7 @@ export function CheckoutBackButton({
   className?: string
 }) {
   const { t } = useI18n()
-  const navigate = useNavigate()
+  const router = useRouter()
   const lp = useLocalePath()
   const [confirmOpen, setConfirmOpen] = useState(false)
   const label = backLabel ?? t('checkout.backToCart')
@@ -320,9 +320,12 @@ export function CheckoutBackButton({
     <>
       <button
         type="button"
-        onClick={() => setConfirmOpen(true)}
+        onClick={() => {
+          // Microtask: evita che lo stesso gesto chiuda subito il dialog sul backdrop.
+          queueMicrotask(() => setConfirmOpen(true))
+        }}
         className={cn(
-          'flex size-[38px] shrink-0 items-center justify-center rounded-full border transition',
+          'relative z-[210] flex size-[38px] shrink-0 items-center justify-center rounded-full border transition',
           dark
             ? 'border-white/15 text-[#f1e8d8] hover:bg-white/10'
             : 'border-[#e2e6eb] text-[#14161b] hover:bg-black/5',
@@ -349,7 +352,8 @@ export function CheckoutBackButton({
         onCancel={() => setConfirmOpen(false)}
         onConfirm={() => {
           setConfirmOpen(false)
-          navigate(lp(backHref))
+          const href = lp(backHref)
+          router.push(href)
         }}
       />
     </>

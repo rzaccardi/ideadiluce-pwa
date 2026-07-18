@@ -63,7 +63,7 @@ export function emptyCheckoutAddress(): AddressInput {
   }
 }
 
-export type CheckoutInitLoadingPhase = 'anagrafica' | 'indirizzi' | 'spedizioni'
+export type CheckoutInitLoadingPhase = 'account' | 'anagrafica' | 'indirizzi' | 'spedizioni'
 
 export const checkoutStore = proxy({
   checkoutMode: 'standard' as CheckoutMode,

@@ -1,6 +1,7 @@
 'use client'
 
 import { useSnapshot } from 'valtio/react'
+import type { ReactNode } from 'react'
 import type { CartDTO, ShippingQuoteDTO } from '@/types/dto'
 import { formatStreetLine } from '@/lib/checkout-address.validators'
 import {
@@ -12,6 +13,8 @@ import {
   updateCheckoutOrderNotes,
 } from '@/features/checkout'
 import { formatMoney } from '@/lib/format'
+import { Link } from '@/lib/navigation'
+import { useLocalePath } from '@/hooks/use-locale-path'
 import { checkoutTotalCents } from './CheckoutOrderSummary'
 import {
   CheckoutReviewCard,
@@ -20,7 +23,6 @@ import {
 import { useI18n } from '@/hooks/use-i18n'
 import {
   CheckoutActionRow,
-  StripeCheckbox,
   StripePayButton,
 } from './StripeFields'
 import { CheckoutStepBackButton } from './CheckoutStepBackButton'
@@ -60,8 +62,22 @@ function formatAddress(address: {
   return lines
 }
 
+function LegalPolicyLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link
+      to={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-semibold text-idl-graphite underline decoration-[#c9a24b]/70 underline-offset-2 hover:decoration-[#9a7b33]"
+    >
+      {children}
+    </Link>
+  )
+}
+
 export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Props) {
   const { t } = useI18n()
+  const lp = useLocalePath()
   const checkout = useSnapshot(checkoutStore)
   const shippingQuote: ShippingQuoteDTO | null = selectedShippingQuote()
   const totalCents = checkoutTotalCents(cart, shippingQuote, checkout.taxBreakdown)
@@ -146,11 +162,15 @@ export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Pro
         />
       </div>
 
-      <StripeCheckbox
-        checked={checkout.termsAccepted}
-        onChange={setTermsAccepted}
-        label={t('checkout.review.acceptTerms')}
-      />
+      <p className="text-xs leading-relaxed text-[#5b616b]">
+        {t('checkout.review.legalAcceptanceBeforeTerms')}{' '}
+        <LegalPolicyLink href={lp('/tos')}>{t('checkout.review.legalTermsLink')}</LegalPolicyLink>
+        {t('checkout.review.legalAcceptanceBetween')}{' '}
+        <LegalPolicyLink href={lp('/privacy-policy')}>{t('checkout.review.legalPrivacyLink')}</LegalPolicyLink>
+        {t('checkout.review.legalAcceptanceAnd')}{' '}
+        <LegalPolicyLink href={lp('/privacy-policy')}>{t('checkout.review.legalCookieLink')}</LegalPolicyLink>
+        {t('checkout.review.legalAcceptanceAfter')}
+      </p>
 
       <p className="text-center text-xs text-[#9298a3]">{t('checkout.review.secureFooter')}</p>
 
@@ -158,12 +178,13 @@ export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Pro
         <CheckoutStepBackButton />
         <StripePayButton
           className="min-w-0 flex-1"
-          disabled={!canPay || !checkout.termsAccepted || !canStartCheckout()}
+          disabled={!canPay || !canStartCheckout()}
           loading={checkout.isLoading || checkout.isPaying || checkout.cartRefreshing}
           variant="pay"
           onClick={() => {
             void (async () => {
               try {
+                setTermsAccepted(true)
                 await prepareCheckoutPayment()
                 onConfirmPay()
               } catch {

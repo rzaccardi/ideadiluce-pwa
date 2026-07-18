@@ -6,6 +6,7 @@ export const quotesStore = proxy({
   isListLoading: false,
   listError: null as string | null,
   detail: null as QuoteDetailDTO | null,
+  detailId: null as string | null,
   isDetailLoading: false,
   detailError: null as string | null,
   isSubmitting: false,

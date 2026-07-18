@@ -325,8 +325,7 @@ export function fetchProducts(partialFilters?: {
 
   if (
     page === 1 &&
-    serverKey === catalogStore.serverFetchKey &&
-    catalogStore.rawProducts.length > 0
+    serverKey === catalogStore.serverFetchKey
   ) {
     reapplyCatalogClientFilters()
     return Promise.resolve()
@@ -387,13 +386,24 @@ export async function fetchNextProductsPage() {
 
 export async function fetchProductsByQuery(
   q: string,
-  options: { pageSize?: number; locale: string },
+  options: { pageSize?: number; locale: string; category?: string },
 ): Promise<ProductCardDTO[]> {
+  const pageSize = options.pageSize ?? 4
   const result = await api.catalog.products({
-    q,
+    q: q.trim() || undefined,
+    category: options.category,
     page: 1,
-    pageSize: options.pageSize ?? 4,
+    pageSize,
     locale: options.locale,
   })
-  return result.items
+  if (result.items.length > 0 || !q.trim() || !options.category) return result.items
+
+  // Query testuale troppo stretta: ritenta solo per categoria mondo (design/tecnica).
+  const fallback = await api.catalog.products({
+    category: options.category,
+    page: 1,
+    pageSize,
+    locale: options.locale,
+  })
+  return fallback.items
 }

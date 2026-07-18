@@ -1,15 +1,15 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Link } from '@/lib/navigation'
 import { useSnapshot } from 'valtio/react'
-import { api } from '@/api/endpoints'
 import {
   fetchOrderDetail,
   fetchOrdersList,
   ordersStore,
 } from '@/features/orders'
 import { authStore } from '@/features/auth'
+import { fetchInvoicesList, invoicesStore } from '@/features/invoices'
 import {
   fetchMyProfessionalRequest,
   isProfessionalRequestPending,
@@ -17,7 +17,6 @@ import {
 } from '@/features/professional-request'
 import { fetchQuotesList, quotesStore } from '@/features/quotes'
 import { fetchWishlist, wishlistStore } from '@/features/wishlist'
-import type { InvoiceDTO } from '@/types/dto'
 import { useI18n } from '@/hooks/use-i18n'
 import { AccountDcOrderCard } from '@/components/account/dc/AccountDcOrderCard'
 import { AccountDcPanel } from '@/components/account/dc/AccountDcPanel'
@@ -61,28 +60,16 @@ export function AccountOverviewPage() {
   const auth = useSnapshot(authStore)
   const orders = useSnapshot(ordersStore)
   const quotes = useSnapshot(quotesStore)
+  const invoices = useSnapshot(invoicesStore)
   const wishlist = useSnapshot(wishlistStore)
   const professionalRequest = useSnapshot(professionalRequestStore)
-  const [invoices, setInvoices] = useState<InvoiceDTO[] | null>(null)
-  const [invoicesLoading, setInvoicesLoading] = useState(true)
-  const [invoicesError, setInvoicesError] = useState<string | null>(null)
 
   useEffect(() => {
     void fetchOrdersList()
     void fetchWishlist()
     void fetchQuotesList()
-    void (async () => {
-      setInvoicesLoading(true)
-      setInvoicesError(null)
-      try {
-        setInvoices(await api.invoices.list())
-      } catch (e) {
-        setInvoicesError(e instanceof Error ? e.message : t('account.invoices.loadError'))
-      } finally {
-        setInvoicesLoading(false)
-      }
-    })()
-  }, [t])
+    void fetchInvoicesList()
+  }, [])
 
   useEffect(() => {
     if (auth.me && !isProfessionalActive(auth.me)) {
@@ -92,7 +79,7 @@ export function AccountOverviewPage() {
 
   const orderList = orders.list ?? []
   const quoteList = quotes.list ?? []
-  const invoiceList = invoices ?? []
+  const invoiceList = invoices.list ?? []
   const inProgressCount = orderList.filter((o) => isOrderInProgress(o.status)).length
   const payableQuotesCount = quoteList.filter((q) => isQuotePayable(q)).length
   const ongoingOrder = orderList.find((o) => isOrderInProgress(o.status)) ?? null
@@ -233,8 +220,11 @@ export function AccountOverviewPage() {
           ) : null
         }
       >
-        {invoicesError ? <StripeErrorBanner message={invoicesError} /> : null}
-        <PageLoadTransition isLoading={invoicesLoading} skeleton={<ListSkeleton count={2} />}>
+        {invoices.listError ? <StripeErrorBanner message={invoices.listError} /> : null}
+        <PageLoadTransition
+          isLoading={invoices.isListLoading || invoices.list === null}
+          skeleton={<ListSkeleton count={2} />}
+        >
           {recentInvoices.length > 0 ? (
             <div className="flex flex-col gap-3.5">
               {recentInvoices.map((invoice) => (

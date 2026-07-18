@@ -1,5 +1,6 @@
 import { accountStore } from '@/features/account'
 import { clearCheckoutAfterLogout, resetCheckout } from '@/features/checkout'
+import { resetInvoicesStore } from '@/features/invoices'
 import { resetOrdersStore } from '@/features/orders'
 import { resetQuotesStore } from '@/features/quotes'
 import { resetWishlistStore } from '@/features/wishlist'
@@ -15,6 +16,7 @@ export function clearClientSessionState(options?: { scope?: ClearClientSessionSc
   resetWishlistStore()
   resetOrdersStore()
   resetQuotesStore()
+  resetInvoicesStore()
   accountStore.error = null
   accountStore.message = null
   accountStore.isSaving = false

@@ -1,14 +1,13 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { useSnapshot } from 'valtio/react'
 import { ImpersonationBanner } from '@/components/ImpersonationBanner'
 import { CartFeedbackLayer } from '@/components/cart/CartFeedbackLayer'
-import { PageTransitionShell } from '@/components/motion'
 import { SiteShell } from '@/components/site/SiteShell'
 import { GlobalSearchProvider } from '@/context/global-search-context'
-import { fetchSitePage, seedSitePageContent, siteStore } from '@/features/site'
+import { fetchSitePage, hydrateSitePageContent, siteStore } from '@/features/site'
 import { useLocale } from '@/context/locale-context'
 import { resolveDcActiveNavId } from '@/lib/dc-static-routes'
 import type { SiteShellContent } from '@/types/site-content'
@@ -22,12 +21,13 @@ export function StorefrontLayout({ children, initialShell = null }: Props) {
   const { locale } = useLocale()
   const pathname = usePathname()
   const { pages } = useSnapshot(siteStore)
-  const shell = (pages.shell ?? initialShell) as SiteShellContent | null
+  const shell =
+    (siteStore.pageLocales.shell === locale ? pages.shell : initialShell) as SiteShellContent | null
   const activeNavId = resolveDcActiveNavId(pathname)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (initialShell) {
-      seedSitePageContent('shell', locale, initialShell)
+      hydrateSitePageContent('shell', locale, initialShell)
     }
   }, [initialShell, locale])
 
@@ -40,7 +40,7 @@ export function StorefrontLayout({ children, initialShell = null }: Props) {
       <CartFeedbackLayer />
       <ImpersonationBanner />
       <SiteShell shell={shell as SiteShellContent | null} activeNavId={activeNavId}>
-        <PageTransitionShell>{children}</PageTransitionShell>
+        {children}
       </SiteShell>
     </GlobalSearchProvider>
   )

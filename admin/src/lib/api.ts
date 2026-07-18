@@ -1,14 +1,14 @@
-/** In dev usa path relativi → proxy Vite (:5174 → :4000), cookie same-origin. */
+/** In dev usa path relativi → proxy Vite (:5274 → :4100), cookie same-origin. */
 export const apiUrl = import.meta.env.DEV
   ? ''
   : (import.meta.env.VITE_API_URL ??
     import.meta.env.VITE_API_BASE_URL ??
-    'http://localhost:4000')
+    'http://localhost:4100')
 
 const apiOrigin =
   import.meta.env.VITE_API_URL ??
   import.meta.env.VITE_API_BASE_URL ??
-  'http://localhost:4000'
+  'http://localhost:4100'
 
 function networkErrorMessage(): string {
   return `Impossibile raggiungere il backend (${apiOrigin}). Verifica che il server API sia avviato (npm run dev:server) e che VITE_API_URL sia corretto.`
