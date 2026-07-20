@@ -1,6 +1,7 @@
 import { ATTACCO_SEARCH, ATTACCO_SOCKETS } from '@/lib/attacco.defaults'
 import { CATALOG_SEARCH_LIMITS, sanitizeCatalogSearchInput } from '@/lib/catalog-search-limits'
 import type { CatalogPreserveParams } from '@/lib/catalog-filters'
+import { attaccoPathSlugFromCode, taxonomyPath } from '@/lib/catalog-taxonomy'
 import type { CategoryDTO, PriceDisplayModeDTO } from '@/types/dto'
 import type { BrandListItemDTO } from '@/types/site-content'
 
@@ -25,7 +26,7 @@ export type CatalogSearchSuggestion = {
   kind: CatalogSearchSuggestionKind
   label: string
   sublabel?: string
-  /** Path senza prefisso locale, es. /negozio?attacco=E27 */
+  /** Path senza prefisso locale, es. /attacco/e27 */
   path: string
   product?: CatalogSearchProductMeta
 }
@@ -58,7 +59,7 @@ function matchesQuery(haystack: string, query: string): boolean {
 
 function attaccoCatalogPath(code: string): string {
   const normalized = code.replace(' · T8', '').trim()
-  return `/negozio?world=technical&attacco=${encodeURIComponent(normalized)}`
+  return taxonomyPath('attacco', attaccoPathSlugFromCode(normalized))
 }
 
 function searchAttacchi(query: string, max: number): CatalogSearchSuggestion[] {
@@ -120,7 +121,7 @@ function searchBrands(
       kind: 'brand' as const,
       label: brand.name,
       sublabel: brand.productCount ? `${brand.productCount} prodotti` : undefined,
-      path: `/negozio?brand=${encodeURIComponent(brand.slug)}`,
+      path: taxonomyPath('brand', brand.slug),
     }))
 }
 

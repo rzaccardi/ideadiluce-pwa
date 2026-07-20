@@ -1,5 +1,4 @@
 export {
-  assignOdooPricelist,
   fetchOdooOrders,
   fetchOdooPricelists,
   fetchOdooPricelistsListDeduped,
@@ -13,6 +12,5 @@ export {
   resetOdooQuotationDetail,
   retryOdooSyncQueueItem,
   retryOdooSyncQueueItemById,
-  type OdooPricelistAssignmentInput,
 } from './odoo.actions'
 export { odooStore } from './odoo.store'

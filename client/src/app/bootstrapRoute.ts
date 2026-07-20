@@ -78,6 +78,13 @@ export function resolveBootstrapRoute(pathname: string): BootstrapRoute {
     return 'ambienti'
   }
   if (normalized === '/attacco' || normalized.startsWith('/attacco/')) return 'attacco'
+  if (
+    normalized.startsWith('/tipologia/') ||
+    normalized.startsWith('/stile/') ||
+    normalized.startsWith('/categoria-tecnica/')
+  ) {
+    return 'catalog'
+  }
   if (/^\/guide\/[^/]+/.test(normalized)) return 'guide-article'
   if (normalized === '/guide' || normalized === '/blog') return 'guide'
 

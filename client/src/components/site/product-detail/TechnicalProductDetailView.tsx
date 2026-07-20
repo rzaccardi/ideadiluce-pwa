@@ -16,6 +16,7 @@ import {
   findSpecValue,
   groupSpecRowsForTechnical,
   parseProductSpecRows,
+  specsToRows,
 } from '@/lib/product-specs-parse'
 import { buildTechnicalCardSpecTags } from '@/lib/technical-card-spec-tags'
 import { cn } from '@/utils/cn'
@@ -108,7 +109,15 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
     (product.alternatives?.length ? product.alternatives : relatedProducts) ?? []
   const accessoryProducts = product.accessories ?? []
 
-  const parsedSpecs = parseProductSpecRows(product.specsTableHtml)
+  const activeSpecs =
+    selectedVariant?.specs?.length
+      ? selectedVariant.specs
+      : product.specs?.length
+        ? product.specs
+        : null
+  const parsedSpecs = activeSpecs
+    ? specsToRows(activeSpecs)
+    : parseProductSpecRows(product.specsTableHtml)
   const specGroups = groupSpecRowsForTechnical(parsedSpecs)
   const tags =
     product.specTags ??
@@ -164,6 +173,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
       {/* HERO */}
         <SectionContainer className="grid min-w-0 items-start gap-8 pb-8 pt-1 sm:gap-12 sm:pb-10 lg:grid-cols-2 lg:gap-12 lg:pb-10">
         <ProductDetailGallery
+          gallery={product.gallery}
           images={galleryImages}
           alt={product.name}
           activeUrl={selectedVariant?.imageUrl ?? product.imageUrl}
@@ -470,6 +480,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                   slug={product.slug}
                   documents={productDocuments}
                   variantRef={variantRef}
+                  ced={selectedVariant?.ced ?? product.ced}
                   variant="technical"
                   showTitle={false}
                 />

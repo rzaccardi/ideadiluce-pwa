@@ -22,6 +22,8 @@ export const socialProofAdminService = {
     const cachedOdooEvents = await prisma.socialProofOdooEvent.count()
     return {
       ...mapSettingsRow(row),
+      // Feed unificato: se Odoo è configurato, lo storico entra sempre nel social proof.
+      odooImportEnabled: odooSocialProofAvailable() ? true : row.odooImportEnabled,
       odooConfigured: odooSocialProofAvailable(),
       cachedOdooEvents,
     }
@@ -36,63 +38,62 @@ export const socialProofAdminService = {
       odooImportEnabled: boolean
     }>,
   ): Promise<SocialProofAdminSettingsDTO> {
-    if (input.odooImportEnabled && !odooSocialProofAvailable()) {
-      throw new AppError(
-        'ODOO_NOT_CONFIGURED',
-        'Odoo not configured',
-        'Abilita e configura Odoo (ODOO_ENABLED, credenziali) prima di importare gli ordini.',
-        400,
-        false,
-      )
+    // odooImportEnabled non è più un toggle: con Odoo configurato lo storico è sempre nel feed.
+    const data: {
+      enabled?: boolean
+      minQuantity?: number
+      lookbackDays?: number
+      maxEvents?: number
+    } = {}
+    if (input.enabled !== undefined) data.enabled = input.enabled
+    if (input.minQuantity !== undefined) data.minQuantity = input.minQuantity
+    if (input.lookbackDays !== undefined) data.lookbackDays = input.lookbackDays
+    if (input.maxEvents !== undefined) data.maxEvents = input.maxEvents
+
+    if (Object.keys(data).length === 0) {
+      return this.getSettings()
     }
 
     await getSocialProofSettings()
-    const row = await prisma.socialProofSettings.update({
+    await prisma.socialProofSettings.update({
       where: { id: 'default' },
-      data: input,
+      data,
     })
-    const cachedOdooEvents = await prisma.socialProofOdooEvent.count()
-    return {
-      ...mapSettingsRow(row),
-      odooConfigured: odooSocialProofAvailable(),
-      cachedOdooEvents,
-    }
+    return this.getSettings()
   },
 
   async syncFromOdoo(ctx: OdooCallContext): Promise<{
     imported: number
     deletedStale: number
+    skippedPwa: number
     settings: SocialProofAdminSettingsDTO
   }> {
-    const row = await getSocialProofSettings()
-    if (!row.odooImportEnabled) {
+    if (!odooSocialProofAvailable()) {
       throw new AppError(
-        'ODOO_IMPORT_DISABLED',
-        'Odoo import disabled',
-        'Attiva l’import da Odoo nelle impostazioni social proof.',
+        'ODOO_NOT_CONFIGURED',
+        'Odoo not configured',
+        'Configura Odoo (ODOO_ENABLED, credenziali) per sincronizzare lo storico ordini.',
         400,
         false,
       )
     }
 
+    const row = await getSocialProofSettings()
+
     try {
       const result = await importSocialProofFromOdoo(ctx, row.lookbackDays)
-      const updated = await prisma.socialProofSettings.update({
+      await prisma.socialProofSettings.update({
         where: { id: 'default' },
         data: {
+          odooImportEnabled: true,
           odooLastSyncAt: new Date(),
           odooLastSyncCount: result.imported,
           odooLastSyncError: null,
         },
       })
-      const cachedOdooEvents = await prisma.socialProofOdooEvent.count()
       return {
         ...result,
-        settings: {
-          ...mapSettingsRow(updated),
-          odooConfigured: odooSocialProofAvailable(),
-          cachedOdooEvents,
-        },
+        settings: await this.getSettings(),
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Errore import Odoo'

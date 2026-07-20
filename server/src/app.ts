@@ -17,7 +17,7 @@ import {
 } from './modules/seo/seo-cache.service.js'
 import { LLMS_TXT_CONTENT_TYPE } from './modules/seo/llms.service.js'
 import { sendSeoPublicAsset } from './modules/seo/seo-response.js'
-import { arflyProxyRouter } from './modules/arfly-proxy/arfly-proxy.routes.js'
+import { odooCatalogProxyRouter } from './modules/odoo-catalog-proxy/odoo-catalog-proxy.routes.js'
 import { asyncHandler } from './utils/async-handler.js'
 
 function isDevLocalhostOrigin(origin: string): boolean {
@@ -89,7 +89,7 @@ export function createApp() {
     }),
   )
   app.use('/api/v1', loadV1Session, v1Router)
-  app.use('/api/v2', loadSessionIfPresent, arflyProxyRouter)
+  app.use('/api/v2', loadSessionIfPresent, odooCatalogProxyRouter)
 
   app.use(errorHandler)
 

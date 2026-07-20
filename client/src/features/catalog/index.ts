@@ -3,6 +3,7 @@ export type { CatalogFilters } from './catalog.store'
 export {
   fetchBrands,
   fetchCatalogBootstrap,
+  fetchCatalogFilters,
   fetchCategories,
   fetchNextProductsPage,
   fetchProducts,

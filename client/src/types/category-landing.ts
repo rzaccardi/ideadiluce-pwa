@@ -35,6 +35,7 @@ export type CategoryFilterOption = {
   value: string
   queryToken?: string
   checked?: boolean
+  count?: number
 }
 
 export type CategoryFilterChipOption = {
@@ -42,6 +43,7 @@ export type CategoryFilterChipOption = {
   value: string
   queryToken?: string
   active?: boolean
+  count?: number
 }
 
 export type CategoryFilterGroup =

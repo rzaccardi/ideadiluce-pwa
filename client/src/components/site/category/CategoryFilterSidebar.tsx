@@ -2,6 +2,12 @@
 
 import type { CategoryFilterGroup } from '@/types/category-landing'
 import { cn } from '@/utils/cn'
+import {
+  ExpandableFilterList,
+  FILTER_CHIP_INITIAL_VISIBLE,
+  FILTER_LIST_INITIAL_VISIBLE,
+} from '@/components/site/catalog/ExpandableFilterList'
+import { WattaggioRangeFilter } from '@/components/site/catalog/WattaggioRangeFilter'
 
 type Props = {
   title: string
@@ -13,6 +19,10 @@ type Props = {
   variant?: 'design' | 'technical'
   className?: string
   sticky?: boolean
+  wattaggioValues?: ReadonlyArray<number>
+  wattaggioMin?: number
+  wattaggioMax?: number
+  onSelectWattaggioRange?: (range: { min?: number; max?: number }) => void
 }
 
 export function CategoryFilterSidebar({
@@ -25,8 +35,18 @@ export function CategoryFilterSidebar({
   variant = 'design',
   className,
   sticky = true,
+  wattaggioValues,
+  wattaggioMin,
+  wattaggioMax,
+  onSelectWattaggioRange,
 }: Props) {
   const isDesign = variant === 'design'
+  const tone = isDesign ? 'design' : 'tech'
+  const showWattRange =
+    variant === 'technical' &&
+    wattaggioValues != null &&
+    wattaggioValues.length >= 2 &&
+    onSelectWattaggioRange != null
 
   return (
     <aside className={cn(sticky && 'lg:sticky lg:top-24', className)}>
@@ -56,50 +76,69 @@ export function CategoryFilterSidebar({
           </div>
 
           {group.kind === 'checkbox' ? (
-            <ul className="space-y-1">
-              {group.options.map((option) => {
+            <ExpandableFilterList
+              items={group.options}
+              initialVisible={FILTER_LIST_INITIAL_VISIBLE}
+              getKey={(option) => option.value}
+              isSelected={(option) => selectedValues.has(option.value)}
+              tone={tone}
+              listClassName="space-y-1"
+              renderItem={(option) => {
                 const checked = selectedValues.has(option.value)
                 return (
-                  <li key={option.value}>
-                    <button
-                      type="button"
-                      onClick={() => onToggleValue(option.value)}
+                  <button
+                    type="button"
+                    onClick={() => onToggleValue(option.value)}
+                    className={cn(
+                      'flex w-full cursor-pointer items-center gap-2 py-1 text-left text-[13.5px]',
+                      checked
+                        ? 'font-semibold text-idl-ink'
+                        : isDesign
+                          ? 'text-idl-ink-soft'
+                          : 'text-idl-graphite-2',
+                    )}
+                  >
+                    <span
                       className={cn(
-                        'flex w-full cursor-pointer items-center gap-2 py-1 text-left text-[13.5px]',
+                        'flex size-4 shrink-0 items-center justify-center rounded border-[1.5px] text-[11px]',
                         checked
-                          ? 'font-semibold text-idl-ink'
+                          ? isDesign
+                            ? 'border-idl-brass bg-idl-brass text-white'
+                            : 'border-idl-amber bg-idl-amber text-white'
                           : isDesign
-                            ? 'text-idl-ink-soft'
-                            : 'text-idl-graphite-2',
+                            ? 'border-idl-path-design-border'
+                            : 'border-idl-tech-chip-border',
                       )}
                     >
+                      {checked ? '✓' : null}
+                    </span>
+                    {option.label}
+                    {option.count != null ? (
                       <span
                         className={cn(
-                          'flex size-4 shrink-0 items-center justify-center rounded border-[1.5px] text-[11px]',
-                          checked
-                            ? isDesign
-                              ? 'border-idl-brass bg-idl-brass text-white'
-                              : 'border-idl-amber bg-idl-amber text-white'
-                            : isDesign
-                              ? 'border-idl-path-design-border'
-                              : 'border-idl-tech-chip-border',
+                          'ml-auto text-[11px]',
+                          isDesign ? 'text-idl-ink-muted' : 'text-idl-muted',
                         )}
                       >
-                        {checked ? '✓' : null}
+                        {option.count}
                       </span>
-                      {option.label}
-                    </button>
-                  </li>
+                    ) : null}
+                  </button>
                 )
-              })}
-            </ul>
+              }}
+            />
           ) : (
-            <div className="flex flex-wrap gap-2">
-              {group.options.map((option) => {
+            <ExpandableFilterList
+              items={group.options}
+              initialVisible={FILTER_CHIP_INITIAL_VISIBLE}
+              getKey={(option) => option.value}
+              isSelected={(option) => selectedValues.has(option.value)}
+              tone={tone}
+              listClassName="flex flex-wrap gap-2"
+              renderItem={(option) => {
                 const active = selectedValues.has(option.value)
                 return (
                   <button
-                    key={option.value}
                     type="button"
                     onClick={() => onToggleValue(option.value)}
                     className={cn(
@@ -112,13 +151,31 @@ export function CategoryFilterSidebar({
                     )}
                   >
                     {option.label}
+                    {option.count != null ? (
+                      <span className="ml-1 opacity-70">{option.count}</span>
+                    ) : null}
                   </button>
                 )
-              })}
-            </div>
+              }}
+            />
           )}
         </div>
       ))}
+
+      {showWattRange ? (
+        <div className="border-t border-idl-tech-border py-4">
+          <div className="mb-2.5 font-mono text-[11px] tracking-[0.1em] text-idl-muted uppercase">
+            Wattaggio
+          </div>
+          <WattaggioRangeFilter
+            values={wattaggioValues}
+            min={wattaggioMin}
+            max={wattaggioMax}
+            onChange={onSelectWattaggioRange}
+            tone="tech"
+          />
+        </div>
+      ) : null}
     </aside>
   )
 }

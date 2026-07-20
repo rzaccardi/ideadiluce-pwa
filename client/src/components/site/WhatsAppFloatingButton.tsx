@@ -2,7 +2,12 @@
 
 import { usePathname } from 'next/navigation'
 import { useI18n } from '@/hooks/use-i18n'
-import { shouldShowWhatsAppBubble, WHATSAPP_COLORS, WHATSAPP_URL } from '@/lib/whatsapp'
+import {
+  isProductDetailPath,
+  shouldShowWhatsAppBubble,
+  WHATSAPP_COLORS,
+  WHATSAPP_URL,
+} from '@/lib/whatsapp'
 import { ExternalLink } from '@/lib/link-title'
 import { cn } from '@/utils/cn'
 
@@ -20,8 +25,16 @@ export function WhatsAppFloatingButton() {
 
   if (!shouldShowWhatsAppBubble(pathname)) return null
 
+  const onProductDetail = isProductDetailPath(pathname)
+
   return (
-    <div className="pointer-events-none fixed bottom-5 right-4 z-40 flex justify-end sm:right-5">
+    <div
+      className={cn(
+        'pointer-events-none fixed right-4 z-40 flex justify-end sm:right-5',
+        // Su PDP mobile la sticky bar occupa il fondo: alza la bolla sopra il CTA.
+        onProductDetail ? 'bottom-24 sm:bottom-5' : 'bottom-5',
+      )}
+    >
       <ExternalLink
         href={WHATSAPP_URL}
         target="_blank"

@@ -127,7 +127,7 @@ async function getProductHit() {
   return null
 }
 
-function arflyToEnrichBody(product: {
+function odooCatalogToEnrichBody(product: {
   slug?: string
   id?: number
   name?: string
@@ -167,7 +167,7 @@ async function enrichPdpPrice(
   slug: string,
   variantRef?: string,
 ) {
-  const body = arflyToEnrichBody(product)
+  const body = odooCatalogToEnrichBody(product)
   const enriched = await req('POST', '/api/v1/catalog/availability/enrich-detail', body, jar)
   const ep = unwrap(enriched.json) as {
     priceCents?: number
@@ -207,10 +207,10 @@ async function priceForSession(jar: Map<string, string>, label: string, productI
     slug,
     hardRefreshCents: pdpCents,
     navigationCents: pdpCents,
-    arflyRawCents: apiV2Cents,
+    odooCatalogRawCents: apiV2Cents,
     cartCents,
     esito: match ? 'OK' : cartCents == null ? 'PARZIALE' : 'KO',
-    note: match ? 'PDP enrich Odoo = carrello' : `pdp=${pdpCents} arfly=${apiV2Cents} cart=${cartCents}`,
+    note: match ? 'PDP enrich Odoo = carrello' : `pdp=${pdpCents} odooCatalog=${apiV2Cents} cart=${cartCents}`,
   })
 }
 
@@ -367,9 +367,9 @@ async function investigateVariantPrice() {
     )
     if (!diff) continue
     const variantRef = String(diff.id)
-    const arflyPdpCents = Math.round(diff.lst_price * 100)
+    const odooCatalogPdpCents = Math.round(diff.lst_price * 100)
     const listingCents = Math.round((p.price_from ?? 0) * 100)
-    const pdpCents = (await enrichPdpPrice(sessions.anon, p, p.slug ?? item.slug, variantRef)) ?? arflyPdpCents
+    const pdpCents = (await enrichPdpPrice(sessions.anon, p, p.slug ?? item.slug, variantRef)) ?? odooCatalogPdpCents
     await req('DELETE', '/api/v1/cart')
     const add = await req('POST', '/api/v1/cart/items', {
       productRef: p.slug ?? item.slug,
@@ -383,7 +383,7 @@ async function investigateVariantPrice() {
       slug: p.slug ?? item.slug,
       variantRef,
       listingPriceCents: listingCents,
-      arflyVariantPriceCents: arflyPdpCents,
+      odooCatalogVariantPriceCents: odooCatalogPdpCents,
       pdpVariantPriceCents: pdpCents,
       cartPriceCents: cartCents,
       causa:

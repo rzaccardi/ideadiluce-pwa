@@ -1,9 +1,9 @@
-import type { ArflySpec } from '@/lib/arfly/types'
+import type { OdooCatalogSpec } from '@/lib/odoo-catalog/types'
 
 const MAX_TAGS = 3
 
-/** Chiavi Arfly in ordine di priorità per i chip filtro in card tecnica. */
-const ARFLY_SPEC_KEY_PRIORITY = [
+/** Chiavi OdooCatalog in ordine di priorità per i chip filtro in card tecnica. */
+const ODOO_CATALOG_SPEC_KEY_PRIORITY = [
   'socket_type',
   'lamp_holder',
   'portalampade',
@@ -63,7 +63,7 @@ function compactCurrent(value: string): string {
   return Number.isFinite(parsed) ? `${parsed % 1 === 0 ? parsed : parsed}mA` : `${value.trim()}mA`
 }
 
-function compactSpecDisplay(spec: ArflySpec): string | null {
+function compactSpecDisplay(spec: OdooCatalogSpec): string | null {
   const raw = spec.display?.trim()
   if (!raw || raw === 'No' || raw === 'Sì') return null
 
@@ -108,11 +108,11 @@ function pushUniqueTag(tags: string[], seen: Set<string>, tag: string | null | u
   tags.push(normalized)
 }
 
-export function buildTechnicalCardSpecTagsFromSpecs(specs: ReadonlyArray<ArflySpec>): string[] {
+export function buildTechnicalCardSpecTagsFromSpecs(specs: ReadonlyArray<OdooCatalogSpec>): string[] {
   const tags: string[] = []
   const seen = new Set<string>()
 
-  for (const key of ARFLY_SPEC_KEY_PRIORITY) {
+  for (const key of ODOO_CATALOG_SPEC_KEY_PRIORITY) {
     const spec = specs.find((s) => s.key === key)
     if (!spec) continue
     pushUniqueTag(tags, seen, compactSpecDisplay(spec))
@@ -184,7 +184,7 @@ export function extractTechnicalCardSpecTagsFromText(
 type BuildInput = {
   name: string
   shortDescription?: string | null
-  specs?: ReadonlyArray<ArflySpec>
+  specs?: ReadonlyArray<OdooCatalogSpec>
   specTags?: ReadonlyArray<string>
 }
 

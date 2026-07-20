@@ -95,6 +95,7 @@ const FOOTER_PAYMENT_METHODS = [
   { id: 'bonifico', label: 'Bonifico bancario', Logo: BonificoBancarioLogo },
   { id: 'visa', label: 'Visa', Logo: VisaLogo },
   { id: 'mastercard', label: 'Mastercard', Logo: MastercardLogo },
+  { id: 'paypal', label: 'PayPal', Logo: PayPalLogo },
   { id: 'apple-pay', label: 'Apple Pay', Logo: ApplePayLogo },
   { id: 'google-pay', label: 'Google Pay', Logo: GooglePayLogo },
 ] as const

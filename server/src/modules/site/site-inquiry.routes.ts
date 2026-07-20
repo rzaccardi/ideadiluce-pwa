@@ -25,6 +25,7 @@ function collectAttachments(files: Express.Multer.File[] | undefined) {
     .map((file) => ({
       filename: file.originalname || 'foto.jpg',
       content: file.buffer,
+      mimetype: file.mimetype,
     }))
 }
 

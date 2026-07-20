@@ -14,6 +14,7 @@ import { PageFlexBody, PageFlexShell } from '@/components/layout/PageFlexShell'
 import { EditorialHubSkeleton, GuideHubPageSkeleton } from '@/components/Skeleton'
 import { SectionContainer } from '@/components/site/primitives'
 import { PageLoadTransition } from '@/components/motion'
+import { brandHref } from '@/lib/brand.defaults'
 
 type EditorialKey = Extract<SitePageKey, 'attacco' | 'ambienti' | 'brand' | 'guide'>
 
@@ -39,23 +40,40 @@ function mergeBrandContent(
 ): EditorialPageContent {
   const base = cms as EditorialPageContent
   if (hubBrands.length === 0) return { ...base, items: [...base.items] }
+
+  const hubByName = new Map(hubBrands.map((b) => [b.name.toLowerCase(), b]))
+  const hubBySlug = new Map(hubBrands.map((b) => [b.slug, b]))
   const seen = new Set<string>()
-  const hubItems = hubBrands.map((brand) => ({
-    title: brand.name,
-    href: `/negozio?brand=${encodeURIComponent(brand.slug)}`,
-    meta: (brand.productCount ?? 0) > 0 ? `${brand.productCount} prodotti` : undefined,
-  }))
-  const cmsItems = [...base.items].filter((item) => {
-    if (seen.has(item.title.toLowerCase())) return false
-    seen.add(item.title.toLowerCase())
-    return true
-  })
-  for (const item of hubItems) {
-    if (seen.has(item.title.toLowerCase())) continue
-    seen.add(item.title.toLowerCase())
-    cmsItems.push(item)
+  const items: EditorialPageContent['items'] = []
+
+  for (const item of base.items) {
+    const key = item.title.toLowerCase()
+    if (seen.has(key)) continue
+    const hub =
+      hubByName.get(key) ??
+      hubBySlug.get(item.href?.match(/\/brand\/([^/?#]+)/)?.[1] ?? '') ??
+      hubBySlug.get(item.href?.match(/[?&]brand=([^&]+)/)?.[1] ?? '')
+    if (!hub) continue
+    seen.add(key)
+    items.push({
+      title: hub.name,
+      href: brandHref(hub.slug),
+      meta: (hub.productCount ?? 0) > 0 ? `${hub.productCount} prodotti` : undefined,
+    })
   }
-  return { ...base, items: cmsItems }
+
+  for (const brand of hubBrands) {
+    const key = brand.name.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    items.push({
+      title: brand.name,
+      href: brandHref(brand.slug),
+      meta: (brand.productCount ?? 0) > 0 ? `${brand.productCount} prodotti` : undefined,
+    })
+  }
+
+  return { ...base, items }
 }
 
 export function EditorialPage({

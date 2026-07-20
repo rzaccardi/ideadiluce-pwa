@@ -99,7 +99,7 @@ export function ContattiPageView({ content }: Props) {
           </Reveal>
 
           {features ? (
-            <Reveal className="mt-8 sm:mt-10">
+            <Reveal className="mt-8 hidden sm:mt-10 lg:block">
               <FeatureCards block={features} />
             </Reveal>
           ) : null}
@@ -107,12 +107,12 @@ export function ContattiPageView({ content }: Props) {
           {contact || leadForm ? (
             <div className="mt-10 grid gap-8 lg:mt-12 lg:grid-cols-2 lg:items-start lg:gap-10">
               {contact ? (
-                <Reveal>
+                <Reveal className="order-2 lg:order-1">
                   <ContactPanel block={contact} />
                 </Reveal>
               ) : null}
               {leadForm ? (
-                <Reveal>
+                <Reveal className="order-1 lg:order-2">
                   <SiteLeadForm
                     kind={leadForm.form}
                     title={leadForm.title}

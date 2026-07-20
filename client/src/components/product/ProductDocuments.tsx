@@ -9,9 +9,18 @@ type Props = {
   slug: string
   documents: ReadonlyArray<ProductDocumentDTO>
   variantRef?: string | null
+  /** CED variante per deep-link `/product-docs/<ced>/<tipo>/current`. */
+  ced?: string | null
   className?: string
   variant?: 'design' | 'technical'
   showTitle?: boolean
+}
+
+const DOC_TYPE_LABEL: Record<string, string> = {
+  datasheet: 'Scheda tecnica',
+  scheda_ue: 'Scheda prodotto UE',
+  ce: 'Dichiarazione CE',
+  istruzioni: 'Istruzioni',
 }
 
 function formatBytes(bytes: number | null | undefined): string | null {
@@ -29,10 +38,21 @@ function downloadHref(slug: string, documentId: string, variantRef?: string | nu
   return `${prefix}/api/v1/catalog/products/${encodeURIComponent(slug)}/documents/${encodeURIComponent(documentId)}/download?${search}`
 }
 
+function resolveDocHref(
+  doc: ProductDocumentDTO,
+  slug: string,
+  variantRef?: string | null,
+): string {
+  if (doc.publicCurrentUrl) return doc.publicCurrentUrl
+  if (/^https?:\/\//i.test(doc.url) && !doc.url.includes('/api/v1/')) return doc.url
+  return downloadHref(slug, doc.id, variantRef)
+}
+
 export function ProductDocuments({
   slug,
   documents,
   variantRef,
+  ced: _ced,
   className,
   variant = 'design',
   showTitle = true,
@@ -56,11 +76,14 @@ export function ProductDocuments({
       <ul className="divide-y divide-idl-border rounded-lg border border-idl-border bg-idl-tech-panel">
         {documents.map((doc) => {
           const size = formatBytes(doc.sizeBytes)
-          const meta = [doc.type, doc.format?.toUpperCase(), size].filter(Boolean).join(' · ')
+          const typeLabel = doc.type ? DOC_TYPE_LABEL[doc.type] ?? doc.type : null
+          const meta = [typeLabel, doc.format?.toUpperCase() ?? doc.mimetype, size]
+            .filter(Boolean)
+            .join(' · ')
           return (
             <li key={doc.id}>
               <ExternalLink
-                href={downloadHref(slug, doc.id, variantRef)}
+                href={resolveDocHref(doc, slug, variantRef)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm transition hover:bg-idl-paper/80"

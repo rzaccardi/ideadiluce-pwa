@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useSnapshot } from 'valtio/react'
-import { ArrowLeftIcon, ExternalLinkIcon, EyeOffIcon, EyeIcon, LanguagesIcon, SaveIcon, SparklesIcon } from 'lucide-react'
+import { ArrowLeftIcon, ExternalLinkIcon, EyeOffIcon, EyeIcon, SaveIcon } from 'lucide-react'
 import {
   fetchGuideDetail,
   getGuideLabel,
@@ -157,8 +157,8 @@ export function GuideDetailPage() {
   ) as Record<SiteLocale, Record<string, unknown>>
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div className="detail-page-with-sticky-actions space-y-6">
+      <div className="flex flex-col gap-4">
         <SitePageHeader
           title={guide?.locales.find((l) => l.locale === 'IT')?.title ?? getGuideLabel(slug)}
           description={`Slug: /guide/${slug} · ${guide?.published ? 'Online sul sito' : 'Bozza — non visibile ai visitatori'}.`}
@@ -194,16 +194,6 @@ export function GuideDetailPage() {
                   Pubblica sul sito
                 </Button>
               )}
-              {missingLocales.length > 0 ? (
-                <Button variant="outline" onClick={() => void onTranslateAll(true)} disabled={busy}>
-                  <SparklesIcon className="size-4" />
-                  Traduci mancanti
-                </Button>
-              ) : null}
-              <Button variant="outline" onClick={() => void onTranslateAll(false)} disabled={busy}>
-                <LanguagesIcon className="size-4" />
-                Rigenera traduzioni
-              </Button>
               <Button variant="success" onClick={() => void onSaveItalian(true)} disabled={busy}>
                 <SaveIcon className="size-4" />
                 Salva IT e traduci
@@ -214,6 +204,24 @@ export function GuideDetailPage() {
               </Button>
             </>
           }
+          menu={[
+            ...(missingLocales.length > 0
+              ? [
+                  {
+                    label: 'Traduci mancanti',
+                    onSelect: () => {
+                      if (!busy) void onTranslateAll(true)
+                    },
+                  },
+                ]
+              : []),
+            {
+              label: 'Rigenera traduzioni',
+              onSelect: () => {
+                if (!busy) void onTranslateAll(false)
+              },
+            },
+          ]}
         />
       </div>
 

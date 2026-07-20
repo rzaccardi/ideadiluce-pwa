@@ -9,7 +9,7 @@ import {
 const groups = [
   {
     kind: 'brand' as const,
-    items: [{ id: 'brand:osram', kind: 'brand' as const, label: 'OSRAM', path: '/negozio?brand=osram' }],
+    items: [{ id: 'brand:osram', kind: 'brand' as const, label: 'OSRAM', path: '/brand/osram' }],
   },
 ]
 

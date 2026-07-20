@@ -40,6 +40,10 @@ type Props = {
   onResetFilters: () => void
   onRemoveFilter: (key: string) => void
   onSelectSort: (sort: CatalogSort) => void
+  wattaggioValues?: ReadonlyArray<number>
+  wattaggioMin?: number
+  wattaggioMax?: number
+  onSelectWattaggioRange?: (range: { min?: number; max?: number }) => void
 }
 
 export function CategoryCatalogSection({
@@ -60,6 +64,10 @@ export function CategoryCatalogSection({
   onResetFilters,
   onRemoveFilter,
   onSelectSort,
+  wattaggioValues,
+  wattaggioMin,
+  wattaggioMax,
+  onSelectWattaggioRange,
 }: Props) {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const isDesign = variant === 'design'
@@ -82,11 +90,15 @@ export function CategoryCatalogSection({
     onToggleValue: onToggleFilter,
     onReset: onResetFilters,
     variant,
+    wattaggioValues,
+    wattaggioMin,
+    wattaggioMax,
+    onSelectWattaggioRange,
   } as const
 
   return (
     <SectionContainer className="grid items-start gap-6 py-6 sm:py-8 lg:grid-cols-[248px_1fr] lg:gap-10 lg:py-10 xl:grid-cols-[264px_1fr]">
-      <CategoryFilterSidebar {...filterSidebarProps} className="hidden lg:block" />
+      <CategoryFilterSidebar {...filterSidebarProps} sticky={false} className="hidden lg:block" />
 
       <div className="min-w-0">
         <div className="mb-4 lg:hidden">

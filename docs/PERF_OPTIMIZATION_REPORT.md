@@ -8,7 +8,7 @@
 
 **Dopo:** una sola `resolveProductMapForCartLines` per GET carrello completo; `buildCartAvailabilityLookup` accetta `preResolvedProducts`. Il reprice Odoo era già in batch (`resolveCartLineUnitPricesCents`, max 2 read Odoo).
 
-**Impatto misurabile:** per un carrello con N righe uniche → da ~2N chiamate Arfly a ~N (stima −50% round-trip catalogo su GET/reprice).
+**Impatto misurabile:** per un carrello con N righe uniche → da ~2N chiamate OdooCatalog a ~N (stima −50% round-trip catalogo su GET/reprice).
 
 **Test:** `cd server && npm run build && npm run test` — OK.
 
@@ -18,7 +18,7 @@
 
 **Dopo:** batch limitato a 8 slug; persistenza su disco `.cache/seo/*.json` + `hydrateSeoCacheFromDisk()` all'avvio.
 
-**Impatto:** cold start serve feed da disco se presente; build più graduale sotto carico Arfly.
+**Impatto:** cold start serve feed da disco se presente; build più graduale sotto carico OdooCatalog.
 
 **Test:** server build + 131 test — OK.
 

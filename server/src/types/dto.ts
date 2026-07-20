@@ -114,13 +114,59 @@ export type ProductAvailabilityDataDTO = {
   isUnrecoverable?: boolean
 }
 
+export type ProductDocumentTypeDTO =
+  | 'datasheet'
+  | 'scheda_ue'
+  | 'ce'
+  | 'istruzioni'
+  | (string & {})
+
 export type ProductDocumentDTO = {
   id: string
   name: string
-  type?: string | null
+  type?: ProductDocumentTypeDTO | null
   format?: string | null
+  mimetype?: string | null
   sizeBytes?: number | null
   url: string
+  /** URL pubblico stabile `/product-docs/<ced>/<tipo>/current` se disponibile. */
+  publicCurrentUrl?: string | null
+}
+
+export type ProductGalleryTagDTO =
+  | 'foto'
+  | 'attacco'
+  | 'misure'
+  | 'accesa'
+  | 'applicazione'
+  | 'ambiente'
+  | 'dettaglio'
+  | 'certificazione'
+  | (string & {})
+
+export type ProductGalleryItemDTO = {
+  type: 'image' | 'video'
+  tag: ProductGalleryTagDTO
+  url: string
+  alt: string
+}
+
+export type ProductSpecValueDTO =
+  | string
+  | number
+  | boolean
+  | null
+  | { set: Array<string | number | boolean> }
+  | { min: number; max: number }
+
+export type ProductSpecDTO = {
+  key: string
+  label: string
+  unit: string
+  valueType: string
+  cardinality: string
+  value: ProductSpecValueDTO
+  display: string
 }
 
 export type ProductRelatedDTO = ProductCardDTO & {
@@ -147,7 +193,7 @@ export type ProductCardDTO = {
   manufacturerCode?: string | null
   defaultCode?: string | null
   ean?: string | null
-  /** ID Odoo `product.template` (catalogo, per add-to-cart senza Arfly). */
+  /** ID Odoo `product.template` (catalogo, per add-to-cart senza OdooCatalog). */
   odooTemplateId?: number | null
   /** Disponibilità acquisto (da Hub/Odoo live). */
   inStock?: boolean
@@ -186,8 +232,11 @@ export type ProductVariantDTO = {
   stockQty?: number | null
   availability?: ProductAvailabilityDataDTO
   ean?: string | null
+  /** Codice univoco TLB a 6 cifre — identificatore variante di riferimento. */
   ced?: string | null
   manufacturerCode?: string | null
+  /** Merge template + override variante (già calcolato server-side). */
+  specs?: ProductSpecDTO[]
   documents?: ProductDocumentDTO[]
 }
 
@@ -206,15 +255,56 @@ export type ProductListDTO = PaginatedDTO<ProductCardDTO> & {
   nextInStockSkip?: number
 }
 
+export type CatalogFiltersFacetOptionDTO = {
+  value: string
+  label: string
+  count: number
+}
+
+export type CatalogFiltersCategoryDTO = {
+  slug: string
+  name: string
+  parentSlug: string | null
+  count: number
+  children: CatalogFiltersCategoryDTO[]
+}
+
+/** Facet aggregate da GET /api/v1/catalog/filters (Odoo `/api/v2/filters`). */
+export type CatalogFiltersDTO = {
+  totalMatching: number
+  appliedFilters: Record<string, unknown>
+  worlds: CatalogFiltersFacetOptionDTO[]
+  categories: CatalogFiltersCategoryDTO[]
+  brands: Array<{ slug: string; name: string; count: number }>
+  tipologie: CatalogFiltersFacetOptionDTO[]
+  ambienti: CatalogFiltersFacetOptionDTO[]
+  stili: CatalogFiltersFacetOptionDTO[]
+  attacchi: CatalogFiltersFacetOptionDTO[]
+  wattaggi: CatalogFiltersFacetOptionDTO[]
+  colorTemps: CatalogFiltersFacetOptionDTO[]
+  tags: CatalogFiltersFacetOptionDTO[]
+  specs: Array<{
+    key: string
+    label: string
+    unit: string
+    values: Array<{ value: string; label: string; count: number }>
+  }>
+}
+
 export type ProductDetailDTO = ProductCardDTO & {
   longDescription: string | null
   /** Prima tabella compatta (Informazioni aggiuntive). */
   additionalInfoTableHtml?: string | null
-  /** Tabella caratteristiche tecniche estratta dal contenuto. */
+  /** @deprecated Preferire `specs` / `variants[i].specs` con `display`. */
   specsTableHtml?: string | null
+  /** Specs comuni a tutte le varianti (template). */
+  specs?: ProductSpecDTO[]
   sku: string | null
   inStock: boolean
+  /** URL immagini (compat); preferire `gallery`. */
   images: string[]
+  /** Media gallery con tag funzionali (ordine editoriale). */
+  gallery?: ProductGalleryItemDTO[]
   categories?: ProductCategoryRefDTO[]
   brand?: ProductBrandDTO | null
   /** ID Odoo `product.template` quando mappato da Hub. */
@@ -230,13 +320,13 @@ export type ProductDetailDTO = ProductCardDTO & {
   alternatives?: ProductRelatedDTO[]
   ean?: string | null
   weightKg?: number | null
-  /** Lunghezza prodotto in metri (Odoo/Arfly). */
+  /** Lunghezza prodotto in metri (Odoo/OdooCatalog). */
   lengthMeters?: number | null
   dimensions?: { lengthCm?: number; widthCm?: number; heightCm?: number }
   priceLabel?: 'excl_vat'
 }
 
-/** Social proof da ordini PWA pagati (nome anonimizzato). */
+/** Social proof da storico ordini unificato (PWA pagati + Odoo, nomi anonimizzati). */
 export type ProductSocialProofEventDTO = {
   buyerLabel: string
   quantity: number
@@ -539,11 +629,11 @@ export type OrderReorderResultDTO = {
 export type QuickReorderMatchTypeDTO =
   | 'odoo_barcode'
   | 'odoo_sku'
-  | 'arfly_ean'
-  | 'arfly_sku'
-  | 'arfly_mpn'
-  | 'arfly_variant_id'
-  | 'arfly_template_id'
+  | 'odooCatalog_ean'
+  | 'odooCatalog_sku'
+  | 'odooCatalog_mpn'
+  | 'odooCatalog_variant_id'
+  | 'odooCatalog_template_id'
 
 export type ResolvedCodeLineDTO = {
   code: string
@@ -641,16 +731,4 @@ export type InvoiceDTO = {
   pdfAvailable: boolean
   /** Link portale Odoo con access token (fallback se PDF non scaricabile). */
   portalUrl?: string | null
-}
-
-export type IntegrationLogDTO = {
-  id: string
-  service: string
-  operation: string
-  correlationId: string
-  success: boolean
-  statusCode: number | null
-  durationMs: number | null
-  startedAt: string
-  finishedAt: string | null
 }

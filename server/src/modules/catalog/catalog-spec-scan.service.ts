@@ -1,14 +1,16 @@
-import { fetchArflyProductList } from '../../adapters/arfly/arflyClient.js'
-import { mapArflyListItem } from '../../adapters/arfly/arflyMapper.js'
+import {
+  fetchOdooCatalogProductSearch,
+  isOdooCatalogConfigured,
+} from '../../adapters/odoo-catalog/odooCatalogClient.js'
+import { mapOdooCatalogListResponse } from '../../adapters/odoo-catalog/odooCatalogMapper.js'
 import type { HubLocale } from '../../lib/hub-locale.js'
 import type { ProductCardDTO } from '../../types/dto.js'
 import type { ProductCardStockHint } from './catalog-stock.enrich.js'
 import {
-  hasActiveSpecFilters,
   productMatchesCatalogTextQuery,
-  productMatchesSpecFilter,
   type CatalogSpecFilters,
 } from './catalog-spec-filter.js'
+import { canonicalizeBrandSlug } from './odoo-catalog-slug.js'
 
 const SPEC_SCAN_PER_PAGE = 100
 const MAX_SPEC_SCAN_PAGES = 20
@@ -18,7 +20,8 @@ export type SpecScanMatch = {
   odooTemplateId: number | null
 }
 
-export async function scanArflyProductsMatchingSpec(input: {
+/** Scan filtri specs via search live Odoo (non indice cache). */
+export async function scanOdooCatalogProductsMatchingSpec(input: {
   locale: HubLocale
   specFilters: CatalogSpecFilters
   textQuery?: string
@@ -27,81 +30,41 @@ export async function scanArflyProductsMatchingSpec(input: {
   partnerId?: number
   pricelistId?: number
 }): Promise<SpecScanMatch[]> {
+  if (!isOdooCatalogConfigured()) return []
+
   const matches: SpecScanMatch[] = []
   let page = 1
   let totalPages = 1
 
   while (page <= totalPages && page <= MAX_SPEC_SCAN_PAGES) {
-    const raw = await fetchArflyProductList({
+    const raw = await fetchOdooCatalogProductSearch({
       locale: input.locale,
       page,
-      perPage: SPEC_SCAN_PER_PAGE,
+      per_page: SPEC_SCAN_PER_PAGE,
       q: input.textQuery || undefined,
       category: input.categorySlug,
-      brand: input.brandSlug,
-      partnerId: input.partnerId,
-      pricelistId: input.pricelistId,
+      brand: input.brandSlug ? canonicalizeBrandSlug(input.brandSlug) : undefined,
+      attacco: input.specFilters.attacco,
+      color_temp: input.specFilters.colorTemp,
     })
+    const chunk = mapOdooCatalogListResponse(raw, input.locale)
+    totalPages = chunk.totalPages
 
-    totalPages = raw.total_pages
-
-    for (let index = 0; index < raw.items.length; index += 1) {
-      const arflyItem = raw.items[index]!
-      const product = mapArflyListItem(arflyItem, input.locale)
-
-      if (!productMatchesSpecFilter(product, input.specFilters)) continue
-      if (input.textQuery && !productMatchesCatalogTextQuery(product, input.textQuery)) continue
-
+    for (const product of chunk.items) {
+      const hint: ProductCardStockHint = {
+        ...product,
+        odooTemplateId: product.odooTemplateId ?? null,
+      }
+      if (input.textQuery && !productMatchesCatalogTextQuery(hint, input.textQuery)) continue
       matches.push({
         product,
-        odooTemplateId: arflyItem.id ?? null,
+        odooTemplateId: hint.odooTemplateId ?? null,
       })
     }
 
+    if (page >= totalPages) break
     page += 1
   }
 
   return matches
-}
-
-export function paginateSpecScanMatches(
-  matches: ReadonlyArray<SpecScanMatch>,
-  page: number,
-  pageSize: number,
-): {
-  slice: SpecScanMatch[]
-  total: number
-  totalPages: number
-  page: number
-  pageSize: number
-  hasNextPage: boolean
-  hasPreviousPage: boolean
-} {
-  const safePage = Math.max(1, page)
-  const safeSize = Math.min(60, Math.max(1, pageSize))
-  const total = matches.length
-  const totalPages = Math.max(1, Math.ceil(total / safeSize))
-  const clampedPage = Math.min(safePage, totalPages)
-  const start = (clampedPage - 1) * safeSize
-
-  return {
-    slice: matches.slice(start, start + safeSize),
-    total,
-    totalPages,
-    page: clampedPage,
-    pageSize: safeSize,
-    hasNextPage: clampedPage < totalPages,
-    hasPreviousPage: clampedPage > 1,
-  }
-}
-
-export function toStockHints(matches: ReadonlyArray<SpecScanMatch>): ProductCardStockHint[] {
-  return matches.map(({ product, odooTemplateId }) => ({
-    ...product,
-    odooTemplateId,
-  }))
-}
-
-export function shouldUseSpecScan(filters: CatalogSpecFilters): boolean {
-  return hasActiveSpecFilters(filters)
 }

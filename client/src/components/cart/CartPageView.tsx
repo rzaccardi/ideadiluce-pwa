@@ -11,13 +11,18 @@ import { CartHeroSection } from '@/components/cart/CartHeroSection'
 import { CartLineItem } from '@/components/cart/CartLineItem'
 import { CartRecommendationsSection } from '@/components/cart/CartRecommendationsSection'
 import { CartReservationExpiredBanner } from '@/components/cart/CartReservationExpiredBanner'
+import { CartCheckoutStickyBar } from '@/components/cart/CartCheckoutStickyBar'
 import { CartSummary } from '@/components/cart/CartSummary'
 import { EmptyCartPrompt } from '@/components/cart/EmptyCartPrompt'
 import { CartPageBody, CartPageShell } from '@/components/cart/CartPageShell'
 import { CART_CARD_SURFACE_OVERFLOW } from '@/components/cart/cart-surfaces'
 import { SectionContainer } from '@/components/site/primitives'
 import { ToastOnError } from '@/components/ToastFeedback'
-import { cartHasBlockedLines, cartPurchasableItemCount } from '@/lib/cartTotals'
+import {
+  cartHasBlockedLines,
+  cartPurchasableItemCount,
+  cartTotalCents,
+} from '@/lib/cartTotals'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { useI18n } from '@/hooks/use-i18n'
 
@@ -81,7 +86,7 @@ export function CartPageView({ state }: Props) {
       <CartHeroSection itemCount={cart.itemCount} />
 
       <CartPageBody>
-        <SectionContainer className="py-6 sm:py-8 lg:py-10">
+        <SectionContainer className="py-6 pb-28 sm:py-8 lg:py-10 lg:pb-10">
         <CartReservationExpiredBanner className="mb-5" />
         <ToastOnError message={state.error} />
 
@@ -153,6 +158,14 @@ export function CartPageView({ state }: Props) {
         </div>
         </SectionContainer>
       </CartPageBody>
+
+      <CartCheckoutStickyBar
+        totalCents={cartTotalCents(cart)}
+        currencyCode={cart.currencyCode}
+        checkoutDisabled={checkoutDisabled}
+        noPurchasableLines={purchasableCount === 0}
+        hasBlockedLines={hasBlockedLines}
+      />
     </CartPageShell>
   )
 }

@@ -36,3 +36,9 @@ export function shouldShowWhatsAppBubble(pathname: string): boolean {
     (prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`),
   )
 }
+
+/** PDP con sticky bar in basso: la bolla va alzata per non coprire "Aggiungi al carrello". */
+export function isProductDetailPath(pathname: string): boolean {
+  const normalized = normalizePath(pathname)
+  return normalized.startsWith('/prodotto/') || normalized.startsWith('/product/')
+}

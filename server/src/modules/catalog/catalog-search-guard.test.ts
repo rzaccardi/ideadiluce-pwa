@@ -30,6 +30,7 @@ describe('resolveCatalogListPageSize', () => {
     expect(resolveCatalogListPageSize(12, true)).toBe(8)
     expect(resolveCatalogListPageSize(24, true)).toBe(24)
     expect(resolveCatalogListPageSize(24, false)).toBe(24)
-    expect(resolveCatalogListPageSize(100, false)).toBe(60)
+    expect(resolveCatalogListPageSize(100, false)).toBe(100)
+    expect(resolveCatalogListPageSize(200, false)).toBe(100)
   })
 })

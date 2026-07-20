@@ -3,18 +3,11 @@ import { useSearchParams } from 'react-router-dom'
 import { useSnapshot } from 'valtio/react'
 import { RoutePageHeader } from '@/components/route-page-header'
 import { InfiniteScrollSentinel, SearchInput, TableFilters, TableSkeleton } from '@/components/shared'
-import {
-  assignOdooPricelist,
-  fetchOdooPricelistsListDeduped,
-  odooStore,
-  type OdooPricelistAssignmentInput,
-} from '@/features/odoo'
+import { fetchOdooPricelistsListDeduped, odooStore } from '@/features/odoo'
 import { useInfiniteScrollSentinel } from '@/hooks/use-infinite-scroll-sentinel'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -31,7 +24,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import type { OdooPricelistAssignment } from '@/types/odoo'
 
 const PAGE_SIZE = 25
 
@@ -57,14 +49,6 @@ export function OdooPricelistsPage() {
   const active = (searchParams.get('active') ?? 'all') as ActiveFilter
   const page = Number(searchParams.get('page') ?? '1')
   const listQuery = useMemo(() => buildListQuery(searchParams, page), [searchParams, page])
-
-  const [assignPricelistId, setAssignPricelistId] = useState('')
-  const [assignPartnerId, setAssignPartnerId] = useState('')
-  const [assignEmail, setAssignEmail] = useState('')
-  const [assignUserId, setAssignUserId] = useState('')
-  const [assignLoading, setAssignLoading] = useState(false)
-  const [assignError, setAssignError] = useState<string | null>(null)
-  const [assignResult, setAssignResult] = useState<OdooPricelistAssignment | null>(null)
 
   const hasMore =
     store.pricelistsList != null &&
@@ -114,139 +98,15 @@ export function OdooPricelistsPage() {
     setSearchParams(p, { replace: true })
   }
 
-  async function onAssign(e: React.FormEvent) {
-    e.preventDefault()
-    setAssignError(null)
-    setAssignResult(null)
-
-    const pricelistId = Number(assignPricelistId)
-    if (!Number.isInteger(pricelistId) || pricelistId <= 0) {
-      setAssignError('Seleziona o indica un listino valido.')
-      return
-    }
-
-    const body: OdooPricelistAssignmentInput = { pricelistId }
-    const partnerId = assignPartnerId.trim() ? Number(assignPartnerId) : undefined
-    const email = assignEmail.trim() || undefined
-    const userId = assignUserId.trim() || undefined
-
-    if (partnerId != null && Number.isInteger(partnerId) && partnerId > 0) {
-      body.partnerId = partnerId
-    } else if (email) {
-      body.email = email
-    } else if (userId) {
-      body.userId = userId
-    } else {
-      setAssignError('Indica partner Odoo, email o ID utente PWA.')
-      return
-    }
-
-    setAssignLoading(true)
-    try {
-      setAssignResult(await assignOdooPricelist(body))
-    } catch (err) {
-      setAssignError(String(err))
-    } finally {
-      setAssignLoading(false)
-    }
-  }
-
   return (
     <div className="space-y-6">
       <RoutePageHeader
         description={
           store.pricelistsList != null
             ? `${store.pricelistsList.total} listini Odoo (product.pricelist)`
-            : 'Listini prezzi Odoo e assegnazione su res.partner'
+            : 'Listini prezzi Odoo'
         }
       />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Assegna listino</CardTitle>
-          <CardDescription>
-            Imposta property_product_pricelist su un partner Odoo. Usa partner ID, email o ID utente PWA.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={(e) => void onAssign(e)} className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="space-y-2">
-                <Label htmlFor="assign-pricelist">Listino</Label>
-                <Select
-                  value={assignPricelistId || undefined}
-                  onValueChange={(v) => setAssignPricelistId(v ?? '')}
-                >
-                  <SelectTrigger id="assign-pricelist" className="h-10 w-full">
-                    <SelectValue placeholder="Seleziona listino…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {store.pricelistsListItems.map((pl) => (
-                      <SelectItem key={pl.id} value={String(pl.id)}>
-                        {pl.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="assign-partner-id">Partner Odoo ID</Label>
-                <Input
-                  id="assign-partner-id"
-                  className="h-10"
-                  inputMode="numeric"
-                  value={assignPartnerId}
-                  onChange={(e) => setAssignPartnerId(e.target.value)}
-                  placeholder="es. 42"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="assign-email">Email cliente</Label>
-                <Input
-                  id="assign-email"
-                  className="h-10"
-                  type="email"
-                  value={assignEmail}
-                  onChange={(e) => setAssignEmail(e.target.value)}
-                  placeholder="cliente@esempio.it"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="assign-user-id">ID utente PWA</Label>
-                <Input
-                  id="assign-user-id"
-                  className="h-10"
-                  value={assignUserId}
-                  onChange={(e) => setAssignUserId(e.target.value)}
-                  placeholder="UUID utente"
-                />
-              </div>
-            </div>
-
-            {assignError ? (
-              <Alert variant="destructive">
-                <AlertTitle>Errore</AlertTitle>
-                <AlertDescription>{assignError}</AlertDescription>
-              </Alert>
-            ) : null}
-
-            {assignResult ? (
-              <Alert>
-                <AlertTitle>Listino assegnato</AlertTitle>
-                <AlertDescription>
-                  {assignResult.partnerName ?? `Partner #${assignResult.partnerId}`} →{' '}
-                  {assignResult.pricelistName ?? `Listino #${assignResult.pricelistId}`}
-                  {assignResult.localUserUpdated ? ' · Utente PWA aggiornato' : ''}
-                </AlertDescription>
-              </Alert>
-            ) : null}
-
-            <Button type="submit" variant="success" disabled={assignLoading}>
-              {assignLoading ? 'Assegnazione…' : 'Assegna listino'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader className="pb-3">

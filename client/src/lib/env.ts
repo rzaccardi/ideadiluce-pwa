@@ -59,10 +59,12 @@ export function getMapboxAccessToken(): string | undefined {
   )
 }
 
-export function getArflyMediaBaseUrl(): string | undefined {
+export function getOdooCatalogMediaBaseUrl(): string | undefined {
   return (
-    process.env.NEXT_PUBLIC_ARFLY_MEDIA_BASE_URL?.trim() ||
-    process.env.VITE_ARFLY_MEDIA_BASE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_ODOO_MEDIA_BASE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_ODOO_CATALOG_MEDIA_BASE_URL?.trim() ||
+    process.env.VITE_ODOO_MEDIA_BASE_URL?.trim() ||
+    process.env.VITE_ODOO_CATALOG_MEDIA_BASE_URL?.trim() ||
     undefined
   )
 }

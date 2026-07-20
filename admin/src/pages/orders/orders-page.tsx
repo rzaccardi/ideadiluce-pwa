@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useSnapshot } from 'valtio/react'
 import { OrdersListTable } from '@/components/orders/orders-list-table'
 import { OrdersSummaryBadges } from '@/components/orders/orders-summary-badges'
 import { RoutePageHeader } from '@/components/route-page-header'
 import { SearchInput, TableFilters } from '@/components/shared'
-import { adminOrdersStore, fetchAdminOrdersListDeduped, fetchPaidSyncPending } from '@/features/orders'
+import { adminOrdersStore, fetchAdminOrdersListDeduped } from '@/features/orders'
 import { useInfiniteScrollSentinel } from '@/hooks/use-infinite-scroll-sentinel'
 import {
   ORDER_JOURNEY_PHASE_FILTER_LABEL,
@@ -80,10 +80,6 @@ export function OrdersPage() {
     void fetchAdminOrdersListDeduped(listQuery, { append: page > 1 })
   }, [listQuery, page])
 
-  useEffect(() => {
-    void fetchPaidSyncPending()
-  }, [])
-
   const loadMore = useCallback(() => {
     if (orders.listLoading || orders.listLoadingMore || !hasMore || !orders.list) return
     const p = new URLSearchParams(searchParams)
@@ -151,44 +147,6 @@ export function OrdersPage() {
             : 'Ordini PWA e storico Odoo sincronizzato live'
         }
       />
-
-      {orders.paidSyncPending != null && orders.paidSyncPending.count > 0 ? (
-        <Alert variant="destructive">
-          <AlertTitle>
-            {orders.paidSyncPending.count} ordine/i pagati — sync Odoo in attesa
-          </AlertTitle>
-          <AlertDescription className="space-y-2">
-            <p>
-              Clienti con pagamento ricevuto ma ordine non ancora sincronizzato su Odoo. Intervieni
-              subito con «Riprova sync» nel dettaglio ordine.
-            </p>
-            <ul className="list-inside list-disc text-sm">
-              {orders.paidSyncPending.items.slice(0, 5).map((o) => (
-                <li key={o.id}>
-                  <Link to={`/orders/${o.id}`} className="font-medium underline-offset-4 hover:underline">
-                    {o.email}
-                  </Link>
-                  {o.amountTotal != null
-                    ? ` · € ${(o.amountTotal / 100).toFixed(2)}`
-                    : null}
-                  {o.lastPaymentError ? ` — ${o.lastPaymentError.slice(0, 80)}` : null}
-                </li>
-              ))}
-            </ul>
-            {orders.paidSyncPending.count > 5 ? (
-              <p className="text-sm">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFilterParam('status', 'PAID_SYNC_PENDING')}
-                >
-                  Mostra tutti nella lista
-                </Button>
-              </p>
-            ) : null}
-          </AlertDescription>
-        </Alert>
-      ) : null}
 
       {orders.listError ? (
         <Alert variant="destructive">

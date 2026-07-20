@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useSnapshot } from 'valtio/react'
 import { ExternalLinkIcon, RefreshCwIcon, SearchIcon } from 'lucide-react'
 import { toast } from 'sonner'
@@ -195,23 +195,9 @@ export function SeoPage() {
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
           <div>
-            <CardTitle>Migrazione SEO da WordPress</CardTitle>
-            <CardDescription>
-              Storico export inviati dal plugin WordPress con URL, metadati Yoast, prodotti e redirect.
-            </CardDescription>
-          </div>
-          <Button variant="outline" render={<Link to="/seo/migration" />}>
-            Apri storico migrazioni
-          </Button>
-        </CardHeader>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
-          <div>
             <CardTitle>Rigenerazione</CardTitle>
             <CardDescription>
-              Aggiorna sitemap, feed e llms.txt dal catalogo Arfly e dalle guide pubblicate nel BO.
+              Aggiorna sitemap, feed e llms.txt dal catalogo OdooCatalog e dalle guide pubblicate nel BO.
               Invalida anche la cache CMS della PWA se REVALIDATE_SECRET è configurato.
             </CardDescription>
           </div>

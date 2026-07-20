@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import type { ArflyVariant } from '../../adapters/arfly/arfly.types.js'
-import { matchArflyVariant, pickOdooVariantMatch } from './catalog-code-match.js'
+import type { OdooCatalogVariant } from '../../adapters/odoo-catalog/odooCatalog.types.js'
+import { matchOdooCatalogVariant, pickOdooVariantMatch } from './catalog-code-match.js'
 
-function variant(partial: Partial<ArflyVariant> & Pick<ArflyVariant, 'id'>): ArflyVariant {
+function variant(partial: Partial<OdooCatalogVariant> & Pick<OdooCatalogVariant, 'id'>): OdooCatalogVariant {
   return {
     id: partial.id,
     ced: partial.ced ?? '',
@@ -15,31 +15,31 @@ function variant(partial: Partial<ArflyVariant> & Pick<ArflyVariant, 'id'>): Arf
   }
 }
 
-describe('matchArflyVariant', () => {
+describe('matchOdooCatalogVariant', () => {
   const variants = [
     variant({ id: 1184, ced: '001520', manufacturer_code: '464749', ean: null }),
     variant({ id: 8484, ced: '002144', manufacturer_code: 'L392702127', ean: '8718739073586' }),
   ]
 
   it('match su CED interno', () => {
-    expect(matchArflyVariant(variants, '001520')?.matchType).toBe('arfly_sku')
+    expect(matchOdooCatalogVariant(variants, '001520')?.matchType).toBe('odooCatalog_sku')
   })
 
   it('match su EAN', () => {
-    expect(matchArflyVariant(variants, '8718739073586')?.matchType).toBe('arfly_ean')
+    expect(matchOdooCatalogVariant(variants, '8718739073586')?.matchType).toBe('odooCatalog_ean')
   })
 
   it('match su MPN produttore', () => {
-    expect(matchArflyVariant(variants, '464749')?.variant.id).toBe(1184)
-    expect(matchArflyVariant(variants, '464749')?.matchType).toBe('arfly_mpn')
+    expect(matchOdooCatalogVariant(variants, '464749')?.variant.id).toBe(1184)
+    expect(matchOdooCatalogVariant(variants, '464749')?.matchType).toBe('odooCatalog_mpn')
   })
 
   it('match su ID variante numerico', () => {
-    expect(matchArflyVariant(variants, '8484')?.matchType).toBe('arfly_variant_id')
+    expect(matchOdooCatalogVariant(variants, '8484')?.matchType).toBe('odooCatalog_variant_id')
   })
 
   it('restituisce null se nessun match', () => {
-    expect(matchArflyVariant(variants, '8711500411990')).toBeNull()
+    expect(matchOdooCatalogVariant(variants, '8711500411990')).toBeNull()
   })
 })
 

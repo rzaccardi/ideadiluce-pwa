@@ -1,6 +1,6 @@
 import { prisma } from '../../lib/prisma.js'
 import type { OrderLineDTO } from '../../types/dto.js'
-import { resolveArflyProductLabels } from '../catalog/arfly-product-labels.js'
+import { resolveOdooCatalogProductLabels } from '../catalog/odoo-product-labels.js'
 
 export async function loadPwaOrderLines(pwaOrderId: string): Promise<OrderLineDTO[]> {
   const po = await prisma.pwaOrder.findUnique({
@@ -9,7 +9,7 @@ export async function loadPwaOrderLines(pwaOrderId: string): Promise<OrderLineDT
   })
   if (!po?.cart?.items.length) return []
 
-  const labels = await resolveArflyProductLabels(po.cart.items.map((i) => i.productRef))
+  const labels = await resolveOdooCatalogProductLabels(po.cart.items.map((i) => i.productRef))
   return po.cart.items.map((line) => {
     const info = labels.get(line.productRef)
     const unit = line.clientUnitPriceEstimate

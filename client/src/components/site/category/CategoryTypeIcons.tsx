@@ -84,7 +84,19 @@ const ICONS: Record<string, ComponentType<IconProps>> = {
   faretti: FarettiIcon,
 }
 
+function resolveTypeIcon(key: string): ComponentType<IconProps> {
+  const normalized = key.trim().toLowerCase()
+  if (ICONS[normalized]) return ICONS[normalized]!
+  if (/sospens|pendan|chandelier/.test(normalized)) return SospensioneIcon
+  if (/parete|appliqu|wall/.test(normalized)) return PareteIcon
+  if (/tavolo|table|desk/.test(normalized)) return TavoloIcon
+  if (/terra|piantan|floor/.test(normalized)) return TerraIcon
+  if (/plafon|soffitto|ceiling/.test(normalized)) return PlafoniereIcon
+  if (/farett|incass|spot|recess/.test(normalized)) return FarettiIcon
+  return SospensioneIcon
+}
+
 export function CategoryTypeIcon({ tile }: { tile: CategoryTypeTile }) {
-  const Icon = ICONS[tile.key] ?? SospensioneIcon
+  const Icon = resolveTypeIcon(tile.key)
   return <Icon className="h-[60px] w-full text-idl-brass sm:h-[84px]" />
 }

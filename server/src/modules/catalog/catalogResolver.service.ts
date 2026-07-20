@@ -1,11 +1,10 @@
 import {
-  fetchArflyProductBySlug,
-  fetchArflyProductDetail,
-  fetchArflyProductList,
-  isArflyConfigured,
-} from '../../adapters/arfly/arflyClient.js'
-import { findArflyProductIdBySlug } from '../../adapters/arfly/arflySlugIndex.js'
-import { mapArflyProductDetail } from '../../adapters/arfly/arflyMapper.js'
+  fetchOdooCatalogProductDetail,
+  fetchOdooCatalogProductList,
+  isOdooCatalogConfigured,
+} from '../../adapters/odoo-catalog/odooCatalogClient.js'
+import { findOdooCatalogProductIdBySlug } from '../../adapters/odoo-catalog/odooCatalogSlugIndex.js'
+import { mapOdooCatalogProductDetail } from '../../adapters/odoo-catalog/odooCatalogMapper.js'
 import { env } from '../../config/env.js'
 import type { HubLocale } from '../../lib/hub-locale.js'
 import type { ProductDetailDTO } from '../../types/dto.js'
@@ -14,26 +13,30 @@ import { enrichProductDetailWithStock } from './catalog-stock.enrich.js'
 import { enrichProductDetailWithOdooPricing } from './catalog-pricing.enrich.js'
 import { resolvePricingContext } from '../pricing/pricelist.service.js'
 import { listOdooStorefrontProductSlugs } from './odoo-catalog-search.service.js'
+import { parseOdooTemplateId } from './odooRef.js'
 
 export async function resolveCatalogProduct(
   _ctx: OdooCallContext,
   productRef: string,
   locale: HubLocale = 'IT',
 ): Promise<ProductDetailDTO | null> {
-  if (!isArflyConfigured()) return null
+  if (!isOdooCatalogConfigured()) return null
 
-  try {
-    const bySlug = await fetchArflyProductBySlug(productRef, locale)
-    if (bySlug) return mapArflyProductDetail(bySlug.product, locale)
-  } catch {
-    // fallback sotto
+  const asId = parseOdooTemplateId(productRef)
+  if (asId != null) {
+    try {
+      const res = await fetchOdooCatalogProductDetail(asId, locale)
+      return mapOdooCatalogProductDetail(res.product, locale)
+    } catch {
+      return null
+    }
   }
 
-  const id = await findArflyProductIdBySlug(productRef, locale)
+  const id = await findOdooCatalogProductIdBySlug(productRef, locale)
   if (id == null) return null
   try {
-    const res = await fetchArflyProductDetail(id, locale)
-    return mapArflyProductDetail(res.product, locale)
+    const res = await fetchOdooCatalogProductDetail(id, locale)
+    return mapOdooCatalogProductDetail(res.product, locale)
   } catch {
     return null
   }
@@ -54,7 +57,7 @@ export async function resolveCatalogProductEnriched(
   return enriched
 }
 
-export async function listArflyProductSlugs(
+export async function listOdooCatalogProductSlugs(
   locale: HubLocale = 'IT',
   ctx: OdooCallContext = { correlationId: 'catalog-slugs' },
 ): Promise<string[]> {
@@ -62,11 +65,12 @@ export async function listArflyProductSlugs(
     return listOdooStorefrontProductSlugs(ctx)
   }
 
-  if (!isArflyConfigured()) return []
+  if (!isOdooCatalogConfigured()) return []
+
   const slugs: string[] = []
   let page = 1
   while (page <= 50) {
-    const list = await fetchArflyProductList({ locale, page, perPage: 100 })
+    const list = await fetchOdooCatalogProductList({ locale, page, perPage: 100 })
     slugs.push(...list.items.map((i) => i.slug))
     if (page >= list.total_pages) break
     page += 1

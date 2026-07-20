@@ -1,135 +1,26 @@
-import {
-  fetchArflyBrands,
-  fetchArflyCategories,
-  fetchArflyProductDetail,
-  fetchArflyProductList,
-  isArflyConfigured,
-} from '../../adapters/arfly/arflyClient.js'
-import { mapArflyListResponse } from '../../adapters/arfly/arflyMapper.js'
-import { env } from '../../config/env.js'
+import { isOdooCatalogConfigured } from '../../adapters/odoo-catalog/odooCatalogClient.js'
 import type { HubLocale } from '../../lib/hub-locale.js'
 import { parseHubLocale } from '../../lib/hub-locale.js'
 import type { CategoryDTO, ProductListDTO } from '../../types/dto.js'
-import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
-import { enrichProductCardsWithStock, type ProductCardStockHint } from './catalog-stock.enrich.js'
+import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { sanitizeCatalogSearchQuery } from './catalog-search-guard.js'
-import { searchOdooCatalogProducts } from './odoo-catalog-search.service.js'
+import {
+  queryOdooCatalogIndex,
+  type BrandListItemDTO,
+} from './odoo-catalog-index.service.js'
+import {
+  sanitizeAttaccoParam,
+  sanitizeColorTempParam,
+} from './catalog-spec-filter.js'
 import type { PricingContext } from '../pricing/pricelist.service.js'
+import {
+  listCatalogBrandsLive,
+  listCatalogCategoriesLive,
+  searchCatalogProductsLive,
+} from './catalog-odoo-search.service.js'
+import { brandSlugLookupKeys } from './odoo-catalog-slug.js'
 
-export type BrandListItemDTO = {
-  slug: string
-  name: string
-  productCount?: number
-}
-
-const arflySkuCache = new Map<string, { sku: string; until: number }>()
-const ARFLY_SKU_CACHE_TTL_MS = 5 * 60_000
-
-function arflySkuCacheKey(templateId: number, locale: HubLocale, partnerId?: number, pricelistId?: number) {
-  return `${templateId}:${locale}:${partnerId ?? 0}:${pricelistId ?? 0}`
-}
-
-async function enrichProductCardsWithSkuFromArfly(
-  items: ProductCardStockHint[],
-  locale: HubLocale,
-  pricing: { partnerId?: number; pricelistId?: number },
-): Promise<ProductCardStockHint[]> {
-  return Promise.all(
-    items.map(async (item) => {
-      if (item.sku?.trim() || item.odooTemplateId == null) return item
-      const cacheKey = arflySkuCacheKey(
-        item.odooTemplateId,
-        locale,
-        pricing.partnerId,
-        pricing.pricelistId,
-      )
-      const cached = arflySkuCache.get(cacheKey)
-      if (cached && cached.until > Date.now()) {
-        return { ...item, sku: cached.sku }
-      }
-      try {
-        const detail = await fetchArflyProductDetail(item.odooTemplateId, locale, pricing)
-        const variant = detail.product.variants?.[0]
-        const sku = variant?.manufacturer_code?.trim() || variant?.ced?.trim() || null
-        if (sku) {
-          arflySkuCache.set(cacheKey, { sku, until: Date.now() + ARFLY_SKU_CACHE_TTL_MS })
-          return { ...item, sku }
-        }
-        return item
-      } catch {
-        return item
-      }
-    }),
-  )
-}
-
-async function categoriesFromProductList(locale: HubLocale): Promise<CategoryDTO[]> {
-  const bySlug = new Map<string, CategoryDTO>()
-  let page = 1
-  while (page <= 20) {
-    const list = await fetchArflyProductList({ locale, page, perPage: 100 })
-    for (const item of list.items) {
-      for (const c of item.categories ?? []) {
-        if (!c.slug) continue
-        bySlug.set(c.slug, {
-          id: String(c.id ?? c.slug),
-          slug: c.slug,
-          name: c.name ?? c.slug,
-          parentId: c.parent_id != null ? String(c.parent_id) : null,
-        })
-      }
-    }
-    if (page >= list.total_pages) break
-    page += 1
-  }
-  return [...bySlug.values()].sort((a, b) => a.name.localeCompare(b.name, 'it'))
-}
-
-async function brandsFromProductList(locale: HubLocale): Promise<BrandListItemDTO[]> {
-  const bySlug = new Map<string, BrandListItemDTO>()
-  let page = 1
-  while (page <= 20) {
-    const list = await fetchArflyProductList({ locale, page, perPage: 100 })
-    for (const item of list.items) {
-      const b = item.brand
-      if (!b?.slug) continue
-      const existing = bySlug.get(b.slug)
-      if (existing) {
-        existing.productCount = (existing.productCount ?? 0) + 1
-      } else {
-        bySlug.set(b.slug, {
-          slug: b.slug,
-          name: b.name ?? b.slug,
-          productCount: 1,
-        })
-      }
-    }
-    if (page >= list.total_pages) break
-    page += 1
-  }
-  return [...bySlug.values()].sort((a, b) => a.name.localeCompare(b.name, 'it'))
-}
-
-const TAXONOMY_CACHE_TTL_MS = 10 * 60 * 1000
-
-type TaxonomyCacheEntry<T> = { expiresAt: number; value: T }
-
-const categoriesCache = new Map<HubLocale, TaxonomyCacheEntry<CategoryDTO[]>>()
-const brandsCache = new Map<HubLocale, TaxonomyCacheEntry<BrandListItemDTO[]>>()
-
-function readTaxonomyCache<T>(map: Map<HubLocale, TaxonomyCacheEntry<T>>, locale: HubLocale): T | null {
-  const entry = map.get(locale)
-  if (!entry || entry.expiresAt <= Date.now()) return null
-  return entry.value
-}
-
-function writeTaxonomyCache<T>(
-  map: Map<HubLocale, TaxonomyCacheEntry<T>>,
-  locale: HubLocale,
-  value: T,
-) {
-  map.set(locale, { expiresAt: Date.now() + TAXONOMY_CACHE_TTL_MS, value })
-}
+export type { BrandListItemDTO }
 
 export const catalogStorefrontService = {
   parseLocale(input: unknown): HubLocale {
@@ -137,29 +28,7 @@ export const catalogStorefrontService = {
   },
 
   async listCategories(localeInput?: string): Promise<CategoryDTO[]> {
-    if (!isArflyConfigured()) return []
-    const locale = parseHubLocale(localeInput)
-    const cached = readTaxonomyCache(categoriesCache, locale)
-    if (cached) return cached
-
-    let items: CategoryDTO[]
-    try {
-      const res = await fetchArflyCategories(locale)
-      const fromApi = res.items
-        .filter((c) => c.slug)
-        .map((c) => ({
-          id: String(c.id ?? c.slug),
-          slug: c.slug!,
-          name: c.name ?? c.slug!,
-          parentId: c.parent_id != null ? String(c.parent_id) : null,
-        }))
-      items = fromApi.length ? fromApi : await categoriesFromProductList(locale)
-    } catch {
-      items = await categoriesFromProductList(locale)
-    }
-
-    writeTaxonomyCache(categoriesCache, locale, items)
-    return items
+    return listCatalogCategoriesLive(localeInput)
   },
 
   async getCategoryBySlug(slug: string, localeInput?: string): Promise<CategoryDTO | null> {
@@ -168,80 +37,55 @@ export const catalogStorefrontService = {
   },
 
   async listBrands(localeInput?: string): Promise<BrandListItemDTO[]> {
-    if (!isArflyConfigured()) return []
-    const locale = parseHubLocale(localeInput)
-    const cached = readTaxonomyCache(brandsCache, locale)
-    if (cached) return cached
-
-    let items: BrandListItemDTO[]
-    try {
-      const res = await fetchArflyBrands(locale)
-      const fromApi = res.items
-        .filter((b) => b.slug)
-        .map((b) => ({
-          slug: b.slug!,
-          name: b.name ?? b.slug!,
-        }))
-      items = fromApi.length ? fromApi : await brandsFromProductList(locale)
-    } catch {
-      items = await brandsFromProductList(locale)
-    }
-
-    writeTaxonomyCache(brandsCache, locale, items)
-    return items
+    return listCatalogBrandsLive(localeInput)
   },
 
   async getBrandBySlug(slug: string, localeInput?: string): Promise<BrandListItemDTO | null> {
     const items = await this.listBrands(localeInput)
-    return items.find((b) => b.slug === slug) ?? null
+    const keys = new Set(brandSlugLookupKeys(slug))
+    return items.find((b) => keys.has(b.slug.toLowerCase())) ?? null
   },
 
+  /**
+   * Listing negozio filtrato: **Odoo live** `/api/v2/products/search`.
+   * Per suggest searchbox passare `cacheOnly: true` (unica lettura indice cache).
+   */
   async listProducts(
     ctx: OdooCallContext,
     options: {
-    locale?: string
-    page?: number
-    pageSize?: number
-    q?: string
-    categorySlug?: string
-    brandSlug?: string
-    attacco?: string
-    colorTemp?: string
-    partnerId?: number
-    pricelistId?: number
-    pricing?: PricingContext | null
-  }): Promise<ProductListDTO> {
+      locale?: string
+      page?: number
+      pageSize?: number
+      q?: string
+      world?: 'design' | 'technical' | string
+      categorySlug?: string
+      subcategorySlug?: string
+      brandSlug?: string
+      tipologia?: string
+      ambiente?: string
+      stile?: string
+      attacco?: string
+      wattaggio?: string | number
+      wattaggioMin?: string | number
+      wattaggioMax?: string | number
+      colorTemp?: string
+      tag?: string
+      sort?: string
+      partnerId?: number
+      pricelistId?: number
+      pricing?: PricingContext | null
+      /** Solo typeahead: forza cache locale invece di search Odoo. */
+      cacheOnly?: boolean
+    },
+  ): Promise<ProductListDTO> {
     const locale = parseHubLocale(options.locale)
     const page = Math.max(1, Number(options.page) || 1)
-    const pageSize = Math.min(60, Math.max(1, Number(options.pageSize) || 24))
+    const pageSize = Math.min(100, Math.max(1, Number(options.pageSize) || 24))
     const effectiveQ = sanitizeCatalogSearchQuery(options.q) ?? ''
-    const pricing =
-      options.pricing ??
-      (options.partnerId != null || options.pricelistId != null
-        ? {
-            segment: 'RETAIL' as const,
-            partnerId: options.partnerId ?? null,
-            pricelistId: options.pricelistId ?? null,
-          }
-        : null)
+    const attacco = sanitizeAttaccoParam(options.attacco)
+    const colorTemp = sanitizeColorTempParam(options.colorTemp)
 
-    if (env.ODOO_ENABLED && isOdooConfigured()) {
-      const listed = await searchOdooCatalogProducts(ctx, {
-        locale,
-        page,
-        pageSize,
-        q: effectiveQ || undefined,
-        categorySlug: options.categorySlug,
-        brandSlug: options.brandSlug,
-        attacco: options.attacco,
-        colorTemp: options.colorTemp,
-        pricing,
-      })
-      const enrichedItems = await enrichProductCardsWithStock(ctx, listed.items)
-      return { ...listed, items: enrichedItems }
-    }
-
-    if (!isArflyConfigured()) {
+    if (!isOdooCatalogConfigured()) {
       return {
         items: [],
         page: 1,
@@ -253,26 +97,42 @@ export const catalogStorefrontService = {
       }
     }
 
-    const raw = await fetchArflyProductList({
+    if (options.cacheOnly) {
+      return queryOdooCatalogIndex({
+        locale,
+        q: effectiveQ || undefined,
+        page,
+        pageSize,
+        categorySlug: options.categorySlug,
+        brandSlug: options.brandSlug,
+        attacco,
+        colorTemp,
+      })
+    }
+
+    return searchCatalogProductsLive(ctx, {
       locale,
       page,
-      perPage: pageSize,
+      pageSize,
       q: effectiveQ || undefined,
-      category: options.categorySlug,
-      brand: options.brandSlug,
+      world: options.world,
+      categorySlug: options.categorySlug,
+      subcategorySlug: options.subcategorySlug,
+      brandSlug: options.brandSlug,
+      tipologia: options.tipologia,
+      ambiente: options.ambiente,
+      stile: options.stile,
+      attacco,
+      wattaggio: options.wattaggio,
+      wattaggioMin: options.wattaggioMin,
+      wattaggioMax: options.wattaggioMax,
+      colorTemp,
+      tag: options.tag,
+      sort: options.sort,
       partnerId: options.partnerId,
       pricelistId: options.pricelistId,
+      pricing: options.pricing,
+      enrichStock: true,
     })
-    const mapped = mapArflyListResponse(raw, locale)
-    const withTemplateIds: ProductCardStockHint[] = mapped.items.map((item, index) => ({
-      ...item,
-      odooTemplateId: raw.items[index]?.id ?? null,
-    }))
-    const withSku = await enrichProductCardsWithSkuFromArfly(withTemplateIds, locale, {
-      partnerId: options.partnerId,
-      pricelistId: options.pricelistId,
-    })
-    const enrichedItems = await enrichProductCardsWithStock(ctx, withSku)
-    return { ...mapped, items: enrichedItems }
   },
 }

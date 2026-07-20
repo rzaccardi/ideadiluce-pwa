@@ -11,7 +11,12 @@ import {
   ODOO_SPEC_TYPE_ATTACCO,
   ODOO_SPEC_TYPE_COLOR_TEMP,
 } from './odoo-catalog.constants.js'
-import { slugifyBrandName, slugifyCatalogToken } from './odoo-catalog-slug.js'
+import {
+  brandSlugLookupKeys,
+  canonicalizeBrandSlug,
+  slugifyBrandName,
+  slugifyCatalogToken,
+} from './odoo-catalog-slug.js'
 import type { CatalogSpecFilters } from './catalog-spec-filter.js'
 import { sanitizeAttaccoParam, sanitizeColorTempParam } from './catalog-spec-filter.js'
 
@@ -107,11 +112,11 @@ function parseProductDomain(raw: string | undefined): unknown[] {
 }
 
 function storefrontWebsiteId(): number {
-  return env.ARFLY_WEBSITE_ID > 0 ? env.ARFLY_WEBSITE_ID : 2
+  return env.ODOO_WEBSITE_ID > 0 ? env.ODOO_WEBSITE_ID : 2
 }
 
 function imageUrlForTemplate(templateId: number): string | null {
-  const base = env.ARFLY_API_BASE_URL?.trim().replace(/\/$/, '')
+  const base = env.ODOO_CATALOG_BASE_URL?.trim().replace(/\/$/, '')
   if (!base) return null
   return `${base}/web/image/product.template/${templateId}/image_128`
 }
@@ -208,9 +213,13 @@ async function resolveCategoryRootId(
 }
 
 async function resolveBrandIdBySlug(ctx: OdooCallContext, brandSlug: string): Promise<number | null> {
-  const normalized = brandSlug.trim().toLowerCase()
+  const keys = brandSlugLookupKeys(brandSlug)
   if (brandMapCache && Date.now() - brandMapCache.at < BRAND_MAP_TTL_MS) {
-    return brandMapCache.bySlug.get(normalized) ?? null
+    for (const key of keys) {
+      const id = brandMapCache.bySlug.get(key)
+      if (id != null) return id
+    }
+    return null
   }
   const rows = await odooExecuteKw<BrandRow[]>(ctx, 'product.brand', 'search_read', [[]], {
     fields: ['name'],
@@ -218,10 +227,19 @@ async function resolveBrandIdBySlug(ctx: OdooCallContext, brandSlug: string): Pr
   })
   const bySlug = new Map<string, number>()
   for (const row of rows) {
-    bySlug.set(slugifyBrandName(row.name), row.id)
+    const slug = slugifyBrandName(row.name)
+    bySlug.set(slug, row.id)
+    bySlug.set(canonicalizeBrandSlug(slug), row.id)
+    for (const alias of brandSlugLookupKeys(slug)) {
+      bySlug.set(alias, row.id)
+    }
   }
   brandMapCache = { at: Date.now(), bySlug }
-  return bySlug.get(normalized) ?? null
+  for (const key of keys) {
+    const id = bySlug.get(key)
+    if (id != null) return id
+  }
+  return null
 }
 
 async function resolveAttaccoOptionId(ctx: OdooCallContext, attacco: string): Promise<number | null> {

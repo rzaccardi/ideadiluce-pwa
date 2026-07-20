@@ -45,11 +45,7 @@ export function BrandView() {
         />
       </Reveal>
 
-      {loading ? (
-        <PageLoadTransition isLoading skeleton={<BrandPageSkeleton />}>
-          {null}
-        </PageLoadTransition>
-      ) : (
+      <PageLoadTransition isLoading={loading && brands.length === 0} skeleton={<BrandPageSkeleton />}>
         <>
           <Reveal immediate delay={0.05}>
             <BrandFeaturedSection brands={featuredBrands} lp={lp} />
@@ -58,8 +54,6 @@ export function BrandView() {
             <BrandDirectorySection
               brands={brands}
               activeFilter={activeFilter}
-              onFilterChange={setActiveFilter}
-              onReset={() => setActiveFilter('all')}
               lp={lp}
             />
           </Reveal>
@@ -70,7 +64,7 @@ export function BrandView() {
             <BrandConsultSection lp={lp} />
           </Reveal>
         </>
-      )}
+      </PageLoadTransition>
     </div>
   )
 }

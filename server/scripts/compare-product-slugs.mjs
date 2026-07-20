@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Confronta slug prodotti WooCommerce (export JSON) vs catalogo Arfly/Odoo.
+ * Confronta slug prodotti WooCommerce (export JSON) vs catalogo OdooCatalog/Odoo.
  *
  * Uso:
  *   node server/scripts/compare-product-slugs.mjs --woo=path/to/products.json
@@ -31,7 +31,7 @@ function parseWooExport(raw) {
     .filter((row) => row.slug && row.recordType === 'product')
 }
 
-async function fetchArflySlugs() {
+async function fetchOdooCatalogSlugs() {
   const slugs = new Set()
   let page = 1
   let totalPages = 1
@@ -92,42 +92,42 @@ async function main() {
   }
 
   const wooProducts = parseWooExport(readFileSync(wooPath, 'utf8'))
-  const arflySlugs = await fetchArflySlugs()
+  const odooCatalogSlugs = await fetchOdooCatalogSlugs()
 
-  const missingInArfly = []
+  const missingInOdooCatalog = []
   const matched = []
   const slugMismatches = []
 
   for (const product of wooProducts) {
-    if (arflySlugs.has(product.slug)) {
+    if (odooCatalogSlugs.has(product.slug)) {
       matched.push(product)
       continue
     }
 
     const legacyPath = legacyPathFromUrl(product.currentUrl)
     const expectedPath = `/prodotto/${product.slug}`
-    missingInArfly.push({ ...product, legacyPath, expectedPath })
+    missingInOdooCatalog.push({ ...product, legacyPath, expectedPath })
 
     if (legacyPath && legacyPath !== expectedPath) {
       slugMismatches.push({ legacyPath, expectedPath, slug: product.slug })
     }
   }
 
-  const onlyInArfly = [...arflySlugs].filter(
+  const onlyInOdooCatalog = [...odooCatalogSlugs].filter(
     (slug) => !wooProducts.some((p) => p.slug === slug),
   )
 
-  console.log('=== Confronto slug WooCommerce vs Arfly ===')
+  console.log('=== Confronto slug WooCommerce vs OdooCatalog ===')
   console.log(`WooCommerce prodotti: ${wooProducts.length}`)
-  console.log(`Arfly slug unici:     ${arflySlugs.size}`)
+  console.log(`OdooCatalog slug unici:     ${odooCatalogSlugs.size}`)
   console.log(`Match:                ${matched.length}`)
-  console.log(`Mancanti in Arfly:    ${missingInArfly.length}`)
-  console.log(`Solo in Arfly:         ${onlyInArfly.length}`)
+  console.log(`Mancanti in Odoo:    ${missingInOdooCatalog.length}`)
+  console.log(`Solo in Odoo:         ${onlyInOdooCatalog.length}`)
   console.log(`Path legacy diversi:  ${slugMismatches.length}`)
 
-  if (missingInArfly.length) {
-    console.log('\n--- Mancanti in Arfly (primi 20) ---')
-    for (const row of missingInArfly.slice(0, 20)) {
+  if (missingInOdooCatalog.length) {
+    console.log('\n--- Mancanti in Odoo (primi 20) ---')
+    for (const row of missingInOdooCatalog.slice(0, 20)) {
       console.log(`  ${row.slug}  ${row.currentUrl || ''}`)
     }
   }
@@ -151,7 +151,7 @@ async function main() {
     console.log('\nNessun redirect da applicare.')
   }
 
-  process.exit(missingInArfly.length ? 1 : 0)
+  process.exit(missingInOdooCatalog.length ? 1 : 0)
 }
 
 main().catch((error) => {

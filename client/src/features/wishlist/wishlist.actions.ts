@@ -1,6 +1,6 @@
 import { api } from '@/api/endpoints'
 import { dedupeAsync } from '@/lib/async-cache'
-import { resolveArflyProductCard } from '@/lib/arfly/lookup'
+import { resolveOdooCatalogProductCard } from '@/lib/odoo-catalog/lookup'
 import type { PwaLocale } from '@/lib/locale'
 import { ApiRequestError } from '@/types/api'
 import type { ProductCardDTO } from '@/types/dto'
@@ -31,7 +31,7 @@ async function loadWishlistProducts(locale: PwaLocale) {
       wishlistStore.items.map(async (item) => {
         let product = byRef.get(item.productRef)
         if (!product) {
-          const resolved = await resolveArflyProductCard(item.productRef, locale)
+          const resolved = await resolveOdooCatalogProductCard(item.productRef, locale)
           if (!resolved) {
             return {
               itemId: item.id,

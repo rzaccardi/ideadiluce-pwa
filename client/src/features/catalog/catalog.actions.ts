@@ -66,9 +66,19 @@ function applyCatalogClientFilters(
     attacco?: string
     colorTemp?: string
     world?: 'design' | 'technical'
+    /** Se true, attacco/Kelvin/world sono già applicati server-side. */
+    serverSideCatalogFilters?: boolean
   },
 ) {
-  let list = applyClientFilters(products, filters)
+  let list = applyClientFilters(products, {
+    inStockOnly: filters.inStockOnly,
+    minPriceCents: filters.minPriceCents,
+    maxPriceCents: filters.maxPriceCents,
+    // Sort gestito da Odoo search quando serverSideCatalogFilters.
+    sort: filters.serverSideCatalogFilters ? undefined : filters.sort,
+    locale: filters.locale,
+  })
+  if (filters.serverSideCatalogFilters) return list
   const specFilters: CatalogSpecFilters = {
     attacco: filters.attacco,
     colorTemp: filters.colorTemp,
@@ -86,6 +96,15 @@ export function catalogServerFetchKey(filters: {
   brandSlug?: string
   attacco?: string
   colorTemp?: string
+  wattaggio?: string
+  wattaggioMin?: string
+  wattaggioMax?: string
+  tipologia?: string
+  ambiente?: string
+  stile?: string
+  tag?: string
+  world?: 'design' | 'technical'
+  sort?: CatalogSort
   page: number
   pageSize: number
   locale: string
@@ -96,6 +115,15 @@ export function catalogServerFetchKey(filters: {
     filters.brandSlug ?? '',
     filters.attacco ?? '',
     filters.colorTemp ?? '',
+    filters.wattaggio ?? '',
+    filters.wattaggioMin ?? '',
+    filters.wattaggioMax ?? '',
+    filters.tipologia ?? '',
+    filters.ambiente ?? '',
+    filters.stile ?? '',
+    filters.tag ?? '',
+    filters.world ?? '',
+    filters.sort ?? 'relevance',
     filters.page,
     filters.pageSize,
     filters.locale,
@@ -113,6 +141,13 @@ function syncFilterStore(partialFilters?: {
   sort?: CatalogSort
   attacco?: string
   colorTemp?: string
+  wattaggio?: string
+  wattaggioMin?: string
+  wattaggioMax?: string
+  tipologia?: string
+  ambiente?: string
+  stile?: string
+  tag?: string
   world?: 'design' | 'technical'
 }) {
   if (partialFilters && 'categorySlug' in partialFilters) {
@@ -145,6 +180,27 @@ function syncFilterStore(partialFilters?: {
   if (partialFilters && 'colorTemp' in partialFilters) {
     catalogStore.filters.colorTemp = partialFilters.colorTemp
   }
+  if (partialFilters && 'wattaggio' in partialFilters) {
+    catalogStore.filters.wattaggio = partialFilters.wattaggio
+  }
+  if (partialFilters && 'wattaggioMin' in partialFilters) {
+    catalogStore.filters.wattaggioMin = partialFilters.wattaggioMin
+  }
+  if (partialFilters && 'wattaggioMax' in partialFilters) {
+    catalogStore.filters.wattaggioMax = partialFilters.wattaggioMax
+  }
+  if (partialFilters && 'tipologia' in partialFilters) {
+    catalogStore.filters.tipologia = partialFilters.tipologia
+  }
+  if (partialFilters && 'ambiente' in partialFilters) {
+    catalogStore.filters.ambiente = partialFilters.ambiente
+  }
+  if (partialFilters && 'stile' in partialFilters) {
+    catalogStore.filters.stile = partialFilters.stile
+  }
+  if (partialFilters && 'tag' in partialFilters) {
+    catalogStore.filters.tag = partialFilters.tag
+  }
   if (partialFilters && 'world' in partialFilters) {
     catalogStore.filters.world = partialFilters.world
   }
@@ -160,6 +216,7 @@ function currentClientFilters() {
     attacco: catalogStore.filters.attacco,
     colorTemp: catalogStore.filters.colorTemp,
     world: catalogStore.filters.world,
+    serverSideCatalogFilters: true,
   }
 }
 
@@ -175,7 +232,10 @@ export function seedCatalogProducts(
 ) {
   catalogStore.rawProducts = items
   catalogStore.serverFetchKey = serverKey
-  catalogStore.products = applyCatalogClientFilters(items, currentClientFilters())
+  catalogStore.products = applyCatalogClientFilters(items, {
+    ...currentClientFilters(),
+    serverSideCatalogFilters: true,
+  })
   if (pagination) {
     catalogStore.pagination = { ...catalogStore.pagination, ...pagination }
   }
@@ -260,24 +320,43 @@ async function loadProducts(filters: {
   sort?: CatalogSort
   attacco?: string
   colorTemp?: string
+  wattaggio?: string
+  wattaggioMin?: string
+  wattaggioMax?: string
+  tipologia?: string
+  ambiente?: string
+  stile?: string
+  tag?: string
   world?: 'design' | 'technical'
 }) {
   catalogStore.isLoading = true
   catalogStore.error = null
   try {
-    const result = await api.catalog.products({
+    const result = await api.catalog.search({
       q: filters.q,
       category: filters.categorySlug,
       brand: filters.brandSlug,
       attacco: filters.attacco,
       colorTemp: filters.colorTemp,
+      wattaggio: filters.wattaggio,
+      wattaggioMin: filters.wattaggioMin,
+      wattaggioMax: filters.wattaggioMax,
+      tipologia: filters.tipologia,
+      ambiente: filters.ambiente,
+      stile: filters.stile,
+      tag: filters.tag,
+      world: filters.world,
+      sort: filters.sort,
       page: filters.page,
       pageSize: filters.pageSize,
       locale: filters.locale,
     })
     catalogStore.rawProducts = result.items
     catalogStore.serverFetchKey = catalogServerFetchKey(filters)
-    catalogStore.products = applyCatalogClientFilters(result.items, filters)
+    catalogStore.products = applyCatalogClientFilters(result.items, {
+      ...filters,
+      serverSideCatalogFilters: true,
+    })
     catalogStore.pagination = {
       page: result.page,
       pageSize: result.pageSize,
@@ -306,6 +385,13 @@ export function fetchProducts(partialFilters?: {
   sort?: CatalogSort
   attacco?: string
   colorTemp?: string
+  wattaggio?: string
+  wattaggioMin?: string
+  wattaggioMax?: string
+  tipologia?: string
+  ambiente?: string
+  stile?: string
+  tag?: string
   world?: 'design' | 'technical'
 }) {
   syncFilterStore(partialFilters)
@@ -318,6 +404,15 @@ export function fetchProducts(partialFilters?: {
     brandSlug: catalogStore.filters.brandSlug,
     attacco: catalogStore.filters.attacco,
     colorTemp: catalogStore.filters.colorTemp,
+    wattaggio: catalogStore.filters.wattaggio,
+    wattaggioMin: catalogStore.filters.wattaggioMin,
+    wattaggioMax: catalogStore.filters.wattaggioMax,
+    tipologia: catalogStore.filters.tipologia,
+    ambiente: catalogStore.filters.ambiente,
+    stile: catalogStore.filters.stile,
+    tag: catalogStore.filters.tag,
+    world: catalogStore.filters.world,
+    sort: catalogStore.filters.sort,
     page,
     pageSize,
     locale: catalogStore.filters.locale,
@@ -344,6 +439,13 @@ export function fetchProducts(partialFilters?: {
     sort: catalogStore.filters.sort,
     attacco: catalogStore.filters.attacco,
     colorTemp: catalogStore.filters.colorTemp,
+    wattaggio: catalogStore.filters.wattaggio,
+    wattaggioMin: catalogStore.filters.wattaggioMin,
+    wattaggioMax: catalogStore.filters.wattaggioMax,
+    tipologia: catalogStore.filters.tipologia,
+    ambiente: catalogStore.filters.ambiente,
+    stile: catalogStore.filters.stile,
+    tag: catalogStore.filters.tag,
     world: catalogStore.filters.world,
   }
 
@@ -357,12 +459,21 @@ export async function fetchNextProductsPage() {
   catalogStore.isLoadingMore = true
   catalogStore.error = null
   try {
-    const result = await api.catalog.products({
+    const result = await api.catalog.search({
       q: catalogStore.filters.q,
       category: catalogStore.filters.categorySlug,
       brand: catalogStore.filters.brandSlug,
       attacco: catalogStore.filters.attacco,
       colorTemp: catalogStore.filters.colorTemp,
+      wattaggio: catalogStore.filters.wattaggio,
+      wattaggioMin: catalogStore.filters.wattaggioMin,
+      wattaggioMax: catalogStore.filters.wattaggioMax,
+      tipologia: catalogStore.filters.tipologia,
+      ambiente: catalogStore.filters.ambiente,
+      stile: catalogStore.filters.stile,
+      tag: catalogStore.filters.tag,
+      world: catalogStore.filters.world,
+      sort: catalogStore.filters.sort,
       page: catalogStore.pagination.page + 1,
       pageSize: catalogStore.pagination.pageSize,
       locale: catalogStore.filters.locale,
@@ -389,7 +500,7 @@ export async function fetchProductsByQuery(
   options: { pageSize?: number; locale: string; category?: string },
 ): Promise<ProductCardDTO[]> {
   const pageSize = options.pageSize ?? 4
-  const result = await api.catalog.products({
+  const result = await api.catalog.search({
     q: q.trim() || undefined,
     category: options.category,
     page: 1,
@@ -398,12 +509,58 @@ export async function fetchProductsByQuery(
   })
   if (result.items.length > 0 || !q.trim() || !options.category) return result.items
 
-  // Query testuale troppo stretta: ritenta solo per categoria mondo (design/tecnica).
-  const fallback = await api.catalog.products({
+  const fallback = await api.catalog.search({
     category: options.category,
     page: 1,
     pageSize,
     locale: options.locale,
   })
   return fallback.items
+}
+
+/**
+ * Carica i facet per la sidebar.
+ *
+ * Richiede solo `world` + `q` (+ locale): se inoltrassimo category / brand /
+ * attacco / tassonomie, Odoo restringerebbe i facet al sottoinsieme filtrato
+ * (es. `category=scarica` nasconde altri attacchi e le categorie sibling).
+ * La selezione resta in URL / store; qui servono tutte le opzioni navigabili.
+ */
+export async function fetchCatalogFilters(partial?: {
+  q?: string
+  /** Ignorato per i facet UI — vedi commento sopra. */
+  categorySlug?: string
+  /** Ignorato per i facet UI. */
+  brandSlug?: string
+  /** Ignorato per i facet UI. */
+  attacco?: string
+  /** Ignorato per i facet UI. */
+  colorTemp?: string
+  /** Ignorato per i facet UI. */
+  wattaggio?: string
+  /** Ignorato per i facet UI. */
+  wattaggioMin?: string
+  /** Ignorato per i facet UI. */
+  wattaggioMax?: string
+  /** Ignorato per i facet UI. */
+  tipologia?: string
+  /** Ignorato per i facet UI. */
+  ambiente?: string
+  /** Ignorato per i facet UI. */
+  stile?: string
+  world?: 'design' | 'technical'
+  locale?: string
+}) {
+  try {
+    const data = await api.catalog.filters({
+      q: partial?.q ?? catalogStore.filters.q,
+      world: partial?.world ?? catalogStore.filters.world,
+      locale: partial?.locale ?? catalogStore.filters.locale,
+    })
+    catalogStore.facets = data
+    return data
+  } catch {
+    catalogStore.facets = null
+    return null
+  }
 }

@@ -13,7 +13,7 @@ describe('searchLocalCatalogSuggestions', () => {
     const groups = searchLocalCatalogSuggestions('vite grande', {})
     const attacchi = groups.find((g) => g.kind === 'attacco')?.items ?? []
     expect(attacchi.some((item) => item.label.includes('E27'))).toBe(true)
-    expect(attacchi[0]?.path).toContain('attacco=E27')
+    expect(attacchi[0]?.path).toContain('/attacco/e27')
   })
 
   it('filtra marchi per nome', () => {
@@ -22,7 +22,7 @@ describe('searchLocalCatalogSuggestions', () => {
     })
     const brands = groups.find((g) => g.kind === 'brand')?.items ?? []
     expect(brands).toHaveLength(1)
-    expect(brands[0]?.path).toBe('/negozio?brand=osram')
+    expect(brands[0]?.path).toBe('/brand/osram')
   })
 })
 

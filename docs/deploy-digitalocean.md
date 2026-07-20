@@ -59,7 +59,7 @@ Copia l’elenco da [`.do/secrets.production.env.example`](../.do/secrets.produc
 
 | Variabile | Componente | Obbligatoria |
 |-----------|------------|--------------|
-| `ARFLY_API_KEY` | api | Sì (catalogo Odoo REST) |
+| `ODOO_CATALOG_API_KEY` | api | Sì (catalogo Odoo REST) |
 | `ODOO_DB`, `ODOO_USERNAME`, `ODOO_PASSWORD` | api | Sì (ordini/stock XML-RPC) |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | api | Sì se pagamenti live |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | shop (BUILD) | Sì se Stripe |
@@ -138,7 +138,7 @@ Per upload futuri dall’admin: crea Space `fra1` + env `SPACES_*` su `api` (ved
 
 ## Limitazioni
 
-- **Odoo/Arfly** restano su `tlbdb.odoo.com` — solo variabili verso l’istanza esterna
+- **Odoo** restano su `tlbdb.odoo.com` — solo variabili verso l’istanza esterna
 - **Cookie sessione**: `trust proxy` già attivo su Express
 - **Re-build shop** necessario dopo cambio `NEXT_PUBLIC_*`
 

@@ -87,7 +87,7 @@ export function GuidesListPage() {
             </Badge>
           </div>
           <CardDescription>
-            Le singole guide si gestiscono qui (non in &quot;Contenuti sito&quot;, dove c&apos;è solo
+            Le singole guide si gestiscono qui (non in &quot;Pagine sito&quot;, dove c&apos;è solo
             la landing /guide). L&apos;interruttore <strong>Pubblicata</strong> rende la guida
             visibile sul sito. Per salvare testi e traduzioni apri il dettaglio.
           </CardDescription>

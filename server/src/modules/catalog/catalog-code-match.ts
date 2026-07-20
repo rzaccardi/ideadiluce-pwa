@@ -1,4 +1,4 @@
-import type { ArflyVariant } from '../../adapters/arfly/arfly.types.js'
+import type { OdooCatalogVariant } from '../../adapters/odoo-catalog/odooCatalog.types.js'
 import type { QuickReorderMatchTypeDTO } from '../../types/dto.js'
 import { normalizeProductCode } from './catalog-code-parser.js'
 
@@ -29,25 +29,25 @@ function textField(v: unknown): string | null {
   return null
 }
 
-export function matchArflyVariant(
-  variants: ArflyVariant[],
+export function matchOdooCatalogVariant(
+  variants: OdooCatalogVariant[],
   code: string,
-): { variant: ArflyVariant; matchType: QuickReorderMatchTypeDTO } | null {
+): { variant: OdooCatalogVariant; matchType: QuickReorderMatchTypeDTO } | null {
   const normalized = normalizeProductCode(code)
   if (!normalized) return null
 
   for (const variant of variants) {
     if (normalizeProductCode(variant.ced) === normalized) {
-      return { variant, matchType: 'arfly_sku' }
+      return { variant, matchType: 'odooCatalog_sku' }
     }
     if (variant.ean && normalizeProductCode(variant.ean) === normalized) {
-      return { variant, matchType: 'arfly_ean' }
+      return { variant, matchType: 'odooCatalog_ean' }
     }
-    if (normalizeProductCode(variant.manufacturer_code) === normalized) {
-      return { variant, matchType: 'arfly_mpn' }
+    if (variant.manufacturer_code && normalizeProductCode(variant.manufacturer_code) === normalized) {
+      return { variant, matchType: 'odooCatalog_mpn' }
     }
     if (String(variant.id) === normalized) {
-      return { variant, matchType: 'arfly_variant_id' }
+      return { variant, matchType: 'odooCatalog_variant_id' }
     }
   }
 

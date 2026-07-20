@@ -1,4 +1,4 @@
--- Legacy Product Hub catalog (moved out of server DB; catalog lives on Odoo/Arfly).
+-- Legacy Product Hub catalog (moved out of server DB; catalog lives on Odoo/OdooCatalog).
 -- Safe on fresh DBs: IF EXISTS on all drops.
 
 DROP TABLE IF EXISTS "ProductPriceHistory" CASCADE;

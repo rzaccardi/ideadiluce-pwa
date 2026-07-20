@@ -61,7 +61,7 @@ function unwrap(data) {
 }
 
 /** Carica dettaglio arricchito (stessa pipeline SSR/CSR). */
-function mapArflyToDetailBody(p) {
+function mapOdooCatalogToDetailBody(p) {
   const priceCents = Math.round((p.price_from ?? 0) * 100)
   return {
     slug: p.slug,
@@ -106,7 +106,7 @@ async function loadEnrichedDetail(slug) {
   const raw = detailRes.json?.data?.product
   if (detailRes.status !== 200 || !raw) return null
 
-  const body = mapArflyToDetailBody(raw)
+  const body = mapOdooCatalogToDetailBody(raw)
   const enrich = await req('POST', '/api/v1/catalog/availability/enrich-detail', body)
   if (enrich.status === 200) return unwrap(enrich.json)
   return body
@@ -235,12 +235,12 @@ await check('prezzo variante al add-to-cart', async () => {
   const line = unwrap(r.json)?.items?.[0]
   const cartPrice =
     line?.clientUnitPriceEstimateCents ?? line?.clientUnitPriceEstimate ?? line?.unitPriceCents
-  // Il carrello applica reprice Odoo: confronta con prezzo post-reprice, non solo enrich Arfly.
+  // Il carrello applica reprice Odoo: confronta con prezzo post-reprice, non solo enrich OdooCatalog.
   const match = cartPrice != null
   return (r.status === 200 || r.status === 201) && match
     ? {
         ok: true,
-        note: `cart=${cartPrice} enrichExpected=${variantWithPrice.expectedCents} ${cartPrice === variantWithPrice.expectedCents ? 'aligned' : 'odoo≠arfly-variant'}`,
+        note: `cart=${cartPrice} enrichExpected=${variantWithPrice.expectedCents} ${cartPrice === variantWithPrice.expectedCents ? 'aligned' : 'odoo≠odooCatalog-variant'}`,
       }
     : {
         ok: false,

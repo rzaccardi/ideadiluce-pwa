@@ -2,18 +2,18 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import type { Request } from 'express'
 
 const findOdooVariantByCode = vi.fn()
-const fetchArflyProductDetail = vi.fn()
-const fetchArflyProductList = vi.fn()
+const fetchOdooCatalogProductDetail = vi.fn()
+const fetchOdooCatalogProductList = vi.fn()
 const resolvePricingContext = vi.fn()
 
 vi.mock('../../adapters/odoo/odooProductCodeLookup.js', () => ({
   findOdooVariantByCode: (...args: unknown[]) => findOdooVariantByCode(...args),
 }))
 
-vi.mock('../../adapters/arfly/arflyClient.js', () => ({
-  isArflyConfigured: () => true,
-  fetchArflyProductDetail: (...args: unknown[]) => fetchArflyProductDetail(...args),
-  fetchArflyProductList: (...args: unknown[]) => fetchArflyProductList(...args),
+vi.mock('../../adapters/odoo-catalog/odooCatalogClient.js', () => ({
+  isOdooCatalogConfigured: () => true,
+  fetchOdooCatalogProductDetail: (...args: unknown[]) => fetchOdooCatalogProductDetail(...args),
+  fetchOdooCatalogProductList: (...args: unknown[]) => fetchOdooCatalogProductList(...args),
 }))
 
 vi.mock('../pricing/pricelist.service.js', () => ({
@@ -32,7 +32,7 @@ describe('resolveProductCodes', () => {
     resolvePricingContext.mockResolvedValue({ segment: 'RETAIL', partnerId: null, pricelistId: null })
   })
 
-  it('risolve via Odoo barcode con arricchimento Arfly', async () => {
+  it('risolve via Odoo barcode con arricchimento OdooCatalog', async () => {
     findOdooVariantByCode.mockResolvedValueOnce({
       variantId: 1184,
       templateId: 1178,
@@ -41,7 +41,7 @@ describe('resolveProductCodes', () => {
       matchField: 'barcode',
     })
 
-    fetchArflyProductDetail.mockResolvedValueOnce({
+    fetchOdooCatalogProductDetail.mockResolvedValueOnce({
       product: {
         id: 1178,
         title: 'Lampada fluorescente OSRAM',
@@ -85,16 +85,16 @@ describe('resolveProductCodes', () => {
     expect(result.unmatched).toHaveLength(0)
   })
 
-  it('fallback Arfly quando Odoo non trova il codice', async () => {
+  it('fallback OdooCatalog quando Odoo non trova il codice', async () => {
     findOdooVariantByCode.mockResolvedValueOnce(null)
-    fetchArflyProductList.mockResolvedValueOnce({
+    fetchOdooCatalogProductList.mockResolvedValueOnce({
       items: [{ id: 7369, title: 'SPL LED', slug: 'spl-led', short_description: '', price_from: 25, price_to: 25, currency: 'EUR', image: { url: '', alt: '' } }],
       page: 1,
       per_page: 15,
       total: 1,
       total_pages: 1,
     })
-    fetchArflyProductDetail.mockResolvedValueOnce({
+    fetchOdooCatalogProductDetail.mockResolvedValueOnce({
       product: {
         id: 7369,
         title: 'SPL LED NAV-T',
@@ -127,13 +127,13 @@ describe('resolveProductCodes', () => {
     const result = await resolveProductCodes(mockReq(), [{ code: 'L392702127', quantity: 1 }])
 
     expect(result.matched).toHaveLength(1)
-    expect(result.matched[0]?.matchType).toBe('arfly_mpn')
+    expect(result.matched[0]?.matchType).toBe('odooCatalog_mpn')
     expect(result.matched[0]?.variantRef).toBe('8484')
   })
 
   it('segnala codici non riconosciuti', async () => {
     findOdooVariantByCode.mockResolvedValue(null)
-    fetchArflyProductList.mockResolvedValue({ items: [], page: 1, per_page: 15, total: 0, total_pages: 1 })
+    fetchOdooCatalogProductList.mockResolvedValue({ items: [], page: 1, per_page: 15, total: 0, total_pages: 1 })
 
     const result = await resolveProductCodes(mockReq(), [
       { code: '4050300464749', quantity: 1 },

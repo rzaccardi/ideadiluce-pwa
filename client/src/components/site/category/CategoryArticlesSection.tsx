@@ -1,5 +1,5 @@
 import type { CategoryArticlesSection } from '@/types/category-landing'
-import { GuideCardGrid } from '@/components/site/sections/GuideCardGrid'
+import { GuideCardSlider } from '@/components/site/sections/GuideCardSlider'
 import type { LocalePathFn } from '../sections/types'
 
 type Props = {
@@ -18,7 +18,7 @@ export function CategoryArticlesSection({ section, lp }: Props) {
             <p className="mt-3 text-[15px] leading-relaxed text-idl-muted">{section.subtitle}</p>
           ) : null}
         </div>
-        <GuideCardGrid items={section.items} lp={lp} variant="editorial" />
+        <GuideCardSlider items={section.items} lp={lp} loop />
       </div>
     </section>
   )

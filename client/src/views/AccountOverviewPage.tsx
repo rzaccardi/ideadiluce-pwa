@@ -142,7 +142,7 @@ export function AccountOverviewPage() {
         </p>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="hidden gap-4 sm:grid sm:grid-cols-2 lg:grid-cols-5">
         <AccountDcStatCard value={orderList.length} label={t('account.dashboard.totalOrders')} />
         <AccountDcStatCard value={inProgressCount} label={t('account.dashboard.inProgress')} />
         <AccountDcStatCard value={savedPartsCount} label={t('account.dashboard.savedParts')} />

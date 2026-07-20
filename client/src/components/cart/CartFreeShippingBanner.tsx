@@ -54,13 +54,14 @@ export function CartFreeShippingBanner({ hint, currencyCode = 'EUR', className }
     <div
       className={cn(CART_CARD_SURFACE, 'px-[22px] py-[18px]', className)}
     >
-      <div className="mb-2.5 flex items-center gap-2 text-[13.5px] text-idl-graphite">
-        <TruckIcon />
-        <span>
-          <strong>{t('cart.freeShipping.unlocked')}</strong>
-          {' — '}
-          {message}
+      <div className="mb-2.5 flex items-start gap-2 text-[13.5px] leading-snug text-idl-graphite">
+        <span className="mt-px shrink-0">
+          <TruckIcon />
         </span>
+        <p className="min-w-0 flex-1">
+          <strong className="block">{t('cart.freeShipping.unlocked')}</strong>
+          <span className="mt-0.5 block">{message}</span>
+        </p>
       </div>
       <div
         className="h-[7px] overflow-hidden rounded-full bg-idl-tech-chip"

@@ -1,6 +1,7 @@
 import { Link } from '@/lib/navigation'
 import { HoverLift, Stagger, StaggerItem } from '@/components/motion'
 import { SiteHeading } from '@/components/site/SiteHeading'
+import { cn } from '@/utils/cn'
 import { RoomCardMedia } from './RoomCardMedia'
 import type { LocalePathFn } from './types'
 
@@ -54,23 +55,35 @@ export function RoomCardGrid({ items, lp, variant = 'home', stagger = 0.08 }: Pr
   }
 
   return (
-    <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" stagger={stagger}>
+    <Stagger
+      className={cn(
+        '-mx-4 flex gap-4 overflow-x-auto scroll-smooth px-4 pb-1',
+        'snap-x snap-mandatory',
+        '[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden',
+        'sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:snap-none',
+        'lg:grid-cols-3',
+      )}
+      stagger={stagger}
+    >
       {items.map((room) => (
-        <StaggerItem key={room.title}>
+        <StaggerItem
+          key={room.title}
+          className="w-[min(78vw,18rem)] shrink-0 snap-start sm:w-auto sm:shrink"
+        >
           <HoverLift>
             <Link to={lp(room.href)} className="group block">
               {room.imageUrl ? (
                 <RoomCardMedia
                   imageUrl={room.imageUrl}
                   videoUrl={room.videoUrl}
-                  sizes="(max-width:768px) 100vw, 33vw"
+                  sizes="(max-width:768px) 78vw, 33vw"
                 />
               ) : null}
-              <div className="mt-3 flex items-center justify-between">
+              <div className="mt-3 flex items-center justify-between gap-2">
                 <SiteHeading level={3} className="font-serif text-[19px] font-medium text-idl-ink">
                   {room.title}
                 </SiteHeading>
-                <span className="text-[13px] font-bold text-idl-brass">Scopri →</span>
+                <span className="shrink-0 text-[13px] font-bold text-idl-brass">Scopri →</span>
               </div>
             </Link>
           </HoverLift>

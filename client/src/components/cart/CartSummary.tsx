@@ -127,16 +127,17 @@ export function CartSummary({
 
         {showCheckoutCta ? (
           <div className="mt-[18px] space-y-3">
-            {checkoutDisabled ? (
-              <p className="text-center text-sm text-amber-800">
-                {noPurchasableLines
-                  ? t('cart.unpurchasable.noPurchasableLines')
-                  : blocked
-                    ? t('cart.unpurchasable.blockedCheckout')
-                    : t('cart.stock.insufficient')}
-              </p>
-            ) : (
-              <>
+            {/* CTA checkout desktop: su mobile è nella sticky bar fissa in basso. */}
+            <div className="hidden lg:block">
+              {checkoutDisabled ? (
+                <p className="text-center text-sm text-amber-800">
+                  {noPurchasableLines
+                    ? t('cart.unpurchasable.noPurchasableLines')
+                    : blocked
+                      ? t('cart.unpurchasable.blockedCheckout')
+                      : t('cart.stock.insufficient')}
+                </p>
+              ) : (
                 <Link
                   to="/checkout"
                   className="block"
@@ -150,8 +151,8 @@ export function CartSummary({
                     {t('cart.checkoutCta')}
                   </Button>
                 </Link>
-              </>
-            )}
+              )}
+            </div>
             {quoteDisabled ? (
               <Button variant="secondary" className="w-full rounded-lg" disabled>
                 {t('cart.quoteCta')}

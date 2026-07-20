@@ -3,7 +3,7 @@ import {
   fetchVariantStockByIds,
   type VariantStockSnapshot,
 } from '../../adapters/odoo/odooInventoryAdapter.js'
-import { deriveInStockFromAvailability } from '../../adapters/arfly/arflyParsers.js'
+import { deriveInStockFromAvailability } from '../../adapters/odoo-catalog/odooCatalogParsers.js'
 import { env } from '../../config/env.js'
 import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import type {
@@ -54,6 +54,7 @@ function pickLineVariant(
   return (
     product.variants.find((variant) => variant.ref === variantRef) ??
     product.variants.find((variant) => String(variant.odooVariantId) === variantRef) ??
+    product.variants.find((variant) => variant.ced === variantRef) ??
     product.variants[0]
   )
 }
@@ -378,7 +379,7 @@ export async function enrichCartLineProduct(
   }
 }
 
-/** Verifica acquistabilità righe (Arfly + Odoo arricchiti). Consente qty > stock se ordinabile. */
+/** Verifica acquistabilità righe (OdooCatalog + Odoo arricchiti). Consente qty > stock se ordinabile. */
 export async function assertCartLinesPurchasable(
   ctx: OdooCallContext,
   lines: Array<{ productRef: string; variantRef: string | null; quantity: number }>,

@@ -630,8 +630,8 @@ async function patchShellMegaMenuColumns() {
         const needsPanelRefresh =
           currentJson !== freshJson &&
           (id === 'arredo'
-            ? !currentJson.includes('q=sospensione') || !currentJson.includes('IN EVIDENZA')
-            : !currentJson.includes('GUIDE TECNICHE') || !currentJson.includes('q=striscia+led'))
+            ? !currentJson.includes('tipologia=sospensione') || !currentJson.includes('IN EVIDENZA')
+            : !currentJson.includes('GUIDE TECNICHE') || !currentJson.includes('category=strip'))
 
         if (needsPanelRefresh) {
           item.panel = structuredClone(fresh.panel)

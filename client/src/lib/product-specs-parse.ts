@@ -32,7 +32,16 @@ export function normalizeSpecLabel(label: string): string {
     .replace(/\p{M}/gu, '')
 }
 
-/** Estrae righe label/valore da tabella HTML specs (Arfly o Hub). */
+export function specsToRows(
+  specs: ReadonlyArray<{ label: string; display: string }> | null | undefined,
+): ProductSpecRow[] {
+  if (!specs?.length) return []
+  return specs
+    .filter((s) => s.label?.trim() && s.display?.trim())
+    .map((s) => ({ label: s.label, value: s.display }))
+}
+
+/** Estrae righe label/valore da tabella HTML specs (OdooCatalog o Hub). */
 export function parseProductSpecRows(tableHtml: string | null | undefined): ProductSpecRow[] {
   if (!tableHtml?.trim()) return []
 

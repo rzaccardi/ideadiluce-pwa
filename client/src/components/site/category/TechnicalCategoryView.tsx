@@ -30,6 +30,10 @@ type CatalogSectionProps = {
   onRemoveFilter: (key: string) => void
   onSelectSort: (sort: CatalogSort) => void
   lp: LocalePathFn
+  wattaggioValues?: ReadonlyArray<number>
+  wattaggioMin?: number
+  wattaggioMax?: number
+  onSelectWattaggioRange?: (range: { min?: number; max?: number }) => void
 }
 
 export function TechnicalCategoryView({
@@ -49,6 +53,10 @@ export function TechnicalCategoryView({
   onRemoveFilter,
   onSelectSort,
   lp,
+  wattaggioValues,
+  wattaggioMin,
+  wattaggioMax,
+  onSelectWattaggioRange,
 }: CatalogSectionProps) {
   return (
     <div className="bg-idl-tech-panel">
@@ -79,6 +87,10 @@ export function TechnicalCategoryView({
           onResetFilters={onResetFilters}
           onRemoveFilter={onRemoveFilter}
           onSelectSort={onSelectSort}
+          wattaggioValues={wattaggioValues}
+          wattaggioMin={wattaggioMin}
+          wattaggioMax={wattaggioMax}
+          onSelectWattaggioRange={onSelectWattaggioRange}
         />
       </Reveal>
       {content.tips ? (

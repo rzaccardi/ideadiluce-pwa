@@ -58,8 +58,8 @@ export function SocialProofPage() {
       <RoutePageHeader
         description={
           settings.enabled
-            ? 'Attivo in negozio · messaggi da ordini PWA e storico Odoo'
-            : 'Disattivato in negozio · configura soglie e import Odoo'
+            ? 'Attivo in negozio · feed da storico ordini unificato (PWA + Odoo)'
+            : 'Disattivato in negozio · configura soglie e sync storico Odoo'
         }
       />
 
@@ -157,9 +157,10 @@ export function SocialProofPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Storico Odoo (pre-PWA)</CardTitle>
+          <CardTitle>Storico ordini unificato</CardTitle>
           <CardDescription>
-            Importa righe confermate da sale.order.line per arricchire il feed oltre agli ordini PWA.
+            Stessa logica della lista ordini: acquisti PWA pagati + storico Odoo (manuale / pre-PWA /
+            altri canali). Gli ordini già nati dalla PWA non vengono duplicati dall’import Odoo.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 p-4 sm:p-6">
@@ -167,7 +168,7 @@ export function SocialProofPage() {
             <Badge variant={settings.odooConfigured ? 'default' : 'secondary'}>
               Odoo {settings.odooConfigured ? 'configurato' : 'non configurato'}
             </Badge>
-            <Badge variant="outline">{settings.cachedOdooEvents} eventi in cache</Badge>
+            <Badge variant="outline">{settings.cachedOdooEvents} eventi Odoo in cache</Badge>
             {settings.odooLastSyncAt ? (
               <span className="text-xs text-gray-500">
                 Ultimo sync: {new Date(settings.odooLastSyncAt).toLocaleString('it-IT')}
@@ -176,6 +177,16 @@ export function SocialProofPage() {
             ) : null}
           </div>
 
+          {!settings.odooConfigured ? (
+            <Alert>
+              <AlertTitle>Solo ordini PWA</AlertTitle>
+              <AlertDescription>
+                Senza Odoo configurato il feed usa solo gli ordini e-commerce pagati. Per includere lo
+                storico pre-PWA configura le credenziali Odoo.
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
           {settings.odooLastSyncError ? (
             <Alert variant="destructive">
               <AlertTitle>Ultimo sync fallito</AlertTitle>
@@ -183,29 +194,14 @@ export function SocialProofPage() {
             </Alert>
           ) : null}
 
-          <div className="flex flex-col gap-4 rounded-lg border border-gray-200 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <Label htmlFor="sp-odoo-import" className="flex min-w-0 flex-col gap-1">
-              <span className="font-medium text-gray-900">Usa ordini Odoo nel feed</span>
-              <span className="text-xs font-normal text-gray-500">
-                Richiede Odoo attivo e una sincronizzazione periodica.
-              </span>
-            </Label>
-            <Switch
-              id="sp-odoo-import"
-              checked={settings.odooImportEnabled}
-              disabled={sp.isSaving || !settings.odooConfigured}
-              onCheckedChange={(odooImportEnabled) => void save({ odooImportEnabled })}
-            />
-          </div>
-
           <Button
             type="button"
             variant="outline"
-            disabled={sp.isSyncing || !settings.odooImportEnabled || !settings.odooConfigured}
+            disabled={sp.isSyncing || !settings.odooConfigured}
             onClick={() => void syncSocialProofOdoo()}
           >
             <RefreshCwIcon className={`h-4 w-4 ${sp.isSyncing ? 'animate-spin' : ''}`} aria-hidden />
-            {sp.isSyncing ? 'Import in corso…' : 'Sincronizza da Odoo ora'}
+            {sp.isSyncing ? 'Import in corso…' : 'Sincronizza storico Odoo ora'}
           </Button>
         </CardContent>
       </Card>

@@ -1,6 +1,6 @@
 import { api } from '@/api/endpoints'
-import { findArflyProductIdBySlug, toPwaLocale } from '@/lib/arfly/lookup'
-import { mapArflyProductDetail } from '@/lib/arfly/mapper'
+import { findOdooCatalogProductIdBySlug, toPwaLocale } from '@/lib/odoo-catalog/lookup'
+import { mapOdooCatalogProductDetail } from '@/lib/odoo-catalog/mapper'
 import type { PwaLocale } from '@/lib/locale'
 import type { ProductDetailDTO } from '@/types/dto'
 import { ApiRequestError } from '@/types/api'
@@ -11,7 +11,7 @@ export type CatalogPricingOptions = {
 }
 
 /**
- * Pipeline unificata PDP: Arfly by-slug → map DTO → enrich stock Odoo (BFF).
+ * Pipeline unificata PDP: OdooCatalog by-slug → map DTO → enrich stock Odoo (BFF).
  * Usata da CSR; SSR usa la stessa sequenza via server-catalog + cookie forward.
  */
 export async function loadProductDetailPipeline(
@@ -19,26 +19,32 @@ export async function loadProductDetailPipeline(
   locale: PwaLocale,
   pricing: CatalogPricingOptions = {},
 ): Promise<ProductDetailDTO> {
-  let res: Awaited<ReturnType<typeof api.arfly.productBySlug>> | null = null
+  let res: Awaited<ReturnType<typeof api.odooCatalog.productBySlug>> | null = null
   try {
-    res = await api.arfly.productBySlug(slug, locale, pricing)
+    res = await api.odooCatalog.productBySlug(slug, locale, pricing)
   } catch (e) {
     if (!(e instanceof ApiRequestError && e.status === 404)) throw e
   }
 
   if (!res?.product) {
-    const productId = await findArflyProductIdBySlug(slug, locale, pricing)
+    const productId = await findOdooCatalogProductIdBySlug(slug, locale, pricing)
     if (productId == null) {
-      throw new ApiRequestError('PRODUCT_NOT_FOUND', 'Not found', 404, undefined, 'Prodotto non trovato.')
+      throw new ApiRequestError(
+        'PRODUCT_NOT_FOUND',
+        'Not found',
+        404,
+        undefined,
+        'Prodotto non più disponibile.',
+      )
     }
-    res = await api.arfly.product(productId, locale, pricing)
+    res = await api.odooCatalog.product(productId, locale, pricing)
   }
 
-  let product = mapArflyProductDetail(res.product, locale)
+  let product = mapOdooCatalogProductDetail(res.product, locale)
   try {
     product = await api.catalog.enrichProductDetail(product)
   } catch {
-    // Mantieni dati Arfly se arricchimento non disponibile
+    // Mantieni dati OdooCatalog se arricchimento non disponibile
   }
   return product
 }

@@ -1,9 +1,27 @@
 import type { CategoryDTO } from '@/types/dto'
 import type { ProductCardDTO } from '@/types/dto'
+import type { CatalogFiltersDTO } from '@/types/dto'
 import type { CatalogSort } from '@/features/catalog/catalog.store'
 import type { ProductCatalogKind } from '@/lib/product-catalog-kind'
 import { resolveProductCardCatalogKind } from '@/lib/product-catalog-kind'
 import { buildTechnicalCardSpecTags } from '@/lib/technical-card-spec-tags'
+
+function categoryLabelFromFacets(
+  facets: CatalogFiltersDTO | null | undefined,
+  slug?: string,
+): string | undefined {
+  if (!facets || !slug) return undefined
+  const needle = slug.trim().toLowerCase()
+  const walk = (nodes: CatalogFiltersDTO['categories']): string | undefined => {
+    for (const node of nodes) {
+      if (node.slug.toLowerCase() === needle) return node.name
+      const nested = walk(node.children ?? [])
+      if (nested) return nested
+    }
+    return undefined
+  }
+  return walk(facets.categories)
+}
 
 export const CATALOG_DESIGN_CATEGORY_SLUG = 'arredo'
 export const CATALOG_TECHNICAL_CATEGORY_SLUG = 'illuminazione-tecnica'
@@ -260,38 +278,112 @@ export function buildActiveFilters(input: {
   brands: ReadonlyArray<{ slug: string; name: string }>
   categorySlug?: string
   brandSlug?: string
+  tipologia?: string
+  ambiente?: string
+  stile?: string
+  tag?: string
   attacco?: string
   colorTemp?: string
+  wattaggio?: string
+  wattaggioMin?: number
+  wattaggioMax?: number
   priceBucket?: CatalogPriceBucket
   inStockOnly?: boolean
   q?: string
   world?: CatalogWorldTab
+  facets?: CatalogFiltersDTO | null
 }): CatalogActiveFilter[] {
   const filters: CatalogActiveFilter[] = []
 
   if (input.world && input.world !== 'all') {
+    const worldLabel =
+      input.facets?.worlds.find((w) => w.value === input.world)?.label ??
+      (input.world === 'design' ? 'Arredo' : 'Tecnica')
     filters.push({
       key: 'world',
-      label: input.world === 'design' ? 'Arredo' : 'Tecnica',
+      label: worldLabel,
     })
   }
 
   if (input.categorySlug) {
-    const category = input.categories.find((c) => c.slug === input.categorySlug)
-    filters.push({ key: 'category', label: category?.name ?? input.categorySlug })
+    const categoryName =
+      categoryLabelFromFacets(input.facets, input.categorySlug) ??
+      input.categories.find((c) => c.slug === input.categorySlug)?.name ??
+      input.categorySlug
+    filters.push({ key: 'category', label: categoryName })
   }
 
   if (input.brandSlug) {
-    const brand = input.brands.find((b) => b.slug === input.brandSlug)
+    const brand =
+      input.facets?.brands.find((b) => b.slug === input.brandSlug) ??
+      input.brands.find((b) => b.slug === input.brandSlug)
     filters.push({ key: 'brand', label: `Brand: ${brand?.name ?? input.brandSlug}` })
   }
 
+  if (input.tipologia) {
+    const label =
+      input.facets?.tipologie.find(
+        (t) =>
+          t.label.toLowerCase() === input.tipologia!.toLowerCase() ||
+          String(t.value).toLowerCase() === input.tipologia!.toLowerCase(),
+      )?.label ?? input.tipologia
+    filters.push({ key: 'tipologia', label })
+  }
+
+  if (input.ambiente) {
+    const label =
+      input.facets?.ambienti.find(
+        (a) =>
+          a.label.toLowerCase() === input.ambiente!.toLowerCase() ||
+          String(a.value).toLowerCase() === input.ambiente!.toLowerCase(),
+      )?.label ?? input.ambiente
+    filters.push({ key: 'ambiente', label })
+  }
+
+  if (input.stile) {
+    const label =
+      input.facets?.stili.find(
+        (s) =>
+          s.label.toLowerCase() === input.stile!.toLowerCase() ||
+          String(s.value).toLowerCase() === input.stile!.toLowerCase(),
+      )?.label ?? input.stile
+    filters.push({ key: 'stile', label })
+  }
+
+  if (input.tag) {
+    const label =
+      input.facets?.tags.find(
+        (t) =>
+          t.label.toLowerCase() === input.tag!.toLowerCase() ||
+          String(t.value).toLowerCase() === input.tag!.toLowerCase(),
+      )?.label ?? input.tag
+    filters.push({ key: 'tag', label })
+  }
+
   if (input.attacco) {
-    filters.push({ key: 'attacco', label: input.attacco })
+    const attaccoLabel =
+      input.facets?.attacchi.find(
+        (a) =>
+          a.label.toLowerCase() === input.attacco!.toLowerCase() ||
+          String(a.value).toLowerCase() === input.attacco!.toLowerCase(),
+      )?.label ?? input.attacco
+    filters.push({ key: 'attacco', label: attaccoLabel })
   }
 
   if (input.colorTemp) {
     filters.push({ key: 'colorTemp', label: input.colorTemp })
+  }
+
+  if (input.wattaggioMin != null || input.wattaggioMax != null) {
+    const minLabel = input.wattaggioMin != null ? `${input.wattaggioMin} W` : '…'
+    const maxLabel = input.wattaggioMax != null ? `${input.wattaggioMax} W` : '…'
+    filters.push({ key: 'wattaggio', label: `${minLabel} – ${maxLabel}` })
+  } else if (input.wattaggio) {
+    const wattLabel =
+      input.facets?.wattaggi.find(
+        (w) => String(w.value).replace(/\.0+$/, '') === String(input.wattaggio).replace(/\.0+$/, ''),
+      )?.label ?? `${input.wattaggio} W`
+    filters.push({ key: 'wattaggio', label: wattLabel })
   }
 
   if (input.priceBucket) {

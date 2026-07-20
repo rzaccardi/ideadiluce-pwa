@@ -68,7 +68,7 @@ export function useProductDetailState({
           }
         })
         .catch(() => {
-          /* mantieni dati Arfly se arricchimento non disponibile */
+          /* mantieni dati OdooCatalog se arricchimento non disponibile */
         })
         .finally(() => {
           if (!cancelled) setIsStockEnriching(false)

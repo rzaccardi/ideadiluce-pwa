@@ -24,7 +24,19 @@ function firstParam(
 /** Risolve filtri server-side per seed SSR (world → categoria radice). */
 function resolveCatalogSsrFilters(
   params: Record<string, string | string[] | undefined>,
-): { q?: string; category?: string; brand?: string; attacco?: string; colorTemp?: string } {
+): {
+  q?: string
+  category?: string
+  brand?: string
+  attacco?: string
+  colorTemp?: string
+  tipologia?: string
+  ambiente?: string
+  stile?: string
+  tag?: string
+  world?: 'design' | 'technical'
+  sort?: string
+} {
   const worldTab = parseCatalogWorld(firstParam(params.world))
   const categoryParam = firstParam(params.category)
   const category =
@@ -34,6 +46,8 @@ function resolveCatalogSsrFilters(
       : worldTab === 'technical'
         ? CATALOG_TECHNICAL_CATEGORY_SLUG
         : undefined)
+  const world = worldTab === 'design' || worldTab === 'technical' ? worldTab : undefined
+  const sort = firstParam(params.sort)
 
   return {
     q: firstParam(params.q),
@@ -41,6 +55,12 @@ function resolveCatalogSsrFilters(
     brand: firstParam(params.brand),
     attacco: firstParam(params.attacco),
     colorTemp: firstParam(params.colorTemp),
+    tipologia: firstParam(params.tipologia),
+    ambiente: firstParam(params.ambiente),
+    stile: firstParam(params.stile),
+    tag: firstParam(params.tag),
+    world,
+    sort,
   }
 }
 
@@ -69,6 +89,12 @@ export async function CatalogRoutePage({ searchParams }: PageProps) {
       brand: ssrFilters.brand,
       attacco: ssrFilters.attacco,
       colorTemp: ssrFilters.colorTemp,
+      tipologia: ssrFilters.tipologia,
+      ambiente: ssrFilters.ambiente,
+      stile: ssrFilters.stile,
+      tag: ssrFilters.tag,
+      world: ssrFilters.world,
+      sort: ssrFilters.sort,
     }),
     fetchCatalogBootstrapServer(locale),
   ])

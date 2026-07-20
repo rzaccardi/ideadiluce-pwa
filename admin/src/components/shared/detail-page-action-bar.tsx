@@ -40,10 +40,10 @@ export function DetailPageActionBar({
         stickyOnMobile
           ? cn(
               'detail-actions-sticky w-full flex-row flex-wrap items-stretch max-lg:[&_button]:w-full',
-              'lg:w-auto lg:shrink-0 lg:flex-nowrap lg:items-center lg:justify-end lg:[&_button]:w-auto',
+              'lg:w-full lg:items-center lg:justify-end lg:[&_button]:w-auto',
             )
           : cn(
-              'w-full flex-col sm:flex-row sm:flex-wrap sm:justify-stretch lg:w-auto lg:justify-end lg:items-center',
+              'w-full flex-col sm:flex-row sm:flex-wrap sm:justify-stretch lg:w-auto lg:shrink-0 lg:justify-end lg:items-center',
             ),
         className,
       )}

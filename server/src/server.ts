@@ -14,6 +14,8 @@ import {
 import { startSeoCacheScheduler } from './jobs/seoCache.scheduler.js'
 import { hydrateSeoCacheFromDisk } from './modules/seo/seo-cache.service.js'
 import { startSearchHintsOdooScheduler } from './jobs/searchHintsOdoo.scheduler.js'
+import { startOdooCatalogIndexScheduler } from './jobs/odooCatalogIndex.scheduler.js'
+import { hydrateOdooCatalogIndexFromDisk } from './modules/catalog/odoo-catalog-index.service.js'
 
 const app = createApp()
 
@@ -39,8 +41,13 @@ void hydrateSeoCacheFromDisk().catch((e) => {
   logger.warn('seo.disk_cache_hydrate_failed', { err: String(e) })
 })
 
+void hydrateOdooCatalogIndexFromDisk().catch((e) => {
+  logger.warn('catalog_index.disk_hydrate_failed', { err: String(e) })
+})
+
 startSeoCacheScheduler()
 startSearchHintsOdooScheduler()
+startOdooCatalogIndexScheduler()
 
 const server = app.listen(env.PORT, () => {
   logger.info(`API in ascolto sulla porta ${env.PORT}`, { nodeEnv: env.NODE_ENV })

@@ -7,6 +7,7 @@ import {
   FileTextIcon,
   HomeIcon,
   LayoutTemplateIcon,
+  MailIcon,
   MegaphoneIcon,
   SearchIcon,
   ShoppingBagIcon,
@@ -14,14 +15,23 @@ import {
   TagsIcon,
   TruckIcon,
   ReceiptIcon,
-  ScrollTextIcon,
   RefreshCwIcon,
-  FileDownIcon,
 } from 'lucide-react'
 import { getSitePageLabel } from '@/features/site'
 
 function getSitePageLabelFromPath(pageKey: string) {
   return getSitePageLabel(pageKey)
+}
+
+/** Etichetta leggibile da slug guida (es. luce-calda-o-fredda → Luce calda o fredda). */
+function formatGuideSlugLabel(slug: string) {
+  const raw = slug.trim()
+  if (!raw) return 'Dettaglio guida'
+  return raw
+    .split('-')
+    .filter(Boolean)
+    .map((word, i) => (i === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word))
+    .join(' ')
 }
 
 export type NavItem = {
@@ -40,48 +50,11 @@ export type NavSection = {
 
 export const navSections: NavSection[] = [
   {
-    label: 'CONTENUTI',
-    items: [
-      {
-        to: '/guides',
-        label: 'Guide editoriali',
-        icon: BookOpenIcon,
-        accentClass: 'text-amber-700',
-        accentBgClass: 'bg-amber-50',
-        match: (p) => p.startsWith('/guides'),
-      },
-      {
-        to: '/seo',
-        label: 'SEO e feed',
-        icon: SearchIcon,
-        accentClass: 'text-emerald-700',
-        accentBgClass: 'bg-emerald-50',
-        match: (p) => p.startsWith('/seo'),
-      },
-      {
-        to: '/site',
-        label: 'Contenuti sito',
-        icon: LayoutTemplateIcon,
-        accentClass: 'text-sky-600',
-        accentBgClass: 'bg-sky-50',
-        match: (p) => p.startsWith('/site'),
-      },
-      {
-        to: '/professional-requests',
-        label: 'Account professionisti',
-        icon: BriefcaseBusinessIcon,
-        accentClass: 'text-violet-600',
-        accentBgClass: 'bg-violet-50',
-        match: (p) => p.startsWith('/professional-requests'),
-      },
-    ],
-  },
-  {
-    label: 'OPERAZIONI',
+    label: 'Vendite',
     items: [
       {
         to: '/orders',
-        label: 'Elenco ordini',
+        label: 'Ordini',
         icon: ShoppingCartIcon,
         accentClass: 'text-indigo-600',
         accentBgClass: 'bg-indigo-50',
@@ -104,6 +77,106 @@ export const navSections: NavSection[] = [
         match: (p) => p.startsWith('/restock'),
       },
       {
+        to: '/odoo/quotations',
+        label: 'Preventivi Odoo',
+        icon: FileTextIcon,
+        accentClass: 'text-cyan-600',
+        accentBgClass: 'bg-cyan-50',
+        match: (p) => p.startsWith('/odoo/quotations'),
+      },
+    ],
+  },
+  {
+    label: 'Catalogo',
+    items: [
+      {
+        to: '/odoo/pricelists',
+        label: 'Listini Odoo',
+        icon: TagsIcon,
+        accentClass: 'text-pink-600',
+        accentBgClass: 'bg-pink-50',
+        match: (p) => p.startsWith('/odoo/pricelists'),
+      },
+      {
+        to: '/catalog-cache',
+        label: 'Cache catalogo',
+        icon: RefreshCwIcon,
+        accentClass: 'text-blue-600',
+        accentBgClass: 'bg-blue-50',
+        match: (p) => p.startsWith('/catalog-cache'),
+      },
+      {
+        to: '/search-analytics',
+        label: 'Analytics ricerca',
+        icon: BarChart3Icon,
+        accentClass: 'text-violet-600',
+        accentBgClass: 'bg-violet-50',
+        match: (p) => p.startsWith('/search-analytics'),
+      },
+      {
+        to: '/social-proof',
+        label: 'Social proof',
+        icon: MegaphoneIcon,
+        accentClass: 'text-emerald-600',
+        accentBgClass: 'bg-emerald-50',
+        match: (p) => p.startsWith('/social-proof'),
+      },
+    ],
+  },
+  {
+    label: 'Contenuti',
+    items: [
+      {
+        to: '/site',
+        label: 'Pagine sito',
+        icon: LayoutTemplateIcon,
+        accentClass: 'text-sky-600',
+        accentBgClass: 'bg-sky-50',
+        match: (p) => p.startsWith('/site'),
+      },
+      {
+        to: '/guides',
+        label: 'Guide',
+        icon: BookOpenIcon,
+        accentClass: 'text-amber-700',
+        accentBgClass: 'bg-amber-50',
+        match: (p) => p.startsWith('/guides'),
+      },
+      {
+        to: '/seo',
+        label: 'SEO e feed',
+        icon: SearchIcon,
+        accentClass: 'text-emerald-700',
+        accentBgClass: 'bg-emerald-50',
+        match: (p) => p.startsWith('/seo'),
+      },
+    ],
+  },
+  {
+    label: 'Clienti',
+    items: [
+      {
+        to: '/site-inquiries',
+        label: 'Richieste contatto',
+        icon: MailIcon,
+        accentClass: 'text-sky-600',
+        accentBgClass: 'bg-sky-50',
+        match: (p) => p.startsWith('/site-inquiries'),
+      },
+      {
+        to: '/professional-requests',
+        label: 'Professionisti',
+        icon: BriefcaseBusinessIcon,
+        accentClass: 'text-violet-600',
+        accentBgClass: 'bg-violet-50',
+        match: (p) => p.startsWith('/professional-requests'),
+      },
+    ],
+  },
+  {
+    label: 'Configurazione',
+    items: [
+      {
         to: '/shipping',
         label: 'Spedizioni',
         icon: TruckIcon,
@@ -119,62 +192,6 @@ export const navSections: NavSection[] = [
         accentBgClass: 'bg-teal-50',
         match: (p) => p.startsWith('/tax-rules'),
       },
-      {
-        to: '/odoo/quotations',
-        label: 'Preventivi Odoo',
-        icon: FileTextIcon,
-        accentClass: 'text-cyan-600',
-        accentBgClass: 'bg-cyan-50',
-        match: (p) => p.startsWith('/odoo/quotations'),
-      },
-      {
-        to: '/odoo/pricelists',
-        label: 'Listini Odoo',
-        icon: TagsIcon,
-        accentClass: 'text-pink-600',
-        accentBgClass: 'bg-pink-50',
-        match: (p) => p.startsWith('/odoo/pricelists'),
-      },
-      {
-        to: '/integration-logs',
-        label: 'Log integrazioni',
-        icon: ScrollTextIcon,
-        accentClass: 'text-slate-600',
-        accentBgClass: 'bg-slate-50',
-        match: (p) => p.startsWith('/integration-logs'),
-      },
-      {
-        to: '/search-analytics',
-        label: 'Analytics ricerca',
-        icon: BarChart3Icon,
-        accentClass: 'text-violet-600',
-        accentBgClass: 'bg-violet-50',
-        match: (p) => p.startsWith('/search-analytics'),
-      },
-      {
-        to: '/document-downloads',
-        label: 'Download documenti',
-        icon: FileDownIcon,
-        accentClass: 'text-stone-600',
-        accentBgClass: 'bg-stone-50',
-        match: (p) => p.startsWith('/document-downloads'),
-      },
-      {
-        to: '/sync-queue',
-        label: 'Coda sync Odoo',
-        icon: RefreshCwIcon,
-        accentClass: 'text-blue-600',
-        accentBgClass: 'bg-blue-50',
-        match: (p) => p.startsWith('/sync-queue'),
-      },
-      {
-        to: '/social-proof',
-        label: 'Social proof',
-        icon: MegaphoneIcon,
-        accentClass: 'text-emerald-600',
-        accentBgClass: 'bg-emerald-50',
-        match: (p) => p.startsWith('/social-proof'),
-      },
     ],
   },
 ]
@@ -184,13 +201,13 @@ export type BreadcrumbItem = { label: string; href?: string }
 export function getBreadcrumbs(pathname: string, _search = ''): BreadcrumbItem[] {
   if (pathname.startsWith('/orders/') && pathname !== '/orders') {
     return [
-      { label: 'Elenco ordini', href: '/orders' },
+      { label: 'Ordini', href: '/orders' },
       { label: 'Dettaglio ordine' },
     ]
   }
   if (pathname.startsWith('/orders')) {
     return [
-      { label: 'Elenco ordini', href: '/orders' },
+      { label: 'Ordini', href: '/orders' },
       { label: 'Ordini e-commerce' },
     ]
   }
@@ -238,40 +255,39 @@ export function getBreadcrumbs(pathname: string, _search = ''): BreadcrumbItem[]
   }
   if (pathname.startsWith('/professional-requests/') && pathname !== '/professional-requests') {
     return [
-      { label: 'Account professionisti', href: '/professional-requests' },
+      { label: 'Professionisti', href: '/professional-requests' },
       { label: 'Dettaglio richiesta' },
     ]
   }
   if (pathname.startsWith('/professional-requests')) {
     return [
-      { label: 'Account professionisti', href: '/professional-requests' },
+      { label: 'Professionisti', href: '/professional-requests' },
       { label: 'Richieste attivazione B2B dalla PWA' },
+    ]
+  }
+  if (pathname.startsWith('/site-inquiries/') && pathname !== '/site-inquiries') {
+    return [
+      { label: 'Richieste contatto', href: '/site-inquiries' },
+      { label: 'Dettaglio richiesta' },
+    ]
+  }
+  if (pathname.startsWith('/site-inquiries')) {
+    return [
+      { label: 'Richieste contatto', href: '/site-inquiries' },
+      { label: 'Moduli Contatti e lead dal sito' },
     ]
   }
   if (pathname.startsWith('/guides/') && pathname !== '/guides') {
     const slug = decodeURIComponent(pathname.slice('/guides/'.length).split('/')[0] ?? '')
     return [
-      { label: 'Guide editoriali', href: '/guides' },
-      { label: slug.replace(/-/g, ' ') },
+      { label: 'Guide', href: '/guides' },
+      { label: formatGuideSlugLabel(slug) },
     ]
   }
   if (pathname.startsWith('/guides')) {
     return [
-      { label: 'Guide editoriali', href: '/guides' },
+      { label: 'Guide', href: '/guides' },
       { label: 'Elenco guide' },
-    ]
-  }
-  if (pathname.startsWith('/seo/migration/') && pathname !== '/seo/migration') {
-    return [
-      { label: 'SEO e feed', href: '/seo' },
-      { label: 'Migrazione WordPress', href: '/seo/migration' },
-      { label: 'Dettaglio export' },
-    ]
-  }
-  if (pathname.startsWith('/seo/migration')) {
-    return [
-      { label: 'SEO e feed', href: '/seo' },
-      { label: 'Migrazione WordPress' },
     ]
   }
   if (pathname.startsWith('/seo')) {
@@ -283,13 +299,13 @@ export function getBreadcrumbs(pathname: string, _search = ''): BreadcrumbItem[]
   if (pathname.startsWith('/site/') && pathname !== '/site') {
     const pageKey = decodeURIComponent(pathname.slice('/site/'.length).split('/')[0] ?? '')
     return [
-      { label: 'Contenuti sito', href: '/site' },
+      { label: 'Pagine sito', href: '/site' },
       { label: getSitePageLabelFromPath(pageKey) },
     ]
   }
   if (pathname.startsWith('/site')) {
     return [
-      { label: 'Contenuti sito', href: '/site' },
+      { label: 'Pagine sito', href: '/site' },
       { label: 'Pagine editoriali PWA' },
     ]
   }
@@ -308,13 +324,7 @@ export function getBreadcrumbs(pathname: string, _search = ''): BreadcrumbItem[]
   if (pathname.startsWith('/odoo/pricelists')) {
     return [
       { label: 'Listini Odoo', href: '/odoo/pricelists' },
-      { label: 'Listini e assegnazioni partner' },
-    ]
-  }
-  if (pathname.startsWith('/integration-logs')) {
-    return [
-      { label: 'Log integrazioni', href: '/integration-logs' },
-      { label: 'Chiamate verso Odoo e servizi esterni' },
+      { label: 'Elenco listini product.pricelist' },
     ]
   }
   if (pathname.startsWith('/search-analytics')) {
@@ -323,16 +333,10 @@ export function getBreadcrumbs(pathname: string, _search = ''): BreadcrumbItem[]
       { label: 'Query catalogo e trend di mercato' },
     ]
   }
-  if (pathname.startsWith('/document-downloads')) {
+  if (pathname.startsWith('/catalog-cache')) {
     return [
-      { label: 'Download documenti', href: '/document-downloads' },
-      { label: 'Tracciamento schede tecniche PDP' },
-    ]
-  }
-  if (pathname.startsWith('/sync-queue')) {
-    return [
-      { label: 'Coda sync Odoo', href: '/sync-queue' },
-      { label: 'Retry sync post-pagamento' },
+      { label: 'Cache catalogo', href: '/catalog-cache' },
+      { label: 'Indice OdooCatalog e sync notturno' },
     ]
   }
   return []
@@ -392,7 +396,7 @@ export function getPageMeta(pathname: string, _search = ''): {
   }
   if (pathname.startsWith('/orders')) {
     return {
-      title: 'Elenco ordini',
+      title: 'Ordini',
       description: 'Ordini e-commerce PWA con filtri e journey checkout',
       icon: ShoppingCartIcon,
       iconClassName: 'text-indigo-600',
@@ -437,17 +441,35 @@ export function getPageMeta(pathname: string, _search = ''): {
   }
   if (pathname.startsWith('/professional-requests')) {
     return {
-      title: 'Account professionisti',
+      title: 'Professionisti',
       description: 'Richieste attivazione B2B inviate dalla pagina /professionisti',
       icon: BriefcaseBusinessIcon,
       iconClassName: 'text-violet-600',
       iconBgClassName: 'bg-violet-50',
     }
   }
+  if (pathname.startsWith('/site-inquiries/') && pathname !== '/site-inquiries') {
+    return {
+      title: 'Dettaglio richiesta contatto',
+      description: 'Messaggio, allegati e gestione stato',
+      icon: MailIcon,
+      iconClassName: 'text-sky-600',
+      iconBgClassName: 'bg-sky-50',
+    }
+  }
+  if (pathname.startsWith('/site-inquiries')) {
+    return {
+      title: 'Richieste contatto',
+      description: 'Moduli Contatti, prodotto non trovato e lead business dal sito',
+      icon: MailIcon,
+      iconClassName: 'text-sky-600',
+      iconBgClassName: 'bg-sky-50',
+    }
+  }
   if (pathname.startsWith('/guides/') && pathname !== '/guides') {
     const slug = decodeURIComponent(pathname.slice('/guides/'.length).split('/')[0] ?? '')
     return {
-      title: slug.replace(/-/g, ' '),
+      title: formatGuideSlugLabel(slug),
       description: 'Contenuto, traduzioni e indicizzazione della guida',
       icon: BookOpenIcon,
       iconClassName: 'text-amber-700',
@@ -456,7 +478,7 @@ export function getPageMeta(pathname: string, _search = ''): {
   }
   if (pathname.startsWith('/guides')) {
     return {
-      title: 'Guide editoriali',
+      title: 'Guide',
       description: 'Pubblicazione, traduzioni e ordine nel catalogo guide',
       icon: BookOpenIcon,
       iconClassName: 'text-amber-700',
@@ -484,7 +506,7 @@ export function getPageMeta(pathname: string, _search = ''): {
   }
   if (pathname.startsWith('/site')) {
     return {
-      title: 'Contenuti sito',
+      title: 'Pagine sito',
       description: 'Header, footer, trust bar e homepage — testi gestiti dal backoffice',
       icon: LayoutTemplateIcon,
       iconClassName: 'text-sky-600',
@@ -512,19 +534,10 @@ export function getPageMeta(pathname: string, _search = ''): {
   if (pathname.startsWith('/odoo/pricelists')) {
     return {
       title: 'Listini Odoo',
-      description: 'Listini product.pricelist e assegnazione su res.partner',
+      description: 'Listini product.pricelist da Odoo',
       icon: TagsIcon,
       iconClassName: 'text-pink-600',
       iconBgClassName: 'bg-pink-50',
-    }
-  }
-  if (pathname.startsWith('/integration-logs')) {
-    return {
-      title: 'Log integrazioni',
-      description: 'Chiamate verso Odoo, VIES e servizi esterni',
-      icon: ScrollTextIcon,
-      iconClassName: 'text-slate-600',
-      iconBgClassName: 'bg-slate-50',
     }
   }
   if (pathname.startsWith('/search-analytics')) {
@@ -536,19 +549,10 @@ export function getPageMeta(pathname: string, _search = ''): {
       iconBgClassName: 'bg-violet-50',
     }
   }
-  if (pathname.startsWith('/document-downloads')) {
+  if (pathname.startsWith('/catalog-cache')) {
     return {
-      title: 'Download documenti',
-      description: 'Tracciamento schede tecniche e datasheet dalle PDP',
-      icon: FileDownIcon,
-      iconClassName: 'text-stone-600',
-      iconBgClassName: 'bg-stone-50',
-    }
-  }
-  if (pathname.startsWith('/sync-queue')) {
-    return {
-      title: 'Coda sync Odoo',
-      description: 'Retry automatici sync Odoo post-pagamento',
+      title: 'Cache catalogo',
+      description: 'Stato indice OdooCatalog e sync manuale',
       icon: RefreshCwIcon,
       iconClassName: 'text-blue-600',
       iconBgClassName: 'bg-blue-50',

@@ -1,6 +1,6 @@
 import { env } from '../../config/env.js'
 import { absoluteUrl, productPath, type HubLocale } from '../../lib/hub-locale.js'
-import { resolveCatalogProduct, listArflyProductSlugs } from '../catalog/catalogResolver.service.js'
+import { resolveCatalogProduct, listOdooCatalogProductSlugs } from '../catalog/catalogResolver.service.js'
 import type { ProductDetailDTO } from '../../types/dto.js'
 
 function escapeXml(s: string): string {
@@ -56,7 +56,7 @@ const MERCHANT_FEED_BATCH_SIZE = 8
 
 export async function buildMerchantFeedXml(): Promise<string> {
   const siteBase = env.PUBLIC_SITE_URL
-  const slugs = await listArflyProductSlugs('IT')
+  const slugs = await listOdooCatalogProductSlugs('IT')
   const items: string[] = []
 
   for (let i = 0; i < slugs.length; i += MERCHANT_FEED_BATCH_SIZE) {
@@ -84,7 +84,7 @@ ${items.join('\n')}
 export async function validateMerchantFeedSample(limit = 10): Promise<
   Array<{ slug: string; feedPrice: string; pagePrice: string; match: boolean }>
 > {
-  const slugs = (await listArflyProductSlugs('IT')).slice(0, limit)
+  const slugs = (await listOdooCatalogProductSlugs('IT')).slice(0, limit)
   const results = []
   for (const slug of slugs) {
     const product = await resolveCatalogProduct({ correlationId: 'merchant-feed' }, slug, 'IT')

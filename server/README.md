@@ -1,6 +1,21 @@
 # Server — API proxy eCommerce headless
 
-Backend **Express + TypeScript + Prisma + Zod**. Il frontend deve chiamare solo queste API; **Odoo** è integrato solo qui (`src/adapters/odoo/`), tramite **XML-RPC** ([Odoo 18 External API](https://www.odoo.com/documentation/18.0/developer/reference/external_api.html)) su `/xmlrpc/2/common` e `/xmlrpc/2/object`.
+Backend **Express + TypeScript + Prisma + Zod**. Il frontend deve chiamare solo queste API; **Odoo** è integrato solo qui.
+
+## Catalogo prodotti (API v2 OdooCatalog)
+
+Contratto: [`docs/API-Prodotti-Odoo-PWA.md`](../docs/API-Prodotti-Odoo-PWA.md).
+
+| | |
+|---|---|
+| **Upstream catalogo** | Solo contratto v2: `GET /api/v2/products`, `GET /api/v2/product/<id>` (+ `website`, `lang`, paginazione). Auth Bearer. |
+| **Non usati** | `by-slug`, `/categories`, `/brands`, XML-RPC catalogo, `?q=`/`?search=` Odoo |
+| **Storefront** | Indice BFF da sync contratto; ricerca/filtri/categorie/brand e PDP da cache |
+| **Docs PDF** | `GET /product-docs/<ced>/<tipo>/current` (pubblico) |
+
+Lingue contratto: `it_IT` · `en_US` · `fr_FR` · `de_DE` · `es_ES` · `ro_RO` (PWA espone IT/EN/FR/DE/ES; `ro_RO` riconosciuto con fallback IT). Upstream 401 → errore BFF; 404 dettaglio → «prodotto non più disponibile».
+
+Stock/prezzi listino partner possono ancora usare XML-RPC Odoo; **non** per lista/ricerca catalogo storefront.
 
 > **Nota:** un’integrazione basata su **JSON-2** (Odoo 19+) non è più l’implementazione attiva in questo repo; restano in `.env` solo `ODOO_BASE_URL` / `ODOO_API_KEY` come opzioni deprecate per compatibilità futura.
 
@@ -13,7 +28,7 @@ Backend **Express + TypeScript + Prisma + Zod**. Il frontend deve chiamare solo 
 
 ```bash
 cp ../.env.example ../.env   # dalla root del monorepo
-# compila DATABASE_URL, CLIENT_ORIGIN, ODOO_* se usi Odoo, ecc.
+# compila DATABASE_URL, CLIENT_ORIGIN, ODOO_CATALOG_* (catalogo), ODOO_* (stock/pricing) se serve
 ```
 
 ## Script
@@ -68,6 +83,7 @@ In produzione/staging: eseguire solo `migrate deploy` dopo il merge del branch c
 
 - `GET /health` — liveness  
 - Prefisso API: `/api/v1` (auth, catalog, cart, wishlist, checkout, orders, users, **integrations**)  
+- Prefisso proxy catalogo: `/api/v2` (OdooCatalog trasparente)
 
 ### Catalogo prodotti
 
@@ -77,7 +93,7 @@ In produzione/staging: eseguire solo `migrate deploy` dopo il merge del branch c
 |-------|---------|------|
 | `category` | assente | Slug categoria opzionale. |
 | `page` | `1` | Numero pagina, intero positivo. |
-| `pageSize` | `24` | Massimo `60`. |
+| `pageSize` | `24` | Massimo `100`. |
 
 Risposta in envelope `{ data: ... }`:
 

@@ -2,14 +2,14 @@ import { config } from 'dotenv'
 import { resolve } from 'node:path'
 import { afterAll, describe, expect, it, vi } from 'vitest'
 import { isOdooConfigured } from '../../adapters/odoo/odooClient.js'
-import { isArflyConfigured } from '../../adapters/arfly/arflyClient.js'
+import { isOdooCatalogConfigured } from '../../adapters/odoo-catalog/odooCatalogClient.js'
 import { resetHomeProductSlidersCache } from './home-product-sliders.cache.js'
 import { homeProductSlidersService } from './home-product-sliders.service.js'
 import { HOME_PRODUCT_SLIDER_KEYS } from './home-product-sliders.types.js'
 
 config({ path: resolve(process.cwd(), '../.env') })
 
-const integrationEnabled = isOdooConfigured() && isArflyConfigured()
+const integrationEnabled = isOdooConfigured() && isOdooCatalogConfigured()
 
 describe.skipIf(!integrationEnabled)('home product sliders integration', () => {
   afterAll(() => {

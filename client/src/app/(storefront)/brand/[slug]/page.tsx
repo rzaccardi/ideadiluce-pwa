@@ -7,7 +7,12 @@ import { getRequestLocale } from '@/lib/locale-server'
 import { buildMetadata } from '@/lib/seo'
 import { buildBreadcrumbJsonLd, buildCollectionPageJsonLd } from '@/lib/seo/json-ld'
 import { brandSeoPath, buildLocalizedPageSeo } from '@/lib/seo-paths'
-import { fetchBrandMetaServer, fetchCatalogProductsServer } from '@/lib/server-catalog'
+import {
+  buildBrandTaxonomy,
+  canonicalizeBrandSlug,
+  humanizeSlug,
+} from '@/lib/catalog-taxonomy'
+import { fetchBrandMetaServer, fetchCatalogBootstrapServer, fetchCatalogProductsServer } from '@/lib/server-catalog'
 
 export const revalidate = 1800
 
@@ -18,14 +23,12 @@ type PageProps = {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
   const locale = await getRequestLocale()
-  const brand = await fetchBrandMetaServer(slug, locale)
-  if (!brand) {
-    return { title: 'Brand non trovato', robots: { index: false, follow: false } }
-  }
-  const name = brand.name
+  const filterSlug = canonicalizeBrandSlug(slug)
+  const brand = await fetchBrandMetaServer(filterSlug, locale)
+  const name = brand?.name ?? humanizeSlug(filterSlug)
   const { canonical, alternates } = buildLocalizedPageSeo({
     currentLocale: locale,
-    pathForLocale: () => brandSeoPath(slug),
+    pathForLocale: () => brandSeoPath(brand?.slug ?? filterSlug),
   })
   return buildMetadata({
     title: name,
@@ -38,15 +41,26 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function BrandSlugPage({ params }: PageProps) {
   const { slug } = await params
   const locale = await getRequestLocale()
-  const [brand, productsRes] = await Promise.all([
-    fetchBrandMetaServer(slug, locale),
-    fetchCatalogProductsServer(locale, { brand: slug, pageSize: 24 }),
+  const filterSlug = canonicalizeBrandSlug(slug)
+  const brand = await fetchBrandMetaServer(filterSlug, locale)
+  const canonicalSlug = brand?.slug ?? filterSlug
+
+  const [productsRes, initialBootstrap] = await Promise.all([
+    fetchCatalogProductsServer(locale, { brand: canonicalSlug, pageSize: 24 }),
+    fetchCatalogBootstrapServer(locale),
   ])
-  if (!brand) notFound()
-  const name = brand.name
+
+  const name =
+    brand?.name ?? productsRes.items[0]?.brand?.name ?? humanizeSlug(canonicalSlug)
+
+  if (!brand && productsRes.total === 0) {
+    notFound()
+  }
+
+  const taxonomy = buildBrandTaxonomy(canonicalSlug, name)
   const { canonical } = buildLocalizedPageSeo({
     currentLocale: locale,
-    pathForLocale: () => brandSeoPath(slug),
+    pathForLocale: () => brandSeoPath(canonicalSlug),
   })
   const site = getSiteUrl().replace(/\/$/, '')
 
@@ -67,7 +81,19 @@ export default async function BrandSlugPage({ params }: PageProps) {
           ]),
         ]}
       />
-      <CatalogPage forcedBrandSlug={slug} initialProducts={productsRes.items} />
+      <CatalogPage
+        forcedTaxonomy={taxonomy}
+        initialProducts={productsRes.items}
+        initialBootstrap={initialBootstrap}
+        initialPagination={{
+          page: productsRes.page,
+          pageSize: productsRes.pageSize,
+          total: productsRes.total,
+          totalPages: productsRes.totalPages,
+          hasNextPage: productsRes.hasNextPage,
+          hasPreviousPage: productsRes.hasPreviousPage,
+        }}
+      />
     </>
   )
 }

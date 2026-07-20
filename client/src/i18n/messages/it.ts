@@ -207,7 +207,7 @@ export const messages: Record<MessageKey, string> = {
   'category.loading': 'Caricamento…',
   'category.empty': 'Nessun prodotto in questa categoria.',
   'category.backToCatalog': '← {catalog}',
-  'product.notAvailable': 'Prodotto non disponibile',
+  'product.notAvailable': 'Prodotto non più disponibile',
   'product.backToCatalog': 'Torna al negozio',
   'product.sectionDescription': 'Descrizione del prodotto',
   'product.sectionSpecs': 'Caratteristiche tecniche',

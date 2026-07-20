@@ -7,7 +7,7 @@ import { z } from 'zod'
 const serverRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 const repoRoot = path.join(serverRoot, '..')
 
-config({ path: path.join(repoRoot, '.env') })
+config({ path: path.join(repoRoot, '.env'), override: true })
 
 const nodeEnvEarly = process.env.NODE_ENV ?? 'development'
 const dbUrlMissing = !process.env.DATABASE_URL?.trim()
@@ -41,15 +41,15 @@ const envSchema = z.object({
   ADMIN_SESSION_COOKIE_NAME: z.string().default('admin_sid'),
   ADMIN_SESSION_DAYS: z.coerce.number().default(7),
   DATABASE_URL: z.string().min(1),
-  /** Catalogo storefront: Odoo REST API v2 (sito Arfly su tlbdb.odoo.com, modulo tlb_idl_ecommerce). */
-  ARFLY_CATALOG_ENABLED: boolish.default(false),
+  /** Catalogo storefront: Odoo REST API v2 (website PWA su tlbdb.odoo.com, modulo tlb_idl_ecommerce). */
+  ODOO_CATALOG_ENABLED: boolish.default(false),
   /** Host Odoo (es. https://tlbdb.odoo.com). */
-  ARFLY_API_BASE_URL: z.string().optional(),
+  ODOO_CATALOG_BASE_URL: z.string().optional(),
   /** Bearer token API key (es. «PWA Platform»). */
-  ARFLY_API_KEY: z.string().optional(),
-  /** ID website Odoo (Arfly = 2). */
-  ARFLY_WEBSITE_ID: z.coerce.number().default(2),
-  ARFLY_TIMEOUT_MS: z.coerce.number().default(25_000),
+  ODOO_CATALOG_API_KEY: z.string().optional(),
+  /** ID website Odoo PWA (= 2). */
+  ODOO_WEBSITE_ID: z.coerce.number().default(2),
+  ODOO_CATALOG_TIMEOUT_MS: z.coerce.number().default(25_000),
   SESSION_COOKIE_NAME: z.string().default('sid'),
   SESSION_DAYS: z.coerce.number().default(30),
   /** Attiva chiamate reali verso Odoo via XML-RPC (Odoo 18). */
@@ -93,7 +93,7 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().email().optional(),
-  /** URL base PWA per link nelle email (es. https://www.ideadiluce.it). */
+  /** URL base PWA per link nelle email (es. https://shop.ideadiluce.it). */
   APP_PUBLIC_URL: z.string().optional(),
   PASSWORD_RESET_TOKEN_HOURS: z.coerce.number().default(24),
   CHECKOUT_REDIRECT_BASE: z.string().optional(),
@@ -145,15 +145,15 @@ const envSchema = z.object({
    * Se assente, si usano le stesse regole di `requireLogin`.
    */
   INTEGRATIONS_TOKEN: z.string().optional(),
-  /** URL pubblico PWA per preview SEO (es. https://www.ideadiluce.com). */
-  PUBLIC_SITE_URL: z.string().default('https://www.ideadiluce.com'),
+  /** URL pubblico PWA per sitemap / Merchant / llms (es. https://shop.ideadiluce.it). */
+  PUBLIC_SITE_URL: z.string().default('https://shop.ideadiluce.it'),
   /** Fase 2: URL pubblico piattaforma tecnica (es. https://www.rfly.com). */
   TECHNICAL_SITE_URL: z.string().optional(),
-  /** Fase 2: website Odoo dedicato al catalogo tecnico (default: ARFLY_WEBSITE_ID). */
-  TECHNICAL_ARFLY_WEBSITE_ID: z.coerce.number().optional(),
+  /** Fase 2: website Odoo dedicato al catalogo tecnico (default: ODOO_WEBSITE_ID). */
+  TECHNICAL_ODOO_WEBSITE_ID: z.coerce.number().optional(),
   /** Meta tag google-site-verification per Search Console. */
   GOOGLE_SITE_VERIFICATION: z.string().optional(),
-  /** Feed "Marco *** ha acquistato …" da ordini PWA/Odoo pagati. */
+  /** Feed "Marco *** ha acquistato …" da storico ordini unificato (PWA + Odoo). */
   SOCIAL_PROOF_ENABLED: boolish.default(true),
   SOCIAL_PROOF_LOOKBACK_DAYS: z.coerce.number().default(30),
   SOCIAL_PROOF_MAX_EVENTS: z.coerce.number().default(12),

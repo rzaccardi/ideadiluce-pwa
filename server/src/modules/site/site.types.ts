@@ -134,7 +134,7 @@ export type HomePageContent = {
     linkLabel: string
     linkHref: string
     productCount: number
-    /** Query Arfly opzionale (es. brand design). Se assente usa lista generica. */
+    /** Query OdooCatalog opzionale (es. brand design). Se assente usa lista generica. */
     searchQuery?: string
   }
   technicalShowcase: {
@@ -144,7 +144,7 @@ export type HomePageContent = {
     linkLabel: string
     linkHref: string
     productCount: number
-    /** Query Arfly opzionale (es. alimentatore, GU10). */
+    /** Query OdooCatalog opzionale (es. alimentatore, GU10). */
     searchQuery?: string
   }
   brands: {

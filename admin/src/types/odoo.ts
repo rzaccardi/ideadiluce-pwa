@@ -64,17 +64,6 @@ export type OdooPaginated<T> = {
   configured: boolean
 }
 
-export type OdooPricelistAssignment = {
-  partnerId: number
-  partnerName: string | null
-  partnerEmail: string | null
-  pricelistId: number | null
-  pricelistName: string | null
-  userId: string | null
-  email: string | null
-  localUserUpdated: boolean
-}
-
 export type OdooSyncOperation = 'FUNNEL_SYNC' | 'RECONCILE_LINES'
 
 export type OdooSyncQueueItem = {

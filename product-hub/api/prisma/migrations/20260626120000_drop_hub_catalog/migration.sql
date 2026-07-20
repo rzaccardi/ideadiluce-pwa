@@ -1,4 +1,4 @@
--- Drop catalogo prodotti Hub (contenuti gestiti solo su Odoo / Arfly)
+-- Drop catalogo prodotti Hub (contenuti gestiti solo su Odoo)
 
 DROP TABLE IF EXISTS "ProductPriceHistory" CASCADE;
 DROP TABLE IF EXISTS "OdooCatalogSync" CASCADE;

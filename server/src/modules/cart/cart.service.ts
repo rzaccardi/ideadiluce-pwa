@@ -5,8 +5,8 @@ import type { Request } from 'express'
 import type { HubLocale } from '../../lib/hub-locale.js'
 import { resolveCatalogProduct, resolveCatalogProductEnriched } from '../catalog/catalogResolver.service.js'
 import { formatOdooTemplateRef, formatOdooVariantRef, parseOdooTemplateId, parseOdooVariantId } from '../catalog/odooRef.js'
-import { fetchArflyProductList, isArflyConfigured } from '../../adapters/arfly/arflyClient.js'
-import { mapArflyListItem } from '../../adapters/arfly/arflyMapper.js'
+import { fetchOdooCatalogProductList, isOdooCatalogConfigured } from '../../adapters/odoo-catalog/odooCatalogClient.js'
+import { mapOdooCatalogListItem } from '../../adapters/odoo-catalog/odooCatalogMapper.js'
 import { env } from '../../config/env.js'
 import { cartRepository } from './cart.repository.js'
 import { mapCartToDTO } from './cart.mappers.js'
@@ -130,10 +130,10 @@ function displayMapFromCatalog(
   )
 }
 
-async function arflyRecommendationCards(limit: number): Promise<ProductCardDTO[]> {
-  if (!isArflyConfigured()) return []
-  const list = await fetchArflyProductList({ locale: 'IT', page: 1, perPage: limit })
-  return list.items.map((item) => mapArflyListItem(item, 'IT'))
+async function odooCatalogRecommendationCards(limit: number): Promise<ProductCardDTO[]> {
+  if (!isOdooCatalogConfigured()) return []
+  const list = await fetchOdooCatalogProductList({ locale: 'IT', page: 1, perPage: limit })
+  return list.items.map((item) => mapOdooCatalogListItem(item, 'IT'))
 }
 
 function assertSession(req: Request) {
@@ -561,7 +561,7 @@ function availabilityFromProduct(
   return variantAvailabilityToCartLine(resolved)
 }
 
-/** Prodotto minimo da ref Odoo + hint client: evita round-trip Arfly su add-to-cart. */
+/** Prodotto minimo da ref Odoo + hint client: evita round-trip OdooCatalog su add-to-cart. */
 function productDetailFromOdooHint(
   productRef: string,
   variantRef: string | null | undefined,
@@ -865,11 +865,11 @@ export const cartService = {
     const cart = await resolveOrCreateCart(req)
     const full = await cartRepository.getWithItems(cart.id)
     if (!full || full.items.length === 0) return []
-    return arflyRecommendationCards(8)
+    return odooCatalogRecommendationCards(8)
   },
 
   async recommendationsForSlugs(_req: Request, _productSlugs: string[]) {
-    return arflyRecommendationCards(8)
+    return odooCatalogRecommendationCards(8)
   },
 
   async reorderLines(

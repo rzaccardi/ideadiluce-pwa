@@ -1,5 +1,5 @@
-import { fetchArflyProductDetail, isArflyConfigured } from '../../adapters/arfly/arflyClient.js'
-import { mapArflyListItem } from '../../adapters/arfly/arflyMapper.js'
+import { fetchOdooCatalogProductDetail, isOdooCatalogConfigured } from '../../adapters/odoo-catalog/odooCatalogClient.js'
+import { mapOdooCatalogListItem } from '../../adapters/odoo-catalog/odooCatalogMapper.js'
 import {
   fetchTopPurchasedProducts,
   odooSearchHintsAvailable,
@@ -37,18 +37,18 @@ async function resolveCardsFromTemplateIds(
   ctx: OdooCallContext,
   templateIds: number[],
   locale: HubLocale,
-  pricing: { partnerId?: number; pricelistId?: number },
+  _pricing: { partnerId?: number; pricelistId?: number },
 ): Promise<ProductCardDTO[]> {
-  if (!isArflyConfigured() || templateIds.length === 0) return []
+  if (!isOdooCatalogConfigured() || templateIds.length === 0) return []
 
   const resolved = await Promise.all(
     templateIds.map(async (templateId): Promise<ProductCardStockHint | null> => {
       try {
-        const detail = await fetchArflyProductDetail(templateId, locale, pricing)
-        const card = mapArflyListItem(detail.product, locale)
+        const detail = await fetchOdooCatalogProductDetail(templateId, locale)
+        const card = mapOdooCatalogListItem(detail.product, locale)
         return { ...card, odooTemplateId: templateId }
       } catch {
-        // prodotto non pubblicato su Arfly
+        // prodotto non pubblicato su OdooCatalog
         return null
       }
     }),

@@ -56,7 +56,7 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['zod'],
   experimental: {
     optimizePackageImports: ['motion', 'framer-motion'],
-    // Dev proxy: add-to-cart può superare 30s (Arfly + Odoo).
+    // Dev proxy: add-to-cart può superare 30s (OdooCatalog + Odoo).
     proxyTimeout: 120_000,
   },
   eslint: {

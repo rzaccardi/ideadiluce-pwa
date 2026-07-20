@@ -1,7 +1,7 @@
 import type { Prisma } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { AppError } from '../../types/errors.js'
-import { resolveArflyProductLabels } from '../catalog/arfly-product-labels.js'
+import { resolveOdooCatalogProductLabels } from '../catalog/odoo-product-labels.js'
 import type {
   AbandonedCartsAdminDetailDTO,
   AbandonedCartsAdminListDTO,
@@ -37,7 +37,7 @@ function parseItemsSnapshot(json: unknown): LineSnapshot[] {
 async function resolveProductLabels(
   refs: string[],
 ): Promise<Map<string, { slug: string; name: string }>> {
-  const labels = await resolveArflyProductLabels(refs)
+  const labels = await resolveOdooCatalogProductLabels(refs)
   const map = new Map<string, { slug: string; name: string }>()
   for (const [ref, label] of labels) {
     map.set(ref, { slug: label.slug, name: label.name })

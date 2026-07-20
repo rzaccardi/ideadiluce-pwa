@@ -4,7 +4,7 @@ export const CATALOG_SEARCH_GUARD = {
   maxQueryLength: 120,
   minQueryLength: 1,
   suggestMaxPageSize: 8,
-  listMaxPageSize: 60,
+  listMaxPageSize: 100,
   defaultPageSize: 24,
 } as const
 

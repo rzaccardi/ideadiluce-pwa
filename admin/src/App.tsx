@@ -13,11 +13,11 @@ import { AbandonedCartsPage } from '@/pages/abandoned-carts/abandoned-carts-page
 import { AbandonedCartDetailPage } from '@/pages/abandoned-carts/abandoned-cart-detail-page'
 import { ProfessionalRequestsPage } from '@/pages/professional-requests/professional-requests-page'
 import { ProfessionalRequestDetailPage } from '@/pages/professional-requests/professional-request-detail-page'
+import { SiteInquiriesPage } from '@/pages/site-inquiries/site-inquiries-page'
+import { SiteInquiryDetailPage } from '@/pages/site-inquiries/site-inquiry-detail-page'
 import { TaxRulesPage } from '@/pages/tax-rules/tax-rules-page'
-import { IntegrationLogsPage } from '@/pages/integration-logs/integration-logs-page'
-import { DocumentDownloadsPage } from '@/pages/document-downloads/document-downloads-page'
 import { SearchAnalyticsPage } from '@/pages/search-analytics/search-analytics-page'
-import { SyncQueuePage } from '@/pages/sync-queue/sync-queue-page'
+import { CatalogCachePage } from '@/pages/catalog-cache/catalog-cache-page'
 
 const OrdersPage = lazy(() =>
   import('@/pages/orders/orders-page').then((m) => ({ default: m.OrdersPage })),
@@ -32,12 +32,6 @@ const GuideDetailPage = lazy(() =>
   import('@/pages/guides/guide-detail-page').then((m) => ({ default: m.GuideDetailPage })),
 )
 const SeoPage = lazy(() => import('@/pages/seo/seo-page').then((m) => ({ default: m.SeoPage })))
-const SeoMigrationListPage = lazy(() =>
-  import('@/pages/seo/seo-migration-list-page').then((m) => ({ default: m.SeoMigrationListPage })),
-)
-const SeoMigrationDetailPage = lazy(() =>
-  import('@/pages/seo/seo-migration-detail-page').then((m) => ({ default: m.SeoMigrationDetailPage })),
-)
 const SitePagesListPage = lazy(() =>
   import('@/pages/site/site-pages-list-page').then((m) => ({ default: m.SitePagesListPage })),
 )
@@ -98,8 +92,6 @@ export function App() {
               <Route path="restock/:id" element={<RestockDetailPage />} />
               <Route path="shipping" element={<ShippingPage />} />
               <Route path="tax-rules" element={<TaxRulesPage />} />
-              <Route path="integration-logs" element={<IntegrationLogsPage />} />
-              <Route path="document-downloads" element={<DocumentDownloadsPage />} />
               <Route path="search-analytics" element={<SearchAnalyticsPage />} />
               <Route
                 path="odoo/quotations"
@@ -125,7 +117,8 @@ export function App() {
                   </LazyPage>
                 }
               />
-              <Route path="sync-queue" element={<SyncQueuePage />} />
+              <Route path="catalog-cache" element={<CatalogCachePage />} />
+              <Route path="sync-queue" element={<Navigate to="/catalog-cache" replace />} />
               <Route path="social-proof" element={<SocialProofPage />} />
               <Route
                 path="site"
@@ -167,24 +160,10 @@ export function App() {
                   </LazyPage>
                 }
               />
-              <Route
-                path="seo/migration"
-                element={
-                  <LazyPage>
-                    <SeoMigrationListPage />
-                  </LazyPage>
-                }
-              />
-              <Route
-                path="seo/migration/:id"
-                element={
-                  <LazyPage>
-                    <SeoMigrationDetailPage />
-                  </LazyPage>
-                }
-              />
               <Route path="professional-requests" element={<ProfessionalRequestsPage />} />
               <Route path="professional-requests/:id" element={<ProfessionalRequestDetailPage />} />
+              <Route path="site-inquiries" element={<SiteInquiriesPage />} />
+              <Route path="site-inquiries/:id" element={<SiteInquiryDetailPage />} />
             </Route>
           </Route>
         </Routes>

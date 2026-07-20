@@ -1,6 +1,6 @@
 import { authStore } from '@/features/auth'
 
-/** Opzioni listino/partner Odoo per chiamate catalogo Arfly (utente autenticato). */
+/** Opzioni listino/partner Odoo per chiamate catalogo Odoo (utente autenticato). */
 export function getCatalogPricingOptions(): {
   partnerId?: number
   pricelistId?: number

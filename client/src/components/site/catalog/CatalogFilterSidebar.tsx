@@ -3,12 +3,27 @@
 import type { CategoryDTO } from '@/types/dto'
 import type { BrandListItemDTO } from '@/types/site-content'
 import {
-  CATALOG_COLOR_TEMPS,
   CATALOG_PRICE_BUCKETS,
-  CATALOG_SOCKET_FILTERS,
   type CatalogPriceBucket,
 } from '@/lib/catalog-filters'
+import {
+  attaccoFacetToParam,
+  facetAttaccoOptions,
+  facetBrandOptions,
+  facetCategoryOptions,
+  facetColorTempOptions,
+  facetTaxonomyOptions,
+  facetWattaggioNumericValues,
+  type FacetChipOption,
+} from '@/lib/catalog-facets-ui'
+import type { CatalogFiltersDTO } from '@/types/dto'
 import { cn } from '@/utils/cn'
+import {
+  ExpandableFilterList,
+  FILTER_CHIP_INITIAL_VISIBLE,
+  FILTER_LIST_INITIAL_VISIBLE,
+} from './ExpandableFilterList'
+import { WattaggioRangeFilter } from './WattaggioRangeFilter'
 
 type Props = {
   rootCategories: ReadonlyArray<CategoryDTO>
@@ -16,14 +31,25 @@ type Props = {
   brands: ReadonlyArray<BrandListItemDTO>
   selectedCategorySlug?: string
   selectedBrandSlug?: string
+  selectedTipologia?: string
+  selectedAmbiente?: string
+  selectedStile?: string
   selectedAttacco?: string
   selectedColorTemp?: string
+  selectedWattaggioMin?: number
+  selectedWattaggioMax?: number
   selectedPriceBucket?: CatalogPriceBucket
   inStockOnly: boolean
+  /** Facet live Odoo — popola attacco / Kelvin / watt / brand / categorie. */
+  facets?: CatalogFiltersDTO | null | Readonly<CatalogFiltersDTO>
   onSelectCategory: (slug?: string) => void
   onSelectBrand: (slug?: string) => void
+  onSelectTipologia?: (value?: string) => void
+  onSelectAmbiente?: (value?: string) => void
+  onSelectStile?: (value?: string) => void
   onSelectAttacco: (value?: string) => void
   onSelectColorTemp: (value?: string) => void
+  onSelectWattaggioRange?: (range: { min?: number; max?: number }) => void
   onSelectPriceBucket: (value?: CatalogPriceBucket) => void
   onToggleInStock: (enabled: boolean) => void
   onReset: () => void
@@ -81,11 +107,13 @@ function FilterGroup({ label, children }: { label: string; children: React.React
 function ChipButton({
   active,
   mono,
+  count,
   onClick,
   children,
 }: {
   active: boolean
   mono?: boolean
+  count?: number
   onClick: () => void
   children: React.ReactNode
 }) {
@@ -102,7 +130,41 @@ function ChipButton({
       )}
     >
       {children}
+      {count != null ? <span className="ml-1 opacity-70">{count}</span> : null}
     </button>
+  )
+}
+
+function ChipGroup({
+  options,
+  isActive,
+  onSelect,
+}: {
+  options: ReadonlyArray<FacetChipOption>
+  isActive: (opt: FacetChipOption) => boolean
+  onSelect: (opt: FacetChipOption | undefined) => void
+}) {
+  return (
+    <ExpandableFilterList
+      items={options}
+      initialVisible={FILTER_CHIP_INITIAL_VISIBLE}
+      getKey={(opt) => opt.value}
+      isSelected={isActive}
+      listClassName="flex flex-wrap gap-1.5"
+      renderItem={(opt) => {
+        const active = isActive(opt)
+        return (
+          <ChipButton
+            mono
+            count={opt.count}
+            active={active}
+            onClick={() => onSelect(active ? undefined : opt)}
+          >
+            {opt.label}
+          </ChipButton>
+        )
+      }}
+    />
   )
 }
 
@@ -112,21 +174,53 @@ export function CatalogFilterSidebar({
   brands,
   selectedCategorySlug,
   selectedBrandSlug,
+  selectedTipologia,
+  selectedAmbiente,
+  selectedStile,
   selectedAttacco,
   selectedColorTemp,
+  selectedWattaggioMin,
+  selectedWattaggioMax,
   selectedPriceBucket,
   inStockOnly,
+  facets,
   onSelectCategory,
   onSelectBrand,
+  onSelectTipologia,
+  onSelectAmbiente,
+  onSelectStile,
   onSelectAttacco,
   onSelectColorTemp,
+  onSelectWattaggioRange,
   onSelectPriceBucket,
   onToggleInStock,
   onReset,
   className,
   showHeader = true,
 }: Props) {
-  const visibleBrands = brands.slice(0, 12)
+  const facetCats = facetCategoryOptions(facets)
+  const facetBrands = facetBrandOptions(facets)
+  const tipologie = facetTaxonomyOptions(facets, 'tipologie')
+  const ambienti = facetTaxonomyOptions(facets, 'ambienti')
+  const stili = facetTaxonomyOptions(facets, 'stili')
+  const sockets = facetAttaccoOptions(facets)
+  const colorTemps = facetColorTempOptions(facets)
+  const wattaggi = facetWattaggioNumericValues(facets)
+
+  const displayRoots =
+    facetCats.roots.length > 0
+      ? facetCats.roots.map((c) => ({ id: c.slug, slug: c.slug, name: c.name, count: c.count }))
+      : rootCategories.map((c) => ({ id: c.id, slug: c.slug, name: c.name, count: undefined as number | undefined }))
+
+  const displaySubs =
+    facetCats.children.length > 0
+      ? facetCats.children.map((c) => ({ id: c.slug, slug: c.slug, name: c.name, count: c.count }))
+      : subcategories.map((c) => ({ id: c.id, slug: c.slug, name: c.name, count: undefined as number | undefined }))
+
+  const visibleBrands =
+    facetBrands.length > 0
+      ? facetBrands
+      : brands.map((b) => ({ slug: b.slug, name: b.name, count: b.productCount }))
 
   return (
     <aside className={className}>
@@ -139,87 +233,182 @@ export function CatalogFilterSidebar({
         </div>
       ) : null}
 
-      {rootCategories.length > 0 ? (
+      {displayRoots.length > 0 ? (
         <FilterGroup label="Categoria">
-          <div className="space-y-0.5">
-            {rootCategories.map((category) => (
+          <ExpandableFilterList
+            items={displayRoots}
+            initialVisible={FILTER_LIST_INITIAL_VISIBLE}
+            getKey={(category) => String(category.id)}
+            isSelected={(category) => selectedCategorySlug === category.slug}
+            listClassName="space-y-0.5"
+            renderItem={(category) => (
               <CheckboxRow
-                key={category.id}
                 checked={selectedCategorySlug === category.slug}
                 label={category.name}
+                count={category.count}
                 onClick={() =>
                   onSelectCategory(selectedCategorySlug === category.slug ? undefined : category.slug)
                 }
               />
-            ))}
-          </div>
+            )}
+          />
         </FilterGroup>
       ) : null}
 
-      {subcategories.length > 0 ? (
+      {displaySubs.length > 0 ? (
         <FilterGroup label="Sottocategoria">
-          <div className="space-y-0.5">
-            {subcategories.map((category) => (
+          <ExpandableFilterList
+            items={displaySubs}
+            initialVisible={FILTER_LIST_INITIAL_VISIBLE}
+            getKey={(category) => String(category.id)}
+            isSelected={(category) => selectedCategorySlug === category.slug}
+            listClassName="space-y-0.5"
+            renderItem={(category) => (
               <CheckboxRow
-                key={category.id}
                 checked={selectedCategorySlug === category.slug}
                 label={category.name}
+                count={category.count}
                 onClick={() =>
                   onSelectCategory(selectedCategorySlug === category.slug ? undefined : category.slug)
                 }
               />
-            ))}
-          </div>
+            )}
+          />
         </FilterGroup>
       ) : null}
 
-      <FilterGroup label="Attacco">
-        <div className="flex flex-wrap gap-1.5">
-          {CATALOG_SOCKET_FILTERS.map((socket) => (
-            <ChipButton
-              key={socket}
-              mono
-              active={selectedAttacco === socket}
-              onClick={() => onSelectAttacco(selectedAttacco === socket ? undefined : socket)}
-            >
-              {socket}
-            </ChipButton>
-          ))}
-        </div>
-      </FilterGroup>
+      {tipologie.length > 0 && onSelectTipologia ? (
+        <FilterGroup label="Tipologia">
+          <ExpandableFilterList
+            items={tipologie}
+            initialVisible={FILTER_LIST_INITIAL_VISIBLE}
+            getKey={(opt) => opt.value}
+            isSelected={(opt) => selectedTipologia === opt.value}
+            listClassName="space-y-0.5"
+            renderItem={(opt) => (
+              <CheckboxRow
+                checked={selectedTipologia === opt.value}
+                label={opt.label}
+                count={opt.count}
+                onClick={() =>
+                  onSelectTipologia(selectedTipologia === opt.value ? undefined : opt.value)
+                }
+              />
+            )}
+          />
+        </FilterGroup>
+      ) : null}
+
+      {ambienti.length > 0 && onSelectAmbiente ? (
+        <FilterGroup label="Ambiente">
+          <ExpandableFilterList
+            items={ambienti}
+            initialVisible={FILTER_LIST_INITIAL_VISIBLE}
+            getKey={(opt) => opt.value}
+            isSelected={(opt) => selectedAmbiente === opt.value}
+            listClassName="space-y-0.5"
+            renderItem={(opt) => (
+              <CheckboxRow
+                checked={selectedAmbiente === opt.value}
+                label={opt.label}
+                count={opt.count}
+                onClick={() =>
+                  onSelectAmbiente(selectedAmbiente === opt.value ? undefined : opt.value)
+                }
+              />
+            )}
+          />
+        </FilterGroup>
+      ) : null}
+
+      {stili.length > 0 && onSelectStile ? (
+        <FilterGroup label="Stile">
+          <ExpandableFilterList
+            items={stili}
+            initialVisible={FILTER_LIST_INITIAL_VISIBLE}
+            getKey={(opt) => opt.value}
+            isSelected={(opt) =>
+              Boolean(selectedStile && selectedStile.toLowerCase() === opt.value.toLowerCase())
+            }
+            listClassName="space-y-0.5"
+            renderItem={(opt) => {
+              const checked = Boolean(
+                selectedStile && selectedStile.toLowerCase() === opt.value.toLowerCase(),
+              )
+              return (
+                <CheckboxRow
+                  checked={checked}
+                  label={opt.label}
+                  count={opt.count}
+                  onClick={() => onSelectStile(checked ? undefined : opt.value)}
+                />
+              )
+            }}
+          />
+        </FilterGroup>
+      ) : null}
+
+      {sockets.length > 0 ? (
+        <FilterGroup label="Attacco">
+          <ChipGroup
+            options={sockets}
+            isActive={(opt) =>
+              Boolean(
+                selectedAttacco &&
+                  selectedAttacco.toLowerCase() ===
+                    attaccoFacetToParam(opt.value, opt.label).toLowerCase(),
+              )
+            }
+            onSelect={(opt) =>
+              onSelectAttacco(opt ? attaccoFacetToParam(opt.value, opt.label) : undefined)
+            }
+          />
+        </FilterGroup>
+      ) : null}
+
+      {wattaggi.length >= 2 && onSelectWattaggioRange ? (
+        <FilterGroup label="Wattaggio">
+          <WattaggioRangeFilter
+            values={wattaggi}
+            min={selectedWattaggioMin}
+            max={selectedWattaggioMax}
+            onChange={onSelectWattaggioRange}
+            tone="tech"
+          />
+        </FilterGroup>
+      ) : null}
 
       {visibleBrands.length > 0 ? (
         <FilterGroup label="Brand">
-          <div className="space-y-0.5">
-            {visibleBrands.map((brand) => (
+          <ExpandableFilterList
+            items={visibleBrands}
+            initialVisible={FILTER_LIST_INITIAL_VISIBLE}
+            getKey={(brand) => brand.slug}
+            isSelected={(brand) => selectedBrandSlug === brand.slug}
+            listClassName="space-y-0.5"
+            renderItem={(brand) => (
               <CheckboxRow
-                key={brand.slug}
                 checked={selectedBrandSlug === brand.slug}
                 label={brand.name}
-                count={brand.productCount}
+                count={brand.count}
                 onClick={() =>
                   onSelectBrand(selectedBrandSlug === brand.slug ? undefined : brand.slug)
                 }
               />
-            ))}
-          </div>
+            )}
+          />
         </FilterGroup>
       ) : null}
 
-      <FilterGroup label="Temperatura colore">
-        <div className="flex flex-wrap gap-1.5">
-          {CATALOG_COLOR_TEMPS.map((temp) => (
-            <ChipButton
-              key={temp}
-              mono
-              active={selectedColorTemp === temp}
-              onClick={() => onSelectColorTemp(selectedColorTemp === temp ? undefined : temp)}
-            >
-              {temp}
-            </ChipButton>
-          ))}
-        </div>
-      </FilterGroup>
+      {colorTemps.length > 0 ? (
+        <FilterGroup label="Temperatura colore">
+          <ChipGroup
+            options={colorTemps}
+            isActive={(opt) => selectedColorTemp === opt.value}
+            onSelect={(opt) => onSelectColorTemp(opt?.value)}
+          />
+        </FilterGroup>
+      ) : null}
 
       <FilterGroup label="Prezzo">
         <div className="space-y-0.5">

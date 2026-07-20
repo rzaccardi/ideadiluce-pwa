@@ -804,6 +804,32 @@ model StockRestockRequest {
   @@index([adminStatus])
 }
 
+/// Richiesta form sito (contatti, prodotto non trovato, B2B lead, preventivo).
+model SiteInquiry {
+  id              String   @id @default(cuid())
+  kind            String
+  name            String
+  email           String
+  phone           String?
+  message         String?
+  productCode     String?
+  brand           String?
+  quantity        Int?
+  usage           String?
+  urgency         String?
+  locale          String?
+  attachmentMeta  Json?
+  status          String   @default("NEW")
+  adminNotes      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([kind])
+  @@index([email])
+  @@index([status])
+  @@index([createdAt])
+}
+
 /// Richiesta attivazione account professionista / business dalla pagina B2B.
 model ProfessionalAccountRequest {
   id          String   @id @default(cuid())

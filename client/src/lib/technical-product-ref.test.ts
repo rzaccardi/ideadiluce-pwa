@@ -5,7 +5,7 @@ describe('formatTechnicalProductRefLine', () => {
   it('formatta brand e codice', () => {
     expect(
       formatTechnicalProductRefLine({
-        brand: { slug: 'tlb-italy', name: 'TLB Italy' },
+        brand: { slug: 'tlb', name: 'TLB' },
         sku: '322805',
       }),
     ).toBe('TLB · COD 322805')

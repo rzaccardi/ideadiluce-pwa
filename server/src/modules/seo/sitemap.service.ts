@@ -17,7 +17,7 @@ import {
   type HubLocale,
 } from '../../lib/hub-locale.js'
 import { catalogStorefrontService } from '../catalog/catalog-storefront.service.js'
-import { listArflyProductSlugs } from '../catalog/catalogResolver.service.js'
+import { listOdooCatalogProductSlugs } from '../catalog/catalogResolver.service.js'
 import { STATIC_SITEMAP_PATHS } from './seo-sitemap.constants.js'
 import { listAmbienteRoomSlugs, listIndexedGuideSlugs } from './seo-guide-slugs.js'
 import {
@@ -120,7 +120,7 @@ function pushLocalizedGroup(
 export async function buildProductSitemapXml(): Promise<string> {
   const siteBase = env.PUBLIC_SITE_URL
   const [productSlugs, categories, brands, guideSlugs] = await Promise.all([
-    listArflyProductSlugs('IT'),
+    listOdooCatalogProductSlugs('IT'),
     catalogStorefrontService.listCategories('IT'),
     catalogStorefrontService.listBrands('IT'),
     listIndexedGuideSlugs(),

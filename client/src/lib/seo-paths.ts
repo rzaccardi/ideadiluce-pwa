@@ -60,6 +60,13 @@ export function catalogHasFilterQuery(
     'attacco',
     'colorTemp',
     'priceBucket',
+    'tipologia',
+    'ambiente',
+    'stile',
+    'tag',
+    'wattaggio',
+    'wattaggio_min',
+    'wattaggio_max',
   ])
 }
 

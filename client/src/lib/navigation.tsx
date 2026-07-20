@@ -69,6 +69,7 @@ export function NavLink({
       className={resolvedClassName}
       title={resolvedTitle}
       aria-label={ariaLabel}
+      aria-current={isActive ? 'page' : undefined}
       {...props}
     >
       {children}

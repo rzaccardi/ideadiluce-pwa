@@ -40,7 +40,6 @@ export function ProductDetailStickyBar({
   isAddingToCart,
   onAdd,
   addLabel,
-  addLabelShort,
   addingLabel,
   variant = 'design',
   variantRef,
@@ -91,7 +90,7 @@ export function ProductDetailStickyBar({
           </div>
         </div>
 
-        <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none sm:shrink-0 sm:gap-5">
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-2.5 sm:flex-none sm:shrink-0 sm:gap-5">
           {!isDesign && availabilityLabel ? (
             <div className="hidden flex-col items-end sm:flex">
               <span
@@ -113,7 +112,7 @@ export function ProductDetailStickyBar({
           ) : null}
           <span
             className={cn(
-              'shrink-0 text-lg font-bold sm:text-[22px]',
+              'shrink-0 text-base font-bold sm:text-[22px]',
               isDesign ? 'font-serif text-idl-design-fg' : 'text-idl-graphite',
             )}
           >
@@ -124,20 +123,13 @@ export function ProductDetailStickyBar({
             disabled={!canAddToCart || isAddingToCart}
             onClick={onAdd}
             className={cn(
-              'min-w-0 shrink rounded-lg px-3 py-2.5 text-xs font-bold transition disabled:opacity-60 sm:px-6 sm:py-3 sm:text-sm',
+              'min-w-0 flex-1 rounded-lg px-4 py-3 text-sm font-bold transition disabled:opacity-60 sm:flex-none sm:px-6 sm:py-3 sm:text-sm',
               isDesign
                 ? 'bg-idl-glow text-idl-design hover:bg-[#f7bd6f]'
                 : 'bg-idl-amber text-white hover:bg-[#b08e3e]',
             )}
           >
-            {isAddingToCart ? (
-              addingLabel
-            ) : (
-              <>
-                <span className="sm:hidden">{addLabelShort ?? addLabel}</span>
-                <span className="hidden sm:inline">{addLabel}</span>
-              </>
-            )}
+            {isAddingToCart ? addingLabel : addLabel}
           </button>
         </div>
       </SectionContainer>

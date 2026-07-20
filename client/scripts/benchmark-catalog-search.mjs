@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Benchmark qualità ricerca catalogo (Arfly via BFF).
+ * Benchmark qualità ricerca catalogo (OdooCatalog via BFF).
  *
  * Uso:
  *   node client/scripts/benchmark-catalog-search.mjs
@@ -154,7 +154,7 @@ async function main() {
       highZeroResultRate: zeroResults.length / Math.max(successful.length, 1) > 0.2,
       highTypoZeroRate: typoZero.length / Math.max(typoResults.length, 1) > 0.5,
       rationale:
-        'Se zeroResultRate > 20% o typoZeroRate > 50%, rivedere query parser, sinonimi o indicizzazione catalogo Arfly.',
+        'Se zeroResultRate > 20% o typoZeroRate > 50%, rivedere query parser, sinonimi o indicizzazione catalogo OdooCatalog.',
     },
     results,
   }

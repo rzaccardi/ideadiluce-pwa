@@ -30,7 +30,7 @@ flowchart TB
   end
 
   subgraph external [Sistemi esterni]
-    ODOO[Odoo / Arfly — tlbdb.odoo.com]
+    ODOO[Odoo — tlbdb.odoo.com]
     STRIPE[Stripe — pagamenti + webhook]
     DHL[DHL API]
     FEDEX[FedEx API]
@@ -104,11 +104,11 @@ Lo spec collega già le origini tra loro:
 
 ## 3. Sistemi annessi
 
-### 3.1 Odoo / Arfly (`tlbdb.odoo.com`)
+### 3.1 Odoo (`tlbdb.odoo.com`)
 
 | Integrazione | Protocollo | Env principali | Go-live |
 |--------------|------------|----------------|---------|
-| Catalogo storefront (Arfly) | REST `/api/v2/products` | `ARFLY_*` | Obbligatorio |
+| Catalogo storefront (catalogo Odoo) | REST `/api/v2/products` | `ODOO_CATALOG_*` | Obbligatorio |
 | Ordini, stock, partner, preventivi | XML-RPC | `ODOO_*` | Obbligatorio |
 | Link prodotto nel BO admin | URL UI | `ODOO_URL`, `ODOO_PRODUCT_ACTION_ID` | Consigliato |
 | Listini B2C / B2B / Professional | XML-RPC | `ODOO_PRICELIST_*_ID` | Se segmentazione prezzi attiva |
@@ -181,7 +181,7 @@ Legenda scope DO: **R** = RUN_TIME, **B** = BUILD_TIME, **RB** = RUN_AND_BUILD_T
 | `DATABASE_URL` | RB | `${postgres.DATABASE_URL}` |
 | `CLIENT_ORIGIN` | R | URL shop |
 | `ADMIN_ORIGIN` | R | URL admin |
-| `ARFLY_API_KEY` | R | Secret Odoo |
+| `ODOO_CATALOG_API_KEY` | R | Secret Odoo |
 | `ODOO_DB`, `ODOO_USERNAME`, `ODOO_PASSWORD` | R | Secret Odoo |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | R | Secret Stripe |
 | `SHIPPING_CREDENTIALS_KEY` | R | Generata (32+ char) |
@@ -205,7 +205,7 @@ Legenda scope DO: **R** = RUN_TIME, **B** = BUILD_TIME, **RB** = RUN_AND_BUILD_T
 |-----------|-------|------|
 | `API_URL`, `NEXT_PUBLIC_API_URL` | RB | `${api.PUBLIC_URL}` |
 | `NEXT_PUBLIC_SITE_URL` | B | URL shop pubblico |
-| `NEXT_PUBLIC_ARFLY_MEDIA_BASE_URL` | B | `https://tlbdb.odoo.com` |
+| `NEXT_PUBLIC_ODOO_MEDIA_BASE_URL` | B | `https://tlbdb.odoo.com` |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | B | Secret `pk_live_…` |
 
 ### `admin`
@@ -250,7 +250,7 @@ Stessa topologia, DB dev (`production: false`), istanze più piccole.
 
 - [ ] Impostare secret da `secrets.production.env.example`
 - [ ] Configurare webhook Stripe su URL `api`
-- [ ] Verificare API key Arfly e credenziali Odoo XML-RPC
+- [ ] Verificare API key Odoo e credenziali Odoo XML-RPC
 - [ ] Generare `SHIPPING_CREDENTIALS_KEY`
 
 ### Fase C — Verifica URL e Stripe
@@ -321,8 +321,8 @@ doctl apps update <APP_ID> --spec .do/app.yaml
 
 - **Un solo processo `api`:** i job girano in-process; scaling orizzontale duplicherebbe scheduler (valutare worker dedicato in futuro).
 - **Rebuild shop** necessario dopo ogni cambio `NEXT_PUBLIC_*`.
-- **Odoo** è single point esterno: timeout API 25s (`ARFLY_TIMEOUT_MS`, `ODOO_TIMEOUT_MS`).
-- **Catalogo:** con `ARFLY_CATALOG_ENABLED=true` ha priorità su Hub e XML-RPC per lo storefront.
+- **Odoo** è single point esterno: timeout API 25s (`ODOO_CATALOG_TIMEOUT_MS`, `ODOO_TIMEOUT_MS`).
+- **Catalogo:** con `ODOO_CATALOG_ENABLED=true` ha priorità su Hub e XML-RPC per lo storefront.
 
 ---
 

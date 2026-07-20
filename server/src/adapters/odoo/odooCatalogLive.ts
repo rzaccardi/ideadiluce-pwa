@@ -1,4 +1,7 @@
 /**
+ * @deprecated Catalogo storefront: usare solo API Odoo catalog v2 (`odooCatalogClient` + `catalog-storefront`).
+ * Questo adapter XML-RPC non è wired alle route pubbliche; tenuto solo per riferimento legacy.
+ *
  * Catalogo Odoo 18 via `execute_kw`.
  * Gli slug esposti sono derivati localmente da `name` + `id`, perché i campi `slug` /
  * `website_slug` non sono garantiti su tutti i database Odoo.

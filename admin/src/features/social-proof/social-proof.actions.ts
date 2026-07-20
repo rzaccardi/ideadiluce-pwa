@@ -51,10 +51,15 @@ export async function syncSocialProofOdoo() {
     const result = await adminApi<{
       imported: number
       deletedStale: number
+      skippedPwa?: number
       settings: SocialProofSettings
     }>('/admin/social-proof/sync-odoo', { method: 'POST' })
     socialProofStore.settings = result.settings
-    socialProofStore.syncMessage = `Importati ${result.imported} righe ordine; rimossi ${result.deletedStale} eventi fuori finestra.`
+    const skipped =
+      result.skippedPwa && result.skippedPwa > 0
+        ? ` Saltate ${result.skippedPwa} righe già coperte da ordini PWA.`
+        : ''
+    socialProofStore.syncMessage = `Importati ${result.imported} righe dallo storico Odoo; rimossi ${result.deletedStale} eventi fuori finestra.${skipped}`
   } catch (e) {
     socialProofStore.error = errMessage(e)
     await fetchSocialProofSettings()

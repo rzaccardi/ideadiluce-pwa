@@ -1,4 +1,5 @@
 import { prisma } from '../../lib/prisma.js'
+import { odooSocialProofAvailable } from '../../adapters/odoo/odooSocialProofImport.js'
 import { formatOdooTemplateRef } from '../catalog/odooRef.js'
 import { resolveCatalogProduct } from '../catalog/catalogResolver.service.js'
 import type { ProductSocialProofDTO, ProductSocialProofEventDTO } from '../../types/dto.js'
@@ -6,6 +7,10 @@ import { anonymizeBuyerLabel } from './social-proof.anonymize.js'
 import { getSocialProofSettings } from './social-proof.settings.js'
 
 const PAID_STATUSES = ['PAID', 'CONFIRMED', 'COMPLETED'] as const
+
+type InternalEvent = ProductSocialProofEventDTO & {
+  odooSaleOrderId?: number | null
+}
 
 function productRefsForSlug(slug: string, odooTemplateId?: number | null): string[] {
   const refs = new Set<string>([slug])
@@ -25,7 +30,7 @@ async function fetchPwaEvents(
   since: Date,
   minQuantity: number,
   maxEvents: number,
-): Promise<{ events: ProductSocialProofEventDTO[]; buyers: number; units: number }> {
+): Promise<InternalEvent[]> {
   const orders = await prisma.pwaOrder.findMany({
     where: {
       orderStatus: { in: [...PAID_STATUSES] },
@@ -39,6 +44,7 @@ async function fetchPwaEvents(
       paidAt: true,
       email: true,
       billingAddressJson: true,
+      odooSaleOrderId: true,
       user: { select: { firstName: true, lastName: true } },
       cart: {
         select: {
@@ -51,32 +57,28 @@ async function fetchPwaEvents(
     },
   })
 
-  const events: ProductSocialProofEventDTO[] = []
-  let units = 0
-  let buyers = 0
+  const events: InternalEvent[] = []
 
   for (const order of orders) {
     const quantity = order.cart.items.reduce((sum, line) => sum + line.quantity, 0)
     if (quantity < 1 || !order.paidAt) continue
     if (!passesMinQuantity(quantity, minQuantity)) continue
-    buyers += 1
-    units += quantity
-    if (events.length < maxEvents) {
-      events.push({
-        buyerLabel: anonymizeBuyerLabel({
-          email: order.email,
-          billingAddressJson: order.billingAddressJson,
-          userFirstName: order.user?.firstName,
-          userLastName: order.user?.lastName,
-        }),
-        quantity,
-        purchasedAt: order.paidAt.toISOString(),
-        source: 'pwa',
-      })
-    }
+    if (events.length >= maxEvents * 4) break
+    events.push({
+      buyerLabel: anonymizeBuyerLabel({
+        email: order.email,
+        billingAddressJson: order.billingAddressJson,
+        userFirstName: order.user?.firstName,
+        userLastName: order.user?.lastName,
+      }),
+      quantity,
+      purchasedAt: order.paidAt.toISOString(),
+      source: 'pwa',
+      odooSaleOrderId: order.odooSaleOrderId,
+    })
   }
 
-  return { events, buyers, units }
+  return events
 }
 
 async function fetchOdooCachedEvents(
@@ -84,8 +86,8 @@ async function fetchOdooCachedEvents(
   since: Date,
   minQuantity: number,
   maxEvents: number,
-): Promise<{ events: ProductSocialProofEventDTO[]; buyers: number; units: number }> {
-  if (templateId == null) return { events: [], buyers: 0, units: 0 }
+): Promise<InternalEvent[]> {
+  if (templateId == null) return []
 
   const rows = await prisma.socialProofOdooEvent.findMany({
     where: {
@@ -97,33 +99,50 @@ async function fetchOdooCachedEvents(
     take: maxEvents * 4,
   })
 
-  const events: ProductSocialProofEventDTO[] = rows.slice(0, maxEvents).map((r) => ({
+  return rows.map((r) => ({
     buyerLabel: r.buyerLabel,
     quantity: r.quantity,
     purchasedAt: r.purchasedAt.toISOString(),
     source: 'odoo' as const,
+    odooSaleOrderId: r.odooSaleOrderId,
   }))
-
-  const buyers = rows.length
-  const units = rows.reduce((s, r) => s + r.quantity, 0)
-  return { events, buyers, units }
 }
 
-function mergeEvents(
-  pwa: ProductSocialProofEventDTO[],
-  odoo: ProductSocialProofEventDTO[],
-  maxEvents: number,
-): ProductSocialProofEventDTO[] {
-  const seen = new Set<string>()
-  const merged = [...pwa, ...odoo]
-    .sort((a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime())
-    .filter((e) => {
-      const key = `${e.purchasedAt}|${e.buyerLabel}|${e.quantity}`
-      if (seen.has(key)) return false
-      seen.add(key)
-      return true
-    })
-  return merged.slice(0, maxEvents)
+/** Unifica PWA + storico Odoo: un solo evento per sale.order / chiave display. */
+function unifyOrderHistory(
+  pwa: InternalEvent[],
+  odoo: InternalEvent[],
+): InternalEvent[] {
+  const seenOdooIds = new Set<number>()
+  const seenKeys = new Set<string>()
+  const unified: InternalEvent[] = []
+
+  const sorted = [...pwa, ...odoo].sort(
+    (a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime(),
+  )
+
+  for (const e of sorted) {
+    if (e.odooSaleOrderId != null) {
+      if (seenOdooIds.has(e.odooSaleOrderId)) continue
+      seenOdooIds.add(e.odooSaleOrderId)
+    } else {
+      const key = `${e.purchasedAt}|${e.buyerLabel}|${e.quantity}|${e.source ?? ''}`
+      if (seenKeys.has(key)) continue
+      seenKeys.add(key)
+    }
+    unified.push(e)
+  }
+
+  return unified
+}
+
+function toPublicEvents(events: InternalEvent[], maxEvents: number): ProductSocialProofEventDTO[] {
+  return events.slice(0, maxEvents).map(({ buyerLabel, quantity, purchasedAt, source }) => ({
+    buyerLabel,
+    quantity,
+    purchasedAt,
+    source,
+  }))
 }
 
 export const socialProofService = {
@@ -148,21 +167,22 @@ export const socialProofService = {
     const refs = productRefsForSlug(product.slug, product.odooTemplateId)
     const since = new Date(Date.now() - settings.lookbackDays * 86_400_000)
     const minQ = settings.minQuantity
+    const useOdooHistory = odooSocialProofAvailable()
 
     const [pwa, odoo] = await Promise.all([
       fetchPwaEvents(refs, since, minQ, settings.maxEvents),
-      settings.odooImportEnabled
+      useOdooHistory
         ? fetchOdooCachedEvents(product.odooTemplateId, since, minQ, settings.maxEvents)
-        : Promise.resolve({ events: [], buyers: 0, units: 0 }),
+        : Promise.resolve([] as InternalEvent[]),
     ])
 
-    const events = mergeEvents(pwa.events, odoo.events, settings.maxEvents)
+    const unified = unifyOrderHistory(pwa, odoo)
 
     return {
       enabled: true,
-      events,
-      buyersLast30Days: pwa.buyers + odoo.buyers,
-      unitsSoldLast30Days: pwa.units + odoo.units,
+      events: toPublicEvents(unified, settings.maxEvents),
+      buyersLast30Days: unified.length,
+      unitsSoldLast30Days: unified.reduce((sum, e) => sum + e.quantity, 0),
       productName: product.name,
       minQuantity: minQ,
     }

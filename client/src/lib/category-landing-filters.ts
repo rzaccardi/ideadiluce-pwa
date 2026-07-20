@@ -2,6 +2,11 @@ import type { CatalogSort } from '@/features/catalog/catalog.store'
 import type { CategoryFilterGroup, CategoryLandingKey } from '@/types/category-landing'
 import type { BrandListItemDTO } from '@/types/site-content'
 import { centsToPriceBucket, priceBucketToCents, type CatalogPriceBucket, type CatalogSpecFilters } from '@/lib/catalog-filters'
+import {
+  landingAttaccoValueToCode,
+  landingKelvinValueToCode,
+  landingWattaggioValueToCode,
+} from '@/lib/catalog-facets-ui'
 
 export type CategoryLandingCatalogConfig = {
   categorySlug: string
@@ -10,8 +15,9 @@ export type CategoryLandingCatalogConfig = {
 
 export const CATEGORY_LANDING_CATALOG_CONFIG: Record<CategoryLandingKey, CategoryLandingCatalogConfig> = {
   design: { categorySlug: 'arredo' },
-  technical: { categorySlug: 'illuminazione-tecnica' },
-  'technical-products': { categorySlug: 'illuminazione-tecnica', baseQuery: 'alimentatore driver trasformatore' },
+  technical: { categorySlug: 'tecnico' },
+  /** Driver + ballast (slug CSV Odoo) — niente q= testuale. */
+  'technical-products': { categorySlug: 'driver,ballast' },
 }
 
 const FILTER_PARAM = 'f'
@@ -84,9 +90,37 @@ export function toggleCategoryLandingFilter(
       if (existing.startsWith('attacco-')) next.delete(existing)
     }
   }
+  if (value.startsWith('wattaggio-')) {
+    for (const existing of next) {
+      if (existing.startsWith('wattaggio-')) next.delete(existing)
+    }
+  }
   if (value.startsWith('kelvin-')) {
     for (const existing of next) {
       if (existing.startsWith('kelvin-')) next.delete(existing)
+    }
+  }
+  if (value.startsWith('tipologia-')) {
+    for (const existing of next) {
+      if (existing.startsWith('tipologia-')) next.delete(existing)
+    }
+  }
+  if (value.startsWith('ambiente-')) {
+    for (const existing of next) {
+      if (existing.startsWith('ambiente-')) next.delete(existing)
+    }
+  }
+  if (value.startsWith('stile-')) {
+    for (const existing of next) {
+      if (existing.startsWith('stile-')) next.delete(existing)
+    }
+  }
+  if (value.startsWith('tag-')) {
+    // tag: AND multipli ammessi — non rimuovere gli altri
+  }
+  if (value.startsWith('category-')) {
+    for (const existing of next) {
+      if (existing.startsWith('category-')) next.delete(existing)
     }
   }
 
@@ -175,9 +209,11 @@ const ATTACCO_FILTER_TO_CODE: Record<string, string> = {
   'attacco-e27': 'E27',
   'attacco-e14': 'E14',
   'attacco-gu53': 'GU5.3',
+  'attacco-gu5.3': 'GU5.3',
   'attacco-r7s': 'R7s',
   'attacco-g9': 'G9',
   'attacco-t8': 'T8',
+  'attacco-g4': 'G4',
 }
 
 const KELVIN_FILTER_TO_CODE: Record<string, string> = {
@@ -187,32 +223,97 @@ const KELVIN_FILTER_TO_CODE: Record<string, string> = {
   'kelvin-6500k': '6500K',
 }
 
+export type CategoryLandingStructuredFilters = CatalogSpecFilters & {
+  wattaggio?: string
+  wattaggioMin?: string
+  wattaggioMax?: string
+  categorySlugFromFacet?: string
+  tag?: string
+  tipologia?: string
+  ambiente?: string
+  stile?: string
+}
+
 export function resolveCategoryLandingSpecFilters(
   selected: ReadonlySet<string>,
   urlParams?: URLSearchParams,
-): CatalogSpecFilters {
+): CategoryLandingStructuredFilters {
   const attaccoFromUrl = urlParams?.get('attacco')?.trim()
   const colorTempFromUrl = urlParams?.get('colorTemp')?.trim()
-  if (attaccoFromUrl || colorTempFromUrl) {
+  const wattaggioFromUrl = urlParams?.get('wattaggio')?.trim()
+  const wattaggioMinFromUrl = urlParams?.get('wattaggio_min')?.trim()
+  const wattaggioMaxFromUrl = urlParams?.get('wattaggio_max')?.trim()
+  const tipologiaFromUrl = urlParams?.get('tipologia')?.trim()
+  const ambienteFromUrl = urlParams?.get('ambiente')?.trim()
+  const stileFromUrl = urlParams?.get('stile')?.trim()
+  if (
+    attaccoFromUrl ||
+    colorTempFromUrl ||
+    wattaggioFromUrl ||
+    wattaggioMinFromUrl ||
+    wattaggioMaxFromUrl ||
+    tipologiaFromUrl ||
+    ambienteFromUrl ||
+    stileFromUrl
+  ) {
     return {
       attacco: attaccoFromUrl || undefined,
       colorTemp: colorTempFromUrl || undefined,
+      wattaggio: wattaggioFromUrl || undefined,
+      wattaggioMin: wattaggioMinFromUrl || undefined,
+      wattaggioMax: wattaggioMaxFromUrl || undefined,
+      tipologia: tipologiaFromUrl || undefined,
+      ambiente: ambienteFromUrl || undefined,
+      stile: stileFromUrl || undefined,
     }
   }
 
   let attacco: string | undefined
   let colorTemp: string | undefined
+  let wattaggio: string | undefined
+  let categorySlugFromFacet: string | undefined
+  let tipologia: string | undefined
+  let ambiente: string | undefined
+  let stile: string | undefined
+  const tags: string[] = []
 
   for (const value of selected) {
     if (!attacco && value.startsWith('attacco-')) {
-      attacco = ATTACCO_FILTER_TO_CODE[value]
+      attacco = ATTACCO_FILTER_TO_CODE[value] ?? landingAttaccoValueToCode(value)
     }
     if (!colorTemp && value.startsWith('kelvin-')) {
-      colorTemp = KELVIN_FILTER_TO_CODE[value]
+      colorTemp = KELVIN_FILTER_TO_CODE[value] ?? landingKelvinValueToCode(value)
+    }
+    if (!wattaggio && value.startsWith('wattaggio-')) {
+      wattaggio = landingWattaggioValueToCode(value)
+    }
+    if (!categorySlugFromFacet && value.startsWith('category-')) {
+      categorySlugFromFacet = value.slice('category-'.length)
+    }
+    if (!tipologia && value.startsWith('tipologia-')) {
+      tipologia = value.slice('tipologia-'.length)
+    }
+    if (!ambiente && value.startsWith('ambiente-')) {
+      ambiente = value.slice('ambiente-'.length)
+    }
+    if (!stile && value.startsWith('stile-')) {
+      stile = value.slice('stile-'.length)
+    }
+    if (value.startsWith('tag-')) {
+      tags.push(value.slice('tag-'.length))
     }
   }
 
-  return { attacco, colorTemp }
+  return {
+    attacco,
+    colorTemp,
+    wattaggio,
+    categorySlugFromFacet,
+    tipologia,
+    ambiente,
+    stile,
+    tag: tags.length ? tags.join(',') : undefined,
+  }
 }
 
 export function buildCategoryLandingSearchQuery(input: {
@@ -232,6 +333,16 @@ export function buildCategoryLandingSearchQuery(input: {
     if (!input.selected.has(value)) continue
     if (value.startsWith('price-') || value.startsWith('stock-')) continue
     if (value.startsWith('attacco-') || value.startsWith('kelvin-')) continue
+    if (
+      value.startsWith('wattaggio-') ||
+      value.startsWith('category-') ||
+      value.startsWith('tag-') ||
+      value.startsWith('tipologia-') ||
+      value.startsWith('ambiente-') ||
+      value.startsWith('stile-')
+    ) {
+      continue
+    }
     if (value.startsWith('brand-')) {
       if (!input.brandSlug) tokens.push(option.queryToken ?? option.label)
       continue
@@ -246,12 +357,20 @@ export function buildCategoryLandingSearchQuery(input: {
 export function buildCategoryLandingActiveFilters(input: {
   groups: ReadonlyArray<CategoryFilterGroup>
   selected: ReadonlySet<string>
+  wattaggioMin?: number
+  wattaggioMax?: number
 }): Array<{ key: string; label: string }> {
   const filters: Array<{ key: string; label: string }> = []
 
   for (const { option, value } of allFilterOptions(input.groups)) {
     if (!input.selected.has(value)) continue
     filters.push({ key: value, label: option.label })
+  }
+
+  if (input.wattaggioMin != null || input.wattaggioMax != null) {
+    const minLabel = input.wattaggioMin != null ? `${input.wattaggioMin} W` : '…'
+    const maxLabel = input.wattaggioMax != null ? `${input.wattaggioMax} W` : '…'
+    filters.push({ key: 'wattaggio', label: `${minLabel} – ${maxLabel}` })
   }
 
   return filters
@@ -291,6 +410,9 @@ export function resetCategoryLandingFilterParams(params: URLSearchParams): URLSe
   next.delete('priceBucket')
   next.delete('minPrice')
   next.delete('maxPrice')
+  next.delete('wattaggio')
+  next.delete('wattaggio_min')
+  next.delete('wattaggio_max')
   next.delete('sort')
   next.delete('page')
   next.delete('pagination')

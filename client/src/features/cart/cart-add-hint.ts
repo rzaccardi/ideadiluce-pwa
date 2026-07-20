@@ -1,6 +1,6 @@
 import type { ProductCardDTO, ProductDetailDTO, ProductVariantDTO } from '@/types/dto'
 
-/** Snapshot prodotto già in memoria (catalogo/PDP) per saltare Arfly su POST /cart/items. */
+/** Snapshot prodotto già in memoria (catalogo/PDP) per saltare OdooCatalog su POST /cart/items. */
 export type CartAddProductHint = {
   odooTemplateId: number
   odooVariantId?: number | null

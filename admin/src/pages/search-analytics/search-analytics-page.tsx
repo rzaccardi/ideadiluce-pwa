@@ -183,7 +183,7 @@ export function SearchAnalyticsPage() {
             Il backend aggiorna automaticamente ogni {store.odooHints?.staleHours ?? 72} ore se Odoo è configurato.
             {' '}
             <Link to="/site/home" className="font-medium text-gray-900 underline-offset-2 hover:underline">
-              Modifica manualmente in Contenuti sito →
+              Modifica manualmente in Pagine sito →
             </Link>
           </CardDescription>
         </CardHeader>

@@ -1,10 +1,10 @@
 import { cache } from 'react'
 import { serverApiClient } from '@/api/server'
-import { toArflyLang } from '@/lib/arfly/locale'
-import { mapArflyListResponse, mapArflyProductDetail } from '@/lib/arfly/mapper'
+import { toOdooCatalogLang } from '@/lib/odoo-catalog/locale'
+import { mapOdooCatalogListResponse, mapOdooCatalogProductDetail } from '@/lib/odoo-catalog/mapper'
 import type { PwaLocale } from '@/lib/locale'
 import type { ProductCardDTO, ProductDetailDTO, ProductListDTO } from '@/types/dto'
-import type { ArflyProductDetailResponse, ArflyProductListResponse } from '@/lib/arfly/types'
+import type { OdooCatalogProductDetailResponse, OdooCatalogProductListResponse } from '@/lib/odoo-catalog/types'
 import type { HomeProductSliderDTO } from '@/types/home-product-sliders'
 import type { CatalogPageContent } from '@/types/site-content'
 import type { CategoryDTO } from '@/types/dto'
@@ -76,9 +76,9 @@ export const fetchFeaturedGuidesServer = cache(async function fetchFeaturedGuide
 })
 
 export async function fetchFeaturedProducts(locale: PwaLocale, pageSize = 3): Promise<ProductCardDTO[]> {
-  const search = new URLSearchParams({ lang: toArflyLang(locale), page: '1', per_page: String(pageSize) })
-  const raw = await serverApiClient.get<ArflyProductListResponse>(`/api/v2/products?${search}`)
-  return mapArflyListResponse(raw, locale).items
+  const search = new URLSearchParams({ lang: toOdooCatalogLang(locale), page: '1', per_page: String(pageSize) })
+  const raw = await serverApiClient.get<OdooCatalogProductListResponse>(`/api/v2/products?${search}`)
+  return mapOdooCatalogListResponse(raw, locale).items
 }
 
 /** Related SSR: solo quelli già sul prodotto — evita un secondo round-trip catalogo sul TTFB. */
@@ -96,12 +96,12 @@ export const fetchProductDetailServer = cache(async function fetchProductDetailS
   slug: string,
   locale: PwaLocale,
 ): Promise<{ product: ProductDetailDTO; relatedProducts: ProductCardDTO[] } | null> {
-  const lang = toArflyLang(locale)
+  const lang = toOdooCatalogLang(locale)
   const bySlugSearch = new URLSearchParams({ lang, slug })
 
-  let res: ArflyProductDetailResponse | null = null
+  let res: OdooCatalogProductDetailResponse | null = null
   try {
-    res = await serverApiClient.get<ArflyProductDetailResponse>(
+    res = await serverApiClient.get<OdooCatalogProductDetailResponse>(
       `/api/v2/product/by-slug?${bySlugSearch}`,
     )
   } catch {
@@ -110,7 +110,7 @@ export const fetchProductDetailServer = cache(async function fetchProductDetailS
 
   if (!res?.product) return null
 
-  const product = mapArflyProductDetail(res.product, locale)
+  const product = mapOdooCatalogProductDetail(res.product, locale)
   const relatedProducts = loadRelatedProducts(product.relatedProducts ?? [])
 
   return { product, relatedProducts }
@@ -126,6 +126,12 @@ export async function fetchCatalogProductsServer(
     brand?: string
     attacco?: string
     colorTemp?: string
+    tipologia?: string
+    ambiente?: string
+    stile?: string
+    tag?: string
+    world?: 'design' | 'technical'
+    sort?: string
   } = {},
 ): Promise<ProductListDTO> {
   return fetchCatalogProductsServerCached(
@@ -137,6 +143,12 @@ export async function fetchCatalogProductsServer(
     params.brand ?? '',
     params.attacco ?? '',
     params.colorTemp ?? '',
+    params.tipologia ?? '',
+    params.ambiente ?? '',
+    params.stile ?? '',
+    params.tag ?? '',
+    params.world ?? '',
+    params.sort ?? '',
   )
 }
 
@@ -150,6 +162,12 @@ const fetchCatalogProductsServerCached = cache(
     brand: string,
     attacco: string,
     colorTemp: string,
+    tipologia: string,
+    ambiente: string,
+    stile: string,
+    tag: string,
+    world = '',
+    sort = '',
   ): Promise<ProductListDTO> {
     const search = new URLSearchParams({ locale })
     search.set('page', String(page))
@@ -159,7 +177,13 @@ const fetchCatalogProductsServerCached = cache(
     if (brand) search.set('brand', brand)
     if (attacco) search.set('attacco', attacco)
     if (colorTemp) search.set('colorTemp', colorTemp)
-    return serverApiClient.get<ProductListDTO>(`/api/v1/catalog/products?${search}`)
+    if (tipologia) search.set('tipologia', tipologia)
+    if (ambiente) search.set('ambiente', ambiente)
+    if (stile) search.set('stile', stile)
+    if (tag) search.set('tag', tag)
+    if (world) search.set('world', world)
+    if (sort) search.set('sort', sort)
+    return serverApiClient.get<ProductListDTO>(`/api/v1/catalog/search?${search}`)
   },
 )
 

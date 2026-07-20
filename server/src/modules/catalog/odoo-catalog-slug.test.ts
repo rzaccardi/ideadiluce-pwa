@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { slugifyBrandName, slugifyCatalogToken } from './odoo-catalog-slug.js'
+import {
+  brandSlugLookupKeys,
+  canonicalizeBrandSlug,
+  slugifyBrandName,
+  slugifyCatalogToken,
+} from './odoo-catalog-slug.js'
 
 describe('odoo-catalog-slug', () => {
   it('slugifica nomi brand', () => {
@@ -9,5 +14,11 @@ describe('odoo-catalog-slug', () => {
 
   it('normalizza token catalogo', () => {
     expect(slugifyCatalogToken('Illuminazione tecnica')).toBe('illuminazione-tecnica')
+  })
+
+  it('canonicalizza alias TLB', () => {
+    expect(canonicalizeBrandSlug('tlb-italy')).toBe('tlb')
+    expect(canonicalizeBrandSlug('TLB')).toBe('tlb')
+    expect(brandSlugLookupKeys('tlb-italy')).toEqual(expect.arrayContaining(['tlb', 'tlb-italy']))
   })
 })

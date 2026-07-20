@@ -118,7 +118,7 @@ await check('Task4 — prezzo /api/v2 con sessione vs anonimo', async () => {
     return { ok: false, note: `anon=${anon.status} logged=${logged.status}` }
   }
   if (priceAnon == null || priceLogged == null) {
-    return { ok: false, note: 'prezzo non estratto dalla risposta Arfly' }
+    return { ok: false, note: 'prezzo non estratto dalla risposta OdooCatalog' }
   }
 
   // Sessione caricata: utente demo ha partner Odoo → almeno la richiesta con cookie deve rispondere 200.

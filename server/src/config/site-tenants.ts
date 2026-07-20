@@ -6,7 +6,7 @@ export type SiteTenantConfig = {
   id: SiteTenantId
   host: string
   publicUrl: string
-  arflyWebsiteId: number
+  odooCatalogWebsiteId: number
   catalogRootCategorySlug: string
 }
 
@@ -25,7 +25,7 @@ export function getDesignTenant(): SiteTenantConfig {
     id: 'design',
     host: hostFromUrl(publicUrl),
     publicUrl,
-    arflyWebsiteId: env.ARFLY_WEBSITE_ID,
+    odooCatalogWebsiteId: env.ODOO_WEBSITE_ID,
     catalogRootCategorySlug: 'arredo',
   }
 }
@@ -36,13 +36,13 @@ export function getTechnicalTenant(): SiteTenantConfig | null {
   if (!raw) return null
 
   const publicUrl = normalizePublicUrl(raw)
-  const websiteId = env.TECHNICAL_ARFLY_WEBSITE_ID ?? env.ARFLY_WEBSITE_ID
+  const websiteId = env.TECHNICAL_ODOO_WEBSITE_ID ?? env.ODOO_WEBSITE_ID
 
   return {
     id: 'technical',
     host: hostFromUrl(publicUrl),
     publicUrl,
-    arflyWebsiteId: websiteId,
+    odooCatalogWebsiteId: websiteId,
     catalogRootCategorySlug: 'illuminazione-tecnica',
   }
 }

@@ -3,7 +3,6 @@ import { dedupeAsync } from '@/lib/async-cache'
 import type {
   OdooPaginated,
   OdooPricelist,
-  OdooPricelistAssignment,
   OdooQuotationDetail,
   OdooSaleDocument,
   OdooStatus,
@@ -34,20 +33,6 @@ export async function fetchOdooQuotationDetail(id: number) {
 
 export async function fetchOdooPricelists(query: string) {
   return adminApi<OdooPaginated<OdooPricelist>>(`/admin/odoo/pricelists?${query}`)
-}
-
-export type OdooPricelistAssignmentInput = {
-  pricelistId: number
-  partnerId?: number
-  email?: string
-  userId?: string
-}
-
-export async function assignOdooPricelist(body: OdooPricelistAssignmentInput) {
-  return adminApi<OdooPricelistAssignment>('/admin/odoo/pricelist-assignments', {
-    method: 'POST',
-    body: JSON.stringify(body),
-  })
 }
 
 export async function fetchOdooSyncQueue(query: string) {

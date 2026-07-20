@@ -63,7 +63,7 @@ function sessionExpiry(): Date {
 /**
  * Carica sessione dal cookie se presente e valida.
  * Non crea sessioni guest — adatto a /api/v2 pubblico (bot, sitemap, SSR anonimo).
- * Con cookie utente loggato (SSR Next) abilita listino B2B/pro nel proxy Arfly.
+ * Con cookie utente loggato (SSR Next) abilita listino B2B/pro nel proxy OdooCatalog.
  */
 export function loadSessionIfPresent(req: Request, _res: Response, next: NextFunction) {
   void (async () => {

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Integration test API storefront (session cookie, catalogo Arfly, carrello, checkout).
+ * Integration test API storefront (session cookie, catalogo OdooCatalog, carrello, checkout).
  * Uso: API_BASE=http://localhost:4000 node server/scripts/api-integration-test.mjs
  */
 const base = (process.env.API_BASE ?? 'http://localhost:4000').replace(/\/$/, '')
@@ -198,8 +198,8 @@ async function addCartItemWithFallback() {
   const refs = new Set(
     [productSlug, demoProductRef, 'sospensione-vetro', 'applique-led'].filter(Boolean),
   )
-  const arfly = await req('GET', '/api/v2/products?lang=it&per_page=20')
-  const listItems = arfly.json?.data?.items ?? []
+  const odooCatalog = await req('GET', '/api/v2/products?lang=it&per_page=20')
+  const listItems = odooCatalog.json?.data?.items ?? []
 
   // Priorità: prodotti con is_orderable esplicito o qty_available > 0
   const prioritized = [...listItems].sort((a, b) => {
@@ -246,7 +246,7 @@ await check('cart add item', async () => {
         ok: false,
         note: process.env.CART_SKIP_STOCK_CHECK === 'true'
           ? 'add fallito anche con CART_SKIP_STOCK_CHECK — verifica catalogo/API'
-          : 'nessun prodotto acquistabile (stock Odoo/Arfly) — imposta API_TEST_PRODUCT_REF o CART_SKIP_STOCK_CHECK=true sul server',
+          : 'nessun prodotto acquistabile (stock Odoo/OdooCatalog) — imposta API_TEST_PRODUCT_REF o CART_SKIP_STOCK_CHECK=true sul server',
       }
 })
 

@@ -49,18 +49,28 @@ type Props = {
   subcategories: ReadonlyArray<CategoryDTO>
   selectedCategorySlug?: string
   selectedBrandSlug?: string
+  selectedTipologia?: string
+  selectedAmbiente?: string
+  selectedStile?: string
   selectedAttacco?: string
   selectedColorTemp?: string
+  selectedWattaggioMin?: number
+  selectedWattaggioMax?: number
   selectedPriceBucket?: CatalogPriceBucket
   inStockOnly: boolean
+  facets?: import('@/types/dto').CatalogFiltersDTO | null | Readonly<import('@/types/dto').CatalogFiltersDTO>
   activeFilters: ReadonlyArray<CatalogActiveFilter>
   sort: CatalogSort
   loadMoreRef: React.RefObject<HTMLDivElement | null>
   onToggleFilters: () => void
   onSelectCategory: (slug?: string) => void
   onSelectBrand: (slug?: string) => void
+  onSelectTipologia?: (value?: string) => void
+  onSelectAmbiente?: (value?: string) => void
+  onSelectStile?: (value?: string) => void
   onSelectAttacco: (value?: string) => void
   onSelectColorTemp: (value?: string) => void
+  onSelectWattaggioRange?: (range: { min?: number; max?: number }) => void
   onSelectPriceBucket: (value?: CatalogPriceBucket) => void
   onToggleInStock: (enabled: boolean) => void
   onResetFilters: () => void
@@ -70,6 +80,10 @@ type Props = {
   emptyTitle: string
   emptyDescription: string
   searchQuery?: string
+  pageTitle?: string
+  pageSubtitle?: string
+  breadcrumbParent?: { label: string; href: string }
+  showWorldTabs?: boolean
 }
 
 function CatalogGridSkeleton({
@@ -171,18 +185,28 @@ export function CatalogPageView({
   subcategories,
   selectedCategorySlug,
   selectedBrandSlug,
+  selectedTipologia,
+  selectedAmbiente,
+  selectedStile,
   selectedAttacco,
   selectedColorTemp,
+  selectedWattaggioMin,
+  selectedWattaggioMax,
   selectedPriceBucket,
   inStockOnly,
+  facets,
   activeFilters,
   sort,
   loadMoreRef,
   onToggleFilters,
   onSelectCategory,
   onSelectBrand,
+  onSelectTipologia,
+  onSelectAmbiente,
+  onSelectStile,
   onSelectAttacco,
   onSelectColorTemp,
+  onSelectWattaggioRange,
   onSelectPriceBucket,
   onToggleInStock,
   onResetFilters,
@@ -192,6 +216,10 @@ export function CatalogPageView({
   emptyTitle,
   emptyDescription,
   searchQuery,
+  pageTitle,
+  pageSubtitle,
+  breadcrumbParent,
+  showWorldTabs = true,
 }: Props) {
   const [filtersModalOpen, setFiltersModalOpen] = useState(false)
 
@@ -201,14 +229,24 @@ export function CatalogPageView({
     brands,
     selectedCategorySlug,
     selectedBrandSlug,
+    selectedTipologia,
+    selectedAmbiente,
+    selectedStile,
     selectedAttacco,
     selectedColorTemp,
+    selectedWattaggioMin,
+    selectedWattaggioMax,
     selectedPriceBucket,
     inStockOnly,
+    facets,
     onSelectCategory,
     onSelectBrand,
+    onSelectTipologia,
+    onSelectAmbiente,
+    onSelectStile,
     onSelectAttacco,
     onSelectColorTemp,
+    onSelectWattaggioRange,
     onSelectPriceBucket,
     onToggleInStock,
     onReset: onResetFilters,
@@ -223,6 +261,10 @@ export function CatalogPageView({
         designLabel={designLabel}
         technicalLabel={technicalLabel}
         searchQuery={searchQuery}
+        title={pageTitle}
+        subtitle={pageSubtitle}
+        breadcrumbParent={breadcrumbParent}
+        showWorldTabs={showWorldTabs}
         afterSearch={
           <CatalogMobileToolbar
             activeFilterCount={activeFilters.length}
@@ -242,7 +284,13 @@ export function CatalogPageView({
         />
       ) : null}
 
-      <CatalogCategoryNavSection lp={lp} worldTab={worldTab} searchQuery={searchQuery} />
+      <CatalogCategoryNavSection
+        lp={lp}
+        worldTab={worldTab}
+        searchQuery={searchQuery}
+        selectedCategorySlug={selectedCategorySlug}
+        facets={facets}
+      />
 
       <SectionContainer className="py-6 sm:py-8 lg:py-10">
         <div

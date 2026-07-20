@@ -1,4 +1,5 @@
 import { prisma } from '../../lib/prisma.js'
+import { detectOdooOrderSource } from '../../modules/odoo/odoo-order-source.js'
 import { anonymizePartnerDisplayName } from '../../modules/social-proof/social-proof.anonymize.js'
 import { assertOdooConfigured, isOdooConfigured, odooExecuteKw, type OdooCallContext } from './odooClient.js'
 
@@ -13,6 +14,8 @@ type OdooOrderRow = {
   id: number
   date_order: string
   partner_id: [number, string] | number | false
+  client_order_ref?: string | false
+  origin?: string | false
 }
 
 type OdooProductRow = {
@@ -30,10 +33,18 @@ function relationName(value: [number, string] | number | false | undefined): str
   return value[1] ?? null
 }
 
+function text(value: string | false | undefined): string | null {
+  return typeof value === 'string' && value.trim() ? value : null
+}
+
+/**
+ * Importa lo storico ordini Odoo (non-PWA) nella cache social proof.
+ * Gli ordini già collegati a un PwaOrder restano sul DB locale — evita doppioni nel feed unificato.
+ */
 export async function importSocialProofFromOdoo(
   ctx: OdooCallContext,
   lookbackDays: number,
-): Promise<{ imported: number; deletedStale: number }> {
+): Promise<{ imported: number; deletedStale: number; skippedPwa: number }> {
   assertOdooConfigured()
   const since = new Date(Date.now() - lookbackDays * 86_400_000)
   const sinceOdoo = since.toISOString().slice(0, 19).replace('T', ' ')
@@ -41,6 +52,14 @@ export async function importSocialProofFromOdoo(
   const deletedStale = await prisma.socialProofOdooEvent.deleteMany({
     where: { purchasedAt: { lt: since } },
   })
+
+  const pwaLinked = await prisma.pwaOrder.findMany({
+    where: { odooSaleOrderId: { not: null } },
+    select: { odooSaleOrderId: true },
+  })
+  const pwaOdooIds = new Set(
+    pwaLinked.map((o) => o.odooSaleOrderId).filter((id): id is number => id != null),
+  )
 
   const domain: unknown[] = [
     ['order_id.state', 'in', ['sale', 'done']],
@@ -50,6 +69,7 @@ export async function importSocialProofFromOdoo(
   const BATCH = 200
   let offset = 0
   let imported = 0
+  let skippedPwa = 0
 
   for (;;) {
     const lines = await odooExecuteKw<OdooLineRow[]>(
@@ -76,7 +96,7 @@ export async function importSocialProofFromOdoo(
     const [orders, products] = await Promise.all([
       orderIds.length
         ? odooExecuteKw<OdooOrderRow[]>(ctx, 'sale.order', 'read', [orderIds], {
-            fields: ['id', 'date_order', 'partner_id'],
+            fields: ['id', 'date_order', 'partner_id', 'client_order_ref', 'origin'],
           })
         : Promise.resolve([]),
       productIds.length
@@ -97,6 +117,21 @@ export async function importSocialProofFromOdoo(
       const templateId = productId != null ? tmplByProductId.get(productId) : null
       const order = orderId != null ? orderById.get(orderId) : undefined
       if (!orderId || !templateId || !order?.date_order) continue
+
+      if (pwaOdooIds.has(orderId)) {
+        skippedPwa += 1
+        continue
+      }
+
+      const source = detectOdooOrderSource({
+        clientOrderRef: text(order.client_order_ref),
+        origin: text(order.origin),
+        dateOrder: order.date_order,
+      })
+      if (source === 'pwa') {
+        skippedPwa += 1
+        continue
+      }
 
       const qty = Math.round(Number(line.product_uom_qty) || 0)
       if (qty < 1) continue
@@ -132,7 +167,7 @@ export async function importSocialProofFromOdoo(
     if (lines.length < BATCH || offset > 10_000) break
   }
 
-  return { imported, deletedStale: deletedStale.count }
+  return { imported, deletedStale: deletedStale.count, skippedPwa }
 }
 
 export function odooSocialProofAvailable(): boolean {

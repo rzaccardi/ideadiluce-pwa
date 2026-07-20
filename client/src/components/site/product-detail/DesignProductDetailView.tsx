@@ -16,6 +16,7 @@ import { extractProductDisplayTitle } from '@/lib/product-display-title'
 import {
   mergeDesignSpecRows,
   parseProductSpecRows,
+  specsToRows,
 } from '@/lib/product-specs-parse'
 import {
   ProductDetailCard,
@@ -86,7 +87,15 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
     catalogKind: 'design',
   })
 
-  const specRows = mergeDesignSpecRows(parseProductSpecRows(product.specsTableHtml))
+  const activeSpecs =
+    selectedVariant?.specs?.length
+      ? selectedVariant.specs
+      : product.specs?.length
+        ? product.specs
+        : null
+  const specRows = mergeDesignSpecRows(
+    activeSpecs ? specsToRows(activeSpecs) : parseProductSpecRows(product.specsTableHtml),
+  )
   const { title: displayTitle, rest: titleRest } = extractProductDisplayTitle(product.name)
   const subtitle = buildProductSubtitle(product)
   const brandLabel = product.brand?.name?.toUpperCase() ?? 'BRAND'
@@ -138,6 +147,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
 
         <SectionContainer className="relative z-[2] grid min-w-0 items-start gap-8 pb-10 pt-5 sm:gap-14 sm:pb-14 sm:pt-7 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14 lg:pb-14">
           <ProductDetailGallery
+            gallery={product.gallery}
             images={galleryImages}
             alt={product.name}
             activeUrl={selectedVariant?.imageUrl ?? product.imageUrl}
@@ -360,6 +370,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
                 slug={product.slug}
                 documents={productDocuments}
                 variantRef={variantRef}
+                ced={selectedVariant?.ced ?? product.ced}
                 variant="design"
                 showTitle={false}
                 className="space-y-0"
@@ -395,7 +406,10 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
               <h2 className="font-serif text-2xl font-medium sm:text-[30px]">Altre icone da scoprire</h2>
             </div>
             {product.brand ? (
-              <Link to={lp('/brand')} className="text-sm font-semibold text-idl-glow hover:underline">
+              <Link
+                to={lp(`/brand/${product.brand.slug}`)}
+                className="text-sm font-semibold text-idl-glow hover:underline"
+              >
                 Tutto {product.brand.name} →
               </Link>
             ) : null}

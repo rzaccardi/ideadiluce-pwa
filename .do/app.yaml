@@ -75,14 +75,14 @@ services:
       - key: APP_PUBLIC_URL
         value: ${shop.PUBLIC_URL}
       - key: PUBLIC_SITE_URL
-        value: ${shop.PUBLIC_URL}
-      - key: ARFLY_CATALOG_ENABLED
+        value: https://shop.ideadiluce.it
+      - key: ODOO_CATALOG_ENABLED
         value: "true"
-      - key: ARFLY_API_BASE_URL
+      - key: ODOO_CATALOG_BASE_URL
         value: https://tlbdb.odoo.com
-      - key: ARFLY_WEBSITE_ID
+      - key: ODOO_WEBSITE_ID
         value: "2"
-      - key: ARFLY_TIMEOUT_MS
+      - key: ODOO_CATALOG_TIMEOUT_MS
         value: "25000"
       - key: ODOO_ENABLED
         value: "true"
@@ -180,7 +180,7 @@ services:
       - key: STRIPE_ENABLED
         value: "true"
         scope: RUN_TIME
-      - key: ARFLY_API_KEY
+      - key: ODOO_CATALOG_API_KEY
         scope: RUN_TIME
         type: SECRET
       - key: ODOO_DB
@@ -242,11 +242,11 @@ services:
       - key: NEXT_PUBLIC_API_URL
         value: ${api.PUBLIC_URL}
         scope: BUILD_TIME
-      - key: NEXT_PUBLIC_ARFLY_MEDIA_BASE_URL
+      - key: NEXT_PUBLIC_ODOO_MEDIA_BASE_URL
         value: https://tlbdb.odoo.com
         scope: BUILD_TIME
       - key: NEXT_PUBLIC_SITE_URL
-        value: ${shop.PUBLIC_URL}
+        value: https://shop.ideadiluce.it
         scope: BUILD_TIME
       - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
         scope: BUILD_TIME
@@ -270,5 +270,5 @@ static_sites:
         value: ${api.PUBLIC_URL}
         scope: BUILD_TIME
       - key: VITE_STOREFRONT_URL
-        value: ${shop.PUBLIC_URL}
+        value: https://shop.ideadiluce.it
         scope: BUILD_TIME

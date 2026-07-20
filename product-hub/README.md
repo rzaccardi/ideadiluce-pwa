@@ -1,6 +1,6 @@
 # Product Hub (legacy)
 
-Schema Postgres `hub` nel monorepo. **Il catalogo prodotti non è più gestito qui**: i contenuti arrivano da Odoo via API Arfly (`ARFLY_*` sul server).
+Schema Postgres `hub` nel monorepo. **Il catalogo prodotti non è più gestito qui**: i contenuti arrivano da Odoo via API Odoo catalog (`ODOO_CATALOG_*` sul server).
 
 Rimane solo la tabella `UrlRedirect` per redirect URL legacy (import Woo storico).
 

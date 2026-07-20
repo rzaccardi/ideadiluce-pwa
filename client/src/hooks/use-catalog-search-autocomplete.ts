@@ -246,6 +246,7 @@ export function useCatalogSearchAutocomplete({
             page: 1,
             pageSize: CATALOG_SEARCH_LIMITS.suggestPageSize,
             locale,
+            suggest: true,
           },
           { signal: controller.signal },
         )

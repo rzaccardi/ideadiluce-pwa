@@ -78,11 +78,11 @@ connections:
 # ——— Sistemi esterni (non su DigitalOcean) ———
 
 external:
-  odoo_arfly:
+  odoo_catalog:
     host: https://tlbdb.odoo.com
     connected_to: api
     uses:
-      - catalogo REST /api/v2/products (Arfly)
+      - catalogo REST /api/v2/products (catalogo Odoo)
       - ordini, stock, partner XML-RPC
 
   stripe:

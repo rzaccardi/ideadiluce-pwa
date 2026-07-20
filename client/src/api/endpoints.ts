@@ -34,8 +34,8 @@ import type {
   ProfessionalRequestSummaryDTO,
   UserPatchResponseDTO,
 } from '@/types/dto'
-import type { ArflyProductDetailResponse, ArflyProductListResponse } from '@/lib/arfly/types'
-import { toArflyLang } from '@/lib/arfly/locale'
+import type { OdooCatalogProductDetailResponse, OdooCatalogProductListResponse } from '@/lib/odoo-catalog/types'
+import { toOdooCatalogLang } from '@/lib/odoo-catalog/locale'
 import type { PwaLocale } from '@/lib/locale'
 import type { AddressInput } from '@/types/integrations'
 
@@ -107,7 +107,7 @@ export const api = {
       return apiClient.post<{ ended: boolean }>('/api/v1/auth/impersonate/end')
     },
   },
-  arfly: {
+  odooCatalog: {
     products(
       params: {
         locale?: PwaLocale
@@ -122,52 +122,40 @@ export const api = {
       } = {},
     ) {
       const search = new URLSearchParams()
-      search.set('lang', toArflyLang(params.locale ?? 'IT'))
+      search.set('lang', toOdooCatalogLang(params.locale ?? 'IT'))
       if (params.page) search.set('page', String(params.page))
       if (params.pageSize) search.set('per_page', String(params.pageSize))
+      // q/category/brand: proxy BFF → Odoo /products/search se presenti
       if (params.q) search.set('q', params.q)
       if (params.category) search.set('category', params.category)
       if (params.brand) search.set('brand', params.brand)
-      if (params.partnerId != null) search.set('partner_id', String(params.partnerId))
-      if (params.pricelistId != null) search.set('pricelist_id', String(params.pricelistId))
       if (params.enrichSpecTags) search.set('enrich_spec_tags', '1')
       const q = search.toString() ? `?${search.toString()}` : ''
-      return apiClient.get<ArflyProductListResponse>(`/api/v2/products${q}`)
+      return apiClient.get<OdooCatalogProductListResponse>(`/api/v2/products${q}`)
     },
     product(
       productId: number,
       locale: PwaLocale = 'IT',
-      options: { partnerId?: number; pricelistId?: number } = {},
+      _options: { partnerId?: number; pricelistId?: number } = {},
     ) {
-      const search = new URLSearchParams({ lang: toArflyLang(locale) })
-      if (options.partnerId != null) search.set('partner_id', String(options.partnerId))
-      if (options.pricelistId != null) search.set('pricelist_id', String(options.pricelistId))
-      return apiClient.get<ArflyProductDetailResponse>(
+      // Contratto Odoo: GET /api/v2/product/<id>?website=&lang= (proxy BFF inietta website)
+      const search = new URLSearchParams({ lang: toOdooCatalogLang(locale) })
+      return apiClient.get<OdooCatalogProductDetailResponse>(
         `/api/v2/product/${productId}?${search.toString()}`,
       )
     },
+    /**
+     * BFF resolve slug→id dalla cache contratto, poi GET /api/v2/product/<id>.
+     * Non esiste by-slug nel contratto Odoo.
+     */
     productBySlug(
       slug: string,
       locale: PwaLocale = 'IT',
-      options: { partnerId?: number; pricelistId?: number } = {},
+      _options: { partnerId?: number; pricelistId?: number } = {},
     ) {
-      const search = new URLSearchParams({ lang: toArflyLang(locale), slug })
-      if (options.partnerId != null) search.set('partner_id', String(options.partnerId))
-      if (options.pricelistId != null) search.set('pricelist_id', String(options.pricelistId))
-      return apiClient.get<ArflyProductDetailResponse>(
+      const search = new URLSearchParams({ lang: toOdooCatalogLang(locale), slug })
+      return apiClient.get<OdooCatalogProductDetailResponse>(
         `/api/v2/product/by-slug?${search.toString()}`,
-      )
-    },
-    categories(locale: PwaLocale = 'IT') {
-      const search = new URLSearchParams({ lang: toArflyLang(locale) })
-      return apiClient.get<import('@/lib/arfly/types').ArflyCategoryListResponse>(
-        `/api/v2/categories?${search.toString()}`,
-      )
-    },
-    brands(locale: PwaLocale = 'IT') {
-      const search = new URLSearchParams({ lang: toArflyLang(locale) })
-      return apiClient.get<import('@/lib/arfly/types').ArflyBrandListResponse>(
-        `/api/v2/brands?${search.toString()}`,
       )
     },
   },
@@ -349,9 +337,18 @@ export const api = {
       pageSize?: number
       q?: string
       category?: string
+      subcategory?: string
       brand?: string
+      world?: 'design' | 'technical'
       attacco?: string
       colorTemp?: string
+      wattaggio?: string | number
+      wattaggioMin?: string | number
+      wattaggioMax?: string | number
+      tag?: string
+      sort?: string
+      /** Typeahead: usa cache locale invece di Odoo search. */
+      suggest?: boolean
     },
       init?: Pick<RequestInit, 'signal'>,
     ) {
@@ -361,12 +358,107 @@ export const api = {
       if (params.pageSize) search.set('pageSize', String(params.pageSize))
       if (params.q) search.set('q', params.q)
       if (params.category) search.set('category', params.category)
+      if (params.subcategory) search.set('subcategory', params.subcategory)
       if (params.brand) search.set('brand', params.brand)
+      if (params.world) search.set('world', params.world)
       if (params.attacco) search.set('attacco', params.attacco)
       if (params.colorTemp) search.set('colorTemp', params.colorTemp)
+      if (params.wattaggio != null) search.set('wattaggio', String(params.wattaggio))
+      if (params.wattaggioMin != null) search.set('wattaggio_min', String(params.wattaggioMin))
+      if (params.wattaggioMax != null) search.set('wattaggio_max', String(params.wattaggioMax))
+      if (params.tag) search.set('tag', params.tag)
+      if (params.sort) search.set('sort', params.sort)
+      if (params.suggest) search.set('suggest', '1')
       return apiClient.get<import('@/types/dto').ProductListDTO>(
         `/api/v1/catalog/products?${search.toString()}`,
         init,
+      )
+    },
+    /** Listing filtrato live Odoo (`/api/v2/products/search`). */
+    search(
+      params: {
+        locale?: string
+        page?: number
+        pageSize?: number
+        q?: string
+        category?: string
+        subcategory?: string
+        brand?: string
+        world?: 'design' | 'technical'
+        tipologia?: string
+        ambiente?: string
+        stile?: string
+        attacco?: string
+        colorTemp?: string
+        wattaggio?: string | number
+        wattaggioMin?: string | number
+        wattaggioMax?: string | number
+        tag?: string
+        sort?: string
+      },
+      init?: Pick<RequestInit, 'signal'>,
+    ) {
+      const search = new URLSearchParams()
+      if (params.locale) search.set('locale', params.locale)
+      if (params.page) search.set('page', String(params.page))
+      if (params.pageSize) search.set('pageSize', String(params.pageSize))
+      if (params.q) search.set('q', params.q)
+      if (params.category) search.set('category', params.category)
+      if (params.subcategory) search.set('subcategory', params.subcategory)
+      if (params.brand) search.set('brand', params.brand)
+      if (params.world) search.set('world', params.world)
+      if (params.tipologia) search.set('tipologia', params.tipologia)
+      if (params.ambiente) search.set('ambiente', params.ambiente)
+      if (params.stile) search.set('stile', params.stile)
+      if (params.attacco) search.set('attacco', params.attacco)
+      if (params.colorTemp) search.set('colorTemp', params.colorTemp)
+      if (params.wattaggio != null) search.set('wattaggio', String(params.wattaggio))
+      if (params.wattaggioMin != null) search.set('wattaggio_min', String(params.wattaggioMin))
+      if (params.wattaggioMax != null) search.set('wattaggio_max', String(params.wattaggioMax))
+      if (params.tag) search.set('tag', params.tag)
+      if (params.sort) search.set('sort', params.sort)
+      return apiClient.get<import('@/types/dto').ProductListDTO>(
+        `/api/v1/catalog/search?${search.toString()}`,
+        init,
+      )
+    },
+    /** Facet aggregate live Odoo (`/api/v2/filters`). */
+    filters(params: {
+      locale?: string
+      q?: string
+      category?: string
+      subcategory?: string
+      brand?: string
+      world?: 'design' | 'technical'
+      tipologia?: string
+      ambiente?: string
+      stile?: string
+      attacco?: string
+      colorTemp?: string
+      wattaggio?: string | number
+      wattaggioMin?: string | number
+      wattaggioMax?: string | number
+      tag?: string
+    } = {}) {
+      const search = new URLSearchParams()
+      if (params.locale) search.set('locale', params.locale)
+      if (params.q) search.set('q', params.q)
+      if (params.category) search.set('category', params.category)
+      if (params.subcategory) search.set('subcategory', params.subcategory)
+      if (params.brand) search.set('brand', params.brand)
+      if (params.world) search.set('world', params.world)
+      if (params.tipologia) search.set('tipologia', params.tipologia)
+      if (params.ambiente) search.set('ambiente', params.ambiente)
+      if (params.stile) search.set('stile', params.stile)
+      if (params.attacco) search.set('attacco', params.attacco)
+      if (params.colorTemp) search.set('colorTemp', params.colorTemp)
+      if (params.wattaggio != null) search.set('wattaggio', String(params.wattaggio))
+      if (params.wattaggioMin != null) search.set('wattaggio_min', String(params.wattaggioMin))
+      if (params.wattaggioMax != null) search.set('wattaggio_max', String(params.wattaggioMax))
+      if (params.tag) search.set('tag', params.tag)
+      const q = search.toString()
+      return apiClient.get<import('@/types/dto').CatalogFiltersDTO>(
+        `/api/v1/catalog/filters${q ? `?${q}` : ''}`,
       )
     },
     enrichProductDetail(product: import('@/types/dto').ProductDetailDTO) {

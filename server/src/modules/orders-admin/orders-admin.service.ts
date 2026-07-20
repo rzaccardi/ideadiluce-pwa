@@ -4,7 +4,7 @@ import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odoo
 import { logger } from '../../lib/logger.js'
 import { prisma } from '../../lib/prisma.js'
 import { AppError } from '../../types/errors.js'
-import { resolveArflyProductLabels } from '../catalog/arfly-product-labels.js'
+import { resolveOdooCatalogProductLabels } from '../catalog/odoo-product-labels.js'
 import { parseOdooTemplateId } from '../catalog/odooRef.js'
 import { ODOO_ORDER_SOURCE_LABEL } from '../odoo/odoo-order-source.js'
 import { odooSalesService } from '../odoo/odoo-sales.service.js'
@@ -88,7 +88,7 @@ async function resolveLineProductInfo(refs: string[]): Promise<Map<string, LineP
   const map = new Map<string, LineProductInfo>()
   if (unique.length === 0) return map
 
-  const labels = await resolveArflyProductLabels(unique)
+  const labels = await resolveOdooCatalogProductLabels(unique)
   for (const ref of unique) {
     const label = labels.get(ref)
     if (!label) continue

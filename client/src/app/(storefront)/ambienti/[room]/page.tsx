@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { CatalogPage } from '@/views/CatalogPage'
 import { JsonLdGraph } from '@/components/JsonLdGraph'
 import { getAmbientiRoomMeta } from '@/lib/ambienti.defaults'
 import { getSiteUrl } from '@/lib/env'
@@ -7,8 +8,8 @@ import { localizePath } from '@/lib/locale'
 import { getRequestLocale } from '@/lib/locale-server'
 import { buildMetadata } from '@/lib/seo'
 import { buildBreadcrumbJsonLd, buildCollectionPageJsonLd } from '@/lib/seo/json-ld'
-import { fetchCatalogProductsServer } from '@/lib/server-catalog'
-import { AmbienteRoomView } from '@/views/AmbienteRoomView'
+import { buildAmbienteTaxonomy, humanizeSlug, taxonomyPageTitle } from '@/lib/catalog-taxonomy'
+import { fetchCatalogBootstrapServer, fetchCatalogProductsServer } from '@/lib/server-catalog'
 
 type PageProps = {
   params: Promise<{ room: string }>
@@ -22,7 +23,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const locale = await getRequestLocale()
   const site = getSiteUrl().replace(/\/$/, '')
   const canonical = `${site}${localizePath(`/ambienti/${room}`, locale)}`
-  const title = `Illuminazione per ${room === 'esterno' ? 'esterni' : room}`
+  const taxonomy = buildAmbienteTaxonomy(room, humanizeSlug(room))
+  const title = taxonomyPageTitle(taxonomy)
 
   return buildMetadata({
     title,
@@ -37,13 +39,18 @@ export default async function AmbienteRoomPage({ params }: PageProps) {
   if (!meta) notFound()
 
   const locale = await getRequestLocale()
-  const productsRes = await fetchCatalogProductsServer(locale, {
-    category: room,
-    pageSize: 24,
-  })
+  const taxonomy = buildAmbienteTaxonomy(room, humanizeSlug(room))
+  const [productsRes, initialBootstrap] = await Promise.all([
+    fetchCatalogProductsServer(locale, {
+      pageSize: 24,
+      world: 'design',
+      ambiente: taxonomy.value,
+    }),
+    fetchCatalogBootstrapServer(locale),
+  ])
   const site = getSiteUrl().replace(/\/$/, '')
   const pageUrl = `${site}${localizePath(`/ambienti/${room}`, locale)}`
-  const title = `Illuminazione per ${room === 'esterno' ? 'esterni' : room}`
+  const title = taxonomyPageTitle(taxonomy)
 
   return (
     <>
@@ -62,7 +69,19 @@ export default async function AmbienteRoomPage({ params }: PageProps) {
           ]),
         ]}
       />
-      <AmbienteRoomView room={meta} products={productsRes.items} />
+      <CatalogPage
+        forcedTaxonomy={taxonomy}
+        initialProducts={productsRes.items}
+        initialBootstrap={initialBootstrap}
+        initialPagination={{
+          page: productsRes.page,
+          pageSize: productsRes.pageSize,
+          total: productsRes.total,
+          totalPages: productsRes.totalPages,
+          hasNextPage: productsRes.hasNextPage,
+          hasPreviousPage: productsRes.hasPreviousPage,
+        }}
+      />
     </>
   )
 }

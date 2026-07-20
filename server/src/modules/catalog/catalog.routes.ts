@@ -9,7 +9,7 @@ import { resolveCodesSchema } from '../cart/cart-quick-reorder.validators.js'
 import { requireLogin } from '../../middlewares/session.js'
 import { catalogSearchRateLimit } from './catalog-search-rate-limit.js'
 
-/** Catalogo storefront: lista prodotti da Odoo (Arfly), categorie/brand non gestiti nel BFF. */
+/** Catalogo storefront: lista prodotti da Odoo (OdooCatalog), categorie/brand non gestiti nel BFF. */
 export const catalogRouter = Router()
 
 catalogRouter.get('/bootstrap', catalogPublicController.bootstrap)
@@ -24,6 +24,10 @@ catalogRouter.get('/categories/:slug', catalogPublicController.categoryBySlug)
 catalogRouter.get('/brands', catalogPublicController.brands)
 catalogRouter.get('/brands/:slug', catalogPublicController.brandBySlug)
 catalogRouter.get('/products', catalogSearchRateLimit, catalogPublicController.products)
+catalogRouter.get('/search', catalogSearchRateLimit, catalogPublicController.search)
+catalogRouter.get('/filters', catalogPublicController.filters)
+catalogRouter.post('/catalog-index/sync', catalogPublicController.syncCatalogIndex)
+catalogRouter.get('/catalog-index', catalogPublicController.catalogIndexMeta)
 catalogRouter.get('/home/product-sliders', catalogPublicController.homeProductSliders)
 catalogRouter.post('/availability/enrich-detail', catalogPublicController.enrichProductDetail)
 catalogRouter.get('/products/:slug/social-proof', storefrontController.productSocialProof)

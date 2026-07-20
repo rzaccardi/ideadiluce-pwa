@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useSnapshot } from 'valtio/react'
-import { ArrowLeftIcon, LanguagesIcon, SaveIcon, SparklesIcon } from 'lucide-react'
+import { ArrowLeftIcon, SaveIcon } from 'lucide-react'
 import {
   fetchSitePageAllLocales,
   isSiteDraftDirty,
@@ -101,8 +101,8 @@ export function SitePageDetailPage() {
   ) as Record<SiteLocale, Record<string, unknown>>
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div className="detail-page-with-sticky-actions space-y-6">
+      <div className="flex flex-col gap-4">
         <SitePageHeader
           title={pageLabel}
           description="Modifica i testi in tutte le lingue. L'italiano è la sorgente per DeepL."
@@ -117,16 +117,6 @@ export function SitePageDetailPage() {
           }
           primary={
             <>
-              {currentMissingLocales.length > 0 ? (
-                <Button variant="outline" onClick={() => void onTranslateAll(true)} disabled={busy}>
-                  <SparklesIcon className="size-4" />
-                  {sp.isTranslating ? 'Traduzione…' : 'Traduci mancanti'}
-                </Button>
-              ) : null}
-              <Button variant="outline" onClick={() => void onTranslateAll(false)} disabled={busy}>
-                <LanguagesIcon className="size-4" />
-                {sp.isTranslating ? 'Traduzione…' : 'Rigenera traduzioni'}
-              </Button>
               <Button variant="success" onClick={() => void onSaveItalian(true)} disabled={busy}>
                 <SaveIcon className="size-4" />
                 {sp.isSaving ? 'Salvataggio…' : 'Salva IT e traduci'}
@@ -137,6 +127,24 @@ export function SitePageDetailPage() {
               </Button>
             </>
           }
+          menu={[
+            ...(currentMissingLocales.length > 0
+              ? [
+                  {
+                    label: 'Traduci mancanti',
+                    onSelect: () => {
+                      if (!busy) void onTranslateAll(true)
+                    },
+                  },
+                ]
+              : []),
+            {
+              label: 'Rigenera traduzioni',
+              onSelect: () => {
+                if (!busy) void onTranslateAll(false)
+              },
+            },
+          ]}
         />
       </div>
 
@@ -154,12 +162,15 @@ export function SitePageDetailPage() {
             Ogni locale può essere salvato come bozza o pubblicato in modo indipendente.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-4">
+        <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {SITE_LOCALES.map((locale) => {
             const draft = sp.localeDrafts[locale]
             const status = currentPageCatalog?.locales[locale]?.status
             return (
-              <div key={locale} className="flex min-w-[140px] items-center gap-2 rounded-lg border px-3 py-2">
+              <div
+                key={locale}
+                className="flex min-w-0 items-center gap-3 rounded-lg border px-3 py-3"
+              >
                 <Switch
                   checked={draft?.published ?? true}
                   onCheckedChange={(checked) => setSiteLocalePublished(locale, checked)}
@@ -169,7 +180,7 @@ export function SitePageDetailPage() {
                   {status === 'missing' ? (
                     <p className="text-xs text-amber-700">Traduzione mancante</p>
                   ) : draft?.updatedAt ? (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="truncate text-xs text-muted-foreground">
                       {new Date(draft.updatedAt).toLocaleString('it-IT')}
                     </p>
                   ) : (

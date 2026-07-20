@@ -13,7 +13,7 @@ import { PageLoadTransition } from '@/components/motion'
 import { useLocale } from '@/context/locale-context'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { useI18n } from '@/hooks/use-i18n'
-import { toPwaLocale } from '@/lib/arfly/lookup'
+import { toPwaLocale } from '@/lib/odoo-catalog/lookup'
 import type { ProductCardDTO } from '@/types/dto'
 
 type Props = {
@@ -49,7 +49,7 @@ export function CategoryPage({ initialProducts, initialCategoryName = null, cate
       try {
         const pwaLocale = toPwaLocale(locale)
         const [listRes, categoriesRes] = await Promise.all([
-          api.catalog.products({ locale: pwaLocale, category: slug, page: 1, pageSize: 48 }),
+          api.catalog.search({ locale: pwaLocale, category: slug, page: 1, pageSize: 48 }),
           api.catalog.categories(pwaLocale),
         ])
         if (cancelled) return

@@ -18,14 +18,22 @@ const REF_LINE_LABELS: Record<ProductIdentifierFieldKey, string> = {
 }
 
 const KNOWN_BRANDS: ReadonlyArray<{ pattern: RegExp; label: string; slug: string }> = [
-  { pattern: /\bTLB(?:\s+Italy)?\b/i, label: 'TLB', slug: 'tlb-italy' },
+  { pattern: /\bTLB(?:\s+Italy)?\b/i, label: 'TLB', slug: 'tlb' },
   { pattern: /\bOSRAM\b/i, label: 'OSRAM', slug: 'osram' },
   { pattern: /\bPhilips\b/i, label: 'PHILIPS', slug: 'philips' },
-  { pattern: /\bArtemide\b/i, label: 'ARTEMIDE', slug: 'artemide' },
-  { pattern: /\bFlos\b/i, label: 'FLOS', slug: 'flos' },
-  { pattern: /\bFontanaArte\b/i, label: 'FONTANAARTE', slug: 'fontanaarte' },
-  { pattern: /\bMean\s*Well\b/i, label: 'MEAN WELL', slug: 'mean-well' },
+  { pattern: /\bGeneral\s*Electric\b|\bGE\b/i, label: 'GENERAL ELECTRIC', slug: 'general-electric' },
+  { pattern: /\bSylvania\b/i, label: 'SYLVANIA', slug: 'sylvania' },
+  { pattern: /\bSPL\b/i, label: 'SPL', slug: 'spl' },
   { pattern: /\bVossloh\b/i, label: 'VOSSLOH', slug: 'vossloh' },
+  { pattern: /\bLedvance\b/i, label: 'LEDVANCE', slug: 'ledvance' },
+  { pattern: /\bAigostar\b/i, label: 'AIGOSTAR', slug: 'aigostar' },
+  { pattern: /\bPatron\b/i, label: 'PATRON', slug: 'patron' },
+  { pattern: /\bIlesa\b/i, label: 'ILESA', slug: 'ilesa' },
+  { pattern: /\bDuralamp\b/i, label: 'DURALAMP', slug: 'duralamp' },
+  { pattern: /\bCentury\b/i, label: 'CENTURY', slug: 'century' },
+  { pattern: /\bThorgeon\b/i, label: 'THORGEON', slug: 'thorgeon' },
+  { pattern: /\bTCI\b/i, label: 'TCI', slug: 'tci' },
+  { pattern: /\bGenelux\b/i, label: 'GENELUX', slug: 'genelux' },
 ]
 
 export function inferTechnicalProductBrandFromName(name: string): ProductBrandDTO | null {
