@@ -99,15 +99,16 @@ Slug reali Odoo: root `tecnico` / `arredo` e figli (`fluorescente`, `led`, `alog
 
 ## Richieste aperte PWA → BE Odoo
 
-Dettaglio completo: [`API-Prodotti-Odoo-PWA.md`](./API-Prodotti-Odoo-PWA.md) §9.
+Tracking: [`API-PWA-Richiesta-Tassonomie.md`](./API-PWA-Richiesta-Tassonomie.md).
 
-### R1 — Popolare `ambiente` (2026-07-20)
+### R1 — `ambiente` · contratto OK, **dati pending**
 
-Serve per `/ambienti/*` e slider home `room-*` **senza** `q=` testuale.
+Wiring PWA: `/ambienti/*` + slider `room-*` → `ambiente=` (+ `category=arredo`).  
+Smoke live ancora `total=0` / facet vuota — attendere popolamento catalogo Odoo.
 
-Slug: `soggiorno` · `cucina` · `bagno` · `camera` · `studio` · `esterno`  
-Facet `ambienti` + search `ambiente=` + `taxonomy.ambiente[]` sul dettaglio.  
-Fallback accettabile: stessi slug come `tag`.
+### R2 — `tipologia` / `stile` · **smoke OK** su Arredo
+
+`/tipologia/*` e `/stile/*` con `category=arredo`. Smoke: `tavolo` / `design` restituiscono prodotti.
 
 ---
 

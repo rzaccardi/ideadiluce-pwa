@@ -1,26 +1,25 @@
 /**
  * Parametri query per GET /api/v2/products/search e GET /api/v2/filters.
- * Alias slug storefront legacy → slug/world Odoo v2 (tecnico/arredo).
+ * Alias slug storefront legacy → category Odoo v2 (tecnico/arredo).
+ * Paradigma PWA: niente `world` in uscita — solo `category`.
  */
 import type { OdooCatalogProductSearchSort } from './odooCatalog.types.js'
 
 export type OdooCatalogWorld = 'design' | 'technical'
 
-/** Slug categoria PWA/CMS → filtro Odoo v2. */
-const CATEGORY_SLUG_ALIASES: Record<
-  string,
-  { world?: OdooCatalogWorld; category?: string }
-> = {
-  'illuminazione-tecnica': { world: 'technical', category: 'tecnico' },
-  'prodotti-tecnici': { world: 'technical', category: 'tecnico' },
-  tecnico: { world: 'technical', category: 'tecnico' },
-  arredo: { world: 'design', category: 'arredo' },
-  'illuminazione-arredo': { world: 'design', category: 'arredo' },
-  'illuminazione-design': { world: 'design', category: 'arredo' },
+/** Slug categoria PWA/CMS → root Odoo v2. */
+const CATEGORY_SLUG_ALIASES: Record<string, string> = {
+  'illuminazione-tecnica': 'tecnico',
+  'prodotti-tecnici': 'tecnico',
+  tecnico: 'tecnico',
+  arredo: 'arredo',
+  'illuminazione-arredo': 'arredo',
+  'illuminazione-design': 'arredo',
 }
 
 export type OdooCatalogFilterParams = {
   q?: string
+  /** Accettato in ingresso (compat); convertito in category, non inoltrato. */
   world?: OdooCatalogWorld | string
   category?: string
   subcategory?: string
@@ -49,31 +48,23 @@ function setIfPresent(out: Record<string, string>, key: string, value: unknown) 
   out[key] = s
 }
 
-/** Normalizza category/world PWA verso i parametri ammessi da Odoo v2. */
+/** Normalizza category/world PWA verso i parametri ammessi da Odoo v2 (senza world). */
 export function normalizeOdooCatalogFilters(
   input: OdooCatalogFilterParams,
 ): OdooCatalogFilterParams {
-  const alias = input.category?.trim()
-    ? CATEGORY_SLUG_ALIASES[input.category.trim().toLowerCase()]
-    : undefined
+  const rawCategory = input.category?.trim() || undefined
+  const alias = rawCategory ? CATEGORY_SLUG_ALIASES[rawCategory.toLowerCase()] : undefined
 
-  let world = input.world?.trim() || undefined
-  let category = input.category?.trim() || undefined
+  let category = alias ?? rawCategory
+  const world = input.world?.trim() || undefined
 
-  if (alias) {
-    world = world || alias.world
-    category = alias.category ?? category
-  }
-
-  if (world === 'design' || world === 'technical') {
-    // ok
-  } else if (world) {
-    world = undefined
+  if (!category && (world === 'design' || world === 'technical')) {
+    category = world === 'design' ? 'arredo' : 'tecnico'
   }
 
   return {
     ...input,
-    world,
+    world: undefined,
     category,
   }
 }
@@ -87,7 +78,6 @@ export function toOdooCatalogQueryParams(
   const out: Record<string, string> = {}
 
   setIfPresent(out, 'q', normalized.q)
-  setIfPresent(out, 'world', normalized.world)
   setIfPresent(out, 'category', normalized.category)
   setIfPresent(out, 'subcategory', normalized.subcategory)
   setIfPresent(out, 'tipologia', normalized.tipologia)

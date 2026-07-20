@@ -5,37 +5,46 @@ import {
 } from './odooCatalogSearchParams.js'
 
 describe('normalizeOdooCatalogFilters', () => {
-  it('mappa illuminazione-tecnica → world technical + category tecnico', () => {
+  it('mappa illuminazione-tecnica → category tecnico (senza world)', () => {
     expect(normalizeOdooCatalogFilters({ category: 'illuminazione-tecnica' })).toEqual({
       category: 'tecnico',
-      world: 'technical',
+      world: undefined,
     })
   })
 
   it('mappa prodotti-tecnici e arredo legacy', () => {
     expect(normalizeOdooCatalogFilters({ category: 'prodotti-tecnici' })).toMatchObject({
       category: 'tecnico',
-      world: 'technical',
     })
     expect(normalizeOdooCatalogFilters({ category: 'illuminazione-arredo' })).toMatchObject({
       category: 'arredo',
-      world: 'design',
     })
   })
 
-  it('rispetta world esplicito', () => {
+  it('converte world esplicito in category root', () => {
+    expect(normalizeOdooCatalogFilters({ world: 'technical' })).toMatchObject({
+      category: 'tecnico',
+      world: undefined,
+    })
+    expect(normalizeOdooCatalogFilters({ world: 'design' })).toMatchObject({
+      category: 'arredo',
+      world: undefined,
+    })
+  })
+
+  it('non sovrascrive category con world', () => {
     expect(
       normalizeOdooCatalogFilters({ category: 'fluorescente', world: 'technical' }),
-    ).toMatchObject({ category: 'fluorescente', world: 'technical' })
+    ).toMatchObject({ category: 'fluorescente', world: undefined })
   })
 
   it('ignora world non valido', () => {
-    expect(normalizeOdooCatalogFilters({ world: 'foo' as 'design' }).world).toBeUndefined()
+    expect(normalizeOdooCatalogFilters({ world: 'foo' as 'design' }).category).toBeUndefined()
   })
 })
 
 describe('toOdooCatalogQueryParams', () => {
-  it('include paginazione e sort per search', () => {
+  it('include paginazione e sort per search; world → category', () => {
     expect(
       toOdooCatalogQueryParams(
         {
@@ -48,7 +57,7 @@ describe('toOdooCatalogQueryParams', () => {
         { includePagination: true },
       ),
     ).toEqual({
-      world: 'technical',
+      category: 'tecnico',
       attacco: 'G4',
       page: '2',
       per_page: '24',
@@ -63,12 +72,12 @@ describe('toOdooCatalogQueryParams', () => {
         { includePagination: false },
       ),
     ).toEqual({
-      world: 'technical',
+      category: 'tecnico',
       attacco: 'G4',
     })
   })
 
-  it('inoltra q, brand, wattaggio, color_temp, tag', () => {
+  it('inoltra q, brand, wattaggio, color_temp, tag, ambiente', () => {
     expect(
       toOdooCatalogQueryParams(
         {
@@ -80,6 +89,9 @@ describe('toOdooCatalogQueryParams', () => {
           color_temp: '3000K',
           tag: 'dimmerabile,t5',
           category: 'illuminazione-tecnica',
+          ambiente: 'soggiorno',
+          tipologia: 'tavolo',
+          stile: 'design',
         },
         { includePagination: false },
       ),
@@ -91,8 +103,10 @@ describe('toOdooCatalogQueryParams', () => {
       wattaggio_max: '40',
       color_temp: '3000K',
       tag: 'dimmerabile,t5',
-      world: 'technical',
       category: 'tecnico',
+      ambiente: 'soggiorno',
+      tipologia: 'tavolo',
+      stile: 'design',
     })
   })
 

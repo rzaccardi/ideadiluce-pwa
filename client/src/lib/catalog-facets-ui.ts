@@ -155,7 +155,7 @@ export function facetBrandOptions(
   }))
 }
 
-/** Opzioni tassonomia design (tipologia / ambiente / stile) da facet. */
+/** Opzioni tassonomia design (tipologia / ambiente / stile) da facet `{value,label,count}`. */
 export function facetTaxonomyOptions(
   facets: CatalogFiltersDTO | null | undefined,
   kind: 'tipologie' | 'ambienti' | 'stili',
@@ -163,11 +163,23 @@ export function facetTaxonomyOptions(
   if (facets == null) return []
   const items = facets[kind]
   if (!items?.length) return []
-  return sortByCountDesc(items).map((o) => ({
-    value: slugToken(String(o.value)),
-    label: o.label || String(o.value),
-    count: o.count,
-  }))
+  return sortByCountDesc(items)
+    .filter((o) => (o.count ?? 0) > 0)
+    .map((o) => {
+      const raw = String(o.value).trim()
+      return {
+        // Param search/filters: slug Odoo (value), non la label.
+        value: slugToken(raw) || raw.toLowerCase(),
+        label: o.label?.trim() || humanizeFacetValue(raw),
+        count: o.count,
+      }
+    })
+}
+
+function humanizeFacetValue(raw: string): string {
+  const s = raw.replace(/[-_]+/g, ' ').trim()
+  if (!s) return raw
+  return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
 function mapCategoryNode(
@@ -224,7 +236,7 @@ export function buildDesignTypeTilesFromFacets(
         key: slug,
         label: t.label,
         count: String(t.count),
-        href: `/negozio?world=design&category=${encodeURIComponent(slug)}`,
+        href: `/tipologia/${encodeURIComponent(slug)}`,
       }
     })
   }
@@ -241,7 +253,7 @@ export function buildDesignTypeTilesFromFacets(
       key: c.slug,
       label: c.name,
       count: String(c.count),
-      href: `/negozio?world=design&category=${encodeURIComponent(c.slug)}`,
+      href: `/negozio?category=arredo&tipologia=${encodeURIComponent(c.slug)}`,
     }))
 }
 
@@ -273,7 +285,7 @@ export function buildTechnicalSubtypeChipsFromFacets(
 
   if (!children.length) return [...fallback]
 
-  const tuttiHref = catalogMode ? '/negozio?world=technical' : baseHref
+  const tuttiHref = catalogMode ? '/negozio?category=tecnico' : baseHref
   const selected = selectedCategorySlug?.trim().toLowerCase()
   const chips: CategorySubtypeChip[] = [
     {
@@ -285,7 +297,7 @@ export function buildTechnicalSubtypeChipsFromFacets(
 
   for (const child of sortByCountDesc(children).filter((c) => c.count > 0)) {
     const href = catalogMode
-      ? `/negozio?world=technical&category=${encodeURIComponent(child.slug)}`
+      ? `/negozio?category=${encodeURIComponent(child.slug)}`
       : `${baseHref}?f=${encodeURIComponent(`category-${child.slug}`)}`
     chips.push({
       label: child.name,

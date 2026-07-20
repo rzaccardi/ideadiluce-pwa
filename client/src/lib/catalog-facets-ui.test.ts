@@ -7,6 +7,7 @@ import {
   facetAttaccoOptions,
   facetCategoryOptions,
   facetColorTempOptions,
+  facetTaxonomyOptions,
   landingAttaccoValueToCode,
   landingKelvinValueToCode,
 } from './catalog-facets-ui'
@@ -68,7 +69,7 @@ describe('catalog-facets-ui', () => {
     expect(chips.some((c) => c.label === 'LED' && c.href?.includes('category=led'))).toBe(true)
   })
 
-  it('costruisce tile design da tipologie', () => {
+  it('costruisce tile design da tipologie verso /tipologia', () => {
     const designFacets: CatalogFiltersDTO = {
       ...facetsFixture,
       totalMatching: 1,
@@ -88,7 +89,21 @@ describe('catalog-facets-ui', () => {
       tags: [],
     }
     const tiles = buildDesignTypeTilesFromFacets(designFacets, [])
-    expect(tiles[0]).toMatchObject({ key: 'tavolo', label: 'Tavolo' })
+    expect(tiles[0]).toMatchObject({ key: 'tavolo', label: 'Tavolo', href: '/tipologia/tavolo' })
+  })
+
+  it('mappa ambienti facet value/label/count per search', () => {
+    const options = facetTaxonomyOptions(
+      {
+        ...facetsFixture,
+        ambienti: [
+          { value: 'soggiorno', label: 'Soggiorno', count: 4 },
+          { value: 'cucina', label: 'Cucina', count: 0 },
+        ],
+      },
+      'ambienti',
+    )
+    expect(options).toEqual([{ value: 'soggiorno', label: 'Soggiorno', count: 4 }])
   })
 
   it('costruisce gruppi landing tecnici da facet', () => {

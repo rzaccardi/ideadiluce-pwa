@@ -43,7 +43,7 @@ export const HOME2_PLACEHOLDER_SHOWCASE: Home2ShowcasePlaceholder[] = [
     name: 'Sospensioni design',
     shortDescription: 'Pezzi iconici per zona pranzo e living',
     imageUrl: '/site/images/lamp-pendant.webp',
-    href: '/negozio?world=design&tipologia=sospensione',
+    href: '/tipologia/sospensione',
     categorySlug: 'DESIGN',
   },
   {
@@ -51,7 +51,7 @@ export const HOME2_PLACEHOLDER_SHOWCASE: Home2ShowcasePlaceholder[] = [
     name: 'Applique da parete',
     shortDescription: 'Luce laterale e atmosfera',
     imageUrl: '/site/images/lamp-applique.webp',
-    href: '/negozio?world=design&tipologia=parete',
+    href: '/tipologia/parete',
     categorySlug: 'DESIGN',
   },
   {
@@ -59,7 +59,7 @@ export const HOME2_PLACEHOLDER_SHOWCASE: Home2ShowcasePlaceholder[] = [
     name: 'Lampade da tavolo',
     shortDescription: 'Complementi per scrivania e comodino',
     imageUrl: '/site/images/lamp-table.webp',
-    href: '/negozio?world=design&tipologia=tavolo',
+    href: '/tipologia/tavolo',
     categorySlug: 'DESIGN',
   },
   {
@@ -67,7 +67,7 @@ export const HOME2_PLACEHOLDER_SHOWCASE: Home2ShowcasePlaceholder[] = [
     name: 'Piantane',
     shortDescription: 'Luce d\'accento e lettura',
     imageUrl: '/site/images/lamp-floor.webp',
-    href: '/negozio?world=design&tipologia=terra',
+    href: '/tipologia/terra',
     categorySlug: 'DESIGN',
   },
   {
@@ -75,7 +75,7 @@ export const HOME2_PLACEHOLDER_SHOWCASE: Home2ShowcasePlaceholder[] = [
     name: 'Plafoniere',
     shortDescription: 'Illuminazione generale con carattere',
     imageUrl: '/site/images/lamp-sphere.webp',
-    href: '/negozio?world=design&tipologia=plafoniere',
+    href: '/tipologia/plafoniere',
     categorySlug: 'DESIGN',
   },
   {
@@ -83,7 +83,7 @@ export const HOME2_PLACEHOLDER_SHOWCASE: Home2ShowcasePlaceholder[] = [
     name: 'Faretti e incasso',
     shortDescription: 'Fascio direzionale e scenografie',
     imageUrl: '/site/images/prod-spot.webp',
-    href: '/negozio?world=design&tipologia=incasso',
+    href: '/tipologia/incasso',
     categorySlug: 'DESIGN',
   },
   {
@@ -187,12 +187,12 @@ export const DEFAULT_HOME2_IT: Home2PageContent = {
     },
   ],
   categoryTiles: [
-    { key: 'sospensione', label: 'Sospensioni', href: '/negozio?world=design&tipologia=sospensione' },
-    { key: 'parete', label: 'Applique', href: '/negozio?world=design&tipologia=parete' },
-    { key: 'tavolo', label: 'Tavolo', href: '/negozio?world=design&tipologia=tavolo' },
-    { key: 'terra', label: 'Piantane', href: '/negozio?world=design&tipologia=terra' },
-    { key: 'plafoniere', label: 'Plafoniere', href: '/negozio?world=design&tipologia=plafoniere' },
-    { key: 'faretto', label: 'Faretti', href: '/negozio?world=design&tipologia=incasso' },
+    { key: 'sospensione', label: 'Sospensioni', href: '/tipologia/sospensione' },
+    { key: 'parete', label: 'Applique', href: '/tipologia/parete' },
+    { key: 'tavolo', label: 'Tavolo', href: '/tipologia/tavolo' },
+    { key: 'terra', label: 'Piantane', href: '/tipologia/terra' },
+    { key: 'plafoniere', label: 'Plafoniere', href: '/tipologia/plafoniere' },
+    { key: 'faretto', label: 'Faretti', href: '/tipologia/incasso' },
   ],
   bestSellers: {
     eyebrow: 'In evidenza',

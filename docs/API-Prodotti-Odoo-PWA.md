@@ -73,7 +73,7 @@ Note:
 
 ### Ricerca
 
-L'API v2 **non ha ancora un endpoint di ricerca full-text**. Con ~700 prodotti pubblicati il pattern consigliato è: sync periodico dell'intero catalogo (7 chiamate da 100) → indice di ricerca lato frontend (o in fase di build/ISR). Evita le vecchie API generiche di Odoo per la ricerca: non filtrano per sito/pubblicazione e restituiscono prodotti non pubblicati. Se preferisci un `?search=` server-side, dimmelo e lo aggiungo al contratto.
+Per ricerca, filtri e facet usa gli endpoint dedicati **§6 `/api/v2/products/search`** e **§7 `/api/v2/filters`**. Questo endpoint lista resta per il sync periodico della cache typeahead (come da vostro schema: suggest locale, listing live).
 
 ---
 
@@ -237,7 +237,7 @@ Nota: un prodotto de-pubblicato dal backoffice sparisce sia dalla lista sia dal 
 Stessa auth e parametri base (`website`, `lang`) del resto della v2.
 
 ```
-GET /api/v2/products/search?website=2&lang=it_IT&world=technical&attacco=G4&wattaggio=20&page=1&per_page=24&sort=relevance
+GET /api/v2/products/search?website=2&lang=it_IT&category=tecnico&attacco=G4&wattaggio=20&page=1&per_page=24&sort=relevance
 ```
 
 ### Parametri filtro
@@ -245,11 +245,11 @@ GET /api/v2/products/search?website=2&lang=it_IT&world=technical&attacco=G4&watt
 | Param | Tipo | Note |
 |---|---|---|
 | `q` | string | full-text su titolo, slug, descrizioni, CED/MPN/EAN, brand, categorie, tag, specs |
-| `world` | `design` \| `technical` | Arredo / Tecnici |
+| `world` | `design` \| `technical` | equivalente a `category=arredo`/`tecnico` — mantenuto per compatibilità, la PWA può ignorarlo |
 | `category` | slug \| csv | matcha **qualsiasi nodo** del percorso categoria del prodotto (es. `fluorescente`, `led`, `tecnico`) — OR |
 | `subcategory` | slug \| csv | come `category`; i due param sono in AND: `category=ballast&subcategory=fluorescente` |
 | `tipologia` | slug \| csv | 1° livello Arredo (`sospensione`, `parete`, `tavolo`…) — OR |
-| `ambiente` | slug \| csv | **non ancora popolato** a catalogo (vedi note §7) |
+| `ambiente` | slug \| csv | slug stanze (vedi note §7 R1) — OR; multiplo per prodotto |
 | `stile` | slug \| csv | da spec `style` (Arredo) — OR |
 | `brand` | slug \| csv | es. `osram,tlb` — OR |
 | `attacco` | string \| csv | da spec `socket_type`, case-insensitive (`G4`, `e27`, `GU5.3`) — OR |
@@ -276,7 +276,7 @@ Risposta: stesso shape di §2 (card leggere) più `sort` e `applied_filters` (ec
 Accetta **gli stessi filtri della search** (senza `page`/`per_page`/`sort`). I conteggi sono calcolati **sul set già filtrato**: con `attacco=G4`, i `wattaggi`/`brands`/… contano solo prodotti G4. `total_matching` coincide sempre con `total` della search a parità di filtri: le due chiamate condividono la stessa pipeline server-side, la coerenza è strutturale.
 
 ```
-GET /api/v2/filters?website=2&lang=it_IT&world=technical&attacco=G4
+GET /api/v2/filters?website=2&lang=it_IT&category=tecnico&attacco=G4
 ```
 
 Risposta:
@@ -286,7 +286,7 @@ Risposta:
   "website": {"id": 2, "name": "PWA"},
   "lang": "it_IT",
   "total_matching": 13,
-  "applied_filters": {"world": "technical", "attacco": ["G4"]},
+  "applied_filters": {"category": ["tecnico"], "attacco": ["G4"]},
   "worlds": [
     {"value": "design", "label": "Arredo", "count": 0},
     {"value": "technical", "label": "Tecnici", "count": 13}
@@ -314,7 +314,7 @@ Risposta:
 
 - **Slug categorie reali**: albero con root `tecnico` / `arredo` e figli tipo `fluorescente`, `led`, `alogene`, `ballast`, `driver`, `scarica`… (non `illuminazione-tecnica`/`lampadine`). Gli slug sono stabili (derivati dal nome IT), le `name` tornano tradotte nella `lang` richiesta.
 - **Specs facetabili** (9 chiavi): `socket_type`, `wattage`, `color_temperature_k`, `source_technology`, `energy_class`, `dimmable`, `bulb_shape`, `ip_rating`, `light_color`. `attacchi`/`wattaggi`/`color_temps` sono scorciatoie delle prime tre.
-- **`ambiente`**: dimensione non ancora modellata a catalogo → facet sempre vuota; il param esiste già ma oggi filtra a 0 risultati. **Richiesta aperta PWA: §9 R1** (popolare slug stanze per Shop by room).
+- **`ambiente`** ★ R1: dimensione modellata con slug stabili `soggiorno` · `cucina` · `bagno` · `camera` · `studio` · `esterno`, assegnazione multipla per prodotto, `name` tradotta nella `lang` richiesta. Facet `ambienti[{value,label,count}]`, filtro `ambiente=<slug|csv>` (OR) e `taxonomy.ambiente[]` sul dettaglio sono attivi. Il popolamento parte dal catalogo Arredo: sui tecnici attuali la copertura sarà limitata — le facet mostrano solo ambienti con `count > 0`, quindi la UI può renderizzare direttamente ciò che arriva.
 - **Label kelvin**: `"3000 K"` (con spazio); in query accettiamo sia `3000K` che `3000`.
 - **Freshness**: l'indice di ricerca server-side si aggiorna da solo a ogni modifica del catalogo. La cache locale PWA resta solo per il typeahead, come da vostro §4.
 
@@ -326,7 +326,7 @@ Il **dettaglio prodotto** (§3) ora espone anche i campi per aggregare lato PWA:
   {"id": 79, "slug": "fluorescente", "name": "Fluorescente", "parent_slug": "tecnico"}
 ],
 "tags": ["fluorescente", "t5", "4000k"],
-"taxonomy": {"world": "technical", "tipologia": [], "ambiente": [], "stile": []}
+"taxonomy": {"world": "technical", "tipologia": [], "ambiente": ["soggiorno", "camera"], "stile": []}
 ```
 
 ---
@@ -334,43 +334,10 @@ Il **dettaglio prodotto** (§3) ora espone anche i campi per aggregare lato PWA:
 ## 8. Riepilogo operativo
 
 - **Catalogo attuale sulla PWA**: ~684 prodotti pubblicati, 6 lingue complete.
+- **Split Tecnici/Arredo**: usa `category=tecnico` / `category=arredo` (il param `world` resta solo per compatibilità).
 - **Sync consigliato**: pull paginato di `/api/v2/products` (100/pagina) + dettaglio on-demand o in build (ISR); **negozio/filtri/facet sempre live** su `/api/v2/products/search` + `/api/v2/filters`.
 - **Identificatori**: prodotto = `id`/`slug` · variante = `ced`.
 - Il campo `default_code` non esiste più nel contratto: se lo stai ancora leggendo da vecchie chiamate, migra su `ced`.
 - Le vecchie API generiche Odoo (XML-RPC / `/shop`) non vanno usate per il frontend: questa v2 è l'unica interfaccia supportata per la PWA.
 
 Per qualsiasi campo aggiuntivo che ti serve (nuove facet, stock, ambiente) scrivimi: il controller è nostro, si estende in giornata.
-
----
-
-## 9. Richieste aperte PWA → BE Odoo
-
-### R1 — Popolare taxonomy `ambiente` (priorità alta) · 2026-07-20
-
-**Stato oggi:** il param `ambiente` su `/api/v2/products/search` e `/api/v2/filters` esiste, ma la facet `ambienti` è sempre vuota e `taxonomy.ambiente` sui prodotti è `[]`. Filtrare con `ambiente=…` restituisce 0 risultati.
-
-**Cosa serve alla PWA:** smettere di usare query full-text (`q=…`) / workaround su `category` per le pagine **Shop by room** (`/ambienti/soggiorno`, cucina, bagno, camera, studio, esterno) e per gli slider home `room-*`. Vogliamo filtri strutturali, non testo libero.
-
-**Richiesta:**
-
-1. Modellare e popolare la dimensione `ambiente` a catalogo (stesso contratto già esposto).
-2. Slug stabili (derivati dal nome IT), allineati alle route PWA:
-
-| Slug richiesto | Uso PWA |
-|---|---|
-| `soggiorno` | `/ambienti/soggiorno`, slider `room-soggiorno` |
-| `cucina` | `/ambienti/cucina`, slider `room-cucina` |
-| `bagno` | `/ambienti/bagno`, slider `room-bagno` |
-| `camera` | `/ambienti/camera` |
-| `studio` | `/ambienti/studio` |
-| `esterno` | `/ambienti/esterno` |
-
-3. Esporre valori non vuoti in:
-   - `GET /api/v2/filters` → `ambienti[{slug,name,count}]`
-   - `GET /api/v2/products/search?ambiente=<slug>` (OR nel csv, AND con le altre dimensioni)
-   - dettaglio prodotto → `taxonomy.ambiente[]`
-4. Associabilità multipla (un prodotto può avere più ambienti, es. applique → `soggiorno,camera`).
-
-**Alternativa accettabile (se la taxonomy non è pronta a breve):** tag prodotto con gli stessi slug (`tag=soggiorno`), documentati e usati in modo coerente. Preferenza resta `ambiente` perché è la dimensione dedicata già nel contratto.
-
-**Quando pronto:** avvisare la PWA — rimuoviamo i workaround `q=` / `category=<room>` e colleghiamo listing, chip e slider a `ambiente=<slug>`.

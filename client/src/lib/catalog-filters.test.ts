@@ -54,10 +54,10 @@ describe('filterProductsBySpec', () => {
 })
 
 describe('resolveEffectiveCatalogCategory', () => {
-  it('forza illuminazione-tecnica con world=technical', () => {
+  it('forza tecnico con world=technical', () => {
     expect(
       resolveEffectiveCatalogCategory({ worldTab: 'technical' }),
-    ).toBe('illuminazione-tecnica')
+    ).toBe('tecnico')
   })
 
   it('forza arredo con world=design', () => {
@@ -69,6 +69,6 @@ describe('resolveEffectiveCatalogCategory', () => {
   it('usa categoria tecnica quando c’è filtro attacco', () => {
     expect(
       resolveEffectiveCatalogCategory({ worldTab: 'all', attacco: 'GU10' }),
-    ).toBe('illuminazione-tecnica')
+    ).toBe('tecnico')
   })
 })

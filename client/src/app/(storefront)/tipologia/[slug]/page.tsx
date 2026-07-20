@@ -42,7 +42,7 @@ export default async function TipologiaSlugPage({ params }: PageProps) {
   const [productsRes, initialBootstrap] = await Promise.all([
     fetchCatalogProductsServer(locale, {
       pageSize: 24,
-      world: 'design',
+      category: 'arredo',
       tipologia: taxonomy.value,
     }),
     fetchCatalogBootstrapServer(locale),

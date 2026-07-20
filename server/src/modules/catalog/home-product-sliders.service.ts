@@ -27,10 +27,11 @@ export { HOME_SLIDER_PRODUCT_COUNT } from './home-product-sliders.types.js'
 const LOOKBACK_DAYS = 90
 const SLIDER_LIMIT = HOME_SLIDER_PRODUCT_COUNT
 
-const ROOM_QUERIES: Record<Extract<HomeProductSliderKey, `room-${string}`>, string> = {
-  'room-soggiorno': 'soggiorno lampada sospensione',
-  'room-cucina': 'cucina illuminazione faretto',
-  'room-bagno': 'bagno applique specchio',
+/** Slug taxonomy `ambiente` (contratto Odoo R1) — niente q= testuale. */
+const ROOM_AMBIENTE: Record<Extract<HomeProductSliderKey, `room-${string}`>, string> = {
+  'room-soggiorno': 'soggiorno',
+  'room-cucina': 'cucina',
+  'room-bagno': 'bagno',
 }
 
 async function resolveCardsFromTemplateIds(
@@ -61,7 +62,7 @@ async function resolveCardsFromTemplateIds(
 
 const SEGMENT_CATEGORY_SLUG: Record<TopPurchasedSegment, string> = {
   design: 'arredo',
-  technical: 'illuminazione-tecnica',
+  technical: 'tecnico',
 }
 
 async function topPurchasedSlider(
@@ -166,18 +167,19 @@ async function inStockTopSlider(
   return merged.slice(0, SLIDER_LIMIT)
 }
 
-async function roomQuerySlider(
+async function roomAmbienteSlider(
   ctx: OdooCallContext,
   locale: HubLocale,
   pricing: { partnerId?: number; pricelistId?: number },
   key: Extract<HomeProductSliderKey, `room-${string}`>,
 ): Promise<ProductCardDTO[]> {
-  const q = ROOM_QUERIES[key]
+  const ambiente = ROOM_AMBIENTE[key]
   const list = await catalogStorefrontService.listProducts(ctx, {
     locale,
     page: 1,
     pageSize: SLIDER_LIMIT,
-    q,
+    ambiente,
+    categorySlug: 'arredo',
     partnerId: pricing.partnerId,
     pricelistId: pricing.pricelistId,
   })
@@ -203,9 +205,9 @@ export const homeProductSlidersService = {
       { key: 'top-design', load: () => topPurchasedSlider(ctx, locale, pricing, 'design', 'sospensione lampada') },
       { key: 'top-technical', load: () => topPurchasedSlider(ctx, locale, pricing, 'technical', 'alimentatore driver') },
       { key: 'in-stock', load: () => inStockTopSlider(ctx, locale, pricing) },
-      { key: 'room-soggiorno', load: () => roomQuerySlider(ctx, locale, pricing, 'room-soggiorno') },
-      { key: 'room-cucina', load: () => roomQuerySlider(ctx, locale, pricing, 'room-cucina') },
-      { key: 'room-bagno', load: () => roomQuerySlider(ctx, locale, pricing, 'room-bagno') },
+      { key: 'room-soggiorno', load: () => roomAmbienteSlider(ctx, locale, pricing, 'room-soggiorno') },
+      { key: 'room-cucina', load: () => roomAmbienteSlider(ctx, locale, pricing, 'room-cucina') },
+      { key: 'room-bagno', load: () => roomAmbienteSlider(ctx, locale, pricing, 'room-bagno') },
     ]
 
     const sliders = await Promise.all(

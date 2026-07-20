@@ -43,7 +43,7 @@ export default async function AmbienteRoomPage({ params }: PageProps) {
   const [productsRes, initialBootstrap] = await Promise.all([
     fetchCatalogProductsServer(locale, {
       pageSize: 24,
-      world: 'design',
+      category: 'arredo',
       ambiente: taxonomy.value,
     }),
     fetchCatalogBootstrapServer(locale),

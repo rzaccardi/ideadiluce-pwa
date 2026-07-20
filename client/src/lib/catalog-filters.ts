@@ -24,7 +24,8 @@ function categoryLabelFromFacets(
 }
 
 export const CATALOG_DESIGN_CATEGORY_SLUG = 'arredo'
-export const CATALOG_TECHNICAL_CATEGORY_SLUG = 'illuminazione-tecnica'
+/** Root Odoo live (alias legacy `illuminazione-tecnica` → `tecnico` lato BFF). */
+export const CATALOG_TECHNICAL_CATEGORY_SLUG = 'tecnico'
 
 export type CatalogWorldTab = 'all' | 'design' | 'technical'
 

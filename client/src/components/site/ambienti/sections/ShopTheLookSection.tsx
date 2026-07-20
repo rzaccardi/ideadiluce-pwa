@@ -128,7 +128,7 @@ export function ShopTheLookSection({ lp }: Props) {
                 <span className="font-serif text-[24px] text-idl-design-fg sm:text-[26px]">{look.total}</span>
               </div>
               <Link
-                to={lp('/negozio?world=design&category=cucina')}
+                to={lp('/negozio?category=arredo&ambiente=cucina')}
                 className="mb-2.5 block rounded-lg bg-idl-glow py-3.5 text-center text-[15px] font-bold text-idl-design transition hover:bg-[#f7bd6f]"
               >
                 Aggiungi tutto il look
@@ -141,7 +141,7 @@ export function ShopTheLookSection({ lp }: Props) {
                   Personalizza
                 </Link>
                 <Link
-                  to={lp('/negozio?world=design&category=cucina')}
+                  to={lp('/negozio?category=arredo&ambiente=cucina')}
                   className="flex-1 rounded-lg border border-white/18 py-2.5 text-center text-[13px] font-semibold text-idl-design-fg"
                 >
                   Alternative

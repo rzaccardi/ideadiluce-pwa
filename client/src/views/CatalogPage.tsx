@@ -69,10 +69,18 @@ export function CatalogPage({
       ? taxonomy.value
       : (forcedBrandSlug ?? params.get('brand') ?? undefined)
   const categoryParam =
-    taxonomy?.kind === 'category' ? taxonomy.value : (params.get('category') ?? undefined)
+    taxonomy?.kind === 'category'
+      ? taxonomy.value
+      : taxonomy?.category
+        ? taxonomy.category
+        : (params.get('category') ?? undefined)
   const worldTab: CatalogWorldTab = taxonomy?.world
     ? taxonomy.world
-    : parseCatalogWorld(params.get('world'))
+    : taxonomy?.category === 'arredo'
+      ? 'design'
+      : taxonomy?.category === 'tecnico'
+        ? 'technical'
+        : parseCatalogWorld(params.get('world'))
   const queryParam = params.get('q')?.trim() ?? ''
   const attaccoParam =
     taxonomy?.kind === 'attacco' ? taxonomy.value : (params.get('attacco')?.trim() ?? '')

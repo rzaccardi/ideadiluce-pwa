@@ -18,7 +18,10 @@ export type CatalogTaxonomyContext = {
   value: string
   /** Label UI (es. GU10, Moderno). */
   label: string
+  /** Tab negozio (UI); non è un filtro Odoo — preferire `category`. */
   world?: 'design' | 'technical'
+  /** Root categoria Odoo (`tecnico` / `arredo`) da applicare al listing. */
+  category?: string
   hubPath: string
   hubLabel: string
 }
@@ -112,7 +115,7 @@ export function buildTipologiaTaxonomy(slug: string): CatalogTaxonomyContext {
     kind: 'tipologia',
     value,
     label: value,
-    world: 'design',
+    category: 'arredo',
     hubPath: '/categoria-prodotto/illuminazione-arredo',
     hubLabel: 'Tipologia',
   }
@@ -124,7 +127,7 @@ export function buildStileTaxonomy(slug: string): CatalogTaxonomyContext {
     kind: 'stile',
     value,
     label: value,
-    world: 'design',
+    category: 'arredo',
     hubPath: '/categoria-prodotto/illuminazione-arredo',
     hubLabel: 'Stile',
   }
@@ -136,7 +139,7 @@ export function buildAmbienteTaxonomy(slug: string, label?: string): CatalogTaxo
     kind: 'ambiente',
     value,
     label: label ?? value,
-    world: 'design',
+    category: 'arredo',
     hubPath: '/ambienti',
     hubLabel: 'Ambienti',
   }
