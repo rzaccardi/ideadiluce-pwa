@@ -76,7 +76,7 @@ export function buildOrganizationJsonLd(siteUrl: string) {
     '@type': 'Organization',
     name: 'Idea di Luce',
     url: site,
-    logo: `${site}/icons.svg`,
+    logo: `${site}/brand/ideadiluce.svg`,
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',

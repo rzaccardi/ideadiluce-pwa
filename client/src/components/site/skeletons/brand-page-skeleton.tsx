@@ -9,7 +9,7 @@ export function BrandPageSkeleton() {
   const { t } = useI18n()
 
   return (
-    <div className="bg-[#f3f2ee]" role="status" aria-label={t('skeleton.loadingPageHeader')}>
+    <div className="bg-[#f4f5f7]" role="status" aria-label={t('skeleton.loadingPageHeader')}>
       <section className="border-b border-idl-tech-border bg-idl-tech-panel">
         <SectionContainer className="pb-8 pt-4 sm:pb-7">
           <Skeleton className="mb-4 h-4 w-48" />

@@ -20,6 +20,7 @@ import type { LocalePathFn } from '../sections/types'
 import { TechnicalAddToCartButton } from './TechnicalAddToCartButton'
 import { TechnicalCatalogSelectionCheckbox } from './TechnicalCatalogSelectionCheckbox'
 import { CatalogProductCardSkeleton } from '../catalog/CatalogProductCardSkeleton'
+import { ProductBrandMark } from '@/components/product/ProductBrandMark'
 
 function stockLabel(product: ProductCardDTO, locale: Parameters<typeof getProductAvailabilityStatus>[0]['locale']) {
   const availability = getProductAvailabilityStatus({
@@ -103,6 +104,11 @@ export const TechnicalCatalogProductCard = memo(function TechnicalCatalogProduct
               <SiteImage src={product.imageUrl} alt="" fill className="object-cover" sizes="25vw" />
             ) : null}
           </div>
+          {product.brand ? (
+            <div className="mb-1.5">
+              <ProductBrandMark brand={product.brand} size="sm" className="text-idl-muted" />
+            </div>
+          ) : null}
           {refLine ? (
             <div className="font-mono text-[10.5px] text-idl-muted">{refLine}</div>
           ) : null}

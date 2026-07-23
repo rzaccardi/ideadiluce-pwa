@@ -61,7 +61,7 @@ export function StripeInput({ className, noBorder, type, ...props }: InputProps)
       type={resolvedType}
       className={cn(
         'idl-field block w-full px-[15px] py-3.5 text-[15px] outline-none',
-        'focus:ring-2 focus:ring-[#c9a24b]/35 focus:ring-inset',
+        'focus:ring-2 focus:ring-[#0c0c0d]/35 focus:ring-inset',
         !noBorder && 'border-0',
         isPassword && 'pr-11',
         className,
@@ -130,7 +130,7 @@ export function StripeSelect({ className, children, ...props }: SelectProps) {
     <select
       className={cn(
         'idl-field block w-full appearance-none bg-[length:12px] bg-[right_12px_center] bg-no-repeat px-[15px] py-3.5 text-[15px] outline-none',
-        'focus:ring-2 focus:ring-[#c9a24b]/35 focus:ring-inset',
+        'focus:ring-2 focus:ring-[#0c0c0d]/35 focus:ring-inset',
         "bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 12 12%22%3E%3Cpath fill=%22%236c727c%22 d=%22M2.5 4.5 6 8l3.5-3.5%22/%3E%3C/svg%3E')]",
         className,
       )}
@@ -193,7 +193,7 @@ export function StripePayButton({
         'w-full rounded-xl px-4 py-4 text-base font-extrabold text-white transition',
         checkoutActionControlClass,
         isPay
-          ? 'bg-[#d9831a] hover:bg-[#b08e3e]'
+          ? 'bg-[#0c0c0d] hover:bg-[#2a2a2e]'
           : 'bg-[#14161b] hover:bg-[#2a2d35]',
         'disabled:cursor-not-allowed disabled:opacity-50',
         loading && 'opacity-80',
@@ -275,7 +275,7 @@ export function StripeCheckbox({
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 size-4 shrink-0 rounded border-[#c0c5cc] text-idl-graphite focus:ring-[#c9a24b]/40"
+        className="mt-0.5 size-4 shrink-0 rounded border-[#c0c5cc] text-idl-graphite focus:ring-[#0c0c0d]/40"
       />
       <span>{label}</span>
     </label>

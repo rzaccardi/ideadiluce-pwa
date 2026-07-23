@@ -39,7 +39,7 @@ export function CategoryCtaBanner({ banner, lp, variant = 'design' }: Props) {
             to={lp(banner.primaryCta.href)}
             className={cn(
               'rounded px-5 py-3.5 text-center text-[14px] font-bold sm:text-[14.5px] sm:whitespace-nowrap',
-              isDesign ? 'bg-idl-glow text-idl-design' : 'bg-idl-amber text-white',
+              isDesign ? 'bg-idl-glow text-idl-design' : 'bg-idl-amber text-white dark:text-idl-design',
             )}
           >
             {banner.primaryCta.label}

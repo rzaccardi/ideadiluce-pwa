@@ -36,7 +36,7 @@ export function GuideArticlePageView({ content, breadcrumb }: Props) {
         coverAlt={content.coverImage?.alt ?? content.title}
       />
 
-      <div className="border-b border-[#e6dcc9] bg-idl-paper">
+      <div className="border-b border-[#e4e4e7] bg-idl-paper">
         <div
           className={cn(
             GUIDE_ARTICLE_LAYOUT.wide,
@@ -84,7 +84,7 @@ export function GuideArticlePageView({ content, breadcrumb }: Props) {
               </p>
             ) : null}
             {content.intro ? (
-              <div className="mt-6 rounded-lg border border-[#e6dcc9] border-l-[3px] border-l-idl-brass bg-white px-5 py-[18px]">
+              <div className="mt-6 rounded-lg border border-[#e4e4e7] border-l-[3px] border-l-idl-brass bg-white px-5 py-[18px]">
                 <p className="mb-2 font-mono text-[10px] tracking-[0.14em] text-idl-brass uppercase">
                   Risposta breve
                 </p>

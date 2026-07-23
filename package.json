@@ -12,6 +12,7 @@
     "dotenv": "^16.6.1"
   },
   "scripts": {
+    "start": "npm run dev",
     "dev": "concurrently -k -n client,server,admin -c cyan,magenta,yellow \"npm run dev:client\" \"npm run dev:server\" \"npm run dev:admin\"",
     "dev:shop": "concurrently -k -n client,server -c cyan,magenta \"npm run dev:client\" \"npm run dev:server\"",
     "dev:client": "npm run dev --workspace=client",

@@ -251,7 +251,7 @@ export function CheckoutAddressSection({
             <button
               type="button"
               onClick={handleChangeAddress}
-              className="text-sm font-semibold text-[#9a7b33] underline decoration-[#cdbfa5] underline-offset-2 hover:decoration-[#9a7b33]"
+              className="text-sm font-semibold text-[#3a3a3d] underline decoration-[#a1a1aa] underline-offset-2 hover:decoration-[#3a3a3d]"
             >
               {t('checkout.address.changeAddress')}
             </button>

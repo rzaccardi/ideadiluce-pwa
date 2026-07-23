@@ -91,7 +91,7 @@ export function CheckoutTrustSignals({ theme = 'light', cartItems }: Props) {
         <p
           className={cn(
             'font-mono text-[9px] font-bold uppercase tracking-[0.14em]',
-            dark ? 'text-[#c9a24b]' : 'text-[#9a7b33]',
+            dark ? 'text-[#0c0c0d]' : 'text-[#3a3a3d]',
           )}
         >
           {t('checkout.summary.trust.recentActivity')}
@@ -99,7 +99,7 @@ export function CheckoutTrustSignals({ theme = 'light', cartItems }: Props) {
         <p
           className={cn(
             'mt-1.5 text-[12px] font-semibold leading-snug',
-            dark ? 'text-[#f1e8d8]' : 'text-[#14161b]',
+            dark ? 'text-[#f5f5f5]' : 'text-[#14161b]',
           )}
         >
           {tParams('product.socialProof.purchased', {

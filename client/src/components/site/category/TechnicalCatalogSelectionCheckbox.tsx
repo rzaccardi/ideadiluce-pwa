@@ -32,7 +32,7 @@ export function TechnicalCatalogSelectionCheckbox({
       className={cn(
         'flex size-4 shrink-0 items-center justify-center rounded border-[1.5px] text-[11px] transition',
         checked
-          ? 'border-idl-amber bg-idl-amber text-white'
+          ? 'border-idl-amber bg-idl-amber text-white dark:text-idl-design'
           : 'border-idl-tech-chip-border bg-white text-transparent',
         disabled && !checked && 'cursor-not-allowed opacity-40',
         className,

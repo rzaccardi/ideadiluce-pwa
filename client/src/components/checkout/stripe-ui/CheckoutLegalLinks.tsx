@@ -42,7 +42,7 @@ export function CheckoutLegalLinks({
             to={lp('/tos')}
             target="_blank"
             rel="noopener noreferrer"
-            className={cn(dark ? 'hover:text-[#f1e8d8]' : 'hover:text-idl-graphite')}
+            className={cn(dark ? 'hover:text-[#f5f5f5]' : 'hover:text-idl-graphite')}
           >
             {t('legal.terms')}
           </Link>
@@ -55,7 +55,7 @@ export function CheckoutLegalLinks({
             to={lp('/privacy-policy')}
             target="_blank"
             rel="noopener noreferrer"
-            className={cn(dark ? 'hover:text-[#f1e8d8]' : 'hover:text-idl-graphite')}
+            className={cn(dark ? 'hover:text-[#f5f5f5]' : 'hover:text-idl-graphite')}
           >
             {t('legal.privacy')}
           </Link>

@@ -1,5 +1,6 @@
 import { Link } from '@/lib/navigation'
 import { Eyebrow, SectionContainer } from '../../primitives'
+import { BrandNameDisplay } from '../BrandNameDisplay'
 import { BRAND_THEMATIC, type BrandCard } from '@/lib/brand.defaults'
 import type { LocalePathFn } from '../../sections/types'
 
@@ -44,9 +45,14 @@ function BrandWall({
             <Link
               key={slug}
               to={lp(brand.href)}
-              className="border-b border-r border-idl-tech-border bg-white px-2 py-5 text-center font-serif text-[14px] text-idl-graphite-2 transition hover:bg-idl-cream hover:text-idl-graphite dark:bg-idl-tech-panel dark:hover:bg-idl-tech-panel sm:text-base"
+              className="flex min-h-[4.5rem] items-center justify-center border-b border-r border-idl-tech-border bg-white px-2 py-4 transition hover:bg-idl-cream dark:bg-idl-tech-panel dark:hover:bg-idl-tech-panel"
             >
-              {brand.name}
+              <BrandNameDisplay
+                name={brand.name}
+                slug={brand.slug}
+                style={brand.displayStyle}
+                size="sm"
+              />
             </Link>
           )
         })}

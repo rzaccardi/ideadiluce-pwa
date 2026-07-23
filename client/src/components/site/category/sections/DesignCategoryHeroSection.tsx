@@ -14,7 +14,7 @@ type HeroProps = {
 export function DesignCategoryHeroSection({ content, lp }: HeroProps) {
   return (
     <section className="relative overflow-hidden bg-idl-design text-idl-design-fg">
-      <div className="pointer-events-none absolute -top-16 -right-16 size-[280px] rounded-full bg-[radial-gradient(circle,rgba(201, 162, 75,0.22)_0%,rgba(201, 162, 75,0)_70%)] sm:-top-20 sm:right-4 sm:size-[380px] lg:right-20 lg:size-[520px]" />
+      <div className="pointer-events-none absolute -top-16 -right-16 size-[280px] rounded-full bg-[radial-gradient(circle,rgba(120, 120, 125,0.22)_0%,rgba(120, 120, 125,0)_70%)] sm:-top-20 sm:right-4 sm:size-[380px] lg:right-20 lg:size-[520px]" />
       <SectionContainer className="relative z-[2] py-5 pb-10 pt-4 sm:py-8 sm:pb-16 sm:pt-5">
         <CategoryBreadcrumb items={content.breadcrumb} lp={lp} variant="design" />
         <div className="max-w-2xl">

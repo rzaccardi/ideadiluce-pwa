@@ -162,7 +162,7 @@ export function AccountOverviewPage() {
           action={
             <Link
               to={`/account/orders/${ongoingOrder.id}`}
-              className="text-[13px] font-bold text-[#d9831a] no-underline hover:underline"
+              className="text-[13px] font-bold text-[#0c0c0d] no-underline hover:underline"
             >
               {t('account.dashboard.details')}
             </Link>
@@ -178,7 +178,7 @@ export function AccountOverviewPage() {
           quoteList.length > 0 ? (
             <Link
               to="/account/quotes"
-              className="text-[13px] font-bold text-[#d9831a] no-underline hover:underline"
+              className="text-[13px] font-bold text-[#0c0c0d] no-underline hover:underline"
             >
               {t('account.overview.viewAllQuotes')} →
             </Link>
@@ -213,7 +213,7 @@ export function AccountOverviewPage() {
           invoiceList.length > 0 ? (
             <Link
               to="/account/invoices"
-              className="text-[13px] font-bold text-[#d9831a] no-underline hover:underline"
+              className="text-[13px] font-bold text-[#0c0c0d] no-underline hover:underline"
             >
               {t('account.overview.viewAllInvoices')} →
             </Link>
@@ -242,7 +242,7 @@ export function AccountOverviewPage() {
           <div className="mb-1.5 text-base font-extrabold text-idl-graphite">
             {t('account.dashboard.reorderParts')}
           </div>
-          <p className="max-w-xl text-[13.5px] leading-relaxed text-[#7a6a52]">
+          <p className="max-w-xl text-[13.5px] leading-relaxed text-[#6b6b70]">
             {t('account.dashboard.reorderPartsBody')}
           </p>
         </div>
@@ -264,7 +264,7 @@ export function AccountOverviewPage() {
               orderList.length > 0 ? (
                 <Link
                   to="/account/orders"
-                  className="text-[13px] font-bold text-[#d9831a] no-underline hover:underline"
+                  className="text-[13px] font-bold text-[#0c0c0d] no-underline hover:underline"
                 >
                   {t('account.overview.myOrders')} →
                 </Link>

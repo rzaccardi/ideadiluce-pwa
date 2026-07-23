@@ -254,10 +254,10 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
               </div>
             ) : null}
 
-            <div className="flex flex-col items-start justify-between gap-6 rounded-[14px] border border-[#f0e3d0] bg-[#fbf4ea] p-6 sm:flex-row sm:items-center sm:p-[24px_26px]">
+            <div className="flex flex-col items-start justify-between gap-6 rounded-[14px] border border-[#e4e4e7] bg-[#f4f5f7] p-6 sm:flex-row sm:items-center sm:p-[24px_26px]">
               <div>
                 <h2 className="text-base font-extrabold text-idl-graphite">{t('thankYou.support.title')}</h2>
-                <p className="mt-1.5 max-w-[520px] text-[13.5px] leading-relaxed text-[#7a6a52]">
+                <p className="mt-1.5 max-w-[520px] text-[13.5px] leading-relaxed text-[#6b6b70]">
                   {t('thankYou.support.body')}
                 </p>
               </div>
@@ -338,12 +338,12 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
             </div>
 
             {!isAuthenticated ? (
-              <div className="rounded-[14px] bg-[#0c0c0d] p-[22px] text-[#f1e8d8]">
+              <div className="rounded-[14px] bg-[#0c0c0d] p-[22px] text-[#f5f5f5]">
                 <div className="font-serif text-lg">{t('thankYou.account.title')}</div>
                 <p className="mt-1.5 text-[12.5px] leading-relaxed text-[#b0b0b4]">{t('thankYou.account.body')}</p>
                 <Link
                   to={registerHref}
-                  className="mt-4 block rounded-lg bg-[#c9a24b] py-3 text-center text-[13.5px] font-bold text-[#0c0c0d] transition hover:brightness-105"
+                  className="mt-4 block rounded-lg bg-[#0c0c0d] py-3 text-center text-[13.5px] font-bold text-[#0c0c0d] transition hover:brightness-105"
                 >
                   {t('thankYou.account.cta')}
                 </Link>

@@ -8,10 +8,10 @@
   body{background:#fff;font-family:'Hanken Grotesk',system-ui,sans-serif;color:#0c0c0d;}
   image-slot[data-theme="dark"]::part(frame){background:#1c1610;}
   image-slot[data-theme="dark"]::part(empty){color:#8f8f93;}
-  @keyframes hsPulse { 0%{box-shadow:0 0 0 0 rgba(201, 162, 75,.55);} 70%{box-shadow:0 0 0 14px rgba(201, 162, 75,0);} 100%{box-shadow:0 0 0 0 rgba(201, 162, 75,0);} }
+  @keyframes hsPulse { 0%{box-shadow:0 0 0 0 rgba(120, 120, 125,.55);} 70%{box-shadow:0 0 0 14px rgba(120, 120, 125,0);} 100%{box-shadow:0 0 0 0 rgba(120, 120, 125,0);} }
 </style>
 <div style="background:#0c0c0d;color:#f1e8d8;position:relative;overflow:hidden;">
-    <div style="position:absolute;top:-60px;right:10%;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(201, 162, 75,.20) 0%,rgba(201, 162, 75,0) 68%);pointer-events:none;"></div>
+    <div style="position:absolute;top:-60px;right:10%;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(120, 120, 125,.20) 0%,rgba(120, 120, 125,0) 68%);pointer-events:none;"></div>
     <div style="max-width:1320px;margin:0 auto;padding:18px 48px 0;position:relative;z-index:2;">
       <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#8f8f93;">Home · <span style="color:#b0b0b4;">Scegli per ambiente</span></div>
     </div>
@@ -143,7 +143,7 @@
       <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:34px;align-items:start;">
 
         
-        <div style="position:relative;border-radius:8px;overflow:hidden;box-shadow:0 0 90px rgba(201, 162, 75,.10);">
+        <div style="position:relative;border-radius:8px;overflow:hidden;box-shadow:0 0 90px rgba(120, 120, 125,.10);">
           <img src="/site/images/look-cucina.png" alt="Cucina moderna con isola" style="display:block;width:100%;aspect-ratio:4/3;object-fit:cover;">
 
           
@@ -154,7 +154,7 @@
 
           
           <sc-if value="{{ hasActive }}" hint-placeholder-val="{{ false }}">
-            <div style="position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,rgba(22,19,13,.96) 60%,rgba(22,19,13,0));padding:26px 22px 20px;">
+            <div style="position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,rgba(12, 12, 13,.96) 60%,rgba(12, 12, 13,0));padding:26px 22px 20px;">
               <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
                 <div>
                   <div style="display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;color:#0c0c0d;background:{{ badgeColor }};border-radius:4px;padding:3px 8px;margin-bottom:9px;">{{ badge }}</div>
@@ -211,7 +211,7 @@
       </div>
 
       
-      <div style="background:#1a1a1b;border:1px solid rgba(201, 162, 75,.2);border-radius:10px;padding:18px 22px;margin-top:24px;display:flex;align-items:center;gap:14px;">
+      <div style="background:#1a1a1b;border:1px solid rgba(120, 120, 125,.2);border-radius:10px;padding:18px 22px;margin-top:24px;display:flex;align-items:center;gap:14px;">
         <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#0c0c0d;background:#c9a24b;border-radius:4px;padding:4px 9px;flex-shrink:0;">CONSIGLIO</span>
         <span style="font-size:13.5px;color:#b0b0b4;">Usa <b style="color:#f1e8d8;">4000K</b> sul piano lavoro per vedere bene i colori dei cibi e <b style="color:#f1e8d8;">3000K</b> su tavolo e isola per un'atmosfera più accogliente.</span>
       </div>

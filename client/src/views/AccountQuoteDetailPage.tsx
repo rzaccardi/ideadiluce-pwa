@@ -61,7 +61,7 @@ export function AccountQuoteDetailPage() {
         action={
           <Link
             to="/account/quotes"
-            className="text-[13px] font-bold text-[#d9831a] no-underline hover:underline"
+            className="text-[13px] font-bold text-[#0c0c0d] no-underline hover:underline"
           >
             ← {t('account.quotes.title')}
           </Link>
@@ -140,7 +140,7 @@ export function AccountQuoteDetailPage() {
       {detail?.pwaOrderId && detail.status === 'converted' ? (
         <Link
           to={`/account/orders/pwa-${detail.pwaOrderId}`}
-          className="text-[13px] font-bold text-[#d9831a] no-underline hover:underline"
+          className="text-[13px] font-bold text-[#0c0c0d] no-underline hover:underline"
         >
           {t('account.quotes.viewOrder')} →
         </Link>

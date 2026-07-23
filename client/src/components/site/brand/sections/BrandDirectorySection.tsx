@@ -58,7 +58,12 @@ export function BrandDirectorySection({ brands, activeFilter, lp }: Props) {
                   className="flex flex-col rounded-xl border border-idl-tech-border bg-idl-tech-panel p-5 transition hover:border-[#cfd4db] hover:shadow-[0_8px_22px_rgba(0,0,0,0.05)] sm:p-6"
                 >
                   <div className="mb-3.5 flex h-[46px] items-center justify-center border-b border-idl-tech-panel pb-3.5">
-                    <BrandNameDisplay name={brand.name} style={brand.displayStyle} size="sm" />
+                    <BrandNameDisplay
+                      name={brand.name}
+                      slug={brand.slug}
+                      style={brand.displayStyle}
+                      size="sm"
+                    />
                   </div>
                   <span
                     className={cn(

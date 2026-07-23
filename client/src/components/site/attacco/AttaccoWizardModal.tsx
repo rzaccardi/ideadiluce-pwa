@@ -73,7 +73,7 @@ export function AttaccoWizardModal({
     <ViewportPortal open lockScroll>
       <div
         className={cn(
-          'fixed inset-0 flex h-[100dvh] w-screen items-center justify-center bg-[rgba(20,16,9,0.55)] p-4 sm:p-6',
+          'fixed inset-0 flex h-[100dvh] w-screen items-center justify-center bg-[rgba(12, 12, 13,0.55)] p-4 sm:p-6',
           layers.modal,
         )}
       onClick={onClose}
@@ -122,7 +122,7 @@ export function AttaccoWizardModal({
                     key={type.id}
                     type="button"
                     onClick={() => onStep(2)}
-                    className="flex items-center gap-3 rounded-[10px] border border-idl-tech-chip-border bg-idl-tech-panel p-3.5 text-left transition hover:border-idl-amber hover:bg-[#fffdf9] sm:p-4"
+                    className="flex items-center gap-3 rounded-[10px] border border-idl-tech-chip-border bg-idl-tech-panel p-3.5 text-left transition hover:border-idl-amber hover:bg-[#fafafa] sm:p-4"
                   >
                     <AttaccoSocketIcon icon={type.icon === 'goccia' ? 'E27' : type.icon === 'spot' ? 'GU10' : type.icon === 'lineare' ? 'R7s' : type.icon === 'sfera' ? 'G9' : 'altri'} size={30} />
                     <div>
@@ -156,7 +156,7 @@ export function AttaccoWizardModal({
                     key={option.key}
                     type="button"
                     onClick={() => onShape(option.key)}
-                    className="flex items-center gap-3.5 rounded-[10px] border border-idl-tech-chip-border bg-idl-tech-panel p-3.5 text-left transition hover:border-idl-amber hover:bg-[#fffdf9] sm:px-4"
+                    className="flex items-center gap-3.5 rounded-[10px] border border-idl-tech-chip-border bg-idl-tech-panel p-3.5 text-left transition hover:border-idl-amber hover:bg-[#fafafa] sm:px-4"
                   >
                     <WizardSocketIcon socket={option.key} />
                     <div>
@@ -207,7 +207,7 @@ export function AttaccoWizardModal({
                 <Link
                   to={lp(result.href)}
                   onClick={onClose}
-                  className="rounded-[7px] bg-idl-amber px-5 py-3 text-[14.5px] font-bold text-white"
+                  className="rounded-[7px] bg-idl-amber px-5 py-3 text-[14.5px] font-bold text-white dark:text-idl-design"
                 >
                   Vedi lampadine {result.short} →
                 </Link>

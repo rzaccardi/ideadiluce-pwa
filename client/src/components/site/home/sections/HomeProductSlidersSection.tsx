@@ -107,7 +107,7 @@ export function HomeProductSlidersSection({ sliders, lp }: Props) {
           >
             {isDesign ? (
               <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                <div className="absolute top-10 -left-16 size-[420px] rounded-full bg-[radial-gradient(circle,rgba(201,162,75,0.16)_0%,transparent_70%)]" />
+                <div className="absolute top-10 -left-16 size-[420px] rounded-full bg-[radial-gradient(circle,rgba(120, 120, 125,0.16)_0%,transparent_70%)]" />
               </div>
             ) : null}
             <SectionContainer className={cn('relative z-[2] pt-12 pb-6 sm:pt-14', isTechnical && 'pt-12')}>

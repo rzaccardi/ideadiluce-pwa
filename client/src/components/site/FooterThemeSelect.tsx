@@ -6,7 +6,6 @@ import { cn } from '@/utils/cn'
 import type { MessageKey } from '@/i18n/messages'
 
 const THEME_LABEL_KEY: Record<SiteTheme, MessageKey> = {
-  classic: 'theme.option.classic',
   light: 'theme.option.light',
   dark: 'theme.option.dark',
 }

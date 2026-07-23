@@ -46,7 +46,7 @@ export function AuthLoadingOverlay({
 
   return createPortal(
     <div
-      className="checkout-loading-overlay fixed inset-0 z-[200] flex h-dvh max-h-dvh w-full touch-none items-center justify-center bg-[rgba(22,19,13,0.62)] p-4"
+      className="checkout-loading-overlay fixed inset-0 z-[200] flex h-dvh max-h-dvh w-full touch-none items-center justify-center bg-[rgba(12, 12, 13,0.62)] p-4"
       role="status"
       aria-live="polite"
       aria-busy="true"

@@ -56,7 +56,12 @@ export function HomeBrandGrid({ brands, lp, stagger = 0.04 }: Props) {
                 title={brandLabel}
               >
                 <div className="mb-3 flex h-11 w-full items-center justify-center">
-                  <BrandNameDisplay name={brand.name} style={brand.displayStyle} size="sm" />
+                  <BrandNameDisplay
+                    name={brand.name}
+                    slug={brand.slug}
+                    style={brand.displayStyle}
+                    size="sm"
+                  />
                 </div>
                 <span
                   className={cn(

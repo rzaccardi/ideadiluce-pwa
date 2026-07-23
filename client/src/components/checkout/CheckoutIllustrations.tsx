@@ -22,7 +22,7 @@ export function CheckoutLoadingRing({ className, size = 76 }: IconProps) {
         cy="38"
         r="33"
         fill="none"
-        stroke="#c9a24b"
+        stroke="#0c0c0d"
         strokeWidth="5"
         strokeLinecap="round"
         strokeDasharray="60 150"
@@ -39,14 +39,14 @@ export function CheckoutLoadingPin({ className, size = 34 }: IconProps) {
       width={size}
       height={size}
       fill="none"
-      stroke="#d9831a"
+      stroke="#0c0c0d"
       strokeWidth="3"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden
     >
       <path d="M24 6 q11 0 11 12 q0 9 -11 22 q-11 -13 -11 -22 q0 -12 11 -12Z" />
-      <circle cx="24" cy="18" r="4" fill="#c9a24b" stroke="none" />
+      <circle cx="24" cy="18" r="4" fill="#0c0c0d" stroke="none" />
     </svg>
   )
 }
@@ -59,7 +59,7 @@ export function CheckoutLoadingTruck({ className, size = 36 }: IconProps) {
       width={size}
       height={size}
       fill="none"
-      stroke="#d9831a"
+      stroke="#0c0c0d"
       strokeWidth="3"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -81,7 +81,7 @@ export function CheckoutLoadingShield({ className, size = 34 }: IconProps) {
       width={size}
       height={size}
       fill="none"
-      stroke="#d9831a"
+      stroke="#0c0c0d"
       strokeWidth="3"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -96,9 +96,9 @@ export function CheckoutLoadingShield({ className, size = 34 }: IconProps) {
 export function CheckoutLoadingBulb({ className, size = 38 }: IconProps) {
   return (
     <svg className={cn('idl-bulb', className)} viewBox="0 0 48 48" width={size} height={size} aria-hidden>
-      <path d="M24 8 q11 0 11 12 q0 7 -6 11 v4 h-10 v-4 q-6 -4 -6 -11 q0 -12 11 -12Z" fill="#c9a24b" />
-      <rect x="19" y="36" width="10" height="5" rx="2" fill="#cdbfa5" />
-      <rect x="20" y="42" width="8" height="3" rx="1.5" fill="#cdbfa5" />
+      <path d="M24 8 q11 0 11 12 q0 7 -6 11 v4 h-10 v-4 q-6 -4 -6 -11 q0 -12 11 -12Z" fill="#0c0c0d" />
+      <rect x="19" y="36" width="10" height="5" rx="2" fill="#a1a1aa" />
+      <rect x="20" y="42" width="8" height="3" rx="1.5" fill="#a1a1aa" />
     </svg>
   )
 }

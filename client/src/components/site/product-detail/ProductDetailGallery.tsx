@@ -261,7 +261,7 @@ export function ProductDetailGallery({
           className={cn(
             'relative aspect-square w-full overflow-hidden focus:outline-none focus-visible:ring-2',
             isDesign
-              ? 'rounded shadow-[0_0_90px_rgba(201, 162, 75,0.10)] focus-visible:ring-idl-glow/40'
+              ? 'rounded shadow-[0_0_90px_rgba(120, 120, 125,0.10)] focus-visible:ring-idl-glow/40'
               : 'rounded-xl border border-idl-tech-border bg-[#f7f8fa] focus-visible:ring-idl-amber/30',
           )}
           onClick={() => {
@@ -285,7 +285,7 @@ export function ProductDetailGallery({
                 href={current.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="absolute inset-0 flex items-center justify-center bg-black/80 text-sm text-white"
+                className="absolute inset-0 flex items-center justify-center bg-black/80 text-sm text-white dark:text-idl-design"
                 onClick={(e) => e.stopPropagation()}
               >
                 Apri video

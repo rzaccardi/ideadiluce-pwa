@@ -45,7 +45,7 @@ export function SiteShellMinimal({ children }: { children: React.ReactNode }) {
       <header className="border-b border-idl-border bg-idl-paper">
         <SectionContainer className="py-4">
           <Link to={lp('/')}>
-            <BrandWordmark />
+            <BrandWordmark className="text-[24px]" />
           </Link>
         </SectionContainer>
       </header>

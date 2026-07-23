@@ -28,7 +28,7 @@ export function GuideArticleHero({ title, eyebrow, coverImageUrl, coverAlt }: Pr
             sizes="100vw"
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-idl-design via-[#2a2418] to-idl-design" />
+          <div className="absolute inset-0 bg-gradient-to-br from-idl-design via-[#2a2a2e] to-idl-design" />
         )}
         <div
           className="absolute inset-0 bg-gradient-to-b from-idl-design/10 via-idl-design/20 to-idl-design/70"
@@ -46,7 +46,7 @@ export function GuideArticleHero({ title, eyebrow, coverImageUrl, coverAlt }: Pr
                 </span>
               ) : null}
               {meta ? (
-                <span className="font-mono text-[11px] tracking-[0.06em] text-[#cdbfa5]">{meta}</span>
+                <span className="font-mono text-[11px] tracking-[0.06em] text-[#a1a1aa]">{meta}</span>
               ) : null}
             </div>
           ) : null}

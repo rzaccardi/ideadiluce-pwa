@@ -36,7 +36,7 @@ export function BrandView() {
   )
 
   return (
-    <div className="bg-[#f3f2ee]">
+    <div className="bg-[#f4f5f7]">
       <Reveal immediate>
         <BrandHeroSection
           lp={lp}

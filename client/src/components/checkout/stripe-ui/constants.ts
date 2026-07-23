@@ -93,16 +93,16 @@ export const CHECKOUT_BRAND = {
   fgMuted: '#6c727c',
   fgSubtle: '#9298a3',
   fgWarm: '#b0b0b4',
-  fgCream: '#f1e8d8',
+  fgCream: '#f5f5f5',
   border: '#e2e6eb',
   surfaceMuted: '#f7f8fa',
   surfaceDark: '#161617',
   primary: '#14161b',
   primaryHover: '#2a2d35',
-  accent: '#c9a24b',
-  accentStrong: '#d9831a',
-  accentHover: '#b08e3e',
-  accentSoft: '#f8f8f6',
+  accent: '#0c0c0d',
+  accentStrong: '#0c0c0d',
+  accentHover: '#2a2a2e',
+  accentSoft: '#f4f5f7',
 } as const
 
 export function checkoutCountryLabel(code: string) {

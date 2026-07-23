@@ -68,7 +68,7 @@ function CrossSellRow({
           to={`/prodotto/${product.slug}`}
           className={cn(
             'line-clamp-2 text-[12.5px] font-semibold leading-tight hover:underline',
-            dark ? 'text-[#f1e8d8]' : 'text-idl-graphite',
+            dark ? 'text-[#f5f5f5]' : 'text-idl-graphite',
           )}
         >
           {product.name}
@@ -84,7 +84,7 @@ function CrossSellRow({
         aria-label={t('checkout.summary.crossSellAdd')}
         className={cn(
           'flex size-7 shrink-0 items-center justify-center rounded-lg text-lg font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60',
-          dark ? 'bg-[#3a332a] hover:bg-[#4d4438]' : 'bg-[#d9831a] hover:bg-[#b08e3e]',
+          dark ? 'bg-[#2a2a2e] hover:bg-[#3a3a3d]' : 'bg-[#0c0c0d] hover:bg-[#2a2a2e]',
         )}
       >
         +
@@ -112,7 +112,7 @@ export function CheckoutCrossSellSection({
         <span
           className={cn(
             'font-mono text-[10px] font-bold uppercase tracking-[0.14em]',
-            dark ? 'text-[#b0b0b4]' : 'text-[#9a7b33]',
+            dark ? 'text-[#b0b0b4]' : 'text-[#3a3a3d]',
           )}
         >
           {t('checkout.summary.crossSellTitle')}

@@ -50,7 +50,7 @@ export function FrozenQuoteCheckoutPage() {
         </div>
         <Link
           to="/account/quotes"
-          className="inline-flex text-sm font-semibold text-[#d9831a] no-underline hover:underline"
+          className="inline-flex text-sm font-semibold text-[#0c0c0d] no-underline hover:underline"
         >
           ← {t('account.quotes.title')}
         </Link>

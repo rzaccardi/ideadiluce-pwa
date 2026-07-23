@@ -507,7 +507,7 @@ export function CheckoutPage() {
 
         <div className={checkoutFormContentClass}>
           {frozenCheckout ? (
-            <p className="mb-4 rounded-xl border border-[#c9a24b]/30 bg-[#f8f8f6] px-4 py-3 text-sm text-[#9a7b33]">
+            <p className="mb-4 rounded-xl border border-[#0c0c0d]/30 bg-[#f4f5f7] px-4 py-3 text-sm text-[#3a3a3d]">
               {t('cart.quote.frozenNotice')}
             </p>
           ) : null}

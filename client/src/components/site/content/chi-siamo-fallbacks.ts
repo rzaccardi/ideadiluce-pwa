@@ -1,5 +1,4 @@
 import type { ContentBlock, ContentPageContent } from '@/types/site-content'
-import { SHOWROOM_MAPS_URL } from '@/lib/company-contact'
 
 export const CHI_SIAMO_STATS: Extract<ContentBlock, { kind: 'stats' }> = {
   kind: 'stats',
@@ -7,15 +6,15 @@ export const CHI_SIAMO_STATS: Extract<ContentBlock, { kind: 'stats' }> = {
     { value: '25+', label: 'anni di esperienza' },
     { value: '8.000+', label: 'prodotti a catalogo' },
     { value: '120+', label: 'brand selezionati' },
-    { value: '1', label: 'showroom a Roma' },
+    { value: '∞', label: 'spedizioni in tutto il mondo' },
   ],
 }
 
-export const CHI_SIAMO_SHOWROOM: Extract<ContentBlock, { kind: 'split' }> = {
+export const CHI_SIAMO_SEDE: Extract<ContentBlock, { kind: 'split' }> = {
   kind: 'split',
-  title: 'Showroom di Roma',
+  title: 'Sede di Roma',
   imageUrl: '',
-  alt: 'Mappa / facciata showroom',
+  alt: 'Mappa / sede Idea di Luce',
   paragraphs: ['Via Appia Pignatelli 450 · su appuntamento'],
   layout: 'image-right',
 }
@@ -30,7 +29,7 @@ export const CHI_SIAMO_SUPPORT_CTA: Extract<ContentBlock, { kind: 'cta' }> = {
   variant: 'dark',
 }
 
-export const CHI_SIAMO_SHOWROOM_CTA: NonNullable<ContentPageContent['cta']> = {
-  label: 'Visita lo showroom →',
-  href: SHOWROOM_MAPS_URL,
+export const CHI_SIAMO_CONTACT_CTA: NonNullable<ContentPageContent['cta']> = {
+  label: 'Contattaci →',
+  href: '/contatti',
 }

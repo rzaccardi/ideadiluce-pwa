@@ -13,7 +13,7 @@ function SupportCard({ card, lp }: { card: CategorySupportCard; lp: LocalePathFn
       <div className="mt-3 flex flex-wrap gap-2">
         <Link
           to={lp(card.primaryCta.href)}
-          className="rounded-md bg-idl-amber px-4 py-2.5 text-[13px] font-bold text-white"
+          className="rounded-md bg-idl-amber px-4 py-2.5 text-[13px] font-bold text-white dark:text-idl-design"
         >
           {card.primaryCta.label}
         </Link>

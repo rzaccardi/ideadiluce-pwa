@@ -40,7 +40,7 @@ export function AttaccoHeroSection({ lp, onOpenWizard }: Props) {
             <button
               type="button"
               onClick={onOpenWizard}
-              className="mt-4 w-full rounded-[7px] bg-idl-amber px-5 py-3.5 text-[14.5px] font-bold text-white transition hover:bg-[#b08e3e] sm:w-auto"
+              className="mt-4 w-full rounded-[7px] bg-idl-amber px-5 py-3.5 text-[14.5px] font-bold text-white dark:text-idl-design transition hover:bg-[#2a2a2e] sm:w-auto"
             >
               {ATTACCO_HERO.wizardCta}
             </button>

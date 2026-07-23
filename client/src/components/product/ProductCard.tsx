@@ -20,6 +20,7 @@ import { formatMoney } from '@/lib/format'
 import { formatPriceDisplayModeLabel } from '@/lib/price-display'
 import { SiteImage } from '@/components/site/SiteImage'
 import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMeta'
+import { ProductBrandMark } from '@/components/product/ProductBrandMark'
 import { cn } from '@/utils/cn'
 
 type Props = {
@@ -122,6 +123,11 @@ export function ProductCard({ product, className }: Props) {
       </Link>
       <div className="flex flex-1 flex-col p-4">
         <Link to={productHref} className="block flex-1 text-left">
+          {product.brand ? (
+            <div className="mb-1.5">
+              <ProductBrandMark brand={product.brand} size="sm" className="text-idl-muted" />
+            </div>
+          ) : null}
           <h3 className="line-clamp-2 min-h-[2lh] leading-snug font-medium text-idl-graphite">
             {product.name}
           </h3>

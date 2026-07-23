@@ -140,7 +140,7 @@ export const DEFAULT_DESIGN_CATEGORY_IT: CategoryLandingContent = {
   cta: {
     title: 'Vuoi un consiglio sulla luce giusta?',
     description:
-      "Inviaci una foto dell'ambiente o del prodotto che cerchi: il nostro showroom di Roma ti aiuta a scegliere brand, finitura e composizione luminosa.",
+      "Inviaci una foto dell'ambiente o del prodotto che cerchi: il nostro team ti aiuta a scegliere brand, finitura e composizione luminosa.",
     primaryCta: { label: 'Richiedi consulenza', href: '/contatti' },
     secondaryCta: { label: 'Invia una foto', href: '/prodotto-non-trovato' },
   },

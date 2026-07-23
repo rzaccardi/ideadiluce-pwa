@@ -305,7 +305,7 @@ export function CheckoutLoadingOverlay({
   return createPortal(
     <div
       className={cn(
-        'checkout-loading-overlay fixed inset-0 z-[200] flex h-dvh max-h-dvh w-full items-center justify-center bg-[rgba(22,19,13,0.62)] p-4',
+        'checkout-loading-overlay fixed inset-0 z-[200] flex h-dvh max-h-dvh w-full items-center justify-center bg-[rgba(12, 12, 13,0.62)] p-4',
         blockInteraction ? 'touch-none' : 'pointer-events-none',
       )}
       role="status"

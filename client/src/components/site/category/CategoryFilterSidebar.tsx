@@ -104,7 +104,7 @@ export function CategoryFilterSidebar({
                         checked
                           ? isDesign
                             ? 'border-idl-brass bg-idl-brass text-white'
-                            : 'border-idl-amber bg-idl-amber text-white'
+                            : 'border-idl-amber bg-idl-amber text-white dark:text-idl-design'
                           : isDesign
                             ? 'border-idl-path-design-border'
                             : 'border-idl-tech-chip-border',

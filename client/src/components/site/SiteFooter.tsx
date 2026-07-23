@@ -139,8 +139,17 @@ export function SiteFooter({ footer }: { footer: SiteShellContent['footer'] }) {
         >
           <StaggerItem>
             <Link to={lp('/')} className="mb-4 inline-block rounded-sm transition-opacity hover:opacity-80">
-              <BrandWordmark className="text-white" accentClassName="text-idl-glow" />
+              <BrandWordmark inverted className="text-[26px]" />
             </Link>
+            <img
+              src="/brand/tlb.svg"
+              alt="TLB Italy"
+              width={72}
+              height={54}
+              decoding="async"
+              className="mb-5 h-8 w-auto opacity-70 brightness-0 invert"
+              draggable={false}
+            />
             <FooterHeading>Info aziendali</FooterHeading>
             <div className="space-y-1 text-[13px] leading-relaxed text-idl-design-muted">
               <p>{company.company}</p>
@@ -216,7 +225,7 @@ export function SiteFooter({ footer }: { footer: SiteShellContent['footer'] }) {
       <Reveal delay={0.08} className="border-t border-white/10">
         <SectionContainer className="flex flex-col items-center gap-4 py-5 text-center text-[12px] text-idl-design-subtle sm:flex-row sm:items-center sm:justify-between sm:text-left">
           <Link to={lp('/')} className="rounded-sm transition-opacity hover:opacity-80">
-            <BrandWordmark className="text-white" accentClassName="text-idl-glow" />
+            <BrandWordmark inverted className="text-[22px]" />
           </Link>
           <div className="flex w-full flex-col items-center gap-3 sm:ml-auto sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-x-5 sm:gap-y-2">
             <FooterLegalLinks className="text-idl-design-subtle" />

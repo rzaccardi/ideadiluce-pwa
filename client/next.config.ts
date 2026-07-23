@@ -3,8 +3,6 @@ import { config as loadDotenv } from 'dotenv'
 import type { NextConfig } from 'next'
 import { SEO_CANONICAL_ALIAS_REDIRECTS } from './src/lib/legacy-seo-pages.config'
 
-const SHOWROOM_MAPS_URL = 'https://share.google/k0SAIICa1mlkcPpBf'
-
 const repoRoot = path.resolve(__dirname, '..')
 loadDotenv({ path: path.join(repoRoot, '.env') })
 
@@ -45,7 +43,7 @@ function buildSeoRedirects() {
     for (const alias of SEO_CANONICAL_ALIAS_REDIRECTS) {
       withTrailingSlashVariants(rules, `${prefix}${alias.fromPath}`, `${prefix}${alias.toPath}`)
     }
-    withTrailingSlashVariants(rules, `${prefix}/showroom`, SHOWROOM_MAPS_URL)
+    withTrailingSlashVariants(rules, `${prefix}/showroom`, `${prefix}/contatti`)
   }
   return rules
 }

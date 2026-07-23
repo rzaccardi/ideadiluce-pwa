@@ -6,6 +6,7 @@ import { SiteImage } from '../SiteImage'
 import { HoverLift } from '@/components/motion'
 import { CatalogProductCardSkeleton } from '../catalog/CatalogProductCardSkeleton'
 import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMeta'
+import { ProductBrandMark } from '@/components/product/ProductBrandMark'
 import type { LocalePathFn } from '../sections/types'
 
 type Props = {
@@ -25,7 +26,7 @@ export const DesignCatalogProductCard = memo(function DesignCatalogProductCard({
   discoverLabel = 'Scopri →',
   brandLabel,
 }: Props) {
-  const brand = brandLabel ?? product.categorySlug?.toUpperCase() ?? '—'
+  const fallbackLabel = brandLabel ?? product.categorySlug?.toUpperCase() ?? null
 
   return (
     <HoverLift className="h-full">
@@ -45,7 +46,12 @@ export const DesignCatalogProductCard = memo(function DesignCatalogProductCard({
           ) : null}
         </div>
         <div className="flex flex-1 flex-col p-3 sm:p-4">
-          <div className="font-mono text-[10px] tracking-[0.08em] text-idl-brass uppercase sm:text-[10.5px]">{brand}</div>
+          <ProductBrandMark
+            brand={product.brand}
+            fallbackLabel={fallbackLabel ?? '—'}
+            size="sm"
+            className="text-idl-brass"
+          />
           <div className="mt-1 line-clamp-2 min-h-[2lh] font-serif text-[17px] leading-snug font-medium text-idl-ink sm:text-[19px]">
             {product.name}
           </div>

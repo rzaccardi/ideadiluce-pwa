@@ -65,7 +65,7 @@ ${mdLink('Brand', `${site}/brand`, 'Elenco brand')}
 ${mdLink('Blog', `${site}/blog`, 'Guide e contenuti editoriali')}
 ${mdLink('Ambienti', `${site}/ambienti`, 'Illuminazione per stanza')}
 ${mdLink('Professionisti', `${site}/professionisti`, 'Area professionisti')}
-${mdLink('Contatti', `${site}/contatti`, 'Contatti e showroom')}
+${mdLink('Contatti', `${site}/contatti`, 'Contatti e assistenza')}
 
 ## Lingue
 

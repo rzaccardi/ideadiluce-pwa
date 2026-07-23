@@ -161,14 +161,14 @@ export const DEFAULT_HOME2_IT: Home2PageContent = {
       'Sospensioni iconiche, applique scultoree e piantane di design. Selezioniamo brand, finiture e composizioni per ambienti che meritano carattere.',
     ctaLabel: 'Esplora il catalogo',
     ctaHref: '/illuminazione-arredo',
-    secondaryCtaLabel: 'Prenota in showroom',
+    secondaryCtaLabel: 'Richiedi consulenza',
     secondaryCtaHref: '/contatti',
   },
   promos: [
-    { label: 'Showroom Roma', description: 'Consulenza e composizione luce' },
+    { label: 'Assistenza reale', description: 'Consulenza e composizione luce' },
     { label: 'Brand internazionali', description: 'Artemide, Flos, FontanaArte…' },
-    { label: 'Spedizione tracciata', description: 'In tutta Italia' },
-    { label: 'Assistenza reale', description: 'Prima e dopo l\'acquisto' },
+    { label: 'Spedizioni tracciate', description: 'In tutto il mondo' },
+    { label: 'Consulenza dedicata', description: 'Prima e dopo l\'acquisto' },
   ],
   splitBlocks: [
     {

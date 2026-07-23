@@ -86,7 +86,7 @@ export function QuoteStepIndicator({ currentStep, accountConfirmed = false }: Pr
                   className={cn(
                     'h-1 rounded-full transition-colors',
                     isCurrent
-                      ? 'bg-[#c9a24b] shadow-[0_0_12px_rgba(201, 162, 75,0.45)]'
+                      ? 'bg-[#0c0c0d] shadow-[0_0_12px_rgba(120, 120, 125,0.45)]'
                       : done
                         ? 'bg-[#14161b]'
                         : 'bg-[#e2e6eb]',

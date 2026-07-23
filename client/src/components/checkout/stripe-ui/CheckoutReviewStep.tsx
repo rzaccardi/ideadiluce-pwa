@@ -68,7 +68,7 @@ function LegalPolicyLink({ href, children }: { href: string; children: ReactNode
       to={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="font-semibold text-idl-graphite underline decoration-[#c9a24b]/70 underline-offset-2 hover:decoration-[#9a7b33]"
+      className="font-semibold text-idl-graphite underline decoration-[#0c0c0d]/70 underline-offset-2 hover:decoration-[#3a3a3d]"
     >
       {children}
     </Link>
@@ -157,7 +157,7 @@ export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Pro
           rows={3}
           value={checkout.draft.orderNotes}
           placeholder={t('checkout.orderNotesPlaceholder')}
-          className="idl-field block w-full resize-none px-[15px] py-3.5 text-[15px] outline-none focus:ring-2 focus:ring-[#c9a24b]/35"
+          className="idl-field block w-full resize-none px-[15px] py-3.5 text-[15px] outline-none focus:ring-2 focus:ring-[#0c0c0d]/35"
           onChange={(e) => updateCheckoutOrderNotes(e.target.value)}
         />
       </div>

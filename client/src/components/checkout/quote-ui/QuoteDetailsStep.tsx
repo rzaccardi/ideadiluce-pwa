@@ -75,7 +75,7 @@ export function QuoteDetailsStep({
           className={cn(
             'idl-field block w-full rounded-[11px] border border-[#e2e6eb] bg-idl-tech-panel px-[15px] py-3.5',
             'text-[15px] outline-none shadow-[0_1px_1px_rgba(0,0,0,0.02)]',
-            'focus:ring-2 focus:ring-[#c9a24b]/35 focus:ring-inset',
+            'focus:ring-2 focus:ring-[#0c0c0d]/35 focus:ring-inset',
           )}
         />
       </div>

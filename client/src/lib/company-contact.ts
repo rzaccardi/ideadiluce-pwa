@@ -1,5 +1,7 @@
-/** Mappa Google dello showroom a Roma. */
-export const SHOWROOM_MAPS_URL = 'https://share.google/k0SAIICa1mlkcPpBf'
+/** Mappa Google della sede a Roma. */
+export const COMPANY_MAPS_URL = 'https://share.google/k0SAIICa1mlkcPpBf'
+/** @deprecated Usa COMPANY_MAPS_URL */
+export const SHOWROOM_MAPS_URL = COMPANY_MAPS_URL
 
 /** Dati aziendali condivisi (footer, contatti, fallback). */
 export const COMPANY_CONTACT = {

@@ -4,7 +4,6 @@ import { ExternalLink } from '@/lib/link-title'
 import { Link } from '@/lib/navigation'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
-import { SHOWROOM_MAPS_URL } from '@/lib/company-contact'
 import type { ContentBlock, ContentPageContent } from '@/types/site-content'
 import { PageFlexBody, PageFlexShell } from '@/components/layout/PageFlexShell'
 import { SectionContainer } from '@/components/site/primitives'
@@ -48,10 +47,10 @@ export function ProductNotFoundPageView({ content }: Props) {
 
   return (
     <PageFlexShell tone="paper">
-      <PageFlexBody tone="paper" className="bg-[#f3f2ee]">
+      <PageFlexBody tone="paper" className="bg-[#f4f5f7]">
         <Reveal immediate className="relative overflow-hidden bg-idl-ink text-idl-cream">
           <div
-            className="pointer-events-none absolute -top-16 right-[18%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,rgba(201, 162, 75,0.18)_0%,rgba(201, 162, 75,0)_68%)]"
+            className="pointer-events-none absolute -top-16 right-[18%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,rgba(120, 120, 125,0.18)_0%,rgba(120, 120, 125,0)_68%)]"
             aria-hidden
           />
           <SectionContainer className="relative z-[1] max-w-3xl py-11 text-center sm:py-12">
@@ -157,9 +156,9 @@ export function ProductNotFoundPageView({ content }: Props) {
               ) : null}
 
               <Reveal>
-                <div className="rounded-[14px] border border-[#f0e3d0] bg-[#fbf4ea] p-5 sm:p-6">
+                <div className="rounded-[14px] border border-[#e4e4e7] bg-[#f4f5f7] p-5 sm:p-6">
                   <div className="text-sm font-bold text-idl-ink">{t('productNotFound.professionalsTitle')}</div>
-                  <p className="mt-1.5 text-[12.5px] leading-relaxed text-[#7a6a52]">
+                  <p className="mt-1.5 text-[12.5px] leading-relaxed text-[#6b6b70]">
                     {t('productNotFound.professionalsBody')}
                   </p>
                   <Link
@@ -174,24 +173,22 @@ export function ProductNotFoundPageView({ content }: Props) {
               <Reveal>
                 <div className="overflow-hidden rounded-[14px] border border-idl-tech-border bg-white">
                   <div
-                    className="aspect-[16/9] bg-[linear-gradient(135deg,#f0efe9_0%,#d8cbb8_55%,#c4b49a_100%)]"
+                    className="aspect-[16/9] bg-[linear-gradient(135deg,#f4f4f5_0%,#c4c4c8_55%,#9a9a9e_100%)]"
                     aria-hidden
                   />
                   <div className="p-5">
                     <div className="text-sm font-extrabold text-idl-ink">
-                      {t('productNotFound.showroomTitle')}
+                      {t('productNotFound.contactTitle')}
                     </div>
                     <p className="mt-1 text-[12.5px] leading-relaxed text-idl-muted">
-                      {t('productNotFound.showroomBody')}
+                      {t('productNotFound.contactBody')}
                     </p>
-                    <ExternalLink
-                      href={SHOWROOM_MAPS_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <Link
+                      to={lp('/contatti')}
                       className="mt-2.5 inline-flex text-sm font-bold text-idl-brass hover:text-idl-amber"
                     >
-                      {t('productNotFound.showroomCta')} →
-                    </ExternalLink>
+                      {t('productNotFound.contactCta')} →
+                    </Link>
                   </div>
                 </div>
               </Reveal>

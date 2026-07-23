@@ -81,7 +81,7 @@ function CheckboxRow({
         <span
           className={cn(
             'flex size-4 shrink-0 items-center justify-center rounded border-[1.5px] text-[11px]',
-            checked ? 'border-idl-amber bg-idl-amber text-white' : 'border-idl-tech-chip-border',
+            checked ? 'border-idl-amber bg-idl-amber text-white dark:text-idl-design' : 'border-idl-tech-chip-border',
           )}
         >
           {checked ? '✓' : null}

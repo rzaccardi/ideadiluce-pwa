@@ -76,7 +76,7 @@ export function AccountQuotesPage() {
                       ) : null}
                       <Link
                         to={`/account/quotes/${q.id}`}
-                        className="text-[13px] font-bold text-[#d9831a] no-underline hover:underline"
+                        className="text-[13px] font-bold text-[#0c0c0d] no-underline hover:underline"
                       >
                         {t('account.quotes.view')} →
                       </Link>

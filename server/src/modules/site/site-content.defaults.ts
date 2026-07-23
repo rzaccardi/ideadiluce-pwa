@@ -10,7 +10,6 @@ import {
   CONTENT_PAGE_KEYS,
   COMPANY_CONTACT,
 } from './site-content-pages.defaults.js'
-import { SHOWROOM_MAPS_URL } from '../../config/store-location.js'
 import { DEFAULT_PROFESSIONISTI_IT } from './site-professionisti.defaults.js'
 import { enrichNavColumns } from './nav-link-visuals.js'
 
@@ -46,7 +45,7 @@ function attaccoMegaMenuColumns() {
 
 export const DEFAULT_SHELL_IT: SiteShellContent = {
   utilityBar: {
-    messages: ['Spedizione tracciata in tutta Italia', 'Showroom a Roma', 'Assistenza tecnica reale'],
+    messages: ['Spedizioni tracciate in tutto il mondo', 'Assistenza tecnica reale'],
     links: [
       { label: 'Professionisti', href: '/professionisti' },
       { label: 'Aiuto', href: '/on-demand' },
@@ -216,9 +215,8 @@ export const DEFAULT_SHELL_IT: SiteShellContent = {
   },
   trustBar: [
     { title: 'Assistenza reale', subtitle: 'Ti aiutiamo a scegliere' },
-    { title: 'Showroom Roma', subtitle: 'Vieni a trovarci dal vivo' },
     { title: 'Ricambi difficili', subtitle: 'Foto, EAN o codice prodotto' },
-    { title: 'Spedizione tracciata', subtitle: 'In tutta Italia' },
+    { title: 'Spedizioni tracciate', subtitle: 'In tutto il mondo' },
   ],
   footer: {
     company: {
@@ -242,7 +240,6 @@ export const DEFAULT_SHELL_IT: SiteShellContent = {
         title: 'Idea di Luce',
         links: [
           { label: 'Chi siamo', href: '/chi-siamo' },
-          { label: 'Showroom Roma', href: SHOWROOM_MAPS_URL },
           { label: 'Professionisti', href: '/professionisti' },
           { label: 'Lavora con noi', href: '/lavora-con-noi' },
         ],

@@ -10,26 +10,25 @@ type BrandLogoProps = {
 export function BrandLogo({ className, compact, inverted }: BrandLogoProps) {
   return (
     <div className={cn('flex items-center gap-2.5', className)}>
-      <div
-        className={cn(
-          'flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
-          inverted
-            ? 'bg-primary-foreground text-primary'
-            : 'bg-primary text-primary-foreground',
-        )}
-      >
-        IL
-      </div>
+      <img
+        src="/brand/icon-512.png"
+        alt=""
+        width={36}
+        height={36}
+        className="size-9 shrink-0 rounded-full object-cover"
+        draggable={false}
+        aria-hidden
+      />
       {!compact ? (
         <div className="flex min-w-0 flex-col">
-          <span
-            className={cn(
-              'truncate text-sm font-semibold tracking-tight',
-              inverted && 'text-primary-foreground',
-            )}
-          >
-            Idea di Luce
-          </span>
+          <img
+            src={inverted ? '/brand/ideadiluce-white.svg' : '/brand/ideadiluce.svg'}
+            alt="Idea di Luce"
+            width={140}
+            height={24}
+            className="h-5 w-auto"
+            draggable={false}
+          />
           <span
             className={cn(
               'text-xs text-muted-foreground',

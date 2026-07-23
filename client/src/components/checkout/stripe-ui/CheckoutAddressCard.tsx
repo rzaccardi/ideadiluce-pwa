@@ -51,7 +51,7 @@ export function CheckoutAddressCard({
   return (
     <CheckoutPanel className="overflow-hidden border-idl-tech-border bg-idl-tech-panel p-0 shadow-[0_1px_2px_rgba(20,22,27,0.04)]">
       <div className="flex gap-3 border-b border-[#ededea] bg-idl-tech-panel px-4 py-3.5 sm:px-5">
-        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-idl-tech-panel text-[#9a7b33] shadow-sm ring-1 ring-[#e2e6eb]">
+        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-idl-tech-panel text-[#3a3a3d] shadow-sm ring-1 ring-[#e2e6eb]">
           <PinIcon />
         </span>
         <div className="min-w-0 flex-1">
@@ -106,7 +106,7 @@ export function CheckoutAddressCard({
         <button
           type="button"
           onClick={onChangeAddress}
-          className="text-sm font-semibold text-[#9a7b33] underline decoration-[#cdbfa5] underline-offset-2 hover:decoration-[#9a7b33]"
+          className="text-sm font-semibold text-[#3a3a3d] underline decoration-[#a1a1aa] underline-offset-2 hover:decoration-[#3a3a3d]"
         >
           {t('checkout.address.changeAddress')}
         </button>

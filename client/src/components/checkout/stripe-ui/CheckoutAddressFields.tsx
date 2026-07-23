@@ -114,7 +114,7 @@ export function CheckoutAddressFields({
             className={cn(
               'flex min-h-[52px] cursor-pointer items-center gap-2.5 rounded-[11px] border border-idl-tech-border bg-idl-tech-panel px-3.5 py-3 text-sm font-medium text-idl-muted sm:min-w-[9.5rem]',
               locked && 'cursor-default bg-idl-tech-panel',
-              address.isSnc && 'border-[#14161b] bg-[#f8f8f6] text-idl-graphite',
+              address.isSnc && 'border-[#14161b] bg-[#f4f5f7] text-idl-graphite',
               focusStreetNumber && !address.isSnc && 'border-amber-300 bg-amber-50/70',
             )}
           >
@@ -123,7 +123,7 @@ export function CheckoutAddressFields({
               checked={address.isSnc}
               disabled={locked}
               onChange={(e) => handleSncChange(e.target.checked)}
-              className="size-4 shrink-0 rounded border-[#c0c5cc] text-idl-graphite focus:ring-[#c9a24b]/35"
+              className="size-4 shrink-0 rounded border-[#c0c5cc] text-idl-graphite focus:ring-[#0c0c0d]/35"
             />
             <span>{t('checkout.address.isSnc')}</span>
           </label>
@@ -331,7 +331,7 @@ export function CourierNotesField({
       rows={2}
       className={cn(
         'idl-field block w-full resize-none px-[15px] py-3.5 text-[15px] outline-none placeholder:text-[#9298a3]',
-        'focus:ring-2 focus:ring-[#c9a24b]/35 focus:ring-inset',
+        'focus:ring-2 focus:ring-[#0c0c0d]/35 focus:ring-inset',
         lockedClass,
       )}
       onChange={field.onChange}

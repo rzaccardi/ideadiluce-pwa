@@ -2,6 +2,6 @@
 export const HOME_SEO_TITLE = 'Illumina con stile — Illuminazione d\'arredo e prodotti tecnici'
 
 export const HOME_SEO_DESCRIPTION =
-  'Idea di Luce: illuminazione d\'arredo, lampadine e prodotti tecnici per casa e professionisti. Showroom a Roma, spedizione in tutta Italia.'
+  'Idea di Luce: illuminazione d\'arredo, lampadine e prodotti tecnici per casa e professionisti. Spedizioni tracciate in tutto il mondo, assistenza tecnica reale.'
 
 export const HOME_SEO_H1 = 'Illumina con stile'

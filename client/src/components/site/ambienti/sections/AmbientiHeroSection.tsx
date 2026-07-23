@@ -11,7 +11,7 @@ type Props = {
 export function AmbientiHeroSection({ lp }: Props) {
   return (
     <section className="relative overflow-hidden bg-idl-design text-idl-design-fg">
-      <div className="pointer-events-none absolute -top-16 right-[10%] size-[320px] rounded-full bg-[radial-gradient(circle,rgba(201, 162, 75,0.20)_0%,rgba(201, 162, 75,0)_68%)] sm:size-[420px] lg:-top-[60px] lg:size-[520px]" />
+      <div className="pointer-events-none absolute -top-16 right-[10%] size-[320px] rounded-full bg-[radial-gradient(circle,rgba(120, 120, 125,0.20)_0%,rgba(120, 120, 125,0)_68%)] sm:size-[420px] lg:-top-[60px] lg:size-[520px]" />
       <SectionContainer className="relative z-[2] pt-4 pb-10 sm:pb-14 sm:pt-5">
         <CategoryBreadcrumb
           items={[
@@ -32,7 +32,7 @@ export function AmbientiHeroSection({ lp }: Props) {
           <div className="mt-6 flex flex-col items-stretch justify-center gap-3 sm:mt-8 sm:flex-row sm:items-center">
             <ExternalLink
               href={AMBIENTI_HERO.primaryCta.href}
-              className="rounded-[7px] bg-idl-glow px-6 py-3.5 text-center text-[15px] font-bold text-idl-design transition hover:bg-[#f7bd6f]"
+              className="rounded-[7px] bg-idl-glow px-6 py-3.5 text-center text-[15px] font-bold text-idl-design transition hover:bg-[#ffffff]"
             >
               {AMBIENTI_HERO.primaryCta.label}
             </ExternalLink>

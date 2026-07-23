@@ -55,16 +55,16 @@ const summaryThemeClasses = {
     row: 'text-idl-graphite',
     rowMuted: 'text-idl-muted',
     border: 'border-idl-tech-chip-border',
-    qtyBadge: 'bg-[#3a332a] text-[#f1e8d8]',
+    qtyBadge: 'bg-[#2a2a2e] text-[#f5f5f5]',
     thumbBorder: 'border-idl-tech-border',
   },
   dark: {
-    itemTitle: 'text-[#f1e8d8]',
+    itemTitle: 'text-[#f5f5f5]',
     itemMeta: 'text-[#b0b0b4]',
-    row: 'text-[#f1e8d8]',
+    row: 'text-[#f5f5f5]',
     rowMuted: 'text-[#b0b0b4]',
     border: 'border-white/10',
-    qtyBadge: 'bg-[#3a332a] text-[#f1e8d8]',
+    qtyBadge: 'bg-[#2a2a2e] text-[#f5f5f5]',
     thumbBorder: 'border-white/10',
   },
 } as const
@@ -242,7 +242,7 @@ export function CheckoutOrderSummary({
         <ViewportPortal open={mobileOpen} lockScroll>
           <button
             type="button"
-            className="fixed inset-0 z-[60] h-[100dvh] w-screen bg-[rgba(22,19,13,0.35)] lg:hidden"
+            className="fixed inset-0 z-[60] h-[100dvh] w-screen bg-[rgba(12, 12, 13,0.35)] lg:hidden"
             onClick={() => setMobileOpen(false)}
             aria-label={t('checkout.summary.hideOrderSummary')}
           />
@@ -276,7 +276,7 @@ export function CheckoutOrderSummary({
         <p className="mt-8 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#b0b0b4]">
           {tParams('checkout.payStore', { store: CHECKOUT_STORE_NAME })}
         </p>
-        <p className={cn(checkoutTitleTypographyClass, 'mt-1 font-serif text-2xl font-semibold text-[#f1e8d8] sm:text-[28px]')}>
+        <p className={cn(checkoutTitleTypographyClass, 'mt-1 font-serif text-2xl font-semibold text-[#f5f5f5] sm:text-[28px]')}>
           {formatMoney(total, cart.currencyCode)}
         </p>
         <div className="mt-8 flex-1">
@@ -327,7 +327,7 @@ export function CheckoutBackButton({
         className={cn(
           'relative z-[210] flex size-[38px] shrink-0 items-center justify-center rounded-full border transition',
           dark
-            ? 'border-white/15 text-[#f1e8d8] hover:bg-white/10'
+            ? 'border-white/15 text-[#f5f5f5] hover:bg-white/10'
             : 'border-[#e2e6eb] text-[#14161b] hover:bg-black/5',
           className,
         )}
@@ -383,22 +383,19 @@ export function CheckoutSummaryHeader({
         <CheckoutBackButton theme={theme} backHref={backHref} backLabel={label} />
       ) : null}
       <BrandWordmark
-        className={cn(
-          'min-w-0 text-lg sm:text-[21px]',
-          dark ? 'text-white' : 'text-[#14161b]',
-        )}
-        accentClassName="text-[#c9a24b]"
+        inverted={dark}
+        className="min-w-0 text-lg sm:text-[21px]"
       />
       <span
         className={cn(
           'ml-auto shrink-0 rounded-[5px] px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-[0.05em] sm:px-2 sm:py-1 sm:text-[10px]',
-          'bg-[#c9a24b] text-[#0c0c0d]',
+          'bg-[#0c0c0d] text-[#0c0c0d]',
         )}
       >
         {t('checkout.summary.secureBadge')}
       </span>
       {isDev() ? (
-        <span className="shrink-0 rounded bg-[#c9a24b] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#0c0c0d] sm:text-[10px]">
+        <span className="shrink-0 rounded bg-[#0c0c0d] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#0c0c0d] sm:text-[10px]">
           Test
         </span>
       ) : null}

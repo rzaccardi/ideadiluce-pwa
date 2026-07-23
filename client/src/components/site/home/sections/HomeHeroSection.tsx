@@ -15,7 +15,7 @@ export function HomeHeroSection({ design, technical, lp }: Props) {
   return (
     <div className="grid border-b border-idl-border lg:grid-cols-2">
       <FadeIn className="relative overflow-hidden bg-idl-design px-6 py-10 text-idl-design-fg sm:px-12 sm:py-16 lg:px-16 lg:py-[74px]">
-        <div className="pointer-events-none absolute -top-20 -right-10 size-[460px] rounded-full bg-[radial-gradient(circle,rgba(201, 162, 75,0.26)_0%,rgba(201, 162, 75,0)_70%)]" />
+        <div className="pointer-events-none absolute -top-20 -right-10 size-[460px] rounded-full bg-[radial-gradient(circle,rgba(120, 120, 125,0.26)_0%,rgba(120, 120, 125,0)_70%)]" />
         <section aria-labelledby="home-hero-design-title" className="relative z-[2] max-w-lg lg:ml-auto">
           <Eyebrow>{design.eyebrow}</Eyebrow>
           <h1
@@ -51,7 +51,7 @@ export function HomeHeroSection({ design, technical, lp }: Props) {
         <p className="mt-4 text-[16.5px] leading-relaxed text-idl-muted">{technical.description}</p>
         <Link
           to={lp(technical.ctaHref)}
-          className="mt-7 inline-flex items-center gap-2 rounded-md bg-idl-amber px-6 py-3.5 text-[15px] font-bold text-white"
+          className="mt-7 inline-flex items-center gap-2 rounded-md bg-idl-amber px-6 py-3.5 text-[15px] font-bold text-white dark:text-idl-design"
         >
           {technical.ctaLabel}
         </Link>

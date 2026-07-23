@@ -11,12 +11,12 @@ function BulbIcon() {
       viewBox="0 0 120 150"
       width={118}
       height={148}
-      style={{ filter: 'drop-shadow(0 0 40px rgba(201, 162, 75,.45))' }}
+      style={{ filter: 'drop-shadow(0 0 40px rgba(120, 120, 125,.45))' }}
       aria-hidden
     >
       <path
         d="M60 14 q34 0 34 38 q0 22 -18 35 v14 h-32 v-14 q-18 -13 -18 -35 q0 -38 34 -38Z"
-        fill="#c9a24b"
+        fill="#0c0c0d"
       />
       <path
         d="M46 70 q14 12 28 0"
@@ -32,7 +32,7 @@ function BulbIcon() {
         strokeLinecap="round"
         opacity={0.5}
       />
-      <rect x={44} y={101} width={32} height={7} rx={2} fill="#cdbfa5" />
+      <rect x={44} y={101} width={32} height={7} rx={2} fill="#a1a1aa" />
       <rect x={46} y={110} width={28} height={6} rx={2} fill="#b3a890" />
       <rect x={48} y={118} width={24} height={6} rx={2} fill="#b0b0b4" />
     </svg>
@@ -49,7 +49,7 @@ function HoverLinkButton({ href, children, variant }: HoverButtonProps) {
   const baseStyle =
     variant === 'primary'
       ? {
-          background: '#c9a24b',
+          background: '#0c0c0d',
           color: '#0c0c0d',
           fontSize: '15px',
           fontWeight: 700,
@@ -59,7 +59,7 @@ function HoverLinkButton({ href, children, variant }: HoverButtonProps) {
         }
       : {
           background: 'transparent',
-          color: '#f1e8d8',
+          color: '#f5f5f5',
           fontSize: '15px',
           fontWeight: 600,
           padding: '14px 26px',
@@ -70,8 +70,8 @@ function HoverLinkButton({ href, children, variant }: HoverButtonProps) {
 
   const hoverStyle =
     variant === 'primary'
-      ? { background: '#f7bd6f' }
-      : { borderColor: '#c9a24b', color: '#c9a24b' }
+      ? { background: '#ffffff' }
+      : { borderColor: '#0c0c0d', color: '#0c0c0d' }
 
   return (
     <Link
@@ -93,8 +93,8 @@ export function NotFoundPageView() {
     <>
       <style>{`
         @keyframes idl-bulb-pulse {
-          0%, 100% { filter: drop-shadow(0 0 40px rgba(201, 162, 75,.45)); }
-          50% { filter: drop-shadow(0 0 56px rgba(201, 162, 75,.65)); }
+          0%, 100% { filter: drop-shadow(0 0 40px rgba(120, 120, 125,.45)); }
+          50% { filter: drop-shadow(0 0 56px rgba(120, 120, 125,.65)); }
         }
         @keyframes idl-glow-drift {
           0%, 100% { opacity: 1; transform: translateX(0); }
@@ -126,7 +126,7 @@ export function NotFoundPageView() {
             height: 600,
             borderRadius: '50%',
             background:
-              'radial-gradient(circle,rgba(201, 162, 75,.22) 0%,rgba(201, 162, 75,.05) 42%,rgba(201, 162, 75,0) 70%)',
+              'radial-gradient(circle,rgba(120, 120, 125,.22) 0%,rgba(120, 120, 125,.05) 42%,rgba(120, 120, 125,0) 70%)',
             pointerEvents: 'none',
           }}
         />
@@ -153,7 +153,7 @@ export function NotFoundPageView() {
               fontFamily: "'JetBrains Mono',monospace",
               fontSize: '12px',
               letterSpacing: '.28em',
-              color: '#c9a24b',
+              color: '#0c0c0d',
               marginBottom: 22,
             }}
           >
@@ -168,7 +168,7 @@ export function NotFoundPageView() {
               fontWeight: 500,
               letterSpacing: '-.01em',
               maxWidth: 680,
-              color: '#f1e8d8',
+              color: '#f5f5f5',
               margin: '0 0 18px',
             }}
           >

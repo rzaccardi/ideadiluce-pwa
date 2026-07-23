@@ -120,7 +120,7 @@ export function ProfessionistiPageView({ content }: Props) {
     <div className="bg-idl-tech-panel">
       <Reveal immediate className="relative overflow-hidden bg-idl-graphite text-[#eef1f4]">
         <div
-          className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_70%_40%,rgba(217,131,26,0.16),transparent_60%)]"
+          className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_70%_40%,rgba(90, 90, 95,0.16),transparent_60%)]"
           aria-hidden
         />
         <SectionContainer className="relative z-[1] grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-12">
@@ -138,7 +138,7 @@ export function ProfessionistiPageView({ content }: Props) {
               <button
                 type="button"
                 onClick={scrollToRegistration}
-                className="rounded-lg bg-idl-amber px-6 py-3.5 text-[15px] font-bold text-white transition hover:bg-[#b08e3e]"
+                className="rounded-lg bg-idl-amber px-6 py-3.5 text-[15px] font-bold text-white dark:text-idl-design transition hover:bg-[#2a2a2e]"
               >
                 {content.hero.primaryCta.label}
               </button>

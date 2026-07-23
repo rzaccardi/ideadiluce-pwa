@@ -138,7 +138,7 @@ export function TechnicalCatalogBulkBar({ products: _products }: Props) {
               type="button"
               disabled={cartLoading}
               onClick={() => void addSelectedToCart()}
-              className="inline-flex min-w-[120px] items-center justify-center gap-1.5 rounded-md bg-idl-amber px-4 py-2 text-[12.5px] font-bold text-white transition hover:bg-idl-amber/90 disabled:opacity-60"
+              className="inline-flex min-w-[120px] items-center justify-center gap-1.5 rounded-md bg-idl-amber px-4 py-2 text-[12.5px] font-bold text-white dark:text-idl-design transition hover:bg-idl-amber/90 disabled:opacity-60"
             >
               {cartLoading ? <LoadingSpinner className="h-3.5 w-3.5" /> : null}
               Aggiungi al carrello

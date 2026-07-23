@@ -1,5 +1,5 @@
 import type { ContentPageContent } from './site.types.js'
-import { getStorePickupLocation, SHOWROOM_MAPS_URL } from '../../config/store-location.js'
+import { getStorePickupLocation } from '../../config/store-location.js'
 import { getLegacyEditorialGuideContent } from '../site-guides/legacy-editorial-guides.content.js'
 import { DEFAULT_TERMINI_IT } from './site-content-termini.defaults.js'
 import { DEFAULT_PRIVACY_IT } from './site-content-privacy.defaults.js'
@@ -68,10 +68,10 @@ export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> =
     title: 'Passione per la luce,',
     titleAccent: 'dal 1998.',
     intro:
-      'Idea di Luce è il punto di riferimento per illuminazione d\'arredo e prodotti tecnici: showroom a Roma, e-commerce e assistenza reale per privati e professionisti.',
+      'Idea di Luce è il punto di riferimento per illuminazione d\'arredo e prodotti tecnici: e-commerce e assistenza reale per privati e professionisti.',
     coverImage: {
       imageUrl: '',
-      alt: 'Showroom · Roma',
+      alt: 'Idea di Luce · Roma',
     },
     blocks: [
       {
@@ -87,16 +87,16 @@ export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> =
           { value: '25+', label: 'anni di esperienza' },
           { value: '8.000+', label: 'prodotti a catalogo' },
           { value: '120+', label: 'brand selezionati' },
-          { value: '1', label: 'showroom a Roma' },
+          { value: '∞', label: 'spedizioni in tutto il mondo' },
         ],
       },
       {
         kind: 'features',
         items: [
-          { num: '01', title: 'Showroom a Roma', description: 'Vieni a vedere dal vivo lampade e materiali.' },
+          { num: '01', title: 'Spedizioni mondiali', description: 'Consegna tracciata in tutto il mondo.' },
           { num: '02', title: 'Catalogo arredo + tecnico', description: 'Design e ricambi nello stesso posto.' },
           { num: '03', title: 'Assistenza umana', description: 'Telefono, email e WhatsApp con persone vere.' },
-          { num: '04', title: 'Spedizione tracciata', description: 'Consegna in tutta Italia.' },
+          { num: '04', title: 'Consulenza dedicata', description: 'Ti aiutiamo a scegliere prima e dopo l\'acquisto.' },
         ],
       },
       {
@@ -105,9 +105,9 @@ export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> =
       },
       {
         kind: 'split',
-        title: 'Showroom di Roma',
+        title: 'Sede di Roma',
         imageUrl: '',
-        alt: 'Mappa / facciata showroom',
+        alt: 'Mappa / sede Idea di Luce',
         paragraphs: ['Via Appia Pignatelli 450 · su appuntamento'],
         layout: 'image-right',
       },
@@ -121,7 +121,7 @@ export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> =
         variant: 'dark',
       },
     ],
-    cta: { label: 'Visita lo showroom →', href: SHOWROOM_MAPS_URL },
+    cta: { label: 'Contattaci →', href: '/contatti' },
   },
 
   'lavora-con-noi': {
@@ -214,9 +214,9 @@ export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> =
         kind: 'features',
         items: [
           { title: 'Assistenza reale', description: 'Ti aiutiamo a scegliere' },
-          { title: 'Showroom Roma', description: 'Vieni a trovarci dal vivo' },
           { title: 'Ricambi difficili', description: 'Foto, EAN o codice prodotto' },
-          { title: 'Spedizione tracciata', description: 'In tutta Italia' },
+          { title: 'Spedizioni tracciate', description: 'In tutto il mondo' },
+          { title: 'Consulenza dedicata', description: 'Prima e dopo l\'acquisto' },
         ],
       },
       { kind: 'contact', ...COMPANY_CONTACT },
@@ -247,7 +247,7 @@ export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> =
     title: 'On Demand',
     subtitle:
       'Se non trovi il prodotto desiderato nel nostro catalogo online, contattaci: compila il form con i dettagli e faremo del nostro meglio per procurartelo. Meriti la luce migliore e siamo qui per aiutarti a trovarla.',
-    heroBadges: ['Risposta in giornata', 'Showroom a Roma', '25+ anni di esperienza'],
+    heroBadges: ['Risposta in giornata', 'Assistenza tecnica reale', '25+ anni di esperienza'],
     blocks: [
       {
         kind: 'lead-form',

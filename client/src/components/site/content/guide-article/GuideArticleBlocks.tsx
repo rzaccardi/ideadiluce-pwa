@@ -121,8 +121,8 @@ function GuideBulletsBlock({ block }: { block: Extract<ContentBlock, { kind: 'bu
   return (
     <GuideBodySection>
       {block.title ? <h2 className="mb-4 font-serif text-[26px] font-medium text-idl-ink">{block.title}</h2> : null}
-      <div className="rounded-[10px] border border-[#e6dcc9] bg-white px-5 py-3 sm:px-[22px]">
-        <ul className="divide-y divide-[#ece2d2]">
+      <div className="rounded-[10px] border border-[#e4e4e7] bg-white px-5 py-3 sm:px-[22px]">
+        <ul className="divide-y divide-[#e4e4e7]">
           {block.items.map((item) => (
             <li key={item} className="py-3 text-[15px] leading-relaxed text-[#3f3a32] first:pt-2 last:pb-2">
               {item}
@@ -140,7 +140,7 @@ function GuideFeaturesBlock({ block }: { block: Extract<ContentBlock, { kind: 'f
       {block.title ? <h2 className="mb-4 font-serif text-[26px] font-medium text-idl-ink">{block.title}</h2> : null}
       <div className="grid gap-4 sm:grid-cols-2">
         {block.items.map((item) => (
-          <div key={item.title} className="rounded-lg border border-[#e6dcc9] bg-white p-5">
+          <div key={item.title} className="rounded-lg border border-[#e4e4e7] bg-white p-5">
             {item.num ? <div className="font-mono text-[11px] text-idl-amber">{item.num}</div> : null}
             <div className="font-serif text-lg text-idl-ink">{item.title}</div>
             <p className="mt-1.5 text-sm leading-relaxed text-idl-muted">{item.description}</p>
@@ -157,7 +157,7 @@ function GuideStepsBlock({ block }: { block: Extract<ContentBlock, { kind: 'step
       {block.title ? <h2 className="mb-4 font-serif text-[26px] font-medium text-idl-ink">{block.title}</h2> : null}
       <ol className="space-y-4">
         {block.items.map((step, index) => (
-          <li key={step.title} className="flex gap-3 rounded-lg border border-[#e6dcc9] bg-white p-4">
+          <li key={step.title} className="flex gap-3 rounded-lg border border-[#e4e4e7] bg-white p-4">
             <span className="font-mono text-sm font-bold text-idl-brass">{String(index + 1).padStart(2, '0')}</span>
             <div>
               <div className="font-semibold text-idl-ink">{step.title}</div>
@@ -178,7 +178,7 @@ export function GuideInspirationSection({
   lp: Lp
 }) {
   return (
-    <section className="mt-8 bg-idl-design text-[#f1e8d8]">
+    <section className="mt-8 bg-idl-design text-[#f5f5f5]">
       <div className={cn(GUIDE_ARTICLE_LAYOUT.wide, SITE_PAGE_X_CLASS, 'py-10 sm:py-14')}>
         <div className="mb-6 flex flex-col gap-4 sm:mb-7 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -195,7 +195,7 @@ export function GuideInspirationSection({
             <Link
               key={item.href}
               to={lp(item.href)}
-              className="group block text-[#f1e8d8] no-underline"
+              className="group block text-[#f5f5f5] no-underline"
             >
               {item.imageUrl ? (
                 <div className="relative mb-3 aspect-[4/5] overflow-hidden rounded bg-idl-design-elevated">
@@ -233,7 +233,7 @@ export function GuideConversionStrip({
   lp: Lp
 }) {
   return (
-    <section className="border-b border-[#e6dcc9] bg-idl-paper">
+    <section className="border-b border-[#e4e4e7] bg-idl-paper">
       <div
         className={cn(
           GUIDE_ARTICLE_LAYOUT.wide,
@@ -254,7 +254,7 @@ export function GuideConversionStrip({
           {block.secondaryLabel && block.secondaryHref ? (
             <Link
               to={lp(block.secondaryHref)}
-              className="inline-flex rounded-md border border-[#e6dcc9] bg-white px-5 py-3 text-sm font-semibold text-idl-graphite no-underline transition hover:border-idl-brass"
+              className="inline-flex rounded-md border border-[#e4e4e7] bg-white px-5 py-3 text-sm font-semibold text-idl-graphite no-underline transition hover:border-idl-brass"
             >
               {block.secondaryLabel}
             </Link>

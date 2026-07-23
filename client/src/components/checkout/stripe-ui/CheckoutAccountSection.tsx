@@ -79,7 +79,7 @@ export function CheckoutAccountSection() {
           <button
             type="button"
             onClick={() => void handleLogout()}
-            className="shrink-0 text-xs font-semibold text-[#9a7b33] underline decoration-[#cdbfa5] underline-offset-2 hover:decoration-[#9a7b33] sm:text-sm"
+            className="shrink-0 text-xs font-semibold text-[#3a3a3d] underline decoration-[#a1a1aa] underline-offset-2 hover:decoration-[#3a3a3d] sm:text-sm"
           >
             {t('checkout.account.notYou')}
           </button>

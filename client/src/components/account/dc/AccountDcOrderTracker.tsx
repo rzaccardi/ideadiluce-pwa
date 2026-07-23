@@ -64,7 +64,7 @@ function Tracker({ steps }: { steps: TrackerStep[] }) {
           step.state === 'done'
             ? 'bg-[#1f9d57] text-white'
             : step.state === 'active'
-              ? 'border-[2.5px] border-[#d9831a] bg-idl-tech-panel text-[#d9831a]'
+              ? 'border-[2.5px] border-[#0c0c0d] bg-idl-tech-panel text-[#0c0c0d]'
               : 'border-2 border-[#cfd5dc] bg-idl-tech-panel text-[#9298a3]'
 
         return (

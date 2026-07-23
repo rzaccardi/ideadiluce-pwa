@@ -215,7 +215,7 @@ function BlockRenderer({
     case 'cta': {
       const primaryClass =
         block.variant === 'accent'
-          ? 'bg-idl-amber text-white hover:brightness-105'
+          ? 'bg-idl-amber text-white dark:text-idl-design hover:brightness-105'
           : block.variant === 'dark'
             ? 'bg-idl-ink text-white hover:bg-idl-ink-soft'
             : 'bg-idl-ink text-white hover:bg-idl-ink-soft'
@@ -224,7 +224,7 @@ function BlockRenderer({
           className={cn(
             ui.panel,
             block.variant === 'light' && 'bg-idl-cream',
-            tone === 'guide' && 'max-w-3xl border-idl-tech-border bg-[#f8f8f6]/40',
+            tone === 'guide' && 'max-w-3xl border-idl-tech-border bg-[#f4f5f7]/40',
           )}
         >
           <h2 className="text-lg font-bold text-idl-ink">{block.title}</h2>

@@ -69,7 +69,19 @@ export function BrandGrid({ items, lp, variant = 'home', stagger = 0.04 }: Props
                 level={3}
                 className="text-sm font-bold tracking-widest text-idl-graphite-2 uppercase"
               >
-                {name}
+                {name.toLowerCase().includes('tlb') ? (
+                  <img
+                    src="/brand/tlb.svg"
+                    alt={name}
+                    height={22}
+                    width={29}
+                    className="mx-auto h-[22px] w-auto object-contain"
+                    decoding="async"
+                    draggable={false}
+                  />
+                ) : (
+                  name
+                )}
               </SiteHeading>
               {meta ? <span className="mt-1 text-[11px] text-idl-muted">{meta}</span> : null}
             </Link>

@@ -11,8 +11,8 @@ import { PageFlexBody, PageFlexShell } from '@/components/layout/PageFlexShell'
 import { SectionContainer } from '@/components/site/primitives'
 import { Reveal, Stagger, StaggerItem } from '@/components/motion'
 import {
-  CHI_SIAMO_SHOWROOM,
-  CHI_SIAMO_SHOWROOM_CTA,
+  CHI_SIAMO_CONTACT_CTA,
+  CHI_SIAMO_SEDE,
   CHI_SIAMO_STATS,
   CHI_SIAMO_SUPPORT_CTA,
 } from '@/components/site/content/chi-siamo-fallbacks'
@@ -94,30 +94,30 @@ function BoImage({
   )
 }
 
-function ShowroomMapCard({
-  showroom,
+function SedeMapCard({
+  sede,
   mapAlt,
 }: {
-  showroom: Extract<ContentBlock, { kind: 'split' }>
+  sede: Extract<ContentBlock, { kind: 'split' }>
   mapAlt: string
 }) {
   return (
     <div className="relative min-h-[320px] overflow-hidden rounded-[14px] sm:min-h-[380px] lg:h-full">
       <BoImage
-        src={showroom.imageUrl}
-        alt={showroom.alt ?? showroom.title ?? mapAlt}
+        src={sede.imageUrl}
+        alt={sede.alt ?? sede.title ?? mapAlt}
         fill
         rounded="rounded-[14px]"
         sizes="(max-width: 1024px) 100vw, 640px"
       />
       <div className="absolute right-5 bottom-5 left-5 max-w-[calc(100%-2.5rem)] rounded-[10px] bg-idl-ink/90 px-5 py-4 text-idl-cream backdrop-blur-sm sm:left-auto sm:max-w-[18rem]">
-        {showroom.title ? (
+        {sede.title ? (
           <SiteHeading level={3} className="font-serif text-lg">
-            {showroom.title}
+            {sede.title}
           </SiteHeading>
         ) : null}
-        {showroom.paragraphs[0] ? (
-          <p className="mt-1 text-[12.5px] text-idl-cream/75">{showroom.paragraphs[0]}</p>
+        {sede.paragraphs[0] ? (
+          <p className="mt-1 text-[12.5px] text-idl-cream/75">{sede.paragraphs[0]}</p>
         ) : null}
       </div>
     </div>
@@ -136,9 +136,9 @@ export function ChiSiamoPageView({ content }: Props) {
   const stats = findBlock(content.blocks, 'stats') ?? CHI_SIAMO_STATS
   const features = findBlock(content.blocks, 'features')
   const contact = findBlock(content.blocks, 'contact')
-  const showroom = findBlock(content.blocks, 'split') ?? CHI_SIAMO_SHOWROOM
+  const sede = findBlock(content.blocks, 'split') ?? CHI_SIAMO_SEDE
   const supportCta = findBlock(content.blocks, 'cta') ?? CHI_SIAMO_SUPPORT_CTA
-  const showroomCta = content.cta ?? CHI_SIAMO_SHOWROOM_CTA
+  const contactCta = content.cta ?? CHI_SIAMO_CONTACT_CTA
 
   return (
     <PageFlexShell tone="paper">
@@ -225,7 +225,7 @@ export function ChiSiamoPageView({ content }: Props) {
           </SectionContainer>
         ) : null}
 
-        {/* Dati aziendali + card showroom (destra) */}
+        {/* Dati aziendali + card sede (destra) */}
         <SectionContainer className="pb-10 sm:pb-14">
           <div className="grid gap-6 lg:grid-cols-2 lg:items-stretch lg:gap-8">
             {contact ? (
@@ -305,26 +305,26 @@ export function ChiSiamoPageView({ content }: Props) {
             ) : null}
 
             <Reveal delay={0.06}>
-              <ShowroomMapCard showroom={showroom} mapAlt={t('chiSiamo.mapAlt')} />
+              <SedeMapCard sede={sede} mapAlt={t('chiSiamo.mapAlt')} />
             </Reveal>
           </div>
 
           <Reveal className="mt-8 text-center">
-            {isExternalHref(showroomCta.href) ? (
+            {isExternalHref(contactCta.href) ? (
               <ExternalLink
-                href={showroomCta.href}
+                href={contactCta.href}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm font-bold text-idl-brass transition hover:text-idl-amber"
               >
-                {showroomCta.label}
+                {contactCta.label}
               </ExternalLink>
             ) : (
               <Link
-                to={lp(showroomCta.href)}
+                to={lp(contactCta.href)}
                 className="text-sm font-bold text-idl-brass transition hover:text-idl-amber"
               >
-                {showroomCta.label}
+                {contactCta.label}
               </Link>
             )}
           </Reveal>

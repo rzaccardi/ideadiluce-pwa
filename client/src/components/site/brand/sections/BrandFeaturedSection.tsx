@@ -29,7 +29,12 @@ export function BrandFeaturedSection({ brands, lp }: Props) {
                 className="flex flex-col rounded-[14px] border border-idl-tech-border bg-idl-tech-panel p-6 transition hover:border-[#cfd4db] hover:shadow-[0_10px_30px_rgba(0,0,0,0.05)] sm:p-7"
               >
                 <div className="mb-5 flex h-16 items-center">
-                  <BrandNameDisplay name={brand.name} style={brand.displayStyle} size="lg" />
+                  <BrandNameDisplay
+                    name={brand.name}
+                    slug={brand.slug}
+                    style={brand.displayStyle}
+                    size="lg"
+                  />
                 </div>
                 <p className="text-[14px] leading-relaxed text-idl-graphite-2">{brand.description}</p>
                 <div className="mt-4 flex flex-wrap gap-1.5">

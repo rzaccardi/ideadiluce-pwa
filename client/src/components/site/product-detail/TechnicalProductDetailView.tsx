@@ -27,6 +27,7 @@ import {
   buildProductSubtitle,
 } from './shared'
 import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMeta'
+import { ProductBrandMark } from '@/components/product/ProductBrandMark'
 import {
   ProductDetailBreadcrumb,
   buildProductBreadcrumbItems,
@@ -181,9 +182,18 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
         />
 
         <div className="min-w-0">
-          <div className="mb-2 font-mono text-[11px] tracking-[0.1em] text-idl-muted uppercase">
-            {brandEyebrow}
-            {product.brand ? '' : ' · COMPONENTISTICA'}
+          <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <ProductBrandMark
+              brand={product.brand}
+              fallbackLabel={brandEyebrow}
+              size="md"
+              className="font-mono text-idl-muted"
+            />
+            {!product.brand ? (
+              <span className="font-mono text-[11px] tracking-[0.1em] text-idl-muted uppercase">
+                · COMPONENTISTICA
+              </span>
+            ) : null}
           </div>
           <h1 className="text-[clamp(1.5rem,6vw,1.875rem)] leading-[1.1] font-extrabold tracking-[-0.02em] text-idl-graphite">
             {displayTitle}
@@ -208,7 +218,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                   className={cn(
                     'rounded-[5px] border px-[11px] py-1.5 font-mono text-[11.5px] text-idl-graphite',
                     /K$/i.test(tag) || /calda|naturale/i.test(tag)
-                      ? 'border-[#f0ddc0] bg-[#fbf1e3]'
+                      ? 'border-[#e4e4e7] bg-[#fbf1e3]'
                       : 'border-idl-tech-chip-border bg-[#eef1f4]',
                   )}
                 >
@@ -248,7 +258,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                       : availability?.status === 'available'
                         ? 'text-[#1f9d57]'
                         : availability?.status === 'orderable'
-                          ? 'text-[#b5701a]'
+                          ? 'text-[#3a3a3d]'
                           : 'text-idl-muted',
                   )}
                 >
@@ -282,7 +292,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                 type="button"
                 disabled={isStockEnriching || !availability?.canAddToCart || isAddingToCart}
                 onClick={handleAddToCart}
-                className="flex-1 rounded-lg bg-idl-amber px-4 py-3.5 text-center text-[15.5px] font-bold text-white transition hover:bg-[#b08e3e] disabled:opacity-60"
+                className="flex-1 rounded-lg bg-idl-amber px-4 py-3.5 text-center text-[15.5px] font-bold text-white dark:text-idl-design transition hover:bg-[#2a2a2e] disabled:opacity-60"
               >
                 {isAddingToCart ? t('product.addingToCart') : t('product.addToCart')}
               </button>
@@ -309,13 +319,13 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
             <div className="mt-3.5 flex flex-col gap-3 border-t border-[#ededea] pt-3.5 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <div className="text-[13.5px] font-bold text-idl-graphite">Non sei sicuro che sia quello giusto?</div>
-                <div className="text-[12.5px] text-[#7a6a52]">
+                <div className="text-[12.5px] text-[#6b6b70]">
                   Inviaci una foto della vecchia lampadina o del portalampada.
                 </div>
               </div>
               <ProductDetailContactLink
                 href={lp('/contatti')}
-                className="w-full shrink-0 rounded-[7px] border border-[#f0ddc0] bg-[#fbf4ea] px-4 py-[11px] text-center text-[13px] font-bold text-[#b5701a] sm:w-auto sm:whitespace-nowrap"
+                className="w-full shrink-0 rounded-[7px] border border-[#e4e4e7] bg-[#f4f5f7] px-4 py-[11px] text-center text-[13px] font-bold text-[#3a3a3d] sm:w-auto sm:whitespace-nowrap"
               >
                 Verifica compatibilità
               </ProductDetailContactLink>
@@ -591,7 +601,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
               <details className="group overflow-hidden rounded-xl border border-amber-200 bg-idl-tech-panel shadow-sm open:shadow-md" open>
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-[15px] font-bold [&::-webkit-details-marker]:hidden">
                   Come verifico che sia il ricambio giusto?
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-idl-amber text-sm text-white group-open:rotate-180">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-idl-amber text-sm text-white dark:text-idl-design group-open:rotate-180">
                     +
                   </span>
                 </summary>
@@ -619,7 +629,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
             <div className="flex flex-col gap-2.5 px-6 py-5 sm:px-7">
               <ProductDetailContactLink
                 href={lp('/contatti')}
-                className="flex items-center gap-3 rounded-[10px] bg-idl-amber px-4 py-3.5 text-sm font-bold text-white"
+                className="flex items-center gap-3 rounded-[10px] bg-idl-amber px-4 py-3.5 text-sm font-bold text-white dark:text-idl-design"
               >
                 Invia una foto →
               </ProductDetailContactLink>
@@ -637,7 +647,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
               </ProductDetailContactLink>
               <div className="mt-1 flex items-center gap-2 text-xs text-idl-muted">
                 <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden />
-                Tecnici disponibili · risposta in giornata · showroom Roma
+                Tecnici disponibili · risposta in giornata · assistenza reale
               </div>
             </div>
           </ProductDetailCard>

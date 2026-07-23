@@ -2,6 +2,7 @@ import { Link } from '@/lib/navigation'
 import type { ProductCardDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
 import { SiteImage } from '@/components/site/SiteImage'
+import { ProductBrandMark } from '@/components/product/ProductBrandMark'
 import type { LocalePathFn } from '@/components/site/sections/types'
 
 type Props = {
@@ -15,7 +16,7 @@ export function DesignRelatedProducts({ products, lp, brandName }: Props) {
     <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
       {products.map((product) => (
         <Link key={product.slug} to={lp(`/prodotto/${product.slug}`)} className="group block">
-          <div className="relative mb-3.5 aspect-[4/5] overflow-hidden rounded-[3px] shadow-[0_0_60px_rgba(201, 162, 75,0.07)]">
+          <div className="relative mb-3.5 aspect-[4/5] overflow-hidden rounded-[3px] shadow-[0_0_60px_rgba(120, 120, 125,0.07)]">
             {product.imageUrl ? (
               <SiteImage
                 src={product.imageUrl}
@@ -30,8 +31,13 @@ export function DesignRelatedProducts({ products, lp, brandName }: Props) {
               </div>
             )}
           </div>
-          <div className="mb-1 font-mono text-[11px] tracking-[0.08em] text-idl-glow uppercase">
-            {brandName ?? product.categorySlug ?? 'IDEADILUCE'}
+          <div className="mb-1">
+            <ProductBrandMark
+              brand={product.brand}
+              fallbackLabel={brandName ?? product.categorySlug ?? 'IDEADILUCE'}
+              size="xs"
+              className="text-idl-glow"
+            />
           </div>
           <div className="line-clamp-2 min-h-[2lh] font-serif text-[17px] leading-snug font-medium text-idl-design-fg sm:text-[19px]">
             {product.name.split(/\s*[—–-]\s+/)[0]}

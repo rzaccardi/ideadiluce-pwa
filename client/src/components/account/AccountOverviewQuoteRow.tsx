@@ -51,14 +51,14 @@ export function AccountOverviewQuoteRow({ quote, compact }: Props) {
           {!compact && payable ? (
             <Link
               to={`/checkout/quote/${quote.id}`}
-              className="text-[13px] font-bold text-[#d9831a] no-underline hover:underline"
+              className="text-[13px] font-bold text-[#0c0c0d] no-underline hover:underline"
             >
               {t('cart.quote.proceedCheckout')} →
             </Link>
           ) : (
             <Link
               to={`/account/quotes/${quote.id}`}
-              className="text-[13px] font-bold text-[#d9831a] no-underline hover:underline"
+              className="text-[13px] font-bold text-[#0c0c0d] no-underline hover:underline"
             >
               {t('account.quotes.view')} →
             </Link>

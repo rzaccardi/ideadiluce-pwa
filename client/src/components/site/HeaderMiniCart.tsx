@@ -312,7 +312,7 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
         {itemCount > 0 ? (
           <span
             className={cn(
-              'absolute bottom-0 right-0 inline-flex min-h-[18px] min-w-[18px] translate-x-1/4 translate-y-1/4 items-center justify-center rounded-full bg-idl-amber px-1.5 text-[11px] font-bold text-white lg:static lg:translate-x-0 lg:translate-y-0',
+              'absolute bottom-0 right-0 inline-flex min-h-[18px] min-w-[18px] translate-x-1/4 translate-y-1/4 items-center justify-center rounded-full bg-idl-amber px-1.5 text-[11px] font-bold text-white dark:text-idl-design lg:static lg:translate-x-0 lg:translate-y-0',
               badgePop && 'cart-badge-pop',
             )}
           >

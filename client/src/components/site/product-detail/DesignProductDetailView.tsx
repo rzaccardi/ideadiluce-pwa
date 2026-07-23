@@ -25,6 +25,7 @@ import {
   buildProductSubtitle,
 } from './shared'
 import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMeta'
+import { ProductBrandMark } from '@/components/product/ProductBrandMark'
 import {
   ProductDetailBreadcrumb,
   buildProductBreadcrumbItems,
@@ -52,9 +53,9 @@ type Props = {
 const DESIGN_CTA = {
   title: 'Stai arredando con la luce?',
   description:
-    "Raccontaci l'ambiente o inviaci una foto: il nostro showroom di Roma ti aiuta a scegliere brand, finitura e composizione luminosa per dare carattere agli spazi.",
+    "Raccontaci l'ambiente o inviaci una foto: il nostro team ti aiuta a scegliere brand, finitura e composizione luminosa per dare carattere agli spazi.",
   primaryCta: { label: 'Richiedi consulenza', href: '/contatti' },
-  secondaryCta: { label: 'Prenota in showroom', href: '/contatti' },
+  secondaryCta: { label: 'Scrivici', href: '/contatti' },
 }
 
 function hasHtmlMarkup(raw: string | null | undefined): boolean {
@@ -141,7 +142,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
       <section className="relative overflow-hidden bg-idl-design">
         <div
           aria-hidden
-          className="pointer-events-none absolute top-10 right-[8%] hidden h-[540px] w-[540px] rounded-full bg-[radial-gradient(circle,rgba(201, 162, 75,0.20)_0%,rgba(201, 162, 75,0)_68%)] animate-idl-glow-drift lg:block"
+          className="pointer-events-none absolute top-10 right-[8%] hidden h-[540px] w-[540px] rounded-full bg-[radial-gradient(circle,rgba(120, 120, 125,0.20)_0%,rgba(120, 120, 125,0)_68%)] animate-idl-glow-drift lg:block"
         />
         <ProductDetailBreadcrumb items={breadcrumbItems} lp={lp} variant="design" inHero />
 
@@ -155,10 +156,19 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
           />
 
           <div className="min-w-0">
-            <Eyebrow variant="design" className="mb-4 tracking-[0.18em] text-idl-glow sm:mb-[18px]">
-              {brandLabel}
-              {product.brand ? ' · ICONA DEL DESIGN' : ''}
-            </Eyebrow>
+            <div className="mb-4 flex flex-wrap items-center gap-x-2.5 gap-y-1 sm:mb-[18px]">
+              <ProductBrandMark
+                brand={product.brand}
+                fallbackLabel={brandLabel}
+                size="md"
+                className="text-idl-glow"
+              />
+              {product.brand ? (
+                <Eyebrow variant="design" className="tracking-[0.18em] text-idl-glow">
+                  · ICONA DEL DESIGN
+                </Eyebrow>
+              ) : null}
+            </div>
             <h1 className="font-serif text-[clamp(2rem,8vw,3.375rem)] leading-none font-medium tracking-[-0.01em]">
               {displayTitle}
             </h1>
@@ -229,7 +239,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
                 type="button"
                 disabled={isStockEnriching || !availability?.canAddToCart || isAddingToCart}
                 onClick={handleAddToCart}
-                className="flex-1 rounded-lg bg-idl-glow px-4 py-[15px] text-center text-[15.5px] font-bold text-idl-design transition hover:bg-[#f7bd6f] disabled:opacity-60"
+                className="flex-1 rounded-lg bg-idl-glow px-4 py-[15px] text-center text-[15.5px] font-bold text-idl-design transition hover:bg-[#ffffff] disabled:opacity-60"
               >
                 {isAddingToCart ? t('product.addingToCart') : t('product.addToCart')}
               </button>

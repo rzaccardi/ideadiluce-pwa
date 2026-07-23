@@ -53,16 +53,48 @@ export function Eyebrow({
   )
 }
 
+/** Wordmark ufficiale Idea di Luce (`/brand/ideadiluce*.svg`). */
 export function BrandWordmark({
   className,
-  accentClassName,
+  inverted = false,
 }: {
   className?: string
+  /** @deprecated Non usato: il logo ufficiale non ha accent tipografico. */
   accentClassName?: string
+  /** Versione bianca su sfondi scuri. */
+  inverted?: boolean
 }) {
   return (
-    <span className={cn(siteTypography.wordmark, className)}>
-      Idea<span className={cn(siteTypography.wordmarkAccent, accentClassName)}>di</span>Luce
-    </span>
+    <img
+      src={inverted ? '/brand/ideadiluce-white.svg' : '/brand/ideadiluce.svg'}
+      alt="Idea di Luce"
+      width={255}
+      height={44}
+      decoding="async"
+      className={cn('h-[1em] w-auto select-none', className)}
+      draggable={false}
+    />
+  )
+}
+
+/** Monogramma circolare Idl (`/brand/mark.png`). */
+export function BrandMark({
+  className,
+  size = 36,
+}: {
+  className?: string
+  size?: number
+}) {
+  return (
+    <img
+      src="/brand/mark.png"
+      alt=""
+      width={size}
+      height={size}
+      decoding="async"
+      className={cn('select-none rounded-full object-cover', className)}
+      draggable={false}
+      aria-hidden
+    />
   )
 }

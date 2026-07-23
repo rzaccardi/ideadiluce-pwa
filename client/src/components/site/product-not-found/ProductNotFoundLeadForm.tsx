@@ -65,7 +65,7 @@ function ChipGroup<T extends string>({
               'rounded-[30px] px-3.5 py-1.5 text-[12.5px] font-semibold transition',
               active
                 ? accent
-                  ? 'bg-idl-amber text-white'
+                  ? 'bg-idl-amber text-white dark:text-idl-design'
                   : 'bg-idl-ink text-white'
                 : 'border border-[#e3e6ea] bg-white text-idl-graphite hover:border-idl-amber/40',
             )}
@@ -167,7 +167,7 @@ export function ProductNotFoundLeadForm({ title, description, className }: Props
       )}
     >
       <div className="mb-1 flex items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-[#f0e3d0] bg-[#fbf4ea] text-idl-amber">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-[#e4e4e7] bg-[#f4f5f7] text-idl-amber">
           <CameraIcon />
         </span>
         <h2 className="text-xl font-extrabold tracking-tight text-idl-ink">

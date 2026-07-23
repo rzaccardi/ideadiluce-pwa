@@ -90,7 +90,7 @@ export function TechnicalAddToCartButton({ product, label = 'Aggiungi', classNam
         void handleAddToCart()
       }}
       className={cn(
-        'inline-flex min-w-[72px] items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-[12.5px] font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-50',
+        'inline-flex min-w-[72px] items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-[12.5px] font-bold text-white dark:text-idl-design transition disabled:cursor-not-allowed disabled:opacity-50',
         !canAdd
           ? 'bg-idl-tech-panel text-idl-muted'
           : inCart

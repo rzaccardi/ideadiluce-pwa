@@ -50,7 +50,7 @@ function CtaBanner({
 }) {
   const primaryClass =
     block.variant === 'accent'
-      ? 'bg-idl-amber text-white hover:bg-[#b08e3e]'
+      ? 'bg-idl-amber text-white dark:text-idl-design hover:bg-[#2a2a2e]'
       : block.variant === 'light'
         ? 'bg-idl-ink text-white hover:bg-idl-ink-soft'
         : 'bg-idl-ink text-white hover:bg-idl-ink-soft'

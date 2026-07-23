@@ -179,7 +179,7 @@ export function PurchaseErrorPageView({ order }: Props) {
               <div className="grid gap-3 sm:grid-cols-3">
                 <Link
                   to={checkoutRetryHref(lp, order.orderId, { step: 'payment', method: 'stripe' })}
-                  className="flex flex-col items-center gap-2 rounded-[10px] border border-[#e7eaee] px-3.5 py-[18px] no-underline transition hover:border-idl-amber hover:bg-[#fdf6ed]"
+                  className="flex flex-col items-center gap-2 rounded-[10px] border border-[#e7eaee] px-3.5 py-[18px] no-underline transition hover:border-idl-amber hover:bg-[#f4f5f7]"
                 >
                   <div className="flex gap-1.5">
                     <span className="flex h-8 items-center rounded bg-[#f0f2f5] px-1.5" role="img" aria-label="Visa">
@@ -193,7 +193,7 @@ export function PurchaseErrorPageView({ order }: Props) {
                 </Link>
                 <Link
                   to={checkoutRetryHref(lp, order.orderId, { step: 'payment', method: 'stripe' })}
-                  className="flex flex-col items-center gap-2 rounded-[10px] border border-[#e7eaee] px-3.5 py-[18px] no-underline transition hover:border-idl-amber hover:bg-[#fdf6ed]"
+                  className="flex flex-col items-center gap-2 rounded-[10px] border border-[#e7eaee] px-3.5 py-[18px] no-underline transition hover:border-idl-amber hover:bg-[#f4f5f7]"
                 >
                   <span className="flex h-8 items-center rounded bg-[#f0f2f5] px-2" role="img" aria-label="PayPal">
                     <PayPalLogo className="h-5" />
@@ -202,7 +202,7 @@ export function PurchaseErrorPageView({ order }: Props) {
                 </Link>
                 <Link
                   to={checkoutRetryHref(lp, order.orderId, { step: 'payment', method: 'bank_transfer' })}
-                  className="flex flex-col items-center gap-2 rounded-[10px] border border-[#e7eaee] px-3.5 py-[18px] no-underline transition hover:border-idl-amber hover:bg-[#fdf6ed]"
+                  className="flex flex-col items-center gap-2 rounded-[10px] border border-[#e7eaee] px-3.5 py-[18px] no-underline transition hover:border-idl-amber hover:bg-[#f4f5f7]"
                 >
                   <BankIcon />
                   <span className="text-[13px] font-bold text-idl-graphite">{t('purchaseError.methods.bankTransfer')}</span>
@@ -210,10 +210,10 @@ export function PurchaseErrorPageView({ order }: Props) {
               </div>
             </div>
 
-            <div className="flex flex-col items-start justify-between gap-6 rounded-[14px] border border-[#f0e3d0] bg-[#fbf4ea] p-6 sm:flex-row sm:items-center sm:p-[24px_26px]">
+            <div className="flex flex-col items-start justify-between gap-6 rounded-[14px] border border-[#e4e4e7] bg-[#f4f5f7] p-6 sm:flex-row sm:items-center sm:p-[24px_26px]">
               <div>
                 <h2 className="text-base font-extrabold text-idl-graphite">{t('purchaseError.support.title')}</h2>
-                <p className="mt-1.5 max-w-[520px] text-[13.5px] leading-relaxed text-[#7a6a52]">
+                <p className="mt-1.5 max-w-[520px] text-[13.5px] leading-relaxed text-[#6b6b70]">
                   {t('purchaseError.support.body')}
                 </p>
               </div>
@@ -317,7 +317,7 @@ export function PurchaseErrorPageView({ order }: Props) {
           <div className="text-[12.5px]">{t('purchaseError.footer.company')}</div>
           <div className="text-[12.5px]">
             {t('purchaseError.footer.help')}{' '}
-            <ExternalLink href="mailto:info@ideadiluce.com" className="font-bold text-[#c9a24b] no-underline">
+            <ExternalLink href="mailto:info@ideadiluce.com" className="font-bold text-[#0c0c0d] no-underline">
               info@ideadiluce.com
             </ExternalLink>
           </div>

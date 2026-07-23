@@ -1,6 +1,6 @@
 import type { SiteShellContent } from '@/types/site-content'
 import { enrichNavColumns } from '@/lib/mobile-nav-visuals'
-import { COMPANY_CONTACT, SHOWROOM_MAPS_URL } from '@/lib/company-contact'
+import { COMPANY_CONTACT } from '@/lib/company-contact'
 
 const SOCKET_ITEMS = [
   { code: 'E27', hint: 'a vite grande', href: '/attacco/e27' },
@@ -35,7 +35,7 @@ function attaccoMegaMenuColumns() {
 /** Shell di fallback: header/footer sempre pronti mentre il CMS carica. */
 export const FALLBACK_SITE_SHELL: SiteShellContent = {
   utilityBar: {
-    messages: ['Spedizione tracciata in tutta Italia', 'Showroom a Roma', 'Assistenza tecnica reale'],
+    messages: ['Spedizioni tracciate in tutto il mondo', 'Assistenza tecnica reale'],
     links: [
       { label: 'Professionisti', href: '/professionisti' },
       { label: 'Aiuto', href: '/prodotto-non-trovato' },
@@ -205,9 +205,8 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
   },
   trustBar: [
     { title: 'Assistenza reale', subtitle: 'Ti aiutiamo a scegliere' },
-    { title: 'Showroom Roma', subtitle: 'Vieni a trovarci dal vivo' },
     { title: 'Ricambi difficili', subtitle: 'Foto, EAN o codice prodotto' },
-    { title: 'Spedizione tracciata', subtitle: 'In tutta Italia' },
+    { title: 'Spedizioni tracciate', subtitle: 'In tutto il mondo' },
   ],
   footer: {
     company: {
@@ -231,7 +230,6 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
         title: 'Idea di Luce',
         links: [
           { label: 'Chi siamo', href: '/chi-siamo' },
-          { label: 'Showroom Roma', href: SHOWROOM_MAPS_URL },
           { label: 'Professionisti', href: '/professionisti' },
           { label: 'Lavora con noi', href: '/lavora-con-noi' },
         ],

@@ -108,7 +108,7 @@ function MegaPanel({
               'inline-block rounded-md px-4 py-2.5 text-[13px] font-bold whitespace-nowrap transition-colors',
               panel.promo.variant === 'design'
                 ? 'bg-idl-glow text-idl-design hover:bg-idl-cta-glow-hover'
-                : 'bg-idl-amber text-white hover:bg-idl-cta-amber-hover',
+                : 'bg-idl-amber text-white dark:text-idl-design hover:bg-idl-cta-amber-hover',
             )}
           >
             {panel.promo.ctaLabel}
@@ -246,7 +246,7 @@ export function SiteHeader({
               <span className={cn('w-3', ui.hamburgerBar)} />
             </button>
             <Link to={lp('/')} className="rounded-sm transition-opacity hover:opacity-80">
-              <BrandWordmark className="text-[20px] md:text-[22px] lg:text-[25px]" />
+              <BrandWordmark className="text-[22px] md:text-[24px] lg:text-[28px]" />
             </Link>
             <nav className="hidden items-center gap-5 text-[14.5px] font-medium lg:flex">
               {nav.items.map((item) =>

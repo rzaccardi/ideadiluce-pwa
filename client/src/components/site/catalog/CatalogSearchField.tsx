@@ -70,7 +70,7 @@ const VARIANT_STYLES: Record<
   technical: {
     form: 'rounded-lg border-[1.5px] border-idl-tech-chip-border bg-idl-tech-panel py-2 pl-5 pr-2',
     input: 'text-[15px] placeholder:text-idl-muted',
-    cta: cn(ui.ctaAmber, 'rounded-md bg-idl-amber px-6 py-3 text-[14.5px] font-bold text-white'),
+    cta: cn(ui.ctaAmber, 'rounded-md bg-idl-amber px-6 py-3 text-[14.5px] font-bold text-white dark:text-idl-design'),
   },
   catalog: {
     form: 'rounded-lg border-[1.5px] border-idl-tech-chip-border bg-idl-tech-panel py-2 pl-4 pr-2',

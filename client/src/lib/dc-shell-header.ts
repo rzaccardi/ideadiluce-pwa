@@ -8,8 +8,8 @@ export type DcHeaderActive =
   | 'guide'
 
 export function resolveDcHeaderVars(html: string, active: DcHeaderActive = 'none'): string {
-  const A = '#9a7b33'
-  const T = '#d9831a'
+  const A = '#3a3a3d'
+  const T = '#0c0c0d'
   const N = 'transparent'
   const ink = '#3a3a3d'
 

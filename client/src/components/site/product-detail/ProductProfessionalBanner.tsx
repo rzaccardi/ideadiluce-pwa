@@ -33,8 +33,8 @@ export function ProductProfessionalBanner({ variant = 'design' }: Props) {
     <section
       className={cn(
         isDesign
-          ? 'border-t border-white/10 bg-idl-ink text-idl-design-fg'
-          : 'border-t border-idl-tech-border bg-[#f4f6f8]',
+          ? 'border-t border-white/10 bg-idl-design text-idl-design-fg'
+          : 'border-t border-idl-tech-border bg-idl-tech-panel text-idl-ink',
       )}
     >
       <SectionContainer className="py-10 sm:py-12">
@@ -49,7 +49,7 @@ export function ProductProfessionalBanner({ variant = 'design' }: Props) {
             <h2
               className={cn(
                 'text-[22px] font-medium sm:text-[26px]',
-                isDesign ? 'font-serif' : 'font-extrabold tracking-tight text-idl-ink',
+                isDesign ? 'font-serif' : 'font-extrabold tracking-tight text-idl-graphite',
               )}
             >
               {COPY.title}
@@ -73,7 +73,7 @@ export function ProductProfessionalBanner({ variant = 'design' }: Props) {
                   key={item}
                   className={cn(
                     'rounded-full px-3 py-1',
-                    isDesign ? 'border border-white/15' : 'border border-idl-tech-chip-border bg-idl-tech-panel',
+                    isDesign ? 'border border-white/15' : 'border border-idl-tech-chip-border bg-idl-tech-chip',
                   )}
                 >
                   {item}
@@ -85,7 +85,7 @@ export function ProductProfessionalBanner({ variant = 'design' }: Props) {
             to={lp('/professionisti')}
             className={cn(
               'inline-flex shrink-0 items-center justify-center rounded-lg px-5 py-3.5 text-center text-[14px] font-bold sm:text-[14.5px]',
-              isDesign ? 'bg-idl-glow text-idl-design hover:bg-[#f7bd6f]' : 'bg-idl-amber text-white hover:bg-[#b08e3e]',
+              isDesign ? 'bg-idl-glow text-idl-design hover:bg-[#ffffff]' : 'bg-idl-amber text-white dark:text-idl-design hover:bg-[#2a2a2e]',
             )}
           >
             {COPY.ctaLabel}

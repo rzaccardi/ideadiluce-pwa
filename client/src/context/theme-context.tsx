@@ -7,24 +7,31 @@ import {
 } from '@/lib/storage-keys'
 import { readWithMigration } from '@/lib/storage-migrate'
 
-export type SiteTheme = 'light' | 'dark' | 'classic'
+export type SiteTheme = 'light' | 'dark'
 
 const THEME_LEGACY_KEYS = LEGACY_STORAGE_KEYS[IDEADILUCE_THEME_KEY]
 
-const THEME_CYCLE: SiteTheme[] = ['classic', 'light', 'dark']
+const THEME_CYCLE: SiteTheme[] = ['light', 'dark']
 
 export const SITE_THEMES = THEME_CYCLE
 
 const DEFAULT_THEME: SiteTheme = 'light'
 
 function isSiteTheme(value: string | null): value is SiteTheme {
-  return value === 'light' || value === 'dark' || value === 'classic'
+  return value === 'light' || value === 'dark'
+}
+
+/** Migra eventuale tema `classic` salvato → `light` (nero). */
+function normalizeStoredTheme(value: string | null): SiteTheme | null {
+  if (isSiteTheme(value)) return value
+  if (value === 'classic') return 'light'
+  return null
 }
 
 function readStoredTheme(): SiteTheme | null {
   if (typeof window === 'undefined') return null
   const stored = readWithMigration(window.localStorage, IDEADILUCE_THEME_KEY, THEME_LEGACY_KEYS)
-  return isSiteTheme(stored) ? stored : null
+  return normalizeStoredTheme(stored)
 }
 
 function getSystemTheme(): SiteTheme {
@@ -43,7 +50,6 @@ export function getNextTheme(theme: SiteTheme): SiteTheme {
 type ThemeContextValue = {
   theme: SiteTheme
   isDark: boolean
-  isClassic: boolean
   setTheme: (theme: SiteTheme) => void
   toggleTheme: () => void
 }
@@ -51,11 +57,7 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
 function applyTheme(theme: SiteTheme) {
-  if (theme === 'classic') {
-    delete document.documentElement.dataset.theme
-  } else {
-    document.documentElement.dataset.theme = theme
-  }
+  document.documentElement.dataset.theme = theme
   document.documentElement.style.colorScheme = theme === 'dark' ? 'dark' : 'light'
 }
 
@@ -66,6 +68,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const resolved = resolveTheme()
     setThemeState(resolved)
     applyTheme(resolved)
+    // Allinea storage se c'era ancora `classic`
+    if (window.localStorage.getItem(IDEADILUCE_THEME_KEY) === 'classic') {
+      window.localStorage.setItem(IDEADILUCE_THEME_KEY, 'light')
+    }
 
     const media = window.matchMedia('(prefers-color-scheme: dark)')
     const onSystemChange = () => {
@@ -98,7 +104,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     () => ({
       theme,
       isDark: theme === 'dark',
-      isClassic: theme === 'classic',
       setTheme,
       toggleTheme,
     }),

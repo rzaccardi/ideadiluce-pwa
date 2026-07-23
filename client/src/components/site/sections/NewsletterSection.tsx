@@ -21,7 +21,7 @@ export function NewsletterSection({ title, description, placeholder, ctaLabel, p
           <input
             type="email"
             placeholder={placeholder}
-            className="min-w-0 flex-1 rounded-md border border-idl-border px-4 py-3 text-sm outline-none"
+            className="min-w-0 flex-1 rounded-md border border-idl-border bg-idl-white px-4 py-3 text-sm outline-none"
           />
           <button type="submit" className={cn(ui.ctaInk, 'rounded-md bg-idl-ink px-5 py-3 text-sm font-bold text-white')}>
             {ctaLabel}

@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSnapshot } from 'valtio/react'
 import { ExternalLink } from '@/lib/link-title'
 import { Link } from '@/lib/navigation'
-import { SHOWROOM_MAPS_URL } from '@/lib/company-contact'
 import { isExternalHref } from '@/lib/href'
 import { AttaccoSocketIcon } from '@/components/site/attacco/AttaccoIcons'
 import { HeaderAccountMenu } from '@/components/site/HeaderAccountMenu'
@@ -428,7 +427,12 @@ function MobileBrandPanel() {
               aria-label={`Scopri ${brand.name}`}
             >
               <div className="mb-2.5 flex h-10 w-full items-center justify-center">
-                <BrandNameDisplay name={brand.name} style={brand.displayStyle} size="sm" />
+                <BrandNameDisplay
+                  name={brand.name}
+                  slug={brand.slug}
+                  style={brand.displayStyle}
+                  size="sm"
+                />
               </div>
               <span
                 className={cn(
@@ -528,7 +532,7 @@ function MobileAltroPanel() {
     { label: t('nav.catalog'), href: '/negozio' },
     { label: t('nav.wishlist'), href: '/wishlist' },
     { label: 'Professionisti', href: '/professionisti' },
-    { label: 'Showroom Roma', href: SHOWROOM_MAPS_URL },
+    { label: 'Contatti', href: '/contatti' },
   ]
 
   return (
@@ -604,7 +608,7 @@ export function MobileSiteMenu({ nav, notFoundCta, activeNavId, onClose }: Props
     >
       <div className={cn(ui.mobileMenuBar, SITE_PAGE_X_CLASS)}>
         <Link to={lp('/')} className="rounded-sm transition-opacity hover:opacity-80">
-          <BrandWordmark className="text-[20px] md:text-[22px]" />
+          <BrandWordmark className="text-[22px] md:text-[24px]" />
         </Link>
         <div className="flex shrink-0 items-center gap-1.5">
           <div className="flex size-10 items-center justify-center">

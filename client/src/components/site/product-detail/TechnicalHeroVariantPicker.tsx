@@ -107,7 +107,7 @@ export function TechnicalHeroVariantPicker({ variants, selectedRef, onChange }: 
             {showKelvinBar ? (
               <>
                 <div
-                  className="mt-2 h-1.5 rounded bg-linear-to-r from-[#f4c97a] via-[#fbe9c9] via-40% to-[#cfe0f0]"
+                  className="mt-2 h-1.5 rounded bg-linear-to-r from-[#c4c4c8] via-[#e8e8ea] via-40% to-[#cfe0f0]"
                   aria-hidden
                 />
                 <div className="mt-1 flex justify-between text-[10.5px] text-idl-muted">

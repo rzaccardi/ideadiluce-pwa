@@ -28,7 +28,7 @@ export function ShopTheLookSection({ lp }: Props) {
         </div>
 
         <div className="grid items-start gap-8 lg:grid-cols-[1.5fr_1fr] lg:gap-9">
-          <div className="relative overflow-hidden rounded-lg shadow-[0_0_90px_rgba(201, 162, 75,0.10)]">
+          <div className="relative overflow-hidden rounded-lg shadow-[0_0_90px_rgba(120, 120, 125,0.10)]">
             <div className="relative aspect-[4/3] bg-idl-design-elevated">
               <SiteImage src={look.imageUrl} alt={look.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 60vw" />
               {look.hotspots.map((hotspot) => {
@@ -56,13 +56,13 @@ export function ShopTheLookSection({ lp }: Props) {
             </div>
 
             {activeHotspot ? (
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgba(22,19,13,0.96)] via-[rgba(22,19,13,0.72)] to-transparent px-5 pb-5 pt-16 sm:px-6">
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgba(12, 12, 13,0.96)] via-[rgba(12, 12, 13,0.72)] to-transparent px-5 pb-5 pt-16 sm:px-6">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <span
                       className={cn(
                         'mb-2 inline-block rounded px-2 py-0.5 font-mono text-[10px] tracking-[0.08em] text-idl-design',
-                        activeHotspot.badge === 'NECESSARIO' ? 'bg-[#e0a85a]' : 'bg-idl-glow',
+                        activeHotspot.badge === 'NECESSARIO' ? 'bg-[#6b6b70]' : 'bg-idl-glow',
                       )}
                     >
                       {activeHotspot.badge}
@@ -129,7 +129,7 @@ export function ShopTheLookSection({ lp }: Props) {
               </div>
               <Link
                 to={lp('/negozio?category=arredo&ambiente=cucina')}
-                className="mb-2.5 block rounded-lg bg-idl-glow py-3.5 text-center text-[15px] font-bold text-idl-design transition hover:bg-[#f7bd6f]"
+                className="mb-2.5 block rounded-lg bg-idl-glow py-3.5 text-center text-[15px] font-bold text-idl-design transition hover:bg-[#ffffff]"
               >
                 Aggiungi tutto il look
               </Link>

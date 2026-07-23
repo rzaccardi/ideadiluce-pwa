@@ -31,7 +31,7 @@ export function CatalogMobileToolbar({
         <span aria-hidden>☰</span>
         Mostra filtri
         {activeFilterCount > 0 ? (
-          <span className="rounded-full bg-idl-amber px-1.5 py-0.5 text-[11px] font-extrabold text-white">
+          <span className="rounded-full bg-idl-amber px-1.5 py-0.5 text-[11px] font-extrabold text-white dark:text-idl-design">
             {activeFilterCount}
           </span>
         ) : null}
