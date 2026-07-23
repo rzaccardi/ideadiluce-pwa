@@ -193,7 +193,7 @@ export function StripePayButton({
         'w-full rounded-xl px-4 py-4 text-base font-extrabold text-white transition',
         checkoutActionControlClass,
         isPay
-          ? 'bg-[#0c0c0d] hover:bg-[#2a2a2e]'
+          ? 'bg-[#0c0c0d] hover:bg-idl-cta-amber-hover'
           : 'bg-[#14161b] hover:bg-[#2a2d35]',
         'disabled:cursor-not-allowed disabled:opacity-50',
         loading && 'opacity-80',

@@ -83,7 +83,7 @@ export function AccountInvoicesPage() {
                         type="button"
                         disabled={downloadingId === inv.id}
                         onClick={() => void handleDownload(inv)}
-                        className="text-[13px] font-bold text-[#0c0c0d] disabled:opacity-50"
+                        className="text-[13px] font-bold text-idl-brass disabled:opacity-50"
                       >
                         {downloadingId === inv.id
                           ? t('account.profile.saving')
@@ -94,7 +94,7 @@ export function AccountInvoicesPage() {
                         href={inv.portalUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[13px] font-bold text-[#0c0c0d] no-underline hover:underline"
+                        className="text-[13px] font-bold text-idl-brass no-underline hover:underline"
                       >
                         {t('account.invoices.portalLink')} →
                       </ExternalLink>

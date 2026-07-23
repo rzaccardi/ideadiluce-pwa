@@ -60,7 +60,7 @@ function RecommendationCard({ product }: { product: ProductCardDTO }) {
         type="button"
         disabled={isAdding}
         onClick={() => void onAdd()}
-        className="flex size-7 shrink-0 items-center justify-center rounded-[7px] bg-idl-amber text-[17px] font-bold text-white dark:text-idl-design transition hover:bg-[#2a2a2e] disabled:cursor-not-allowed disabled:opacity-60"
+        className="flex size-7 shrink-0 items-center justify-center rounded-[7px] bg-idl-amber text-[17px] font-bold text-white dark:text-idl-design transition hover:bg-idl-cta-amber-hover disabled:cursor-not-allowed disabled:opacity-60"
         aria-label="Aggiungi al carrello"
       >
         +

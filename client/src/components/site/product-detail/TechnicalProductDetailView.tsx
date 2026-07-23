@@ -292,7 +292,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                 type="button"
                 disabled={isStockEnriching || !availability?.canAddToCart || isAddingToCart}
                 onClick={handleAddToCart}
-                className="flex-1 rounded-lg bg-idl-amber px-4 py-3.5 text-center text-[15.5px] font-bold text-white dark:text-idl-design transition hover:bg-[#2a2a2e] disabled:opacity-60"
+                className="flex-1 rounded-lg bg-idl-amber px-4 py-3.5 text-center text-[15.5px] font-bold text-white dark:text-idl-design transition hover:bg-idl-cta-amber-hover disabled:opacity-60"
               >
                 {isAddingToCart ? t('product.addingToCart') : t('product.addToCart')}
               </button>

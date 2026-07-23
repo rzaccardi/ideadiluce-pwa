@@ -92,7 +92,7 @@ export function AttaccoMegaPanel() {
           </div>
           <Link
             to={lp(panel.promo.ctaHref)}
-            className="inline-flex shrink-0 items-center justify-center rounded-md bg-idl-amber px-4 py-2 text-[12.5px] font-bold whitespace-nowrap text-white dark:text-idl-design transition-colors hover:bg-[#2a2a2e] sm:ml-4"
+            className="inline-flex shrink-0 items-center justify-center rounded-md bg-idl-amber px-4 py-2 text-[12.5px] font-bold whitespace-nowrap text-white dark:text-idl-design transition-colors hover:bg-idl-cta-amber-hover sm:ml-4"
           >
             {panel.promo.ctaLabel}
           </Link>

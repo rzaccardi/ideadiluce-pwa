@@ -48,7 +48,7 @@ export function CheckoutPanel({
 export function CheckoutInfoNote({ children }: { children: ReactNode }) {
   return (
     <div className="flex gap-2.5 rounded-[11px] border border-[#ededea] bg-idl-tech-panel px-[15px] py-3.5">
-      <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center text-[#0c0c0d]" aria-hidden>
+      <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center text-idl-ink" aria-hidden>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.25" />
           <path d="M8 7v4M8 5.5v0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -219,8 +219,8 @@ export function CheckoutSegmentControl<T extends string>({
           className={cn(
             'rounded-[10px] px-2 py-2.5 text-xs font-bold leading-tight transition sm:px-3 sm:text-sm',
             value === option.value
-              ? 'bg-[#0c0c0d] text-black shadow-[0_2px_8px_rgba(120, 120, 125,0.35)]'
-              : 'text-idl-muted hover:bg-idl-tech-panel/60 hover:text-idl-graphite',
+              ? 'bg-[#0c0c0d] text-white shadow-[0_2px_8px_rgba(12,12,13,0.25)]'
+              : 'text-idl-muted hover:bg-white/80 hover:text-idl-graphite',
           )}
         >
           {option.label}

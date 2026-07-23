@@ -25,14 +25,14 @@ export function CheckoutLegalLinks({
       <ul
         className={cn(
           'flex flex-wrap items-center gap-x-3 gap-y-1 text-xs',
-          dark ? 'text-[#6f6450]' : 'text-[#9298a3]',
+          dark ? 'text-[#8a8a90]' : 'text-[#9298a3]',
           className,
         )}
       >
         {showPoweredBy ? (
           <>
             <li>{t('checkout.poweredByStripe')}</li>
-            <li aria-hidden className={dark ? 'text-[#6f6450]/60' : 'text-[#9298a3]/60'}>
+            <li aria-hidden className={dark ? 'text-[#8a8a90]/60' : 'text-[#9298a3]/60'}>
               ·
             </li>
           </>
@@ -47,7 +47,7 @@ export function CheckoutLegalLinks({
             {t('legal.terms')}
           </Link>
         </li>
-        <li aria-hidden className={dark ? 'text-[#6f6450]/60' : 'text-[#9298a3]/60'}>
+        <li aria-hidden className={dark ? 'text-[#8a8a90]/60' : 'text-[#9298a3]/60'}>
           ·
         </li>
         <li>

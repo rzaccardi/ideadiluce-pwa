@@ -16,7 +16,7 @@ function BulbIcon() {
     >
       <path
         d="M60 14 q34 0 34 38 q0 22 -18 35 v14 h-32 v-14 q-18 -13 -18 -35 q0 -38 34 -38Z"
-        fill="#0c0c0d"
+        fill="#c9a24b"
       />
       <path
         d="M46 70 q14 12 28 0"
@@ -49,7 +49,7 @@ function HoverLinkButton({ href, children, variant }: HoverButtonProps) {
   const baseStyle =
     variant === 'primary'
       ? {
-          background: '#0c0c0d',
+          background: '#c9a24b',
           color: '#0c0c0d',
           fontSize: '15px',
           fontWeight: 700,
@@ -71,7 +71,7 @@ function HoverLinkButton({ href, children, variant }: HoverButtonProps) {
   const hoverStyle =
     variant === 'primary'
       ? { background: '#ffffff' }
-      : { borderColor: '#0c0c0d', color: '#0c0c0d' }
+      : { borderColor: '#c9a24b', color: '#c9a24b' }
 
   return (
     <Link
@@ -153,7 +153,7 @@ export function NotFoundPageView() {
               fontFamily: "'JetBrains Mono',monospace",
               fontSize: '12px',
               letterSpacing: '.28em',
-              color: '#0c0c0d',
+              color: '#c9a24b',
               marginBottom: 22,
             }}
           >

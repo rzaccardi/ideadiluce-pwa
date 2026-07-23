@@ -10,19 +10,19 @@ type IconProps = {
 export function CheckoutLoadingRing({ className, size = 76 }: IconProps) {
   return (
     <svg
-      className={cn('idl-ring absolute inset-0', className)}
+      className={cn('idl-ring absolute inset-0 text-idl-ink', className)}
       viewBox="0 0 76 76"
       width={size}
       height={size}
       aria-hidden
     >
-      <circle cx="38" cy="38" r="33" fill="none" stroke="#f1f0ec" strokeWidth="5" />
+      <circle cx="38" cy="38" r="33" fill="none" stroke="currentColor" strokeOpacity="0.12" strokeWidth="5" />
       <circle
         cx="38"
         cy="38"
         r="33"
         fill="none"
-        stroke="#0c0c0d"
+        stroke="currentColor"
         strokeWidth="5"
         strokeLinecap="round"
         strokeDasharray="60 150"
@@ -34,19 +34,19 @@ export function CheckoutLoadingRing({ className, size = 76 }: IconProps) {
 export function CheckoutLoadingPin({ className, size = 34 }: IconProps) {
   return (
     <svg
-      className={cn('idl-pin', className)}
+      className={cn('idl-pin text-idl-ink', className)}
       viewBox="0 0 48 48"
       width={size}
       height={size}
       fill="none"
-      stroke="#0c0c0d"
+      stroke="currentColor"
       strokeWidth="3"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden
     >
       <path d="M24 6 q11 0 11 12 q0 9 -11 22 q-11 -13 -11 -22 q0 -12 11 -12Z" />
-      <circle cx="24" cy="18" r="4" fill="#0c0c0d" stroke="none" />
+      <circle cx="24" cy="18" r="4" fill="currentColor" stroke="none" />
     </svg>
   )
 }
@@ -54,12 +54,12 @@ export function CheckoutLoadingPin({ className, size = 34 }: IconProps) {
 export function CheckoutLoadingTruck({ className, size = 36 }: IconProps) {
   return (
     <svg
-      className={cn('idl-truck', className)}
+      className={cn('idl-truck text-idl-ink', className)}
       viewBox="0 0 48 48"
       width={size}
       height={size}
       fill="none"
-      stroke="#0c0c0d"
+      stroke="currentColor"
       strokeWidth="3"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -76,12 +76,12 @@ export function CheckoutLoadingTruck({ className, size = 36 }: IconProps) {
 export function CheckoutLoadingShield({ className, size = 34 }: IconProps) {
   return (
     <svg
-      className={cn('idl-bulb', className)}
+      className={cn('idl-bulb text-idl-ink', className)}
       viewBox="0 0 48 48"
       width={size}
       height={size}
       fill="none"
-      stroke="#0c0c0d"
+      stroke="currentColor"
       strokeWidth="3"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -95,8 +95,8 @@ export function CheckoutLoadingShield({ className, size = 34 }: IconProps) {
 
 export function CheckoutLoadingBulb({ className, size = 38 }: IconProps) {
   return (
-    <svg className={cn('idl-bulb', className)} viewBox="0 0 48 48" width={size} height={size} aria-hidden>
-      <path d="M24 8 q11 0 11 12 q0 7 -6 11 v4 h-10 v-4 q-6 -4 -6 -11 q0 -12 11 -12Z" fill="#0c0c0d" />
+    <svg className={cn('idl-bulb text-idl-brass', className)} viewBox="0 0 48 48" width={size} height={size} aria-hidden>
+      <path d="M24 8 q11 0 11 12 q0 7 -6 11 v4 h-10 v-4 q-6 -4 -6 -11 q0 -12 11 -12Z" fill="currentColor" />
       <rect x="19" y="36" width="10" height="5" rx="2" fill="#a1a1aa" />
       <rect x="20" y="42" width="8" height="3" rx="1.5" fill="#a1a1aa" />
     </svg>

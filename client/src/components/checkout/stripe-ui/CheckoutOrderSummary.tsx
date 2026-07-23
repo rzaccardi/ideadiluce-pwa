@@ -389,13 +389,13 @@ export function CheckoutSummaryHeader({
       <span
         className={cn(
           'ml-auto shrink-0 rounded-[5px] px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-[0.05em] sm:px-2 sm:py-1 sm:text-[10px]',
-          'bg-[#0c0c0d] text-[#0c0c0d]',
+          'bg-[#c9a24b] text-[#0c0c0d]',
         )}
       >
         {t('checkout.summary.secureBadge')}
       </span>
       {isDev() ? (
-        <span className="shrink-0 rounded bg-[#0c0c0d] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#0c0c0d] sm:text-[10px]">
+        <span className="shrink-0 rounded bg-[#c9a24b] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#0c0c0d] sm:text-[10px]">
           Test
         </span>
       ) : null}

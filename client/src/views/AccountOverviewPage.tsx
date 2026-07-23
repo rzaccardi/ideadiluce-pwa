@@ -162,7 +162,7 @@ export function AccountOverviewPage() {
           action={
             <Link
               to={`/account/orders/${ongoingOrder.id}`}
-              className="text-[13px] font-bold text-[#0c0c0d] no-underline hover:underline"
+              className="text-[13px] font-bold text-idl-brass no-underline hover:underline"
             >
               {t('account.dashboard.details')}
             </Link>
@@ -178,7 +178,7 @@ export function AccountOverviewPage() {
           quoteList.length > 0 ? (
             <Link
               to="/account/quotes"
-              className="text-[13px] font-bold text-[#0c0c0d] no-underline hover:underline"
+              className="text-[13px] font-bold text-idl-brass no-underline hover:underline"
             >
               {t('account.overview.viewAllQuotes')} →
             </Link>
@@ -213,7 +213,7 @@ export function AccountOverviewPage() {
           invoiceList.length > 0 ? (
             <Link
               to="/account/invoices"
-              className="text-[13px] font-bold text-[#0c0c0d] no-underline hover:underline"
+              className="text-[13px] font-bold text-idl-brass no-underline hover:underline"
             >
               {t('account.overview.viewAllInvoices')} →
             </Link>
@@ -264,7 +264,7 @@ export function AccountOverviewPage() {
               orderList.length > 0 ? (
                 <Link
                   to="/account/orders"
-                  className="text-[13px] font-bold text-[#0c0c0d] no-underline hover:underline"
+                  className="text-[13px] font-bold text-idl-brass no-underline hover:underline"
                 >
                   {t('account.overview.myOrders')} →
                 </Link>

@@ -20,7 +20,7 @@ export function BrandConsultSection({ lp }: Props) {
         <div className="flex w-full shrink-0 flex-col gap-2.5 sm:w-auto sm:flex-row">
           <Link
             to={lp(BRAND_CONSULT_CTA.primaryCta.href)}
-            className="rounded-md bg-idl-amber px-5 py-3.5 text-center text-[14.5px] font-bold text-white dark:text-idl-design transition hover:bg-[#2a2a2e] sm:whitespace-nowrap"
+            className="rounded-md bg-idl-amber px-5 py-3.5 text-center text-[14.5px] font-bold text-white dark:text-idl-design transition hover:bg-idl-cta-amber-hover sm:whitespace-nowrap"
           >
             {BRAND_CONSULT_CTA.primaryCta.label}
           </Link>

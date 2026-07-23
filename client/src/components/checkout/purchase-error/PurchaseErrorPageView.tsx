@@ -317,7 +317,7 @@ export function PurchaseErrorPageView({ order }: Props) {
           <div className="text-[12.5px]">{t('purchaseError.footer.company')}</div>
           <div className="text-[12.5px]">
             {t('purchaseError.footer.help')}{' '}
-            <ExternalLink href="mailto:info@ideadiluce.com" className="font-bold text-[#0c0c0d] no-underline">
+            <ExternalLink href="mailto:info@ideadiluce.com" className="font-bold text-[#c9a24b] no-underline">
               info@ideadiluce.com
             </ExternalLink>
           </div>

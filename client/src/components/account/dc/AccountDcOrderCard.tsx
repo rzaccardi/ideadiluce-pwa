@@ -109,7 +109,7 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
           <span className="text-sm font-extrabold text-idl-graphite">{total}</span>
           <Link
             to={`/account/orders/${order.id}`}
-            className="text-[13px] font-bold text-[#0c0c0d] no-underline hover:underline"
+            className="text-[13px] font-bold text-idl-brass no-underline hover:underline"
           >
             {t('account.orders.track')}
           </Link>
@@ -118,7 +118,7 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
               type="button"
               disabled={reordering}
               onClick={() => void handleReorder()}
-              className="text-[13px] font-bold text-[#0c0c0d] disabled:opacity-50"
+              className="text-[13px] font-bold text-idl-brass disabled:opacity-50"
             >
               {reordering ? t('account.orders.table.reordering') : t('account.orders.reorder')}
             </button>

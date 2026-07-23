@@ -285,7 +285,7 @@ export function ProductDetailGallery({
                 href={current.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="absolute inset-0 flex items-center justify-center bg-black/80 text-sm text-white dark:text-idl-design"
+                className="absolute inset-0 flex items-center justify-center bg-black/80 text-sm text-white"
                 onClick={(e) => e.stopPropagation()}
               >
                 Apri video

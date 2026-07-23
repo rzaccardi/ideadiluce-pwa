@@ -85,7 +85,7 @@ export function ProductProfessionalBanner({ variant = 'design' }: Props) {
             to={lp('/professionisti')}
             className={cn(
               'inline-flex shrink-0 items-center justify-center rounded-lg px-5 py-3.5 text-center text-[14px] font-bold sm:text-[14.5px]',
-              isDesign ? 'bg-idl-glow text-idl-design hover:bg-[#ffffff]' : 'bg-idl-amber text-white dark:text-idl-design hover:bg-[#2a2a2e]',
+              isDesign ? 'bg-idl-glow text-idl-design hover:bg-[#ffffff]' : 'bg-idl-amber text-white dark:text-idl-design hover:bg-idl-cta-amber-hover',
             )}
           >
             {COPY.ctaLabel}

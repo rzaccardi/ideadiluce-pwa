@@ -126,7 +126,7 @@ export function ProductDetailStickyBar({
               'min-w-0 flex-1 rounded-lg px-4 py-3 text-sm font-bold transition disabled:opacity-60 sm:flex-none sm:px-6 sm:py-3 sm:text-sm',
               isDesign
                 ? 'bg-idl-glow text-idl-design hover:bg-[#ffffff]'
-                : 'bg-idl-amber text-white dark:text-idl-design hover:bg-[#2a2a2e]',
+                : 'bg-idl-amber text-white dark:text-idl-design hover:bg-idl-cta-amber-hover',
             )}
           >
             {isAddingToCart ? addingLabel : addLabel}

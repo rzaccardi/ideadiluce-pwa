@@ -138,7 +138,7 @@ export function ProfessionistiPageView({ content }: Props) {
               <button
                 type="button"
                 onClick={scrollToRegistration}
-                className="rounded-lg bg-idl-amber px-6 py-3.5 text-[15px] font-bold text-white dark:text-idl-design transition hover:bg-[#2a2a2e]"
+                className="rounded-lg bg-idl-amber px-6 py-3.5 text-[15px] font-bold text-white dark:text-idl-design transition hover:bg-idl-cta-amber-hover"
               >
                 {content.hero.primaryCta.label}
               </button>

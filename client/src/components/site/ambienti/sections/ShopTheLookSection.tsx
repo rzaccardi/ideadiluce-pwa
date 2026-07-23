@@ -41,7 +41,7 @@ export function ShopTheLookSection({ lp }: Props) {
                     onClick={() => setActiveId(isActive ? null : hotspot.id)}
                     className={cn(
                       'ambienti-hotspot absolute flex size-[30px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white text-[14px] font-extrabold text-idl-design transition',
-                      isActive ? 'bg-idl-tech-panel' : 'bg-idl-glow',
+                      isActive ? 'bg-white' : 'bg-idl-glow',
                     )}
                     style={{
                       left: hotspot.left,
@@ -103,8 +103,10 @@ export function ShopTheLookSection({ lp }: Props) {
                 >
                   <span
                     className={cn(
-                      'flex size-[26px] shrink-0 items-center justify-center rounded-full text-[13px] font-extrabold text-idl-design',
-                      product.visible ? 'bg-idl-glow' : 'bg-idl-design-dim',
+                      'flex size-[26px] shrink-0 items-center justify-center rounded-full text-[13px] font-extrabold',
+                      product.visible
+                        ? 'bg-idl-glow text-idl-design'
+                        : 'bg-idl-design-dim text-white',
                     )}
                   >
                     {product.id}

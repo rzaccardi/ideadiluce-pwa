@@ -343,7 +343,7 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
                 <p className="mt-1.5 text-[12.5px] leading-relaxed text-[#b0b0b4]">{t('thankYou.account.body')}</p>
                 <Link
                   to={registerHref}
-                  className="mt-4 block rounded-lg bg-[#0c0c0d] py-3 text-center text-[13.5px] font-bold text-[#0c0c0d] transition hover:brightness-105"
+                  className="mt-4 block rounded-lg bg-[#c9a24b] py-3 text-center text-[13.5px] font-bold text-[#0c0c0d] transition hover:brightness-105"
                 >
                   {t('thankYou.account.cta')}
                 </Link>

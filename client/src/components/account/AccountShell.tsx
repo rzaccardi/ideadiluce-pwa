@@ -35,7 +35,7 @@ export function AccountShell({ user, nav, children }: Props) {
       <div className={accountDcUserBandClass}>
         <SectionContainer className="flex flex-wrap items-center gap-[18px] py-7 sm:py-8">
           <div
-            className="flex size-[58px] shrink-0 items-center justify-center rounded-full bg-[#0c0c0d] font-serif text-2xl font-semibold text-[#0c0c0d]"
+            className="flex size-[58px] shrink-0 items-center justify-center rounded-full bg-[#c9a24b] font-serif text-2xl font-semibold text-[#0c0c0d]"
             aria-hidden
           >
             {userInitial(user)}

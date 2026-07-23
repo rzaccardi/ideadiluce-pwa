@@ -123,7 +123,7 @@ export function OrderDetailPage() {
         action={
           <Link
             to="/account/orders"
-            className="text-[13px] font-bold text-[#0c0c0d] no-underline hover:underline"
+            className="text-[13px] font-bold text-idl-brass no-underline hover:underline"
           >
             ← {t('orders.detail.back')}
           </Link>
