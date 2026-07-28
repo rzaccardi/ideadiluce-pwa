@@ -374,7 +374,7 @@ export type CartItemDTO = {
   /** Label variante leggibile (matrice). */
   variantLabel?: string | null
   /** Attributi matrice selezionati. */
-  variantAttributes?: Array<{ name: string; value: string }>
+  variantAttributes?: ReadonlyArray<{ name: string; value: string }>
   purchasable: boolean
   availabilityStatus: CartLineAvailabilityStatusDTO
   blockReason?: CartLineBlockReasonDTO

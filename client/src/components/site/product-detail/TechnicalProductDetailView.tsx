@@ -410,7 +410,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
             <div
               className={cn(
                 'rounded-xl border border-amber-200 bg-amber-50 p-5',
-                product.longDescription?.trim() ? 'mt-5' : null,
+                product.longDescription?.trim() && 'mt-5',
               )}
             >
               <div className="mb-2 flex items-center gap-2 text-[15px] font-extrabold text-amber-900">

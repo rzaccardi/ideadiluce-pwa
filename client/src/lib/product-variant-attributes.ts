@@ -90,8 +90,8 @@ export function isVariantPurchasable(variant: ProductVariantDTO): boolean {
     return avail.isOrderable === true
   }
   if (variant.inStock === false) return false
-  if (variant.stockQty != null) return variant.stockQty > 0 || variant.inStock !== false
-  return variant.inStock !== false
+  if (variant.stockQty != null) return variant.stockQty > 0
+  return true
 }
 
 function preferPurchasable(variants: ProductVariantDTO[]): ProductVariantDTO | undefined {
