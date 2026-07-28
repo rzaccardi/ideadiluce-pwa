@@ -8,6 +8,8 @@ export type CartAddProductHint = {
   name?: string
   imageUrl?: string | null
   unitPriceCents?: number
+  variantLabel?: string | null
+  attributes?: Array<{ name: string; value: string }>
 }
 
 function parseOdooVariantId(variantRef: string | null | undefined): number | null {
@@ -37,13 +39,19 @@ export function buildCartAddHintFromCard(
   const odooVariantId =
     variant?.odooVariantId ?? parseOdooVariantId(variantRef ?? null) ?? undefined
 
+  const attributes = (variant?.attributes ?? [])
+    .filter((a) => a.name?.trim() && a.value?.trim())
+    .map((a) => ({ name: a.name.trim(), value: a.value.trim() }))
+
   return {
     odooTemplateId,
     odooVariantId: odooVariantId ?? null,
     slug: product.slug,
     name: product.name,
-    imageUrl: product.imageUrl,
+    imageUrl: variant?.imageUrl ?? product.imageUrl,
     unitPriceCents: variant?.priceCents ?? product.priceCents,
+    variantLabel: variant?.label ?? null,
+    ...(attributes.length ? { attributes } : {}),
   }
 }
 

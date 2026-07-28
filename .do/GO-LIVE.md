@@ -134,6 +134,12 @@ Verifica locale: `npm run stripe:setup`, `npm run stripe:webhook`.
 | Cifratura DB | `SHIPPING_CREDENTIALS_KEY` | **32+ caratteri**, obbligatoria in produzione |
 | Ritiro in negozio | `STORE_PICKUP_*` | Indirizzo sede unica (Roma) |
 
+**Ticket operativi aperti (fuori PDP):**
+
+- **Spedizione internazionale:** il claim marketing “in tutto il mondo” non è operativo finché in BO non ci sono zone estere (seed attuale = solo IT) e DHL/FedEx abilitati con credenziali. Allineare anche il copy CMS di `/spedizioni` (oggi parla solo di Italia).
+
+**Nota:** non c’è showroom fisico — `/showroom` resta 301 → `/contatti`; il copy “Showroom a Roma” è stato rimosso da header/shell.
+
 ### 3.4 Email (SMTP)
 
 | Uso | Env |

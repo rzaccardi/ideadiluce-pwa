@@ -1,5 +1,6 @@
 import type { CartItemDTO } from '@/types/dto'
 import type { MessageKey } from '@/i18n/messages'
+import { variantAttributeChips } from '@/lib/variant-display'
 
 export type CartLineAvailabilityTone = 'available' | 'limited' | 'unavailable'
 
@@ -43,12 +44,7 @@ export function getCartLineAvailabilityDisplay(line: CartItemDTO): {
 }
 
 export function cartLineVariantChips(line: CartItemDTO): string[] {
-  if (!line.variantRef?.trim()) return []
-  const parts = line.variantRef
-    .split(/[,|/]/)
-    .map((part) => part.trim())
-    .filter(Boolean)
-  return parts.length > 0 ? parts.slice(0, 4) : [line.variantRef.trim()]
+  return variantAttributeChips(line.variantAttributes, line.variantLabel)
 }
 
 const toneClass: Record<CartLineAvailabilityTone, string> = {

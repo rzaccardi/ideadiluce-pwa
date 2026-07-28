@@ -92,6 +92,7 @@ export type HomeGuideCard = {
   title: string
   meta: string
   href: string
+  imageUrl?: string
 }
 
 export type HomePageContent = {

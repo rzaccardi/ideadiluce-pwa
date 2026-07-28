@@ -273,6 +273,10 @@ export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> =
     eyebrow: 'GUIDA BASE · 5 MIN',
     title: 'Luce calda, naturale o fredda?',
     subtitle: 'La differenza tra 2700K, 3000K, 4000K e 6500K e quale scegliere per ogni stanza.',
+    coverImage: {
+      imageUrl: 'https://ideadiluce.com/wp-content/uploads/2024/06/copertina-articolo2.jpg',
+      alt: 'Confronto tra luce calda, naturale e fredda',
+    },
     blocks: [
       {
         kind: 'prose',

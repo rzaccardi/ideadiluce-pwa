@@ -3,6 +3,13 @@
 import { useMemo } from 'react'
 import type { ProductVariantDTO } from '@/types/dto'
 import { cn } from '@/utils/cn'
+import {
+  attributeNames,
+  getMatrixValueState,
+  pickVariantForAttribute,
+  subgroupAttributeValues,
+  uniqueValuesForAttr,
+} from '@/lib/product-variant-attributes'
 
 type Props = {
   variants: ReadonlyArray<ProductVariantDTO>
@@ -14,57 +21,22 @@ function isKelvinGroup(name: string): boolean {
   return /temperatura|colore|kelvin/i.test(name)
 }
 
-function attributeNames(variants: ReadonlyArray<ProductVariantDTO>): string[] {
-  const names = new Set<string>()
-  for (const v of variants) {
-    for (const a of v.attributes) names.add(a.name)
-  }
-  return [...names]
-}
-
-function uniqueValuesForAttr(variants: ReadonlyArray<ProductVariantDTO>, attrName: string): string[] {
-  const values: string[] = []
-  const seen = new Set<string>()
-  for (const v of variants) {
-    const value = v.attributes.find((a) => a.name === attrName)?.value?.trim()
-    if (!value || seen.has(value)) continue
-    seen.add(value)
-    values.push(value)
-  }
-  return values
-}
-
-function pickVariantForAttribute(
-  variants: ReadonlyArray<ProductVariantDTO>,
-  selectedRef: string,
-  attrName: string,
-  newValue: string,
-): string {
-  const current = variants.find((v) => v.ref === selectedRef) ?? variants[0]
-  const desired = new Map(current.attributes.map((a) => [a.name, a.value]))
-  desired.set(attrName, newValue)
-
-  const exact = variants.find((v) =>
-    [...desired.entries()].every(([name, value]) =>
-      v.attributes.some((a) => a.name === name && a.value === value),
-    ),
-  )
-  if (exact) return exact.ref
-
-  const partial = variants.find((v) =>
-    v.attributes.some((a) => a.name === attrName && a.value === newValue),
-  )
-  return partial?.ref ?? current.ref
-}
-
 export function TechnicalHeroVariantPicker({ variants, selectedRef, onChange }: Props) {
   const groups = useMemo(() => {
     if (variants.length <= 1) return []
-    return attributeNames(variants).map((name) => ({
-      name,
-      hint: /lunghezza|length/i.test(name) ? 'Misura la vecchia lampadina prima di scegliere' : null,
-      values: uniqueValuesForAttr(variants, name),
-    }))
+    return attributeNames(variants).flatMap((name) => {
+      const subgroups = subgroupAttributeValues(name, uniqueValuesForAttr(variants, name))
+      return subgroups.map((sub) => ({
+        attrName: name,
+        title: sub.title,
+        hint:
+          /lunghezza|length/i.test(name) && sub.values.every((v) => /^\d/.test(v))
+            ? 'Misura la vecchia lampadina prima di scegliere'
+            : null,
+        values: sub.values,
+        showKelvinBar: isKelvinGroup(name) && subgroups.length === 1,
+      }))
+    })
   }, [variants])
 
   const selected = variants.find((v) => v.ref === selectedRef) ?? variants[0]
@@ -74,29 +46,51 @@ export function TechnicalHeroVariantPicker({ variants, selectedRef, onChange }: 
   return (
     <div className="space-y-[18px]">
       {groups.map((group) => {
-        const selectedValue = selected?.attributes.find((a) => a.name === group.name)?.value
-        const showKelvinBar = isKelvinGroup(group.name)
+        const selectedValue = selected?.attributes.find((a) => a.name === group.attrName)?.value
+        const selectedInGroup = group.values.includes(selectedValue ?? '')
 
         return (
-          <div key={group.name}>
+          <div key={`${group.attrName}:${group.title}`}>
             <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
-              <span className="text-[13.5px] font-bold text-idl-graphite">{group.name}</span>
+              <span className="text-[13.5px] font-bold text-idl-graphite">{group.title}</span>
               {group.hint ? <span className="text-xs text-idl-muted">{group.hint}</span> : null}
+              {!group.hint && selectedInGroup ? (
+                <span className="text-xs text-idl-muted">{selectedValue}</span>
+              ) : null}
             </div>
             <div className="flex flex-wrap gap-2">
               {group.values.map((value) => {
                 const active = selectedValue === value
+                const state = getMatrixValueState(variants, selectedRef, group.attrName, value)
+                const unavailable = state === 'unavailable'
                 return (
                   <button
-                    key={`${group.name}-${value}`}
+                    key={`${group.attrName}-${value}`}
                     type="button"
-                    onClick={() => onChange(pickVariantForAttribute(variants, selectedRef, group.name, value))}
+                    disabled={unavailable}
+                    aria-disabled={unavailable || undefined}
+                    title={
+                      unavailable
+                        ? 'Combinazione non disponibile'
+                        : state === 'out_of_stock'
+                          ? 'Non disponibile / esaurito'
+                          : undefined
+                    }
+                    onClick={() => {
+                      if (unavailable) return
+                      onChange(
+                        pickVariantForAttribute(variants, selectedRef, group.attrName, value),
+                      )
+                    }}
                     className={cn(
                       'rounded-[7px] px-4 py-2.5 text-[13px] font-semibold transition',
-                      showKelvinBar ? 'font-sans' : 'font-mono',
+                      group.showKelvinBar ? 'font-sans' : 'font-mono',
                       active
                         ? 'bg-idl-graphite text-white'
                         : 'border border-idl-tech-chip-border bg-idl-tech-panel text-idl-graphite-2 hover:border-idl-amber/40',
+                      unavailable && 'cursor-not-allowed opacity-35 hover:border-idl-tech-chip-border',
+                      state === 'out_of_stock' && !active && 'opacity-55',
+                      state === 'out_of_stock' && active && 'line-through decoration-white/50',
                     )}
                   >
                     {value}
@@ -104,7 +98,7 @@ export function TechnicalHeroVariantPicker({ variants, selectedRef, onChange }: 
                 )
               })}
             </div>
-            {showKelvinBar ? (
+            {group.showKelvinBar ? (
               <>
                 <div
                   className="mt-2 h-1.5 rounded bg-linear-to-r from-[#c4c4c8] via-[#e8e8ea] via-40% to-[#cfe0f0]"

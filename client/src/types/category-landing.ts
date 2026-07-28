@@ -84,6 +84,7 @@ export type CategoryArticlesSection = {
     title: string
     meta?: string
     href: string
+    imageUrl?: string
   }>
 }
 

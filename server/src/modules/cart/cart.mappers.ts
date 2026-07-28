@@ -4,12 +4,14 @@ import type {
   CartItemDTO,
   CartLineAvailabilityDTO,
   FreeShippingHintDTO,
+  ProductDetailDTO,
   TaxBreakdownDTO,
 } from '../../types/dto.js'
 import { buildCartReservationMeta } from './cart.reservation.js'
 import { resolveCartEstimateTotals } from './cartTotals.js'
 import { resolveCartDeliveryLeadDays } from '../catalog/availability.service.js'
 import { resolveCartLineAvailabilityStatus } from './cart-line-availability.js'
+import { parseCartLineVariantMeta } from './cart-line-variant-meta.js'
 
 function unitForLine(line: CartItem, catalogUnitCents: number | null): number | null {
   if (line.clientUnitPriceEstimate != null) return line.clientUnitPriceEstimate
@@ -23,6 +25,39 @@ const defaultAvailability: CartLineAvailabilityDTO = {
   warning: null,
 }
 
+function resolveLineVariantDisplay(
+  line: CartItem,
+  display: { slug: string; name: string; imageUrl: string | null } | undefined,
+  product: ProductDetailDTO | null | undefined,
+) {
+  const meta = parseCartLineVariantMeta(line.metadataJson)
+  const variant =
+    line.variantRef && product?.variants?.length
+      ? (product.variants.find((v) => v.ref === line.variantRef) ??
+        product.variants.find((v) => String(v.odooVariantId) === line.variantRef))
+      : product?.variants?.[0]
+
+  const attributes =
+    meta?.attributes?.length
+      ? meta.attributes
+      : (variant?.attributes ?? []).filter((a) => a.name?.trim() && a.value?.trim())
+
+  const variantLabel =
+    meta?.variantLabel ??
+    variant?.label ??
+    (attributes.length ? attributes.map((a) => a.value).join(' · ') : null)
+
+  const imageUrl = meta?.imageUrl ?? variant?.imageUrl ?? display?.imageUrl ?? null
+
+  return {
+    imageUrl,
+    variantLabel: variantLabel?.trim() || null,
+    variantAttributes: attributes.length
+      ? attributes.map((a) => ({ name: a.name, value: a.value }))
+      : undefined,
+  }
+}
+
 export function mapCartToDTO(
   cart: Cart & { items: CartItem[] },
   priceLookup: Map<string, number>,
@@ -32,6 +67,7 @@ export function mapCartToDTO(
   availabilityLookup: Map<string, CartLineAvailabilityDTO & { purchasable: boolean }> = new Map(),
   priceChangedIds: Set<string> = new Set(),
   taxBreakdown: TaxBreakdownDTO | null = null,
+  productByRef: Map<string, ProductDetailDTO | null> = new Map(),
 ): CartDTO {
   const warnings: string[] = []
 
@@ -39,7 +75,7 @@ export function mapCartToDTO(
     const cat = priceLookup.get(line.productRef) ?? null
     const unit = unitForLine(line, cat)
     const display = displayLookup.get(line.productRef)
-    const productResolved = display != null
+    const productResolved = display != null || productByRef.has(line.productRef)
     const availKey = `${line.productRef}:${line.variantRef ?? ''}`
     const missingAvailability = !availabilityLookup.has(availKey)
     const avail = availabilityLookup.get(availKey) ?? {
@@ -50,7 +86,9 @@ export function mapCartToDTO(
     }
     if (missingAvailability) {
       const name = display?.name ?? line.productRef
-      warnings.push(`${name}: disponibilità non verificata — riga non acquistabile fino a verifica stock.`)
+      warnings.push(
+        `${name}: disponibilità non verificata — riga non acquistabile fino a verifica stock.`,
+      )
     }
     const { availabilityStatus, blockReason } = resolveCartLineAvailabilityStatus({
       purchasable: avail.purchasable,
@@ -67,6 +105,12 @@ export function mapCartToDTO(
       warnings.push(`${name}: ${avail.warning}`)
     }
 
+    const variantDisplay = resolveLineVariantDisplay(
+      line,
+      display,
+      productByRef.get(line.productRef),
+    )
+
     return {
       id: line.id,
       productRef: line.productRef,
@@ -76,7 +120,11 @@ export function mapCartToDTO(
       lineTotalEstimateCents: lineTotal,
       productSlug: display?.slug ?? line.productRef,
       productName: display?.name ?? line.productRef,
-      imageUrl: display?.imageUrl ?? null,
+      imageUrl: variantDisplay.imageUrl,
+      variantLabel: variantDisplay.variantLabel,
+      ...(variantDisplay.variantAttributes
+        ? { variantAttributes: variantDisplay.variantAttributes }
+        : {}),
       purchasable,
       availabilityStatus,
       ...(blockReason ? { blockReason } : {}),

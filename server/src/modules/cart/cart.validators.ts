@@ -7,6 +7,16 @@ export const cartAddProductHintSchema = z.object({
   name: z.string().min(1).optional(),
   imageUrl: z.string().nullable().optional(),
   unitPriceCents: z.number().int().min(0).optional(),
+  variantLabel: z.string().min(1).optional().nullable(),
+  attributes: z
+    .array(
+      z.object({
+        name: z.string().min(1),
+        value: z.string().min(1),
+      }),
+    )
+    .max(20)
+    .optional(),
 })
 
 export type CartAddProductHint = z.infer<typeof cartAddProductHintSchema>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from '@/lib/navigation'
 import { HoverLift } from '@/components/motion'
 import { SiteHeading } from '@/components/site/SiteHeading'
+import { SiteImage } from '@/components/site/SiteImage'
 import { useI18n } from '@/hooks/use-i18n'
 import { cn } from '@/utils/cn'
 import type { GuideCardItem } from './GuideCardGrid'
@@ -123,25 +124,44 @@ export function GuideCardSlider({ items, lp, className, loop = false }: Props) {
             <HoverLift>
               <Link
                 to={lp(guide.href)}
-                className="flex min-h-[180px] flex-col rounded-lg border border-idl-path-design-border bg-white p-5 transition hover:border-idl-brass dark:bg-idl-tech-panel"
+                className={cn(
+                  'group flex h-full flex-col overflow-hidden rounded-lg border border-idl-path-design-border bg-white transition hover:border-idl-brass dark:bg-idl-tech-panel',
+                  !guide.imageUrl && 'min-h-[180px]',
+                )}
               >
-                {guide.category ? (
-                  <div className="font-mono text-[10.5px] tracking-widest text-idl-brass-light uppercase">
-                    {guide.category}
+                {guide.imageUrl ? (
+                  <div className="relative aspect-[16/10] overflow-hidden bg-idl-cream">
+                    <SiteImage
+                      src={guide.imageUrl}
+                      alt=""
+                      fill
+                      sizes="(max-width: 640px) 78vw, 17.5rem"
+                      className="object-cover transition duration-500 group-hover:scale-[1.03]"
+                    />
                   </div>
                 ) : null}
-                <SiteHeading
-                  level={3}
-                  className="mt-3 font-serif text-xl leading-snug font-medium text-idl-ink"
-                >
-                  {guide.title}
-                </SiteHeading>
-                <div className="flex-1" />
-                {guide.meta ? (
-                  <div className="mt-4 text-[13px] font-bold text-idl-brass">
-                    {`${guide.meta} · Leggi →`}
-                  </div>
-                ) : null}
+                <div className="flex flex-1 flex-col p-5">
+                  {guide.category ? (
+                    <div className="font-mono text-[10.5px] tracking-widest text-idl-brass-light uppercase">
+                      {guide.category}
+                    </div>
+                  ) : null}
+                  <SiteHeading
+                    level={3}
+                    className={cn(
+                      'font-serif text-xl leading-snug font-medium text-idl-ink',
+                      guide.category ? 'mt-3' : undefined,
+                    )}
+                  >
+                    {guide.title}
+                  </SiteHeading>
+                  <div className="flex-1" />
+                  {guide.meta ? (
+                    <div className="mt-4 text-[13px] font-bold text-idl-brass">
+                      {`${guide.meta} · Leggi →`}
+                    </div>
+                  ) : null}
+                </div>
               </Link>
             </HoverLift>
           </li>

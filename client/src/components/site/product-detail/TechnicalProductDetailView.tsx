@@ -15,8 +15,8 @@ import { extractProductDisplayTitle } from '@/lib/product-display-title'
 import {
   findSpecValue,
   groupSpecRowsForTechnical,
-  parseProductSpecRows,
-  specsToRows,
+  isDimensionSpecLabel,
+  mergeProductAndVariantSpecs,
 } from '@/lib/product-specs-parse'
 import { buildTechnicalCardSpecTags } from '@/lib/technical-card-spec-tags'
 import { cn } from '@/utils/cn'
@@ -36,6 +36,10 @@ import {
 import { ProductDetailGallery } from './ProductDetailGallery'
 import { TechnicalHeroVariantPicker } from './TechnicalHeroVariantPicker'
 import { ProductQuantityStepper } from './ProductQuantityStepper'
+import {
+  ProductDimensionsPanel,
+  hasProductDimensionsContent,
+} from './ProductDimensionsPanel'
 import {
   ProductDetailStickyBar,
   createAddToCartHandler,
@@ -110,15 +114,11 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
     (product.alternatives?.length ? product.alternatives : relatedProducts) ?? []
   const accessoryProducts = product.accessories ?? []
 
-  const activeSpecs =
-    selectedVariant?.specs?.length
-      ? selectedVariant.specs
-      : product.specs?.length
-        ? product.specs
-        : null
-  const parsedSpecs = activeSpecs
-    ? specsToRows(activeSpecs)
-    : parseProductSpecRows(product.specsTableHtml)
+  const parsedSpecs = mergeProductAndVariantSpecs({
+    productSpecs: product.specs,
+    variantSpecs: selectedVariant?.specs,
+    specsTableHtml: product.specsTableHtml,
+  })
   const specGroups = groupSpecRowsForTechnical(parsedSpecs)
   const tags =
     product.specTags ??
@@ -153,11 +153,27 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
   })).filter((row) => row.value?.trim())
 
   const incompatValue = findSpecValue(parsedSpecs, /non compatibile|incompatib/i)
-  const dimensionsValue = findSpecValue(parsedSpecs, /dimensioni|lunghezza|diametro/i)
-  const hasCompatSection =
-    compatRows.length > 0 || Boolean(product.shortDescription?.trim()) || Boolean(incompatValue?.trim())
+  const hasDimensionsPanel = hasProductDimensionsContent(
+    product,
+    parsedSpecs,
+    selectedVariant?.attributes,
+  )
+  /** Compatibilità solo con dati specs reali — niente sezione basata sulla short description. */
+  const hasCompatSection = compatRows.length > 0
+  const shortDescription = product.shortDescription?.trim() || ''
+  const showPurchaseWarning =
+    Boolean(shortDescription) &&
+    shortDescription !== (subtitle?.trim() || '') &&
+    shortDescription !== (product.name?.trim() || '')
   const hasDescriptionOrSpecs =
-    Boolean(product.longDescription?.trim()) || highlightSpecs.length > 0
+    Boolean(product.longDescription?.trim()) || highlightSpecs.length > 0 || showPurchaseWarning
+  /** Scheda tecnica completa: escludi misure (pannello dedicato). */
+  const specGroupsWithoutDimensions = specGroups
+    .map((group) => ({
+      ...group,
+      rows: group.rows.filter((row) => !isDimensionSpecLabel(row.label, row.key)),
+    }))
+    .filter((group) => group.rows.length > 0)
 
   const handleAddToCart = createAddToCartHandler({
     product,
@@ -343,7 +359,6 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
       {hasCompatSection ? (
       <section className="border-y border-[#ededea] bg-[#f7f8fa]">
         <SectionContainer className="grid gap-5 py-7 sm:grid-cols-2 sm:gap-6 sm:py-[34px]">
-          {compatRows.length > 0 ? (
           <ProductDetailCard variant="technical" className="p-4 sm:p-[26px]">
             <h2 className="mb-4 text-base font-extrabold tracking-[-0.01em]">Compatibilità rapida</h2>
             <div>
@@ -359,45 +374,51 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
               ))}
             </div>
           </ProductDetailCard>
-          ) : <div />}
 
-          {(product.shortDescription?.trim() || incompatValue?.trim()) ? (
+          {incompatValue?.trim() ? (
           <div className="flex flex-col gap-3.5">
-            {product.shortDescription?.trim() ? (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
-              <div className="mb-2 flex items-center gap-2 text-[15px] font-extrabold text-amber-900">
-                <span aria-hidden>⚠️</span> Controlla prima dell&apos;acquisto
-              </div>
-              <p className="text-sm leading-relaxed text-amber-950/80">{product.shortDescription}</p>
-            </div>
-            ) : null}
-            {incompatValue?.trim() ? (
             <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-4">
               <div className="flex items-center gap-2 text-sm font-bold text-red-800">
                 <span aria-hidden>⛔</span>
                 {incompatValue}
               </div>
             </div>
-            ) : null}
           </div>
-          ) : null}
+          ) : <div />}
         </SectionContainer>
       </section>
       ) : null}
 
       {hasDescriptionOrSpecs ? (
       <SectionContainer className="grid items-start gap-10 py-10 sm:gap-12 lg:grid-cols-2 lg:py-12">
-        {product.longDescription?.trim() ? (
+        {(product.longDescription?.trim() || showPurchaseWarning) ? (
         <div>
-          <h2 className="mb-3 text-lg font-extrabold tracking-tight">Descrizione</h2>
-          {hasHtmlMarkup(product.longDescription) ? (
-            <ProductDescriptionHtml
-              html={product.longDescription}
-              className="product-description max-w-none text-[15px] leading-relaxed text-idl-graphite-2"
-            />
-          ) : (
-            <p className="text-[15px] leading-relaxed text-idl-graphite-2">{product.longDescription}</p>
-          )}
+          {product.longDescription?.trim() ? (
+            <>
+              <h2 className="mb-3 text-lg font-extrabold tracking-tight">Descrizione</h2>
+              {hasHtmlMarkup(product.longDescription) ? (
+                <ProductDescriptionHtml
+                  html={product.longDescription}
+                  className="product-description max-w-none text-[15px] leading-relaxed text-idl-graphite-2"
+                />
+              ) : (
+                <p className="text-[15px] leading-relaxed text-idl-graphite-2">{product.longDescription}</p>
+              )}
+            </>
+          ) : null}
+          {showPurchaseWarning ? (
+            <div
+              className={cn(
+                'rounded-xl border border-amber-200 bg-amber-50 p-5',
+                product.longDescription?.trim() ? 'mt-5' : null,
+              )}
+            >
+              <div className="mb-2 flex items-center gap-2 text-[15px] font-extrabold text-amber-900">
+                <span aria-hidden>⚠️</span> Controlla prima dell&apos;acquisto
+              </div>
+              <p className="text-sm leading-relaxed text-amber-950/80">{shortDescription}</p>
+            </div>
+          ) : null}
         </div>
         ) : <div />}
 
@@ -420,14 +441,14 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
       </SectionContainer>
       ) : null}
 
-      {(specGroups.length > 0 || dimensionsValue || productDocuments.length > 0) ? (
+      {(specGroupsWithoutDimensions.length > 0 || hasDimensionsPanel || productDocuments.length > 0) ? (
       <section className="border-t border-idl-tech-chip bg-idl-tech-panel">
         <SectionContainer className="py-10 sm:py-12">
           <h2 className="mb-5 text-xl font-extrabold tracking-tight">Scheda tecnica completa</h2>
           <div className="grid items-start gap-10 lg:grid-cols-[1.3fr_1fr] lg:gap-11">
-            {specGroups.length > 0 ? (
+            {specGroupsWithoutDimensions.length > 0 ? (
             <div>
-              {specGroups.map((group) => (
+              {specGroupsWithoutDimensions.map((group) => (
                 <div key={group.title} className="mb-5">
                   <ProductDetailSectionLabel variant="technical" className="mb-2 tracking-wider">
                     {group.title}
@@ -476,12 +497,12 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                 </ol>
               </ProductDetailCard>
 
-              {dimensionsValue ? (
-              <ProductDetailCard variant="technical">
-                <h3 className="mb-4 text-base font-extrabold tracking-tight">Dimensioni e ingombri</h3>
-                <p className="text-xs text-idl-muted">{dimensionsValue}</p>
-              </ProductDetailCard>
-              ) : null}
+              <ProductDimensionsPanel
+                product={product}
+                specRows={parsedSpecs}
+                variantAttributes={selectedVariant?.attributes}
+                variant="technical"
+              />
 
               {productDocuments.length > 0 ? (
               <ProductDetailCard variant="technical">
@@ -659,7 +680,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
       <ProductDetailStickyBar
         product={product}
         displayPriceCents={displayPriceCents}
-        imageUrl={galleryImages[0] ?? product.imageUrl}
+        imageUrl={selectedVariant?.imageUrl ?? galleryImages[0] ?? product.imageUrl}
         variantRef={variantRef}
         quantity={quantity}
         availabilityLabel={

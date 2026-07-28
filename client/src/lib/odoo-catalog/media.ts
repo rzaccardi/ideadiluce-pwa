@@ -38,6 +38,17 @@ export function resolveOdooCatalogMediaUrlWithSize(
   return withOdooCatalogImageSize(resolveOdooCatalogMediaUrl(path), size)
 }
 
+/** Confronta URL Odoo ignorando la size (`image_512` vs `image_1920`). */
+export function odooCatalogImageUrlsMatch(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): boolean {
+  if (!a?.trim() || !b?.trim()) return false
+  if (a === b) return true
+  const norm = (url: string) => url.replace(SIZE_RE, '/image_SIZE')
+  return norm(a) === norm(b)
+}
+
 /** URL pubblico stabile documenti prodotto (senza auth, 302 sull'ultima versione). */
 export function odooCatalogProductDocCurrentUrl(
   ced: string,

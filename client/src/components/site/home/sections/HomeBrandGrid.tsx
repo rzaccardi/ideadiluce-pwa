@@ -20,12 +20,9 @@ export function HomeBrandGrid({ brands, lp, stagger = 0.04 }: Props) {
   return (
     <Stagger
       className={cn(
-        '-mx-4 flex gap-3 overflow-x-auto scroll-smooth px-4 pb-1',
-        'snap-x snap-mandatory',
-        '[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden',
-        'sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-0 sm:overflow-hidden sm:rounded-[10px]',
-        'sm:border sm:border-idl-tech-border sm:bg-white sm:px-0 sm:pb-0 sm:snap-none',
-        'lg:grid-cols-6 dark:sm:bg-idl-tech-panel',
+        'grid grid-cols-2 overflow-hidden rounded-[10px] border border-idl-tech-border bg-white',
+        'sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6',
+        'dark:bg-idl-tech-panel',
       )}
       stagger={stagger}
     >
@@ -37,15 +34,11 @@ export function HomeBrandGrid({ brands, lp, stagger = 0.04 }: Props) {
         const brandLabel = `${brand.name} — ${productMeta}`
 
         return (
-          <StaggerItem
-            key={brand.slug}
-            className="w-[min(42vw,10.5rem)] shrink-0 snap-start sm:w-auto sm:shrink"
-          >
+          <StaggerItem key={brand.slug} className="min-w-0">
             <article
               className={cn(
-                'flex min-h-[148px] flex-col bg-white transition hover:bg-idl-cream',
-                'rounded-lg border border-idl-tech-border',
-                'sm:rounded-none sm:border-0 sm:border-b sm:border-r sm:border-idl-tech-border',
+                'flex h-full min-h-[148px] flex-col bg-white transition hover:bg-idl-cream',
+                'border-b border-r border-idl-tech-border',
                 'dark:bg-idl-tech-panel dark:hover:bg-idl-tech-panel',
               )}
             >

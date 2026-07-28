@@ -405,6 +405,7 @@ export async function seedSitePages() {
   await patchShellNavLinkImages()
   await patchShellNavEditorialLinks()
   await patchShellFooterCompany()
+  await patchShellRemoveShowroomCopy()
   await patchShellItSource()
   await patchHomeHeroCategoryLinks()
   await patchHomeSeoHeroCopy()
@@ -529,6 +530,55 @@ async function patchHomeVisualSections() {
 
     if (changed) {
       await siteRepository.upsert('home', locale, content, row.published)
+    }
+  }
+}
+
+/** Rimuove copy showroom (utility bar, trust bar, footer) — non esiste showroom fisico. */
+async function patchShellRemoveShowroomCopy() {
+  const isShowroomText = (value: string) => /showroom/i.test(value)
+
+  for (const locale of SITE_LOCALES) {
+    const row = await siteRepository.findByKeyLocale('shell', locale)
+    if (!row?.published) continue
+
+    const content = row.content as SiteShellContent
+    let changed = false
+
+    const nextMessages = content.utilityBar.messages.filter((msg) => !isShowroomText(msg))
+    if (nextMessages.length !== content.utilityBar.messages.length) {
+      content.utilityBar.messages = nextMessages
+      changed = true
+    }
+
+    if (locale === 'IT') {
+      const freshMessages = DEFAULT_SHELL_IT.utilityBar.messages
+      if (JSON.stringify(content.utilityBar.messages) !== JSON.stringify(freshMessages)) {
+        content.utilityBar.messages = [...freshMessages]
+        changed = true
+      }
+      if (JSON.stringify(content.trustBar) !== JSON.stringify(DEFAULT_SHELL_IT.trustBar)) {
+        content.trustBar = structuredClone(DEFAULT_SHELL_IT.trustBar)
+        changed = true
+      }
+    } else {
+      const nextTrust = content.trustBar.filter(
+        (item) => !isShowroomText(item.title) && !isShowroomText(item.subtitle),
+      )
+      if (nextTrust.length !== content.trustBar.length) {
+        content.trustBar = nextTrust
+        changed = true
+      }
+    }
+
+    for (const column of content.footer.columns) {
+      const before = column.links.length
+      column.links = column.links.filter((link) => !isShowroomText(link.label))
+      if (column.links.length !== before) changed = true
+    }
+
+    if (changed) {
+      await siteRepository.upsert('shell', locale, content, row.published)
     }
   }
 }

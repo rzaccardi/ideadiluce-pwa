@@ -9,7 +9,7 @@ import { HomeView2 } from '@/components/site/home2/HomeView2'
 import { useLocale } from '@/context/locale-context'
 import { ToastOnError } from '@/components/ToastFeedback'
 import { isHomePageContent } from '@/lib/site-page-keys'
-import { resolveHomeBrandCards } from '@/lib/brand.defaults'
+import { resolveCatalogBrandCards } from '@/lib/brand.defaults'
 import type { BrandListItemDTO, HomePageContent } from '@/types/site-content'
 import type { HomeProductSliderDTO } from '@/types/home-product-sliders'
 import type { ProductCardDTO } from '@/types/dto'
@@ -26,7 +26,13 @@ type Props = {
   initialContent?: HomePageContent | null
   initialProductSliders?: HomeProductSliderDTO[] | null
   initialBrands?: BrandListItemDTO[]
-  initialFeaturedGuides?: Array<{ category: string; title: string; meta: string; href: string }>
+  initialFeaturedGuides?: Array<{
+    category: string
+    title: string
+    meta: string
+    href: string
+    imageUrl?: string
+  }>
 }
 
 export function HomePage2({
@@ -55,21 +61,19 @@ export function HomePage2({
     [productSliders, queryDesignProducts],
   )
 
-  const homeBrands = useMemo(() => {
-    if (!cmsContent) return []
-    return resolveHomeBrandCards(cmsContent.brands.items, hubBrands)
-  }, [cmsContent, hubBrands])
+  const homeBrands = useMemo(() => resolveCatalogBrandCards(hubBrands), [hubBrands])
 
   const guidesSection = useMemo(() => {
     if (!cmsContent) return null
     if (!featuredGuides.length) return cmsContent.guides
     return {
       ...cmsContent.guides,
-      items: featuredGuides.map((guide) => ({
+      items: featuredGuides.slice(0, 4).map((guide) => ({
         category: guide.category,
         title: guide.title,
         meta: guide.meta,
         href: guide.href,
+        imageUrl: guide.imageUrl,
       })),
     }
   }, [cmsContent, featuredGuides])

@@ -160,6 +160,16 @@ function MiniCartPanel({
                     >
                       {item.productName ?? item.productSlug ?? item.productRef}
                     </Link>
+                    {item.variantAttributes?.length || item.variantLabel ? (
+                      <p className="truncate text-[10px] text-idl-muted">
+                        {(item.variantAttributes?.length
+                          ? item.variantAttributes.map((a) => a.value)
+                          : [item.variantLabel]
+                        )
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </p>
+                    ) : null}
                     <p className="text-xs text-idl-muted">
                       {tParams('orders.detail.quantity', { count: item.quantity })}
                     </p>

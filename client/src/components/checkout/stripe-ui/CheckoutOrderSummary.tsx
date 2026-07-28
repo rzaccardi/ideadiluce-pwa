@@ -113,6 +113,16 @@ function SummaryContent({
               <p className={cn('line-clamp-2 text-sm font-semibold leading-snug', tTheme.itemTitle)}>
                 {item.productName ?? item.productRef}
               </p>
+              {item.variantAttributes?.length || item.variantLabel ? (
+                <p className={cn('mt-1 text-[11px] leading-snug', tTheme.itemMeta)}>
+                  {(item.variantAttributes?.length
+                    ? item.variantAttributes.map((a) => `${a.name}: ${a.value}`)
+                    : item.variantLabel
+                      ? [item.variantLabel]
+                      : []
+                  ).join(' · ')}
+                </p>
+              ) : null}
               {item.quantity > 1 && item.lineTotalEstimateCents != null ? (
                 <p className={cn('mt-0.5 text-xs', tTheme.itemMeta)}>
                   {formatMoney(

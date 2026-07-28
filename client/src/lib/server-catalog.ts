@@ -35,6 +35,7 @@ export type HomeFeaturedGuideDTO = {
   meta: string
   title: string
   href: string
+  imageUrl?: string
   featured: boolean
   sortOrder: number
 }

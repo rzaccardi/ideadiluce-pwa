@@ -14,9 +14,11 @@ import { SectionContainer, Eyebrow } from '@/components/site/primitives'
 import { SiteImage } from '@/components/site/SiteImage'
 import { extractProductDisplayTitle } from '@/lib/product-display-title'
 import {
+  findSpecValue,
+  isDimensionSpecLabel,
   mergeDesignSpecRows,
-  parseProductSpecRows,
-  specsToRows,
+  mergeProductAndVariantSpecs,
+  pickDesignHeroMeta,
 } from '@/lib/product-specs-parse'
 import {
   ProductDetailCard,
@@ -34,6 +36,10 @@ import {
 import { ProductDetailGallery } from './ProductDetailGallery'
 import { DesignHeroVariantPicker } from './DesignHeroVariantPicker'
 import { DesignRelatedProducts } from './DesignRelatedProducts'
+import {
+  ProductDimensionsPanel,
+  hasProductDimensionsContent,
+} from './ProductDimensionsPanel'
 import { ProductQuantityStepper } from './ProductQuantityStepper'
 import { ProductDetailStickyBar,
   createAddToCartHandler,
@@ -88,20 +94,15 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
     catalogKind: 'design',
   })
 
-  const activeSpecs =
-    selectedVariant?.specs?.length
-      ? selectedVariant.specs
-      : product.specs?.length
-        ? product.specs
-        : null
-  const specRows = mergeDesignSpecRows(
-    activeSpecs ? specsToRows(activeSpecs) : parseProductSpecRows(product.specsTableHtml),
-  )
+  const parsedSpecRows = mergeProductAndVariantSpecs({
+    productSpecs: product.specs,
+    variantSpecs: selectedVariant?.specs,
+    specsTableHtml: product.specsTableHtml,
+  })
+  const specRows = mergeDesignSpecRows(parsedSpecRows)
   const { title: displayTitle, rest: titleRest } = extractProductDisplayTitle(product.name)
   const subtitle = buildProductSubtitle(product)
   const brandLabel = product.brand?.name?.toUpperCase() ?? 'BRAND'
-  const lifestyleImages = galleryImages.slice(1, 4)
-  const storyQuote = subtitle ?? product.shortDescription
   const priceModeLabel = formatPriceDisplayModeLabel(
     selectedVariant?.priceDisplayMode ?? product.priceDisplayMode,
   )
@@ -117,16 +118,55 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
     return [...byId.values()]
   }, [product.documents, selectedVariant?.documents])
 
+  const galleryByTag = useMemo(() => {
+    const urlsFor = (tag: string) =>
+      (product.gallery ?? [])
+        .filter((item) => item.type === 'image' && (item.tag || 'foto') === tag && item.url)
+        .map((item) => item.url)
+    return {
+      ambiente: urlsFor('ambiente'),
+      dettaglio: urlsFor('dettaglio'),
+    }
+  }, [product.gallery])
+
+  /** Solo media taggati ambiente (niente riuso packshot). */
+  const lifestyleHeroImage = galleryByTag.ambiente[0] ?? null
+  const lifestyleGridImages = [
+    ...galleryByTag.ambiente.slice(1),
+    ...galleryByTag.dettaglio,
+  ].slice(0, 2)
+
   const accessories = product.accessories ?? []
-  const dimensionsValue = specRows.find((r) => r.label === 'Dimensioni')?.value
-  const designerName = specRows.find((r) => r.label === 'Designer')?.value
+  const alternatives = product.alternatives ?? []
+  const hasDimensionsPanel = hasProductDimensionsContent(
+    product,
+    parsedSpecRows,
+    selectedVariant?.attributes,
+  )
+  const designerName =
+    findSpecValue(parsedSpecRows, /designer/i) ??
+    specRows.find((r) => /designer/i.test(r.label))?.value ??
+    null
+  const heroMeta = pickDesignHeroMeta(specRows)
+  const categoryChips = (product.categories ?? []).filter((c) => c.slug && c.name)
+  const specTags = (product.specTags ?? []).filter((t) => t.trim())
+  /** Storia solo con testo narrativo dedicato (plain longDescription), non shortDescription. */
   const storyBody =
     product.longDescription?.trim() && !hasHtmlMarkup(product.longDescription)
       ? product.longDescription.trim()
       : null
-  const hasStorySection = Boolean(storyQuote || storyBody)
-  const lifestyleGridImages = lifestyleImages.slice(1).filter(Boolean)
-  const specRowsWithValues = specRows.filter((row) => row.value?.trim())
+  const hasStorySection = Boolean(storyBody)
+  const hasHtmlDescription =
+    Boolean(product.longDescription?.trim()) && hasHtmlMarkup(product.longDescription)
+  const shortDescription = product.shortDescription?.trim() || ''
+  const showShortDescription =
+    Boolean(shortDescription) &&
+    shortDescription !== (subtitle?.trim() || '') &&
+    shortDescription !== (product.name?.trim() || '') &&
+    shortDescription !== (storyBody || '')
+  const specRowsWithValues = specRows.filter(
+    (row) => row.value?.trim() && !isDimensionSpecLabel(row.label, row.key),
+  )
 
   const handleAddToCart = createAddToCartHandler({
     product,
@@ -175,6 +215,44 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
             {(titleRest || subtitle) ? (
               <div className="mt-3 text-base text-idl-design-muted">
                 {titleRest ? <span>{titleRest}</span> : subtitle ? <span>{subtitle}</span> : null}
+              </div>
+            ) : null}
+            {showShortDescription ? (
+              <p className="mt-3 text-sm leading-relaxed text-idl-design-muted">{shortDescription}</p>
+            ) : null}
+            {heroMeta.length > 0 ? (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {heroMeta.map(({ label, value }) => (
+                  <span
+                    key={`${label}:${value}`}
+                    className="rounded border border-white/12 bg-white/[0.04] px-2.5 py-1 text-[11.5px] tracking-wide text-idl-design-muted"
+                  >
+                    <span className="text-idl-design-dim">{label}</span>
+                    <span className="mx-1.5 text-white/20">·</span>
+                    <span className="text-idl-design-fg">{value}</span>
+                  </span>
+                ))}
+              </div>
+            ) : null}
+            {specTags.length > 0 || categoryChips.length > 0 ? (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {specTags.map((tag) => (
+                  <span
+                    key={`tag:${tag}`}
+                    className="rounded-sm bg-white/[0.06] px-2 py-0.5 text-[11px] tracking-wide text-idl-design-dim"
+                  >
+                    {tag}
+                  </span>
+                ))}
+                {categoryChips.map((cat) => (
+                  <Link
+                    key={cat.slug}
+                    to={lp(`/categoria/${cat.slug}`)}
+                    className="rounded-sm border border-white/10 px-2 py-0.5 text-[11px] tracking-wide text-idl-design-dim transition hover:border-idl-glow hover:text-idl-glow"
+                  >
+                    {cat.name}
+                  </Link>
+                ))}
               </div>
             ) : null}
             <div className="mb-7">
@@ -279,48 +357,37 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
         </SectionContainer>
       </section>
 
-      {hasStorySection ? (
+      {hasStorySection && storyBody ? (
       <section className="border-t border-white/6 bg-[#0c0c0d]">
         <SectionContainer narrow className="py-12 text-center sm:py-16">
           <ProductDetailSectionLabel variant="design" className="mb-6 tracking-[0.22em]">
             LA STORIA
           </ProductDetailSectionLabel>
-          {storyQuote ? (
-            <blockquote className="font-serif text-[clamp(1.375rem,5vw,2rem)] leading-[1.32] font-normal italic text-idl-design-fg">
-              &ldquo;{storyQuote}&rdquo;
-            </blockquote>
-          ) : null}
-          {storyBody ? (
-            <div className="mx-auto mt-7 max-w-3xl text-base leading-[1.7] text-idl-design-muted">
-              <p>{storyBody}</p>
-            </div>
-          ) : null}
+          <div className="mx-auto max-w-3xl font-serif text-[clamp(1.25rem,4vw,1.625rem)] leading-[1.55] text-idl-design-fg">
+            <p>{storyBody}</p>
+          </div>
         </SectionContainer>
       </section>
       ) : null}
 
-      {lifestyleImages[0] ? (
+      {lifestyleHeroImage ? (
       <section className="bg-idl-design">
           <div className="relative h-[420px] sm:h-[560px] lg:h-[680px]">
-            <SiteImage src={lifestyleImages[0]} alt="" fill className="object-cover" sizes="100vw" />
+            <SiteImage src={lifestyleHeroImage} alt="" fill className="object-cover" sizes="100vw" />
           </div>
       </section>
       ) : null}
 
-      {product.longDescription?.trim() ? (
+      {hasHtmlDescription && product.longDescription?.trim() ? (
       <section className="border-t border-idl-border bg-idl-path-design">
         <SectionContainer narrow className="py-12 sm:py-16">
           <ProductDetailSectionLabel variant="design" className="mb-[18px] text-idl-brass tracking-[0.18em]">
             DESCRIZIONE
           </ProductDetailSectionLabel>
-          {hasHtmlMarkup(product.longDescription) ? (
-            <ProductDescriptionHtml
-              html={product.longDescription}
-              className="product-description max-w-none text-base leading-[1.85] text-idl-ink-soft [&_p:first-child]:font-serif [&_p:first-child]:text-[23px] [&_p:first-child]:leading-[1.5] [&_p:first-child]:text-idl-ink [&_p]:mb-[18px] [&_ul]:my-[18px] [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5 [&_ol]:my-[18px] [&_ol]:list-decimal [&_ol]:space-y-1.5 [&_ol]:pl-5 [&_li]:text-idl-ink-soft [&_strong]:text-idl-ink"
-            />
-          ) : (
-            <p className="mb-[26px] font-serif text-[23px] leading-[1.5] text-idl-ink">{product.longDescription}</p>
-          )}
+          <ProductDescriptionHtml
+            html={product.longDescription}
+            className="product-description max-w-none text-base leading-[1.85] text-idl-ink-soft [&_p:first-child]:font-serif [&_p:first-child]:text-[23px] [&_p:first-child]:leading-[1.5] [&_p:first-child]:text-idl-ink [&_p]:mb-[18px] [&_ul]:my-[18px] [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5 [&_ol]:my-[18px] [&_ol]:list-decimal [&_ol]:space-y-1.5 [&_ol]:pl-5 [&_li]:text-idl-ink-soft [&_strong]:text-idl-ink"
+          />
           <div className="mt-7 flex flex-col gap-3 border-t border-idl-border pt-[22px] sm:flex-row sm:flex-wrap sm:items-center">
             <span className="font-mono text-[11px] tracking-wide text-idl-placeholder uppercase">
               SCHEDA A CURA DI IDEADILUCE
@@ -337,7 +404,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
       </section>
       ) : null}
 
-      {(specRowsWithValues.length > 0 || dimensionsValue || productDocuments.length > 0) ? (
+      {(specRowsWithValues.length > 0 || hasDimensionsPanel || productDocuments.length > 0) ? (
       <section className="bg-idl-paper">
         <SectionContainer className="grid min-w-0 items-start gap-8 py-10 sm:gap-14 sm:py-14 lg:grid-cols-2 lg:py-14">
           {specRowsWithValues.length > 0 ? (
@@ -352,26 +419,26 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
             <div>
               {specRowsWithValues.map((row) => (
                 <ProductSpecRowItem
-                  key={row.label}
+                  key={`${row.key ?? row.label}:${row.value}`}
                   label={row.label}
                   value={row.value}
                   href={row.href}
                   variant="design"
-                  monoValue={/portalampade|tensione|dimensioni|protezione|manuale/i.test(row.label)}
+                  monoValue={/portalampade|attacco|tensione|protezione|manuale|wattaggio/i.test(row.label)}
                 />
               ))}
             </div>
           </div>
           ) : <div />}
 
-          {(dimensionsValue || productDocuments.length > 0) ? (
+          {(hasDimensionsPanel || productDocuments.length > 0) ? (
           <div className="flex flex-col gap-[22px]">
-            {dimensionsValue ? (
-            <ProductDetailCard variant="design">
-              <h3 className="mb-[18px] font-serif text-xl font-medium text-idl-ink">Dimensioni</h3>
-              <p className="text-sm text-idl-ink-muted">{dimensionsValue}</p>
-            </ProductDetailCard>
-            ) : null}
+            <ProductDimensionsPanel
+              product={product}
+              specRows={parsedSpecRows}
+              variantAttributes={selectedVariant?.attributes}
+              variant="design"
+            />
 
             {productDocuments.length > 0 ? (
             <ProductDetailCard variant="design">
@@ -425,12 +492,30 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
             ) : null}
           </div>
           <DesignRelatedProducts
-            products={relatedProducts.slice(0, 4)}
+            products={relatedProducts.slice(0, 8)}
             lp={lp}
             brandName={product.brand?.name}
           />
         </SectionContainer>
       </section>
+      ) : null}
+
+      {alternatives.length > 0 ? (
+        <section className="border-t border-white/6 bg-idl-design">
+          <SectionContainer className="py-12 sm:py-16">
+            <div className="mb-7">
+              <ProductDetailSectionLabel variant="design" className="mb-3">
+                ALTERNATIVE
+              </ProductDetailSectionLabel>
+              <h2 className="font-serif text-2xl font-medium sm:text-[30px]">Potrebbe interessarti anche</h2>
+            </div>
+            <DesignRelatedProducts
+              products={alternatives.slice(0, 8)}
+              lp={lp}
+              brandName={product.brand?.name}
+            />
+          </SectionContainer>
+        </section>
       ) : null}
 
       {accessories.length > 0 ? (
@@ -442,7 +527,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
               </ProductDetailSectionLabel>
               <h2 className="font-serif text-2xl font-medium sm:text-[30px]">Completa il progetto</h2>
             </div>
-            <DesignRelatedProducts products={accessories.slice(0, 4)} lp={lp} brandName={product.brand?.name} />
+            <DesignRelatedProducts products={accessories.slice(0, 8)} lp={lp} brandName={product.brand?.name} />
           </SectionContainer>
         </section>
       ) : null}
@@ -473,7 +558,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
       <ProductDetailStickyBar
         product={product}
         displayPriceCents={displayPriceCents}
-        imageUrl={galleryImages[0] ?? product.imageUrl}
+        imageUrl={selectedVariant?.imageUrl ?? galleryImages[0] ?? product.imageUrl}
         variantRef={variantRef}
         quantity={quantity}
         availabilityLabel={

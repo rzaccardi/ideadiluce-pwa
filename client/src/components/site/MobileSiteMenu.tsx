@@ -470,6 +470,7 @@ function MobileGuidePanel({ onClose }: { onClose: () => void }) {
             title: guide.title,
             meta: guide.meta,
             href: guide.href,
+            imageUrl: guide.imageUrl,
           })),
         ),
       )

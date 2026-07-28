@@ -365,6 +365,10 @@ export type CartItemDTO = {
   productSlug: string | null
   productName: string | null
   imageUrl: string | null
+  /** Label variante (es. attributi uniti) — mai ID grezzo. */
+  variantLabel?: string | null
+  /** Attributi matrice selezionati (Dimensioni, Colore, …). */
+  variantAttributes?: Array<{ name: string; value: string }>
   purchasable: boolean
   availabilityStatus: CartLineAvailabilityStatusDTO
   blockReason?: CartLineBlockReasonDTO

@@ -1,6 +1,5 @@
 'use client'
 
-import { cn } from '@/utils/cn'
 import { Skeleton } from '@/components/skeleton-primitive'
 import { useI18n } from '@/hooks/use-i18n'
 
@@ -16,20 +15,15 @@ function PageHeaderBlock() {
   )
 }
 
-export function GuideCardSkeleton({ variant = 'editorial' }: { variant?: 'home' | 'editorial' }) {
-  const minHeight = variant === 'home' ? 'min-h-[210px]' : 'min-h-[180px]'
-
+export function GuideCardSkeleton({ variant: _variant = 'editorial' }: { variant?: 'home' | 'editorial' }) {
   return (
-    <div
-      className={cn(
-        'flex flex-col rounded-lg border border-idl-path-design-border bg-white p-5 dark:bg-idl-tech-panel',
-        minHeight,
-      )}
-    >
-      <Skeleton className="h-3 w-24" />
-      <Skeleton className="mt-3 h-6 w-4/5" />
-      <div className="flex-1" />
-      <Skeleton className="mt-4 h-4 w-32" />
+    <div className="flex flex-col overflow-hidden rounded-lg border border-idl-path-design-border bg-white dark:bg-idl-tech-panel">
+      <Skeleton className="aspect-[16/10] w-full rounded-none" />
+      <div className="flex flex-col p-5">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="mt-3 h-6 w-4/5" />
+        <Skeleton className="mt-4 h-4 w-32" />
+      </div>
     </div>
   )
 }

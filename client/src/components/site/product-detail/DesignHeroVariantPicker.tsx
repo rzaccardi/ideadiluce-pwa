@@ -3,6 +3,15 @@
 import { useMemo } from 'react'
 import type { ProductVariantDTO } from '@/types/dto'
 import { cn } from '@/utils/cn'
+import {
+  attributeNames,
+  getMatrixValueState,
+  isSwatchAttribute,
+  pickVariantForAttribute,
+  subgroupAttributeValues,
+  uniqueValuesForAttr,
+  type MatrixValueState,
+} from '@/lib/product-variant-attributes'
 
 const SWATCH_COLORS: Record<string, string> = {
   bianco: '#f3efe7',
@@ -13,16 +22,23 @@ const SWATCH_COLORS: Record<string, string> = {
   red: '#b3322f',
   nero: '#1f1c17',
   black: '#1f1c17',
+  alluminio: '#a8a8ac',
+  aluminum: '#a8a8ac',
+  aluminium: '#a8a8ac',
+  bronzo: '#8c6b45',
+  bronze: '#8c6b45',
+  oro: '#c4a35a',
+  gold: '#c4a35a',
+  cromo: '#c5c5c9',
+  chrome: '#c5c5c9',
+  argento: '#b8b8bc',
+  silver: '#b8b8bc',
 }
 
 type Props = {
   variants: ReadonlyArray<ProductVariantDTO>
   selectedRef: string
   onChange: (ref: string) => void
-}
-
-function isFinituraAttribute(name: string): boolean {
-  return /finitura|colore|color/i.test(name)
 }
 
 function swatchForValue(value: string): string | null {
@@ -33,83 +49,140 @@ function swatchForValue(value: string): string | null {
   return null
 }
 
+function matrixButtonProps(state: MatrixValueState, active: boolean) {
+  const disabled = state === 'unavailable'
+  return {
+    disabled,
+    'aria-disabled': disabled || undefined,
+    title:
+      state === 'unavailable'
+        ? 'Combinazione non disponibile'
+        : state === 'out_of_stock'
+          ? 'Non disponibile / esaurito'
+          : undefined,
+    className: cn(
+      state === 'unavailable' && 'cursor-not-allowed opacity-35',
+      state === 'out_of_stock' && !active && 'opacity-55',
+    ),
+  }
+}
+
 export function DesignHeroVariantPicker({ variants, selectedRef, onChange }: Props) {
-  const finitura = useMemo(() => {
-    if (variants.length <= 1) return null
-    const attrName = variants[0]?.attributes.find((a) => isFinituraAttribute(a.name))?.name
-    if (!attrName) return null
-    const options = variants.map((v) => {
-      const attr = v.attributes.find((a) => a.name === attrName)
-      return { ref: v.ref, value: attr?.value ?? v.label, swatch: swatchForValue(attr?.value ?? v.label) }
+  const groups = useMemo(() => {
+    if (variants.length <= 1) return []
+    return attributeNames(variants).flatMap((name) => {
+      const asSwatch = isSwatchAttribute(name)
+      const subgroups = asSwatch
+        ? [{ title: name, values: uniqueValuesForAttr(variants, name) }]
+        : subgroupAttributeValues(name, uniqueValuesForAttr(variants, name))
+      return subgroups.map((sub) => ({
+        attrName: name,
+        title: sub.title,
+        values: sub.values,
+        asSwatch,
+      }))
     })
-    return { attrName, options }
   }, [variants])
 
   const selected = variants.find((v) => v.ref === selectedRef) ?? variants[0]
-  const selectedFinitura =
-    finitura?.options.find((o) => o.ref === selected?.ref)?.value ?? finitura?.options[0]?.value
 
-  if (finitura) {
-    return (
-      <div className="mb-[26px]">
-        <div className="mb-3 flex items-baseline justify-between">
-          <span className="text-sm font-semibold text-idl-design-fg">Finitura</span>
-          <span className="text-[13px] text-idl-design-dim">{selectedFinitura ?? '—'}</span>
-        </div>
-        <div className="flex gap-3">
-          {finitura.options.map((option) => {
-            const active = option.ref === selectedRef
-            return (
-              <button
-                key={option.ref}
-                type="button"
-                aria-label={option.value}
-                aria-pressed={active}
-                onClick={() => onChange(option.ref)}
-                className={cn(
-                  'size-[38px] rounded-full border-2 transition',
-                  active
-                    ? 'border-idl-glow shadow-[0_0_0_3px_#0c0c0d_inset]'
-                    : 'border-white/20 hover:border-white/35',
-                )}
-                style={{ background: option.swatch ?? '#8f8f93' }}
-              />
-            )
-          })}
-        </div>
-      </div>
-    )
-  }
+  if (!groups.length) return null
 
-  if (variants.length <= 1) {
-    return null
-  }
-
-  const attrName = variants[0]?.attributes[0]?.name ?? 'Variante'
   return (
-    <div className="mb-[26px]">
-      <div className="mb-2 text-sm font-semibold text-idl-design-fg">{attrName}</div>
-      <div className="flex flex-wrap gap-2">
-        {variants.map((v) => {
-          const label = v.attributes.map((a) => a.value).join(' · ') || v.label
-          const active = v.ref === selectedRef
+    <div className="mb-[26px] space-y-5">
+      {groups.map((group) => {
+        const selectedValue = selected?.attributes.find((a) => a.name === group.attrName)?.value
+        const selectedInGroup = group.values.includes(selectedValue ?? '')
+
+        if (group.asSwatch) {
           return (
-            <button
-              key={v.ref}
-              type="button"
-              onClick={() => onChange(v.ref)}
-              className={cn(
-                'rounded-lg border px-4 py-2.5 text-sm font-medium transition',
-                active
-                  ? 'border-idl-glow bg-idl-glow text-idl-design'
-                  : 'border-white/20 text-idl-design-muted hover:border-white/35',
-              )}
-            >
-              {label}
-            </button>
+            <div key={`${group.attrName}:${group.title}`}>
+              <div className="mb-3 flex items-baseline justify-between gap-3">
+                <span className="text-sm font-semibold text-idl-design-fg">{group.title}</span>
+                <span className="text-[13px] text-idl-design-dim">
+                  {selectedInGroup ? selectedValue : '—'}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {group.values.map((value) => {
+                  const active = selectedValue === value
+                  const state = getMatrixValueState(variants, selectedRef, group.attrName, value)
+                  const matrix = matrixButtonProps(state, active)
+                  const swatch = swatchForValue(value)
+                  return (
+                    <button
+                      key={`${group.attrName}-${value}`}
+                      type="button"
+                      aria-label={value}
+                      aria-pressed={active}
+                      disabled={matrix.disabled}
+                      aria-disabled={matrix['aria-disabled']}
+                      title={matrix.title ?? value}
+                      onClick={() => {
+                        if (matrix.disabled) return
+                        onChange(
+                          pickVariantForAttribute(variants, selectedRef, group.attrName, value),
+                        )
+                      }}
+                      className={cn(
+                        'size-[38px] rounded-full border-2 transition',
+                        active
+                          ? 'border-idl-glow shadow-[0_0_0_3px_#0c0c0d_inset]'
+                          : 'border-white/20 hover:border-white/35',
+                        matrix.className,
+                      )}
+                      style={{ background: swatch ?? '#8f8f93' }}
+                    />
+                  )
+                })}
+              </div>
+            </div>
           )
-        })}
-      </div>
+        }
+
+        return (
+          <div key={`${group.attrName}:${group.title}`}>
+            <div className="mb-2 flex items-baseline justify-between gap-3">
+              <span className="text-sm font-semibold text-idl-design-fg">{group.title}</span>
+              <span className="text-[13px] text-idl-design-dim">
+                {selectedInGroup ? selectedValue : '—'}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {group.values.map((value) => {
+                const active = selectedValue === value
+                const state = getMatrixValueState(variants, selectedRef, group.attrName, value)
+                const matrix = matrixButtonProps(state, active)
+                return (
+                  <button
+                    key={`${group.attrName}-${value}`}
+                    type="button"
+                    disabled={matrix.disabled}
+                    aria-disabled={matrix['aria-disabled']}
+                    title={matrix.title}
+                    onClick={() => {
+                      if (matrix.disabled) return
+                      onChange(
+                        pickVariantForAttribute(variants, selectedRef, group.attrName, value),
+                      )
+                    }}
+                    className={cn(
+                      'rounded-lg border px-4 py-2.5 text-sm font-medium transition',
+                      active
+                        ? 'border-idl-glow bg-idl-glow text-idl-design'
+                        : 'border-white/20 text-idl-design-muted hover:border-white/35',
+                      matrix.className,
+                      state === 'out_of_stock' && active && 'line-through decoration-idl-design/50',
+                    )}
+                  >
+                    {value}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }

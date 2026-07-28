@@ -114,11 +114,17 @@ export function useProductDetailState({
   }, [selectedVariantRef, slug])
 
   const variantRef = selectedVariant?.ref ?? null
-  const galleryImages = product?.images?.length
-    ? product.images
-    : product?.imageUrl
-      ? [product.imageUrl]
-      : []
+  const galleryImages = useMemo(() => {
+    const base = product?.images?.length
+      ? [...product.images]
+      : product?.imageUrl
+        ? [product.imageUrl]
+        : []
+    const variantImage = selectedVariant?.imageUrl?.trim()
+    if (!variantImage) return base
+    const withoutDup = base.filter((url) => url !== variantImage)
+    return [variantImage, ...withoutDup]
+  }, [product?.images, product?.imageUrl, selectedVariant?.imageUrl])
 
   const displayPriceCents = selectedVariant?.priceCents ?? product?.priceCents ?? 0
   const availabilityData = product

@@ -147,10 +147,14 @@ export function createAddToCartHandler(input: {
   return () => {
     if (input.setIsAddingToCart) {
       input.setIsAddingToCart(true)
+      const selected = input.variantRef
+        ? input.product.variants.find((v) => v.ref === input.variantRef)
+        : input.product.variants[0]
       void addItem(input.product.slug, input.quantity, input.variantRef, {
         feedback: {
           productName: input.product.name,
-          imageUrl: input.galleryImages[0] ?? input.product.imageUrl,
+          imageUrl:
+            selected?.imageUrl ?? input.galleryImages[0] ?? input.product.imageUrl,
           quantity: input.quantity,
         },
         productHint: buildCartAddHintFromDetail(input.product, input.variantRef),

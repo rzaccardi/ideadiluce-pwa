@@ -37,6 +37,7 @@ import { enrichCartLineProduct } from '../catalog/catalog-stock.enrich.js'
 import { unitPriceCentsFromOdoo } from '../catalog/odooPricing.service.js'
 import { subtotalCentsFromCartItems } from './cartTotals.js'
 import type { CartAddProductHint } from './cart.validators.js'
+import { buildCartLineVariantMeta } from './cart-line-variant-meta.js'
 
 function storedProductRef(product: ProductDetailDTO): string {
   if (product.odooTemplateId != null) {
@@ -102,6 +103,7 @@ async function catalogAndAvailabilityForCart(
 ): Promise<{
   catalog: Map<string, CartCatalogEntry>
   availability: Map<string, CartLineAvailabilityDTO & { purchasable: boolean }>
+  productByRef: Map<string, ProductDetailDTO | null>
 }> {
   const ctx: OdooCallContext = { correlationId: req.correlationId, req }
   const productByRef = await resolveProductMapForCartLines(ctx, items)
@@ -112,7 +114,7 @@ async function catalogAndAvailabilityForCart(
     async () => null,
     productByRef,
   )
-  return { catalog, availability }
+  return { catalog, availability, productByRef }
 }
 
 function priceMapFromCatalog(catalog: Map<string, CartCatalogEntry>): Map<string, number> {
@@ -182,6 +184,7 @@ type CartMutationLineContext = {
   variantRef: string | null
   availability: CartLineAvailabilityDTO & { purchasable: boolean }
   catalog: CartCatalogEntry
+  product?: ProductDetailDTO | null
 }
 
 type DtoFromCartOptions = {
@@ -357,14 +360,18 @@ async function dtoFromCartId(
         ),
       )
     : unifiedCatalogPromise!.then((r) => r.availability)
+  const productByRefPromise = options?.fastMutation
+    ? Promise.resolve(new Map<string, ProductDetailDTO | null>())
+    : unifiedCatalogPromise!.then((r) => r.productByRef)
   const repricePromise = shouldReprice
     ? syncCartPricing(req, full.id, pricing)
     : Promise.resolve(new Set<string>())
 
-  const [catalogLookup, availabilityLookup, repriceChangedIds] = await Promise.all([
+  const [catalogLookup, availabilityLookup, repriceChangedIds, productByRef] = await Promise.all([
     catalogLookupPromise,
     availabilityLookupPromise,
     repricePromise,
+    productByRefPromise,
   ])
   priceChangedIds = repriceChangedIds
 
@@ -421,6 +428,7 @@ async function dtoFromCartId(
     availabilityLookup,
     priceChangedIds,
     taxBreakdown,
+    productByRef,
   )
   return { dto, priceChangedIds }
 }
@@ -505,6 +513,9 @@ async function buildFastMutationCartDto(
     availabilityLookup,
     new Set(),
     taxBreakdown,
+    mutation.product
+      ? new Map([[mutation.productRef, mutation.product]])
+      : new Map(),
   )
 }
 
@@ -575,15 +586,21 @@ function productDetailFromOdooHint(
   const name = hint?.name ?? slug
   const imageUrl = hint?.imageUrl ?? null
   const priceCents = hint?.unitPriceCents ?? 0
+  const attributes = (hint?.attributes ?? [])
+    .filter((a) => a.name?.trim() && a.value?.trim())
+    .map((a) => ({ name: a.name.trim(), value: a.value.trim() }))
+  const variantLabel =
+    hint?.variantLabel?.trim() ||
+    (attributes.length ? attributes.map((a) => a.value).join(' · ') : name)
 
   const variants =
     odooVariantId != null
       ? [
           {
             ref: formatOdooVariantRef(odooVariantId),
-            label: name,
+            label: variantLabel,
             imageUrl,
-            attributes: [],
+            attributes,
             odooVariantId,
             priceCents: hint?.unitPriceCents,
           },
@@ -649,13 +666,28 @@ async function resolveProductForCartLine(
 function catalogEntryFromProduct(
   product: ProductDetailDTO,
   unitPriceCents: number,
+  variantRef?: string | null,
 ): CartCatalogEntry {
+  const variant = selectedVariant(product, variantRef ?? null)
   return {
     priceCents: unitPriceCents,
     slug: product.slug,
     name: product.name,
-    imageUrl: product.imageUrl,
+    imageUrl: variant?.imageUrl ?? product.imageUrl,
   }
+}
+
+function variantMetaFromProduct(
+  product: ProductDetailDTO,
+  variantRef: string | null,
+  hint?: CartAddProductHint | null,
+) {
+  const variant = selectedVariant(product, variantRef)
+  return buildCartLineVariantMeta({
+    variantLabel: hint?.variantLabel ?? variant?.label ?? null,
+    imageUrl: hint?.imageUrl ?? variant?.imageUrl ?? product.imageUrl,
+    attributes: hint?.attributes ?? variant?.attributes ?? [],
+  })
 }
 
 function catalogLineInStock(product: ProductDetailDTO, variantRef: string | null): boolean {
@@ -773,10 +805,12 @@ export const cartService = {
     })
     const nextQuantity = (existing?.quantity ?? 0) + input.quantity
     await assertLineStock(req, line.product, line.variantRef, nextQuantity)
+    const variantMeta = variantMetaFromProduct(line.product, line.variantRef, input.productHint)
     if (existing) {
       await cartRepository.updateItem(existing.id, {
         quantity: nextQuantity,
         clientUnitPriceEstimate: line.unitPriceCents,
+        metadataJson: variantMeta,
       })
     } else {
       await cartRepository.addItem({
@@ -785,6 +819,7 @@ export const cartService = {
         variantRef: line.variantRef,
         quantity: input.quantity,
         clientUnitPriceEstimate: line.unitPriceCents,
+        metadataJson: variantMeta,
       })
     }
     await syncReservationAfterItemsChange(cart.id)
@@ -793,7 +828,8 @@ export const cartService = {
       productRef: line.productRef,
       variantRef: line.variantRef,
       availability,
-      catalog: catalogEntryFromProduct(line.product, line.unitPriceCents),
+      catalog: catalogEntryFromProduct(line.product, line.unitPriceCents, line.variantRef),
+      product: line.product,
     })
   },
 
@@ -817,6 +853,7 @@ export const cartService = {
       await cartRepository.updateItem(itemId, {
         quantity,
         clientUnitPriceEstimate: line.unitPriceCents,
+        metadataJson: variantMetaFromProduct(line.product, line.variantRef),
       })
     } else {
       await cartRepository.updateItem(itemId, { quantity })
@@ -827,7 +864,8 @@ export const cartService = {
         productRef: line.productRef,
         variantRef: line.variantRef,
         availability: availabilityFromProduct(line.product, line.variantRef, quantity),
-        catalog: catalogEntryFromProduct(line.product, line.unitPriceCents),
+        catalog: catalogEntryFromProduct(line.product, line.unitPriceCents, line.variantRef),
+        product: line.product,
       })
     }
     const { dto } = await dtoFromCartId(req, cart.id, { reprice: false, fastMutation: true })

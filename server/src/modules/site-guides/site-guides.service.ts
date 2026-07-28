@@ -231,12 +231,15 @@ export const siteGuideService = {
       const title = content.title?.trim()
       if (!title) continue
 
+      const imageUrl = content.coverImage?.imageUrl?.trim() || undefined
+
       items.push({
         slug: guide.slug,
         category: guide.category,
         meta: guide.readingMeta,
         title,
         href: `/guide/${guide.slug}`,
+        imageUrl,
         featured: guide.featured,
         sortOrder: guide.sortOrder,
       })

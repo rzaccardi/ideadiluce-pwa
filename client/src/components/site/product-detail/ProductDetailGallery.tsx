@@ -1,12 +1,17 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useIsClient } from '@/hooks/use-is-client'
 import { layers } from '@/lib/layering'
 import { cn } from '@/utils/cn'
 import { SiteImage } from '@/components/site/SiteImage'
 import type { ProductGalleryItemDTO, ProductGalleryTagDTO } from '@/types/dto'
+import {
+  odooCatalogImageUrlsMatch,
+  withOdooCatalogImageSize,
+} from '@/lib/odoo-catalog/media'
+import { isMeasureGalleryTag } from '@/lib/product-specs-parse'
 
 function LightboxCloseIcon({ className }: { className?: string }) {
   return (
@@ -33,11 +38,13 @@ function LightboxChevronIcon({ direction, className }: { direction: 'left' | 'ri
 const lightboxControlClass =
   'flex size-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50'
 
-/** Ordine tab editoriale (solo tag con almeno un media). */
+/** Quante thumb visibili contemporaneamente nello slider. */
+const THUMB_PAGE_SIZE = 4
+
+/** Ordine tab editoriale (solo tag con almeno un media). `misure` va nel pannello Dimensioni. */
 export const GALLERY_TAG_ORDER: ProductGalleryTagDTO[] = [
   'foto',
   'attacco',
-  'misure',
   'accesa',
   'applicazione',
   'ambiente',
@@ -108,14 +115,18 @@ export function ProductDetailGallery({
   variant = 'design',
 }: Props) {
   const items = useMemo((): ProductGalleryItemDTO[] => {
-    if (gallery?.length) return [...gallery]
-    if (images?.length) {
-      return images.map((url) => ({ type: 'image' as const, tag: 'foto' as const, url, alt: '' }))
-    }
-    if (activeUrl) {
-      return [{ type: 'image', tag: 'foto', url: activeUrl, alt: '' }]
-    }
-    return []
+    const raw: ProductGalleryItemDTO[] = (() => {
+      if (gallery?.length) return [...gallery]
+      if (images?.length) {
+        return images.map((url) => ({ type: 'image' as const, tag: 'foto' as const, url, alt: '' }))
+      }
+      if (activeUrl) {
+        return [{ type: 'image', tag: 'foto', url: activeUrl, alt: '' }]
+      }
+      return []
+    })()
+    // Schema dimensioni: solo nel pannello «Dimensioni e ingombri»
+    return raw.filter((item) => item.type !== 'image' || !isMeasureGalleryTag(item.tag))
   }, [gallery, images, activeUrl])
 
   const tagsPresent = useMemo(() => {
@@ -137,6 +148,8 @@ export function ProductDetailGallery({
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
+  /** Se true, l’utente ha scelto una thumb; altrimenti la hero segue la variante (`activeUrl`). */
+  const [manualBrowse, setManualBrowse] = useState(false)
   const isClient = useIsClient()
   const isDesign = variant === 'design'
 
@@ -147,18 +160,53 @@ export function ProductDetailGallery({
   }, [tagsPresent, activeTag])
 
   useEffect(() => {
+    setManualBrowse(false)
     if (activeUrl) {
-      const idx = displayItems.findIndex((i) => i.url === activeUrl)
+      const idx = displayItems.findIndex(
+        (i) => i.type === 'image' && odooCatalogImageUrlsMatch(i.url, activeUrl),
+      )
       if (idx >= 0) {
         setSelectedIndex(idx)
         return
       }
+      const match = items.find(
+        (i) => i.type === 'image' && odooCatalogImageUrlsMatch(i.url, activeUrl),
+      )
+      if (match) {
+        const tag = match.tag || 'foto'
+        if (tag !== activeTag) {
+          setActiveTag(tag)
+          return
+        }
+      }
     }
     setSelectedIndex(0)
-  }, [activeUrl, activeTag, displayItems])
+  }, [activeUrl, activeTag, displayItems, items])
 
-  const current = displayItems[selectedIndex] ?? displayItems[0]
-  const lightboxItem = displayItems[lightboxIndex] ?? current
+  /** Hero sempre sulla foto variante (`activeUrl`) finché l’utente non sfoglia le thumb. */
+  const variantHeroItem = useMemo((): ProductGalleryItemDTO | null => {
+    if (!activeUrl?.trim()) return null
+    const matched = displayItems.find(
+      (i) => i.type === 'image' && odooCatalogImageUrlsMatch(i.url, activeUrl),
+    )
+    if (matched) return matched
+    return {
+      type: 'image',
+      tag: 'foto',
+      url: withOdooCatalogImageSize(activeUrl, 'image_1920') ?? activeUrl,
+      alt: '',
+    }
+  }, [activeUrl, displayItems])
+
+  const showingVariantHero = Boolean(!manualBrowse && variantHeroItem)
+  const current =
+    showingVariantHero && variantHeroItem
+      ? variantHeroItem
+      : (displayItems[selectedIndex] ?? displayItems[0])
+  const lightboxItem =
+    lightboxIndex < 0 && variantHeroItem
+      ? variantHeroItem
+      : (displayItems[lightboxIndex] ?? current)
 
   const openLightbox = useCallback(
     (index: number) => {
@@ -168,14 +216,95 @@ export function ProductDetailGallery({
     [],
   )
 
+  const openCurrentLightbox = useCallback(() => {
+    if (current?.type !== 'image') return
+    if (showingVariantHero) {
+      setLightboxIndex(-1)
+      setLightboxOpen(true)
+      return
+    }
+    openLightbox(selectedIndex)
+  }, [current?.type, showingVariantHero, openLightbox, selectedIndex])
+
+  const selectThumb = useCallback((index: number) => {
+    setManualBrowse(true)
+    setSelectedIndex(index)
+  }, [])
+
+  const thumbScrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollThumbsPrev, setCanScrollThumbsPrev] = useState(false)
+  const [canScrollThumbsNext, setCanScrollThumbsNext] = useState(false)
+  const [thumbPage, setThumbPage] = useState(0)
+  const thumbPageCount = Math.max(1, Math.ceil(displayItems.length / THUMB_PAGE_SIZE))
+
+  const updateThumbScrollState = useCallback(() => {
+    const el = thumbScrollRef.current
+    if (!el) return
+    const { scrollLeft, scrollWidth, clientWidth } = el
+    setCanScrollThumbsPrev(scrollLeft > 2)
+    setCanScrollThumbsNext(scrollLeft + clientWidth < scrollWidth - 2)
+    const pageWidth = clientWidth || 1
+    setThumbPage(Math.min(thumbPageCount - 1, Math.round(scrollLeft / pageWidth)))
+  }, [thumbPageCount])
+
+  useEffect(() => {
+    updateThumbScrollState()
+    const el = thumbScrollRef.current
+    if (!el) return
+    el.addEventListener('scroll', updateThumbScrollState, { passive: true })
+    const observer = new ResizeObserver(updateThumbScrollState)
+    observer.observe(el)
+    return () => {
+      el.removeEventListener('scroll', updateThumbScrollState)
+      observer.disconnect()
+    }
+  }, [displayItems.length, activeTag, updateThumbScrollState])
+
+  const scrollThumbsByPage = useCallback(
+    (direction: -1 | 1) => {
+      const el = thumbScrollRef.current
+      if (!el) return
+      el.scrollBy({ left: direction * el.clientWidth, behavior: 'smooth' })
+    },
+    [],
+  )
+
+  const scrollThumbsToPage = useCallback((page: number) => {
+    const el = thumbScrollRef.current
+    if (!el) return
+    el.scrollTo({ left: page * el.clientWidth, behavior: 'smooth' })
+  }, [])
+
+  useEffect(() => {
+    const el = thumbScrollRef.current
+    if (!el || displayItems.length <= 1) return
+    const activeIdx = showingVariantHero
+      ? displayItems.findIndex(
+          (i) =>
+            i.type === 'image' &&
+            activeUrl &&
+            odooCatalogImageUrlsMatch(i.url, activeUrl),
+        )
+      : selectedIndex
+    if (activeIdx < 0) return
+    const node = el.querySelector<HTMLElement>(`[data-thumb="${activeIdx}"]`)
+    node?.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' })
+  }, [selectedIndex, showingVariantHero, activeUrl, displayItems, activeTag])
+
   const goPrev = useCallback(() => {
     if (!displayItems.length) return
-    setLightboxIndex((i) => (i - 1 + displayItems.length) % displayItems.length)
+    setLightboxIndex((i) => {
+      if (i < 0) return displayItems.length - 1
+      return (i - 1 + displayItems.length) % displayItems.length
+    })
   }, [displayItems.length])
 
   const goNext = useCallback(() => {
     if (!displayItems.length) return
-    setLightboxIndex((i) => (i + 1) % displayItems.length)
+    setLightboxIndex((i) => {
+      if (i < 0) return 0
+      return (i + 1) % displayItems.length
+    })
   }, [displayItems.length])
 
   useEffect(() => {
@@ -216,6 +345,11 @@ export function ProductDetailGallery({
   const currentAlt = current?.alt?.trim() || alt
   const embedSrc =
     current?.type === 'video' && current.url ? videoEmbedSrc(current.url) : null
+  /** Packshot/dettaglio: contain (niente crop). Ambiente: cover per riempire. */
+  const imageObjectClass =
+    isDesign && (current?.tag || 'foto') !== 'ambiente' ? 'object-contain' : 'object-cover'
+  const thumbObjectClass = (tag: string | undefined) =>
+    isDesign && (tag || 'foto') !== 'ambiente' ? 'object-contain' : 'object-cover'
 
   return (
     <>
@@ -261,12 +395,10 @@ export function ProductDetailGallery({
           className={cn(
             'relative aspect-square w-full overflow-hidden focus:outline-none focus-visible:ring-2',
             isDesign
-              ? 'rounded shadow-[0_0_90px_rgba(120, 120, 125,0.10)] focus-visible:ring-idl-glow/40'
+              ? 'rounded bg-idl-design-elevated shadow-[0_0_90px_rgba(120, 120, 125,0.10)] focus-visible:ring-idl-glow/40'
               : 'rounded-xl border border-idl-tech-border bg-[#f7f8fa] focus-visible:ring-idl-amber/30',
           )}
-          onClick={() => {
-            if (current?.type === 'image') openLightbox(selectedIndex)
-          }}
+          onClick={openCurrentLightbox}
           aria-label={
             current?.type === 'video' ? 'Video prodotto' : 'Ingrandisci immagine prodotto'
           }
@@ -293,10 +425,11 @@ export function ProductDetailGallery({
             )
           ) : current ? (
             <SiteImage
+              key={current.url}
               src={current.url}
               alt={currentAlt}
               fill
-              className="object-cover"
+              className={imageObjectClass}
               sizes="50vw"
               priority
             />
@@ -304,51 +437,150 @@ export function ProductDetailGallery({
         </button>
 
         {displayItems.length > 1 ? (
-          <div className={cn('grid grid-cols-4', isDesign ? 'gap-3' : 'gap-2.5')}>
-            {displayItems.map((item, idx) => {
-              const selectedThumb = idx === selectedIndex
-              return (
+          <div className="relative min-w-0">
+            {displayItems.length > THUMB_PAGE_SIZE ? (
+              <div
+                className={cn(
+                  'pointer-events-none absolute inset-y-0 left-0 right-0 z-[1] flex items-center justify-between',
+                )}
+              >
                 <button
-                  key={`${item.tag}-${item.url}-${idx}`}
                   type="button"
-                  onClick={() => setSelectedIndex(idx)}
-                  onDoubleClick={() => item.type === 'image' && openLightbox(idx)}
+                  aria-label="Miniature precedenti"
+                  disabled={!canScrollThumbsPrev}
+                  onClick={() => scrollThumbsByPage(-1)}
                   className={cn(
-                    'aspect-square overflow-hidden transition',
+                    'pointer-events-auto flex size-7 -translate-x-1 items-center justify-center rounded-full border backdrop-blur-sm transition disabled:cursor-not-allowed disabled:opacity-30',
                     isDesign
-                      ? cn(
-                          'rounded-[3px] border',
-                          selectedThumb
-                            ? 'border-idl-glow/30'
-                            : 'border-white/8 hover:border-white/20',
-                        )
-                      : cn(
-                          'rounded-lg border bg-idl-tech-panel',
-                          selectedThumb ? 'border-2 border-idl-amber' : 'border-idl-tech-border',
-                        ),
+                      ? 'border-white/15 bg-idl-design/80 text-idl-design-fg hover:border-idl-glow/40'
+                      : 'border-idl-tech-border bg-white/90 text-idl-graphite hover:border-idl-amber/50',
                   )}
-                  aria-label={
-                    item.type === 'video' ? 'Seleziona video' : 'Seleziona immagine'
-                  }
                 >
-                  <div className="relative size-full">
-                    {item.type === 'video' ? (
-                      <div className="flex size-full items-center justify-center bg-black/70 text-[10px] font-medium uppercase tracking-wide text-white">
-                        Video
-                      </div>
-                    ) : (
-                      <SiteImage
-                        src={item.url}
-                        alt={item.alt || ''}
-                        fill
-                        className="object-cover"
-                        sizes="15vw"
-                      />
-                    )}
-                  </div>
+                  <LightboxChevronIcon direction="left" className="size-3.5" />
                 </button>
-              )
-            })}
+                <button
+                  type="button"
+                  aria-label="Miniature successive"
+                  disabled={!canScrollThumbsNext}
+                  onClick={() => scrollThumbsByPage(1)}
+                  className={cn(
+                    'pointer-events-auto flex size-7 translate-x-1 items-center justify-center rounded-full border backdrop-blur-sm transition disabled:cursor-not-allowed disabled:opacity-30',
+                    isDesign
+                      ? 'border-white/15 bg-idl-design/80 text-idl-design-fg hover:border-idl-glow/40'
+                      : 'border-idl-tech-border bg-white/90 text-idl-graphite hover:border-idl-amber/50',
+                  )}
+                >
+                  <LightboxChevronIcon direction="right" className="size-3.5" />
+                </button>
+              </div>
+            ) : null}
+
+            <div
+              ref={thumbScrollRef}
+              className={cn(
+                'flex min-w-0 overflow-x-auto scroll-smooth',
+                isDesign ? 'gap-3' : 'gap-2.5',
+                '[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden',
+              )}
+              role="list"
+              aria-label="Miniature galleria"
+            >
+              {displayItems.map((item, idx) => {
+                const selectedThumb = showingVariantHero
+                  ? Boolean(
+                      activeUrl &&
+                        item.type === 'image' &&
+                        odooCatalogImageUrlsMatch(item.url, activeUrl),
+                    )
+                  : idx === selectedIndex
+                return (
+                  <button
+                    key={`${item.tag}-${item.url}-${idx}`}
+                    type="button"
+                    data-thumb={idx}
+                    role="listitem"
+                    onClick={() => selectThumb(idx)}
+                    onDoubleClick={() => item.type === 'image' && openLightbox(idx)}
+                    className={cn(
+                      'aspect-square shrink-0 overflow-hidden transition',
+                      isDesign
+                        ? cn(
+                            'rounded-[3px] border bg-idl-design-elevated',
+                            selectedThumb
+                              ? 'border-idl-glow/30'
+                              : 'border-white/8 hover:border-white/20',
+                          )
+                        : cn(
+                            'rounded-lg border bg-idl-tech-panel',
+                            selectedThumb
+                              ? 'border-2 border-idl-amber'
+                              : 'border-idl-tech-border',
+                          ),
+                    )}
+                    style={{
+                      flexBasis: isDesign
+                        ? 'calc((100% - 2.25rem) / 4)'
+                        : 'calc((100% - 1.875rem) / 4)',
+                    }}
+                    aria-label={
+                      item.type === 'video' ? 'Seleziona video' : 'Seleziona immagine'
+                    }
+                    aria-current={selectedThumb ? 'true' : undefined}
+                  >
+                    <div className="relative size-full">
+                      {item.type === 'video' ? (
+                        <div className="flex size-full items-center justify-center bg-black/70 text-[10px] font-medium uppercase tracking-wide text-white">
+                          Video
+                        </div>
+                      ) : (
+                        <SiteImage
+                          src={item.url}
+                          alt={item.alt || ''}
+                          fill
+                          className={thumbObjectClass(item.tag)}
+                          sizes="15vw"
+                        />
+                      )}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+
+            {displayItems.length > THUMB_PAGE_SIZE ? (
+              <div
+                className={cn(
+                  'mt-2 flex justify-center gap-1.5',
+                  isDesign ? 'text-idl-design-dim' : 'text-idl-muted',
+                )}
+                role="tablist"
+                aria-label="Pagine miniature"
+              >
+                {Array.from({ length: thumbPageCount }).map((_, page) => {
+                  const activePage = page === thumbPage
+                  return (
+                    <button
+                      key={page}
+                      type="button"
+                      role="tab"
+                      aria-selected={activePage}
+                      aria-label={`Pagina miniature ${page + 1}`}
+                      onClick={() => scrollThumbsToPage(page)}
+                      className={cn(
+                        'size-1.5 rounded-full transition',
+                        activePage
+                          ? isDesign
+                            ? 'bg-idl-glow'
+                            : 'bg-idl-amber'
+                          : isDesign
+                            ? 'bg-white/25 hover:bg-white/40'
+                            : 'bg-idl-tech-chip hover:bg-idl-tech-chip-border',
+                      )}
+                    />
+                  )
+                })}
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -376,7 +608,7 @@ export function ProductDetailGallery({
               >
                 <LightboxCloseIcon className="size-5" />
               </button>
-              {displayItems.filter((i) => i.type === 'image').length > 1 ? (
+              {displayItems.filter((i) => i.type === 'image').length > 0 ? (
                 <>
                   <button
                     type="button"

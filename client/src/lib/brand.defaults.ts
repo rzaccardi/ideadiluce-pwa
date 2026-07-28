@@ -338,7 +338,45 @@ function cardFromMeta(meta: BrandMeta, hub?: BrandListItemDTO): BrandCard {
   }
 }
 
-/** Home: solo brand presenti in API, nell’ordine degli item CMS. */
+function cardFromHub(hub: BrandListItemDTO, meta?: BrandMeta): BrandCard {
+  if (meta) return cardFromMeta(meta, hub)
+  const slug = hub.slug === 'tlb-italy' ? 'tlb' : hub.slug
+  return {
+    slug,
+    name: hub.name,
+    displayStyle: 'bold',
+    categories: ['tecnico'],
+    description: '',
+    tags: [],
+    productLines: '',
+    productCount: hub.productCount ?? 0,
+    href: brandHref(slug),
+    featured: false,
+  }
+}
+
+const HOME_BRAND_LIMIT = 12
+
+/** Brand di casa: esclusi dalla showcase home (non fanno “wow”). */
+const HOME_BRAND_EXCLUDE_SLUGS = new Set(['tlb', 'tlb-italy', 'idea-di-luce', 'ideadiluce'])
+
+function isHomeOwnBrand(hub: BrandListItemDTO): boolean {
+  const slug = hub.slug === 'tlb-italy' ? 'tlb' : hub.slug
+  if (HOME_BRAND_EXCLUDE_SLUGS.has(slug) || HOME_BRAND_EXCLUDE_SLUGS.has(hub.slug)) return true
+  const key = normalizeBrandKey(hub.name)
+  return key === 'tlb' || key === 'tlbitaly' || key === 'ideadiluce'
+}
+
+/** Home: top brand catalogo per n. prodotti, esclusi i marchi di casa. */
+export function resolveCatalogBrandCards(hubBrands: BrandListItemDTO[]): BrandCard[] {
+  return hubBrands
+    .filter((hub) => !isHomeOwnBrand(hub))
+    .map((hub) => cardFromHub(hub, findBrandMeta(hub)))
+    .sort((a, b) => b.productCount - a.productCount || a.name.localeCompare(b.name, 'it'))
+    .slice(0, HOME_BRAND_LIMIT)
+}
+
+/** Home (legacy CMS): solo brand presenti in API, nell’ordine degli item CMS. */
 export function resolveHomeBrandCards(
   items: ReadonlyArray<string | { name: string; href?: string }>,
   hubBrands: BrandListItemDTO[],
@@ -358,22 +396,7 @@ export function resolveHomeBrandCards(
 
     if (!hub) return []
 
-    const meta = findBrandMeta(hub) ?? fromMeta
-    const card = meta
-      ? cardFromMeta(meta, hub)
-      : {
-          slug: hub.slug,
-          name: hub.name,
-          displayStyle: 'bold' as BrandDisplayStyle,
-          categories: ['tecnico'] as BrandCategory[],
-          description: '',
-          tags: [],
-          productLines: '',
-          productCount: hub.productCount ?? 0,
-          href: brandHref(hub.slug),
-          featured: false,
-        }
-
+    const card = cardFromHub(hub, findBrandMeta(hub) ?? fromMeta)
     return [{ ...card, href: customHref ?? card.href }]
   })
 }

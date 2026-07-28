@@ -9,7 +9,7 @@ import { HomeView } from '@/components/site/home/HomeView'
 import { useLocale } from '@/context/locale-context'
 import { ToastOnError } from '@/components/ToastFeedback'
 import { isHomePageContent } from '@/lib/site-page-keys'
-import { resolveHomeBrandCards } from '@/lib/brand.defaults'
+import { resolveCatalogBrandCards } from '@/lib/brand.defaults'
 import type { BrandListItemDTO, HomePageContent } from '@/types/site-content'
 import type { HomeProductSliderDTO } from '@/types/home-product-sliders'
 import type { ProductCardDTO } from '@/types/dto'
@@ -26,7 +26,13 @@ type Props = {
   initialContent?: HomePageContent | null
   initialProductSliders?: HomeProductSliderDTO[] | null
   initialBrands?: BrandListItemDTO[]
-  initialFeaturedGuides?: Array<{ category: string; title: string; meta: string; href: string }>
+  initialFeaturedGuides?: Array<{
+    category: string
+    title: string
+    meta: string
+    href: string
+    imageUrl?: string
+  }>
 }
 
 export function HomePage({
@@ -43,13 +49,14 @@ export function HomePage({
   const [queryDesignProducts, setQueryDesignProducts] = useState<ProductCardDTO[]>([])
   const [queryTechnicalProducts, setQueryTechnicalProducts] = useState<ProductCardDTO[]>([])
   const [featuredGuides, setFeaturedGuides] = useState<
-    Array<{ category: string; title: string; meta: string; href: string }>
+    Array<{ category: string; title: string; meta: string; href: string; imageUrl?: string }>
   >(
     initialFeaturedGuides.map((guide) => ({
       category: guide.category,
       title: guide.title,
       meta: guide.meta,
       href: guide.href,
+      imageUrl: guide.imageUrl,
     })),
   )
   const [hubBrands, setHubBrands] = useState<BrandListItemDTO[]>(initialBrands)
@@ -74,10 +81,7 @@ export function HomePage({
 
   const extraSliders = useMemo(() => extraHomeProductSliders(productSliders), [productSliders])
 
-  const homeBrands = useMemo(() => {
-    if (!content) return []
-    return resolveHomeBrandCards(content.brands.items, hubBrands)
-  }, [content, hubBrands])
+  const homeBrands = useMemo(() => resolveCatalogBrandCards(hubBrands), [hubBrands])
 
   const viewContent = useMemo(() => {
     if (!content) return null
@@ -86,11 +90,12 @@ export function HomePage({
       ...content,
       guides: {
         ...content.guides,
-        items: featuredGuides.map((guide) => ({
+        items: featuredGuides.slice(0, 4).map((guide) => ({
           category: guide.category,
           title: guide.title,
           meta: guide.meta,
           href: guide.href,
+          imageUrl: guide.imageUrl,
         })),
       },
     }
@@ -115,6 +120,7 @@ export function HomePage({
               title: guide.title,
               meta: guide.meta,
               href: guide.href,
+              imageUrl: guide.imageUrl,
             })),
           ),
         )

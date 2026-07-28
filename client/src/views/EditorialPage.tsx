@@ -20,7 +20,7 @@ type EditorialKey = Extract<SitePageKey, 'attacco' | 'ambienti' | 'brand' | 'gui
 
 function mergeGuideHubContent(
   cms: EditorialPageContent,
-  indexed: Array<{ title: string; href: string; meta: string; category: string }>,
+  indexed: Array<{ title: string; href: string; meta: string; category: string; imageUrl?: string }>,
 ): EditorialPageContent {
   if (indexed.length === 0) return { ...cms, items: [...cms.items] }
   return {
@@ -30,6 +30,7 @@ function mergeGuideHubContent(
       href: guide.href,
       meta: guide.meta,
       category: guide.category,
+      imageUrl: guide.imageUrl,
     })),
   }
 }
@@ -88,7 +89,7 @@ export function EditorialPage({
   const raw = snap.pages[pageKey] ?? initialContent
   const [hubBrands, setHubBrands] = useState<BrandListItemDTO[]>([])
   const [indexedGuides, setIndexedGuides] = useState<
-    Array<{ title: string; href: string; meta: string; category: string }>
+    Array<{ title: string; href: string; meta: string; category: string; imageUrl?: string }>
   >([])
 
   useLayoutEffect(() => {
