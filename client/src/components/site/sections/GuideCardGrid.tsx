@@ -1,5 +1,6 @@
 import { Link } from '@/lib/navigation'
 import { HoverLift, Stagger, StaggerItem } from '@/components/motion'
+import { BrandWordmark } from '@/components/site/primitives'
 import { SiteHeading } from '@/components/site/SiteHeading'
 import { SiteImage } from '@/components/site/SiteImage'
 import { cn } from '@/utils/cn'
@@ -18,6 +19,29 @@ type Props = {
   lp: LocalePathFn
   variant?: 'home' | 'editorial'
   stagger?: number
+}
+
+export function GuideCardMedia({ imageUrl, sizes }: { imageUrl?: string; sizes: string }) {
+  return (
+    <div className="relative aspect-[16/10] overflow-hidden bg-idl-cream">
+      {imageUrl ? (
+        <SiteImage
+          src={imageUrl}
+          alt=""
+          fill
+          sizes={sizes}
+          className="object-cover transition duration-500 group-hover:scale-[1.03]"
+        />
+      ) : (
+        <div
+          className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-idl-cream via-[#efe9df] to-[#e5dfd4]"
+          aria-hidden
+        >
+          <BrandWordmark className="h-5 opacity-45 sm:h-6" />
+        </div>
+      )}
+    </div>
+  )
 }
 
 export function GuideCardGrid({ items, lp, variant = 'home', stagger = 0.07 }: Props) {
@@ -48,26 +72,16 @@ export function GuideCardGrid({ items, lp, variant = 'home', stagger = 0.07 }: P
           <HoverLift>
             <Link
               to={lp(guide.href)}
-              className={cn(
-                'group flex h-full flex-col overflow-hidden rounded-lg border border-idl-path-design-border bg-white transition hover:border-idl-brass dark:bg-idl-tech-panel',
-                !guide.imageUrl && (isHome ? 'min-h-[210px]' : 'min-h-[180px]'),
-              )}
+              className="group flex h-full flex-col overflow-hidden rounded-lg border border-idl-path-design-border bg-white transition hover:border-idl-brass dark:bg-idl-tech-panel"
             >
-              {guide.imageUrl ? (
-                <div className="relative aspect-[16/10] overflow-hidden bg-idl-cream">
-                  <SiteImage
-                    src={guide.imageUrl}
-                    alt=""
-                    fill
-                    sizes={
-                      isHome
-                        ? '(max-width: 640px) 78vw, (max-width: 1024px) 50vw, 25vw'
-                        : '(max-width: 640px) 100vw, 50vw'
-                    }
-                    className="object-cover transition duration-500 group-hover:scale-[1.03]"
-                  />
-                </div>
-              ) : null}
+              <GuideCardMedia
+                imageUrl={guide.imageUrl}
+                sizes={
+                  isHome
+                    ? '(max-width: 640px) 78vw, (max-width: 1024px) 50vw, 25vw'
+                    : '(max-width: 640px) 100vw, 50vw'
+                }
+              />
               <div className="flex flex-1 flex-col p-5">
                 {guide.category ? (
                   <div className="font-mono text-[10.5px] tracking-widest text-idl-brass-light uppercase">

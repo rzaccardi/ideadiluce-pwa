@@ -4,10 +4,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from '@/lib/navigation'
 import { HoverLift } from '@/components/motion'
 import { SiteHeading } from '@/components/site/SiteHeading'
-import { SiteImage } from '@/components/site/SiteImage'
 import { useI18n } from '@/hooks/use-i18n'
 import { cn } from '@/utils/cn'
-import type { GuideCardItem } from './GuideCardGrid'
+import { GuideCardMedia, type GuideCardItem } from './GuideCardGrid'
 import type { LocalePathFn } from './types'
 
 type Props = {
@@ -124,22 +123,12 @@ export function GuideCardSlider({ items, lp, className, loop = false }: Props) {
             <HoverLift>
               <Link
                 to={lp(guide.href)}
-                className={cn(
-                  'group flex h-full flex-col overflow-hidden rounded-lg border border-idl-path-design-border bg-white transition hover:border-idl-brass dark:bg-idl-tech-panel',
-                  !guide.imageUrl && 'min-h-[180px]',
-                )}
+                className="group flex h-full flex-col overflow-hidden rounded-lg border border-idl-path-design-border bg-white transition hover:border-idl-brass dark:bg-idl-tech-panel"
               >
-                {guide.imageUrl ? (
-                  <div className="relative aspect-[16/10] overflow-hidden bg-idl-cream">
-                    <SiteImage
-                      src={guide.imageUrl}
-                      alt=""
-                      fill
-                      sizes="(max-width: 640px) 78vw, 17.5rem"
-                      className="object-cover transition duration-500 group-hover:scale-[1.03]"
-                    />
-                  </div>
-                ) : null}
+                <GuideCardMedia
+                  imageUrl={guide.imageUrl}
+                  sizes="(max-width: 640px) 78vw, 17.5rem"
+                />
                 <div className="flex flex-1 flex-col p-5">
                   {guide.category ? (
                     <div className="font-mono text-[10.5px] tracking-widest text-idl-brass-light uppercase">
