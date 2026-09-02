@@ -83,7 +83,7 @@ export function ProductGallery({ images, alt, activeUrl }: Props) {
           onClick={() => openLightbox(current)}
           aria-label="Ingrandisci immagine prodotto"
         >
-          <img src={current} alt={alt} className="h-full w-full object-cover" />
+          <img src={current} alt={alt} className="h-full w-full object-contain p-4" />
         </button>
         {base.length > 1 ? (
           <ul className="flex flex-wrap gap-2">
@@ -99,7 +99,7 @@ export function ProductGallery({ images, alt, activeUrl }: Props) {
                   )}
                   aria-label="Seleziona immagine"
                 >
-                  <img src={url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                  <img src={url} alt="" loading="lazy" className="h-full w-full object-contain p-1" />
                 </button>
               </li>
             ))}

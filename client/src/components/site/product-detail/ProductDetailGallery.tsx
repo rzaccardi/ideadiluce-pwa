@@ -12,6 +12,7 @@ import {
   withOdooCatalogImageSize,
 } from '@/lib/odoo-catalog/media'
 import { isMeasureGalleryTag } from '@/lib/product-specs-parse'
+import { productGalleryObjectFitClass } from '@/lib/product-image-fit'
 
 function LightboxCloseIcon({ className }: { className?: string }) {
   return (
@@ -345,11 +346,16 @@ export function ProductDetailGallery({
   const currentAlt = current?.alt?.trim() || alt
   const embedSrc =
     current?.type === 'video' && current.url ? videoEmbedSrc(current.url) : null
-  /** Packshot/dettaglio: contain (niente crop). Ambiente: cover per riempire. */
-  const imageObjectClass =
-    isDesign && (current?.tag || 'foto') !== 'ambiente' ? 'object-contain' : 'object-cover'
-  const thumbObjectClass = (tag: string | undefined) =>
-    isDesign && (tag || 'foto') !== 'ambiente' ? 'object-contain' : 'object-cover'
+  /** Packshot/scheda: contain (niente crop). Ambiente: cover per riempire. */
+  const imageFitClass = productGalleryObjectFitClass(current?.tag)
+  const imageObjectClass = cn(
+    imageFitClass,
+    imageFitClass === 'object-contain' && !isDesign && 'p-4 sm:p-7',
+  )
+  const thumbObjectClass = (tag: string | undefined) => {
+    const fit = productGalleryObjectFitClass(tag)
+    return cn(fit, fit === 'object-contain' && !isDesign && 'p-1.5')
+  }
 
   return (
     <>

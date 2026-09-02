@@ -10,6 +10,7 @@ import { SectionContainer } from '@/components/site/primitives'
 import { SiteImage } from '@/components/site/SiteImage'
 import { BankTransferInstructionsTable } from '@/components/checkout/BankTransferInstructions'
 import type { MessageKey } from '@/i18n/messages'
+import { productCardObjectFitClass } from '@/lib/product-image-fit'
 import { cn } from '@/utils/cn'
 
 type Props = {
@@ -231,7 +232,7 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
                     <li key={`${line.productRef}-${line.variantRef ?? ''}`} className="flex gap-3.5 py-4 first:pt-0 last:pb-0">
                       <div className="relative size-[66px] shrink-0 overflow-hidden rounded-[9px] bg-[#f7f8fa]">
                         {line.imageUrl ? (
-                          <SiteImage src={line.imageUrl} alt="" fill className="object-cover" sizes="66px" />
+                          <SiteImage src={line.imageUrl} alt="" fill className="object-contain p-1" sizes="66px" />
                         ) : null}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -377,25 +378,34 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
               </Link>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {recommendations.slice(0, 4).map((product) => (
-                <Link
-                  key={product.slug}
-                  to={lp(`/prodotto/${product.slug}`)}
-                  className="rounded-[10px] border border-[#e7eaee] p-3.5 transition hover:border-[#cfd4db] hover:shadow-[0_6px_18px_rgba(0,0,0,0.05)]"
-                >
-                  <div className="relative mb-3 aspect-square overflow-hidden rounded-md bg-[#f7f8fa]">
-                    {product.imageUrl ? (
-                      <SiteImage src={product.imageUrl} alt="" fill className="object-cover" sizes="200px" />
-                    ) : null}
-                  </div>
-                  <div className="line-clamp-2 min-h-[34px] text-[13px] font-semibold leading-snug text-idl-graphite">
-                    {product.name}
-                  </div>
-                  <div className="mt-2.5 text-[15px] font-extrabold">
-                    {formatMoney(product.priceCents, product.currency)}
-                  </div>
-                </Link>
-              ))}
+              {recommendations.slice(0, 4).map((product) => {
+                const imageFitClass = productCardObjectFitClass(product)
+                return (
+                  <Link
+                    key={product.slug}
+                    to={lp(`/prodotto/${product.slug}`)}
+                    className="rounded-[10px] border border-[#e7eaee] p-3.5 transition hover:border-[#cfd4db] hover:shadow-[0_6px_18px_rgba(0,0,0,0.05)]"
+                  >
+                    <div className="relative mb-3 aspect-square overflow-hidden rounded-md bg-[#f7f8fa]">
+                      {product.imageUrl ? (
+                        <SiteImage
+                          src={product.imageUrl}
+                          alt=""
+                          fill
+                          className={cn(imageFitClass, imageFitClass === 'object-contain' && 'p-2.5')}
+                          sizes="200px"
+                        />
+                      ) : null}
+                    </div>
+                    <div className="line-clamp-2 min-h-[34px] text-[13px] font-semibold leading-snug text-idl-graphite">
+                      {product.name}
+                    </div>
+                    <div className="mt-2.5 text-[15px] font-extrabold">
+                      {formatMoney(product.priceCents, product.currency)}
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
           </SectionContainer>
         </section>

@@ -29,7 +29,7 @@ export function AccountDcOrderLines({
         >
           <div className="relative size-[66px] shrink-0 overflow-hidden rounded-[9px] bg-idl-tech-panel">
             {line.imageUrl ? (
-              <SiteImage src={line.imageUrl} alt="" fill className="object-cover" sizes="66px" />
+              <SiteImage src={line.imageUrl} alt="" fill className="object-contain p-1" sizes="66px" />
             ) : null}
           </div>
           <div className="min-w-0 flex-1">

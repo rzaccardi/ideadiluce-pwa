@@ -6,6 +6,7 @@ import { suggestionOptionId } from '@/lib/catalog-search-palette'
 import { formatMoney } from '@/lib/format'
 import { cn } from '@/utils/cn'
 import type { CatalogSearchSuggestion, CatalogSearchSuggestionKind } from '@/lib/catalog-search-suggestions'
+import { productSearchThumbObjectFitClass } from '@/lib/product-image-fit'
 
 export const CATALOG_SEARCH_GROUP_LABEL_KEYS: Record<
   CatalogSearchSuggestionKind,
@@ -126,6 +127,10 @@ export function CatalogSearchSuggestionRow({
   const isProduct = item.kind === 'product'
   const product = item.product
   const optionId = listId ? suggestionOptionId(listId, item.id) : undefined
+  const productThumbFit = productSearchThumbObjectFitClass({
+    specTags: product?.specTags,
+    label: item.label,
+  })
 
   if (variant === 'palette' && isProduct) {
     return (
@@ -147,7 +152,13 @@ export function CatalogSearchSuggestionRow({
       >
         <div className="relative size-12 shrink-0 overflow-hidden rounded-lg border border-idl-border bg-idl-cream">
           {product?.imageUrl ? (
-            <Image src={product.imageUrl} alt="" fill sizes="48px" className="object-cover" />
+            <Image
+              src={product.imageUrl}
+              alt=""
+              fill
+              sizes="48px"
+              className={cn(productThumbFit, productThumbFit === 'object-contain' && 'p-1')}
+            />
           ) : (
             <div className="flex size-full items-center justify-center text-[10px] font-mono text-idl-muted">
               IDL

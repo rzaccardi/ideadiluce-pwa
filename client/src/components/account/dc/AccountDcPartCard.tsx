@@ -67,7 +67,7 @@ export function AccountDcPartCard({
       <Link to={localize(`/prodotto/${product.slug}`)} className="block">
         <div className="relative mb-3 aspect-square overflow-hidden rounded-md bg-idl-tech-panel">
           {product.imageUrl ? (
-            <SiteImage src={product.imageUrl} alt="" fill className="object-cover" sizes="200px" />
+            <SiteImage src={product.imageUrl} alt="" fill className="object-contain p-2.5" sizes="200px" />
           ) : null}
         </div>
       </Link>

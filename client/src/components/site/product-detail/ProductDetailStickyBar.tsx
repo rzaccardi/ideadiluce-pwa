@@ -68,7 +68,15 @@ export function ProductDetailStickyBar({
               isDesign ? 'border-idl-path-design-border bg-idl-cream' : 'border-idl-tech-border bg-idl-tech-panel',
             )}
           >
-            {imageUrl ? <SiteImage src={imageUrl} alt="" fill className="object-cover" sizes="40px" /> : null}
+            {imageUrl ? (
+              <SiteImage
+                src={imageUrl}
+                alt=""
+                fill
+                className={isDesign ? 'object-cover' : 'object-contain p-1'}
+                sizes="40px"
+              />
+            ) : null}
           </div>
           <div className="min-w-0">
             <div

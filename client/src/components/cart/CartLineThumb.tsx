@@ -20,7 +20,7 @@ export function CartLineThumb({ imageUrl, name, size = 'md', className }: Props)
       <img
         src={imageUrl}
         alt=""
-        className={cn('shrink-0 border border-idl-border/60 object-cover', dim, className)}
+        className={cn('shrink-0 border border-idl-border/60 object-contain p-0.5', dim, className)}
       />
     )
   }

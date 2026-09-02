@@ -21,6 +21,7 @@ import { formatPriceDisplayModeLabel } from '@/lib/price-display'
 import { SiteImage } from '@/components/site/SiteImage'
 import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMeta'
 import { ProductBrandMark } from '@/components/product/ProductBrandMark'
+import { productCardObjectFitClass } from '@/lib/product-image-fit'
 import { cn } from '@/utils/cn'
 
 type Props = {
@@ -87,6 +88,7 @@ export function ProductCard({ product, className }: Props) {
   }
 
   const imageAlt = product.name
+  const imageFitClass = productCardObjectFitClass(product)
 
   return (
     <article
@@ -103,7 +105,11 @@ export function ProductCard({ product, className }: Props) {
               alt={imageAlt}
               fill
               sizes="(max-width: 640px) 100vw, 320px"
-              className={cn('object-cover', outOfStock && 'opacity-75 saturate-50')}
+              className={cn(
+                imageFitClass,
+                imageFitClass === 'object-contain' && 'p-3',
+                outOfStock && 'opacity-75 saturate-50',
+              )}
             />
           ) : (
             <div className="flex h-full items-center justify-center text-xs text-idl-placeholder">

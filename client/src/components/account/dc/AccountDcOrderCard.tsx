@@ -76,7 +76,7 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
       <div className="flex flex-col gap-4 rounded-[11px] border border-idl-tech-border bg-idl-tech-panel p-4 sm:flex-row sm:items-center">
         {visibleLines[0]?.imageUrl ? (
           <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-idl-tech-panel">
-            <SiteImage src={visibleLines[0].imageUrl} alt="" fill className="object-cover" sizes="56px" />
+            <SiteImage src={visibleLines[0].imageUrl} alt="" fill className="object-contain p-1" sizes="56px" />
           </div>
         ) : (
           <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-idl-tech-panel text-xs font-bold text-idl-muted">
@@ -151,7 +151,7 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
               className="relative size-[46px] overflow-hidden rounded-[7px] bg-idl-tech-panel"
             >
               {line.imageUrl ? (
-                <SiteImage src={line.imageUrl} alt="" fill className="object-cover" sizes="46px" />
+                <SiteImage src={line.imageUrl} alt="" fill className="object-contain p-0.5" sizes="46px" />
               ) : null}
             </div>
           ))}

@@ -10,6 +10,7 @@ import { removeWishlistItem } from '@/features/wishlist'
 import { formatMoney } from '@/lib/format'
 import { Button } from '@/components/Button'
 import { useI18n } from '@/hooks/use-i18n'
+import { productCardObjectFitClass } from '@/lib/product-image-fit'
 import { cn } from '@/utils/cn'
 
 type Props = {
@@ -85,6 +86,8 @@ export function WishlistItemCard({
     )
   }
 
+  const imageFitClass = productCardObjectFitClass(product)
+
   return (
     <article
       className={cn(
@@ -98,7 +101,11 @@ export function WishlistItemCard({
             <img
               src={product.imageUrl}
               alt=""
-              className="h-full w-full object-cover transition hover:scale-[1.02]"
+              className={cn(
+                'h-full w-full transition hover:scale-[1.02]',
+                imageFitClass,
+                imageFitClass === 'object-contain' && 'p-3',
+              )}
             />
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-idl-placeholder">

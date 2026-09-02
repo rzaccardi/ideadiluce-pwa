@@ -242,7 +242,7 @@ export function PurchaseErrorPageView({ order }: Props) {
                     >
                       <div className="relative size-[54px] shrink-0 overflow-hidden rounded-lg bg-[#f7f8fa]">
                         {line.imageUrl ? (
-                          <SiteImage src={line.imageUrl} alt="" fill className="object-cover" sizes="54px" />
+                          <SiteImage src={line.imageUrl} alt="" fill className="object-contain p-1" sizes="54px" />
                         ) : null}
                       </div>
                       <div className="min-w-0 flex-1">

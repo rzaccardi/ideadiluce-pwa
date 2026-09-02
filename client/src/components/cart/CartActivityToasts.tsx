@@ -59,7 +59,7 @@ export function CartActivityToasts({ className }: { className?: string }) {
               <img
                 src={toast.imageUrl}
                 alt=""
-                className="h-12 w-12 shrink-0 rounded-lg object-cover ring-1 ring-zinc-100"
+                className="h-12 w-12 shrink-0 rounded-lg object-contain p-0.5 ring-1 ring-zinc-100"
               />
             ) : (
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-idl-cream text-xs text-idl-placeholder">

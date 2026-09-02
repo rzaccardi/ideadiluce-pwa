@@ -101,7 +101,13 @@ export const TechnicalCatalogProductCard = memo(function TechnicalCatalogProduct
           </div>
           <div className="relative mb-3 aspect-square overflow-hidden rounded bg-idl-tech-panel">
             {product.imageUrl ? (
-              <SiteImage src={product.imageUrl} alt="" fill className="object-cover" sizes="25vw" />
+              <SiteImage
+                src={product.imageUrl}
+                alt=""
+                fill
+                className="object-contain p-2.5"
+                sizes="25vw"
+              />
             ) : null}
           </div>
           {product.brand ? (
