@@ -41,7 +41,7 @@ function TabLink({
         ui.interactive,
         'shrink-0 whitespace-nowrap rounded-[30px] px-[18px] py-2.5 text-[13.5px] font-bold',
         active
-          ? 'bg-idl-white text-idl-ink shadow-sm'
+          ? 'bg-idl-white text-idl-ink shadow-sm dark:bg-white dark:text-[#0c0c0d]'
           : 'text-idl-graphite-2 hover:bg-idl-tech-panel/60 hover:text-idl-ink',
       )}
     >

@@ -33,7 +33,7 @@ export function AmbientiRoomsSection({ items, lp }: Props) {
   }, [activeGroup, items])
 
   return (
-    <section id="ambienti" className="bg-white">
+    <section id="ambienti" className="bg-white dark:bg-idl-paper">
       <SectionContainer className="py-10 sm:py-14">
         <div className="mb-2 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <h2 className="font-serif text-[26px] font-medium text-idl-ink sm:text-[30px]">Scegli l&apos;ambiente</h2>
@@ -81,7 +81,7 @@ export function AmbientiRoomsSection({ items, lp }: Props) {
               return (
                 <article
                   key={item.href}
-                  className="group overflow-hidden rounded-xl border border-idl-path-design-border bg-white transition hover:border-idl-brass hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
+                  className="group overflow-hidden rounded-xl border border-idl-path-design-border bg-white transition hover:border-idl-brass hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:bg-idl-tech-panel"
                 >
                   <Link to={lp(item.href)} className="block">
                     {item.imageUrl ? (

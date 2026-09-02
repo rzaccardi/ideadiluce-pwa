@@ -67,7 +67,7 @@ function ChipGroup<T extends string>({
                 ? accent
                   ? 'bg-idl-amber text-white dark:text-idl-design'
                   : 'bg-idl-ink text-white'
-                : 'border border-[#e3e6ea] bg-white text-idl-graphite hover:border-idl-amber/40',
+                : 'border border-idl-border bg-idl-cream text-idl-graphite hover:border-idl-amber/40',
             )}
           >
             {option.label}
@@ -162,12 +162,12 @@ export function ProductNotFoundLeadForm({ title, description, className }: Props
   return (
     <div
       className={cn(
-        'rounded-2xl border border-idl-tech-border bg-white p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:p-8',
+        'rounded-2xl border border-idl-border bg-idl-paper p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:p-8',
         className,
       )}
     >
       <div className="mb-1 flex items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-[#e4e4e7] bg-[#f4f5f7] text-idl-amber">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-idl-border bg-idl-cream text-idl-amber">
           <CameraIcon />
         </span>
         <h2 className="text-xl font-extrabold tracking-tight text-idl-ink">
@@ -206,7 +206,7 @@ export function ProductNotFoundLeadForm({ title, description, className }: Props
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t('productNotFound.namePlaceholder')}
-              className={cn(ui.input, 'mt-1.5 border-[#e3e6ea] bg-[#f7f8fa]')}
+              className={cn(ui.input, 'mt-1.5 dark:bg-white/10')}
               autoComplete="name"
             />
           </label>
@@ -218,7 +218,7 @@ export function ProductNotFoundLeadForm({ title, description, className }: Props
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={t('productNotFound.emailPlaceholder')}
-              className={cn(ui.input, 'mt-1.5 border-[#e3e6ea] bg-[#f7f8fa]')}
+              className={cn(ui.input, 'mt-1.5 dark:bg-white/10')}
               autoComplete="email"
             />
           </label>
@@ -228,7 +228,7 @@ export function ProductNotFoundLeadForm({ title, description, className }: Props
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder={t('productNotFound.phonePlaceholder')}
-              className={cn(ui.input, 'mt-1.5 border-[#e3e6ea] bg-[#f7f8fa]')}
+              className={cn(ui.input, 'mt-1.5 dark:bg-white/10')}
               autoComplete="tel"
             />
           </label>
@@ -238,7 +238,7 @@ export function ProductNotFoundLeadForm({ title, description, className }: Props
               value={productCode}
               onChange={(e) => setProductCode(e.target.value)}
               placeholder={t('productNotFound.codePlaceholder')}
-              className={cn(ui.input, 'mt-1.5 border-[#e3e6ea] bg-[#f7f8fa] font-mono text-sm')}
+              className={cn(ui.input, 'mt-1.5 font-mono text-sm dark:bg-white/10')}
             />
           </label>
           <label className="block text-sm">
@@ -247,7 +247,7 @@ export function ProductNotFoundLeadForm({ title, description, className }: Props
               value={brand}
               onChange={(e) => setBrand(e.target.value)}
               placeholder={t('productNotFound.brandPlaceholder')}
-              className={cn(ui.input, 'mt-1.5 border-[#e3e6ea] bg-[#f7f8fa]')}
+              className={cn(ui.input, 'mt-1.5 dark:bg-white/10')}
             />
           </label>
           <label className="block text-sm">
@@ -257,7 +257,7 @@ export function ProductNotFoundLeadForm({ title, description, className }: Props
               min={1}
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              className={cn(ui.input, 'mt-1.5 border-[#e3e6ea] bg-[#f7f8fa]')}
+              className={cn(ui.input, 'mt-1.5 dark:bg-white/10')}
             />
           </label>
         </div>
@@ -279,7 +279,7 @@ export function ProductNotFoundLeadForm({ title, description, className }: Props
             onChange={(e) => setMessage(e.target.value)}
             rows={4}
             placeholder={t('productNotFound.messagePlaceholder')}
-            className={cn(ui.input, 'mt-1.5 min-h-[88px] resize-y border-[#e3e6ea] bg-[#f7f8fa]')}
+            className={cn(ui.input, 'mt-1.5 min-h-[88px] resize-y dark:bg-white/10')}
           />
         </label>
 

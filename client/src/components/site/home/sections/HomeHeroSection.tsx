@@ -51,7 +51,7 @@ export function HomeHeroSection({ design, technical, lp }: Props) {
         <p className="mt-4 text-[16.5px] leading-relaxed text-idl-muted">{technical.description}</p>
         <Link
           to={lp(technical.ctaHref)}
-          className="mt-7 inline-flex items-center gap-2 rounded-md bg-idl-amber px-6 py-3.5 text-[15px] font-bold text-white dark:text-idl-design"
+          className="mt-7 inline-flex items-center gap-2 rounded-md bg-idl-amber px-6 py-3.5 text-[15px] font-bold text-white dark:bg-white dark:text-[#0c0c0d]"
         >
           {technical.ctaLabel}
         </Link>

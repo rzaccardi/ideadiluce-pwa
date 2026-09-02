@@ -209,6 +209,12 @@
     --color-idl-cta-amber-hover: #e09420;
     --color-idl-cta-glow-hover: #f7c87a;
 
+    --idl-btn-primary-bg: #ffffff;
+    --idl-btn-primary-fg: #0c0c0d;
+    --idl-btn-primary-hover: #e4e4e7;
+    --idl-btn-technical-bg: #ffffff;
+    --idl-btn-technical-hover: #e4e4e7;
+
     --shadow-idl-toast: var(--shadow-idl-toast-dark);
   }
 }
@@ -242,6 +248,12 @@ html[data-theme='dark'] {
   --color-idl-cta-ink-hover: #3a3f4a;
   --color-idl-cta-amber-hover: #e09420;
   --color-idl-cta-glow-hover: #f7c87a;
+
+  --idl-btn-primary-bg: #ffffff;
+  --idl-btn-primary-fg: #0c0c0d;
+  --idl-btn-primary-hover: #e4e4e7;
+  --idl-btn-technical-bg: #ffffff;
+  --idl-btn-technical-hover: #e4e4e7;
 
   --shadow-idl-toast: var(--shadow-idl-toast-dark);
 }

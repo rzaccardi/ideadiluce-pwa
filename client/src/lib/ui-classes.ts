@@ -5,8 +5,10 @@ export const ui = {
   /** Button testuali in nav/menu: reset browser + hover come i link. */
   navButton:
     'cursor-pointer border-0 bg-transparent p-0 font-inherit text-inherit transition-colors duration-150',
-  ctaInk: 'cursor-pointer transition-colors duration-150 hover:bg-idl-cta-ink-hover',
-  ctaAmber: 'cursor-pointer transition-colors duration-150 hover:bg-idl-cta-amber-hover',
+  ctaInk:
+    'cursor-pointer transition-colors duration-150 hover:bg-idl-cta-ink-hover dark:bg-white dark:text-[#0c0c0d] dark:hover:bg-neutral-200',
+  ctaAmber:
+    'cursor-pointer transition-colors duration-150 hover:bg-idl-cta-amber-hover dark:bg-white dark:text-[#0c0c0d] dark:hover:bg-neutral-200',
   ctaGlow: 'cursor-pointer transition-colors duration-150 hover:bg-idl-cta-glow-hover',
   input:
     'w-full rounded-lg border border-idl-border bg-idl-tech-panel px-3 py-2 text-idl-graphite outline-none transition placeholder:text-idl-placeholder focus:border-idl-brass focus:ring-2 focus:ring-idl-brass/20',

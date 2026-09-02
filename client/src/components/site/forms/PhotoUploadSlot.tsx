@@ -25,7 +25,7 @@ export function PhotoUploadSlot({ id, label, hint, file, previewUrl, onPick }: P
         onClick={() => inputRef.current?.click()}
         className={cn(
           'relative flex aspect-[3/2] w-full flex-col items-center justify-center overflow-hidden rounded-[10px]',
-          'border-[1.5px] border-dashed border-[#d4d9df] bg-[#fafbfc] text-center transition hover:border-idl-amber/50',
+          'border-[1.5px] border-dashed border-idl-border bg-idl-cream text-center transition hover:border-idl-amber/50 dark:bg-white/10',
         )}
       >
         {previewUrl ? (
@@ -35,7 +35,7 @@ export function PhotoUploadSlot({ id, label, hint, file, previewUrl, onPick }: P
           <span className="px-4 text-[13px] leading-snug text-idl-muted">{hint}</span>
         )}
         {file ? (
-          <span className="absolute bottom-2 rounded-md bg-idl-ink/75 px-2 py-1 text-[11px] font-semibold text-white">
+          <span className="absolute bottom-2 rounded-md bg-black/70 px-2 py-1 text-[11px] font-semibold text-white">
             {file.name}
           </span>
         ) : null}

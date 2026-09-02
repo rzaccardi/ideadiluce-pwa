@@ -31,7 +31,7 @@ export function SocketTileCardSkeleton() {
 
 export function RoomCardSkeleton() {
   return (
-    <div className="overflow-hidden rounded-lg border border-idl-border bg-white">
+    <div className="overflow-hidden rounded-lg border border-idl-border bg-white dark:bg-idl-tech-panel">
       <Skeleton className="aspect-[4/3] w-full rounded-none" />
       <div className="p-5">
         <Skeleton className="h-6 w-3/4" />

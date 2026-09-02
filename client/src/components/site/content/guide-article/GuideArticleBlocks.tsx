@@ -121,7 +121,7 @@ function GuideBulletsBlock({ block }: { block: Extract<ContentBlock, { kind: 'bu
   return (
     <GuideBodySection>
       {block.title ? <h2 className="mb-4 font-serif text-[26px] font-medium text-idl-ink">{block.title}</h2> : null}
-      <div className="rounded-[10px] border border-[#e4e4e7] bg-white px-5 py-3 sm:px-[22px]">
+      <div className="rounded-[10px] border border-[#e4e4e7] bg-white px-5 py-3 sm:px-[22px] dark:bg-idl-tech-panel">
         <ul className="divide-y divide-[#e4e4e7]">
           {block.items.map((item) => (
             <li key={item} className="py-3 text-[15px] leading-relaxed text-[#3f3a32] first:pt-2 last:pb-2">
@@ -140,7 +140,7 @@ function GuideFeaturesBlock({ block }: { block: Extract<ContentBlock, { kind: 'f
       {block.title ? <h2 className="mb-4 font-serif text-[26px] font-medium text-idl-ink">{block.title}</h2> : null}
       <div className="grid gap-4 sm:grid-cols-2">
         {block.items.map((item) => (
-          <div key={item.title} className="rounded-lg border border-[#e4e4e7] bg-white p-5">
+          <div key={item.title} className="rounded-lg border border-[#e4e4e7] bg-white p-5 dark:bg-idl-tech-panel">
             {item.num ? <div className="font-mono text-[11px] text-idl-amber">{item.num}</div> : null}
             <div className="font-serif text-lg text-idl-ink">{item.title}</div>
             <p className="mt-1.5 text-sm leading-relaxed text-idl-muted">{item.description}</p>
@@ -157,7 +157,7 @@ function GuideStepsBlock({ block }: { block: Extract<ContentBlock, { kind: 'step
       {block.title ? <h2 className="mb-4 font-serif text-[26px] font-medium text-idl-ink">{block.title}</h2> : null}
       <ol className="space-y-4">
         {block.items.map((step, index) => (
-          <li key={step.title} className="flex gap-3 rounded-lg border border-[#e4e4e7] bg-white p-4">
+          <li key={step.title} className="flex gap-3 rounded-lg border border-[#e4e4e7] bg-white p-4 dark:bg-idl-tech-panel">
             <span className="font-mono text-sm font-bold text-idl-brass">{String(index + 1).padStart(2, '0')}</span>
             <div>
               <div className="font-semibold text-idl-ink">{step.title}</div>
@@ -254,7 +254,7 @@ export function GuideConversionStrip({
           {block.secondaryLabel && block.secondaryHref ? (
             <Link
               to={lp(block.secondaryHref)}
-              className="inline-flex rounded-md border border-[#e4e4e7] bg-white px-5 py-3 text-sm font-semibold text-idl-graphite no-underline transition hover:border-idl-brass"
+              className="inline-flex rounded-md border border-[#e4e4e7] bg-white px-5 py-3 text-sm font-semibold text-idl-graphite no-underline transition hover:border-idl-brass dark:bg-idl-tech-panel"
             >
               {block.secondaryLabel}
             </Link>

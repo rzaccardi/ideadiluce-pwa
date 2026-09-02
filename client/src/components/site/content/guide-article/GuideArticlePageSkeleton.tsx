@@ -40,7 +40,7 @@ export function GuideArticlePageSkeleton() {
       <section className={cn(GUIDE_ARTICLE_LAYOUT.intro, SITE_PAGE_X_CLASS, 'py-10 sm:py-11')}>
         <Skeleton className="h-10 w-full max-w-lg" />
         <Skeleton className="mt-3 h-5 w-full max-w-2xl" />
-        <div className="mt-6 rounded-lg border border-[#e4e4e7] border-l-[3px] border-l-idl-brass bg-white px-5 py-[18px]">
+        <div className="mt-6 rounded-lg border border-[#e4e4e7] border-l-[3px] border-l-idl-brass bg-white px-5 py-[18px] dark:bg-idl-tech-panel">
           <Skeleton className="h-3 w-24" />
           <Skeleton className="mt-2 h-4 w-full" />
           <Skeleton className="mt-2 h-4 w-5/6" />

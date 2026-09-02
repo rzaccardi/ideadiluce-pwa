@@ -334,7 +334,7 @@ export function ProductDetailGallery({
         className={cn(
           'flex aspect-square items-center justify-center text-sm',
           isDesign
-            ? 'rounded border border-idl-path-design-border bg-white text-idl-ink-muted'
+            ? 'rounded border border-idl-path-design-border bg-white text-idl-ink-muted dark:bg-idl-tech-panel'
             : 'rounded-xl border border-idl-tech-border bg-[#f7f8fa] text-idl-muted',
         )}
       >
@@ -401,7 +401,7 @@ export function ProductDetailGallery({
           className={cn(
             'relative aspect-square w-full overflow-hidden focus:outline-none focus-visible:ring-2',
             isDesign
-              ? 'rounded border border-idl-path-design-border bg-white focus-visible:ring-idl-brass/30'
+              ? 'rounded border border-idl-path-design-border bg-white focus-visible:ring-idl-brass/30 dark:bg-idl-tech-panel'
               : 'rounded-xl border border-idl-tech-border bg-[#f7f8fa] focus-visible:ring-idl-amber/30',
           )}
           onClick={openCurrentLightbox}
@@ -511,7 +511,7 @@ export function ProductDetailGallery({
                       'aspect-square shrink-0 overflow-hidden transition',
                       isDesign
                         ? cn(
-                            'rounded-[3px] border bg-white',
+                            'rounded-[3px] border bg-white dark:bg-idl-tech-panel',
                             selectedThumb
                               ? 'border-idl-brass'
                               : 'border-idl-path-design-border hover:border-idl-brass/50',

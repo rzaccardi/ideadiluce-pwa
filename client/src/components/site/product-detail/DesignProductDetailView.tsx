@@ -217,7 +217,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
                 {heroMeta.map(({ label, value }) => (
                   <span
                     key={`${label}:${value}`}
-                    className="rounded border border-idl-path-design-border bg-white px-2.5 py-1 text-[11.5px] tracking-wide text-idl-ink-muted"
+                    className="rounded border border-idl-path-design-border bg-white px-2.5 py-1 text-[11.5px] tracking-wide text-idl-ink-muted dark:bg-idl-tech-panel"
                   >
                     <span className="text-idl-ink-muted">{label}</span>
                     <span className="mx-1.5 text-idl-border-strong">·</span>

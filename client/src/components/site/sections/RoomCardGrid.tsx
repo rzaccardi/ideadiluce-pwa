@@ -30,7 +30,7 @@ export function RoomCardGrid({ items, lp, variant = 'home', stagger = 0.08 }: Pr
             <HoverLift>
               <Link
                 to={lp(room.href)}
-                className="group block overflow-hidden rounded-lg border border-idl-border bg-white"
+                className="group block overflow-hidden rounded-lg border border-idl-border bg-white dark:bg-idl-tech-panel"
               >
                 {room.imageUrl ? (
                   <RoomCardMedia

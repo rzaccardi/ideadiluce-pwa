@@ -29,7 +29,7 @@ export function CartCheckoutStickyBar({
   return (
     <div
       className={cn(
-        'fixed inset-x-0 bottom-0 z-40 border-t border-idl-tech-border bg-white pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-4px_16px_rgba(0,0,0,0.06)] lg:hidden',
+        'fixed inset-x-0 bottom-0 z-40 border-t border-idl-tech-border bg-white pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-4px_16px_rgba(0,0,0,0.06)] dark:bg-idl-paper lg:hidden',
       )}
     >
       <SectionContainer className="flex items-center gap-3 py-3">

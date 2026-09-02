@@ -116,7 +116,7 @@ function MobileVisualLink({
     <Link
       to={lp(href)}
       onClick={onNavigate}
-      className="group block overflow-hidden rounded-xl border border-idl-border bg-white transition hover:border-idl-brass"
+      className="group block overflow-hidden rounded-xl border border-idl-border bg-white transition hover:border-idl-brass dark:bg-idl-tech-panel"
     >
       {visual ? (
         <div className={cn('relative overflow-hidden bg-idl-cream', aspectClass)}>
@@ -307,7 +307,7 @@ function MobileAttaccoPanel({ item }: { item: Extract<NavItem, { kind: 'dropdown
           <Link
             key={socket.key}
             to={lp(socket.href)}
-            className="flex items-center gap-2.5 rounded-xl border border-idl-tech-border bg-white p-3 transition hover:border-idl-amber"
+            className="flex items-center gap-2.5 rounded-xl border border-idl-tech-border bg-white p-3 transition hover:border-idl-amber dark:bg-idl-tech-panel"
           >
             <AttaccoSocketIcon icon={socket.icon} size={26} />
             <div className="min-w-0">
@@ -423,7 +423,7 @@ function MobileBrandPanel() {
             <Link
               key={brand.slug}
               to={lp(brand.href)}
-              className="flex min-h-[118px] flex-col items-center border-b border-r border-idl-tech-border bg-idl-tech-panel px-3 py-4 text-center transition hover:bg-white hover:text-idl-brass"
+              className="flex min-h-[118px] flex-col items-center border-b border-r border-idl-tech-border bg-idl-tech-panel px-3 py-4 text-center transition hover:bg-white hover:text-idl-brass dark:hover:bg-idl-cream"
               aria-label={`Scopri ${brand.name}`}
             >
               <div className="mb-2.5 flex h-10 w-full items-center justify-center">
@@ -501,7 +501,7 @@ function MobileGuidePanel({ onClose }: { onClose: () => void }) {
               key={guide.href}
               to={lp(guide.href)}
               onClick={onClose}
-              className="group flex gap-3 overflow-hidden rounded-xl border border-idl-border bg-white p-2 transition hover:border-idl-brass"
+              className="group flex gap-3 overflow-hidden rounded-xl border border-idl-border bg-white p-2 transition hover:border-idl-brass dark:bg-idl-tech-panel"
             >
               <div className="relative size-[72px] shrink-0 overflow-hidden rounded-lg bg-idl-cream">
                 <SiteImage src={look.imageUrl} alt="" fill sizes="72px" className="object-cover" />
@@ -609,7 +609,7 @@ export function MobileSiteMenu({ nav, notFoundCta, activeNavId, onClose }: Props
     >
       <div className={cn(ui.mobileMenuBar, SITE_PAGE_X_CLASS)}>
         <Link to={lp('/')} className="rounded-sm transition-opacity hover:opacity-80">
-          <BrandWordmark className="text-[22px] md:text-[24px]" />
+          <BrandWordmark className="text-[22px] md:text-[24px] dark:brightness-0 dark:invert" />
         </Link>
         <div className="flex shrink-0 items-center gap-1.5">
           <div className="flex size-10 items-center justify-center">

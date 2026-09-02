@@ -73,7 +73,7 @@ export function ProductProfessionalBanner({ variant = 'design' }: Props) {
                   key={item}
                   className={cn(
                     'rounded-full px-3 py-1',
-                    isDesign ? 'border border-idl-path-design-border bg-white' : 'border border-idl-tech-chip-border bg-idl-tech-chip',
+                    isDesign ? 'border border-idl-path-design-border bg-white dark:bg-idl-tech-panel' : 'border border-idl-tech-chip-border bg-idl-tech-chip',
                   )}
                 >
                   {item}

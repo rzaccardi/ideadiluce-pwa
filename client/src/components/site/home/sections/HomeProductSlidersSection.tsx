@@ -101,7 +101,7 @@ export function HomeProductSlidersSection({ sliders, lp }: Props) {
             className={cn(
               'overflow-visible',
               isDesign && 'relative bg-idl-design text-idl-design-fg',
-              isTechnical && 'border-t border-idl-border bg-white',
+              isTechnical && 'border-t border-idl-border bg-white dark:bg-idl-tech-panel',
               meta.tone === 'paper' && 'border-t border-idl-border bg-idl-cream/40',
             )}
           >

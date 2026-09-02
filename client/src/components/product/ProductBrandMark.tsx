@@ -28,6 +28,13 @@ const NAME_CLASS: Record<Size, string> = {
   lg: 'text-xs tracking-[0.12em]',
 }
 
+const DARK_NAME_CLASS: Record<Size, string> = {
+  xs: 'text-[11px]',
+  sm: 'text-xs',
+  md: 'text-[13px]',
+  lg: 'text-sm',
+}
+
 /**
  * Logo brand da `/brands/{slug}.jpg`, con fallback al nome.
  */
@@ -56,9 +63,19 @@ export function ProductBrandMark({
           decoding="async"
           loading="lazy"
           draggable={false}
-          className="max-h-full max-w-[8.5rem] object-contain object-left"
+          className="max-h-full max-w-[8.5rem] object-contain object-left dark:hidden"
           style={{ height: h, width: 'auto' }}
         />
+        {label ? (
+          <span
+            className={cn(
+              'hidden font-sans font-medium tracking-normal text-idl-ink normal-case dark:inline',
+              DARK_NAME_CLASS[size],
+            )}
+          >
+            {label}
+          </span>
+        ) : null}
       </span>
     )
   }
@@ -66,7 +83,13 @@ export function ProductBrandMark({
   if (!showNameFallback || !label) return null
 
   return (
-    <span className={cn('font-mono uppercase', NAME_CLASS[size], className)}>
+    <span
+      className={cn(
+        'font-mono uppercase dark:font-sans dark:font-medium dark:normal-case dark:tracking-normal dark:text-idl-ink',
+        NAME_CLASS[size],
+        className,
+      )}
+    >
       {label}
     </span>
   )

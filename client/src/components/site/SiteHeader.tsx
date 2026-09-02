@@ -246,7 +246,7 @@ export function SiteHeader({
               <span className={cn('w-3', ui.hamburgerBar)} />
             </button>
             <Link to={lp('/')} className="rounded-sm transition-opacity hover:opacity-80">
-              <BrandWordmark className="text-[22px] md:text-[24px] lg:text-[28px]" />
+              <BrandWordmark className="text-[22px] md:text-[24px] lg:text-[28px] dark:brightness-0 dark:invert" />
             </Link>
             <nav className="hidden items-center gap-5 text-[14.5px] font-medium lg:flex">
               {nav.items.map((item) =>

@@ -87,8 +87,8 @@ export function ProductDetailPageSkeleton({ variant = 'design' }: Props) {
               className={cn(
                 'overflow-hidden rounded-lg border',
                 isDesign
-                  ? 'border-idl-path-design-border bg-white'
-                  : 'border-idl-tech-border bg-white',
+                  ? 'border-idl-path-design-border bg-white dark:bg-idl-tech-panel'
+                  : 'border-idl-tech-border bg-white dark:bg-idl-tech-panel',
               )}
             >
               <Skeleton

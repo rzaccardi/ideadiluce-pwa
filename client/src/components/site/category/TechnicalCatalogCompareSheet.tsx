@@ -70,7 +70,7 @@ export function TechnicalCatalogCompareSheet({ products, lp, onClose, className 
         aria-label="Chiudi confronto"
         onClick={onClose}
       />
-      <div className="relative z-10 flex max-h-[85vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-2xl border border-idl-tech-border bg-white shadow-xl sm:rounded-2xl">
+      <div className="relative z-10 flex max-h-[85vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-2xl border border-idl-tech-border bg-white shadow-xl sm:rounded-2xl dark:bg-idl-tech-panel">
         <div className="flex items-center justify-between border-b border-idl-tech-border px-5 py-4">
           <div>
             <h2 id="technical-compare-title" className="text-lg font-extrabold text-idl-ink">

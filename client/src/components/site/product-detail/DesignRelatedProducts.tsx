@@ -16,7 +16,7 @@ export function DesignRelatedProducts({ products, lp, brandName }: Props) {
     <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
       {products.map((product) => (
         <Link key={product.slug} to={lp(`/prodotto/${product.slug}`)} className="group block">
-          <div className="relative mb-3.5 aspect-[4/5] overflow-hidden rounded-[3px] border border-idl-path-design-border bg-white">
+          <div className="relative mb-3.5 aspect-[4/5] overflow-hidden rounded-[3px] border border-idl-path-design-border bg-white dark:bg-idl-tech-panel">
             {product.imageUrl ? (
               <SiteImage
                 src={product.imageUrl}
@@ -26,7 +26,7 @@ export function DesignRelatedProducts({ products, lp, brandName }: Props) {
                 sizes="25vw"
               />
             ) : (
-              <div className="flex h-full items-center justify-center bg-white text-xs text-idl-ink-muted">
+              <div className="flex h-full items-center justify-center bg-white text-xs text-idl-ink-muted dark:bg-idl-tech-panel">
                 —
               </div>
             )}

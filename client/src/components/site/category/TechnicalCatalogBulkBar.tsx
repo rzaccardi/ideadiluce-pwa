@@ -99,7 +99,7 @@ export function TechnicalCatalogBulkBar({ products: _products }: Props) {
     <>
       <div
         className={cn(
-          'fixed inset-x-0 bottom-0 z-40 border-t border-idl-tech-border bg-white/95 px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-sm',
+          'fixed inset-x-0 bottom-0 z-40 border-t border-idl-tech-border bg-white/95 px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-sm dark:bg-idl-paper/95',
           'sm:px-6',
         )}
         role="region"

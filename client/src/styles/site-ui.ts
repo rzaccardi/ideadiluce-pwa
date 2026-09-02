@@ -78,14 +78,18 @@ export const siteForms = {
     'border-[length:var(--border-width-idl-field)] border-idl-border-strong bg-transparent',
 } as const
 
+/** Dark mode: tasto pieno → bianco + testo nero. */
+export const siteCtaDarkFill =
+  'dark:bg-white dark:text-[#0c0c0d] dark:hover:bg-neutral-200'
+
 export const siteButtons = {
   base: 'inline-flex cursor-pointer items-center justify-center gap-2 font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50',
-  primary: 'bg-idl-ink text-white hover:bg-idl-cta-ink-hover',
+  primary: `bg-idl-ink text-white hover:bg-idl-cta-ink-hover ${siteCtaDarkFill}`,
   secondary:
     'border border-idl-border-strong bg-idl-tech-panel text-idl-graphite hover:border-idl-brass/40 hover:bg-idl-cream',
   ghost: 'text-idl-ink-soft hover:bg-idl-cream hover:text-idl-graphite',
   accent: 'bg-idl-glow font-bold text-idl-design hover:bg-idl-cta-glow-hover',
-  technical: 'bg-idl-amber font-bold text-white hover:bg-idl-cta-amber-hover',
+  technical: `bg-idl-amber font-bold text-white hover:bg-idl-cta-amber-hover ${siteCtaDarkFill}`,
   sm: 'rounded-idl-sm px-3 py-1.5 text-idl-sm',
   md: 'rounded-idl-sm px-4 py-2 text-idl-body',
   lg: 'rounded-idl-sm px-5 py-2.5 text-idl-body-lg',
@@ -93,8 +97,7 @@ export const siteButtons = {
     'flex min-h-12 w-full items-center justify-center rounded-idl-md border-none px-4 py-3.5 text-center text-idl-body-lg font-bold sm:py-4 sm:text-[15.5px]',
   pill:
     'rounded-idl-pill border border-idl-tech-border bg-idl-tech-panel px-4 py-2 text-idl-body-sm font-semibold text-idl-graphite-2 transition hover:border-idl-amber',
-  pillActive:
-    'rounded-idl-pill bg-idl-ink px-4 py-2 text-idl-body-sm font-bold text-white',
+  pillActive: `rounded-idl-pill bg-idl-ink px-4 py-2 text-idl-body-sm font-bold text-white ${siteCtaDarkFill}`,
 } as const
 
 export const siteLinks = {

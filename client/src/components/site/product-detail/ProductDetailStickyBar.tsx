@@ -56,7 +56,7 @@ export function ProductDetailStickyBar({
       className={cn(
         'sticky bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom,0px)]',
         isDesign
-          ? 'border-idl-border bg-white/95 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur-sm'
+          ? 'border-idl-border bg-white/95 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur-sm dark:bg-idl-paper/95'
           : 'border-idl-tech-border bg-idl-tech-panel shadow-[0_-4px_16px_rgba(0,0,0,0.05)]',
       )}
     >

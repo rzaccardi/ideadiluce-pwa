@@ -47,8 +47,8 @@ export function ProductNotFoundPageView({ content }: Props) {
 
   return (
     <PageFlexShell tone="paper">
-      <PageFlexBody tone="paper" className="bg-[#f4f5f7]">
-        <Reveal immediate className="relative overflow-hidden bg-idl-ink text-idl-cream">
+      <PageFlexBody tone="paper" className="bg-idl-cream">
+        <Reveal immediate className="relative overflow-hidden bg-idl-design text-idl-design-fg">
           <div
             className="pointer-events-none absolute -top-16 right-[18%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,rgba(120, 120, 125,0.18)_0%,rgba(120, 120, 125,0)_68%)]"
             aria-hidden
@@ -67,12 +67,12 @@ export function ProductNotFoundPageView({ content }: Props) {
               {content.title}
             </h1>
             {content.subtitle ? (
-              <p className="mx-auto mt-3.5 max-w-xl text-base leading-relaxed text-[#b0b0b4] sm:text-[16px]">
+              <p className="mx-auto mt-3.5 max-w-xl text-base leading-relaxed text-idl-design-muted sm:text-[16px]">
                 {content.subtitle}
               </p>
             ) : null}
             {content.heroBadges?.length ? (
-              <div className="mt-5 inline-flex flex-wrap justify-center gap-x-6 gap-y-2 border-t border-white/10 pt-4 text-[12.5px] text-[#8f8f93]">
+              <div className="mt-5 inline-flex flex-wrap justify-center gap-x-6 gap-y-2 border-t border-white/10 pt-4 text-[12.5px] text-idl-design-subtle">
                 {content.heroBadges.map((badge) => (
                   <span key={badge}>● {badge}</span>
                 ))}
@@ -93,7 +93,7 @@ export function ProductNotFoundPageView({ content }: Props) {
             <div className="flex flex-col gap-5 lg:sticky lg:top-24">
               {steps ? (
                 <Reveal>
-                  <div className="rounded-[14px] border border-idl-tech-border bg-white p-6 sm:p-7">
+                  <div className="rounded-[14px] border border-idl-border bg-idl-paper p-6 sm:p-7">
                     <h2 className="mb-4 text-base font-extrabold tracking-tight text-idl-ink">
                       {steps.title ?? t('productNotFound.stepsTitle')}
                     </h2>
@@ -118,7 +118,7 @@ export function ProductNotFoundPageView({ content }: Props) {
 
               {contact ? (
                 <Reveal>
-                  <div className="rounded-[14px] bg-idl-ink p-6 text-idl-cream sm:p-7">
+                  <div className="rounded-[14px] bg-idl-design p-6 text-idl-design-fg sm:p-7">
                     <div className="mb-3.5 font-mono text-[10.5px] tracking-[0.14em] text-idl-brass">
                       {t('productNotFound.preferTalk')}
                     </div>
@@ -137,7 +137,7 @@ export function ProductNotFoundPageView({ content }: Props) {
                       {contact.phone ? (
                         <ExternalLink
                           href={contact.phoneHref ?? `tel:${contact.phone}`}
-                          className="flex items-center gap-3 rounded-[9px] border border-white/20 px-4 py-3 text-sm font-semibold text-idl-cream transition hover:border-idl-brass/50"
+                          className="flex items-center gap-3 rounded-[9px] border border-white/20 px-4 py-3 text-sm font-semibold text-idl-design-fg transition hover:border-idl-brass/50"
                         >
                           Tel: {contact.phone}
                         </ExternalLink>
@@ -145,7 +145,7 @@ export function ProductNotFoundPageView({ content }: Props) {
                       {contact.email ? (
                         <ExternalLink
                           href={`mailto:${contact.email}`}
-                          className="flex items-center gap-3 rounded-[9px] border border-white/20 px-4 py-3 text-sm font-semibold text-idl-cream transition hover:border-idl-brass/50"
+                          className="flex items-center gap-3 rounded-[9px] border border-white/20 px-4 py-3 text-sm font-semibold text-idl-design-fg transition hover:border-idl-brass/50"
                         >
                           {contact.email}
                         </ExternalLink>
@@ -156,9 +156,9 @@ export function ProductNotFoundPageView({ content }: Props) {
               ) : null}
 
               <Reveal>
-                <div className="rounded-[14px] border border-[#e4e4e7] bg-[#f4f5f7] p-5 sm:p-6">
+                <div className="rounded-[14px] border border-idl-border bg-idl-paper p-5 sm:p-6">
                   <div className="text-sm font-bold text-idl-ink">{t('productNotFound.professionalsTitle')}</div>
-                  <p className="mt-1.5 text-[12.5px] leading-relaxed text-[#6b6b70]">
+                  <p className="mt-1.5 text-[12.5px] leading-relaxed text-idl-muted">
                     {t('productNotFound.professionalsBody')}
                   </p>
                   <Link
@@ -171,9 +171,9 @@ export function ProductNotFoundPageView({ content }: Props) {
               </Reveal>
 
               <Reveal>
-                <div className="overflow-hidden rounded-[14px] border border-idl-tech-border bg-white">
+                <div className="overflow-hidden rounded-[14px] border border-idl-border bg-idl-paper">
                   <div
-                    className="aspect-[16/9] bg-[linear-gradient(135deg,#f4f4f5_0%,#c4c4c8_55%,#9a9a9e_100%)]"
+                    className="aspect-[16/9] bg-[linear-gradient(135deg,#f4f4f5_0%,#c4c4c8_55%,#9a9a9e_100%)] dark:bg-[linear-gradient(135deg,#1c1c1e_0%,#2a2a2e_55%,#3a3a3d_100%)]"
                     aria-hidden
                   />
                   <div className="p-5">

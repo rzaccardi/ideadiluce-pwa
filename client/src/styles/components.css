@@ -229,6 +229,24 @@ html[data-theme='light'] .idl-surface-panel {
   background: var(--idl-btn-technical-hover);
 }
 
+/*
+ * Dark mode: tasti pieni (ink / amber / graphite) → bianco + testo nero.
+ * Copre link e button che usano le utility Tailwind, non i CTA oro su hero scuri.
+ */
+html[data-theme='dark'] :is(a, button).bg-idl-ink,
+html[data-theme='dark'] :is(a, button).bg-idl-amber,
+html[data-theme='dark'] :is(a, button).bg-idl-graphite {
+  background-color: #ffffff;
+  color: #0c0c0d;
+}
+
+html[data-theme='dark'] :is(a, button).bg-idl-ink:not(:disabled):hover,
+html[data-theme='dark'] :is(a, button).bg-idl-amber:not(:disabled):hover,
+html[data-theme='dark'] :is(a, button).bg-idl-graphite:not(:disabled):hover {
+  background-color: #e4e4e7;
+  color: #0c0c0d;
+}
+
 .idl-btn--ghost {
   background: transparent;
   color: var(--idl-fg-secondary);
@@ -437,4 +455,75 @@ html[data-theme='dark'] .checkout-shell {
 
 .site-full-bleed-track > .site-full-bleed-spacer:last-child {
   margin-inline-start: calc(-1 * var(--site-full-bleed-gap));
+}
+
+/*
+ * Dark mode: superfici / bordi / testi hardcoded in hex chiari (legacy light).
+ * Non tocca bg-white Tailwind usato come overlay su foto, né i CTA dark:bg-white.
+ */
+html[data-theme='dark'] :is(
+  .bg-\[\#f7f8fa\],
+  .bg-\[\#f4f5f7\],
+  .bg-\[\#f3f2ee\],
+  .bg-\[\#fafbfc\],
+  .bg-\[\#fafafa\],
+  .bg-\[\#f0f2f5\],
+  .bg-\[\#eef1f4\],
+  .bg-\[\#eef7f1\],
+  .bg-\[\#f4fbf7\],
+  .bg-\[\#ffffff\]
+) {
+  background-color: var(--color-idl-tech-panel);
+}
+
+html[data-theme='dark'] .bg-\[\#f4f5f7\]\/40 {
+  background-color: color-mix(in srgb, var(--color-idl-tech-panel) 40%, transparent);
+}
+
+html[data-theme='dark'] :is(
+  .hover\:bg-\[\#f4f5f7\]:hover,
+  .hover\:bg-\[\#fafafa\]:hover,
+  .hover\:bg-\[\#f7f8fa\]:hover
+) {
+  background-color: var(--color-idl-cream);
+}
+
+html[data-theme='dark'] :is(
+  .border-\[\#e4e4e7\],
+  .border-\[\#e7eaee\],
+  .border-\[\#e3e6ea\],
+  .border-\[\#ededea\],
+  .border-\[\#e4e3de\],
+  .border-\[\#ece2d2\],
+  .border-\[\#d4d9df\],
+  .border-\[\#cfd4db\],
+  .border-\[\#e2e6eb\]
+) {
+  border-color: var(--color-idl-border);
+}
+
+html[data-theme='dark'] :is(.divide-\[\#e4e4e7\] > :not(:first-child), .divide-\[\#ededea\] > :not(:first-child)) {
+  border-color: var(--color-idl-border);
+}
+
+html[data-theme='dark'] :is(
+  .text-\[\#3f3a32\],
+  .text-\[\#5b616b\],
+  .text-\[\#3a3a3d\],
+  .text-\[\#6b6157\],
+  .text-zinc-900
+) {
+  color: var(--color-idl-ink);
+}
+
+html[data-theme='dark'] .bg-emerald-50 {
+  background-color: color-mix(in srgb, #1f9d57 16%, var(--color-idl-tech-panel));
+}
+
+html[data-theme='dark'] .bg-zinc-100 {
+  background-color: var(--color-idl-tech-chip);
+}
+
+html[data-theme='dark'] .text-zinc-600 {
+  color: var(--color-idl-ink-muted);
 }
