@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import {
+  ActivityIcon,
   BarChart3Icon,
   BellRingIcon,
   BookOpenIcon,
@@ -8,6 +9,7 @@ import {
   HomeIcon,
   LayoutTemplateIcon,
   MailIcon,
+  MailsIcon,
   MegaphoneIcon,
   SearchIcon,
   ShoppingBagIcon,
@@ -16,6 +18,7 @@ import {
   TruckIcon,
   ReceiptIcon,
   RefreshCwIcon,
+  UnlinkIcon,
   Volume2Icon,
 } from 'lucide-react'
 import { getSitePageLabel } from '@/features/site'
@@ -85,6 +88,14 @@ export const navSections: NavSection[] = [
         accentBgClass: 'bg-cyan-50',
         match: (p) => p.startsWith('/odoo/quotations'),
       },
+      {
+        to: '/odoo/sync-queue',
+        label: 'Resilienza Odoo',
+        icon: ActivityIcon,
+        accentClass: 'text-rose-600',
+        accentBgClass: 'bg-rose-50',
+        match: (p) => p.startsWith('/odoo/sync-queue') || p === '/sync-queue',
+      },
     ],
   },
   {
@@ -143,6 +154,14 @@ export const navSections: NavSection[] = [
         accentBgClass: 'bg-emerald-50',
         match: (p) => p.startsWith('/seo'),
       },
+      {
+        to: '/not-found',
+        label: 'Pagine 404',
+        icon: UnlinkIcon,
+        accentClass: 'text-rose-700',
+        accentBgClass: 'bg-rose-50',
+        match: (p) => p.startsWith('/not-found'),
+      },
     ],
   },
   {
@@ -155,6 +174,14 @@ export const navSections: NavSection[] = [
         accentClass: 'text-sky-600',
         accentBgClass: 'bg-sky-50',
         match: (p) => p.startsWith('/site-inquiries'),
+      },
+      {
+        to: '/mail-log',
+        label: 'Email inviate',
+        icon: MailsIcon,
+        accentClass: 'text-blue-600',
+        accentBgClass: 'bg-blue-50',
+        match: (p) => p.startsWith('/mail-log'),
       },
       {
         to: '/professional-requests',
@@ -192,6 +219,14 @@ export const navSections: NavSection[] = [
         accentClass: 'text-slate-600',
         accentBgClass: 'bg-slate-50',
         match: (p) => p.startsWith('/experience'),
+      },
+      {
+        to: '/uptime',
+        label: 'Monitoraggio',
+        icon: ActivityIcon,
+        accentClass: 'text-rose-600',
+        accentBgClass: 'bg-rose-50',
+        match: (p) => p.startsWith('/uptime'),
       },
     ],
   },
@@ -251,7 +286,13 @@ export function getBreadcrumbs(pathname: string, _search = ''): BreadcrumbItem[]
   if (pathname.startsWith('/experience')) {
     return [
       { label: 'Esperienza', href: '/experience' },
-      { label: 'Suoni e feedback dell’interfaccia in negozio' },
+      { label: 'Avviso sito precedente e suoni di interfaccia' },
+    ]
+  }
+  if (pathname.startsWith('/uptime')) {
+    return [
+      { label: 'Monitoraggio', href: '/uptime' },
+      { label: 'UptimeRobot — sito, API, catalogo e Odoo' },
     ]
   }
   if (pathname.startsWith('/social-proof')) {
@@ -284,6 +325,18 @@ export function getBreadcrumbs(pathname: string, _search = ''): BreadcrumbItem[]
       { label: 'Moduli Contatti e lead dal sito' },
     ]
   }
+  if (pathname.startsWith('/mail-log/') && pathname !== '/mail-log') {
+    return [
+      { label: 'Email inviate', href: '/mail-log' },
+      { label: 'Dettaglio email' },
+    ]
+  }
+  if (pathname.startsWith('/mail-log')) {
+    return [
+      { label: 'Email inviate', href: '/mail-log' },
+      { label: 'Storico transazionali da Odoo' },
+    ]
+  }
   if (pathname.startsWith('/guides/') && pathname !== '/guides') {
     const slug = decodeURIComponent(pathname.slice('/guides/'.length).split('/')[0] ?? '')
     return [
@@ -295,6 +348,18 @@ export function getBreadcrumbs(pathname: string, _search = ''): BreadcrumbItem[]
     return [
       { label: 'Guide', href: '/guides' },
       { label: 'Elenco guide' },
+    ]
+  }
+  if (pathname.startsWith('/not-found/detail')) {
+    return [
+      { label: 'Pagine 404', href: '/not-found' },
+      { label: 'Dettaglio URL' },
+    ]
+  }
+  if (pathname.startsWith('/not-found')) {
+    return [
+      { label: 'Pagine 404', href: '/not-found' },
+      { label: 'URL non trovati e link persi' },
     ]
   }
   if (pathname.startsWith('/seo')) {
@@ -326,6 +391,12 @@ export function getBreadcrumbs(pathname: string, _search = ''): BreadcrumbItem[]
     return [
       { label: 'Preventivi Odoo', href: '/odoo/quotations' },
       { label: 'Preventivi draft/sent da sale.order' },
+    ]
+  }
+  if (pathname.startsWith('/odoo/sync-queue') || pathname === '/sync-queue') {
+    return [
+      { label: 'Resilienza Odoo', href: '/odoo/sync-queue' },
+      { label: 'Kill switch e coda comandi' },
     ]
   }
   if (pathname.startsWith('/odoo/pricelists')) {
@@ -431,10 +502,19 @@ export function getPageMeta(pathname: string, _search = ''): {
   if (pathname.startsWith('/experience')) {
     return {
       title: 'Esperienza',
-      description: 'Suoni e feedback dell’interfaccia in negozio',
+      description: 'Avviso sito precedente al go-live e suoni di interfaccia in negozio',
       icon: Volume2Icon,
       iconClassName: 'text-slate-600',
       iconBgClassName: 'bg-slate-50',
+    }
+  }
+  if (pathname.startsWith('/uptime')) {
+    return {
+      title: 'Monitoraggio',
+      description: 'Uptime, SSL e incidenti su shop, API, catalogo, Odoo e back office',
+      icon: ActivityIcon,
+      iconClassName: 'text-rose-600',
+      iconBgClassName: 'bg-rose-50',
     }
   }
   if (pathname.startsWith('/social-proof')) {
@@ -482,6 +562,24 @@ export function getPageMeta(pathname: string, _search = ''): {
       iconBgClassName: 'bg-sky-50',
     }
   }
+  if (pathname.startsWith('/mail-log/') && pathname !== '/mail-log') {
+    return {
+      title: 'Dettaglio email',
+      description: 'Anteprima del messaggio conservato in Odoo',
+      icon: MailsIcon,
+      iconClassName: 'text-blue-600',
+      iconBgClassName: 'bg-blue-50',
+    }
+  }
+  if (pathname.startsWith('/mail-log')) {
+    return {
+      title: 'Email inviate',
+      description: 'Storico delle email transazionali del sito, conservato in Odoo',
+      icon: MailsIcon,
+      iconClassName: 'text-blue-600',
+      iconBgClassName: 'bg-blue-50',
+    }
+  }
   if (pathname.startsWith('/guides/') && pathname !== '/guides') {
     const slug = decodeURIComponent(pathname.slice('/guides/'.length).split('/')[0] ?? '')
     return {
@@ -504,17 +602,35 @@ export function getPageMeta(pathname: string, _search = ''): {
   if (pathname.startsWith('/seo')) {
     return {
       title: 'SEO e feed',
-      description: 'Sitemap, Google Merchant feed, llms.txt e redirect 301',
+      description: 'Sitemap, Google Merchant Center (feed dal proxy), llms.txt e redirect 301',
       icon: SearchIcon,
       iconClassName: 'text-emerald-700',
       iconBgClassName: 'bg-emerald-50',
+    }
+  }
+  if (pathname.startsWith('/not-found/detail')) {
+    return {
+      title: 'Dettaglio 404',
+      description: 'Referrer, hit e redirect per questo URL',
+      icon: UnlinkIcon,
+      iconClassName: 'text-rose-700',
+      iconBgClassName: 'bg-rose-50',
+    }
+  }
+  if (pathname.startsWith('/not-found')) {
+    return {
+      title: 'Pagine 404',
+      description: 'URL della pagina 404 vista in negozio, con referrer per capire se è un link perso',
+      icon: UnlinkIcon,
+      iconClassName: 'text-rose-700',
+      iconBgClassName: 'bg-rose-50',
     }
   }
   if (pathname.startsWith('/site/') && pathname !== '/site') {
     const pageKey = decodeURIComponent(pathname.slice('/site/'.length).split('/')[0] ?? '')
     return {
       title: getSitePageLabelFromPath(pageKey),
-      description: 'Testi editoriali in IT, EN, ES, FR e DE',
+      description: 'Testi editoriali in IT, EN, ES, FR, DE e RO',
       icon: LayoutTemplateIcon,
       iconClassName: 'text-sky-600',
       iconBgClassName: 'bg-sky-50',
@@ -545,6 +661,15 @@ export function getPageMeta(pathname: string, _search = ''): {
       icon: FileTextIcon,
       iconClassName: 'text-cyan-600',
       iconBgClassName: 'bg-cyan-50',
+    }
+  }
+  if (pathname.startsWith('/odoo/sync-queue') || pathname === '/sync-queue') {
+    return {
+      title: 'Resilienza Odoo',
+      description: 'Kill switch, fallback catalogo/SMTP e coda comandi da reinviare',
+      icon: ActivityIcon,
+      iconClassName: 'text-rose-600',
+      iconBgClassName: 'bg-rose-50',
     }
   }
   if (pathname.startsWith('/odoo/pricelists')) {

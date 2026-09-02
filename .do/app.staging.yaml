@@ -65,6 +65,8 @@ services:
         value: ${shop.PUBLIC_URL}
       - key: PUBLIC_SITE_URL
         value: https://shop.ideadiluce.it
+      - key: API_PUBLIC_URL
+        value: ${api.PUBLIC_URL}
       - key: ODOO_CATALOG_ENABLED
         value: "true"
       - key: ODOO_CATALOG_BASE_URL
@@ -96,6 +98,9 @@ services:
         scope: RUN_TIME
         type: SECRET
       - key: STRIPE_WEBHOOK_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: UPTIMEROBOT_API_KEY
         scope: RUN_TIME
         type: SECRET
 

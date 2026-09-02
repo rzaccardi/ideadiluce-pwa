@@ -44,6 +44,7 @@ import { CheckoutReviewStep } from '@/components/checkout/stripe-ui/CheckoutRevi
 import { CheckoutStepIndicator } from '@/components/checkout/stripe-ui/CheckoutStepIndicator'
 import { CheckoutStepBody } from '@/components/checkout/stripe-ui/CheckoutStepBody'
 import { StripeErrorBanner } from '@/components/checkout/stripe-ui/StripeFields'
+import { LegacySiteNoticeInline } from '@/components/site/LegacySiteNoticeBanner'
 import { CheckoutPaymentSkeleton } from '@/components/checkout/CheckoutPaymentSkeleton'
 import { StripePaymentShell } from '@/components/checkout/StripePaymentShell'
 import type { StripePaymentFormHandle } from '@/components/checkout/StripePaymentForm'
@@ -408,7 +409,8 @@ export function CheckoutPage() {
 
   if (isCartEmpty && !cart.isLoading) {
     return (
-      <div className="checkout-root flex min-h-screen items-center justify-center bg-idl-tech-panel px-4 py-12">
+      <div className="checkout-root flex min-h-screen flex-col items-center justify-center bg-idl-tech-panel px-4 py-12">
+        <LegacySiteNoticeInline className="w-full max-w-md" />
         <EmptyCartPrompt compact className="w-full max-w-md" />
       </div>
     )
@@ -514,6 +516,8 @@ export function CheckoutPage() {
               {t('cart.quote.frozenNotice')}
             </p>
           ) : null}
+
+          <LegacySiteNoticeInline />
 
           <CheckoutStepIndicator currentStep={step} />
 

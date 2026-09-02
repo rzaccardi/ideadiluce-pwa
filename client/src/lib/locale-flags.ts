@@ -4,6 +4,7 @@ import flagEs from 'circle-flags/flags/es.svg'
 import flagFr from 'circle-flags/flags/fr.svg'
 import flagGb from 'circle-flags/flags/gb.svg'
 import flagIt from 'circle-flags/flags/it.svg'
+import flagRo from 'circle-flags/flags/ro.svg'
 
 /** Bandiere rotonde (circle-flags) incluse nel bundle via npm */
 export const LOCALE_FLAG_SRC: Record<PwaLocale, string | { src: string }> = {
@@ -12,6 +13,7 @@ export const LOCALE_FLAG_SRC: Record<PwaLocale, string | { src: string }> = {
   ES: flagEs,
   FR: flagFr,
   DE: flagDe,
+  RO: flagRo,
 }
 
 export function localeFlagUrl(locale: PwaLocale): string {

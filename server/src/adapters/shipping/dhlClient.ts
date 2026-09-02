@@ -131,3 +131,54 @@ export async function fetchDhlRates(
   }
   return lines
 }
+
+export async function trackDhlNumber(
+  trackingNumber: string,
+  correlationId?: string,
+): Promise<unknown | null> {
+  if (!env.DHL_ENABLED) return null
+  const creds = await credentials()
+  if (!creds) return null
+
+  const url = new URL(`${apiBase()}/tracking`)
+  url.searchParams.set('shipmentTrackingNumber', trackingNumber)
+  url.searchParams.set('trackingView', 'all-checkpoints')
+  url.searchParams.set('levelOfDetail', 'all')
+
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Authorization: basicAuth(creds.apiKey, creds.apiSecret),
+    },
+    signal: AbortSignal.timeout(8_000),
+  })
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '')
+    logger.warn('dhl.track_failed', { status: res.status, err: errText.slice(0, 200) })
+    if (correlationId) {
+      await writeStructuredIntegrationLog({
+        service: 'dhl',
+        operation: 'track',
+        correlationId,
+        success: false,
+        statusCode: res.status,
+        error: errText.slice(0, 500),
+        extra: { trackingNumber },
+      })
+    }
+    return null
+  }
+
+  const data: unknown = await res.json()
+  if (correlationId) {
+    await writeStructuredIntegrationLog({
+      service: 'dhl',
+      operation: 'track',
+      correlationId,
+      success: true,
+      extra: { trackingNumber },
+    })
+  }
+  return data
+}

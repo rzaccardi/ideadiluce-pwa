@@ -15,6 +15,7 @@ import {
 import { formatMoney } from '@/lib/format'
 import {
   formatOrderRef,
+  orderDisplayStatus,
   orderStatusLabel,
   orderStatusTone,
   paymentStatusLabel,
@@ -24,8 +25,9 @@ import type { PwaLocale } from '@/lib/locale'
 import { AccountDcPanel } from '@/components/account/dc/AccountDcPanel'
 import { AccountDcDetailRow } from '@/components/account/dc/AccountDcDetailRow'
 import { AccountDcOrderLines } from '@/components/account/dc/AccountDcOrderLines'
-import { AccountDcOrderTracker } from '@/components/account/dc/AccountDcOrderTracker'
+import { AccountDcOrderTracker, AccountDcShipmentPanel } from '@/components/account/dc/AccountDcOrderTracker'
 import { AccountDcStatusPill } from '@/components/account/dc/AccountDcStatusPill'
+import { AccountReturnRequestButton } from '@/components/account/dc/AccountReturnRequestButton'
 import {
   accountDcOutlineBtnClass,
   accountDcPrimaryBtnClass,
@@ -42,6 +44,7 @@ const LOCALE_DATE: Record<PwaLocale, string> = {
   ES: 'es-ES',
   FR: 'fr-FR',
   DE: 'de-DE',
+  RO: 'ro-RO',
 }
 
 export function OrderDetailPage() {
@@ -132,8 +135,8 @@ export function OrderDetailPage() {
       >
         <div className="mb-6 flex flex-wrap items-center gap-2">
           <AccountDcStatusPill
-            label={orderStatusLabel(order.status, locale)}
-            tone={orderStatusTone(order.status)}
+            label={orderStatusLabel(orderDisplayStatus(order), locale)}
+            tone={orderStatusTone(orderDisplayStatus(order))}
           />
           {order.paymentStatus ? (
             <AccountDcStatusPill
@@ -153,7 +156,52 @@ export function OrderDetailPage() {
           ) : null}
         </div>
 
-        <AccountDcOrderTracker order={{ ...order, lines: [...order.lines] }} t={t} />
+        <AccountDcOrderTracker order={order} t={t} />
+      </AccountDcPanel>
+
+      <AccountDcPanel title={t('orders.shipment.title')}>
+        <AccountDcShipmentPanel order={order} t={t} locale={locale} />
+      </AccountDcPanel>
+
+      <AccountDcPanel title={t('orders.return.title')}>
+        {order.returnRequest ? (
+          <div
+            className="rounded-[11px] border border-idl-tech-border bg-idl-path-design px-4 py-3 text-sm leading-relaxed text-idl-graphite"
+            role="status"
+          >
+            <p className="font-semibold">{t('orders.return.successTitle')}</p>
+            <p className="mt-1 text-idl-muted">{t('orders.return.successBody')}</p>
+          </div>
+        ) : order.returnWindow?.reason === 'expired' ? (
+          <div
+            className="rounded-[11px] border border-idl-tech-border bg-idl-tech-panel px-4 py-3 text-sm leading-relaxed text-idl-graphite"
+            role="status"
+          >
+            <p className="font-semibold">{t('orders.return.expiredTitle')}</p>
+            <p className="mt-1 text-idl-muted">{t('orders.return.expired')}</p>
+            <div className="mt-4">
+              <AccountReturnRequestButton
+                orderId={order.id}
+                alreadyRequested={false}
+                returnEligible={false}
+                variant="primary"
+              />
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="text-sm leading-relaxed text-idl-muted">{t('orders.return.description')}</p>
+            <p className="mt-2 text-xs leading-relaxed text-idl-muted">{t('orders.return.legalNote')}</p>
+            <div className="mt-4">
+              <AccountReturnRequestButton
+                orderId={order.id}
+                alreadyRequested={false}
+                returnEligible={order.returnWindow?.eligible !== false}
+                variant="primary"
+              />
+            </div>
+          </>
+        )}
       </AccountDcPanel>
 
       {order.lines.length > 0 ? (
@@ -171,7 +219,7 @@ export function OrderDetailPage() {
         <dl>
           <AccountDcDetailRow
             label={t('orders.detail.orderStatus')}
-            value={orderStatusLabel(order.status, locale)}
+            value={orderStatusLabel(orderDisplayStatus(order), locale)}
           />
           <AccountDcDetailRow
             label={t('orders.detail.paymentStatus')}

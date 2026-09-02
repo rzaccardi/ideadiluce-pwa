@@ -711,6 +711,10 @@ export async function queryOdooCatalogIndex(options: {
   brandSlug?: string
   attacco?: string
   colorTemp?: string
+  world?: string
+  tipologia?: string
+  ambiente?: string
+  stile?: string
 }): Promise<ProductListDTO> {
   // Solo cache in-memory / disco: nessuna chiamata live Odoo in ricerca/filtri.
   await hydrateOdooCatalogIndexFromDisk()
@@ -747,6 +751,24 @@ export async function queryOdooCatalogIndex(options: {
   if (options.brandSlug?.trim()) {
     const brand = options.brandSlug.trim()
     filtered = filtered.filter((e) => e.brandSlug === brand || e.brand?.slug === brand)
+  }
+  if (options.world === 'design') {
+    filtered = filtered.filter((e) =>
+      /arredo|design|decorativ/i.test([e.categorySlug, ...e.categorySlugs].join(' ')),
+    )
+  }
+  if (options.world === 'technical') {
+    filtered = filtered.filter((e) =>
+      /tecnica|tecnici|ricambi|lampadine|componenti|driver|alimentator/i.test(
+        [e.categorySlug, ...e.categorySlugs].join(' '),
+      ),
+    )
+  }
+  for (const extra of [options.tipologia, options.ambiente, options.stile]) {
+    const token = extra?.trim().toLowerCase()
+    if (token) {
+      filtered = filtered.filter((e) => e.searchText.includes(token) || e.categorySlugs.includes(token))
+    }
   }
   if (tokens.length) {
     filtered = filtered.filter((e) => tokens.every((t) => e.searchText.includes(t)))

@@ -7,6 +7,22 @@ export type OdooStatusDTO = {
   notes: string[]
   pingOk: boolean
   customFieldsAvailable?: string[]
+  emergencyMode?: boolean
+  catalogCacheFallback?: boolean
+  smtpFallback?: boolean
+  pendingSyncCount?: number
+  exhaustedSyncCount?: number
+}
+
+export type OdooResilienceSettingsDTO = {
+  emergencyMode: boolean
+  catalogCacheFallback: boolean
+  smtpFallback: boolean
+  note: string | null
+  updatedAt: string
+  updatedByEmail: string | null
+  envEmergencyOverride: boolean
+  smtpConfigured: boolean
 }
 
 export type OdooSaleOrderLineDTO = {
@@ -97,11 +113,18 @@ export type OdooPricelistListQuery = {
   active?: boolean
 }
 
-export type OdooSyncOperationDTO = 'FUNNEL_SYNC' | 'RECONCILE_LINES'
+export type OdooSyncOperationDTO =
+  | 'ENSURE_PARTNER'
+  | 'ENSURE_SALE_ORDER'
+  | 'RECONCILE_LINES'
+  | 'FUNNEL_SYNC'
+  | 'ENSURE_PORTAL_USER'
+  | 'SEND_MAIL'
 
 export type OdooSyncQueueItemDTO = {
   id: string
-  pwaOrderId: string
+  pwaOrderId: string | null
+  userId: string | null
   operation: OdooSyncOperationDTO
   status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'EXHAUSTED'
   attempts: number

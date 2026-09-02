@@ -46,6 +46,7 @@ const LOCALE_LABELS: Record<SiteLocale, string> = {
   ES: 'Spagnolo',
   FR: 'Francese',
   DE: 'Tedesco',
+  RO: 'Rumeno',
 }
 
 export function GuideDetailPage() {
@@ -91,7 +92,7 @@ export function GuideDetailPage() {
       await saveGuideContent(slug, 'IT', { translateAllLocales })
       toast.success(
         translateAllLocales
-          ? 'Guida salvata e tradotta in EN, ES, FR e DE'
+          ? 'Guida salvata e tradotta in EN, ES, FR, DE e RO'
           : 'Contenuti italiani salvati',
       )
     } catch (e) {
@@ -358,7 +359,7 @@ export function GuideDetailPage() {
               </div>
               <CardDescription>
                 Componi la guida con blocchi modulari: testo, immagini, ispirazioni prodotti e CTA.
-                Ogni stringa traducibile mostra IT, EN, ES, FR e DE nello stesso blocco.
+                Ogni stringa traducibile mostra IT, EN, ES, FR, DE e RO nello stesso blocco.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

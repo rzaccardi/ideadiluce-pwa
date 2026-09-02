@@ -4,6 +4,7 @@ export {
   fetchOrderDetail,
   fetchOrderRecommendations,
   reorderOrder,
+  requestOrderReturn,
   resetOrderDetail,
   resetOrdersStore,
 } from './orders.actions'

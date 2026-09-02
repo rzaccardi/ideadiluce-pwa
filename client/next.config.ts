@@ -12,7 +12,7 @@ const apiUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   'http://localhost:4100'
 
-const LOCALE_PREFIXES = ['', '/en', '/es', '/fr', '/de']
+const LOCALE_PREFIXES = ['', '/en', '/es', '/fr', '/de', '/ro']
 
 function withTrailingSlashVariants(
   rules: Array<{ source: string; destination: string; permanent: boolean }>,

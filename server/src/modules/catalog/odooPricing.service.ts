@@ -124,15 +124,22 @@ export async function repriceCartFromOdoo(
   if (!cart) return
 
   if (await isCartCheckoutPriceLocked(cartId)) return
-  const unitPrices = await resolveCartLineUnitPricesCents(
-    ctx,
-    cart.items.map((line) => ({
-      lineId: line.id,
-      productRef: line.productRef,
-      variantRef: line.variantRef,
-    })),
-    pricing,
-  )
+
+  let unitPrices: Map<string, number | null>
+  try {
+    unitPrices = await resolveCartLineUnitPricesCents(
+      ctx,
+      cart.items.map((line) => ({
+        lineId: line.id,
+        productRef: line.productRef,
+        variantRef: line.variantRef,
+      })),
+      pricing,
+    )
+  } catch {
+    /* Odoo giù: tieni gli ultimi prezzi locali nel carrello */
+    return
+  }
 
   const itemUpdates: Array<{ id: string; clientUnitPriceEstimate: number }> = []
   let subtotal = 0

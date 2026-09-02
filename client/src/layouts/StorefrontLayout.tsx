@@ -21,8 +21,14 @@ export function StorefrontLayout({ children, initialShell = null }: Props) {
   const { locale } = useLocale()
   const pathname = usePathname()
   const { pages } = useSnapshot(siteStore)
-  const shell =
-    (siteStore.pageLocales.shell === locale ? pages.shell : initialShell) as SiteShellContent | null
+  const storedShellLocale = siteStore.pageLocales.shell
+  const shell = (
+    storedShellLocale === locale
+      ? pages.shell
+      : storedShellLocale
+        ? pages.shell
+        : initialShell
+  ) as SiteShellContent | null
   const activeNavId = resolveDcActiveNavId(pathname)
 
   useLayoutEffect(() => {

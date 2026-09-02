@@ -7,7 +7,51 @@ import { z } from 'zod'
 const serverRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 const repoRoot = path.join(serverRoot, '..')
 
+function safeDbHost(databaseUrl: string): string {
+  try {
+    return new URL(databaseUrl).hostname
+  } catch {
+    return ''
+  }
+}
+
+function applyDevDbFallback(databaseUrl: string | undefined, directUrl: string | undefined) {
+  if (!databaseUrl) return
+  process.env.DATABASE_URL = databaseUrl
+  if (directUrl) process.env.DIRECT_URL = directUrl
+}
+
+function readPersistedDevDbFallback(): { databaseUrl: string; directUrl: string } | null {
+  try {
+    const raw = readFileSync(path.join(repoRoot, '.cache', 'postgres-dev-fallback.json'), 'utf8')
+    const parsed = JSON.parse(raw) as { databaseUrl?: string; directUrl?: string }
+    if (typeof parsed.databaseUrl === 'string' && parsed.databaseUrl.trim()) {
+      return {
+        databaseUrl: parsed.databaseUrl.trim(),
+        directUrl: parsed.directUrl?.trim() || parsed.databaseUrl.trim(),
+      }
+    }
+  } catch {
+    /* file assente */
+  }
+  return null
+}
+
+/** `ensure-postgres-dev.mjs` può già aver impostato il Postgres locale: non farlo sovrascrivere da `.env`. */
+const inheritedDatabaseUrl = process.env.DATABASE_URL?.trim()
+const inheritedDirectUrl = process.env.DIRECT_URL?.trim()
+const keepDevDbFallback =
+  process.env.IDL_POSTGRES_DEV_FALLBACK === '1' ||
+  Boolean(inheritedDatabaseUrl && /^(localhost|127\.0\.0\.1)$/i.test(safeDbHost(inheritedDatabaseUrl)))
+
 config({ path: path.join(repoRoot, '.env'), override: true })
+
+if (keepDevDbFallback && inheritedDatabaseUrl) {
+  applyDevDbFallback(inheritedDatabaseUrl, inheritedDirectUrl)
+} else {
+  const persisted = readPersistedDevDbFallback()
+  if (persisted) applyDevDbFallback(persisted.databaseUrl, persisted.directUrl)
+}
 
 const nodeEnvEarly = process.env.NODE_ENV ?? 'development'
 const dbUrlMissing = !process.env.DATABASE_URL?.trim()
@@ -86,7 +130,14 @@ const envSchema = z.object({
   ODOO_PRICELIST_B2B_ID: z.coerce.number().optional(),
   /** ID listino Odoo professional (`product.pricelist`). */
   ODOO_PRICELIST_PROFESSIONAL_ID: z.coerce.number().optional(),
-  /** SMTP per email transazionali (reset password, ecc.). */
+  /**
+   * Se true, lock/pagamento restano bloccati quando Odoo XML-RPC non risponde
+   * (comportamento storico). Default false: il checkout prosegue in locale e la coda riprova dopo.
+   */
+  ODOO_CHECKOUT_REQUIRE_LIVE: boolish.default(false),
+  /** Forza la modalità emergenza Odoo (stesso effetto del kill switch in admin). */
+  ODOO_EMERGENCY_MODE: boolish.default(false),
+  /** SMTP di fallback se Odoo mail non è raggiungibile (anche con ODOO_ENABLED). */
   SMTP_ENABLED: boolish.default(false),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().default(587),
@@ -180,8 +231,17 @@ const envSchema = z.object({
   SPACES_REGION: z.string().default('fra1'),
   /** Minuti dopo paidAt prima di inviare alert email per PAID_SYNC_PENDING. */
   PAID_SYNC_ALERT_MINUTES: z.coerce.number().default(15),
-  /** Destinatario email alert sync Odoo (se assente: solo log + banner BO). */
+  /** Destinatario alert sync Odoo (default: info@ideadiluce.com via template Odoo). */
   PAID_SYNC_ALERT_EMAIL: z.string().email().optional(),
+  /**
+   * URL pubblico del componente api (es. https://api-….ondigitalocean.app).
+   * Serve a UptimeRobot per il check diretto `/health` senza passare dallo shop.
+   */
+  API_PUBLIC_URL: z.string().optional(),
+  /** Main API Key UptimeRobot (Integrations & API). Read-only basta per la dashboard BO. */
+  UPTIMEROBOT_API_KEY: z.string().optional(),
+  /** Intervallo check in secondi (free = 300, piani a pagamento da 60). */
+  UPTIMEROBOT_INTERVAL_SECONDS: z.coerce.number().default(300),
   /** Aggiornamento automatico query ricerca Home da Odoo (prodotti più acquistati). */
   SEARCH_HINTS_AUTO_SYNC_ENABLED: boolish.default(true),
   SEARCH_HINTS_STALE_HOURS: z.coerce.number().default(72),

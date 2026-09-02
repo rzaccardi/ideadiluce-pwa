@@ -3,6 +3,7 @@ import path from 'node:path'
 import { logger } from '../../lib/logger.js'
 import { buildLlmsTxt } from './llms.service.js'
 import { buildMerchantFeedXml } from './merchant-feed.service.js'
+import { listNavCatalogLandingPaths } from './nav-landing-paths.js'
 import { buildProductSitemapXml } from './sitemap.service.js'
 
 type CacheEntry = {
@@ -31,6 +32,20 @@ async function persistDiskCache(key: CacheKey, entry: CacheEntry) {
     await writeFile(diskCachePath(key), JSON.stringify(entry), 'utf8')
   } catch (err) {
     logger.warn('seo.disk_cache_write_failed', { key, err: String(err) })
+  }
+}
+
+async function persistNavLandingPaths(builtAt: string) {
+  try {
+    await mkdir(DISK_CACHE_DIR, { recursive: true })
+    const paths = listNavCatalogLandingPaths()
+    await writeFile(
+      path.join(DISK_CACHE_DIR, 'nav-landings.json'),
+      JSON.stringify({ builtAt, paths }),
+      'utf8',
+    )
+  } catch (err) {
+    logger.warn('seo.disk_cache_write_failed', { key: 'nav-landings', err: String(err) })
   }
 }
 
@@ -66,18 +81,60 @@ function countMerchantItems(xml: string): number {
   return (xml.match(/<item>/g) ?? []).length
 }
 
-async function notifyStorefrontRevalidation() {
+function storefrontBaseUrl(): string | null {
   const baseUrl = process.env.STOREFRONT_URL ?? process.env.NEXT_PUBLIC_SITE_URL
+  if (!baseUrl) return null
+  return baseUrl.replace(/\/$/, '')
+}
+
+async function notifyStorefrontRevalidation() {
+  const baseUrl = storefrontBaseUrl()
   const secret = process.env.REVALIDATE_SECRET
   if (!baseUrl || !secret) return
   try {
     await fetch(
-      `${baseUrl.replace(/\/$/, '')}/api/revalidate-site?secret=${encodeURIComponent(secret)}`,
+      `${baseUrl}/api/revalidate-site?secret=${encodeURIComponent(secret)}`,
       { method: 'POST' },
     )
   } catch {
     // best-effort
   }
+}
+
+const WARMUP_CONCURRENCY = 3
+
+/** Preriscalda ISR storefront sulle landing da menu/megamenu (categorie, attacchi, ambienti). */
+async function warmupStorefrontLandingPages() {
+  const origin = storefrontBaseUrl()
+  if (!origin) return
+
+  const paths = listNavCatalogLandingPaths()
+  const startedAt = Date.now()
+  let next = 0
+  let ok = 0
+
+  async function worker() {
+    while (next < paths.length) {
+      const path = paths[next++]
+      if (!path) continue
+      try {
+        const res = await fetch(`${origin}${path}`, {
+          headers: { 'user-agent': 'ideadiluce-seo-warmup' },
+          redirect: 'follow',
+        })
+        if (res.ok) ok += 1
+      } catch {
+        // best-effort: non blocca il refresh SEO
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: WARMUP_CONCURRENCY }, () => worker()))
+  logger.info('seo.landing_warmup', {
+    total: paths.length,
+    ok,
+    ms: Date.now() - startedAt,
+  })
 }
 
 export async function refreshSeoCaches(options?: { skipPwaRevalidate?: boolean }) {
@@ -93,15 +150,18 @@ export async function refreshSeoCaches(options?: { skipPwaRevalidate?: boolean }
       buildAndStoreLlms(),
     ])
     const builtAt = sitemapEntry.builtAt
+    void persistNavLandingPaths(builtAt)
 
     if (!options?.skipPwaRevalidate) {
       await notifyStorefrontRevalidation()
+      void warmupStorefrontLandingPages()
     }
 
     logger.info('seo.cache_refreshed', {
       ms: Date.now() - startedAt,
       sitemapUrls: sitemapEntry.itemCount,
       merchantItems: merchantEntry.itemCount,
+      navLandingPaths: listNavCatalogLandingPaths().length,
     })
 
     return {
@@ -129,6 +189,11 @@ async function buildAndStoreMerchantFeed(): Promise<CacheEntry> {
   cache.merchantFeed = { body, builtAt, itemCount: countMerchantItems(body) }
   void persistDiskCache('merchantFeed', cache.merchantFeed)
   return cache.merchantFeed
+}
+
+/** Rigenera solo il feed Merchant (dopo salvataggio impostazioni BO). */
+export async function refreshMerchantFeed(): Promise<CacheEntry> {
+  return buildAndStoreMerchantFeed()
 }
 
 async function buildAndStoreLlms(): Promise<CacheEntry> {

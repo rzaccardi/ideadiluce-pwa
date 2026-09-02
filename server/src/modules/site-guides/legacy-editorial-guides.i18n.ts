@@ -811,4 +811,205 @@ export const LEGACY_EDITORIAL_GUIDES_I18N: Record<
       cta: { label: 'Alle Guides →', href: '/guide' },
     },
   },
+
+  RO: {
+    'luce-calda-o-fredda': {
+      layout: 'article',
+      eyebrow: 'DESIGN · SHOP THE LOOK · IUNIE 2024',
+      title: 'Lumină CALDĂ sau RECE: alegerea care luminează',
+      subtitle: 'Joc de roluri: cum să alegi lumina caldă sau rece, cameră cu cameră.',
+      intro:
+        'Lumina caldă (2400–2700K) este primitoare; lumina rece (4000–6500K) e mai strălucitoare și mai potrivită pentru sarcinile vizuale. Preferă calda în dormitor și living; neutră/rece în birou și bucătărie.',
+      blocks: [
+        {
+          kind: 'prose',
+          paragraphs: [
+            'Iluminatul joacă un rol esențial în crearea atmosferei potrivite în fiecare încăpere. Cum alegi între lumina caldă și cea rece? Temperatura de culoare se măsoară în Kelvin (K): valorile mici dau o strălucire blândă, primitoare, ca flacăra unei lumânări; valorile mari amintesc de lumina limpede a dimineții.',
+            'Lumina caldă, între 2400K și 2700K, este moale și primitoare. Lumina rece, între 4000K și 6500K, este mai strălucitoare — ideală acolo unde contează concentrarea și vizibilitatea.',
+          ],
+        },
+        {
+          kind: 'bullets',
+          title: 'Cameră cu cameră',
+          items: [
+            'Dormitor: preferă lumina caldă, mai ales la veiozele de noptieră, pentru relaxare și somn.',
+            'Birou: lumina rece îmbunătățește concentrarea și productivitatea.',
+            'Bucătărie: mulți aleg lumina rece sau neutră, pentru un aspect curat și o vizibilitate mai bună la gătit.',
+            'Baie: combină ambele — rece pentru machiaj și bărbierit, caldă pentru o baie relaxantă seara.',
+            'Sala de mese: lumina caldă creează o atmosferă primitoare la masă.',
+          ],
+        },
+        {
+          kind: 'cards',
+          title: 'Inspirație',
+          subtitle: 'Corpuri de iluminat de design care completează alegerea temperaturii de culoare.',
+          items: [
+            {
+              title: 'Alphabet of light',
+              description: 'Compoziție modulară Artemide pentru o lumină scenografică în living.',
+              href: '/negozio?world=design&q=Alphabet+of+light',
+              imageUrl: 'https://ideadiluce.com/wp-content/uploads/2024/07/alpha.jpg',
+            },
+            {
+              title: 'Captain Flint',
+              description: 'Lampadar Flos cu lumină caldă reglabilă, pentru colțul de lectură.',
+              href: '/negozio?world=design&q=Captain+Flint',
+              imageUrl: 'https://ideadiluce.com/wp-content/uploads/2024/07/capflin.jpg',
+            },
+            {
+              title: 'Lampara',
+              description: 'Lampă suspendată cu caracter cald, pentru sala de mese sau holul de intrare.',
+              href: '/negozio?world=design&q=Lampara',
+              imageUrl: 'https://ideadiluce.com/wp-content/uploads/2024/07/lampara.jpg',
+            },
+            {
+              title: 'Bolla',
+              description: 'Sticlă suflată și lumină difuză, pentru atmosfere blânde.',
+              href: '/negozio?world=design&q=Bolla',
+              imageUrl: 'https://ideadiluce.com/wp-content/uploads/2024/07/bolla1.jpg',
+            },
+          ],
+        },
+        {
+          kind: 'cta',
+          title: 'Cauți becuri sau corpuri după temperatura de culoare?',
+          primaryLabel: 'Explorează iluminatul de design →',
+          primaryHref: '/categoria-prodotto/illuminazione-arredo',
+          variant: 'accent',
+        },
+      ],
+      cta: { label: 'Toate ghidurile de design →', href: '/guide' },
+    },
+    'calipso-artemide-io-vengo-dalla-luna': {
+      layout: 'article',
+      eyebrow: 'DESIGN · DESIGN SPOTLIGHT · IUNIE 2024',
+      title: 'CALIPSO – Proiectat de Artemide',
+      subtitle: 'Vin de pe lună: geometrie fractală, confort vizual și lumină emoțională.',
+      intro:
+        'Artemide Calipso se naște dintr-un algoritm: cercuri luminoase organice care răspândesc o lumină confortabilă și creează o atmosferă unică pentru camere de zi, holuri și spații de socializare.',
+      blocks: [
+        {
+          kind: 'prose',
+          paragraphs: [
+            'O emoție luminoasă prinde formă cu Artemide Calipso, o lucrare de design care surprinde frumusețea lunară. Născută dintr-un algoritm, geometria sa fractală creează un ansamblu organic de cercuri de lumină, oferind un confort vizual optim și o atmosferă unică.',
+            'Potrivită în orice ambient, Calipso îmbină performanța ridicată cu o expresivitate distinctivă — semnătură a iluminatului de design Artemide. Cu Calipso, lumina devine emoție: tehnologia se topește în artă, iar luna pătrunde în casă.',
+            'Descoperă cum se împletesc tehnologia și designul într-o experiență de iluminat de neuitat. Lasă-te inspirat de Calipso și transformă-ți spațiile cu strălucirea sa învăluitoare.',
+          ],
+        },
+        {
+          kind: 'features',
+          title: 'Neil Poulton',
+          items: [
+            {
+              title: 'Designer',
+              description:
+                'Designerul scoțian premiat Neil Poulton, stabilit la Paris, este cunoscut pentru proiecte minimaliste, dar avansate tehnologic. Colaborează de ani de zile cu Artemide și cu alte mărci de referință.',
+            },
+            {
+              title: 'Filosofie',
+              description:
+                'Forme esențiale, materiale rafinate și inovație luminoasă: fiecare produs este gândit să se integreze în spațiile de zi cu zi, fără să-și piardă identitatea sculpturală.',
+            },
+          ],
+        },
+        {
+          kind: 'cards',
+          title: 'Produse Neil Poulton',
+          subtitle: 'Descoperă Calipso și alte icoane Artemide semnate de designer.',
+          items: [
+            {
+              title: 'Calipso',
+              description: 'Lampă suspendată iconică, cu geometrie fractală și lumină difuză.',
+              href: '/negozio?world=design&q=Calipso',
+              imageUrl: 'https://ideadiluce.com/wp-content/uploads/2024/06/calipso.jpg',
+            },
+            {
+              title: 'Microsurf',
+              description: 'Veioză compactă, cu lumină directă și reflectată.',
+              href: '/negozio?world=design&q=Microsurf',
+              imageUrl: 'https://ideadiluce.com/wp-content/uploads/2024/06/microsurf.jpg',
+            },
+            {
+              title: 'Talo',
+              description: 'Linie esențială pentru birouri și noptiere contemporane.',
+              href: '/negozio?world=design&q=Talo+Artemide',
+              imageUrl: 'https://ideadiluce.com/wp-content/uploads/2024/06/talo.jpg',
+            },
+            {
+              title: 'Rea',
+              description: 'Aplică de perete cu profil subțire.',
+              href: '/negozio?world=design&q=Rea+Artemide',
+              imageUrl: 'https://ideadiluce.com/wp-content/uploads/2024/06/rea.jpg',
+            },
+          ],
+        },
+        {
+          kind: 'cta',
+          title: 'Explorează întreaga colecție Artemide',
+          primaryLabel: 'Vezi marca Artemide →',
+          primaryHref: '/brand/artemide',
+          variant: 'accent',
+        },
+      ],
+      cta: { label: 'Mai multă inspirație de design →', href: '/categoria-prodotto/illuminazione-arredo' },
+    },
+    'la-natura-trend-2024': {
+      layout: 'article',
+      eyebrow: 'DESIGN · STYLE RADAR · IUNIE 2024',
+      title: 'Tendințe în iluminat 2024 – NATURA',
+      subtitle: 'Natura vine acasă: forme organice, materiale naturale și lumină poetică.',
+      intro:
+        'Designul din 2024 celebrează stupii, cursurile de apă și siluetele montane: lămpi organice, finisaje Wabi-Sabi și compoziții modulare aduc o notă naturală în interior.',
+      blocks: [
+        {
+          kind: 'prose',
+          paragraphs: [
+            'Natura este muza designului din 2024, iar iluminatul nu face excepție. Inspirate de stupi, de curgerea apei sau de formele munților, lămpile de design din acest an aduc natura în spațiile de locuit. Uită liniile rigide: 2024 celebrează formele organice și materialele naturale.',
+            'Chlorophilia, de Ross Lovegrove, este o sculptură luminoasă care reinterpretează expertiza Artemide într-o cheie organică, fluidă. Ușurința ei se dezvăluie aprinsă, printr-un joc spectaculos de umbre: corpul central difuzează o lumină indirectă, filtrată prin trei elemente transparente în formă de frunză.',
+            'Estetica Wabi-Sabi, care celebrează imperfecțiunea și frumusețea îmbătrânirii, este o altă tendință puternică: finisaje antichizate, materiale brute și forme imperfecte dau caracter interiorului.',
+            'Artemide Yanzi echilibrează tradiția și inovația: ramuri din alamă periată susțin rândunici stilizate, cu capete din sticlă albă care adăpostesc lumina. Un sistem deschis, pentru compoziții personalizate și peisaje luminoase unice.',
+          ],
+        },
+        {
+          kind: 'cards',
+          title: 'Inspirate de natură',
+          subtitle: 'O selecție de lămpi organice și compoziții scenografice.',
+          items: [
+            {
+              title: 'Chlorophilia',
+              description: 'Sculptură luminoasă Ross Lovegrove, cu frunze de sticlă.',
+              href: '/negozio?world=design&q=Chlorophilia',
+              imageUrl: 'https://ideadiluce.com/wp-content/uploads/2024/07/chloro.jpg',
+            },
+            {
+              title: 'Yanzi',
+              description: 'Sistem modular cu rândunici de sticlă și alamă periată.',
+              href: '/negozio?world=design&q=Yanzi',
+              imageUrl: 'https://ideadiluce.com/wp-content/uploads/2024/07/yanzi.jpg',
+            },
+            {
+              title: 'Calipso',
+              description: 'Geometrie fractală inspirată de suprafața lunară.',
+              href: '/negozio?world=design&q=Calipso',
+              imageUrl: 'https://ideadiluce.com/wp-content/uploads/2024/06/calipso-up2.jpg',
+            },
+            {
+              title: 'UOVO',
+              description: 'Formă organică din sticlă suflată, pentru o lumină blândă.',
+              href: '/negozio?world=design&q=Uovo+Artemide',
+              imageUrl: 'https://ideadiluce.com/wp-content/uploads/2024/07/uovo.jpg',
+            },
+          ],
+        },
+        {
+          kind: 'cta',
+          title: 'Descoperă iluminatul de design',
+          primaryLabel: 'Mergi la categoria design →',
+          primaryHref: '/categoria-prodotto/illuminazione-arredo',
+          variant: 'accent',
+        },
+      ],
+      cta: { label: 'Toate ghidurile →', href: '/guide' },
+    },
+  },
 }

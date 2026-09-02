@@ -15,10 +15,15 @@ import { ProfessionalRequestsPage } from '@/pages/professional-requests/professi
 import { ProfessionalRequestDetailPage } from '@/pages/professional-requests/professional-request-detail-page'
 import { SiteInquiriesPage } from '@/pages/site-inquiries/site-inquiries-page'
 import { SiteInquiryDetailPage } from '@/pages/site-inquiries/site-inquiry-detail-page'
+import { MailLogPage } from '@/pages/mail-log/mail-log-page'
+import { MailLogDetailPage } from '@/pages/mail-log/mail-log-detail-page'
 import { TaxRulesPage } from '@/pages/tax-rules/tax-rules-page'
 import { ExperiencePage } from '@/pages/experience/experience-page'
 import { SearchAnalyticsPage } from '@/pages/search-analytics/search-analytics-page'
 import { CatalogCachePage } from '@/pages/catalog-cache/catalog-cache-page'
+import { UptimePage } from '@/pages/uptime/uptime-page'
+import { NotFoundAnalyticsPage } from '@/pages/not-found/not-found-analytics-page'
+import { NotFoundAnalyticsDetailPage } from '@/pages/not-found/not-found-analytics-detail-page'
 
 const OrdersPage = lazy(() =>
   import('@/pages/orders/orders-page').then((m) => ({ default: m.OrdersPage })),
@@ -38,6 +43,9 @@ const SitePagesListPage = lazy(() =>
 )
 const SitePageDetailPage = lazy(() =>
   import('@/pages/site/site-page-detail-page').then((m) => ({ default: m.SitePageDetailPage })),
+)
+const OdooResiliencePage = lazy(() =>
+  import('@/pages/odoo/odoo-resilience-page').then((m) => ({ default: m.OdooResiliencePage })),
 )
 const OdooPricelistsPage = lazy(() =>
   import('@/pages/odoo/pricelists-page').then((m) => ({ default: m.OdooPricelistsPage })),
@@ -94,7 +102,10 @@ export function App() {
               <Route path="shipping" element={<ShippingPage />} />
               <Route path="tax-rules" element={<TaxRulesPage />} />
               <Route path="experience" element={<ExperiencePage />} />
+              <Route path="uptime" element={<UptimePage />} />
               <Route path="search-analytics" element={<SearchAnalyticsPage />} />
+              <Route path="not-found" element={<NotFoundAnalyticsPage />} />
+              <Route path="not-found/detail" element={<NotFoundAnalyticsDetailPage />} />
               <Route
                 path="odoo/quotations"
                 element={
@@ -119,8 +130,16 @@ export function App() {
                   </LazyPage>
                 }
               />
+              <Route
+                path="odoo/sync-queue"
+                element={
+                  <LazyPage>
+                    <OdooResiliencePage />
+                  </LazyPage>
+                }
+              />
               <Route path="catalog-cache" element={<CatalogCachePage />} />
-              <Route path="sync-queue" element={<Navigate to="/catalog-cache" replace />} />
+              <Route path="sync-queue" element={<Navigate to="/odoo/sync-queue" replace />} />
               <Route path="social-proof" element={<SocialProofPage />} />
               <Route
                 path="site"
@@ -166,6 +185,8 @@ export function App() {
               <Route path="professional-requests/:id" element={<ProfessionalRequestDetailPage />} />
               <Route path="site-inquiries" element={<SiteInquiriesPage />} />
               <Route path="site-inquiries/:id" element={<SiteInquiryDetailPage />} />
+              <Route path="mail-log" element={<MailLogPage />} />
+              <Route path="mail-log/:id" element={<MailLogDetailPage />} />
             </Route>
           </Route>
         </Routes>

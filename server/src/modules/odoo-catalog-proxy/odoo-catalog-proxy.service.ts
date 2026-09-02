@@ -18,10 +18,9 @@ import { buildTechnicalCardSpecTagsFromSpecs } from '../../lib/technical-card-sp
 function langFromQuery(locale?: string, lang?: string): HubLocale {
   if (lang?.includes('_')) {
     const code = lang.split('_')[0]?.toUpperCase()
-    if (code === 'IT' || code === 'EN' || code === 'ES' || code === 'FR' || code === 'DE') {
+    if (code === 'IT' || code === 'EN' || code === 'ES' || code === 'FR' || code === 'DE' || code === 'RO') {
       return code
     }
-    if (code === 'RO') return 'IT'
   }
   return parseHubLocale(locale)
 }
@@ -240,11 +239,23 @@ export async function proxyOdooCatalogProductDetail(
   },
 ) {
   const locale = langFromQuery(query.locale, query.lang)
-  return fetchOdooCatalogProductDetail(productId, locale)
+  try {
+    return await fetchOdooCatalogProductDetail(productId, locale)
+  } catch (e) {
+    const { getCachedProductDetailById } = await import('../catalog/odoo-catalog-index.service.js')
+    const { markCatalogDegraded } = await import('../odoo/odoo-degraded-state.js')
+    markCatalogDegraded()
+    const cached = await getCachedProductDetailById(locale, productId)
+    if (cached?.product) {
+      return { ...cached, product: { ...cached.product, pwa_degraded: true } }
+    }
+    throw e
+  }
 }
 
 /**
  * BFF-only: resolve slug → id via search live Odoo, poi GET /api/v2/product/<id>.
+ * Se Odoo è giù, usa l'indice cache locale.
  */
 export async function proxyOdooCatalogProductBySlug(
   slug: string,
@@ -257,11 +268,23 @@ export async function proxyOdooCatalogProductBySlug(
   },
 ) {
   const locale = langFromQuery(query.locale, query.lang)
-  const id = await findOdooCatalogProductIdBySlug(slug, locale)
-  if (id == null) {
-    throw new OdooCatalogClientError(`Prodotto non trovato per slug ${slug}`, 404)
+  try {
+    const id = await findOdooCatalogProductIdBySlug(slug, locale)
+    if (id == null) {
+      throw new OdooCatalogClientError(`Prodotto non trovato per slug ${slug}`, 404)
+    }
+    return await proxyOdooCatalogProductDetail(id, query)
+  } catch (e) {
+    if (e instanceof OdooCatalogClientError && e.httpStatus === 404) throw e
+    const { getCachedProductDetailBySlug } = await import('../catalog/odoo-catalog-index.service.js')
+    const { markCatalogDegraded } = await import('../odoo/odoo-degraded-state.js')
+    markCatalogDegraded()
+    const cached = await getCachedProductDetailBySlug(locale, slug)
+    if (cached?.product) {
+      return { ...cached, product: { ...cached.product, pwa_degraded: true } }
+    }
+    throw e
   }
-  return proxyOdooCatalogProductDetail(id, query)
 }
 
 export { OdooCatalogClientError }

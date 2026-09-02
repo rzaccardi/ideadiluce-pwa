@@ -1,7 +1,7 @@
 import { proxy } from 'valtio'
 import type { SiteCatalog, SiteI18nStatus } from '@/types/site'
 
-export const SITE_LOCALES = ['IT', 'EN', 'ES', 'FR', 'DE'] as const
+export const SITE_LOCALES = ['IT', 'EN', 'ES', 'FR', 'DE', 'RO'] as const
 export type SiteLocale = (typeof SITE_LOCALES)[number]
 
 export type SitePageSummary = {
@@ -73,6 +73,7 @@ export const siteStore = proxy({
     ES: emptyLocaleDraft(),
     FR: emptyLocaleDraft(),
     DE: emptyLocaleDraft(),
+    RO: emptyLocaleDraft(),
   } as Record<SiteLocale, SiteLocaleDraft>,
   draftContent: {} as Record<string, unknown>,
   draftJson: '{}',

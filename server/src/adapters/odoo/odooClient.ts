@@ -91,10 +91,10 @@ export function buildOdooProductWebUrl(
   return `${base}/action-${actionId}/${templateId}`
 }
 
-/** Form contatto `res.partner` nel client web Odoo 17+ (path relativo a `ODOO_URL`). */
-export function buildOdooPartnerWebUrl(baseUrl: string, partnerId: number): string {
+/** Form `mail.mail` nel client web Odoo (email in uscita, Impostazioni → Tecnico). */
+export function buildOdooMailWebUrl(baseUrl: string, mailId: number): string {
   const base = baseUrl.replace(/\/$/, '')
-  return `${base}/contacts/${partnerId}`
+  return `${base}/web#id=${mailId}&model=mail.mail&view_type=form`
 }
 
 export function isOdooConfigured(): boolean {

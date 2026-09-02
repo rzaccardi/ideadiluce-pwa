@@ -2,8 +2,8 @@ import type { Request } from 'express'
 import { randomUUID } from 'node:crypto'
 import path from 'node:path'
 import bcrypt from 'bcryptjs'
-import { sendMail } from '../../lib/mail.js'
 import { logger } from '../../lib/logger.js'
+import { sendPwaMail, PWA_ADMIN_MAIL_TO } from '../../adapters/odoo/odooMailAdapter.js'
 import { parseHubLocale } from '../../lib/hub-locale.js'
 import { isSpacesConfigured, spacesPublicUrl, uploadProductImage } from '../../adapters/spaces/spaces.storage.js'
 import { createOdooCustomerAdapter } from '../../adapters/odoo/odooCustomerAdapter.js'
@@ -20,7 +20,6 @@ import { professionalAccountRepository } from './professional-account.repository
 import type { ProfessionalAccountRequestInput } from './professional-account.validators.js'
 import { normalizeCountryCode } from '../tax/tax.constants.js'
 
-const INQUIRY_TO = 'info@ideadiluce.com'
 const customerAdapter = createOdooCustomerAdapter()
 
 function splitContactName(contactName: string): { firstName: string; lastName: string } {
@@ -410,20 +409,30 @@ export const professionalAccountService = {
       userId: userResult.userId,
     })
 
-    await sendMail({
-      to: INQUIRY_TO,
-      subject: `[Idea di Luce] Attivazione account business — ${row.companyName}`,
-      text: lines.join('\n'),
-      attachments: visuraFile && !visuraUrl
-        ? [{ filename: visuraFile.originalname, content: visuraFile.buffer }]
-        : undefined,
+    const ctx: OdooCallContext = { correlationId: req.correlationId, req }
+    await sendPwaMail(ctx, {
+      templateKey: 'professional_request_admin',
+      emailTo: PWA_ADMIN_MAIL_TO,
+      vars: {
+        company_name: row.companyName,
+        body_text: lines.join('\n'),
+      },
+      attachments:
+        visuraFile && !visuraUrl
+          ? [{ filename: visuraFile.originalname, content: visuraFile.buffer, mimetype: visuraFile.mimetype }]
+          : undefined,
     })
 
     if (userResult.accountCreated && userResult.plainPassword) {
-      await sendMail({
-        to: email,
-        subject: 'Richiesta account professionisti — Idea di Luce',
-        text: `Ciao${firstName ? ` ${firstName}` : ''},\n\nAbbiamo ricevuto la tua richiesta di attivazione account business.\nVerificheremo i dati e ti contatteremo entro 24 ore lavorative.\n\nNel frattempo abbiamo creato un accesso al portale:\nEmail: ${email}\nPassword temporanea: ${userResult.plainPassword}\n\nAccedi da: ${publicAppUrl('/login')}`,
+      await sendPwaMail(ctx, {
+        templateKey: 'professional_account_customer',
+        emailTo: email,
+        vars: {
+          first_name_suffix: firstName ? ` ${firstName}` : '',
+          email,
+          password: userResult.plainPassword,
+          login_url: publicAppUrl('/login'),
+        },
       })
     }
 

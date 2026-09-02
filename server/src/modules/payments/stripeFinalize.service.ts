@@ -9,8 +9,11 @@ import { orderStatusToDTO, paymentMethodToDTO, paymentStatusToDTO } from './paym
 import { env } from '../../config/env.js'
 import { createOdooPaymentAdapter } from '../../adapters/odoo/odooPaymentAdapter.js'
 import { createOdooOrderAdapter } from '../../adapters/odoo/odooOrderAdapter.js'
-import { enqueueOdooSyncFailure } from '../odoo/odoo-sync-queue.service.js'
+import { enqueueOdooSyncFailure, enqueueOrderOdooSaga } from '../odoo/odoo-sync-queue.service.js'
 import { writeStructuredIntegrationLog } from '../../lib/integration-log-context.js'
+import { sendPwaMail } from '../../adapters/odoo/odooMailAdapter.js'
+import { publicAppUrl } from '../../lib/mail.js'
+import { orderTransactionalMail } from '../orders/order-transactional-mail.service.js'
 
 const paymentUrlAdapter = createOdooPaymentAdapter()
 const orderAdapter = createOdooOrderAdapter()
@@ -59,6 +62,10 @@ export async function finalizeStripeCheckout(
     where: { source: 'stripe', externalId: `session:${session.id}`, processed: true },
   })
   if (existing) {
+    const already = await prisma.pwaOrder.findUnique({ where: { id: pwaOrderId } })
+    if (already && ['PAID', 'PAID_SYNC_PENDING', 'SYNCED', 'CONFIRMED', 'COMPLETED'].includes(already.orderStatus)) {
+      await orderTransactionalMail.notifyPaidCustomer(already, req.correlationId ?? 'stripe-finalize')
+    }
     return { orderId: pwaOrderId, alreadyProcessed: true }
   }
 
@@ -134,7 +141,60 @@ export async function finalizeStripeCheckout(
     data: { status: 'CONVERTED', convertedOrderId: updated.id },
   })
 
+  await orderTransactionalMail.notifyPaidCustomer(updated, req.correlationId ?? 'stripe-finalize')
+
   const ctx: OdooCallContext = { correlationId: req.correlationId, req }
+
+  const billing = (updated.billingAddressJson as { firstName?: string } | null) ?? null
+  const amount =
+    updated.amountTotal != null
+      ? new Intl.NumberFormat('it-IT', { style: 'currency', currency: updated.currencyCode || 'EUR' }).format(
+          updated.amountTotal / 100,
+        )
+      : ''
+  try {
+    await sendPwaMail(ctx, {
+      templateKey: 'order_confirmation',
+      emailTo: updated.email,
+      vars: {
+        first_name_suffix: billing?.firstName ? ` ${billing.firstName}` : '',
+        order_number: updated.clientOrderRef?.trim() || updated.id,
+        amount,
+        order_url: publicAppUrl(`/account/orders/${updated.id}`),
+      },
+    })
+    const meta = (updated.metadataJson as Record<string, unknown> | null) ?? {}
+    await prisma.pwaOrder.update({
+      where: { id: updated.id },
+      data: {
+        metadataJson: {
+          ...meta,
+          orderConfirmationMailAt: new Date().toISOString(),
+        },
+      },
+    })
+  } catch (e) {
+    logger.warn('stripe.order_confirmation_mail_failed', {
+      orderId: updated.id,
+      error: e instanceof Error ? e.message : String(e),
+    })
+    void enqueueOrderOdooSaga(updated.id, {
+      includeMail: true,
+      lastError: e instanceof Error ? e.message : String(e),
+    }).catch(() => undefined)
+  }
+
+  if (env.ODOO_ENABLED && !updated.odooSaleOrderId) {
+    await prisma.pwaOrder.update({
+      where: { id: updated.id },
+      data: { orderStatus: 'PAID_SYNC_PENDING', odooLastSyncStatus: 'FAILED' },
+    })
+    await enqueueOrderOdooSaga(updated.id, {
+      includeMail: false,
+      lastError: 'Pagato in locale senza sale.order Odoo.',
+    })
+  }
+
   if (env.ODOO_ENABLED && updated.odooSaleOrderId) {
     const cart = await prisma.cart.findUnique({
       where: { id: updated.cartId },

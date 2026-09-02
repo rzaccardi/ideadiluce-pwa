@@ -46,7 +46,12 @@ export function useProductDetailState({
   )
 
   useEffect(() => {
-    if (initialProduct && initialProduct.slug === slug) {
+    const initialMatchesLocale =
+      Boolean(initialProduct) &&
+      initialProduct?.slug === slug &&
+      initialProduct.locale === locale
+
+    if (initialMatchesLocale && initialProduct) {
       productStore.product = initialProduct
       productStore.relatedProducts = initialRelatedProducts ?? []
       productStore.currentSlug = slug

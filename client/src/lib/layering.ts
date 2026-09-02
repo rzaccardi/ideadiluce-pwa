@@ -10,5 +10,9 @@ export const layers = {
   sheet: 'z-[71]',
   modal: 'z-[80]',
   searchModal: 'z-[120]',
+  /** Header checkout (logo / back) — sopra overlay di loading z-200. */
+  checkoutHeader: 'z-[210]',
+  /** Overlay riepilogo ordine mobile — sopra header checkout. */
+  checkoutMobileSummary: 'z-[230]',
   dialog: 'z-[10000]',
 } as const

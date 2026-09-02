@@ -5,12 +5,13 @@
  */
 import { parse } from 'dotenv'
 import { execSync, spawnSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import net from 'node:net'
 import { join } from 'node:path'
 import { fillDatabaseUrlFromExample, loadMonorepoEnv, repoRoot } from './load-monorepo-env.mjs'
 
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1'])
+const FALLBACK_FILE = join(repoRoot, '.cache', 'postgres-dev-fallback.json')
 
 function parseDbTarget(databaseUrl) {
   const parsed = new URL(databaseUrl)
@@ -44,6 +45,19 @@ function canConnect(host, port, timeoutMs = 1500) {
     socket.once('timeout', () => done(false))
     socket.once('error', () => done(false))
   })
+}
+
+function writeDevDbFallback(databaseUrl, directUrl) {
+  mkdirSync(join(repoRoot, '.cache'), { recursive: true })
+  writeFileSync(
+    FALLBACK_FILE,
+    JSON.stringify({ databaseUrl, directUrl, writtenAt: new Date().toISOString() }),
+    'utf8',
+  )
+}
+
+function clearDevDbFallback() {
+  rmSync(FALLBACK_FILE, { force: true })
 }
 
 function dockerAvailable() {
@@ -133,9 +147,12 @@ export async function ensurePostgresForDev() {
       )
       process.env.DATABASE_URL = local.databaseUrl
       process.env.DIRECT_URL = local.directUrl
+      process.env.IDL_POSTGRES_DEV_FALLBACK = '1'
+      writeDevDbFallback(local.databaseUrl, local.directUrl)
       databaseUrl = local.databaseUrl
     } else {
       console.log(`[postgres] Connessione remota raggiungibile (${target.host}:${target.port})`)
+      clearDevDbFallback()
       return
     }
   }

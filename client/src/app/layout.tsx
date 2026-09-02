@@ -3,6 +3,7 @@ import Script from 'next/script'
 import { Providers } from '@/providers'
 import { hanken } from '@/lib/fonts'
 import { getCookiebotCbid, getSiteUrl, getGoogleSiteVerification } from '@/lib/env'
+import { getCachedMessages, preloadLocale } from '@/i18n/messages'
 import { HTML_LANG } from '@/lib/locale'
 import { getRequestLocale } from '@/lib/locale-server'
 import { HOME_SEO_DESCRIPTION } from '@/lib/seo/home-metadata'
@@ -68,6 +69,8 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getRequestLocale()
+  await preloadLocale(locale)
+  const initialMessages = getCachedMessages(locale)
   const lang = HTML_LANG[locale]
   const cookiebotCbid = getCookiebotCbid()
 
@@ -94,7 +97,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Script id="legacy-sw-cleanup" strategy="beforeInteractive">
           {SW_CLEANUP_SCRIPT}
         </Script>
-        <Providers>{children}</Providers>
+        <Providers initialLocale={locale} initialMessages={initialMessages}>
+          {children}
+        </Providers>
       </body>
     </html>
   )

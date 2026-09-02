@@ -4,6 +4,7 @@ import type {
   OdooPaginated,
   OdooPricelist,
   OdooQuotationDetail,
+  OdooResilienceSettings,
   OdooSaleDocument,
   OdooStatus,
   OdooSyncQueueItem,
@@ -41,6 +42,21 @@ export async function fetchOdooSyncQueue(query: string) {
 
 export async function retryOdooSyncQueueItemById(queueId: string) {
   return adminApi<OdooSyncQueueItem>(`/admin/odoo/sync-queue/${queueId}/retry`, { method: 'POST' })
+}
+
+export async function requeueExhaustedOdooSync() {
+  return adminApi<{ requeued: number }>('/admin/odoo/sync-queue/retry-exhausted', { method: 'POST' })
+}
+
+export async function fetchOdooResilience() {
+  return adminApi<OdooResilienceSettings>('/admin/odoo/resilience')
+}
+
+export async function patchOdooResilience(body: Partial<Pick<OdooResilienceSettings, 'emergencyMode' | 'catalogCacheFallback' | 'smtpFallback' | 'note'>>) {
+  return adminApi<OdooResilienceSettings>('/admin/odoo/resilience', {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  })
 }
 
 export async function fetchOdooQuotationsList(query: string, options?: { append?: boolean }) {
@@ -193,5 +209,50 @@ export async function retryOdooSyncQueueItem(queueId: string, listQuery: string)
     odooStore.syncQueueListError = errMessage(e)
   } finally {
     odooStore.syncQueueRetryingId = null
+  }
+}
+
+export async function loadOdooResiliencePage(listQuery: string) {
+  odooStore.statusLoading = true
+  odooStore.resilienceLoading = true
+  odooStore.syncQueueListError = null
+  try {
+    const [status, resilience] = await Promise.all([
+      fetchOdooStatus(),
+      fetchOdooResilience(),
+    ])
+    odooStore.status = status
+    odooStore.resilience = resilience
+    await fetchOdooSyncQueueList(listQuery)
+  } catch (e) {
+    odooStore.syncQueueListError = errMessage(e)
+  } finally {
+    odooStore.statusLoading = false
+    odooStore.resilienceLoading = false
+  }
+}
+
+export async function saveOdooResilience(
+  patch: Partial<Pick<OdooResilienceSettings, 'emergencyMode' | 'catalogCacheFallback' | 'smtpFallback' | 'note'>>,
+) {
+  odooStore.resilienceSaving = true
+  try {
+    odooStore.resilience = await patchOdooResilience(patch)
+    odooStore.status = await fetchOdooStatus()
+  } finally {
+    odooStore.resilienceSaving = false
+  }
+}
+
+export async function requeueAllExhaustedOdooSync(listQuery: string) {
+  odooStore.syncQueueRequeueing = true
+  try {
+    await requeueExhaustedOdooSync()
+    await fetchOdooSyncQueueList(listQuery)
+    odooStore.status = await fetchOdooStatus()
+  } catch (e) {
+    odooStore.syncQueueListError = errMessage(e)
+  } finally {
+    odooStore.syncQueueRequeueing = false
   }
 }

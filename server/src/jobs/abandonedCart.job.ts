@@ -1,6 +1,9 @@
 import { prisma } from '../lib/prisma.js'
 import { syncSaleOrderFunnelState } from '../adapters/odoo/odooFunnelSync.js'
 import { recordAbandonedCartEvent } from '../modules/cart/cart-contact.service.js'
+import { orderTransactionalMail } from '../modules/orders/order-transactional-mail.service.js'
+
+const ABANDONED_MAIL_STATUSES = ['CHECKOUT_STARTED', 'PAYMENT_STARTED'] as const
 
 export async function processAbandonedCheckoutCandidates(
   olderThanMs = 1000 * 60 * 60 * 24,
@@ -8,7 +11,7 @@ export async function processAbandonedCheckoutCandidates(
   const cutoff = new Date(Date.now() - olderThanMs)
   const candidates = await prisma.pwaOrder.findMany({
     where: {
-      orderStatus: { in: ['CHECKOUT_STARTED', 'PAYMENT_STARTED', 'PAYMENT_PENDING'] },
+      orderStatus: { in: [...ABANDONED_MAIL_STATUSES] },
       updatedAt: { lt: cutoff },
     },
   })
@@ -28,6 +31,7 @@ export async function processAbandonedCheckoutCandidates(
       orderId: order.id,
       olderThanMs,
     })
+    await orderTransactionalMail.sendAbandonedCartReminder(updated, `abandoned-${order.id}`)
     await syncSaleOrderFunnelState(
       { correlationId: `abandoned-${order.id}` },
       updated.odooSaleOrderId,

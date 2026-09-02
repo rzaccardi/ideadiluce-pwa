@@ -3,7 +3,9 @@ import type {
   OdooPaginated,
   OdooPricelist,
   OdooQuotationDetail,
+  OdooResilienceSettings,
   OdooSaleDocument,
+  OdooStatus,
   OdooSyncQueueList,
 } from '@/types/odoo'
 
@@ -31,4 +33,11 @@ export const odooStore = proxy({
   syncQueueListLoadingMore: false,
   syncQueueListError: null as string | null,
   syncQueueRetryingId: null as string | null,
+  syncQueueRequeueing: false,
+
+  status: null as OdooStatus | null,
+  statusLoading: false,
+  resilience: null as OdooResilienceSettings | null,
+  resilienceLoading: false,
+  resilienceSaving: false,
 })

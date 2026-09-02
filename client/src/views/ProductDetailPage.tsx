@@ -73,7 +73,14 @@ export function ProductDetailPage({
 
   return (
     <PageLoadTransition isLoading={false} skeleton={<ProductDetailSkeleton variant={skeletonVariant} />}>
-      {detailView}
+      <>
+        {productForView.degraded ? (
+          <div className="bg-amber-50 px-4 py-3 text-center text-sm text-amber-950">
+            {t('product.degradedBanner')}
+          </div>
+        ) : null}
+        {detailView}
+      </>
     </PageLoadTransition>
   )
 }

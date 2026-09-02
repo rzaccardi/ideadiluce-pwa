@@ -214,11 +214,20 @@ export function ProductCategoryLandingPage({
 
   useLayoutEffect(() => {
     if (!initialBootstrap) return
+    if (
+      catalogStore.filters.locale &&
+      catalogStore.filters.locale !== locale &&
+      catalogStore.categories.length > 0
+    ) {
+      return
+    }
     seedCatalogBootstrap(initialBootstrap, locale)
   }, [initialBootstrap, locale])
 
   useLayoutEffect(() => {
     if (!initialProducts || !initialSeedKey) return
+    const payloadLocale = initialProducts[0]?.locale
+    if (payloadLocale && payloadLocale !== locale) return
     catalogStore.filters.locale = locale
     catalogStore.filters.categorySlug = catalogConfig.categorySlug
     catalogStore.filters.brandSlug = brandSlug

@@ -128,6 +128,7 @@ export function CatalogPage({
   const catalogLoading = useSnapshot(catalogStore).isLoading
   const catalogLoadingMore = useSnapshot(catalogStore).isLoadingMore
   const catalogError = useSnapshot(catalogStore).error
+  const catalogDegraded = useSnapshot(catalogStore).degraded
   const catalogPagination = useSnapshot(catalogStore).pagination
   const rawProductsLength = useSnapshot(catalogStore).rawProducts.length
   const catalogCms = useSnapshot(siteStore).pages.catalog
@@ -261,11 +262,20 @@ export function CatalogPage({
 
   useLayoutEffect(() => {
     if (!initialBootstrap) return
+    if (
+      catalogStore.filters.locale &&
+      catalogStore.filters.locale !== locale &&
+      catalogStore.categories.length > 0
+    ) {
+      return
+    }
     seedCatalogBootstrap(initialBootstrap, locale)
   }, [initialBootstrap, locale])
 
   useLayoutEffect(() => {
     if (!initialProducts || !initialSeedKey) return
+    const payloadLocale = initialProducts[0]?.locale
+    if (payloadLocale && payloadLocale !== locale) return
     // Allinea i filtri server prima dello seed, così fetchProducts non rifà il round-trip.
     catalogStore.filters.locale = locale
     catalogStore.filters.categorySlug = effectiveCategory
@@ -625,6 +635,8 @@ export function CatalogPage({
         pageSubtitle={pageSubtitle}
         breadcrumbParent={breadcrumbParent}
         showWorldTabs={!taxonomy}
+        degraded={catalogDegraded}
+        degradedMessage={t('catalog.degradedBanner')}
       />
   )
 }

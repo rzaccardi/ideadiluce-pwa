@@ -38,6 +38,11 @@ function ensureHubDatabaseUrlForCli(): void {
 
 ensureHubDatabaseUrlForCli()
 
+/** `migrate` richiede la connessione diretta (DO: porta 25060 / defaultdb + schema=hub). */
+if (args[0] === 'migrate' && process.env.DIRECT_URL?.trim()) {
+  process.env.HUB_DATABASE_URL = hubDatabaseUrl(process.env.DIRECT_URL.trim())
+}
+
 const result = spawnSync('prisma', args, {
   cwd: apiRoot,
   env: process.env,

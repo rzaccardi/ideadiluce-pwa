@@ -526,12 +526,164 @@ export const DEFAULT_TERMINI_DE: ContentPageContent = {
   ],
 }
 
+export const DEFAULT_TERMINI_RO: ContentPageContent = {
+  layout: 'legal',
+  title: 'Termeni de utilizare și condiții de vânzare',
+  subtitle: 'Termeni de utilizare a site-ului și vânzare online a TLB ITALY S.r.l.',
+  intro:
+    'Site-ul www.ideadiluce.com („Site-ul”) este deținut de TLB ITALY S.r.l. („Titularul” sau „Vânzătorul”), cu sediul social în Via Appia Pignatelli 450 – 00178 Rome (RM) Italy – VAT IT17245551001 – R.E.A.: RM-1705840 – Capital social: €10,000.00 vărsat integral.',
+  seo: { noindex: false },
+  blocks: [
+  {
+    kind: 'prose',
+    title: 'Contact',
+    paragraphs: [
+      'Pentru orice informație, cerere de asistență, întrebare sau semnalare, vă rugăm să contactați Serviciul nostru Clienți:',
+      'prin e-mail: info@ideadiluce.com',
+      'prin telefon: +39 06 716 7111',
+    ],
+  },
+  { kind: 'prose', title: 'Termeni de utilizare', paragraphs: [] },
+  {
+    kind: 'prose',
+    title: '1. TERMENI DE UTILIZARE A SITE-ULUI',
+    paragraphs: [
+      'Prin utilizarea Site-ului nostru și/sau plasarea de comenzi prin acesta, Clientul confirmă aderarea la următoarele reguli și se angajează să:',
+      'folosească Site-ul exclusiv în scopuri licite;',
+      'se abțină de la plasarea de comenzi înșelătoare sau frauduloase. Dacă apar indicii valabile de posibilă comandă frauduloasă, ne rezervăm dreptul de a anula comanda și de a semnala situația autorităților competente;',
+      'furnizeze date de contact precum adresa de e-mail și adresa poștală, asigurându-se că sunt exacte și adevărate, permițând astfel folosirea lor pentru procesarea comenzii, conform Politicii de confidențialitate. Lipsa unor informații exacte și complete poate împiedica onorarea comenzii.',
+      'Prin confirmarea unei comenzi pe acest Site, declarați că sunteți major și că aveți capacitatea legală de a încheia contracte.',
+      'Declinăm orice răspundere pentru incidente sau daune cauzate de utilizarea internetului, inclusiv, fără a se limita la, întreruperi de serviciu, intruziuni externe, viruși informatici sau orice alt eveniment de forță majoră.',
+    ],
+  },
+  {
+    kind: 'prose',
+    title: '2. PROPRIETATE INDUSTRIALĂ ȘI INTELECTUALĂ',
+    paragraphs: [
+      'Domeniul, Site-ul și întregul său conținut, inclusiv imagini, texte, videoclipuri, logo-uri etc., sunt proprietatea exclusivă a Titularului sau a deținătorilor legitimi ai drepturilor de proprietate intelectuală și de autor corespunzătoare.',
+      'Este expres interzisă copierea, descărcarea, modificarea sau utilizarea mărcii, a videoclipurilor, a logo-urilor și a oricărui alt element de identificare de pe acest site, în orice scop și prin orice mijloace, fără autorizarea scrisă explicită a proprietarului site-ului sau a deținătorilor drepturilor.',
+    ],
+  },
+  {
+    kind: 'prose',
+    title: 'Condiții generale de vânzare',
+    paragraphs: [
+      'Prezentele Condiții generale de vânzare (denumite în continuare „CGV”) reglementează raportul contractual dintre Titular și Client privind cumpărarea produselor de iluminat comercializate de Titular prin Site.',
+      'Dispozițiile introductive și Termenii de utilizare a Site-ului nostru fac parte integrantă din aceste CGV.',
+      'Vă rugăm să le citiți cu atenție și să le imprimați și/sau să le salvați pe un alt suport durabil accesibil. Consultați de asemenea cu atenție Politica de confidențialitate și Politica de cookie-uri.',
+      'Titularul se angajează să mențină aceste documente întotdeauna disponibile și actualizate. Ele pot fi modificate sau actualizate în orice moment de Titular, iar utilizatorul se angajează să le revizuiască înainte de a plasa fiecare comandă.',
+    ],
+  },
+  {
+    kind: 'prose',
+    title: '1. Definiții',
+    paragraphs: [
+      '1.1. „Contract” înseamnă contractul de vânzare la distanță privind bunuri mobile corporale comercializate pe Site.',
+      '1.2. „Client” înseamnă consumatorul, ca persoană fizică care a împlinit 18 ani, sau profesionistul care acționează în exercitarea activității sale.',
+      '1.3. „Comandă” înseamnă propunerea de cumpărare pe care utilizatorul o trimite Titularului Site-ului prin parcurgerea procedurii de comandă descrise.',
+      '1.4. „Produse” înseamnă bunurile mobile corporale puse în vânzare pe acest Site.',
+    ],
+  },
+  {
+    kind: 'prose',
+    title: '2. Disponibilitatea serviciului',
+    paragraphs: [
+      '2.1. Titularul își rezervă dreptul de a nu accepta comenzi care par anormale în raport cu cantitatea sau frecvența achizițiilor.',
+      'Titularul își rezervă de asemenea dreptul de a nu accepta comenzi de la utilizatori cu litigii în curs, fraudă la plată sau date de identificare false ori incomplete.',
+    ],
+  },
+  {
+    kind: 'prose',
+    title: '3. DOMENIUL DE APLICARE',
+    paragraphs: [
+      '3.1. Prezentele CGV se aplică tuturor vânzărilor efectuate de Vânzător pe Site. CGV aplicabile sunt cele în vigoare la data transmiterii comenzii de cumpărare.',
+      '3.2. Prezentele CGV nu reglementează vânzările sau serviciile unor terți accesibile prin hyperlinkuri.',
+      '3.3. Prezentele CGV pot fi modificate în orice moment și vor produce efecte de la publicarea pe Site.',
+    ],
+  },
+  {
+    kind: 'prose',
+    title: '4. CUM TRIMITEȚI COMANDA ȘI CUM ÎNCHEIAȚI UN CONTRACT CU NOI',
+    paragraphs: [
+      '4.1. Pentru a trimite comanda: adăugați produse în coș, verificați rezumatul, confirmați comanda. Puteți anula până la pregătirea în depozit.',
+      '4.2. Prin trimiterea unei comenzi declarați că ați citit și ați acceptat integral prezentele CGV și obligația de a plăti prețul indicat.',
+      '4.3. Putem refuza o comandă dacă există erori în informațiile furnizate sau în fișa produsului.',
+      '4.4. Dacă plata integrală nu este efectuată, contractul de cumpărare va fi reziliat automat.',
+      '4.5. Fiecare comandă este stocată digital sau pe hârtie la sediul nostru. Puteți solicita o copie în orice moment.',
+    ],
+  },
+  {
+    kind: 'prose',
+    title: '5. PRODUSELE ȘI DISPONIBILITATEA LOR',
+    paragraphs: [
+      '5.1. Produsele sunt descrise în fișele respective. Pot apărea ușoare diferențe între fotografii și realitate.',
+      '5.2. Disponibilitatea indicată se referă la momentul în care consultați Site-ul.',
+      '5.3. Dacă un produs comandat nu este disponibil, vă vom informa prin e-mail, cu dreptul la rambursare integrală sau la alternativele prevăzute.',
+    ],
+  },
+  {
+    kind: 'prose',
+    title: '6. PLĂȚI',
+    paragraphs: [
+      '6.1. Prin trimiterea comenzii, vă angajați să plătiți folosind una dintre metodele descrise.',
+      '6.2. Acceptăm Visa, MasterCard, Maestro, Postepay și American Express. Datele cardului sunt criptate și trimise direct procesatorului de plăți.',
+      '6.3. Portofele digitale: PayPal, Apple Pay, Shop Pay, Google Pay.',
+      '6.4. Transfer bancar în termen de 5 zile lucrătoare; bunurile sunt expediate după verificarea creditării.',
+      '6.5. Rambursările folosesc aceeași metodă de plată, dacă nu s-a convenit altfel.',
+      '6.6. Protocoale avansate de securitate; verificare suplimentară PSD2 pentru achiziții peste 30 de euro.',
+    ],
+  },
+  {
+    kind: 'prose',
+    title: '7. PREȚURI',
+    paragraphs: [
+      '7.1. Toate prețurile sunt în euro și includ TVA, unde este cazul. Prețul aplicat este cel de la momentul comenzii.',
+      '7.2. Pentru reduceri, indicăm de asemenea cel mai mic preț din ultimele 30 de zile, unde este cazul.',
+    ],
+  },
+  {
+    kind: 'prose',
+    title: '8. TERMENE DE LIVRARE ȘI COSTURI DE EXPEDIERE',
+    paragraphs: [
+      '8.1. Costurile de expediere sunt în sarcina dumneavoastră și se calculează înainte de plată.',
+      '8.2. Produsele sunt expediate numai după primirea plății integrale.',
+      '8.3. Confirmarea expedierii prin e-mail.',
+      '8.4. Livrarea articolelor disponibile în termen de 10 zile lucrătoare de la încheierea contractului.',
+      '8.5–8.9. Reguli privind tentativele de livrare, depozitarea, transferul riscului, verificarea ambalajului și rezervele către transportator. Semnalarea daunelor ascunse în termen de 7 zile la info@ideadiluce.com.',
+    ],
+  },
+  {
+    kind: 'prose',
+    title: '9. POLITICA DE RETUR ȘI DREPTUL DE RETRAGERE — CLIENȚI B2C',
+    paragraphs: [
+      '9.1. Drept de retragere în termen de 14 zile de la primire. Nu se aplică produselor la comandă sau personalizate.',
+      '9.2. Prelungire până în următoarea zi lucrătoare dacă termenul cade într-un weekend sau într-o zi de sărbătoare legală.',
+      '9.3. Contactați info@ideadiluce.com pentru a organiza returul.',
+      '9.4. Returnare în starea originală în termen de 7 zile de la contactul cu serviciul clienți.',
+      '9.5. Rambursare în termen de 14 zile de la primirea bunurilor.',
+      '9.6. Costurile de retur sunt în sarcina dumneavoastră; etichetă de retur disponibilă la cerere, cu reținere din rambursare.',
+    ],
+  },
+  {
+    kind: 'contact',
+    company: 'TLB ITALY S.r.l.',
+    vat: 'VAT IT17245551001',
+    rea: 'REA RM-1705840',
+    address: 'Via Appia Pignatelli 450, 00178 Rome (RM), Italy',
+    phone: '+39 06 716 7111',
+    phoneHref: 'tel:+39067167111',
+    email: 'info@ideadiluce.com',
+  },
+  ],
+}
+
 const TERMINI_BY_LOCALE: Record<SiteLocale, ContentPageContent> = {
   IT: DEFAULT_TERMINI_IT,
   EN: DEFAULT_TERMINI_EN,
   ES: DEFAULT_TERMINI_ES,
   FR: DEFAULT_TERMINI_FR,
   DE: DEFAULT_TERMINI_DE,
+  RO: DEFAULT_TERMINI_RO,
 }
 
 export function getTerminiDefaults(locale: SiteLocale): ContentPageContent {

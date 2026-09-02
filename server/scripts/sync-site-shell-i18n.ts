@@ -36,7 +36,7 @@ async function main() {
   await siteRepository.upsert('shell', 'IT', structuredClone(DEFAULT_SHELL_IT), true)
 
   const pageKeys = [...SITE_PAGE_KEYS]
-  console.log(`→ Traduzione DeepL di ${pageKeys.length} pagine in EN, ES, FR, DE…`)
+  console.log(`→ Traduzione DeepL di ${pageKeys.length} pagine in EN, ES, FR, DE, RO…`)
 
   for (const pageKey of pageKeys) {
     process.stdout.write(`  · ${pageKey}… `)

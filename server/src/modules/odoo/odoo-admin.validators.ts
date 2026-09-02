@@ -45,3 +45,10 @@ export const odooSyncQueueListQuerySchema = z.object({
 export const odooSyncQueueIdParamsSchema = z.object({
   id: z.string().min(1),
 })
+
+export const odooResiliencePatchSchema = z.object({
+  emergencyMode: z.boolean().optional(),
+  catalogCacheFallback: z.boolean().optional(),
+  smtpFallback: z.boolean().optional(),
+  note: z.string().max(500).nullable().optional(),
+})

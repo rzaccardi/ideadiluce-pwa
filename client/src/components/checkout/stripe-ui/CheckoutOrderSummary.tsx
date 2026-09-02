@@ -29,6 +29,7 @@ import { CartLineThumb } from '@/components/cart/CartLineThumb'
 import { CartRemoveButton } from '@/components/cart/CartRemoveButton'
 import { ViewportPortal } from '@/components/ViewportPortal'
 import { useI18n } from '@/hooks/use-i18n'
+import { layers } from '@/lib/layering'
 
 type CartLike = Omit<CartDTO, 'items' | 'warnings'> & {
   items: ReadonlyArray<CartItemDTO>
@@ -250,27 +251,29 @@ export function CheckoutOrderSummary({
           {mobileToggle}
         </div>
         <ViewportPortal open={mobileOpen} lockScroll>
-          <button
-            type="button"
-            className="fixed inset-0 z-[60] h-[100dvh] w-screen bg-[rgba(12, 12, 13,0.35)] lg:hidden"
-            onClick={() => setMobileOpen(false)}
-            aria-label={t('checkout.summary.hideOrderSummary')}
-          />
-          <div className={cn(checkoutMobileSummaryClass, 'z-[70] shadow-[0_16px_48px_rgba(0,0,0,0.14)]')}>
-            {mobileToggle}
-            <div className={checkoutMobileSummaryPanelClass}>
-              <div className="px-4 pb-5 pt-4 sm:px-5">
-                <SummaryContent
-                  cart={cart}
-                  selectedShipping={selectedShipping}
-                  freeShippingHint={freeShippingHint}
-                  taxBreakdown={taxBreakdown}
-                  onRemoveItem={onRemoveItem}
-                  removeDisabled={removeDisabled}
-                  recommendations={recommendations}
-                  recommendationsLoading={recommendationsLoading}
-                  onCrossSellAdded={onCrossSellAdded}
-                />
+          <div className={cn('fixed inset-0 isolate lg:hidden', layers.checkoutMobileSummary)}>
+            <button
+              type="button"
+              className="absolute inset-0 h-full w-full bg-[rgba(12, 12, 13,0.35)]"
+              onClick={() => setMobileOpen(false)}
+              aria-label={t('checkout.summary.hideOrderSummary')}
+            />
+            <div className={cn(checkoutMobileSummaryClass, 'shadow-[0_16px_48px_rgba(0,0,0,0.14)]')}>
+              {mobileToggle}
+              <div className={checkoutMobileSummaryPanelClass}>
+                <div className="px-4 pb-5 pt-4 sm:px-5">
+                  <SummaryContent
+                    cart={cart}
+                    selectedShipping={selectedShipping}
+                    freeShippingHint={freeShippingHint}
+                    taxBreakdown={taxBreakdown}
+                    onRemoveItem={onRemoveItem}
+                    removeDisabled={removeDisabled}
+                    recommendations={recommendations}
+                    recommendationsLoading={recommendationsLoading}
+                    onCrossSellAdded={onCrossSellAdded}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -355,7 +358,8 @@ export function CheckoutBackButton({
         href={href}
         aria-label={label}
         className={cn(
-          'relative z-[210] flex size-[38px] shrink-0 items-center justify-center rounded-full border transition',
+          'relative flex size-[38px] shrink-0 items-center justify-center rounded-full border transition',
+          layers.checkoutHeader,
           checkoutBackButtonClass[dark ? 'dark' : 'light'],
           className,
         )}
@@ -416,7 +420,7 @@ export function CheckoutSummaryHeader({
   const dark = theme === 'dark'
 
   return (
-    <div className={cn('relative z-[210] flex min-w-0 items-center gap-2 sm:gap-3.5', className)}>
+    <div className={cn('relative flex min-w-0 items-center gap-2 sm:gap-3.5', layers.checkoutHeader, className)}>
       {showBack ? (
         <CheckoutBackButton
           theme={theme}

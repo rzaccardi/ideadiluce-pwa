@@ -3,6 +3,7 @@ import { noStorePrivateApi } from '../../middlewares/no-store-private-api.js'
 import { authRouter } from '../../modules/auth/auth.routes.js'
 import { catalogRouter } from '../../modules/catalog/catalog.routes.js'
 import { searchRouter, searchAnalyticsAdminRouter } from '../../modules/search/search.routes.js'
+import { notFoundAdminRouter, notFoundRouter } from '../../modules/not-found/not-found.routes.js'
 import { wishlistRouter } from '../../modules/wishlist/wishlist.routes.js'
 import { cartRouter } from '../../modules/cart/cart.routes.js'
 import { checkoutRouter } from '../../modules/checkout/checkout.routes.js'
@@ -26,6 +27,7 @@ import { siteGuidesAdminRouter } from '../../modules/site-guides/site-guides-adm
 import { professionalAccountRouter } from '../../modules/professional-account/professional-account.routes.js'
 import { professionalRequestsAdminRouter } from '../../modules/professional-requests-admin/professional-requests-admin.routes.js'
 import { siteInquiriesAdminRouter } from '../../modules/site-inquiries-admin/site-inquiries-admin.routes.js'
+import { mailLogAdminRouter } from '../../modules/mail-log-admin/mail-log-admin.routes.js'
 import { odooAdminRouter } from '../../modules/odoo/odoo-admin.routes.js'
 import { quotesRouter } from '../../modules/quotes/quotes.routes.js'
 import { invoicesRouter } from '../../modules/invoices/invoices.routes.js'
@@ -37,16 +39,25 @@ import { wpSeoMigrationIngestRouter } from '../../modules/wp-seo-migration/wp-se
 
 import { taxAdminRouter } from '../../modules/tax/tax.admin.routes.js'
 import { taxRouter, vatRouter } from '../../modules/tax/tax.routes.js'
+import { uptimeAdminRouter } from '../../modules/uptime-admin/uptime-admin.routes.js'
+import { healthData } from '../health.js'
+import { ok } from '../../lib/api-response.js'
 
 export const v1Router = Router()
 
 v1Router.use(noStorePrivateApi)
 
+v1Router.get('/health', (_req, res) => {
+  res.json(ok(healthData()))
+})
+
 v1Router.use('/auth', authRouter)
 v1Router.use('/address', addressRouter)
 v1Router.use('/catalog', catalogRouter)
 v1Router.use('/search', searchRouter)
+v1Router.use('/not-found', notFoundRouter)
 v1Router.use('/admin/search-analytics', searchAnalyticsAdminRouter)
+v1Router.use('/admin/not-found', notFoundAdminRouter)
 v1Router.use('/seo', seoRouter)
 v1Router.use('/admin/seo', seoAdminRouter)
 v1Router.use('/admin/wp-seo-migration', wpSeoMigrationAdminRouter)
@@ -68,6 +79,8 @@ v1Router.use('/admin/orders', ordersAdminRouter)
 v1Router.use('/admin/abandoned-carts', abandonedCartsAdminRouter)
 v1Router.use('/admin/professional-requests', professionalRequestsAdminRouter)
 v1Router.use('/admin/site-inquiries', siteInquiriesAdminRouter)
+v1Router.use('/admin/mail-log', mailLogAdminRouter)
+v1Router.use('/admin/uptime', uptimeAdminRouter)
 v1Router.use('/admin/odoo', odooAdminRouter)
 v1Router.use('/admin/document-downloads', documentDownloadsAdminRouter)
 v1Router.use('/admin/catalog-cache', catalogCacheAdminRouter)

@@ -1,6 +1,6 @@
-export type PwaLocale = 'IT' | 'EN' | 'ES' | 'FR' | 'DE'
+export type PwaLocale = 'IT' | 'EN' | 'ES' | 'FR' | 'DE' | 'RO'
 
-export const PWA_LOCALES: PwaLocale[] = ['IT', 'EN', 'ES', 'FR', 'DE']
+export const PWA_LOCALES: PwaLocale[] = ['IT', 'EN', 'ES', 'FR', 'DE', 'RO']
 
 export const LOCALE_LABEL: Record<PwaLocale, string> = {
   IT: 'IT',
@@ -8,6 +8,7 @@ export const LOCALE_LABEL: Record<PwaLocale, string> = {
   ES: 'ES',
   FR: 'FR',
   DE: 'DE',
+  RO: 'RO',
 }
 
 export const LOCALE_NAME: Record<PwaLocale, string> = {
@@ -16,6 +17,7 @@ export const LOCALE_NAME: Record<PwaLocale, string> = {
   ES: 'Español',
   FR: 'Français',
   DE: 'Deutsch',
+  RO: 'Română',
 }
 
 /** Attributo lang su <html> (BCP 47). */
@@ -25,6 +27,7 @@ export const HTML_LANG: Record<PwaLocale, string> = {
   ES: 'es',
   FR: 'fr',
   DE: 'de',
+  RO: 'ro',
 }
 
 /** Prefisso path URL (IT = radice) */
@@ -34,6 +37,7 @@ export const LOCALE_PATH_PREFIX: Record<PwaLocale, string> = {
   ES: '/es',
   FR: '/fr',
   DE: '/de',
+  RO: '/ro',
 }
 
 const PREFIX_TO_LOCALE = new Map(

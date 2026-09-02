@@ -11,7 +11,7 @@ import type { ProductCardDTO } from '@/types/dto'
 import type { CatalogSort } from './catalog.store'
 import { ApiRequestError } from '@/types/api'
 import { catalogStore } from './catalog.store'
-import { seedSitePageContent } from '@/features/site'
+import { seedSitePageContent, setSitePageContent } from '@/features/site'
 
 function errMessage(e: unknown) {
   return e instanceof ApiRequestError ? (e.userMessage ?? e.message) : 'Errore catalogo'
@@ -273,8 +273,9 @@ export function fetchCatalogBootstrap(options?: { locale?: string; skipIfFresh?:
       const data = await api.catalog.bootstrap(locale)
       catalogStore.categories = data.categories
       catalogStore.brands = data.brands
+      catalogStore.filters.locale = locale
       if (data.cms) {
-        seedSitePageContent('catalog', locale, data.cms)
+        setSitePageContent('catalog', locale, data.cms)
       }
     } catch {
       catalogStore.categories = []
@@ -365,6 +366,7 @@ async function loadProducts(filters: {
       hasNextPage: result.hasNextPage,
       hasPreviousPage: result.hasPreviousPage,
     }
+    catalogStore.degraded = Boolean(result.degraded)
   } catch (e) {
     catalogStore.error = errMessage(e)
   } finally {
@@ -488,6 +490,7 @@ export async function fetchNextProductsPage() {
       hasNextPage: result.hasNextPage,
       hasPreviousPage: result.hasPreviousPage,
     }
+    catalogStore.degraded = Boolean(result.degraded)
   } catch (e) {
     catalogStore.error = errMessage(e)
   } finally {

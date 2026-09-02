@@ -199,6 +199,7 @@ model User {
   pwaOrders             PwaOrder[]
   quoteRequests         QuoteRequest[]
   notifications         UserNotification[]
+  returnRequests        OrderReturnRequest[]
   passwordResetTokens   PasswordResetToken[]
   impersonationTokens   ImpersonationToken[]
 
@@ -353,6 +354,47 @@ model QuoteRequest {
   @@index([cartId])
   @@index([status])
   @@index([odooSaleOrderId])
+}
+
+/// Richiesta di reso / recesso avviata dal cliente dall'area account.
+model OrderReturnRequest {
+  id              String   @id @default(cuid())
+  userId          String
+  orderId         String
+  pwaOrderId      String?
+  odooSaleOrderId Int?
+  email           String
+  locale          String   @default("IT")
+  notes           String?
+  status          String   @default("NEW")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, orderId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+/// Snapshot tracking corriere / picking Odoo per area account.
+model OrderShipmentSnapshot {
+  id              String   @id @default(cuid())
+  odooSaleOrderId Int      @unique
+  pwaOrderId      String?
+  carrier         String?
+  trackingNumber  String?
+  status          String
+  deliveredAt     DateTime?
+  payloadJson     Json
+  fetchedAt       DateTime
+  nextRefreshAt   DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([nextRefreshAt])
+  @@index([pwaOrderId])
 }
 
 model SyncRetryJob {
@@ -514,11 +556,12 @@ model PwaOrder {
 
 model OdooSyncQueue {
   id          String              @id @default(cuid())
-  pwaOrderId  String
+  pwaOrderId  String?
+  userId      String?
   operation   String
   payload     Json                @default("{}")
   attempts    Int                 @default(0)
-  maxAttempts Int                 @default(4)
+  maxAttempts Int                 @default(8)
   nextRetryAt DateTime            @default(now())
   lastError   String?
   status      OdooSyncQueueStatus @default(PENDING)
@@ -526,11 +569,24 @@ model OdooSyncQueue {
   updatedAt   DateTime            @updatedAt
   resolvedAt  DateTime?
 
-  order PwaOrder @relation(fields: [pwaOrderId], references: [id], onDelete: Cascade)
+  order PwaOrder? @relation(fields: [pwaOrderId], references: [id], onDelete: Cascade)
 
   @@index([status, nextRetryAt])
   @@index([pwaOrderId])
+  @@index([userId])
   @@index([pwaOrderId, operation, status])
+}
+
+/** Kill switch e fallback se Odoo è giù (manutenzione, timeout, disservizio). */
+model OdooResilienceSettings {
+  id                   String   @id @default("default")
+  emergencyMode        Boolean  @default(false)
+  catalogCacheFallback Boolean  @default(true)
+  smtpFallback         Boolean  @default(true)
+  note                 String?
+  updatedByEmail       String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }
 
 model PwaPayment {
@@ -715,10 +771,27 @@ model AbandonedCartEvent {
 
 /** Impostazioni UX storefront (singleton `default`). */
 model StorefrontSettings {
-  id            String   @id @default("default")
-  soundsEnabled Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                       String   @id @default("default")
+  soundsEnabled            Boolean  @default(true)
+  /** Barra go-live: rimanda al sito precedente se il nuovo ha problemi. */
+  legacySiteNoticeEnabled  Boolean  @default(false)
+  legacySiteUrl            String   @default("https://old.ideadiluce.it")
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+}
+
+/** Impostazioni Google Merchant Center gestite dal proxy/BO (non da Odoo). */
+model MerchantCenterSettings {
+  id                    String  @id @default("default")
+  enabled               Boolean @default(true)
+  includeOutOfStock     Boolean @default(true)
+  expandVariants        Boolean @default(false)
+  googleProductCategory String  @default("594")
+  shippingCountry       String  @default("IT")
+  shippingPriceCents    Int?
+  brandFallback         String  @default("Idea di Luce")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
 
 /** Impostazioni social proof (singleton `default`). */
@@ -786,6 +859,35 @@ model CatalogSearchEvent {
   @@index([action])
   @@index([createdAt])
   @@index([userId])
+}
+
+/// Hit pagina 404 storefront (link persi, URL legacy, probe). Aggregati nel BO.
+model NotFoundHit {
+  id           String   @id @default(cuid())
+  path         String
+  queryString  String?
+  referrer     String?
+  referrerHost String?
+  /// none | internal | legacy | external
+  referrerKind String   @default("none")
+  locale       String   @default("IT")
+  isBot        Boolean  @default(false)
+  isProbe      Boolean  @default(false)
+  /// product | category | brand | guide | room | content | probe | other
+  pathKind     String   @default("other")
+  userId       String?
+  sessionId    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  @@index([path])
+  @@index([createdAt])
+  @@index([path, createdAt])
+  @@index([referrerKind])
+  @@index([isBot])
+  @@index([isProbe])
+  @@index([pathKind])
+  @@index([referrerHost])
 }
 
 /** Richiesta email quando un prodotto torna disponibile o richiesta prodotto fuori stock. */

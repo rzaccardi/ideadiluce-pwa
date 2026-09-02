@@ -8,12 +8,16 @@
 #
 # Deploy:
 #   doctl apps create --spec .do/app.yaml
-#   doctl apps update <APP_ID> --spec .do/app.yaml
+#   NON usare `doctl apps update --spec .do/app.yaml` sull'app live:
+#   lo spec in UI ha domini (shop/manage.ideadiluce.it), ingress e secret extra.
+#   Questo file allinea cluster DB + build; per un update copiare il blocco
+#   databases: dallo spec scaricato (`doctl apps spec get`).
 #
 # Prima del primo deploy:
 #   1. Verifica github.repo
 #   2. In Apps → Settings → Environment aggiungi i SECRET da .do/secrets.production.env.example
-#   3. Dopo deploy verde: db:seed + hub:import (tunnel DATABASE_URL)
+#   3. Imposta i SECRET DATABASE_URL (pool ideadiluce-api:25061) e DIRECT_URL (defaultdb:25060)
+#   4. Dopo deploy verde: db:seed + hub:import (via DIRECT_URL)
 #
 # Staging: .do/app.staging.yaml | Guida: docs/deploy-digitalocean.md
 
@@ -30,13 +34,14 @@ alerts:
 # URL principale → shop: imposta in DO Networking (ingress esplicito con path "/" confligge se shop esiste già).
 
 databases:
-  - name: postgres
+  # Cluster managed esistente (non rinominare: un name/cluster_name diverso crea un DB nuovo).
+  - name: db-ideadiluce-pwa
     engine: PG
-    version: "16"
+    version: "18"
     production: true
-    cluster_name: ideadiluce-pwa-db
-    db_name: ideadiluce
-    db_user: ideadiluce
+    cluster_name: db-ideadiluce-pwa
+    db_name: defaultdb
+    db_user: doadmin
 
 services:
   # ——— Backend API (Express, Prisma, Hub) ———
@@ -63,9 +68,15 @@ services:
         value: production
       - key: PORT
         value: "8080"
+      # Pool PgBouncer `ideadiluce-api` (porta 25061). Non usare ${db-ideadiluce-pwa.DATABASE_URL}:
+      # quello è defaultdb diretto e bypassa il pool dimensionato per le 2 istanze api.
       - key: DATABASE_URL
-        value: ${postgres.DATABASE_URL}
         scope: RUN_AND_BUILD_TIME
+        type: SECRET
+      # Connessione diretta defaultdb:25060 — obbligatoria per `prisma migrate deploy`.
+      - key: DIRECT_URL
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
       - key: CLIENT_ORIGIN
         value: ${shop.PUBLIC_URL}
       - key: ADMIN_ORIGIN
@@ -76,6 +87,8 @@ services:
         value: ${shop.PUBLIC_URL}
       - key: PUBLIC_SITE_URL
         value: https://shop.ideadiluce.it
+      - key: API_PUBLIC_URL
+        value: ${api.PUBLIC_URL}
       - key: ODOO_CATALOG_ENABLED
         value: "true"
       - key: ODOO_CATALOG_BASE_URL
@@ -199,6 +212,9 @@ services:
         scope: RUN_TIME
         type: SECRET
       - key: SHIPPING_CREDENTIALS_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: UPTIMEROBOT_API_KEY
         scope: RUN_TIME
         type: SECRET
       - key: ADMIN_SEED_EMAIL

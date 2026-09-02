@@ -27,6 +27,7 @@ import { syncSaleOrderFunnelState } from '../../adapters/odoo/odooFunnelSync.js'
 import { writeIntegrationLog } from '../../lib/integration-log.js'
 import { taxService } from '../tax/tax.service.js'
 import { resolvePricingContext } from '../pricing/pricelist.service.js'
+import { enqueueOrderOdooSaga } from '../odoo/odoo-sync-queue.service.js'
 
 const customerAdapter = createOdooCustomerAdapter()
 const orderAdapter = createOdooOrderAdapter()
@@ -208,13 +209,6 @@ export async function syncCheckoutDraftOrder(
     viesRequestDate: input.fiscal?.viesRequestDate ?? null,
   }
 
-  const partner = await customerAdapter.findOrCreateCustomer(ctx, {
-    email: input.email,
-    firstName: input.billingAddress.firstName,
-    lastName: input.billingAddress.lastName,
-    phone: input.billingAddress.phone,
-  })
-
   let existing = options?.existingOrder ?? (await findReusableCheckoutOrder(cart.id, idempotencyKey))
 
   let orderId = existing?.id
@@ -239,11 +233,38 @@ export async function syncCheckoutDraftOrder(
   }
 
   const orderRow = existing
+  let odooPartnerId = orderRow.odooPartnerId
+  let odooDegraded = false
+  if (odooPartnerId == null || orderRow.email !== input.email) {
+    try {
+      const partner = await customerAdapter.findOrCreateCustomer(ctx, {
+        email: input.email,
+        firstName: input.billingAddress.firstName,
+        lastName: input.billingAddress.lastName,
+        phone: input.billingAddress.phone,
+      })
+      odooPartnerId = partner.odooPartnerId
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e)
+      odooDegraded = true
+      void writeIntegrationLog({
+        service: 'odoo',
+        operation: 'checkout_partner_sync',
+        correlationId: req.correlationId,
+        success: false,
+        statusCode: 502,
+        requestRedacted: { pwaOrderId: orderId, email: input.email },
+        responseRedacted: { message },
+        startedAt: new Date(),
+        finishedAt: new Date(),
+      })
+    }
+  }
 
   let odooSaleOrderId = orderRow.odooSaleOrderId ?? null
 
   const draftPayload = {
-    odooPartnerId: partner.odooPartnerId,
+    odooPartnerId: odooPartnerId ?? 0,
     odooSaleOrderId,
     pwaOrderId: orderId,
     clientOrderRef: input.clientOrderRef ?? orderRow.clientOrderRef ?? undefined,
@@ -273,18 +294,19 @@ export async function syncCheckoutDraftOrder(
       : null,
   }
 
-  if (env.ODOO_ENABLED && isOdooConfigured()) {
+  if (env.ODOO_ENABLED && isOdooConfigured() && odooPartnerId != null) {
     try {
       const orderResult = await orderAdapter.syncSaleOrderDraft(ctx, draftPayload)
       odooSaleOrderId = orderResult.odooSaleOrderId
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e)
+      odooDegraded = true
       void writeIntegrationLog({
         service: 'odoo',
         operation: 'checkout_draft_sync',
         correlationId: req.correlationId,
         success: false,
-        statusCode: input.lockPrices ? 503 : 502,
+        statusCode: 202,
         requestRedacted: {
           pwaOrderId: orderId,
           cartId: cart.id,
@@ -294,16 +316,9 @@ export async function syncCheckoutDraftOrder(
         startedAt: new Date(),
         finishedAt: new Date(),
       })
-      if (input.lockPrices) {
-        throw new AppError(
-          'ODOO_UNAVAILABLE',
-          'Odoo unavailable',
-          'Il sistema ordini non è momentaneamente disponibile. Riprova tra qualche minuto.',
-          503,
-          true,
-        )
-      }
     }
+  } else if (env.ODOO_ENABLED && isOdooConfigured() && odooPartnerId == null) {
+    odooDegraded = true
   }
 
   const checkoutSession =
@@ -312,7 +327,7 @@ export async function syncCheckoutDraftOrder(
           where: { id: orderRow.checkoutSessionId },
           data: {
             email: input.email,
-            odooPartnerId: partner.odooPartnerId,
+            odooPartnerId,
             odooSaleOrderId,
             shippingMethodRef: shippingSel?.methodRef ?? null,
             billingAddressJson: input.billingAddress as object,
@@ -326,7 +341,7 @@ export async function syncCheckoutDraftOrder(
             email: input.email,
             state: 'COMMITTED',
             userId: s.userId ?? undefined,
-            odooPartnerId: partner.odooPartnerId,
+            odooPartnerId,
             odooSaleOrderId,
             shippingMethodRef: shippingSel?.methodRef ?? null,
             billingAddressJson: input.billingAddress as object,
@@ -351,6 +366,7 @@ export async function syncCheckoutDraftOrder(
     taxDisclaimerKey: taxOrder.disclaimerKey ?? null,
     taxLabel: taxOrder.taxLabel,
     taxCents: taxOrder.taxCents,
+    ...(odooDegraded ? { odooDegraded: true } : {}),
   })
 
   const order = await prisma.pwaOrder.update({
@@ -373,7 +389,7 @@ export async function syncCheckoutDraftOrder(
       courierNotes: input.courierNotes?.trim() || orderRow.courierNotes || null,
       fiscalJson: jsonValue(fiscalPayload),
       linesSnapshotJson: linesSnapshot ? jsonValue(linesSnapshot) : orderRow.linesSnapshotJson ?? undefined,
-      odooPartnerId: partner.odooPartnerId,
+      odooPartnerId,
       odooSaleOrderId,
       checkoutStartedAt: orderRow.checkoutStartedAt ?? new Date(),
       metadataJson,
@@ -391,14 +407,26 @@ export async function syncCheckoutDraftOrder(
   await syncCartContactEmail(cart.id)
 
   if (odooSaleOrderId) {
-    await syncSaleOrderFunnelState(ctx, odooSaleOrderId, {
-      pwaOrderId: order.id,
-      orderStatus: orderStatus.toLowerCase(),
-      paymentStatus: 'not_started',
-      paymentMethod: input.paymentMethod ?? null,
-      cartId: cart.id,
-      sessionId: s.id,
-    })
+    try {
+      await syncSaleOrderFunnelState(ctx, odooSaleOrderId, {
+        pwaOrderId: order.id,
+        orderStatus: orderStatus.toLowerCase(),
+        paymentStatus: 'not_started',
+        paymentMethod: input.paymentMethod ?? null,
+        cartId: cart.id,
+        sessionId: s.id,
+      })
+    } catch {
+      odooDegraded = true
+    }
+  }
+
+  if (odooDegraded || (env.ODOO_ENABLED && isOdooConfigured() && (!odooPartnerId || !odooSaleOrderId))) {
+    void enqueueOrderOdooSaga(order.id, {
+      includeMail: false,
+      includePortal: createAccount,
+      lastError: 'Checkout in locale: sync Odoo differita.',
+    }).catch(() => undefined)
   }
 
   return { order, checkoutSessionId: checkoutSession.id }

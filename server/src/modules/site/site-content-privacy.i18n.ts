@@ -428,12 +428,194 @@ export const DEFAULT_PRIVACY_DE: ContentPageContent = {
   ],
 }
 
+export const DEFAULT_PRIVACY_RO: ContentPageContent = {
+  layout: 'legal',
+  title: 'Politica de confidențialitate',
+  subtitle: 'Informații privind prelucrarea datelor personale conform RGPD.',
+  intro:
+    'Prezenta Politică de confidențialitate, emisă în temeiul art. 13 din Regulamentul (UE) 2016/679 („RGPD” sau „Regulamentul”), informează Utilizatorii cu privire la modul în care Datele lor Personale (adică orice informație care îi poate identifica în mod direct sau indirect) vor fi prelucrate atunci când vizitează și/sau cumpără pe site-ul www.ideadiluce.com („Site-ul”). Prezenta notificare, împreună cu Politica de cookie-uri și Termenii de utilizare și Condițiile generale de vânzare, stabilește bazele pe care vor fi prelucrate datele personale ale Utilizatorilor.',
+  seo: { noindex: false },
+  blocks: [
+    {
+      kind: 'prose',
+      title: 'Operatorul de date',
+      paragraphs: [
+        'Operatorul datelor personale colectate prin Site este: TLB Italy S.r.l., cu sediul social în Via Appia Pignatelli, 450, 00178 Rome (RM), VAT IT17245551001 („Operatorul de date”), e-mail: info@tlbitaly.com.',
+      ],
+    },
+    {
+      kind: 'prose',
+      title: 'Modalități de prelucrare',
+      paragraphs: [
+        'Acordăm o importanță deosebită dreptului Utilizatorilor la viață privată și la protecția datelor personale, care vor fi prelucrate în mod legal. Datele Personale furnizate sau obținute vor fi prelucrate respectând principiile de corectitudine, legalitate, transparență și confidențialitate, cu măsuri de securitate adecvate pentru a preveni accesul neautorizat, divulgarea, modificarea sau distrugerea.',
+        'Prelucrarea se realizează cu mijloace informatice și/sau telematice, potrivit unor metode organizatorice și unei logici strâns legate de scopurile declarate.',
+      ],
+    },
+    {
+      kind: 'prose',
+      title: 'Date personale prelucrate',
+      paragraphs: [
+        'Atunci când Utilizatorul vizitează Site-ul, ne contactează (prin e-mail, telefon, poștă etc.), se abonează la newsletter sau plasează o comandă, prelucrăm o parte din datele sale personale, fie direct, fie prin terți.',
+        'Categorii de date personale prelucrate:',
+        'Date de identificare, de contact și de acces: nume și prenume, adresă de e-mail, adresă de livrare, număr de telefon, date de autentificare în cont și orice alte Date Personale furnizate voluntar de Utilizator.',
+        'Date de cumpărare: date referitoare la achizițiile efectuate.',
+        'Date de navigare: date de conexiune, adrese IP, nume de domeniu și alți parametri legați de browserul și sistemul de operare utilizate.',
+        'Date de utilizare: informații generate la vizitarea Site-ului sau la efectuarea de achiziții: date de jurnal, date de înregistrare, procese de interacțiune și tranzacție, indicatori de performanță, fluxuri de navigare și utilizarea funcțiilor.',
+        'Date de facturare și plată: număr de TVA, dacă este cazul, cod fiscal, adresă.',
+      ],
+    },
+    {
+      kind: 'prose',
+      title: 'Scopurile prelucrării și temeiul juridic',
+      paragraphs: [
+        'Operatorul va prelucra Datele Personale ale Utilizatorilor pentru desfășurarea activităților sale comerciale, în scopurile specifice indicate mai jos.',
+      ],
+    },
+    {
+      kind: 'prose',
+      title: '1. Scopuri legate de contract și obligații legale',
+      paragraphs: [
+        '1.1 Navigarea pe Site; 1.2 Înregistrarea și gestionarea contului; 1.3 Activitățile necesare pentru încheierea și executarea contractului de cumpărare a produselor de iluminat vândute pe Site; 1.4 Procesarea comenzilor; 1.5 Asistență clienți și răspunsuri la cereri, reclamații și semnalări; 1.6 Gestionarea cererilor prin mijloace de comunicare la distanță; 1.7 Respectarea obligațiilor legale, de reglementare și ale UE; 1.8 Activități administrative, contabile și fiscale; 1.9 Răspunsuri la cereri de exercitare a drepturilor prevăzute de contract, de legislația aplicabilă sau de RGPD.',
+        'Temei juridic: executarea obligațiilor precontractuale și contractuale (art. 6.1.b GDPR) sau respectarea obligațiilor legale (art. 6.1.c GDPR). Cu excepția datelor opționale de înregistrare a contului, prelucrarea este necesară pentru a încheia și executa contracte prin Site. Lipsa furnizării datelor îl va împiedica pe Utilizator să încheie un contract și/sau să primească răspunsuri la cereri.',
+      ],
+    },
+    {
+      kind: 'prose',
+      title: '2. Analiză, statistici și alte scopuri fără consimțământ',
+      paragraphs: [
+        '2.1 Analiza statistică a utilizării Site-ului, a navigării și a căutărilor de produse, pentru a îmbunătăți Site-ul și oferta de produse; 2.2 Protejarea drepturilor contractuale ale Operatorului și prevenirea/reprimarea acțiunilor frauduloase sau dăunătoare; 2.3 Reamintire către Utilizatorii care au început checkout-ul că au adăugat un produs de iluminat în coș (interes legitim, art. 6.1.f GDPR; e-mailuri tranzacționale, de exemplu coș abandonat).',
+      ],
+    },
+    {
+      kind: 'prose',
+      title: '3. Marketing direct și profilare',
+      paragraphs: [
+        '3.1 Cu consimțământul Utilizatorului, e-mailuri comerciale cu noutăți, oferte, promoții și cercetări de piață, inclusiv prin instrumente automatizate precum e-mailul și newsletter-ul; 3.2 Cu consimțământul Utilizatorului, prelucrare pentru profilare, retargeting și comunicări comerciale personalizate pe baza profilului Utilizatorului, inclusiv luarea de decizii automatizate.',
+        'Temei juridic: consimțământul Utilizatorului (art. 6.1.a GDPR). Furnizarea datelor este opțională. Refuzul, retragerea sau opoziția nu vor afecta posibilitatea Utilizatorului de a cumpăra pe Site.',
+      ],
+    },
+    {
+      kind: 'prose',
+      title: '4. Soft-spam',
+      paragraphs: [
+        'Comunicări comerciale la adresa de e-mail furnizată la cumpărare, pentru a oferi vânzarea directă de produse similare, în temeiul art. 130, alineatul 4 din Codul italian privind confidențialitatea (Decret legislativ 196/2003), cu condiția ca Utilizatorul să nu se opună inițial sau în comunicările ulterioare.',
+      ],
+    },
+    {
+      kind: 'prose',
+      title: 'Modificarea alegerilor și retragerea consimțământului',
+      paragraphs: [
+        'Utilizatorii pot retrage consimțământul și/sau se pot opune prelucrării pentru marketing generic și profilare în orice moment, prin metodele indicate în secțiunea „Drepturile persoanei vizate”.',
+        'Prelucrarea bazată pe consimțământ înainte de retragere rămâne legală. După retragere/opoziție pentru marketing, datele nu vor mai fi prelucrate în acest scop, decât dacă se aplică un alt temei juridic (executarea contractului, obligație legală, interes legitim).',
+      ],
+    },
+    {
+      kind: 'prose',
+      title: 'Perioada de păstrare',
+      paragraphs: [
+        'Datele vor fi prelucrate pe durata necesară atingerii scopurilor pentru care au fost colectate. Se aplică termene specifice de păstrare pe scop: date contractuale pe timpul strict necesar; date fiscale/contabile/legale până la termenele prevăzute de lege; date bazate pe interes legitim până la satisfacerea interesului (până la 10 ani pentru apărare în litigii); date de marketing/profilare până la 12 luni de la consimțământ sau de la ultimul contact. După expirarea termenelor, Datele Personale vor fi șterse.',
+      ],
+    },
+    {
+      kind: 'prose',
+      title: 'Comunicarea și divulgarea datelor',
+      paragraphs: [
+        'Pe lângă Operator, pot avea acces la date: persoane implicate în organizarea Site-ului și a societății (consultant fiscal, webmaster, consultant de marketing, suport IT, dezvoltare software); terți care prelucrează date în numele Operatorului (servicii de plată, avocați, contabili, administratori de sistem, logistică, servicii de newsletter); entități publice sau private cu acces legal; potențiali cumpărători ai societății sau entități rezultate din fuziuni.',
+        'Destinatarii pot acționa ca persoane împuternicite, sub-împuternicite sau operatori independenți. Utilizatorii pot solicita lista actualizată a persoanelor împuternicite în temeiul art. 28 GDPR.',
+      ],
+    },
+    {
+      kind: 'prose',
+      title: 'Locul prelucrării și transferurile în străinătate',
+      paragraphs: [
+        'Prelucrarea are loc în principal în Italia și în țările UE. Unele instrumente ale terților pot prelucra date în afara SEE. Transferurile pot avea loc prin instrumente externe (newsletter, remarketing, publicitate, butoane sociale, video). Atunci când sunt necesare transferuri către țări terțe, Operatorul asigură o protecție adecvată conform art. 45 GDPR sau clauze contractuale standard conform art. 46.2 GDPR.',
+      ],
+    },
+    {
+      kind: 'prose',
+      title: 'Cookie-uri',
+      paragraphs: [
+        'Acest Site folosește cookie-uri — fișiere text mici instalate pe dispozitivele utilizatorilor pentru a îmbunătăți navigarea, a personaliza conținutul și reclamele, a oferi funcții sociale și a analiza traficul. Detalii în Politica de cookie-uri.',
+      ],
+    },
+    {
+      kind: 'prose',
+      title: 'Instrumente de prelucrare a Datelor Personale',
+      paragraphs: [],
+    },
+    {
+      kind: 'prose',
+      title: 'Newsletter',
+      paragraphs: [
+        'Mailchimp (Intuit Inc.) — serviciu de gestionare a adreselor de e-mail și de trimitere. Locul prelucrării: STATELE UNITE. Utilizatorii se pot dezabona prin linkul din fiecare comunicare comercială.',
+      ],
+    },
+    {
+      kind: 'prose',
+      title: 'Butoane rețele sociale',
+      paragraphs: [
+        'Facebook și Instagram (Meta Platforms Ireland Limited) — interacțiune cu rețelele sociale. Date Personale colectate: Cookie-uri, Date de utilizare. Locul prelucrării: IRLANDA – STATELE UNITE.',
+      ],
+    },
+    {
+      kind: 'prose',
+      title: 'Gestionarea plăților',
+      paragraphs: [
+        'NEXI (Nexi S.p.A.), PayPal (Paypal Europe S.a.r.l.), Apple Pay (Apple Payments Inc.), Google Pay (Google Ireland Limited) — servicii de plată online. Consultați politica de confidențialitate a fiecărui furnizor pentru detalii.',
+      ],
+    },
+    {
+      kind: 'prose',
+      title: 'Statistici',
+      paragraphs: [
+        'Google Analytics (Google Ireland Limited) — analiză de trafic cu anonimizarea IP activată. Opt-out: https://tools.google.com/dlpage/gaoptout?hl=en. Locul prelucrării: IRLANDA și, în unele cazuri, STATELE UNITE.',
+        'Facebook Pixel (Meta Platforms Ireland Limited) — urmărirea conversiilor. Locul prelucrării: Irlanda și, în unele cazuri, STATELE UNITE.',
+      ],
+    },
+    {
+      kind: 'prose',
+      title: 'Remarketing',
+      paragraphs: [
+        'Servicii care permit publicitate pe baza utilizării anterioare a Site-ului, prin urmărirea Datelor de utilizare și Cookie-uri. Acest Site folosește Facebook Pixel.',
+      ],
+    },
+    {
+      kind: 'prose',
+      title: 'Drepturile persoanei vizate',
+      paragraphs: [
+        'Persoanele vizate pot exercita drepturile prevăzute de art. 7 și 15-22 din Regulament: acces, rectificare, ștergere, restricționare, portabilitate, opoziție și retragerea consimțământului.',
+        'Cererile pot fi trimise Operatorului la legal@ideadiluce.com. Persoanele vizate pot depune o plângere la Autoritatea italiană pentru protecția datelor (Garante per la protezione dei dati personali, Piazza Venezia 11, 00187 Rome, http://www.garanteprivacy.it/).',
+      ],
+    },
+    {
+      kind: 'prose',
+      title: 'Modificări ale acestei Politici de confidențialitate',
+      paragraphs: [
+        'Operatorul își rezervă dreptul de a modifica această Politică de confidențialitate în orice moment, publicând actualizările pe această pagină. Vă rugăm să consultați periodic această pagină, ținând cont de data ultimei actualizări de la final.',
+        'Dacă Utilizatorii nu acceptă modificările, trebuie să înceteze utilizarea Site-ului și pot solicita ștergerea Datelor Personale. Versiunile anterioare se aplică datelor colectate înainte de modificări.',
+        'Politica de confidențialitate actualizată ultima dată: martie 2024.',
+      ],
+    },
+    {
+      kind: 'contact',
+      company: 'TLB ITALY S.r.l.',
+      vat: 'VAT IT17245551001',
+      rea: 'REA RM-1705840',
+      address: 'Via Appia Pignatelli 450, 00178 Rome (RM), Italy',
+      phone: '+39 06 716 7111',
+      phoneHref: 'tel:+39067167111',
+      email: 'info@tlbitaly.com',
+    },
+  ],
+}
+
 const PRIVACY_BY_LOCALE: Record<SiteLocale, ContentPageContent> = {
   IT: DEFAULT_PRIVACY_IT,
   EN: DEFAULT_PRIVACY_EN,
   ES: DEFAULT_PRIVACY_ES,
   FR: DEFAULT_PRIVACY_FR,
   DE: DEFAULT_PRIVACY_DE,
+  RO: DEFAULT_PRIVACY_RO,
 }
 
 export function getPrivacyDefaults(locale: SiteLocale): ContentPageContent {

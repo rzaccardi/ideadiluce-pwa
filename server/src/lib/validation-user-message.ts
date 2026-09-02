@@ -3,8 +3,8 @@ import { parseHubLocale, type HubLocale } from './hub-locale.js'
 
 type LocalizedCopy = Record<HubLocale, string>
 
-function copy(it: string, en: string, es: string, fr: string, de: string): LocalizedCopy {
-  return { IT: it, EN: en, ES: es, FR: fr, DE: de }
+function copy(it: string, en: string, es: string, fr: string, de: string, ro: string): LocalizedCopy {
+  return { IT: it, EN: en, ES: es, FR: fr, DE: de, RO: ro }
 }
 
 const GENERIC = {
@@ -14,6 +14,7 @@ const GENERIC = {
     'Datos no válidos.',
     'Données non valides.',
     'Ungültige Daten.',
+    'Date nevalide.',
   ),
   required: copy(
     'Campo obbligatorio.',
@@ -21,6 +22,7 @@ const GENERIC = {
     'Campo obligatorio.',
     'Champ obligatoire.',
     'Dieses Feld ist erforderlich.',
+    'Câmp obligatoriu.',
   ),
   tooShort: copy(
     'Valore troppo corto.',
@@ -28,6 +30,7 @@ const GENERIC = {
     'El valor es demasiado corto.',
     'Valeur trop courte.',
     'Wert ist zu kurz.',
+    'Valoarea este prea scurtă.',
   ),
   tooLong: copy(
     'Valore troppo lungo.',
@@ -35,6 +38,7 @@ const GENERIC = {
     'El valor es demasiado largo.',
     'Valeur trop longue.',
     'Wert ist zu lang.',
+    'Valoarea este prea lungă.',
   ),
   invalidEmail: copy(
     'Email non valida.',
@@ -42,6 +46,7 @@ const GENERIC = {
     'Email no válida.',
     'Adresse e-mail non valide.',
     'Ungültige E-Mail-Adresse.',
+    'Adresă de e-mail nevalidă.',
   ),
 } as const
 
@@ -52,6 +57,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'Introduce el número o selecciona «Sin número».',
     'Saisissez le numéro, ou sélectionnez « Pas de numéro ».',
     'Geben Sie die Hausnummer ein oder wählen Sie «Keine Hausnummer».',
+    'Introdu numărul sau selectează «Fără număr».',
   ),
   'Invalid postal code': copy(
     'CAP non valido.',
@@ -59,6 +65,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'Código postal no válido.',
     'Code postal invalide.',
     'Ungültige Postleitzahl.',
+    'Cod poștal nevalid.',
   ),
   'Invalid phone number': copy(
     'Numero di telefono non valido.',
@@ -66,6 +73,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'Número de teléfono no válido.',
     'Numéro de téléphone invalide.',
     'Ungültige Telefonnummer.',
+    'Număr de telefon nevalid.',
   ),
   'Invalid country code': copy(
     'Codice paese non valido.',
@@ -73,6 +81,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'Código de país no válido.',
     'Code pays invalide.',
     'Ungültiger Ländercode.',
+    'Cod de țară nevalid.',
   ),
   'Email obbligatoria.': copy(
     'Email obbligatoria.',
@@ -80,6 +89,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'El email es obligatorio.',
     'L’e-mail est obligatoire.',
     'E-Mail ist erforderlich.',
+    'E-mailul este obligatoriu.',
   ),
   'Indirizzi di fatturazione e spedizione obbligatori.': copy(
     'Indirizzi di fatturazione e spedizione obbligatori.',
@@ -87,6 +97,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'Las direcciones de facturación y envío son obligatorias.',
     'Les adresses de facturation et de livraison sont obligatoires.',
     'Rechnungs- und Lieferadresse sind erforderlich.',
+    'Adresele de facturare și livrare sunt obligatorii.',
   ),
   'Metodo di pagamento obbligatorio.': copy(
     'Metodo di pagamento obbligatorio.',
@@ -94,6 +105,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'El método de pago es obligatorio.',
     'Le mode de paiement est obligatoire.',
     'Zahlungsmethode ist erforderlich.',
+    'Metoda de plată este obligatorie.',
   ),
   'Ragione sociale obbligatoria.': copy(
     'Ragione sociale obbligatoria.',
@@ -101,6 +113,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'La razón social es obligatoria.',
     'La raison sociale est obligatoire.',
     'Firmenname ist erforderlich.',
+    'Denumirea firmei este obligatorie.',
   ),
   'Ragione sociale obbligatoria per ordini business.': copy(
     'Ragione sociale obbligatoria per ordini business.',
@@ -108,6 +121,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'La razón social es obligatoria para pedidos de empresa.',
     'La raison sociale est obligatoire pour les commandes professionnelles.',
     'Firmenname ist für Geschäftskunden erforderlich.',
+    'Denumirea firmei este obligatorie pentru comenzile business.',
   ),
   'Partita IVA obbligatoria.': copy(
     'Partita IVA obbligatoria.',
@@ -115,6 +129,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'El NIF/IVA es obligatorio.',
     'Le numéro de TVA est obligatoire.',
     'USt-IdNr. ist erforderlich.',
+    'Codul de TVA este obligatoriu.',
   ),
   'Partita IVA obbligatoria per ordini business.': copy(
     'Partita IVA obbligatoria per ordini business.',
@@ -122,6 +137,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'El NIF/IVA es obligatorio para pedidos de empresa.',
     'Le numéro de TVA est obligatoire pour les commandes professionnelles.',
     'USt-IdNr. ist für Geschäftskunden erforderlich.',
+    'Codul de TVA este obligatoriu pentru comenzile business.',
   ),
   'Inserire almeno PEC o codice destinatario SDI.': copy(
     'Inserire almeno PEC o codice destinatario SDI.',
@@ -129,6 +145,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'Indica al menos un email PEC o un código destinatario SDI.',
     'Indiquez au moins une adresse PEC ou un code destinataire SDI.',
     'Geben Sie mindestens eine PEC-Adresse oder einen SDI-Empfängercode an.',
+    'Introdu cel puțin un e-mail PEC sau un cod destinatar SDI.',
   ),
   'Codice fiscale obbligatorio.': copy(
     'Codice fiscale obbligatorio.',
@@ -136,6 +153,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'El código fiscal es obligatorio.',
     'Le code fiscal est obligatoire.',
     'Steuer-ID ist erforderlich.',
+    'Codul fiscal este obligatoriu.',
   ),
   'Il codice fiscale deve avere 16 caratteri.': copy(
     'Il codice fiscale deve avere 16 caratteri.',
@@ -143,6 +161,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'El código fiscal debe tener 16 caracteres.',
     'Le code fiscal doit contenir 16 caractères.',
     'Die Steuer-ID muss 16 Zeichen haben.',
+    'Codul fiscal trebuie să aibă 16 caractere.',
   ),
   'Formato codice fiscale non valido.': copy(
     'Formato codice fiscale non valido.',
@@ -150,6 +169,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'Formato de código fiscal no válido.',
     'Format de code fiscal invalide.',
     'Ungültiges Steuer-ID-Format.',
+    'Format de cod fiscal nevalid.',
   ),
   'Codice fiscale non valido.': copy(
     'Codice fiscale non valido.',
@@ -157,6 +177,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'Código fiscal no válido.',
     'Code fiscal invalide.',
     'Ungültige Steuer-ID.',
+    'Cod fiscal nevalid.',
   ),
   'La partita IVA deve avere 11 cifre.': copy(
     'La partita IVA deve avere 11 cifre.',
@@ -164,6 +185,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'El NIF/IVA debe tener 11 dígitos.',
     'Le numéro de TVA doit comporter 11 chiffres.',
     'Die USt-IdNr. muss 11 Ziffern haben.',
+    'Codul de TVA trebuie să aibă 11 cifre.',
   ),
   'Cifra di controllo partita IVA non valida.': copy(
     'Cifra di controllo partita IVA non valida.',
@@ -171,6 +193,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'Dígito de control del NIF/IVA no válido.',
     'Clé de contrôle TVA invalide.',
     'Ungültige USt-IdNr.-Prüfziffer.',
+    'Cifra de control a codului de TVA este nevalidă.',
   ),
   'Formato partita IVA non valido.': copy(
     'Formato partita IVA non valido.',
@@ -178,6 +201,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'Formato de NIF/IVA no válido.',
     'Format de numéro de TVA invalide.',
     'Ungültiges USt-IdNr.-Format.',
+    'Format de cod TVA nevalid.',
   ),
   'Partita IVA non valida.': copy(
     'Partita IVA non valida.',
@@ -185,6 +209,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'NIF/IVA no válido.',
     'Numéro de TVA invalide.',
     'Ungültige USt-IdNr.',
+    'Cod de TVA nevalid.',
   ),
   'Specifica il settore in "Altro"': copy(
     'Specifica il settore in "Altro".',
@@ -192,6 +217,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'Especifica el sector en «Otro».',
     'Précisez le secteur dans « Autre ».',
     'Geben Sie die Branche unter «Sonstiges» an.',
+    'Specifică sectorul în „Altele”.',
   ),
   'Inserisci almeno un codice prodotto.': copy(
     'Inserisci almeno un codice prodotto.',
@@ -199,6 +225,7 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'Introduce al menos un código de producto.',
     'Saisissez au moins un code produit.',
     'Geben Sie mindestens einen Produktcode ein.',
+    'Introdu cel puțin un cod de produs.',
   ),
   Required: GENERIC.required,
   'Invalid email': GENERIC.invalidEmail,

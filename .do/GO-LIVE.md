@@ -25,18 +25,18 @@ flowchart TB
     SHOP[shop — Next.js :3000]
     API[api — Express :8080]
     ADMIN[admin — Vite static]
-    PG[(postgres — PG 16)]
+    PG[(postgres — PG 18)]
     SPACES[(Spaces CDN — opzionale)]
   end
 
   subgraph external [Sistemi esterni]
-    ODOO[Odoo — tlbdb.odoo.com]
+    ODOO[Odoo — catalogo, ordini, email]
     STRIPE[Stripe — pagamenti + webhook]
     DHL[DHL API]
     FEDEX[FedEx API]
-    SMTP[SMTP — email transazionali]
     DEEPL[DeepL — traduzioni BO]
     GMAPS[Google Places — autocomplete]
+    UPTIME[UptimeRobot — uptime shop/API/Odoo]
   end
 
   SHOP_USER --> SHOP
@@ -48,10 +48,13 @@ flowchart TB
   API --> STRIPE
   API --> DHL
   API --> FEDEX
-  API --> SMTP
   API --> DEEPL
   API --> GMAPS
   API --> SPACES
+  ADMIN -->|proxy API key| UPTIME
+  UPTIME -->|HTTP checks| SHOP
+  UPTIME -->|GET /health| API
+  UPTIME -->|HTTPS| ODOO
   STRIPE -->|webhook POST| API
 ```
 
@@ -62,7 +65,7 @@ flowchart TB
 | `api` | Web Service | Express, Prisma, Product Hub, job in-process | 8080 | `GET /health` |
 | `shop` | Web Service | Next.js (`client/`) | 3000 | `GET /` |
 | `admin` | Static Site | Vite SPA (`admin/dist`) | — | build artifact |
-| `postgres` | Managed DB | PostgreSQL 16 | 5432 | managed |
+| `db-ideadiluce-pwa` | Managed DB | PostgreSQL 18, pool `ideadiluce-api` | 25060 / 25061 | managed |
 
 **Schema DB:** `public` (BFF: utenti, carrelli, ordini PWA, CMS, shipping, tax) + `hub` (catalogo import Woo / arricchimenti).
 
@@ -140,13 +143,16 @@ Verifica locale: `npm run stripe:setup`, `npm run stripe:webhook`.
 
 **Nota:** non c’è showroom fisico — `/showroom` resta 301 → `/contatti`; il copy “Showroom a Roma” è stato rimosso da header/shell.
 
-### 3.4 Email (SMTP)
+### 3.4 Email (Odoo)
+
+Le email transazionali (clienti e notifiche interne a `info@ideadiluce.com`) partono da Odoo: la PWA crea i `mail.template` mancanti via API e spedisce con `mail.mail`. Serve un server di posta in uscita configurato in Odoo, non SMTP sulla PWA.
 
 | Uso | Env |
 |-----|-----|
-| Reset password, alert sync Odoo, notifiche BO | `SMTP_*`, `PAID_SYNC_ALERT_EMAIL` |
-
-Abilitare con `SMTP_ENABLED=true` prima del go-live se serve self-service password e alert operativi.
+| Reset password (nativo Odoo se portal user) | Odoo `auth_signup` |
+| Alert sync / preventivi / contatti / credenziali | template `[PWA] …` in Odoo |
+| Destinatario alert sync (override) | `PAID_SYNC_ALERT_EMAIL` |
+| Fallback solo se Odoo è spento (dev) | `SMTP_*` |
 
 ### 3.5 DeepL (opzionale)
 
@@ -174,6 +180,37 @@ Upload media catalogo / documenti professionali dall’admin. Non obbligatorio s
 | `BANK_TRANSFER_IBAN` | IBAN |
 | `BANK_TRANSFER_BANK_NAME` | Banca |
 
+### 3.9 UptimeRobot (consigliato)
+
+Monitoraggio esterno di shop, API, catalogo, Odoo e back office. Lo stato si legge dal BO in **Configurazione → Monitoraggio**. La chiave resta sul server: il browser non la vede.
+
+| Env | Note |
+|-----|------|
+| `UPTIMEROBOT_API_KEY` | Main API Key da [Integrations & API](https://uptimerobot.com/dashboard#mySettings) (read-write per creare i monitor dal BO) |
+| `API_PUBLIC_URL` | `${api.PUBLIC_URL}` — check diretto `GET /health` senza passare dallo shop |
+| `UPTIMEROBOT_INTERVAL_SECONDS` | Default 300 (piano free). Piani a pagamento: 60 |
+
+Setup:
+
+1. Account su [uptimerobot.com](https://uptimerobot.com/) (50 monitor free, check ogni 5 minuti)
+2. Impostare `UPTIMEROBOT_API_KEY` sul componente `api`
+3. Dal BO: **Crea i monitor consigliati**
+
+Monitor creati (prefisso `IDL ·`):
+
+| Monitor | URL | Tipo |
+|---------|-----|------|
+| Storefront | `PUBLIC_SITE_URL` | keyword «Idea di Luce» |
+| API (sito) | `{site}/api/v1/health` | keyword `"status":"ok"` |
+| Catalogo | `{site}/api/v1/catalog/catalog-index?locale=IT` | keyword `"syncedAt"` |
+| Sitemap | `{site}/sitemap.xml` | keyword `urlset` |
+| Merchant feed | `{site}/merchant-feed.xml` | keyword `rss` |
+| API (diretta) | `{API_PUBLIC_URL}/health` | keyword `"status":"ok"` |
+| Odoo | `ODOO_CATALOG_BASE_URL` | HTTP |
+| Back office | `ADMIN_ORIGIN` | HTTP |
+
+Alert: email (e Slack/app se collegati in UptimeRobot). IP dei checker: [locations](https://uptimerobot.com/help/locations/). Non sostituisce gli health check DigitalOcean (`GET /health` su `api`, `GET /` su `shop`).
+
 ---
 
 ## 4. Matrice variabili per componente
@@ -184,7 +221,8 @@ Legenda scope DO: **R** = RUN_TIME, **B** = BUILD_TIME, **RB** = RUN_AND_BUILD_T
 
 | Variabile | Scope | Fonte |
 |-----------|-------|-------|
-| `DATABASE_URL` | RB | `${postgres.DATABASE_URL}` |
+| `DATABASE_URL` | RB | Secret: pool PgBouncer `ideadiluce-api` (porta 25061) |
+| `DIRECT_URL` | RB | Secret: connessione diretta `defaultdb` (porta 25060), per `prisma migrate deploy` |
 | `CLIENT_ORIGIN` | R | URL shop |
 | `ADMIN_ORIGIN` | R | URL admin |
 | `ODOO_CATALOG_API_KEY` | R | Secret Odoo |
@@ -197,13 +235,14 @@ Legenda scope DO: **R** = RUN_TIME, **B** = BUILD_TIME, **RB** = RUN_AND_BUILD_T
 | Variabile | Note |
 |-----------|------|
 | `ADMIN_SEED_EMAIL`, `ADMIN_SEED_PASSWORD` | Solo primo deploy |
-| `SMTP_*` | Email transazionali |
-| `PAID_SYNC_ALERT_EMAIL` | Alert sync Odoo |
+| `PAID_SYNC_ALERT_EMAIL` | Override destinatario alert sync (default info@) |
 | `GOOGLE_MAPS_API_KEY` | Checkout indirizzi |
 | `STORE_PICKUP_*` | Ritiro negozio |
 | `BANK_TRANSFER_*` | Pagamento bonifico |
 | `ODOO_PRICELIST_*_ID` | Listini segmentati |
 | `SPACES_*` | Upload media admin |
+| `UPTIMEROBOT_API_KEY` | Dashboard uptime nel BO |
+| `API_PUBLIC_URL` | `${api.PUBLIC_URL}` per check API diretto |
 
 ### `shop`
 
@@ -249,7 +288,7 @@ Stessa topologia, DB dev (`production: false`), istanze più piccole.
 
 - [ ] Creare app: `doctl apps create --spec .do/app.yaml`
 - [ ] Verificare `github.repo` e branch `main`
-- [ ] Attendere deploy verde su `api`, `shop`, `admin`, `postgres`
+- [ ] Attendere deploy verde su `api`, `shop`, `admin`, `db-ideadiluce-pwa`
 - [ ] Annotare URL temporanei `*.ondigitalocean.app`
 
 ### Fase B — Secret e integrazioni
@@ -258,6 +297,7 @@ Stessa topologia, DB dev (`production: false`), istanze più piccole.
 - [ ] Configurare webhook Stripe su URL `api`
 - [ ] Verificare API key Odoo e credenziali Odoo XML-RPC
 - [ ] Generare `SHIPPING_CREDENTIALS_KEY`
+- [ ] (Consigliato) `UPTIMEROBOT_API_KEY` e creazione monitor dal BO
 
 ### Fase C — Verifica URL e Stripe
 
@@ -288,6 +328,7 @@ Manuale:
 
 ```bash
 curl -s https://<api-….ondigitalocean.app>/health
+curl -s https://<api-….ondigitalocean.app>/api/v1/health
 curl -s "https://<api-….ondigitalocean.app>/api/v1/catalog/products?pageSize=2&locale=IT" | head
 ```
 
@@ -302,6 +343,7 @@ curl -s "https://<api-….ondigitalocean.app>/api/v1/catalog/products?pageSize=2
 - [ ] Abilitare alert `DEPLOYMENT_FAILED` / `DOMAIN_FAILED` (già in spec)
 - [ ] Monitorare log `api` per `odoo.sync_retry`, `paid_sync_alert`
 - [ ] Pianificare backup DB (managed Postgres DO)
+- [ ] Collegare UptimeRobot e verificare i monitor in BO → Monitoraggio
 
 ---
 
@@ -318,7 +360,8 @@ curl -s "https://<api-….ondigitalocean.app>/api/v1/catalog/products?pageSize=2
 
 ```bash
 doctl apps create --spec .do/app.staging.yaml
-doctl apps update <APP_ID> --spec .do/app.yaml
+# Produzione: non sovrascrivere lo spec live con app.yaml (domini/ingress/secret).
+# Allineare solo il blocco databases (cluster db-ideadiluce-pwa) dallo spec scaricato.
 ```
 
 ---

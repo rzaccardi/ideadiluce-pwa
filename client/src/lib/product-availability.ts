@@ -31,6 +31,7 @@ const LOCALE_TAG: Record<PwaLocale, string> = {
   ES: 'es-ES',
   FR: 'fr-FR',
   DE: 'de-DE',
+  RO: 'ro-RO',
 }
 
 function daysUntilIsoDate(iso: string | null | undefined): number | null {

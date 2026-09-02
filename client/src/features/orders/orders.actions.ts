@@ -85,6 +85,23 @@ export async function reorderOrder(id: string) {
   return api.orders.reorder(id)
 }
 
+export async function requestOrderReturn(id: string, notes?: string, locale?: string) {
+  const result = await api.orders.requestReturn(id, { notes, locale })
+  const snapshot = {
+    id: result.id,
+    createdAt: result.createdAt,
+    status: result.status,
+  }
+  if (ordersStore.detail?.id === id) {
+    ordersStore.detail.returnRequest = snapshot
+  }
+  if (ordersStore.list) {
+    const match = ordersStore.list.find((order) => order.id === id)
+    if (match) match.returnRequest = snapshot
+  }
+  return result
+}
+
 async function loadOrderRecommendations(id: string) {
   ordersStore.recommendationsLoading = true
   ordersStore.recommendationsError = null

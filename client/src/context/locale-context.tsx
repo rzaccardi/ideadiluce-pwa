@@ -1,9 +1,11 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useMemo } from 'react'
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { preloadLocale } from '@/i18n/messages'
+import { hydrateLocale, isLocaleLoaded, preloadLocale } from '@/i18n/messages'
+import type { LocaleMessages } from '@/i18n/messages'
 import {
+  HTML_LANG,
   localizePath,
   parseLocaleFromPathname,
   stripLocalePrefix,
@@ -22,17 +24,37 @@ const LocaleContext = createContext<LocaleContextValue | null>(null)
 type LocaleProviderProps = {
   children: React.ReactNode
   initialLocale?: PwaLocale
+  initialMessages?: LocaleMessages
 }
 
-export function LocaleProvider({ children, initialLocale }: LocaleProviderProps) {
+function applyDocumentLocale(locale: PwaLocale) {
+  if (typeof document === 'undefined') return
+  document.documentElement.lang = HTML_LANG[locale]
+}
+
+export function LocaleProvider({ children, initialLocale, initialMessages }: LocaleProviderProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  const locale = useMemo(() => {
-    if (initialLocale) return initialLocale
-    return parseLocaleFromPathname(pathname)
-  }, [initialLocale, pathname])
+  if (initialLocale && initialMessages) {
+    hydrateLocale(initialLocale, initialMessages)
+  }
+
+  const [locale, setLocale] = useState<PwaLocale>(
+    () => initialLocale ?? parseLocaleFromPathname(pathname),
+  )
+
+  useLayoutEffect(() => {
+    const next = parseLocaleFromPathname(window.location.pathname)
+    setLocale(next)
+    applyDocumentLocale(next)
+  }, [pathname])
+
+  useEffect(() => {
+    if (isLocaleLoaded(locale)) return
+    void preloadLocale(locale)
+  }, [locale])
 
   const pathWithoutLocale = stripLocalePrefix(pathname)
 
@@ -41,20 +63,22 @@ export function LocaleProvider({ children, initialLocale }: LocaleProviderProps)
   const switchLocale = useCallback(
     (next: PwaLocale) => {
       const search = searchParams.toString()
-      const target = localizePath(`${pathWithoutLocale}${search ? `?${search}` : ''}`, next)
-      router.push(target)
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : pathname
+      const unprefixed = stripLocalePrefix(currentPath)
+      const target = localizePath(`${unprefixed}${search ? `?${search}` : ''}`, next)
+      applyDocumentLocale(next)
+      void preloadLocale(next).then(() => {
+        setLocale(next)
+        router.push(target)
+      })
     },
-    [router, pathWithoutLocale, searchParams],
+    [router, pathname, searchParams],
   )
 
   const value = useMemo(
     () => ({ locale, pathWithoutLocale, localize, switchLocale }),
     [locale, pathWithoutLocale, localize, switchLocale],
   )
-
-  useEffect(() => {
-    void preloadLocale(locale)
-  }, [locale])
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>
 }

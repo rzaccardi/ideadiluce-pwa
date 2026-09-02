@@ -14,9 +14,8 @@
 # CLI (richiede doctl autenticato)
 doctl apps create --spec .do/app.yaml
 doctl apps list
-doctl apps update <APP_ID> --spec .do/app.yaml
-
-# Oppure: Control Panel → Create App → GitHub → "Use existing app spec"
+# Non fare update cieco con questo spec: l'app live ha domini e secret extra.
+# doctl apps spec get <APP_ID>
 ```
 
 ## Componenti
@@ -26,7 +25,7 @@ doctl apps update <APP_ID> --spec .do/app.yaml
 | `api` | Web Service | `server/` | `build:server` + migrazioni | `${api.PUBLIC_URL}` |
 | `shop` | Web Service | `client/` | Next.js workspace | `${shop.PUBLIC_URL}` |
 | `admin` | Static Site | `admin/` | Vite → `admin/dist` | `${admin.PUBLIC_URL}` |
-| `postgres` | Managed DB | — | — | rete interna |
+| `db-ideadiluce-pwa` | Managed DB | PG 18, pool `ideadiluce-api` | — | rete interna |
 
 Tutti i componenti usano `source_dir: /` (root monorepo npm workspaces). L’`ingress` punta l’URL principale dell’app allo shop; api e admin hanno sottodomini dedicati.
 

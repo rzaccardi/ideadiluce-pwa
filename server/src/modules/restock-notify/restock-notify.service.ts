@@ -1,7 +1,7 @@
 import type { Request } from 'express'
 import { AppError } from '../../types/errors.js'
 import type { ProductAvailabilityDataDTO, ProductDetailDTO, StockRestockRequestDTO } from '../../types/dto.js'
-import { sendMail } from '../../lib/mail.js'
+import { sendPwaMail, PWA_ADMIN_MAIL_TO } from '../../adapters/odoo/odooMailAdapter.js'
 import { logger } from '../../lib/logger.js'
 import { parseHubLocale } from '../../lib/hub-locale.js'
 import { resolveCatalogProductEnriched } from '../catalog/catalogResolver.service.js'
@@ -125,22 +125,26 @@ export const restockNotifyService = {
         requestType,
       })
       try {
-        await sendMail({
-          to: 'info@ideadiluce.com',
-          subject: `[Idea di Luce] ${typeLabel} — ${product.name}`,
-          text: [
-            `Tipo: ${typeLabel}`,
-            `Prodotto: ${product.name}`,
-            `Riferimento: ${row.productRef}`,
-            variantRef ? `Variante: ${variantRef}` : null,
-            `Quantità: ${row.quantity}`,
-            `Email cliente: ${row.email}`,
-            `Lingua: ${row.locale}`,
-            `ID richiesta: ${row.id}`,
-            `Pagina: ${product.slug}`,
-          ]
-            .filter(Boolean)
-            .join('\n'),
+        await sendPwaMail(ctx, {
+          templateKey: 'restock_notify_admin',
+          emailTo: PWA_ADMIN_MAIL_TO,
+          vars: {
+            type_label: typeLabel,
+            product_name: product.name,
+            body_text: [
+              `Tipo: ${typeLabel}`,
+              `Prodotto: ${product.name}`,
+              `Riferimento: ${row.productRef}`,
+              variantRef ? `Variante: ${variantRef}` : null,
+              `Quantità: ${row.quantity}`,
+              `Email cliente: ${row.email}`,
+              `Lingua: ${row.locale}`,
+              `ID richiesta: ${row.id}`,
+              `Pagina: ${product.slug}`,
+            ]
+              .filter(Boolean)
+              .join('\n'),
+          },
         })
       } catch (e) {
         logger.warn('restock-notify.admin_mail_failed', {

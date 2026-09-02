@@ -25,6 +25,7 @@ export async function sendMail(options: {
   subject: string
   text: string
   html?: string
+  replyTo?: string
   attachments?: Array<{ filename: string; content: Buffer }>
 }): Promise<void> {
   const from = env.SMTP_FROM ?? 'noreply@ideadiluce.it'
@@ -42,6 +43,7 @@ export async function sendMail(options: {
   await transport.sendMail({
     from,
     to: options.to,
+    replyTo: options.replyTo,
     subject: options.subject,
     text: options.text,
     html: options.html ?? options.text.replace(/\n/g, '<br>'),

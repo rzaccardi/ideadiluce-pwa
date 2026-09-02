@@ -1,6 +1,8 @@
 import type { Request, Response } from 'express'
 import { ok } from '../lib/api-response.js'
 import { ordersService } from '../modules/orders/orders.service.js'
+import { orderReturnRequestService } from '../modules/orders/order-return-request.service.js'
+import { orderReturnRequestBodySchema } from '../modules/orders/order-return-request.validators.js'
 import { paymentsService } from '../modules/payments/payments.service.js'
 import { asyncHandler } from '../utils/async-handler.js'
 
@@ -27,6 +29,19 @@ export const ordersController = {
     const userId = req.sessionRecord!.user!.id
     const data = await ordersService.reorder(req, userId, req.params.id)
     res.json(ok(data))
+  }),
+
+  requestReturn: asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.sessionRecord!.user!.id
+    const body = orderReturnRequestBodySchema.parse(req.body ?? {})
+    const order = await ordersService.getById(userId, req.params.id, req.correlationId)
+    const data = await orderReturnRequestService.submit({
+      userId,
+      order,
+      notes: body.notes,
+      locale: body.locale,
+    })
+    res.status(data.alreadyRequested ? 200 : 201).json(ok(data))
   }),
 
   status: asyncHandler(async (req: Request, res: Response) => {

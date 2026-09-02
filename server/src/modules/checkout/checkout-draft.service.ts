@@ -8,6 +8,8 @@ import type { CheckoutStartDTO } from '../../types/dto.js'
 import type { CheckoutDraftBody } from './checkout-draft.validators.js'
 import { isCheckoutAddressValid } from './checkout-address.validators.js'
 import { assertOdooReadyForCheckoutFromRequest } from '../../lib/odoo-checkout-health.js'
+import { isEmergencyMode } from '../odoo/odoo-resilience.settings.js'
+import { isCatalogDegraded } from '../odoo/odoo-degraded-state.js'
 import { segmentFromDto } from '../tax/tax.validators.js'
 import {
   assertOrderAccess,
@@ -40,15 +42,24 @@ export const checkoutDraftService = {
 
     if (body.step === 'shipping' || body.step === 'lock') {
       const orderLocked = priceLocked || body.orderId != null
-      if (!orderLocked) {
-        await assertCartLinesPurchasable(
-          ctx,
-          cartFresh.items.map((i) => ({
-            productRef: i.productRef,
-            variantRef: i.variantRef,
-            quantity: i.quantity,
-          })),
-        )
+      const skipStock = (await isEmergencyMode()) || isCatalogDegraded()
+      if (!orderLocked && !skipStock) {
+        try {
+          await assertCartLinesPurchasable(
+            ctx,
+            cartFresh.items.map((i) => ({
+              productRef: i.productRef,
+              variantRef: i.variantRef,
+              quantity: i.quantity,
+            })),
+          )
+        } catch (e) {
+          if ((await isEmergencyMode()) || isCatalogDegraded()) {
+            /* fail-open: catalogo Odoo non disponibile */
+          } else {
+            throw e
+          }
+        }
       }
     }
 

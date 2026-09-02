@@ -1,4 +1,5 @@
 import { SITE_PAGE_X_CLASS } from '@/components/site/primitives'
+import { layers } from '@/lib/layering'
 
 /** Paesi supportati nel selettore checkout (ISO 3166-1 alpha-2). */
 export const CHECKOUT_COUNTRIES: Array<{ code: string; label: string }> = [
@@ -12,6 +13,7 @@ export const CHECKOUT_COUNTRIES: Array<{ code: string; label: string }> = [
   { code: 'GB', label: 'Regno Unito' },
   { code: 'NL', label: 'Paesi Bassi' },
   { code: 'PT', label: 'Portogallo' },
+  { code: 'RO', label: 'Romania' },
   { code: 'US', label: 'Stati Uniti' },
 ]
 
@@ -72,7 +74,8 @@ export const checkoutMobileSummarySpacerClass =
 
 /** Barra riepilogo mobile collassabile, fixed in cima (sticky non funziona con PageTransition). */
 export const checkoutMobileSummaryClass = [
-  'fixed inset-x-0 top-0 z-30 border-b border-idl-tech-border bg-idl-tech-panel lg:hidden',
+  'fixed inset-x-0 top-0 border-b border-idl-tech-border bg-idl-tech-panel lg:hidden',
+  layers.checkoutMobileSummary,
   'pt-[env(safe-area-inset-top,0px)]',
 ].join(' ')
 

@@ -21,6 +21,7 @@ function dateLocaleFor(locale: PwaLocale): string {
   if (locale === 'EN') return 'en-GB'
   if (locale === 'ES') return 'es-ES'
   if (locale === 'FR') return 'fr-FR'
+  if (locale === 'RO') return 'ro-RO'
   return 'de-DE'
 }
 

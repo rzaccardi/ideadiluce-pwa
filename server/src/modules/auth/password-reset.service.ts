@@ -2,13 +2,15 @@ import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import { prisma } from '../../lib/prisma.js'
 import { env } from '../../config/env.js'
-import { publicAppUrl, sendMail } from '../../lib/mail.js'
+import { publicAppUrl } from '../../lib/mail.js'
 import { logger } from '../../lib/logger.js'
 import { hashSessionToken } from '../../lib/token-hash.js'
 import { AppError } from '../../types/errors.js'
 import { requestOdooPasswordReset } from '../../adapters/odoo/odooPortalUserAdapter.js'
 import { isOdooConfigured } from '../../adapters/odoo/odooClient.js'
+import { sendPwaMail } from '../../adapters/odoo/odooMailAdapter.js'
 import { ensurePwaUserStubFromOdoo } from './odoo-account-sync.service.js'
+import { isEmergencyMode } from '../odoo/odoo-resilience.settings.js'
 
 function resetExpiry(): Date {
   return new Date(Date.now() + env.PASSWORD_RESET_TOKEN_HOURS * 60 * 60 * 1000)
@@ -21,22 +23,34 @@ function odooPasswordResetEnabled(correlationId?: string): correlationId is stri
 export const passwordResetService = {
   async requestReset(email: string, correlationId?: string): Promise<void> {
     const normalized = email.toLowerCase().trim()
+    const emergency = await isEmergencyMode()
 
-    if (odooPasswordResetEnabled(correlationId)) {
-      const result = await requestOdooPasswordReset({ correlationId }, normalized)
-      if (result === 'mail_failed') {
-        logger.warn('password_reset.odoo_mail_delivery_issue', {
+    if (odooPasswordResetEnabled(correlationId) && !emergency) {
+      try {
+        const result = await requestOdooPasswordReset({ correlationId }, normalized)
+        if (result === 'sent') return
+        logger.warn('password_reset.odoo_fallback_to_pwa', {
           correlationId,
           email: normalized,
+          result,
+        })
+      } catch (e) {
+        logger.warn('password_reset.odoo_failed', {
+          correlationId,
+          email: normalized,
+          error: e instanceof Error ? e.message : String(e),
         })
       }
-      return
     }
 
     let user = await prisma.user.findUnique({ where: { email: normalized } })
 
     if (!user && correlationId) {
-      await ensurePwaUserStubFromOdoo({ correlationId }, normalized)
+      try {
+        await ensurePwaUserStubFromOdoo({ correlationId }, normalized)
+      } catch {
+        /* Odoo giù: solo utenti PWA già presenti */
+      }
       user = await prisma.user.findUnique({ where: { email: normalized } })
     }
 
@@ -54,15 +68,18 @@ export const passwordResetService = {
     })
 
     const link = publicAppUrl(`/reset-password?token=${encodeURIComponent(rawToken)}`)
-    await sendMail({
-      to: user.email,
-      subject: 'Reimposta la password — Idea di Luce',
-      text: `Ciao,\n\nPer reimpostare la password apri questo link (valido ${env.PASSWORD_RESET_TOKEN_HOURS} ore):\n\n${link}\n\nSe non hai richiesto il reset, ignora questa email.`,
+    await sendPwaMail(correlationId ? { correlationId } : { correlationId: 'password-reset' }, {
+      templateKey: 'password_reset',
+      emailTo: user.email,
+      vars: {
+        hours: String(env.PASSWORD_RESET_TOKEN_HOURS),
+        reset_url: link,
+      },
     })
   },
 
   async resetPassword(token: string, password: string, correlationId?: string): Promise<void> {
-    if (odooPasswordResetEnabled(correlationId)) {
+    if (odooPasswordResetEnabled(correlationId) && !(await isEmergencyMode())) {
       throw new AppError(
         'PASSWORD_RESET_DELEGATED_ODOO',
         'Reset delegated to Odoo',

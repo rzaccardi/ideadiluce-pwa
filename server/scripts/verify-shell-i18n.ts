@@ -5,7 +5,7 @@ loadMonorepoEnv()
 import { siteRepository } from '../src/modules/site/site.repository.js'
 
 async function main() {
-  for (const locale of ['IT', 'EN', 'DE', 'FR', 'ES'] as const) {
+  for (const locale of ['IT', 'EN', 'DE', 'FR', 'ES', 'RO'] as const) {
     const row = await siteRepository.findByKeyLocale('shell', locale)
     const content = row?.content as {
       utilityBar?: { messages?: string[] }

@@ -11,6 +11,8 @@ import { buildBreadcrumbJsonLd, buildCollectionPageJsonLd } from '@/lib/seo/json
 import { buildAmbienteTaxonomy, humanizeSlug, taxonomyPageTitle } from '@/lib/catalog-taxonomy'
 import { fetchCatalogBootstrapServer, fetchCatalogProductsServer } from '@/lib/server-catalog'
 
+export const revalidate = 1800
+
 type PageProps = {
   params: Promise<{ room: string }>
 }

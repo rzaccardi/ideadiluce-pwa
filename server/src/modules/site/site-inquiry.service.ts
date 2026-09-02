@@ -3,12 +3,10 @@ import path from 'node:path'
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { isSpacesConfigured, spacesPublicUrl, uploadProductImage } from '../../adapters/spaces/spaces.storage.js'
 import { env } from '../../config/env.js'
-import { sendMail } from '../../lib/mail.js'
+import { sendPwaMail, PWA_ADMIN_MAIL_TO } from '../../adapters/odoo/odooMailAdapter.js'
 import { logger } from '../../lib/logger.js'
 import { prisma } from '../../lib/prisma.js'
 import type { SiteInquiryInput } from './site-inquiry.validators.js'
-
-const INQUIRY_TO = 'info@ideadiluce.com'
 
 export function kindLabel(kind: SiteInquiryInput['kind']) {
   switch (kind) {
@@ -86,7 +84,11 @@ async function storeInquiryAttachment(
 }
 
 export const siteInquiryService = {
-  async submit(input: SiteInquiryInput, attachments: InquiryAttachment[] = []) {
+  async submit(
+    input: SiteInquiryInput,
+    attachments: InquiryAttachment[] = [],
+    correlationId = 'site-inquiry',
+  ) {
     const row = await prisma.siteInquiry.create({
       data: {
         kind: input.kind,
@@ -136,7 +138,6 @@ export const siteInquiryService = {
     ].filter(Boolean)
 
     const text = lines.join('\n')
-    const subject = `[Idea di Luce] ${kindLabel(input.kind)} — ${input.name}`
 
     logger.info('site.inquiry', {
       id: row.id,
@@ -146,14 +147,25 @@ export const siteInquiryService = {
     })
 
     const emailAttachments = attachments.filter((_, i) => !attachmentMeta[i]?.url)
-    await sendMail({
-      to: INQUIRY_TO,
-      subject,
-      text,
-      attachments: emailAttachments.length
-        ? emailAttachments.map((a) => ({ filename: a.filename, content: a.content }))
-        : undefined,
-    })
+    await sendPwaMail(
+      { correlationId },
+      {
+        templateKey: 'site_inquiry_admin',
+        emailTo: PWA_ADMIN_MAIL_TO,
+        vars: {
+          kind_label: kindLabel(input.kind),
+          customer_name: input.name,
+          body_text: text,
+        },
+        attachments: emailAttachments.length
+          ? emailAttachments.map((a) => ({
+              filename: a.filename,
+              content: a.content,
+              mimetype: a.mimetype,
+            }))
+          : undefined,
+      },
+    )
 
     return { submitted: true, id: row.id }
   },

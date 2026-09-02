@@ -22,9 +22,14 @@ if (!process.env.DATABASE_URL?.trim() && args[0] === 'generate') {
     'postgresql://build:build@127.0.0.1:5432/build?schema=public'
 }
 
-/** In locale DIRECT_URL coincide con DATABASE_URL; su DO è la connessione diretta (migrate). */
+/** In locale DIRECT_URL coincide con DATABASE_URL; su DO è la connessione diretta (porta 25060 / defaultdb). */
 if (!process.env.DIRECT_URL?.trim() && process.env.DATABASE_URL?.trim()) {
   process.env.DIRECT_URL = process.env.DATABASE_URL
+}
+
+/** `migrate` non può passare da PgBouncer (transaction pool). */
+if (args[0] === 'migrate' && process.env.DIRECT_URL?.trim()) {
+  process.env.DATABASE_URL = process.env.DIRECT_URL
 }
 
 if (!process.env.DATABASE_URL?.trim()) {

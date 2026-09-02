@@ -80,8 +80,8 @@ describe('searchHintsAdminService', () => {
     const result = await searchHintsAdminService.applyFromOdoo(ctx, { lookbackDays: 90, limit: 8 })
 
     expect(result.hints).toEqual(['TLB 322805', 'Artemide Eclisse'])
-    expect(result.updatedLocales).toEqual(['IT', 'EN', 'ES', 'FR', 'DE'])
-    expect(siteService.saveAdminPage).toHaveBeenCalledTimes(5)
+    expect(result.updatedLocales).toEqual(['IT', 'EN', 'ES', 'FR', 'DE', 'RO'])
+    expect(siteService.saveAdminPage).toHaveBeenCalledTimes(6)
     expect(siteService.saveAdminPage).toHaveBeenCalledWith(
       'home',
       'IT',

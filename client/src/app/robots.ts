@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/llms.txt'],
+        allow: ['/', '/llms.txt', '/merchant-feed.xml'],
         disallow: [
           '/account/',
           '/checkout/',

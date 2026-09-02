@@ -4,6 +4,8 @@ import type { ProductDocumentDTO } from '@/types/dto'
 import { ExternalLink } from '@/lib/link-title'
 import { getBrowserApiBase } from '@/lib/env'
 import { cn } from '@/utils/cn'
+import { useI18n } from '@/hooks/use-i18n'
+import type { MessageKey } from '@/i18n/messages'
 
 type Props = {
   slug: string
@@ -16,11 +18,11 @@ type Props = {
   showTitle?: boolean
 }
 
-const DOC_TYPE_LABEL: Record<string, string> = {
-  datasheet: 'Scheda tecnica',
-  scheda_ue: 'Scheda prodotto UE',
-  ce: 'Dichiarazione CE',
-  istruzioni: 'Istruzioni',
+const DOC_TYPE_KEY: Record<string, MessageKey> = {
+  datasheet: 'product.docs.datasheet',
+  scheda_ue: 'product.docs.euSheet',
+  ce: 'product.docs.ce',
+  istruzioni: 'product.docs.instructions',
 }
 
 function formatBytes(bytes: number | null | undefined): string | null {
@@ -57,6 +59,7 @@ export function ProductDocuments({
   variant = 'design',
   showTitle = true,
 }: Props) {
+  const { t } = useI18n()
   if (!documents.length) return null
 
   const isDesign = variant === 'design'
@@ -70,13 +73,14 @@ export function ProductDocuments({
             isDesign ? 'font-serif text-idl-ink' : 'font-extrabold text-idl-ink',
           )}
         >
-          Documenti e schede tecniche
+          {t('product.docs.title')}
         </h2>
       ) : null}
       <ul className="divide-y divide-idl-border rounded-lg border border-idl-border bg-idl-tech-panel">
         {documents.map((doc) => {
           const size = formatBytes(doc.sizeBytes)
-          const typeLabel = doc.type ? DOC_TYPE_LABEL[doc.type] ?? doc.type : null
+          const typeKey = doc.type ? DOC_TYPE_KEY[doc.type] : undefined
+          const typeLabel = typeKey ? t(typeKey) : doc.type
           const meta = [typeLabel, doc.format?.toUpperCase() ?? doc.mimetype, size]
             .filter(Boolean)
             .join(' · ')

@@ -11,6 +11,7 @@ describe('api-cache-policy', () => {
     expect(isPrivateApiPath('/api/v1/cart')).toBe(true)
     expect(isPrivateApiPath('/api/v1/checkout/draft')).toBe(true)
     expect(isPrivateApiPath('/api/v1/auth/refresh')).toBe(true)
+    expect(isPrivateApiPath('/api/v1/site/settings')).toBe(true)
     expect(privateApiFetchInit('/api/v1/users/me')).toEqual({ cache: 'no-store' })
   })
 

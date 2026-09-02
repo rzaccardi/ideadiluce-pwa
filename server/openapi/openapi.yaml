@@ -10,7 +10,7 @@ servers:
 paths:
   /health:
     get:
-      summary: Health check (root server, non sotto /api/v1 in implementazione Express)
+      summary: Health check liveness (anche `GET /health` in root Express; UptimeRobot usa questo path via rewrite shop)
       responses:
         '200':
           description: OK

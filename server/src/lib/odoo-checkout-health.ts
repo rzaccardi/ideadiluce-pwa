@@ -7,6 +7,7 @@ import {
   odooXmlRpcVersion,
   type OdooCallContext,
 } from '../adapters/odoo/odooClient.js'
+import { isEmergencyMode } from '../modules/odoo/odoo-resilience.settings.js'
 
 export type OdooCheckoutHealthMeta = {
   userId?: string | null
@@ -20,6 +21,7 @@ export async function assertOdooReadyForCheckout(
   meta: OdooCheckoutHealthMeta,
 ): Promise<void> {
   if (!env.ODOO_ENABLED || !isOdooConfigured()) return
+  if (await isEmergencyMode()) return
 
   const startedAt = new Date()
   try {
@@ -32,7 +34,7 @@ export async function assertOdooReadyForCheckout(
       operation: 'checkout_health',
       correlationId: ctx.correlationId,
       success: false,
-      statusCode: 503,
+      statusCode: env.ODOO_CHECKOUT_REQUIRE_LIVE ? 503 : 202,
       requestRedacted: {
         step: meta.step,
         userId: meta.userId ?? null,
@@ -43,13 +45,15 @@ export async function assertOdooReadyForCheckout(
       startedAt,
       finishedAt,
     })
-    throw new AppError(
-      'ODOO_UNAVAILABLE',
-      'Odoo unavailable',
-      'Il sistema ordini non è momentaneamente disponibile. Riprova tra qualche minuto.',
-      503,
-      true,
-    )
+    if (env.ODOO_CHECKOUT_REQUIRE_LIVE) {
+      throw new AppError(
+        'ODOO_UNAVAILABLE',
+        'Odoo unavailable',
+        'Il sistema ordini non è momentaneamente disponibile. Riprova tra qualche minuto.',
+        503,
+        true,
+      )
+    }
   }
 }
 

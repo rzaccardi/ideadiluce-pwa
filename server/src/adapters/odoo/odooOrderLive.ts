@@ -113,7 +113,10 @@ async function variantForProductRef(
   return { variantId: vid, priceUnit: Number(row.list_price || 0) }
 }
 
+let deliveryProductIdCache: number | null | undefined
+
 async function deliveryProductId(ctx: OdooCallContext): Promise<number | null> {
+  if (deliveryProductIdCache !== undefined) return deliveryProductIdCache
   const rows = await odooExecuteKw<Array<{ id: number }>>(
     ctx,
     'product.product',
@@ -121,7 +124,8 @@ async function deliveryProductId(ctx: OdooCallContext): Promise<number | null> {
     [[['sale_ok', '=', true], ['type', '=', 'service'], ['name', 'ilike', 'Spedizione']]],
     { fields: ['id'], limit: 1 },
   )
-  return rows[0]?.id ?? null
+  deliveryProductIdCache = rows[0]?.id ?? null
+  return deliveryProductIdCache
 }
 
 async function buildOrderLineCommands(
@@ -129,9 +133,16 @@ async function buildOrderLineCommands(
   lines: SaleOrderLineInput[],
   shippingLine?: SaleOrderShippingLine | null,
 ): Promise<unknown[]> {
+  const needDelivery = Boolean(shippingLine && shippingLine.amountCents > 0)
+  const [resolved, deliveryId] = await Promise.all([
+    Promise.all(lines.map((line) => variantForProductRef(ctx, line.productRef, line.variantRef))),
+    needDelivery ? deliveryProductId(ctx) : Promise.resolve(null),
+  ])
+
   const commands: unknown[] = []
-  for (const line of lines) {
-    const v = await variantForProductRef(ctx, line.productRef, line.variantRef)
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!
+    const v = resolved[i]
     if (!v) {
       throw new Error(`Prodotto Odoo non trovato per slug/ref: ${line.productRef}`)
     }
@@ -144,20 +155,17 @@ async function buildOrderLineCommands(
     if (line.label) row.name = line.label
     commands.push([0, 0, row])
   }
-  if (shippingLine && shippingLine.amountCents > 0) {
-    const deliveryId = await deliveryProductId(ctx)
-    if (deliveryId) {
-      commands.push([
-        0,
-        0,
-        {
-          product_id: deliveryId,
-          product_uom_qty: 1,
-          price_unit: shippingLine.amountCents / 100,
-          name: shippingLine.label,
-        },
-      ])
-    }
+  if (needDelivery && deliveryId && shippingLine) {
+    commands.push([
+      0,
+      0,
+      {
+        product_id: deliveryId,
+        product_uom_qty: 1,
+        price_unit: shippingLine.amountCents / 100,
+        name: shippingLine.label,
+      },
+    ])
   }
   return commands
 }
@@ -208,7 +216,10 @@ export function createLiveOdooOrderAdapter(): OdooOrderAdapter {
     },
 
     async createOrUpdateSaleOrder(ctx: OdooCallContext, input: SaleOrderInput) {
-      const lineCommands = await buildOrderLineCommands(ctx, input.lines, input.shippingLine)
+      const [lineCommands, fields] = await Promise.all([
+        buildOrderLineCommands(ctx, input.lines, input.shippingLine),
+        saleOrderFields(ctx),
+      ])
       if (lineCommands.length === 0) {
         throw new Error('Nessuna riga ordine valida')
       }
@@ -217,7 +228,6 @@ export function createLiveOdooOrderAdapter(): OdooOrderAdapter {
       if (input.clientOrderRef?.trim()) {
         extraVals.client_order_ref = input.clientOrderRef.trim()
       }
-      const fields = await saleOrderFields(ctx)
       appendOrderNoteFields(extraVals, fields, input)
       appendFiscalPosition(extraVals, fields, input)
 

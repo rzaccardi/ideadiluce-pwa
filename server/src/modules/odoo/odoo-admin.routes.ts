@@ -11,6 +11,7 @@ import {
   odooAdminPricelistAssignmentSchema,
   odooAdminPricelistQuerySchema,
   odooAdminQuotationIdParamsSchema,
+  odooResiliencePatchSchema,
   odooSyncQueueIdParamsSchema,
   odooSyncQueueListQuerySchema,
 } from './odoo-admin.validators.js'
@@ -23,6 +24,23 @@ odooAdminRouter.get(
   '/status',
   asyncHandler(async (req, res) => {
     res.json(ok(await odooAdminService.getStatus(req)))
+  }),
+)
+
+odooAdminRouter.get(
+  '/resilience',
+  asyncHandler(async (_req, res) => {
+    res.json(ok(await odooAdminService.getResilience()))
+  }),
+)
+
+odooAdminRouter.patch(
+  '/resilience',
+  validateRequest({ body: odooResiliencePatchSchema }),
+  asyncHandler(async (req, res) => {
+    const body = odooResiliencePatchSchema.parse(req.body)
+    const email = req.adminSessionRecord?.adminUser?.email ?? null
+    res.json(ok(await odooAdminService.patchResilience(body, email)))
   }),
 )
 
@@ -81,6 +99,13 @@ odooAdminRouter.get(
   asyncHandler(async (req, res) => {
     const query = odooSyncQueueListQuerySchema.parse(req.query)
     res.json(ok(await odooAdminService.listSyncQueue(query)))
+  }),
+)
+
+odooAdminRouter.post(
+  '/sync-queue/retry-exhausted',
+  asyncHandler(async (_req, res) => {
+    res.json(ok(await odooAdminService.requeueExhausted()))
   }),
 )
 

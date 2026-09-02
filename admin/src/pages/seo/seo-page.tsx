@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useSnapshot } from 'valtio/react'
-import { ExternalLinkIcon, RefreshCwIcon, SearchIcon } from 'lucide-react'
+import { ExternalLinkIcon, RefreshCwIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   deleteSeoRedirect,
@@ -14,6 +14,7 @@ import {
 import { RoutePageHeader } from '@/components/route-page-header'
 import { InfiniteScrollSentinel, RouteSkeleton } from '@/components/shared'
 import { useInfiniteScrollSentinel } from '@/hooks/use-infinite-scroll-sentinel'
+import { MerchantCenterPanel } from './merchant-center-panel'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -134,7 +135,7 @@ export function SeoPage() {
 
   return (
     <div className="space-y-6">
-      <RoutePageHeader description="Sitemap, feed Google Shopping, llms.txt e redirect 301. I file pubblici si rigenerano automaticamente ogni 6 ore; puoi forzare l'aggiornamento dopo modifiche al catalogo o alle guide." />
+      <RoutePageHeader description="Sitemap, feed Google Shopping gestito dal proxy, llms.txt e redirect 301. I file pubblici si rigenerano automaticamente ogni ora; puoi forzare l'aggiornamento dopo modifiche al catalogo o alle guide." />
 
       {store.error ? (
         <Alert variant="destructive">
@@ -168,6 +169,9 @@ export function SeoPage() {
           <CardContent className="space-y-2 text-sm">
             <p>Ultima generazione: {formatWhen(store.status?.merchantFeed?.builtAt)}</p>
             <p>Prodotti nel feed: {store.status?.merchantFeed?.itemCount ?? '—'}</p>
+            {store.merchant ? (
+              <p>{store.merchant.enabled ? 'Generato dal proxy / BO' : 'Feed disattivato dal BO'}</p>
+            ) : null}
             {urls ? (
               <a href={urls.merchantFeed} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sky-600 hover:underline">
                 Apri feed <ExternalLinkIcon className="h-3.5 w-3.5" />
@@ -192,13 +196,15 @@ export function SeoPage() {
         </Card>
       </div>
 
+      <MerchantCenterPanel />
+
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
           <div>
             <CardTitle>Rigenerazione</CardTitle>
             <CardDescription>
-              Aggiorna sitemap, feed e llms.txt dal catalogo OdooCatalog e dalle guide pubblicate nel BO.
-              Invalida anche la cache CMS della PWA se REVALIDATE_SECRET è configurato.
+              Aggiorna sitemap, feed Merchant (dal proxy, non da Odoo) e llms.txt. Invalida anche la
+              cache CMS della PWA se REVALIDATE_SECRET è configurato.
             </CardDescription>
           </div>
           <Button variant="success" onClick={() => void onRefresh()} disabled={store.isRefreshing}>

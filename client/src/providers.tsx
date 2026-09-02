@@ -1,27 +1,27 @@
 'use client'
 
 import { Suspense, useEffect } from 'react'
-import { usePathname } from 'next/navigation'
 import { LocaleProvider } from '@/context/locale-context'
 import { ThemeProvider } from '@/context/theme-context'
 import { bootstrapSession } from '@/app/bootstrap'
 import { attachSessionRefreshListener } from '@/features/auth'
-import { parseLocaleFromPathname } from '@/lib/locale'
 import { cleanupLegacyServiceWorkers } from '@/lib/legacy-sw-cleanup'
 import { initValtioDevtools } from '@/lib/valtio-devtools'
 import { AppToaster } from '@/components/ui/AppToaster'
 import { CookiebotRouteSync } from '@/components/CookiebotRouteSync'
 import { WhatsAppFloatingButton } from '@/components/site/WhatsAppFloatingButton'
+import type { PwaLocale } from '@/lib/locale'
+import type { LocaleMessages } from '@/i18n/messages'
 
 function BootstrapGate({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
-
   useEffect(() => {
     attachSessionRefreshListener()
   }, [])
 
   useEffect(() => {
-    void bootstrapSession({ pathname })
+    void bootstrapSession({
+      pathname: typeof window !== 'undefined' ? window.location.pathname : undefined,
+    })
     // Solo al mount: pathname evita doppio GET carrello su landing diretta in /cart.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -29,22 +29,15 @@ function BootstrapGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-function LocaleProviders({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
-  const locale = parseLocaleFromPathname(pathname)
-
-  return (
-    <LocaleProvider initialLocale={locale}>
-      <BootstrapGate>
-        {children}
-        <CookiebotRouteSync />
-        <WhatsAppFloatingButton />
-      </BootstrapGate>
-    </LocaleProvider>
-  )
-}
-
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({
+  children,
+  initialLocale,
+  initialMessages,
+}: {
+  children: React.ReactNode
+  initialLocale?: PwaLocale
+  initialMessages?: LocaleMessages
+}) {
   useEffect(() => {
     void cleanupLegacyServiceWorkers()
   }, [])
@@ -54,7 +47,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <Suspense fallback={null}>
       <ThemeProvider>
-        <LocaleProviders>{children}</LocaleProviders>
+        <LocaleProvider initialLocale={initialLocale} initialMessages={initialMessages}>
+          <BootstrapGate>
+            {children}
+            <CookiebotRouteSync />
+            <WhatsAppFloatingButton />
+          </BootstrapGate>
+        </LocaleProvider>
       </ThemeProvider>
       <AppToaster />
     </Suspense>

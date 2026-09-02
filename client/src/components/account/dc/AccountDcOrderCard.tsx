@@ -8,6 +8,7 @@ import { reorderOrder } from '@/features/orders'
 import { formatMoney } from '@/lib/format'
 import {
   formatOrderRef,
+  orderDisplayStatus,
   orderStatusLabel,
   orderStatusTone,
 } from '@/lib/orderLabels'
@@ -15,12 +16,14 @@ import type { PwaLocale } from '@/lib/locale'
 import { SiteImage } from '@/components/site/SiteImage'
 import { useI18n } from '@/hooks/use-i18n'
 import { AccountDcStatusPill } from './AccountDcStatusPill'
+import { AccountReturnRequestButton } from './AccountReturnRequestButton'
 
 function dateLocaleFor(locale: PwaLocale): string {
   if (locale === 'IT') return 'it-IT'
   if (locale === 'EN') return 'en-GB'
   if (locale === 'ES') return 'es-ES'
   if (locale === 'FR') return 'fr-FR'
+  if (locale === 'RO') return 'ro-RO'
   return 'de-DE'
 }
 
@@ -46,8 +49,9 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
     order.totalAmount != null && order.currencyCode
       ? formatMoney(order.totalAmount, order.currencyCode)
       : '—'
-  const statusLabel = orderStatusLabel(order.status, locale)
-  const statusTone = orderStatusTone(order.status)
+  const displayStatus = orderDisplayStatus(order)
+  const statusLabel = orderStatusLabel(displayStatus, locale)
+  const statusTone = orderStatusTone(displayStatus)
   const visibleLines = lines?.filter((line) => line.imageUrl).slice(0, 3) ?? []
   const extraCount = lines ? Math.max(0, lines.length - visibleLines.length) : 0
   const lineCountLabel =
@@ -88,7 +92,15 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
         </div>
         <div className="text-right">
           <div className="text-[11.5px] text-[#8b919b]">{t('account.dashboard.delivery')}</div>
-          <div className="text-[13.5px] font-bold text-idl-graphite">{t('account.dashboard.deliverySoon')}</div>
+          <div className="text-[13.5px] font-bold text-idl-graphite">
+            {order.shipment?.deliveredAt
+              ? formatOrderDate(order.shipment.deliveredAt, locale)
+              : order.shipment?.estimatedDeliveryAt
+                ? formatOrderDate(order.shipment.estimatedDeliveryAt, locale)
+                : order.shipment?.status === 'in_transit' || order.shipment?.status === 'shipped'
+                  ? t('orderStatus.in_transit')
+                  : t('account.dashboard.deliverySoon')}
+          </div>
         </div>
         <AccountDcStatusPill label={statusLabel} tone={statusTone} />
       </div>
@@ -105,7 +117,7 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
           <span className="text-[12.5px] text-idl-muted">{formatOrderDate(order.createdAt, locale)}</span>
           <AccountDcStatusPill label={statusLabel} tone={statusTone} />
         </div>
-        <div className="flex items-center gap-[18px]">
+        <div className="flex flex-wrap items-center gap-[18px]">
           <span className="text-sm font-extrabold text-idl-graphite">{total}</span>
           <Link
             to={`/account/orders/${order.id}`}
@@ -123,6 +135,12 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
               {reordering ? t('account.orders.table.reordering') : t('account.orders.reorder')}
             </button>
           ) : null}
+          <AccountReturnRequestButton
+            orderId={order.id}
+            alreadyRequested={Boolean(order.returnRequest)}
+            returnEligible={order.returnWindow?.eligible !== false}
+            variant="link"
+          />
         </div>
       </div>
       {visibleLines.length > 0 ? (

@@ -1,6 +1,6 @@
-export type HubLocale = 'IT' | 'EN' | 'ES' | 'FR' | 'DE'
+export type HubLocale = 'IT' | 'EN' | 'ES' | 'FR' | 'DE' | 'RO'
 
-export const HUB_LOCALES: HubLocale[] = ['IT', 'EN', 'ES', 'FR', 'DE']
+export const HUB_LOCALES: HubLocale[] = ['IT', 'EN', 'ES', 'FR', 'DE', 'RO']
 
 export const LOCALE_PATH: Record<HubLocale, string> = {
   IT: '',
@@ -8,6 +8,7 @@ export const LOCALE_PATH: Record<HubLocale, string> = {
   ES: '/es',
   FR: '/fr',
   DE: '/de',
+  RO: '/ro',
 }
 
 /** BCP 47 per hreflang */
@@ -17,6 +18,7 @@ export const HREFLANG_CODE: Record<HubLocale, string> = {
   ES: 'es',
   FR: 'fr',
   DE: 'de',
+  RO: 'ro',
 }
 
 const LOCALE_SET = new Set<string>(HUB_LOCALES)

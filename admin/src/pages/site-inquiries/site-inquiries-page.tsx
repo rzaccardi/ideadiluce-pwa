@@ -123,7 +123,7 @@ export function SiteInquiriesPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Elenco richieste</CardTitle>
           <CardDescription>
-            Ogni invio viene salvato qui e inviato anche via email a info@ideadiluce.com.
+            Ogni invio viene salvato qui e notificato via Odoo a info@ideadiluce.com.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

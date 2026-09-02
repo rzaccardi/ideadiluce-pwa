@@ -1,8 +1,11 @@
 'use client'
 
+import { useEffect } from 'react'
 import { Link } from '@/lib/navigation'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
+import { useLocale } from '@/context/locale-context'
+import { trackNotFoundEvent } from '@/lib/not-found-events'
 
 function BulbIcon() {
   return (
@@ -88,6 +91,17 @@ function HoverLinkButton({ href, children, variant }: HoverButtonProps) {
 export function NotFoundPageView() {
   const { t } = useI18n()
   const lp = useLocalePath()
+  const { locale } = useLocale()
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    trackNotFoundEvent({
+      path: window.location.pathname,
+      queryString: window.location.search || null,
+      referrer: document.referrer || null,
+      locale,
+    })
+  }, [locale])
 
   return (
     <>

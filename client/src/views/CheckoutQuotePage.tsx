@@ -10,6 +10,7 @@ import {
 } from '@/components/checkout/stripe-ui/CheckoutOrderSummary'
 import { CheckoutStepBody } from '@/components/checkout/stripe-ui/CheckoutStepBody'
 import { StripeErrorBanner } from '@/components/checkout/stripe-ui/StripeFields'
+import { LegacySiteNoticeInline } from '@/components/site/LegacySiteNoticeBanner'
 import {
   checkoutColumnGutterClass,
   checkoutFormColumnClass,
@@ -129,7 +130,8 @@ export function CheckoutQuotePage() {
 
   if (c && c.items.length === 0 && !cart.isLoading && !successId) {
     return (
-      <div className="checkout-root flex min-h-dvh items-center justify-center bg-idl-tech-panel px-4 py-12">
+      <div className="checkout-root flex min-h-dvh flex-col items-center justify-center bg-idl-tech-panel px-4 py-12">
+        <LegacySiteNoticeInline className="w-full max-w-md" />
         <EmptyCartPrompt compact className="w-full max-w-md" />
       </div>
     )
@@ -173,6 +175,7 @@ export function CheckoutQuotePage() {
         ) : null}
 
         <div className={checkoutFormContentClass}>
+          <LegacySiteNoticeInline />
           <QuoteStepIndicator
             currentStep={step}
             accountConfirmed={step === 'account' && auth.isAuthenticated}

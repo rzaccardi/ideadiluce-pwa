@@ -13,6 +13,7 @@ const PRIVATE_API_PREFIXES = [
   '/api/v1/address',
   '/api/v1/tax',
   '/api/v1/vat',
+  '/api/v1/site/settings',
 ] as const
 
 /** TTL Data Cache Next per GET pubblici (catalogo, CMS, SEO). */

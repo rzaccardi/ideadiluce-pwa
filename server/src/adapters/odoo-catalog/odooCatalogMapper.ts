@@ -341,6 +341,7 @@ export function mapOdooCatalogProductDetail(
       noindex: false,
     },
     alternates: mapAlternates(product.seo?.alternates),
+    degraded: Boolean((product as { pwa_degraded?: boolean }).pwa_degraded),
   }
 }
 

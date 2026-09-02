@@ -46,7 +46,9 @@ export function resolveAccountSection(
             ? 'es-ES'
             : locale === 'FR'
               ? 'fr-FR'
-              : 'de-DE'
+              : locale === 'RO'
+                ? 'ro-RO'
+                : 'de-DE'
     return {
       title: formatOrderRef(o.odooSaleOrderId, locale),
       description: new Date(o.createdAt).toLocaleDateString(dateLocale, {

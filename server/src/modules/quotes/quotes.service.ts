@@ -4,7 +4,7 @@ import { env } from '../../config/env.js'
 import { createOdooCustomerAdapter } from '../../adapters/odoo/odooCustomerAdapter.js'
 import { createOdooOrderAdapter } from '../../adapters/odoo/odooOrderAdapter.js'
 import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
-import { sendMail } from '../../lib/mail.js'
+import { sendPwaMail, PWA_ADMIN_MAIL_TO } from '../../adapters/odoo/odooMailAdapter.js'
 import { logger } from '../../lib/logger.js'
 import { prisma } from '../../lib/prisma.js'
 import { AppError } from '../../types/errors.js'
@@ -35,8 +35,6 @@ import { syncRetryJobService } from '../sync-retry/sync-retry.service.js'
 
 const customerAdapter = createOdooCustomerAdapter()
 const orderAdapter = createOdooOrderAdapter()
-
-const INQUIRY_TO = 'info@ideadiluce.com'
 
 function placeholderAddress(firstName: string, lastName: string): TestCheckoutAddressInput {
   return {
@@ -432,23 +430,22 @@ export const quotesService = {
       row.notes || '(nessuna nota)',
     ]
 
-    void sendMail({
-      to: INQUIRY_TO,
-      subject: `[Idea di Luce] Richiesta preventivo — ${user.email}`,
-      text: lines.join('\n'),
+    void sendPwaMail(ctx, {
+      templateKey: 'quote_request_admin',
+      emailTo: PWA_ADMIN_MAIL_TO,
+      vars: {
+        customer_email: user.email,
+        body_text: lines.join('\n'),
+      },
     }).catch((err) => logger.warn('quotes.notify_email_failed', { err: String(err) }))
 
     if (row.odooSaleOrderId && env.ODOO_ENABLED && isOdooConfigured()) {
-      void sendMail({
-        to: user.email,
-        subject: '[Idea di Luce] Richiesta preventivo ricevuta',
-        text: [
-          'Abbiamo ricevuto la tua richiesta di preventivo.',
-          row.odooSaleOrderId ? `Riferimento Odoo: SO${row.odooSaleOrderId}` : '',
-          'Ti contatteremo a breve con il preventivo definitivo.',
-        ]
-          .filter(Boolean)
-          .join('\n'),
+      void sendPwaMail(ctx, {
+        templateKey: 'quote_received_customer',
+        emailTo: user.email,
+        vars: {
+          odoo_ref_line: `Riferimento Odoo: SO${row.odooSaleOrderId}`,
+        },
       }).catch((err) => logger.warn('quotes.customer_email_failed', { err: String(err) }))
     }
 

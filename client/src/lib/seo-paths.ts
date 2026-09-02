@@ -8,6 +8,7 @@ const HREFLANG: Record<PwaLocale, string> = {
   ES: 'es',
   FR: 'fr',
   DE: 'de',
+  RO: 'ro',
 }
 
 /** Canonical + hreflang per pagine statiche localizzate (categoria, brand, …). */

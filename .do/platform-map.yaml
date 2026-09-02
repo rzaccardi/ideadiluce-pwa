@@ -32,7 +32,7 @@ components:
     stack: Express + Prisma + Product Hub
     source: server/
     public_url: ${api.PUBLIC_URL}
-    health: GET /health
+    health: GET /health e GET /api/v1/health
 
   admin:
     role: backoffice
@@ -42,7 +42,9 @@ components:
 
   postgres:
     role: database
-    engine: PostgreSQL 16
+    engine: PostgreSQL 18
+    cluster: db-ideadiluce-pwa
+    pool: ideadiluce-api
     schemas:
       - public # BFF: utenti, carrelli, ordini, CMS, shipping, tax
       - hub # catalogo import / arricchimenti
@@ -118,6 +120,13 @@ external:
     optional: true
     uses:
       - autocomplete indirizzi checkout
+
+  uptimerobot:
+    connected_to: api
+    optional: true
+    uses:
+      - check HTTP shop, API, catalogo, Odoo, admin
+      - dashboard e creazione monitor dal BO
 
   spaces:
     connected_to: api

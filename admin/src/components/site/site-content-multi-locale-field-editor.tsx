@@ -17,6 +17,7 @@ const LOCALE_LABELS: Record<SiteLocale, string> = {
   ES: 'Spagnolo',
   FR: 'Francese',
   DE: 'Tedesco',
+  RO: 'Rumeno',
 }
 
 type SiteContentMultiLocaleFieldEditorProps = {

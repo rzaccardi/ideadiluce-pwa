@@ -2,6 +2,8 @@ import { proxy } from 'valtio'
 
 export type StorefrontSettings = {
   soundsEnabled: boolean
+  legacySiteNoticeEnabled: boolean
+  legacySiteUrl: string
 }
 
 export const storefrontSettingsStore = proxy({

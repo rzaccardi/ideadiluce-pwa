@@ -12,6 +12,7 @@ import { AcceptedPaymentMethods } from '@/components/payment-method-logos'
 import { SocialBrandIcon, hasSocialBrandIcon } from '@/components/site/social-brand-icons'
 import { BrandWordmark, SectionContainer } from './primitives'
 import { CookiebotConsentLink } from './CookiebotConsentLink'
+import { LegacySiteFooterLink } from './LegacySiteNoticeBanner'
 import { useI18n } from '@/hooks/use-i18n'
 
 function FooterLegalLinks({ className }: { className?: string }) {
@@ -122,18 +123,9 @@ export function SiteFooter({ footer }: { footer: SiteShellContent['footer'] }) {
           stagger={0.08}
         >
           <StaggerItem>
-            <Link to={lp('/')} className="mb-4 inline-block rounded-sm transition-opacity hover:opacity-80">
+            <Link to={lp('/')} className="mb-5 inline-block rounded-sm transition-opacity hover:opacity-80">
               <BrandWordmark inverted className="text-[26px]" />
             </Link>
-            <img
-              src="/brand/tlb.svg"
-              alt="TLB Italy"
-              width={72}
-              height={54}
-              decoding="async"
-              className="mb-5 h-8 w-auto opacity-70 brightness-0 invert"
-              draggable={false}
-            />
             <FooterHeading>Info aziendali</FooterHeading>
             <div className="space-y-1 text-[13px] leading-relaxed text-idl-design-muted">
               <p>{company.company}</p>
@@ -171,6 +163,7 @@ export function SiteFooter({ footer }: { footer: SiteShellContent['footer'] }) {
                   {company.email}
                 </ExternalLink>
               </p>
+              <LegacySiteFooterLink />
             </div>
             <div className="mt-5">
               <FooterHeading>Orari</FooterHeading>

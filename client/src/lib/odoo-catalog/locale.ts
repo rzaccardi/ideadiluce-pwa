@@ -18,13 +18,14 @@ export const ODOO_CATALOG_LANG_BY_PWA: Record<PwaLocale, OdooCatalogLang> = {
   FR: 'fr_FR',
   DE: 'de_DE',
   ES: 'es_ES',
+  RO: 'ro_RO',
 }
 
 export function toOdooCatalogLang(locale: PwaLocale): OdooCatalogLang {
   return ODOO_CATALOG_LANG_BY_PWA[locale]
 }
 
-/** Valori non ammessi → it_IT (come fallback silenzioso Odoo). `ro_RO` riconosciuto ma senza rotte PWA. */
+/** Valori non ammessi → it_IT (come fallback silenzioso Odoo). */
 export function normalizeOdooCatalogLang(lang: string | undefined | null): OdooCatalogLang {
   if (!lang?.trim()) return 'it_IT'
   const normalized = lang.trim()

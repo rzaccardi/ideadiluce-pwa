@@ -4,7 +4,7 @@ import { env } from '../../config/env.js'
 import { generateAccountPassword } from '../../lib/generate-password.js'
 import { publicAppUrl } from '../../lib/mail.js'
 import { createOdooCustomerAdapter } from '../../adapters/odoo/odooCustomerAdapter.js'
-import { sendOdooTransactionalMail } from '../../adapters/odoo/odooMailAdapter.js'
+import { sendPwaMail } from '../../adapters/odoo/odooMailAdapter.js'
 import {
   ensureOdooPortalUser,
   findOdooPortalUserByEmail,
@@ -263,14 +263,18 @@ export async function provisionOdooAccountAfterOrder(
   const loginUrl = publicAppUrl('/login')
   const firstName = input.shippingProfile?.firstName?.trim()
   if (shouldSendCredentials) {
-    await sendOdooTransactionalMail(ctx, {
+    await sendPwaMail(ctx, {
+      templateKey: 'account_credentials',
       emailTo: normalized,
-      subject: 'Il tuo account Idea di Luce',
-      bodyText: `Ciao${firstName ? ` ${firstName}` : ''},\n\n${
-        odooUserCreated
+      vars: {
+        first_name_suffix: firstName ? ` ${firstName}` : '',
+        intro: odooUserCreated
           ? 'Abbiamo creato il tuo account sul portale Idea di Luce (sincronizzato con Odoo).'
-          : 'Il tuo account Idea di Luce è stato attivato.'
-      }\n\nEmail: ${normalized}\nPassword temporanea: ${plainPassword}\n\nAccedi da: ${loginUrl}\n\nTi consigliamo di cambiare la password dopo il primo accesso.`,
+          : 'Il tuo account Idea di Luce è stato attivato.',
+        email: normalized,
+        password: plainPassword,
+        login_url: loginUrl,
+      },
     })
   }
 }

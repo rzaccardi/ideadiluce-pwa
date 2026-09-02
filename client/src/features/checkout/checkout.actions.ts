@@ -28,6 +28,7 @@ import {
   resolvePrefilledAddress,
 } from '@/lib/addressAutocomplete'
 import { shippingAddressFromUser } from '@/lib/address'
+import { dedupeAsync } from '@/lib/async-cache'
 import { isCheckoutAddressValid, mergeResolvedStreetNumber } from '@/lib/checkout-address.validators'
 import { fetchCart, shouldRepriceCartOnLoad, waitForPendingCartMutations } from '@/features/cart'
 import { cartStore } from '@/features/cart/cart.store'
@@ -138,7 +139,7 @@ async function syncCheckoutBeforePaymentStep() {
   if (!isSpedizioneCompartmentComplete()) {
     throw new Error(localeMessage('checkout.error.incompleteStep'))
   }
-  await syncCheckoutDraft('details', { silent: true })
+  // Un solo patchDraft: lo step `shipping` include già anagrafica, indirizzi e metodo.
   await syncCheckoutDraft('shipping', { silent: true })
 }
 
@@ -149,8 +150,8 @@ async function ensureCheckoutOrder() {
 }
 
 /**
- * Precarica sync indirizzi + ordine dopo la scelta spedizione.
- * La sessione Stripe resta allo step pagamento (niente download JS / Payment Element qui).
+ * Precarica sync ordine dopo la scelta spedizione.
+ * Avvia anche la sessione Stripe in background, senza aspettare lo step pagamento.
  */
 export function prefetchCheckoutTransitionToPayment(): void {
   if (!canPrefetchCheckoutTransition()) return
@@ -168,6 +169,8 @@ export function prefetchCheckoutTransitionToPayment(): void {
       await syncCheckoutBeforePaymentStep()
       await ensureCheckoutOrder()
       checkoutTransitionPrefetchCompletedKey = key
+      // Stripe in background: non blocca il passaggio allo step pagamento.
+      prefetchCheckoutPayment()
       checkoutDbg.fn('prefetchCheckoutTransitionToPayment', 'exit', {
         orderId: checkoutStore.order?.orderId,
       })
@@ -497,8 +500,7 @@ async function refreshShippingQuotesIfNeeded() {
   }
 
   if (checkoutStore.shippingQuotesLoading) {
-    checkoutDbg.fn('refreshShippingQuotesIfNeeded', 'skip', { reason: 'already loading, reschedule' })
-    scheduleShippingQuotesFetch(300)
+    checkoutDbg.fn('refreshShippingQuotesIfNeeded', 'skip', { reason: 'already loading' })
     return
   }
 
@@ -1566,20 +1568,23 @@ export function canGoBackCheckoutStep(step: CheckoutStep = checkoutStore.current
 
 export async function fetchShippingQuotes(options?: { skipAutoSelect?: boolean }) {
   checkoutDbg.fn('fetchShippingQuotes', 'enter', { skipAutoSelect: options?.skipAutoSelect })
+  const requestedFp = shippingFingerprint(shippingAddressPayload())
   checkoutStore.shippingQuotesLoading = true
   checkoutStore.error = null
+  let succeeded = false
   try {
-    checkoutDbg.api('shipping.quotes', { fingerprint: shippingFingerprint(shippingAddressPayload()) })
+    checkoutDbg.api('shipping.quotes', { fingerprint: requestedFp })
     const res = await api.shipping.quotes({
       shippingAddress: shippingAddressForQuotes(),
     })
     checkoutStore.freeShippingHint = res.freeShippingHint
     checkoutStore.deliveryEstimateDays = res.deliveryEstimateDays ?? null
     checkoutStore.shippingQuotes = filterVisibleShippingQuotes(res.quotes, res.freeShippingHint)
-    checkoutStore.shippingQuotesFingerprint = shippingFingerprint(shippingAddressPayload())
+    checkoutStore.shippingQuotesFingerprint = requestedFp
     if (!options?.skipAutoSelect) {
       await autoSelectShippingQuote(checkoutStore.shippingQuotes)
     }
+    succeeded = true
     checkoutDbg.fn('fetchShippingQuotes', 'exit', {
       quotes: checkoutStore.shippingQuotes.length,
       selected: checkoutStore.selectedShippingMethodRef,
@@ -1590,6 +1595,14 @@ export async function fetchShippingQuotes(options?: { skipAutoSelect?: boolean }
     throw e
   } finally {
     checkoutStore.shippingQuotesLoading = false
+    const current = shippingAddressPayload()
+    if (
+      succeeded &&
+      destinationComplete(current) &&
+      shippingFingerprint(current) !== checkoutStore.shippingQuotesFingerprint
+    ) {
+      scheduleShippingQuotesFetch(0)
+    }
   }
 }
 
@@ -1875,37 +1888,62 @@ export async function startCheckout(options?: { silent?: boolean }) {
 
 export async function createPaymentSession(options?: { silent?: boolean }) {
   const orderId = checkoutStore.order?.orderId
-  checkoutDbg.fn('createPaymentSession', 'enter', { orderId, method: checkoutStore.selectedPaymentMethod })
+  const method = checkoutStore.selectedPaymentMethod
+  checkoutDbg.fn('createPaymentSession', 'enter', { orderId, method })
   if (!orderId) {
     checkoutStore.error = localeMessage('checkout.error.missingOrder')
     checkoutDbg.fn('createPaymentSession', 'skip', { reason: 'missing orderId' })
     return
   }
-  if (!options?.silent) checkoutStore.isLoading = true
-  checkoutStore.error = null
-  try {
-    checkoutDbg.api('payments.createSession', { orderId, method: checkoutStore.selectedPaymentMethod })
-    checkoutStore.payment = await api.payments.createSession({
-      orderId,
-      paymentMethod: checkoutStore.selectedPaymentMethod,
-    })
-    const publishableKey = checkoutStore.payment?.publishableKey
-    if (publishableKey) {
-      const { preloadStripe } = await import('@/lib/stripe-loader')
-      preloadStripe(publishableKey)
-    }
-    checkoutDbg.fn('createPaymentSession', 'exit', {
-      orderId,
-      method: checkoutStore.payment?.method,
-      hasClientSecret: Boolean(checkoutStore.payment?.clientSecret),
-    })
-  } catch (e) {
-    checkoutStore.error = errMessage(e)
-    checkoutDbg.fn('createPaymentSession', 'error', { message: checkoutStore.error })
-    throw e
-  } finally {
-    if (!options?.silent) checkoutStore.isLoading = false
+  if (
+    checkoutStore.payment?.clientSecret &&
+    checkoutStore.payment.method === method &&
+    checkoutStore.payment.orderId === orderId
+  ) {
+    checkoutDbg.fn('createPaymentSession', 'skip', { reason: 'payment already exists' })
+    return
   }
+
+  return dedupeAsync(`checkout:paymentSession:${orderId}:${method}`, async () => {
+    if (
+      checkoutStore.payment?.clientSecret &&
+      checkoutStore.payment.method === method &&
+      checkoutStore.payment.orderId === orderId
+    ) {
+      checkoutDbg.fn('createPaymentSession', 'skip', { reason: 'payment already exists' })
+      return
+    }
+    if (!options?.silent) checkoutStore.isLoading = true
+    checkoutStore.error = null
+    try {
+      checkoutDbg.api('payments.createSession', { orderId, method })
+      const payment = await api.payments.createSession({
+        orderId,
+        paymentMethod: method,
+      })
+      if (checkoutStore.order?.orderId !== orderId) {
+        checkoutDbg.fn('createPaymentSession', 'skip', { reason: 'stale order after session' })
+        return
+      }
+      checkoutStore.payment = payment
+      const publishableKey = checkoutStore.payment?.publishableKey
+      if (publishableKey) {
+        const { preloadStripe } = await import('@/lib/stripe-loader')
+        preloadStripe(publishableKey)
+      }
+      checkoutDbg.fn('createPaymentSession', 'exit', {
+        orderId,
+        method: checkoutStore.payment?.method,
+        hasClientSecret: Boolean(checkoutStore.payment?.clientSecret),
+      })
+    } catch (e) {
+      checkoutStore.error = errMessage(e)
+      checkoutDbg.fn('createPaymentSession', 'error', { message: checkoutStore.error })
+      throw e
+    } finally {
+      if (!options?.silent) checkoutStore.isLoading = false
+    }
+  })
 }
 
 /** Rigenera la sessione Stripe quando il client_secret in memoria non è più attivo su Stripe. */

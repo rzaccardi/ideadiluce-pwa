@@ -1,47 +1,55 @@
 import type { OdooSyncQueueStatus, Prisma } from '@prisma/client'
 import type { Request } from 'express'
-import { syncSaleOrderFunnelState, type OdooFunnelState } from '../../adapters/odoo/odooFunnelSync.js'
-import { createOdooOrderAdapter } from '../../adapters/odoo/odooOrderAdapter.js'
 import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { env } from '../../config/env.js'
 import { logger } from '../../lib/logger.js'
 import { prisma } from '../../lib/prisma.js'
 import { AppError } from '../../types/errors.js'
-import type {
-  OdooSyncOperationDTO,
-  OdooSyncQueueItemDTO,
-  OdooSyncQueueListDTO,
-} from '../../types/odoo.dto.js'
+import type { OdooSyncQueueItemDTO, OdooSyncQueueListDTO } from '../../types/odoo.dto.js'
+import { sendPwaMail, PWA_ADMIN_MAIL_TO } from '../../adapters/odoo/odooMailAdapter.js'
+import { earlierSagaOperations, toOperationDto } from './odoo-sync-operations.js'
+import { executeQueueOperation } from './odoo-sync-saga.js'
 import {
-  orderStatusToDTO,
-  paymentMethodToDTO,
-  paymentStatusToDTO,
-} from '../payments/payment.types.js'
-import { sendMail } from '../../lib/mail.js'
+  backoffMs,
+  enqueueOdooSyncFailure,
+  enqueueOdooSyncOperation,
+} from './odoo-sync-queue.enqueue.js'
 
-const orderAdapter = createOdooOrderAdapter()
-const SYNC_ALERT_TO = 'info@ideadiluce.com'
+export {
+  enqueueOdooSyncFailure,
+  enqueueOdooSyncOperation,
+  ODOO_SYNC_BACKOFF_MS,
+  ODOO_SYNC_MAX_ATTEMPTS,
+} from './odoo-sync-queue.enqueue.js'
+export type { OdooSyncQueueOperation } from './odoo-sync-operations.js'
+export { enqueueOrderOdooSaga, enqueueUserOdooSaga } from './odoo-sync-saga.js'
 
-async function notifySyncExhausted(input: {
-  queueId: string
-  pwaOrderId: string
-  operation: string
-  attempts: number
-  lastError: string
-}) {
+async function notifySyncExhausted(
+  ctx: OdooCallContext,
+  input: {
+    queueId: string
+    pwaOrderId: string | null
+    operation: string
+    attempts: number
+    lastError: string
+  },
+) {
   try {
-    await sendMail({
-      to: SYNC_ALERT_TO,
-      subject: `[Idea di Luce] Sync Odoo esaurita — ordine ${input.pwaOrderId}`,
-      text: [
-        'Tipo: Coda sync Odoo — tentativi esauriti',
-        `ID coda: ${input.queueId}`,
-        `Ordine PWA: ${input.pwaOrderId}`,
-        `Operazione: ${input.operation}`,
-        `Tentativi: ${input.attempts}`,
-        '',
-        input.lastError,
-      ].join('\n'),
+    await sendPwaMail(ctx, {
+      templateKey: 'sync_exhausted_admin',
+      emailTo: PWA_ADMIN_MAIL_TO,
+      vars: {
+        pwa_order_id: input.pwaOrderId ?? '',
+        body_text: [
+          'Tipo: Coda sync Odoo — tentativi esauriti',
+          `ID coda: ${input.queueId}`,
+          `Ordine PWA: ${input.pwaOrderId ?? '—'}`,
+          `Operazione: ${input.operation}`,
+          `Tentativi: ${input.attempts}`,
+          '',
+          input.lastError,
+        ].join('\n'),
+      },
     })
   } catch (e) {
     logger.warn('odoo.sync_queue_exhausted_mail_failed', {
@@ -51,40 +59,15 @@ async function notifySyncExhausted(input: {
   }
 }
 
-export const ODOO_SYNC_BACKOFF_MS = [60_000, 300_000, 900_000, 3_600_000] as const
-export const ODOO_SYNC_MAX_ATTEMPTS = ODOO_SYNC_BACKOFF_MS.length
+type QueueRow = Prisma.OdooSyncQueueGetPayload<{
+  include: { order: { select: { email: true; odooSaleOrderId: true } } }
+}>
 
-export type OdooSyncQueueOperation = 'funnel_sync' | 'reconcile_lines'
-
-type EnqueueInput = {
-  pwaOrderId: string
-  operation: OdooSyncQueueOperation | 'FUNNEL_SYNC' | 'RECONCILE_LINES'
-  payload?: Prisma.InputJsonValue
-  lastError?: string
-  error?: string
-}
-
-function backoffMs(attempts: number): number {
-  const idx = Math.min(Math.max(attempts, 0), ODOO_SYNC_BACKOFF_MS.length - 1)
-  return ODOO_SYNC_BACKOFF_MS[idx]!
-}
-
-function normalizeOperation(operation: string): OdooSyncQueueOperation {
-  return operation === 'reconcile_lines' || operation === 'RECONCILE_LINES'
-    ? 'reconcile_lines'
-    : 'funnel_sync'
-}
-
-function toOperationDto(operation: string): OdooSyncOperationDTO {
-  return normalizeOperation(operation) === 'reconcile_lines' ? 'RECONCILE_LINES' : 'FUNNEL_SYNC'
-}
-
-function mapQueueItem(
-  row: Prisma.OdooSyncQueueGetPayload<{ include: { order: { select: { email: true; odooSaleOrderId: true } } } }>,
-): OdooSyncQueueItemDTO {
+function mapQueueItem(row: QueueRow): OdooSyncQueueItemDTO {
   return {
     id: row.id,
     pwaOrderId: row.pwaOrderId,
+    userId: row.userId,
     operation: toOperationDto(row.operation),
     status: row.status as OdooSyncQueueItemDTO['status'],
     attempts: row.attempts,
@@ -94,179 +77,75 @@ function mapQueueItem(
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     completedAt: row.resolvedAt?.toISOString() ?? null,
-    orderEmail: row.order.email,
-    odooSaleOrderId: row.order.odooSaleOrderId,
+    orderEmail: row.order?.email ?? null,
+    odooSaleOrderId: row.order?.odooSaleOrderId ?? null,
   }
 }
 
-function funnelStateFromPayload(payload: unknown, order: { id: string }): OdooFunnelState {
-  const data = payload as {
-    funnelState?: Partial<OdooFunnelState>
-    orderStatus?: string
-    paymentStatus?: string
-    paymentMethod?: string | null
-  }
-  if (data.funnelState) {
-    return {
-      pwaOrderId: data.funnelState.pwaOrderId ?? order.id,
-      orderStatus: data.funnelState.orderStatus ?? 'unknown',
-      paymentStatus: data.funnelState.paymentStatus ?? 'unknown',
-      paymentMethod: data.funnelState.paymentMethod ?? null,
-      cartId: data.funnelState.cartId ?? null,
-      sessionId: data.funnelState.sessionId ?? null,
-      abandonedAt: data.funnelState.abandonedAt ?? null,
-      lastPaymentError: data.funnelState.lastPaymentError ?? null,
-      providerTransactionId: data.funnelState.providerTransactionId ?? null,
-    }
-  }
-  return {
-    pwaOrderId: order.id,
-    orderStatus: data.orderStatus ?? 'unknown',
-    paymentStatus: data.paymentStatus ?? 'unknown',
-    paymentMethod: data.paymentMethod ?? null,
-  }
-}
+const queueInclude = { order: { select: { email: true, odooSaleOrderId: true } } } as const
 
-async function executeQueueOperation(
-  ctx: OdooCallContext,
-  operation: string,
-  pwaOrderId: string,
-  payload: unknown,
-): Promise<void> {
-  const order = await prisma.pwaOrder.findUnique({ where: { id: pwaOrderId } })
-  if (!order) {
-    throw new AppError('ORDER_NOT_FOUND', 'Order not found', 'Ordine non trovato.', 404, false)
-  }
-  if (!order.odooSaleOrderId) {
-    throw new AppError(
-      'ODOO_ORDER_MISSING',
-      'Missing odooSaleOrderId',
-      'Ordine senza sale.order Odoo collegato.',
-      409,
-      false,
-    )
-  }
-
-  if (operation === 'RECONCILE_LINES') {
-    const data = payload as {
-      lines?: Array<{
-        productRef: string
-        variantRef?: string | null
-        quantity: number
-        unitPriceCents?: number
-      }>
-      shippingLine?: {
-        label: string
-        amountCents: number
-        carrierCode?: string
-        serviceCode?: string
-      } | null
-    }
-    if (!Array.isArray(data.lines) || data.lines.length === 0) {
-      const cart = await prisma.cart.findUnique({
-        where: { id: order.cartId },
-        include: { items: true, shippingSelection: true },
-      })
-      if (!cart?.items.length) {
-        throw new AppError('EMPTY_CART', 'Cart empty', 'Carrello vuoto.', 400, false)
-      }
-      await orderAdapter.reconcileSaleOrderLines(
-        ctx,
-        order.odooSaleOrderId,
-        cart.items.map((i) => ({
-          productRef: i.productRef,
-          variantRef: i.variantRef,
-          quantity: i.quantity,
-          unitPriceCents: i.clientUnitPriceEstimate ?? undefined,
-        })),
-        cart.shippingSelection
-          ? {
-              label: cart.shippingSelection.label,
-              amountCents: cart.shippingSelection.amountCents,
-              carrierCode: cart.shippingSelection.carrierCode,
-              serviceCode: cart.shippingSelection.serviceCode,
-            }
-          : null,
-      )
-      return
-    }
-    await orderAdapter.reconcileSaleOrderLines(
-      ctx,
-      order.odooSaleOrderId,
-      data.lines,
-      data.shippingLine ?? null,
-    )
-    return
-  }
-
-  const funnelState = funnelStateFromPayload(payload, order)
-  if (!payload || typeof payload !== 'object' || !('funnelState' in (payload as object))) {
-    funnelState.cartId = order.cartId
-    funnelState.sessionId = order.sessionId
-    funnelState.abandonedAt = order.abandonedAt
-    funnelState.lastPaymentError = order.lastPaymentError
-    funnelState.providerTransactionId = order.providerTransactionId
-    if (!funnelState.orderStatus || funnelState.orderStatus === 'unknown') {
-      funnelState.orderStatus = orderStatusToDTO(order.orderStatus)
-    }
-    if (!funnelState.paymentStatus || funnelState.paymentStatus === 'unknown') {
-      funnelState.paymentStatus = paymentStatusToDTO(order.paymentStatus)
-    }
-    if (funnelState.paymentMethod == null && order.paymentMethod) {
-      funnelState.paymentMethod = paymentMethodToDTO(order.paymentMethod)
-    }
-  }
-
-  const syncStatus = await syncSaleOrderFunnelState(ctx, order.odooSaleOrderId, funnelState)
-  if (syncStatus === 'failed') {
-    throw new Error('Sync funnel Odoo fallita')
-  }
-  if (syncStatus === 'skipped') {
-    throw new AppError('ODOO_DISABLED', 'Odoo sync skipped', 'Odoo non abilitato.', 503, false)
-  }
-}
-
-export async function enqueueOdooSyncFailure(input: EnqueueInput) {
-  if (!env.ODOO_ENABLED) return null
-
-  const operation = normalizeOperation(input.operation)
-  const lastError = (input.lastError ?? input.error ?? 'Sync Odoo fallita').slice(0, 2000)
-
-  const existing = await prisma.odooSyncQueue.findFirst({
+async function shouldDeferForSaga(row: {
+  pwaOrderId: string | null
+  userId: string | null
+  operation: string
+}): Promise<boolean> {
+  const earlier = earlierSagaOperations(row.operation)
+  if (earlier.length === 0) return false
+  const scope = row.pwaOrderId
+    ? { pwaOrderId: row.pwaOrderId }
+    : row.userId
+      ? { userId: row.userId, pwaOrderId: null }
+      : null
+  if (!scope) return false
+  const blocking = await prisma.odooSyncQueue.findFirst({
     where: {
-      pwaOrderId: input.pwaOrderId,
-      operation,
-      status: 'PENDING',
+      ...scope,
+      operation: { in: [...earlier] },
+      status: { in: ['PENDING', 'PROCESSING', 'EXHAUSTED'] },
     },
+    select: { id: true },
   })
+  return blocking != null
+}
 
-  const nextRetryAt = new Date(Date.now() + backoffMs(existing?.attempts ?? 0))
-  const payload = input.payload ?? {}
-
-  if (existing) {
-    return prisma.odooSyncQueue.update({
-      where: { id: existing.id },
-      data: {
-        lastError,
-        nextRetryAt,
-        payload,
-      },
+async function markFailed(
+  ctx: OdooCallContext,
+  row: { id: string; pwaOrderId: string | null; operation: string; attempts: number; maxAttempts: number; nextRetryAt: Date },
+  message: string,
+) {
+  const attempts = row.attempts + 1
+  const exhausted = attempts >= row.maxAttempts
+  const updated = await prisma.odooSyncQueue.update({
+    where: { id: row.id },
+    data: {
+      status: exhausted ? 'EXHAUSTED' : 'PENDING',
+      attempts,
+      lastError: message.slice(0, 2000),
+      nextRetryAt: exhausted ? row.nextRetryAt : new Date(Date.now() + backoffMs(attempts)),
+    },
+    include: queueInclude,
+  })
+  if (exhausted) {
+    logger.warn('odoo.sync_queue_exhausted', {
+      queueId: row.id,
+      pwaOrderId: row.pwaOrderId,
+      operation: row.operation,
+      attempts,
+    })
+    await notifySyncExhausted(ctx, {
+      queueId: row.id,
+      pwaOrderId: row.pwaOrderId,
+      operation: row.operation,
+      attempts,
+      lastError: message,
     })
   }
-
-  return prisma.odooSyncQueue.create({
-    data: {
-      pwaOrderId: input.pwaOrderId,
-      operation,
-      payload,
-      lastError,
-      nextRetryAt,
-    },
-  })
+  return { updated, exhausted }
 }
 
 export const odooSyncQueueService = {
   enqueueFailure: enqueueOdooSyncFailure,
+  enqueue: enqueueOdooSyncOperation,
 
   async list(query: {
     page: number
@@ -276,7 +155,7 @@ export const odooSyncQueueService = {
   }): Promise<OdooSyncQueueListDTO> {
     const where: Prisma.OdooSyncQueueWhereInput = {
       ...(query.pwaOrderId ? { pwaOrderId: query.pwaOrderId } : {}),
-      ...(query.status ? { status: query.status } : { status: { in: ['PENDING', 'EXHAUSTED'] } }),
+      ...(query.status ? { status: query.status } : { status: { in: ['PENDING', 'EXHAUSTED', 'PROCESSING'] } }),
     }
 
     const skip = (query.page - 1) * query.pageSize
@@ -284,7 +163,7 @@ export const odooSyncQueueService = {
       prisma.odooSyncQueue.count({ where }),
       prisma.odooSyncQueue.findMany({
         where,
-        include: { order: { select: { email: true, odooSaleOrderId: true } } },
+        include: queueInclude,
         orderBy: [{ nextRetryAt: 'asc' }, { createdAt: 'desc' }],
         skip,
         take: query.pageSize,
@@ -301,13 +180,21 @@ export const odooSyncQueueService = {
     }
   },
 
+  async counts(): Promise<{ pending: number; exhausted: number }> {
+    const [pending, exhausted] = await Promise.all([
+      prisma.odooSyncQueue.count({ where: { status: { in: ['PENDING', 'PROCESSING'] } } }),
+      prisma.odooSyncQueue.count({ where: { status: 'EXHAUSTED' } }),
+    ])
+    return { pending, exhausted }
+  },
+
   async findActiveForOrder(pwaOrderId: string): Promise<OdooSyncQueueItemDTO | null> {
     const row = await prisma.odooSyncQueue.findFirst({
       where: {
         pwaOrderId,
-        status: { in: ['PENDING', 'EXHAUSTED'] },
+        status: { in: ['PENDING', 'EXHAUSTED', 'PROCESSING'] },
       },
-      include: { order: { select: { email: true, odooSaleOrderId: true } } },
+      include: queueInclude,
       orderBy: { createdAt: 'desc' },
     })
     return row ? mapQueueItem(row) : null
@@ -316,7 +203,7 @@ export const odooSyncQueueService = {
   async retryById(id: string, req?: Request): Promise<OdooSyncQueueItemDTO> {
     const row = await prisma.odooSyncQueue.findUnique({
       where: { id },
-      include: { order: { select: { email: true, odooSaleOrderId: true } } },
+      include: queueInclude,
     })
     if (!row) {
       throw new AppError('SYNC_QUEUE_NOT_FOUND', 'Queue item not found', 'Sync non trovata.', 404, false)
@@ -341,7 +228,7 @@ export const odooSyncQueueService = {
     })
 
     try {
-      await executeQueueOperation(ctx, row.operation, row.pwaOrderId, row.payload)
+      await executeQueueOperation(ctx, row.operation, row.pwaOrderId, row.userId, row.payload)
       const completed = await prisma.odooSyncQueue.update({
         where: { id },
         data: {
@@ -349,42 +236,18 @@ export const odooSyncQueueService = {
           resolvedAt: new Date(),
           lastError: null,
         },
-        include: { order: { select: { email: true, odooSaleOrderId: true } } },
+        include: queueInclude,
       })
-      await prisma.pwaOrder.update({
-        where: { id: row.pwaOrderId },
-        data: { odooLastSyncStatus: 'SYNCED', odooLastSyncAt: new Date() },
-      })
+      if (row.pwaOrderId) {
+        await prisma.pwaOrder.update({
+          where: { id: row.pwaOrderId },
+          data: { odooLastSyncStatus: 'SYNCED', odooLastSyncAt: new Date() },
+        })
+      }
       return mapQueueItem(completed)
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
-      const attempts = row.attempts + 1
-      const exhausted = attempts >= row.maxAttempts
-      const updated = await prisma.odooSyncQueue.update({
-        where: { id },
-        data: {
-          status: exhausted ? 'EXHAUSTED' : 'PENDING',
-          attempts,
-          lastError: msg.slice(0, 2000),
-          nextRetryAt: exhausted ? row.nextRetryAt : new Date(Date.now() + backoffMs(attempts)),
-        },
-        include: { order: { select: { email: true, odooSaleOrderId: true } } },
-      })
-      if (exhausted) {
-        logger.warn('odoo.sync_queue_exhausted', {
-          queueId: id,
-          pwaOrderId: row.pwaOrderId,
-          operation: row.operation,
-          attempts,
-        })
-        await notifySyncExhausted({
-          queueId: id,
-          pwaOrderId: row.pwaOrderId,
-          operation: row.operation,
-          attempts,
-          lastError: msg,
-        })
-      }
+      const { updated, exhausted } = await markFailed(ctx, row, msg)
       throw new AppError(
         'ODOO_SYNC_RETRY_FAILED',
         'Retry failed',
@@ -396,6 +259,18 @@ export const odooSyncQueueService = {
         { queueItem: mapQueueItem(updated) },
       )
     }
+  },
+
+  async requeueExhausted(): Promise<{ requeued: number }> {
+    const result = await prisma.odooSyncQueue.updateMany({
+      where: { status: 'EXHAUSTED' },
+      data: {
+        status: 'PENDING',
+        nextRetryAt: new Date(),
+        lastError: 'Reimmesso in coda dopo ripristino Odoo.',
+      },
+    })
+    return { requeued: result.count }
   },
 
   async processDueItems(correlationId = 'odoo-sync-retry-job'): Promise<{ processed: number; failed: number }> {
@@ -418,12 +293,14 @@ export const odooSyncQueueService = {
 
     for (const row of due) {
       if (row.attempts >= row.maxAttempts) continue
+      if (await shouldDeferForSaga(row)) continue
+
       await prisma.odooSyncQueue.update({
         where: { id: row.id },
         data: { status: 'PROCESSING' },
       })
       try {
-        await executeQueueOperation(ctx, row.operation, row.pwaOrderId, row.payload)
+        await executeQueueOperation(ctx, row.operation, row.pwaOrderId, row.userId, row.payload)
         await prisma.odooSyncQueue.update({
           where: { id: row.id },
           data: {
@@ -432,39 +309,16 @@ export const odooSyncQueueService = {
             lastError: null,
           },
         })
-        await prisma.pwaOrder.update({
-          where: { id: row.pwaOrderId },
-          data: { odooLastSyncStatus: 'SYNCED', odooLastSyncAt: new Date() },
-        })
+        if (row.pwaOrderId) {
+          await prisma.pwaOrder.update({
+            where: { id: row.pwaOrderId },
+            data: { odooLastSyncStatus: 'SYNCED', odooLastSyncAt: new Date() },
+          })
+        }
         processed += 1
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e)
-        const attempts = row.attempts + 1
-        const exhausted = attempts >= row.maxAttempts
-        await prisma.odooSyncQueue.update({
-          where: { id: row.id },
-          data: {
-            status: exhausted ? 'EXHAUSTED' : 'PENDING',
-            attempts,
-            lastError: msg.slice(0, 2000),
-            nextRetryAt: exhausted ? row.nextRetryAt : new Date(Date.now() + backoffMs(attempts)),
-          },
-        })
-        if (exhausted) {
-          logger.warn('odoo.sync_queue_exhausted', {
-            queueId: row.id,
-            pwaOrderId: row.pwaOrderId,
-            operation: row.operation,
-            attempts,
-          })
-          await notifySyncExhausted({
-            queueId: row.id,
-            pwaOrderId: row.pwaOrderId,
-            operation: row.operation,
-            attempts,
-            lastError: msg,
-          })
-        }
+        await markFailed(ctx, row, msg)
         failed += 1
       }
     }

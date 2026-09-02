@@ -8,6 +8,7 @@ const SITE_LOCALE_TO_DEEPL: Record<string, string> = {
   ES: 'ES',
   FR: 'FR',
   DE: 'DE',
+  RO: 'RO',
 }
 
 const BATCH_SIZE = 40

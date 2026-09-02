@@ -2,6 +2,7 @@ import { adminApi } from '@/lib/api'
 import { dedupeAsync } from '@/lib/async-cache'
 import { cloneContent } from './site-content-utils'
 import {
+  SITE_LOCALES,
   siteStore,
   type SiteLocale,
   type SiteLocaleDraft,
@@ -193,9 +194,7 @@ export async function saveSitePage(
 }
 
 export async function saveSitePageAllDirtyLocales(pageKey: string) {
-  const dirtyLocales = (['IT', 'EN', 'ES', 'FR', 'DE'] as SiteLocale[]).filter((locale) =>
-    isSiteLocaleDraftDirty(locale),
-  )
+  const dirtyLocales = SITE_LOCALES.filter((locale) => isSiteLocaleDraftDirty(locale))
   if (dirtyLocales.length === 0) return
 
   siteStore.isSaving = true
@@ -284,7 +283,7 @@ export function setSiteFieldSearch(query: string) {
 }
 
 export function isSiteDraftDirty() {
-  return (['IT', 'EN', 'ES', 'FR', 'DE'] as SiteLocale[]).some((locale) => isSiteLocaleDraftDirty(locale))
+  return SITE_LOCALES.some((locale) => isSiteLocaleDraftDirty(locale))
 }
 
 export function isSiteLocaleDraftDirty(locale: SiteLocale) {

@@ -14,6 +14,13 @@ const ORDER_STATUS_KEYS: Record<string, MessageKey> = {
   cancelled: 'orderStatus.cancelled',
   confirmed: 'orderStatus.confirmed',
   completed: 'orderStatus.completed',
+  shipped: 'orderStatus.shipped',
+  in_transit: 'orderStatus.in_transit',
+  out_for_delivery: 'orderStatus.out_for_delivery',
+  delivered: 'orderStatus.delivered',
+  shipment_exception: 'orderStatus.shipment_exception',
+  sale: 'orderStatus.confirmed',
+  done: 'orderStatus.completed',
 }
 
 const PAYMENT_STATUS_KEYS: Record<string, MessageKey> = {
@@ -24,6 +31,19 @@ const PAYMENT_STATUS_KEYS: Record<string, MessageKey> = {
   failed: 'paymentStatus.failed',
   cancelled: 'paymentStatus.cancelled',
   refunded: 'paymentStatus.refunded',
+}
+
+export function orderDisplayStatus(order: {
+  status: string
+  shipment?: { status: string } | null
+}): string {
+  const ship = order.shipment?.status
+  if (ship === 'delivered') return 'delivered'
+  if (ship === 'out_for_delivery') return 'out_for_delivery'
+  if (ship === 'in_transit') return 'in_transit'
+  if (ship === 'shipped') return 'shipped'
+  if (ship === 'exception') return 'shipment_exception'
+  return order.status
 }
 
 export function orderStatusLabel(status: string, locale: PwaLocale = 'IT'): string {
@@ -58,8 +78,8 @@ export type OrderStatusTone = 'success' | 'warning' | 'danger' | 'neutral'
 
 export function orderStatusTone(status: string): OrderStatusTone {
   const key = status.toLowerCase()
-  if (['paid', 'paid_sync_pending', 'synced', 'confirmed', 'completed'].includes(key)) return 'success'
-  if (['payment_pending', 'payment_started', 'checkout_started'].includes(key)) return 'warning'
+  if (['paid', 'paid_sync_pending', 'synced', 'confirmed', 'completed', 'delivered', 'shipped', 'in_transit', 'out_for_delivery'].includes(key)) return 'success'
+  if (['payment_pending', 'payment_started', 'checkout_started', 'shipment_exception'].includes(key)) return 'warning'
   if (['payment_failed', 'cancelled', 'abandoned'].includes(key)) return 'danger'
   return 'neutral'
 }

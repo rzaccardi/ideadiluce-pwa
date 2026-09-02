@@ -13,6 +13,7 @@ import { SiteHeader } from './SiteHeader'
 import { SiteFooter } from './SiteFooter'
 import { TrustBar } from './TrustBar'
 import { UtilityBar } from './UtilityBar'
+import { LegacySiteNoticeBanner } from './LegacySiteNoticeBanner'
 
 type Props = {
   shell: Readonly<SiteShellContent> | null
@@ -27,6 +28,7 @@ export function SiteShell({ shell, activeNavId = null, children }: Props) {
     <LayoutGroup id="site-shell">
       <div className="site-shell flex min-h-screen min-w-0 flex-col bg-idl-paper font-sans text-idl-graphite">
         <div className={cn('site-chrome sticky top-0 isolate overflow-visible', layers.headerBar)}>
+          <LegacySiteNoticeBanner />
           <UtilityBar bar={resolvedShell.utilityBar} />
           <SiteHeader nav={resolvedShell.nav} footer={resolvedShell.footer} activeNavId={activeNavId} />
         </div>

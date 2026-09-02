@@ -22,7 +22,7 @@ Tre componenti **separati** nello stesso monorepo (ognuno con URL proprio `*.ond
 | **Web Service** | `api` | `server/` | Express :8080, Prisma, Hub | `${api.PUBLIC_URL}` |
 | **Web Service** | `shop` | `client/` | Next.js :3000 | `${shop.PUBLIC_URL}` (anche URL principale app) |
 | **Static Site** | `admin` | `admin/` | Vite SPA → `admin/dist` | `${admin.PUBLIC_URL}` |
-| **Managed PostgreSQL** | `postgres` | — | Schema `public` + `hub` | interno |
+| **Managed PostgreSQL** | `db-ideadiluce-pwa` | — | PG 18, pool `ideadiluce-api`, schema `public` + `hub` | interno |
 
 Lo spec usa `source_dir: /` (root monorepo) perché i build npm workspaces devono vedere `package.json` root, `client/`, `server/` e `admin/` insieme.
 
@@ -44,14 +44,10 @@ doctl apps create --spec .do/app.yaml
 
 1. **Apps** → **Create App** → GitHub → repo `ideadiluce-pwa`
 2. Seleziona **Use existing app spec** e conferma il path `.do/app.yaml`
-3. Verifica che compaiano **3 componenti** (`api`, `shop`, `admin`) + database `postgres`
+3. Verifica che compaiano **3 componenti** (`api`, `shop`, `admin`) + database `db-ideadiluce-pwa`
 4. Verifica `github.repo` e branch `main`
 
-**Se l’app esiste già con un solo componente**, aggiorna lo spec:
-
-```bash
-doctl apps update <APP_ID> --spec .do/app.yaml
-```
+**Se l’app esiste già con un solo componente**, non sovrascrivere lo spec live con `.do/app.yaml` (perderebbe domini e secret). Scarica lo spec (`doctl apps spec get`) e allinea solo il blocco `databases:` al cluster `db-ideadiluce-pwa`.
 
 ### 2. Secret (Environment)
 
@@ -63,10 +59,11 @@ Copia l’elenco da [`.do/secrets.production.env.example`](../.do/secrets.produc
 | `ODOO_DB`, `ODOO_USERNAME`, `ODOO_PASSWORD` | api | Sì (ordini/stock XML-RPC) |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | api | Sì se pagamenti live |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | shop (BUILD) | Sì se Stripe |
+| `DIRECT_URL` | api (BUILD+RUN) | Sì per `prisma migrate deploy` (defaultdb:25060) |
 | `SHIPPING_CREDENTIALS_KEY` | api | Consigliata (32+ char) |
 | `ADMIN_SEED_*` | api | Solo primo deploy |
 
-`DATABASE_URL` è già `${postgres.DATABASE_URL}` nello spec.
+`DATABASE_URL` e `DIRECT_URL` sono secret (pool PgBouncer `ideadiluce-api` + connessione diretta `defaultdb:25060`). Non usare `${db-ideadiluce-pwa.DATABASE_URL}`: punta a defaultdb diretto e bypassa il pool.
 
 ### 3. Primo deploy
 
@@ -126,7 +123,7 @@ Branch `staging`, Postgres dev (`production: false`).
 
 ```bash
 doctl apps create --spec .do/app.yaml
-doctl apps update <APP_ID> --spec .do/app.yaml
+doctl apps spec get <APP_ID>
 doctl apps logs <APP_ID> api --type run
 ```
 

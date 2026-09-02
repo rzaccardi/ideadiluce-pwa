@@ -40,7 +40,7 @@ seoRouter.get(
   '/merchant-feed/validate',
   asyncHandler(async (_req, res) => {
     const sample = await validateMerchantFeedSample(20)
-    res.json({ data: { items: sample } })
+    res.json({ data: sample })
   }),
 )
 

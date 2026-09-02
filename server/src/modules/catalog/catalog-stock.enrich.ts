@@ -386,25 +386,35 @@ export async function assertCartLinesPurchasable(
 ): Promise<void> {
   if (lines.length === 0) return
 
+  const { isEmergencyMode } = await import('../odoo/odoo-resilience.settings.js')
+  const { isCatalogDegraded } = await import('../odoo/odoo-degraded-state.js')
+  if ((await isEmergencyMode()) || isCatalogDegraded()) return
+
   const { resolveCatalogProductEnriched } = await import('./catalogResolver.service.js')
   const { AppError } = await import('../../types/errors.js')
 
-  const lookup = await buildCartAvailabilityLookup(ctx, lines, (productRef) => {
-    const line = lines.find((l) => l.productRef === productRef)
-    return resolveCatalogProductEnriched(ctx, productRef, 'IT', line?.quantity ?? 1)
-  })
+  try {
+    const lookup = await buildCartAvailabilityLookup(ctx, lines, (productRef) => {
+      const line = lines.find((l) => l.productRef === productRef)
+      return resolveCatalogProductEnriched(ctx, productRef, 'IT', line?.quantity ?? 1)
+    })
 
-  for (const line of lines) {
-    const key = `${line.productRef}:${line.variantRef ?? ''}`
-    const avail = lookup.get(key)
-    if (!avail?.purchasable) {
-      throw new AppError(
-        'STOCK_UNAVAILABLE',
-        'Product not purchasable',
-        avail?.warning ?? 'Uno o più prodotti non sono più disponibili. Aggiorna il carrello.',
-        409,
-        false,
-      )
+    for (const line of lines) {
+      const key = `${line.productRef}:${line.variantRef ?? ''}`
+      const avail = lookup.get(key)
+      if (!avail?.purchasable) {
+        if ((await isEmergencyMode()) || isCatalogDegraded()) return
+        throw new AppError(
+          'STOCK_UNAVAILABLE',
+          'Product not purchasable',
+          avail?.warning ?? 'Uno o più prodotti non sono più disponibili. Aggiorna il carrello.',
+          409,
+          false,
+        )
+      }
     }
+  } catch (e) {
+    if ((await isEmergencyMode()) || isCatalogDegraded()) return
+    throw e
   }
 }

@@ -34,6 +34,7 @@ const LOCALE_LABELS: Record<SiteLocale, string> = {
   ES: 'Spagnolo',
   FR: 'Francese',
   DE: 'Tedesco',
+  RO: 'Rumeno',
 }
 
 export function SitePageDetailPage() {
@@ -59,7 +60,7 @@ export function SitePageDetailPage() {
       await saveSitePage(pageKey, 'IT', sp.localeDrafts.IT?.published ?? true, { translateAllLocales })
       toast.success(
         translateAllLocales
-          ? 'Contenuti salvati e tradotti in EN, ES, FR e DE'
+          ? 'Contenuti salvati e tradotti in EN, ES, FR, DE e RO'
           : 'Contenuti italiani salvati',
       )
     } catch (e) {
@@ -204,7 +205,7 @@ export function SitePageDetailPage() {
                 {isDirty ? <Badge variant="outline">Modifiche non salvate</Badge> : null}
               </div>
               <CardDescription>
-                Ogni campo traducibile mostra IT, EN, ES, FR e DE nello stesso blocco.
+                Ogni campo traducibile mostra IT, EN, ES, FR, DE e RO nello stesso blocco.
                 {currentMissingLocales.length > 0 ? (
                   <> Lingue da generare: {currentMissingLocales.join(', ')}.</>
                 ) : null}

@@ -1,7 +1,7 @@
 import { prisma } from '../../lib/prisma.js'
 import { env } from '../../config/env.js'
 import { logger } from '../../lib/logger.js'
-import { sendMail } from '../../lib/mail.js'
+import { sendPwaMail, PWA_ADMIN_MAIL_TO } from '../../adapters/odoo/odooMailAdapter.js'
 import { writeStructuredIntegrationLog } from '../../lib/integration-log-context.js'
 
 export type PaidSyncPendingSummary = {
@@ -56,12 +56,11 @@ export const paidSyncAlertService = {
   },
 
   /**
-   * Invia email admin per ordini PAID_SYNC_PENDING oltre soglia (una sola volta per ordine).
-   * Logga esplicitamente: inviato / email non configurata / errore SMTP.
+   * Invia email admin (via Odoo) per ordini PAID_SYNC_PENDING oltre soglia (una sola volta per ordine).
    */
   async processDueAlerts(): Promise<{ sent: number; skipped: number; failed: number }> {
     const threshold = alertThresholdDate()
-    const emailTo = env.PAID_SYNC_ALERT_EMAIL?.trim()
+    const emailTo = env.PAID_SYNC_ALERT_EMAIL?.trim() || PWA_ADMIN_MAIL_TO
 
     const due = await prisma.pwaOrder.findMany({
       where: {
@@ -77,26 +76,6 @@ export const paidSyncAlertService = {
       return { sent: 0, skipped: 0, failed: 0 }
     }
 
-    if (!emailTo) {
-      logger.warn('paid_sync_alert.email_not_configured', {
-        pendingCount: due.length,
-        orderIds: due.map((o) => o.id),
-        hint: 'Imposta PAID_SYNC_ALERT_EMAIL per ricevere email automatiche',
-      })
-      for (const order of due) {
-        await writeStructuredIntegrationLog({
-          service: 'orders',
-          operation: 'paid_sync_alert_skipped',
-          correlationId: `paid-sync-${order.id}`,
-          success: false,
-          orderId: order.id,
-          odooSaleOrderId: order.odooSaleOrderId ?? undefined,
-          error: 'PAID_SYNC_ALERT_EMAIL non configurata',
-        })
-      }
-      return { sent: 0, skipped: due.length, failed: 0 }
-    }
-
     let sent = 0
     let failed = 0
 
@@ -104,7 +83,6 @@ export const paidSyncAlertService = {
       const adminUrl = `${env.ADMIN_ORIGIN.replace(/\/$/, '')}/orders/${order.id}`
       const amount =
         order.amountTotal != null ? `€ ${(order.amountTotal / 100).toFixed(2)}` : 'n/d'
-      const subject = `[Idea di Luce] Ordine pagato — sync Odoo in attesa (${order.id.slice(-8)})`
       const text = [
         'Un ordine risulta pagato ma la sincronizzazione Odoo non è completata.',
         '',
@@ -122,7 +100,17 @@ export const paidSyncAlertService = {
       ].join('\n')
 
       try {
-        await sendMail({ to: emailTo, subject, text })
+        await sendPwaMail(
+          { correlationId: `paid-sync-${order.id}` },
+          {
+            templateKey: 'paid_sync_alert_admin',
+            emailTo,
+            vars: {
+              order_short: order.id.slice(-8),
+              body_text: text,
+            },
+          },
+        )
         await prisma.pwaOrder.update({
           where: { id: order.id },
           data: { paidSyncAlertSentAt: new Date() },

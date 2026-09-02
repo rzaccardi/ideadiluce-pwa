@@ -11,6 +11,8 @@ import { cartService } from '../cart/cart.service.js'
 import type { Request } from 'express'
 import type { PwaOrder } from '@prisma/client'
 import { ACCOUNT_VISIBLE_PWA_ORDER_STATUSES } from './orders.constants.js'
+import { orderReturnRequestService } from './order-return-request.service.js'
+import { OPEN_RETURN_WINDOW, orderShipmentService } from './order-shipment.service.js'
 
 function portalFromSnapshot(snapshotJson: unknown): string | null {
   if (!snapshotJson || typeof snapshotJson !== 'object') return null
@@ -47,6 +49,9 @@ function mapRow(r: {
     odooPortalUrl: portalFromSnapshot(snap),
     source: 'pwa',
     sourceLabel: 'E-commerce',
+    returnRequest: null,
+    shipment: null,
+    returnWindow: OPEN_RETURN_WINDOW,
   }
 }
 
@@ -63,6 +68,9 @@ function mapOdooOrder(r: OdooSaleDocumentDTO): OrderDTO {
     odooPortalUrl: null,
     source: r.source,
     sourceLabel: r.sourceLabel,
+    returnRequest: null,
+    shipment: null,
+    returnWindow: OPEN_RETURN_WINDOW,
   }
 }
 
@@ -119,6 +127,9 @@ function mapPwaOrderRow(po: PwaOrder): OrderDTO | null {
     odooPortalUrl: null,
     source: 'pwa',
     sourceLabel: 'E-commerce',
+    returnRequest: null,
+    shipment: null,
+    returnWindow: OPEN_RETURN_WINDOW,
   }
 }
 
@@ -211,15 +222,19 @@ export const ordersService = {
       }
     }
 
-    return fromCache.sort(
+    const sorted = fromCache.sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     )
+    const withReturns = await orderReturnRequestService.attachToOrders(userId, sorted)
+    return orderShipmentService.attachCached(withReturns)
   },
 
   async getById(userId: string, id: string, correlationId = 'orders-detail'): Promise<OrderDetailDTO> {
     if (id.startsWith('odoo-')) {
       const order = (await this.list(userId, correlationId)).find((o) => o.id === id)
-      if (order) return enrichOrderDetail(order, [])
+      if (order) {
+        return orderShipmentService.attachLive(enrichOrderDetail(order, []), correlationId)
+      }
       throw new AppError('ORDER_NOT_FOUND', 'Order not found', 'Ordine non trovato.', 404, false)
     }
 
@@ -228,7 +243,8 @@ export const ordersService = {
       const base = mapRow(row)
       const pwaId = base.pwaOrderId ?? (base.id.startsWith('pwa-') ? base.id.replace(/^pwa-/, '') : null)
       const lines = pwaId ? await loadPwaOrderLines(pwaId) : []
-      return enrichOrderDetail(base, lines)
+      const [withReturn] = await orderReturnRequestService.attachToOrders(userId, [base])
+      return orderShipmentService.attachLive(enrichOrderDetail(withReturn ?? base, lines), correlationId)
     }
 
     const po = await findOwnedPwaOrder(userId, id)
@@ -249,9 +265,13 @@ export const ordersService = {
       odooPortalUrl: cache ? portalFromSnapshot(cache.snapshotJson) : null,
       source: 'pwa',
       sourceLabel: 'E-commerce',
+      returnRequest: null,
+      shipment: null,
+      returnWindow: OPEN_RETURN_WINDOW,
     }
     const lines = await loadPwaOrderLines(po.id)
-    return enrichOrderDetail(base, lines)
+    const [withReturn] = await orderReturnRequestService.attachToOrders(userId, [base])
+    return orderShipmentService.attachLive(enrichOrderDetail(withReturn ?? base, lines), correlationId)
   },
 
   async reorder(req: Request, userId: string, id: string): Promise<OrderReorderResultDTO> {

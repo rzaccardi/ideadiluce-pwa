@@ -20,6 +20,7 @@ import { catalogStorefrontService } from '../catalog/catalog-storefront.service.
 import { listOdooCatalogProductSlugs } from '../catalog/catalogResolver.service.js'
 import { STATIC_SITEMAP_PATHS } from './seo-sitemap.constants.js'
 import { listAmbienteRoomSlugs, listIndexedGuideSlugs } from './seo-guide-slugs.js'
+import { listNavCatalogLandingPaths } from './nav-landing-paths.js'
 import {
   isPathInWordpressIndex,
   listWordpressIndexedBrandSlugs,
@@ -162,6 +163,16 @@ export async function buildProductSitemapXml(): Promise<string> {
   // 4. Ambienti PWA (/ambienti/{room})
   for (const room of roomSlugs) {
     pushLocalizedGroup(seen, entries, siteBase, pathsForSlug(room, ambienteRoomPath))
+  }
+
+  // 4b. Landing da menu, mega-menu e link (categorie, attacchi, tipologie, stili)
+  for (const landingPath of listNavCatalogLandingPaths()) {
+    pushLocalizedGroup(
+      seen,
+      entries,
+      siteBase,
+      pathsForStatic((locale) => staticContentPath(landingPath, locale)),
+    )
   }
 
   // 5. Prodotti Odoo aggiunti dopo il cutover (non in sitemap WP)

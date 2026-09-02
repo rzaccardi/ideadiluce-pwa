@@ -25,8 +25,15 @@ export function seedSitePageContent(pageKey: SitePageKey, locale: string, conten
   }
 }
 
+export function setSitePageContent(pageKey: SitePageKey, locale: string, content: unknown) {
+  siteStore.pages[pageKey] = content
+  siteStore.pageLocales[pageKey] = locale
+}
+
 /** Applica contenuto SSR senza attendere useEffect — evita skeleton su navigazioni con dati già noti. */
 export function hydrateSitePageContent(pageKey: SitePageKey, locale: string, content: unknown) {
+  const existingLocale = siteStore.pageLocales[pageKey]
+  if (existingLocale && existingLocale !== locale) return
   siteStore.pages[pageKey] = content
   siteStore.pageLocales[pageKey] = locale
 }

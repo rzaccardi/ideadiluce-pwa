@@ -266,6 +266,8 @@ export type PaginatedDTO<T> = {
 
 export type ProductListDTO = PaginatedDTO<ProductCardDTO> & {
   nextInStockSkip?: number
+  degraded?: boolean
+  source?: 'live' | 'cache'
 }
 
 export type CatalogFiltersFacetOptionDTO = {
@@ -331,6 +333,8 @@ export type ProductDetailDTO = ProductCardDTO & {
   weightKg?: number | null
   lengthMeters?: number | null
   dimensions?: { lengthCm?: number; widthCm?: number; heightCm?: number }
+  /** PDP da cache locale perché il catalogo live non risponde. */
+  degraded?: boolean
   priceLabel?: 'excl_vat'
 }
 
@@ -688,7 +692,7 @@ export type ThankYouOrderDTO = PwaOrderStatusResponseDTO & {
   createdAt: string
   paidAt: string | null
   shippingAddress: UserAddressDTO | null
-  lines: OrderLineDTO[]
+  lines: readonly OrderLineDTO[]
   subtotalCents: number | null
   shippingCents: number | null
   taxCents: number | null
@@ -708,6 +712,52 @@ export const ORDER_SOURCE_LABEL: Record<OrderSourceDTO, string> = {
   odoo_historical: 'Storico',
 }
 
+export type OrderReturnRequestDTO = {
+  id: string
+  createdAt: string
+  status: string
+}
+
+export type OrderReturnRequestResultDTO = OrderReturnRequestDTO & {
+  alreadyRequested: boolean
+}
+
+export type OrderShipmentStatusDTO =
+  | 'preparing'
+  | 'shipped'
+  | 'in_transit'
+  | 'out_for_delivery'
+  | 'delivered'
+  | 'exception'
+
+export type OrderShipmentEventDTO = {
+  at: string
+  label: string
+  location: string | null
+}
+
+export type OrderShipmentDTO = {
+  carrier: 'dhl' | 'fedex' | 'other' | null
+  carrierLabel: string | null
+  trackingNumber: string | null
+  trackingUrl: string | null
+  status: OrderShipmentStatusDTO
+  shippedAt: string | null
+  estimatedDeliveryAt: string | null
+  deliveredAt: string | null
+  lastLocation: string | null
+  events: readonly OrderShipmentEventDTO[]
+  updatedAt: string
+}
+
+export type OrderReturnWindowDTO = {
+  eligible: boolean
+  reason: 'open' | 'not_delivered' | 'expired'
+  deliveredAt: string | null
+  expiresAt: string | null
+  daysRemaining: number | null
+}
+
 export type OrderDTO = {
   id: string
   pwaOrderId: string | null
@@ -721,6 +771,9 @@ export type OrderDTO = {
   odooPortalUrl: string | null
   source: OrderSourceDTO
   sourceLabel: string
+  returnRequest: OrderReturnRequestDTO | null
+  shipment: OrderShipmentDTO | null
+  returnWindow: OrderReturnWindowDTO
 }
 
 export type OrderLineDTO = {
@@ -735,7 +788,7 @@ export type OrderLineDTO = {
 }
 
 export type OrderDetailDTO = OrderDTO & {
-  lines: OrderLineDTO[]
+  lines: readonly OrderLineDTO[]
   lineCount: number
   isSingleItem: boolean
 }

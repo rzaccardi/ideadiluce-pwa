@@ -7,6 +7,22 @@ export type OdooStatus = {
   notes: string[]
   pingOk: boolean
   customFieldsAvailable?: string[]
+  emergencyMode?: boolean
+  catalogCacheFallback?: boolean
+  smtpFallback?: boolean
+  pendingSyncCount?: number
+  exhaustedSyncCount?: number
+}
+
+export type OdooResilienceSettings = {
+  emergencyMode: boolean
+  catalogCacheFallback: boolean
+  smtpFallback: boolean
+  note: string | null
+  updatedAt: string
+  updatedByEmail: string | null
+  envEmergencyOverride: boolean
+  smtpConfigured: boolean
 }
 
 export type OdooSaleDocument = {
@@ -64,11 +80,18 @@ export type OdooPaginated<T> = {
   configured: boolean
 }
 
-export type OdooSyncOperation = 'FUNNEL_SYNC' | 'RECONCILE_LINES'
+export type OdooSyncOperation =
+  | 'ENSURE_PARTNER'
+  | 'ENSURE_SALE_ORDER'
+  | 'RECONCILE_LINES'
+  | 'FUNNEL_SYNC'
+  | 'ENSURE_PORTAL_USER'
+  | 'SEND_MAIL'
 
 export type OdooSyncQueueItem = {
   id: string
-  pwaOrderId: string
+  pwaOrderId: string | null
+  userId: string | null
   operation: OdooSyncOperation
   status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'EXHAUSTED'
   attempts: number

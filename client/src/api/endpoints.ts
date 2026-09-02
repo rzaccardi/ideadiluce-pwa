@@ -10,6 +10,7 @@ import type {
   OrderDTO,
   OrderDetailDTO,
   OrderReorderResultDTO,
+  OrderReturnRequestResultDTO,
   QuoteCheckoutDTO,
   QuoteDetailDTO,
   QuoteRequestDTO,
@@ -183,7 +184,11 @@ export const api = {
       )
     },
     settings() {
-      return apiClient.get<{ soundsEnabled: boolean }>('/api/v1/site/settings')
+      return apiClient.get<{
+        soundsEnabled: boolean
+        legacySiteNoticeEnabled: boolean
+        legacySiteUrl: string
+      }>('/api/v1/site/settings')
     },
     submitInquiry(body: {
       kind: 'product-not-found' | 'contact' | 'b2b' | 'professional-quote'
@@ -631,6 +636,9 @@ export const api = {
     },
     reorder(id: string) {
       return apiClient.post<OrderReorderResultDTO>(`/api/v1/orders/${id}/reorder`)
+    },
+    requestReturn(id: string, body?: { notes?: string; locale?: string }) {
+      return apiClient.post<OrderReturnRequestResultDTO>(`/api/v1/orders/${id}/return-request`, body ?? {})
     },
     recommendations(id: string) {
       return apiClient.get<ProductCardDTO[]>(`/api/v1/orders/${id}/recommendations`)

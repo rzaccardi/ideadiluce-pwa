@@ -28,7 +28,17 @@ export const catalogStorefrontService = {
   },
 
   async listCategories(localeInput?: string): Promise<CategoryDTO[]> {
-    return listCatalogCategoriesLive(localeInput)
+    try {
+      return await listCatalogCategoriesLive(localeInput)
+    } catch (e) {
+      const { markCatalogDegraded } = await import('../odoo/odoo-degraded-state.js')
+      const { isCatalogCacheFallbackEnabled } = await import('../odoo/odoo-resilience.settings.js')
+      const { getCachedCategories } = await import('./odoo-catalog-index.service.js')
+      markCatalogDegraded()
+      if (!(await isCatalogCacheFallbackEnabled())) throw e
+      const locale = parseHubLocale(localeInput)
+      return (await getCachedCategories(locale)) ?? []
+    }
   },
 
   async getCategoryBySlug(slug: string, localeInput?: string): Promise<CategoryDTO | null> {
@@ -37,7 +47,17 @@ export const catalogStorefrontService = {
   },
 
   async listBrands(localeInput?: string): Promise<BrandListItemDTO[]> {
-    return listCatalogBrandsLive(localeInput)
+    try {
+      return await listCatalogBrandsLive(localeInput)
+    } catch (e) {
+      const { markCatalogDegraded } = await import('../odoo/odoo-degraded-state.js')
+      const { isCatalogCacheFallbackEnabled } = await import('../odoo/odoo-resilience.settings.js')
+      const { getCachedBrands } = await import('./odoo-catalog-index.service.js')
+      markCatalogDegraded()
+      if (!(await isCatalogCacheFallbackEnabled())) throw e
+      const locale = parseHubLocale(localeInput)
+      return (await getCachedBrands(locale)) ?? []
+    }
   },
 
   async getBrandBySlug(slug: string, localeInput?: string): Promise<BrandListItemDTO | null> {
@@ -107,32 +127,59 @@ export const catalogStorefrontService = {
         brandSlug: options.brandSlug,
         attacco,
         colorTemp,
+        world: options.world,
+        tipologia: options.tipologia,
+        ambiente: options.ambiente,
+        stile: options.stile,
       })
     }
 
-    return searchCatalogProductsLive(ctx, {
-      locale,
-      page,
-      pageSize,
-      q: effectiveQ || undefined,
-      world: options.world,
-      categorySlug: options.categorySlug,
-      subcategorySlug: options.subcategorySlug,
-      brandSlug: options.brandSlug,
-      tipologia: options.tipologia,
-      ambiente: options.ambiente,
-      stile: options.stile,
-      attacco,
-      wattaggio: options.wattaggio,
-      wattaggioMin: options.wattaggioMin,
-      wattaggioMax: options.wattaggioMax,
-      colorTemp,
-      tag: options.tag,
-      sort: options.sort,
-      partnerId: options.partnerId,
-      pricelistId: options.pricelistId,
-      pricing: options.pricing,
-      enrichStock: true,
-    })
+    try {
+      const live = await searchCatalogProductsLive(ctx, {
+        locale,
+        page,
+        pageSize,
+        q: effectiveQ || undefined,
+        world: options.world,
+        categorySlug: options.categorySlug,
+        subcategorySlug: options.subcategorySlug,
+        brandSlug: options.brandSlug,
+        tipologia: options.tipologia,
+        ambiente: options.ambiente,
+        stile: options.stile,
+        attacco,
+        wattaggio: options.wattaggio,
+        wattaggioMin: options.wattaggioMin,
+        wattaggioMax: options.wattaggioMax,
+        colorTemp,
+        tag: options.tag,
+        sort: options.sort,
+        partnerId: options.partnerId,
+        pricelistId: options.pricelistId,
+        pricing: options.pricing,
+        enrichStock: true,
+      })
+      return { ...live, source: 'live' as const, degraded: false }
+    } catch (e) {
+      const { markCatalogDegraded } = await import('../odoo/odoo-degraded-state.js')
+      const { isCatalogCacheFallbackEnabled } = await import('../odoo/odoo-resilience.settings.js')
+      markCatalogDegraded()
+      if (!(await isCatalogCacheFallbackEnabled())) throw e
+      const cached = await queryOdooCatalogIndex({
+        locale,
+        q: effectiveQ || undefined,
+        page,
+        pageSize,
+        categorySlug: options.categorySlug,
+        brandSlug: options.brandSlug,
+        attacco,
+        colorTemp,
+        world: options.world,
+        tipologia: options.tipologia,
+        ambiente: options.ambiente,
+        stile: options.stile,
+      })
+      return { ...cached, source: 'cache' as const, degraded: true }
+    }
   },
 }

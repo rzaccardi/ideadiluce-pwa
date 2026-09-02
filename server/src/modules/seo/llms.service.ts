@@ -2,6 +2,11 @@ import { env } from '../../config/env.js'
 import { HREFLANG_CODE, HUB_LOCALES, LOCALE_PATH } from '../../lib/hub-locale.js'
 import { catalogStorefrontService } from '../catalog/catalog-storefront.service.js'
 import { listAmbienteRoomSlugs, listIndexedGuideSlugs } from './seo-guide-slugs.js'
+import {
+  listNavAttaccoSlugs,
+  listNavCategoriaTecnicaSlugs,
+  listNavTipologiaSlugs,
+} from './nav-landing-paths.js'
 
 export const LLMS_TXT_CONTENT_TYPE = 'text/markdown; charset=utf-8'
 
@@ -20,12 +25,16 @@ function titleFromSlug(slug: string): string {
 /** Contenuto llms.txt per crawler AI — pagine indicizzabili principali. */
 export async function buildLlmsTxt(): Promise<string> {
   const site = env.PUBLIC_SITE_URL.replace(/\/$/, '')
-  const [guideSlugs, roomSlugs, categories, brands] = await Promise.all([
-    listIndexedGuideSlugs(),
-    Promise.resolve(listAmbienteRoomSlugs()),
-    catalogStorefrontService.listCategories('IT'),
-    catalogStorefrontService.listBrands('IT'),
-  ])
+  const [guideSlugs, roomSlugs, attaccoSlugs, tipologiaSlugs, tecnicaSlugs, categories, brands] =
+    await Promise.all([
+      listIndexedGuideSlugs(),
+      Promise.resolve(listAmbienteRoomSlugs()),
+      Promise.resolve(listNavAttaccoSlugs()),
+      Promise.resolve(listNavTipologiaSlugs()),
+      Promise.resolve(listNavCategoriaTecnicaSlugs()),
+      catalogStorefrontService.listCategories('IT'),
+      catalogStorefrontService.listBrands('IT'),
+    ])
 
   const localeLines = HUB_LOCALES.map((locale) => {
     const prefix = LOCALE_PATH[locale]
@@ -40,6 +49,17 @@ export async function buildLlmsTxt(): Promise<string> {
   const roomLines = roomSlugs
     .map((room) => mdLink(titleFromSlug(room), `${site}/ambienti/${room}`, 'Ispirazione per ambiente'))
     .join('\n')
+  const attaccoLines = attaccoSlugs
+    .map((slug) => mdLink(slug.toUpperCase(), `${site}/attacco/${slug}`, 'Lampadine per attacco'))
+    .join('\n')
+  const tipologiaLines = tipologiaSlugs
+    .map((slug) => mdLink(titleFromSlug(slug), `${site}/tipologia/${slug}`, 'Tipologia arredo'))
+    .join('\n')
+  const tecnicaLines = tecnicaSlugs
+    .map((slug) =>
+      mdLink(titleFromSlug(slug), `${site}/categoria-tecnica/${slug}`, 'Categoria tecnica'),
+    )
+    .join('\n')
   const topCategories = categories
     .filter((c) => c.slug)
     .slice(0, 12)
@@ -53,9 +73,9 @@ export async function buildLlmsTxt(): Promise<string> {
 
   return `# Idea di Luce
 
-> E-commerce di illuminazione arredo e tecnica (Italia, multilingua IT/EN/ES/FR/DE).
+> E-commerce di illuminazione arredo e tecnica (Italia, multilingua IT/EN/ES/FR/DE/RO).
 
-Le pagine prodotto usano \`/prodotto/{slug}/\`; categorie, brand, guide e ambienti seguono rispettivamente \`/categoria/\`, \`/brand/\`, \`/guide/\` e \`/ambienti/\` con slug dedicato. Ogni pagina pubblica ha versioni localizzate (prefissi /en, /es, /fr, /de); la sitemap include i tag hreflang. I prezzi e la disponibilità possono dipendere dal listino e dalla sessione utente: non indicizzare URL con filtri query complessi sul catalogo.
+Le pagine prodotto usano \`/prodotto/{slug}/\`; categorie, brand, guide e ambienti seguono rispettivamente \`/categoria/\`, \`/brand/\`, \`/guide/\` e \`/ambienti/\` con slug dedicato. Ogni pagina pubblica ha versioni localizzate (prefissi /en, /es, /fr, /de, /ro); la sitemap include i tag hreflang. I prezzi e la disponibilità possono dipendere dal listino e dalla sessione utente: non indicizzare URL con filtri query complessi sul catalogo.
 
 ## Pagine principali
 
@@ -64,6 +84,7 @@ ${mdLink('Negozio', `${site}/negozio`, 'Catalogo prodotti')}
 ${mdLink('Brand', `${site}/brand`, 'Elenco brand')}
 ${mdLink('Blog', `${site}/blog`, 'Guide e contenuti editoriali')}
 ${mdLink('Ambienti', `${site}/ambienti`, 'Illuminazione per stanza')}
+${mdLink('Attacco', `${site}/attacco`, 'Scegli per attacco lampadina')}
 ${mdLink('Professionisti', `${site}/professionisti`, 'Area professionisti')}
 ${mdLink('Contatti', `${site}/contatti`, 'Contatti e assistenza')}
 
@@ -78,6 +99,18 @@ ${guideLines || mdLink('Blog', `${site}/blog`, 'Elenco guide editoriali')}
 ## Ambienti
 
 ${roomLines}
+
+## Attacchi
+
+${attaccoLines || mdLink('Attacco', `${site}/attacco`, 'Elenco attacchi')}
+
+## Tipologie arredo
+
+${tipologiaLines || mdLink('Arredo', `${site}/illuminazione-arredo`, 'Illuminazione d\'arredo')}
+
+## Categorie tecniche
+
+${tecnicaLines || mdLink('Tecnica', `${site}/categoria-prodotto/illuminazione-tecnica`, 'Illuminazione tecnica')}
 
 ## Categorie principali
 

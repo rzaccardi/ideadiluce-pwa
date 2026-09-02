@@ -61,6 +61,6 @@ siteInquiryRouter.post(
       ...collectAttachments(fileMap?.attachments),
     ]
 
-    res.status(201).json(ok(await siteInquiryService.submit(parsed.data, attachments)))
+    res.status(201).json(ok(await siteInquiryService.submit(parsed.data, attachments, req.correlationId)))
   }),
 )

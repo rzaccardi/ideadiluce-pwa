@@ -74,25 +74,29 @@ export const checkoutRegisterService = {
     let odooPartnerId: number | null = null
 
     if (env.ODOO_ENABLED && isOdooConfigured()) {
-      const partner = await customerAdapter.findOrCreateCustomer(ctx, {
-        email: normalized,
-        firstName: input.firstName,
-        lastName: input.lastName,
-        phone: input.phone,
-      })
-      odooPartnerId = partner.odooPartnerId
+      try {
+        const partner = await customerAdapter.findOrCreateCustomer(ctx, {
+          email: normalized,
+          firstName: input.firstName,
+          lastName: input.lastName,
+          phone: input.phone,
+        })
+        odooPartnerId = partner.odooPartnerId
 
-      if (odooPartnerId) {
-        try {
-          await ensureOdooPortalUser(ctx, {
-            email: normalized,
-            partnerId: odooPartnerId,
-            name: displayName,
-            password: input.password,
-          })
-        } catch {
-          /* account PWA comunque */
+        if (odooPartnerId) {
+          try {
+            await ensureOdooPortalUser(ctx, {
+              email: normalized,
+              partnerId: odooPartnerId,
+              name: displayName,
+              password: input.password,
+            })
+          } catch {
+            /* account PWA comunque */
+          }
         }
+      } catch {
+        /* partner Odoo in coda dopo create user */
       }
     }
 
@@ -127,6 +131,18 @@ export const checkoutRegisterService = {
 
     if (odooPartnerId) {
       await persistOdooCustomerMap({ userId: user.id, email: normalized, odooPartnerId })
+    } else if (env.ODOO_ENABLED && isOdooConfigured()) {
+      const { enqueueUserOdooSaga } = await import('../odoo/odoo-sync-queue.service.js')
+      void enqueueUserOdooSaga(
+        user.id,
+        {
+          email: normalized,
+          firstName: input.firstName,
+          lastName: input.lastName,
+          phone: input.phone,
+        },
+        'Registrazione PWA: partner Odoo differito.',
+      ).catch(() => undefined)
     }
 
     return authService.loginByVerifiedEmail(normalized, sessionId)

@@ -1,7 +1,7 @@
 import { CONTENT_PAGE_KEYS } from './site-content-pages.defaults.js'
 import type { SitePageKey } from './site.types.js'
 
-export const SITE_LOCALES = ['IT', 'EN', 'ES', 'FR', 'DE'] as const
+export const SITE_LOCALES = ['IT', 'EN', 'ES', 'FR', 'DE', 'RO'] as const
 export type SiteLocale = (typeof SITE_LOCALES)[number]
 
 export const SITE_PAGE_LABELS: Record<SitePageKey, string> = {

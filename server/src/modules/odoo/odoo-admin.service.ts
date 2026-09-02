@@ -14,10 +14,15 @@ import type {
 import { odooIntegrationService } from '../integrations/odoo-integration.service.js'
 import { odooSalesService } from './odoo-sales.service.js'
 import { odooSyncQueueService } from './odoo-sync-queue.service.js'
+import {
+  getOdooResilienceSettingsDTO,
+  patchOdooResilienceSettings,
+} from './odoo-resilience.settings.js'
 import type {
   odooAdminListQuerySchema,
   odooAdminPricelistAssignmentSchema,
   odooAdminPricelistQuerySchema,
+  odooResiliencePatchSchema,
   odooSyncQueueListQuerySchema,
 } from './odoo-admin.validators.js'
 import type { z } from 'zod'
@@ -61,6 +66,25 @@ async function readCustomFieldsAvailable(ctx: OdooCallContext): Promise<string[]
   return PWA_CUSTOM_FIELDS.filter((f) => available.has(f))
 }
 
+async function withResilience(base: OdooStatusDTO): Promise<OdooStatusDTO> {
+  const [settings, counts] = await Promise.all([
+    getOdooResilienceSettingsDTO(),
+    odooSyncQueueService.counts(),
+  ])
+  const emergency = settings.envEmergencyOverride || settings.emergencyMode
+  if (emergency) {
+    base.notes.push('Modalità emergenza Odoo attiva: checkout e catalogo restano locali, sync in coda.')
+  }
+  return {
+    ...base,
+    emergencyMode: emergency,
+    catalogCacheFallback: settings.catalogCacheFallback,
+    smtpFallback: settings.smtpFallback,
+    pendingSyncCount: counts.pending,
+    exhaustedSyncCount: counts.exhausted,
+  }
+}
+
 export const odooAdminService = {
   async getStatus(req?: Request): Promise<OdooStatusDTO> {
     const notes: string[] = []
@@ -68,14 +92,14 @@ export const odooAdminService = {
 
     if (!env.ODOO_ENABLED) {
       notes.push('ODOO_ENABLED è false — nessuna chiamata remota.')
-      return { enabled: false, configured: false, mode, notes, pingOk: false }
+      return withResilience({ enabled: false, configured: false, mode, notes, pingOk: false })
     }
 
     if (!isOdooConfigured()) {
       notes.push(
         'ODOO_ENABLED ma configurazione XML-RPC incompleta: servono ODOO_URL, ODOO_DB, ODOO_USERNAME, ODOO_PASSWORD.',
       )
-      return { enabled: true, configured: false, mode, notes, pingOk: false }
+      return withResilience({ enabled: true, configured: false, mode, notes, pingOk: false })
     }
 
     const ping = await odooIntegrationService.ping(req?.correlationId ?? 'admin-odoo-status')
@@ -92,14 +116,14 @@ export const odooAdminService = {
       notes.push(`fields_get fallito: ${e instanceof Error ? e.message : String(e)}`)
     }
 
-    return {
+    return withResilience({
       enabled: true,
       configured: true,
       mode,
       notes,
       pingOk: Boolean(ping.ok),
       customFieldsAvailable,
-    }
+    })
   },
 
   listQuotations(
@@ -202,5 +226,20 @@ export const odooAdminService = {
 
   retrySyncQueueItem(id: string, req?: Request) {
     return odooSyncQueueService.retryById(id, req)
+  },
+
+  requeueExhausted() {
+    return odooSyncQueueService.requeueExhausted()
+  },
+
+  getResilience() {
+    return getOdooResilienceSettingsDTO()
+  },
+
+  patchResilience(
+    body: z.infer<typeof odooResiliencePatchSchema>,
+    updatedByEmail?: string | null,
+  ) {
+    return patchOdooResilienceSettings(body, updatedByEmail)
   },
 }

@@ -27,7 +27,7 @@ async function credentials() {
   return { clientId, clientSecret, accountNumber, sandbox: row?.sandbox ?? true }
 }
 
-async function accessToken(): Promise<string | null> {
+async function getFedexAccessToken(): Promise<string | null> {
   const creds = await credentials()
   if (!creds) return null
   if (tokenCache && tokenCache.expiresAt > Date.now() + 60_000) {
@@ -71,7 +71,7 @@ export async function fetchFedexRates(
 ): Promise<ShippingQuoteLine[]> {
   if (!env.FEDEX_ENABLED) return []
 
-  const token = await accessToken()
+  const token = await getFedexAccessToken()
   const creds = await credentials()
   if (!token || !creds?.accountNumber) return []
 
@@ -164,4 +164,55 @@ export async function fetchFedexRates(
     })
   }
   return lines
+}
+
+export async function trackFedexNumber(
+  trackingNumber: string,
+  correlationId?: string,
+): Promise<unknown | null> {
+  if (!env.FEDEX_ENABLED) return null
+  const token = await getFedexAccessToken()
+  if (!token) return null
+
+  const res = await fetch(`${apiBase()}/track/v1/trackingnumbers`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      includeDetailedScans: true,
+      trackingInfo: [{ trackingNumberInfo: { trackingNumber } }],
+    }),
+    signal: AbortSignal.timeout(8_000),
+  })
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '')
+    logger.warn('fedex.track_failed', { status: res.status, err: errText.slice(0, 200) })
+    if (correlationId) {
+      await writeStructuredIntegrationLog({
+        service: 'fedex',
+        operation: 'track',
+        correlationId,
+        success: false,
+        statusCode: res.status,
+        error: errText.slice(0, 500),
+        extra: { trackingNumber },
+      })
+    }
+    return null
+  }
+
+  const data: unknown = await res.json()
+  if (correlationId) {
+    await writeStructuredIntegrationLog({
+      service: 'fedex',
+      operation: 'track',
+      correlationId,
+      success: true,
+      extra: { trackingNumber },
+    })
+  }
+  return data
 }

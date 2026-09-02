@@ -19,13 +19,12 @@ export const ODOO_CATALOG_LANG_BY_HUB: Record<HubLocale, OdooCatalogLang> = {
   FR: 'fr_FR',
   DE: 'de_DE',
   ES: 'es_ES',
+  RO: 'ro_RO',
 }
 
-/** `ro_RO` è nel contratto API; la PWA non espone ancora rotte RO → mappa a IT. */
-const HUB_BY_ODOO_CATALOG_LANG = new Map<string, HubLocale>([
-  ...HUB_LOCALES.map((loc) => [ODOO_CATALOG_LANG_BY_HUB[loc], loc] as const),
-  ['ro_RO', 'IT'],
-])
+const HUB_BY_ODOO_CATALOG_LANG = new Map<string, HubLocale>(
+  HUB_LOCALES.map((loc) => [ODOO_CATALOG_LANG_BY_HUB[loc], loc] as const),
+)
 
 export function toOdooCatalogLang(locale: HubLocale): OdooCatalogLang {
   return ODOO_CATALOG_LANG_BY_HUB[locale]

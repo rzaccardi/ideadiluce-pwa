@@ -226,7 +226,7 @@ export async function searchCatalogProductsLive(
 }
 
 export async function getCatalogFiltersLive(
-  ctx: OdooCallContext,
+  _ctx: OdooCallContext,
   options: Omit<CatalogSearchOptions, 'page' | 'pageSize' | 'sort' | 'enrichStock'>,
 ): Promise<CatalogFiltersDTO> {
   const locale = parseHubLocale(options.locale)
@@ -238,8 +238,27 @@ export async function getCatalogFiltersLive(
     const raw = await fetchOdooCatalogFilters(filters)
     return mapOdooCatalogFiltersResponse(raw)
   } catch (e) {
-    if (e instanceof OdooCatalogClientError) throw toOdooCatalogError(e, ctx.correlationId)
-    throw e
+    const { markCatalogDegraded } = await import('../odoo/odoo-degraded-state.js')
+    const { isCatalogCacheFallbackEnabled } = await import('../odoo/odoo-resilience.settings.js')
+    markCatalogDegraded()
+    if (!(await isCatalogCacheFallbackEnabled())) throw e
+    const { getCachedCategories, getCachedBrands } = await import('./odoo-catalog-index.service.js')
+    const [categories, brands] = await Promise.all([
+      getCachedCategories(locale),
+      getCachedBrands(locale),
+    ])
+    const empty = emptyFilters()
+    return {
+      ...empty,
+      categories: (categories ?? []).map((c) => ({
+        slug: c.slug,
+        name: c.name,
+        parentSlug: c.parentId,
+        count: 0,
+        children: [],
+      })),
+      brands: (brands ?? []).map((b) => ({ slug: b.slug, name: b.name, count: b.productCount ?? 0 })),
+    }
   }
 }
 

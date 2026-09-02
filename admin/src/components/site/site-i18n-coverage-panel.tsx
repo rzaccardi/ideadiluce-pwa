@@ -21,6 +21,7 @@ const LOCALE_LABELS: Record<SiteLocale, string> = {
   ES: 'ES',
   FR: 'FR',
   DE: 'DE',
+  RO: 'RO',
 }
 
 type SiteI18nCoveragePanelProps = {
@@ -90,7 +91,7 @@ export function SiteI18nCoveragePanel({
         <div className="space-y-1">
           <CardTitle>Copertura traduzioni</CardTitle>
           <CardDescription>
-            Ogni pagina editoriali ha versioni IT, EN, ES, FR e DE. Le celle ambra indicano lingue
+            Ogni pagina editoriali ha versioni IT, EN, ES, FR, DE e RO. Le celle ambra indicano lingue
             ancora da generare con DeepL partendo dall&apos;italiano salvato.
           </CardDescription>
         </div>

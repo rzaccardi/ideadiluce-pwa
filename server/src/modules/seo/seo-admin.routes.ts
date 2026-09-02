@@ -6,8 +6,14 @@ import { asyncHandler } from '../../utils/async-handler.js'
 import { ok } from '../../lib/api-response.js'
 import { validateRequest } from '../../middlewares/validate-request.js'
 import { env } from '../../config/env.js'
+import { logger } from '../../lib/logger.js'
 import { validateMerchantFeedSample } from './merchant-feed.service.js'
-import { getSeoCacheStatus, refreshSeoCaches } from './seo-cache.service.js'
+import { getSeoCacheStatus, refreshMerchantFeed, refreshSeoCaches } from './seo-cache.service.js'
+import {
+  getMerchantCenterSettingsDTO,
+  patchMerchantCenterSettings,
+} from './merchant-center.settings.js'
+import { merchantCenterSettingsPatchSchema } from './merchant-center.validators.js'
 import {
   deleteSeoRedirect,
   listSeoRedirects,
@@ -19,10 +25,14 @@ export const seoAdminRouter = Router()
 
 seoAdminRouter.use(loadAdminSession, requireAdminAuth)
 
+function publicSiteBase() {
+  return env.PUBLIC_SITE_URL.replace(/\/$/, '')
+}
+
 seoAdminRouter.get(
   '/status',
   asyncHandler(async (_req, res) => {
-    const site = env.PUBLIC_SITE_URL.replace(/\/$/, '')
+    const site = publicSiteBase()
     res.json(
       ok({
         ...getSeoCacheStatus(),
@@ -45,10 +55,50 @@ seoAdminRouter.post(
 )
 
 seoAdminRouter.get(
+  '/merchant-center',
+  asyncHandler(async (_req, res) => {
+    const settings = await getMerchantCenterSettingsDTO()
+    const status = getSeoCacheStatus()
+    res.json(
+      ok({
+        ...settings,
+        publicFeedUrl: `${publicSiteBase()}/merchant-feed.xml`,
+        lastBuiltAt: status.merchantFeed?.builtAt ?? null,
+        itemCount: status.merchantFeed?.itemCount ?? null,
+      }),
+    )
+  }),
+)
+
+seoAdminRouter.patch(
+  '/merchant-center',
+  validateRequest({ body: merchantCenterSettingsPatchSchema }),
+  asyncHandler(async (req, res) => {
+    const settings = await patchMerchantCenterSettings(req.body)
+    void refreshMerchantFeed()
+      .then((entry) => {
+        logger.info('seo.merchant_feed_refreshed', { itemCount: entry.itemCount })
+      })
+      .catch((err) => {
+        logger.warn('seo.merchant_feed_refresh_failed', { err: String(err) })
+      })
+    const status = getSeoCacheStatus()
+    res.json(
+      ok({
+        ...settings,
+        publicFeedUrl: `${publicSiteBase()}/merchant-feed.xml`,
+        lastBuiltAt: status.merchantFeed?.builtAt ?? null,
+        itemCount: status.merchantFeed?.itemCount ?? null,
+      }),
+    )
+  }),
+)
+
+seoAdminRouter.get(
   '/merchant-feed/validate',
   asyncHandler(async (_req, res) => {
-    const items = await validateMerchantFeedSample(20)
-    res.json(ok({ items }))
+    const sample = await validateMerchantFeedSample(20)
+    res.json(ok(sample))
   }),
 )
 

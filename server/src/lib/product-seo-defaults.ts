@@ -1,6 +1,6 @@
 import { env } from '../config/env.js'
 import type { ProductAlternateDTO, ProductSeoDTO } from '../types/dto.js'
-import { absoluteUrl, productPath, type HubLocale } from './hub-locale.js'
+import { absoluteUrl, HREFLANG_CODE, HUB_LOCALES, productPath, type HubLocale } from './hub-locale.js'
 
 export function defaultProductSeo(
   name: string,
@@ -17,10 +17,8 @@ export function defaultProductSeo(
 }
 
 export function defaultProductAlternates(slug: string): ProductAlternateDTO[] {
-  return [
-    {
-      locale: 'it',
-      href: absoluteUrl(env.PUBLIC_SITE_URL, productPath(slug, 'IT')),
-    },
-  ]
+  return HUB_LOCALES.map((locale) => ({
+    locale: HREFLANG_CODE[locale],
+    href: absoluteUrl(env.PUBLIC_SITE_URL, productPath(slug, locale)),
+  }))
 }
