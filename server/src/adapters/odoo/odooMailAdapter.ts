@@ -167,7 +167,6 @@ async function sendViaOdooMail(
     bodyHtml: string
     bodyText: string
     templateKey: PwaMailTemplateKey
-    templateId?: number
     replyTo?: string
     attachmentIds?: number[]
   },
@@ -180,7 +179,6 @@ async function sendViaOdooMail(
     auto_delete: false,
     headers: buildPwaMailHeaders(input.templateKey),
   }
-  if (input.templateId != null) vals.mail_template_id = input.templateId
   if (input.replyTo) vals.reply_to = input.replyTo
   if (input.attachmentIds?.length) vals.attachment_ids = [[6, 0, input.attachmentIds]]
 
@@ -308,7 +306,6 @@ export async function sendPwaMail(ctx: OdooCallContext | undefined, input: PwaMa
       bodyHtml,
       bodyText,
       templateKey: input.templateKey,
-      templateId,
       replyTo: input.replyTo,
       attachmentIds,
     })

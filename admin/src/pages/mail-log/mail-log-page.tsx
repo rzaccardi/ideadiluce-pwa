@@ -139,7 +139,7 @@ export function MailLogPage() {
                       }}
                     >
                       <SelectTrigger id="mail-log-template" className="h-10 w-full">
-                        <SelectValue />
+                        <SelectValue placeholder="Tutti i tipi" />
                       </SelectTrigger>
                       <SelectContent>
                         {MAIL_LOG_TEMPLATE_FILTER_OPTIONS.map((opt) => (
@@ -159,7 +159,7 @@ export function MailLogPage() {
                       }}
                     >
                       <SelectTrigger id="mail-log-state" className="h-10 w-full">
-                        <SelectValue />
+                        <SelectValue placeholder="Tutte" />
                       </SelectTrigger>
                       <SelectContent>
                         {MAIL_LOG_STATE_FILTER_OPTIONS.map((opt) => (
@@ -193,7 +193,7 @@ export function MailLogPage() {
 
           {store.listLoading && store.listItems.length === 0 ? (
             <TableSkeleton rows={8} columns={['Data', 'Tipo', 'Destinatario', 'Oggetto', 'Stato']} />
-          ) : (
+          ) : store.listError && store.listItems.length === 0 ? null : (
             <Table>
               <TableHeader>
                 <TableRow>

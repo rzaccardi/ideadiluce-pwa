@@ -5,23 +5,25 @@ import {
   mapMailLogDetail,
   mapMailLogListItem,
   odooDatetimeToIso,
+  type MailLogOdooCapabilities,
 } from './mail-log-admin.mapper.js'
 import { parsePwaMailTemplateKey, buildPwaMailHeaders } from '../../adapters/odoo/odoo-mail.templates.js'
 
 describe('mail-log-admin mapper', () => {
-  it('costruisce il domain PWA con filtri', () => {
-    expect(buildPwaMailLogDomain({})).toEqual([
-      '|',
-      ['headers', 'ilike', 'X-PWA-Mail: 1'],
-      ['mail_template_id.name', '=like', '[PWA]%'],
-    ])
+  const odoo18: MailLogOdooCapabilities = {
+    hasHeaders: true,
+    hasMailTemplateId: false,
+    hasFailureType: true,
+    hasFailureReason: true,
+  }
+
+  it('costruisce il domain PWA senza mail_template_id (Odoo 18)', () => {
+    expect(buildPwaMailLogDomain({}, odoo18)).toEqual([['headers', 'ilike', 'X-PWA-Mail']])
 
     expect(
-      buildPwaMailLogDomain({ q: 'mario@', state: 'sent', templateKey: 'site_inquiry_admin' }),
+      buildPwaMailLogDomain({ q: 'mario@', state: 'sent', templateKey: 'site_inquiry_admin' }, odoo18),
     ).toEqual([
-      '|',
-      ['headers', 'ilike', 'X-PWA-Mail: 1'],
-      ['mail_template_id.name', '=like', '[PWA]%'],
+      ['headers', 'ilike', 'X-PWA-Mail'],
       ['state', '=', 'sent'],
       ['headers', 'ilike', 'X-PWA-Template: site_inquiry_admin'],
       '|',
@@ -29,19 +31,31 @@ describe('mail-log-admin mapper', () => {
       ['subject', 'ilike', 'mario@'],
     ])
 
-    expect(buildPwaMailLogDomain({ state: 'bounce' })).toEqual([
-      '|',
-      ['headers', 'ilike', 'X-PWA-Mail: 1'],
-      ['mail_template_id.name', '=like', '[PWA]%'],
+    expect(buildPwaMailLogDomain({ state: 'bounce' }, odoo18)).toEqual([
+      ['headers', 'ilike', 'X-PWA-Mail'],
       '|',
       ['failure_type', 'ilike', 'bounce'],
       ['failure_reason', 'ilike', 'bounce'],
     ])
   })
 
+  it('aggiunge OR sul template se Odoo espone mail_template_id', () => {
+    expect(
+      buildPwaMailLogDomain(
+        {},
+        { hasHeaders: true, hasMailTemplateId: true, hasFailureType: true, hasFailureReason: true },
+      ),
+    ).toEqual([
+      '|',
+      ['headers', 'ilike', 'X-PWA-Mail'],
+      ['mail_template_id.name', '=like', '[PWA]%'],
+    ])
+  })
+
   it('riconosce i record PWA da header o template', () => {
     expect(isPwaMailRecord({ headers: buildPwaMailHeaders('password_reset') })).toBe(true)
     expect(isPwaMailRecord({ mail_template_id: [3, '[PWA] Reimposta password'] })).toBe(true)
+    expect(isPwaMailRecord({ headers: "{'X-PWA-Mail': '1'}", mail_template_id: false })).toBe(true)
     expect(isPwaMailRecord({ headers: false, mail_template_id: [9, 'Sales: Send by Email'] })).toBe(
       false,
     )

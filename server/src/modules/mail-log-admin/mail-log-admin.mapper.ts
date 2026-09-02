@@ -1,5 +1,4 @@
 import {
-  PWA_MAIL_HEADER_MARK,
   PWA_MAIL_TEMPLATES,
   parsePwaMailTemplateKey,
   pwaMailTemplateLabel,
@@ -76,37 +75,64 @@ export function odooDatetimeToIso(value: unknown): string | null {
   return d.toISOString()
 }
 
+export type MailLogOdooCapabilities = {
+  hasHeaders: boolean
+  hasMailTemplateId: boolean
+  hasFailureType: boolean
+  hasFailureReason: boolean
+}
+
 export function isPwaMailRecord(row: {
   headers?: unknown
   mail_template_id?: unknown
 }): boolean {
   const headers = text(row.headers) ?? ''
-  if (headers.includes('X-PWA-Mail: 1')) return true
+  if (headers.includes('X-PWA-Mail: 1') || headers.includes("'X-PWA-Mail'")) return true
   const templateName = many2OneName(row.mail_template_id) ?? ''
   return templateName.startsWith('[PWA]')
 }
 
-export function buildPwaMailLogDomain(query: {
-  q?: string
-  state?: string
-  templateKey?: string
-}): unknown[] {
-  const domain: unknown[] = [
-    '|',
-    ['headers', 'ilike', PWA_MAIL_HEADER_MARK],
-    ['mail_template_id.name', '=like', '[PWA]%'],
-  ]
+function orDomain(left: unknown, right: unknown): unknown[] {
+  return ['|', left, right]
+}
+
+/** Domain PWA: in Odoo 18 `mail.mail` non ha `mail_template_id` — usare solo gli header. */
+export function buildPwaMailLogDomain(
+  query: {
+    q?: string
+    state?: string
+    templateKey?: string
+  },
+  caps: MailLogOdooCapabilities,
+): unknown[] {
+  const identity: unknown[] = []
+  if (caps.hasHeaders) identity.push(['headers', 'ilike', 'X-PWA-Mail'])
+  if (caps.hasMailTemplateId) identity.push(['mail_template_id.name', '=like', '[PWA]%'])
+
+  const domain: unknown[] =
+    identity.length === 0 ? [] : identity.length === 1 ? [identity[0]] : orDomain(identity[0], identity[1])
+
   if (query.state === 'bounce') {
-    domain.push('|', ['failure_type', 'ilike', 'bounce'], ['failure_reason', 'ilike', 'bounce'])
+    const bounce: unknown[] = []
+    if (caps.hasFailureType) bounce.push(['failure_type', 'ilike', 'bounce'])
+    if (caps.hasFailureReason) bounce.push(['failure_reason', 'ilike', 'bounce'])
+    if (bounce.length === 1) domain.push(bounce[0])
+    else if (bounce.length >= 2) domain.push(...orDomain(bounce[0], bounce[1]))
+    else domain.push(['state', '=', 'exception'])
   } else if (query.state && query.state !== 'all') {
     domain.push(['state', '=', query.state])
   }
-  if (query.templateKey && query.templateKey !== 'all' && query.templateKey in PWA_MAIL_TEMPLATES) {
+  if (
+    caps.hasHeaders &&
+    query.templateKey &&
+    query.templateKey !== 'all' &&
+    query.templateKey in PWA_MAIL_TEMPLATES
+  ) {
     domain.push(['headers', 'ilike', `X-PWA-Template: ${query.templateKey}`])
   }
   const q = query.q?.trim()
   if (q) {
-    domain.push('|', ['email_to', 'ilike', q], ['subject', 'ilike', q])
+    domain.push(...orDomain(['email_to', 'ilike', q], ['subject', 'ilike', q]))
   }
   return domain
 }

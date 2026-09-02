@@ -1,11 +1,15 @@
 import { z } from 'zod'
 import { NOT_FOUND_PATH_KINDS, NOT_FOUND_REFERRER_KINDS } from './not-found.normalize.js'
 
+/** Query flag: stringhe URL (`true`/`false`/`1`/`0`) o booleani già parsati (validateRequest). */
 const boolQuery = (fallback: boolean) =>
-  z
-    .enum(['true', 'false', '1', '0'])
-    .optional()
-    .transform((value) => (value == null ? fallback : value === 'true' || value === '1'))
+  z.preprocess((value) => {
+    if (value === undefined || value === null || value === '') return fallback
+    if (typeof value === 'boolean') return value
+    if (value === 'true' || value === '1') return true
+    if (value === 'false' || value === '0') return false
+    return value
+  }, z.boolean())
 
 export const notFoundEventBodySchema = z.object({
   path: z.string().trim().min(1).max(2000),

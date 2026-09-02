@@ -32,8 +32,8 @@ async function adminFetch(path: string, init?: RequestInit): Promise<Response> {
 async function parseError(res: Response): Promise<string> {
   let msg = await res.text()
   try {
-    const j = JSON.parse(msg) as { error?: { message?: string } }
-    msg = j.error?.message ?? msg
+    const j = JSON.parse(msg) as { error?: { message?: string; userMessage?: string } }
+    msg = j.error?.userMessage ?? j.error?.message ?? msg
   } catch {
     /* testo grezzo */
   }

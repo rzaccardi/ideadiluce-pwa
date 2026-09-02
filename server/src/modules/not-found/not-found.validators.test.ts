@@ -33,6 +33,15 @@ describe('notFoundAdminListQuerySchema', () => {
       hideBots: true,
       hideProbes: false,
     })
+    expect(notFoundAdminListQuerySchema.parse({ hideBots: true, hideProbes: false })).toMatchObject({
+      hideBots: true,
+      hideProbes: false,
+    })
+    const once = notFoundAdminListQuerySchema.parse({ hideBots: 'true', hideProbes: '1' })
+    expect(notFoundAdminListQuerySchema.parse(once)).toMatchObject({
+      hideBots: true,
+      hideProbes: true,
+    })
   })
 })
 

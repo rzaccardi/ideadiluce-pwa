@@ -106,9 +106,9 @@ describe('sendPwaMail', () => {
     expect(odooExecuteKw.mock.calls[4]?.[2]).toBe('create')
     expect(odooExecuteKw.mock.calls[4]?.[3]?.[0]).toMatchObject({
       email_to: 'mario@test.it',
-      mail_template_id: 11,
       auto_delete: false,
     })
+    expect(odooExecuteKw.mock.calls[4]?.[3]?.[0]).not.toHaveProperty('mail_template_id')
     expect(String(odooExecuteKw.mock.calls[4]?.[3]?.[0]?.headers)).toContain('X-PWA-Mail: 1')
     expect(String(odooExecuteKw.mock.calls[4]?.[3]?.[0]?.headers)).toContain('X-PWA-Template: account_credentials')
     expect(String(odooExecuteKw.mock.calls[4]?.[3]?.[0]?.body_html)).toContain('Ciao Mario')

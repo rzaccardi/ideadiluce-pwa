@@ -4,7 +4,7 @@ import type { MailLogDetail, MailLogList } from '@/types/mail-log'
 import { adminMailLogStore } from './mail-log.store'
 
 function errMessage(e: unknown) {
-  return String(e)
+  return e instanceof Error ? e.message : String(e)
 }
 
 export async function fetchAdminMailLogList(query: string, options?: { append?: boolean }) {
