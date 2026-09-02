@@ -26,6 +26,7 @@ import {
 } from '@/components/payment-method-logos'
 import { useI18n } from '@/hooks/use-i18n'
 import { preloadStripe } from '@/lib/stripe-loader'
+import { playCheckoutStartSound } from '@/features/checkout/checkout-start-sound'
 import { CART_CARD_SURFACE } from '@/components/cart/cart-surfaces'
 import { cn } from '@/utils/cn'
 
@@ -141,6 +142,7 @@ export function CartSummary({
                 <Link
                   to="/checkout"
                   className="block"
+                  onClick={() => playCheckoutStartSound()}
                   onMouseEnter={() => preloadStripe()}
                   onFocus={() => preloadStripe()}
                 >

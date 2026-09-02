@@ -1,7 +1,9 @@
 import type { ApiFailureBody } from '@/types/api'
 import { ApiRequestError } from '@/types/api'
 import { privateApiFetchInit } from '@/lib/api-cache-policy'
+import { localizeApiUserMessage } from '@/lib/api-user-message'
 import { getIntegrationsToken, getPublicApiUrl, isDev } from '@/lib/env'
+import { parseLocaleFromPathname } from '@/lib/locale'
 
 type JsonBody = Record<string, unknown> | unknown[] | null
 
@@ -27,6 +29,9 @@ function buildHeaders(init?: RequestInit, body?: JsonBody | FormData): Headers {
   const integrationToken = getIntegrationsToken()
   if (integrationToken && !headers.has('X-Integrations-Token')) {
     headers.set('X-Integrations-Token', integrationToken)
+  }
+  if (typeof window !== 'undefined' && !headers.has('X-Locale')) {
+    headers.set('X-Locale', parseLocaleFromPathname(window.location.pathname))
   }
   return headers
 }
@@ -56,7 +61,7 @@ async function parseResponse<T>(res: Response): Promise<T> {
       e.message,
       res.status,
       e.details,
-      e.userMessage,
+      e.userMessage ? localizeApiUserMessage(e.userMessage) : e.userMessage,
       e.retriable,
       e.correlationId ?? fallbackCorr,
     )

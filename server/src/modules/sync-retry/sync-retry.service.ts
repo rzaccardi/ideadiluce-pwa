@@ -39,7 +39,16 @@ export const syncRetryJobService = {
       })
 
       try {
-        if (job.service === 'odoo') {
+        if (job.service === 'odoo' && job.operation === 'cart_prep' && job.entityType === 'cart') {
+          const { prepareCartAgainstOdoo } = await import('../cart/cart-odoo-prep.service.js')
+          await prepareCartAgainstOdoo({
+            cartId: job.entityId,
+            correlationId:
+              typeof (job.payload as { correlationId?: unknown })?.correlationId === 'string'
+                ? (job.payload as { correlationId: string }).correlationId
+                : `retry-${job.id}`,
+          })
+        } else if (job.service === 'odoo') {
           await processOdooSyncRetryQueue()
         }
         await prisma.syncRetryJob.update({

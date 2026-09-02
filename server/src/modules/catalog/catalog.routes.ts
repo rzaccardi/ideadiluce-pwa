@@ -8,6 +8,9 @@ import { stockRestockRequestSchema } from '../restock-notify/restock-notify.vali
 import { resolveCodesSchema } from '../cart/cart-quick-reorder.validators.js'
 import { requireLogin } from '../../middlewares/session.js'
 import { catalogSearchRateLimit } from './catalog-search-rate-limit.js'
+import { loadAdminSession } from '../../middlewares/admin-session.js'
+import { requireAdminAuth } from '../../middlewares/admin-auth.js'
+import { formSubmitRateLimit } from '../../lib/rate-limiters.js'
 
 /** Catalogo storefront: lista prodotti da Odoo (OdooCatalog), categorie/brand non gestiti nel BFF. */
 export const catalogRouter = Router()
@@ -26,7 +29,12 @@ catalogRouter.get('/brands/:slug', catalogPublicController.brandBySlug)
 catalogRouter.get('/products', catalogSearchRateLimit, catalogPublicController.products)
 catalogRouter.get('/search', catalogSearchRateLimit, catalogPublicController.search)
 catalogRouter.get('/filters', catalogPublicController.filters)
-catalogRouter.post('/catalog-index/sync', catalogPublicController.syncCatalogIndex)
+catalogRouter.post(
+  '/catalog-index/sync',
+  loadAdminSession,
+  requireAdminAuth,
+  catalogPublicController.syncCatalogIndex,
+)
 catalogRouter.get('/catalog-index', catalogPublicController.catalogIndexMeta)
 catalogRouter.get('/home/product-sliders', catalogPublicController.homeProductSliders)
 catalogRouter.post('/availability/enrich-detail', catalogPublicController.enrichProductDetail)
@@ -37,6 +45,7 @@ catalogRouter.get(
 )
 catalogRouter.post(
   '/products/:slug/restock-notify',
+  formSubmitRateLimit,
   validateRequest({ body: stockRestockRequestSchema }),
   restockNotifyController.create,
 )

@@ -55,7 +55,9 @@ export type UserDTO = {
   viesAddress: string | null
   taxValidationStatus: string | null
   taxCheckedAt: string | null
+  /** Non esposto in storefront: il BFF risolve il partner dalla sessione. */
   odooPartnerId: number | null
+  /** Non esposto in storefront: il BFF risolve il listino dalla sessione. */
   odooPricelistId: number | null
 }
 

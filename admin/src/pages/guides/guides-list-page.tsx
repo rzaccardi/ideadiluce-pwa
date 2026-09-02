@@ -1,13 +1,23 @@
-import { useCallback, useEffect, useMemo } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useSnapshot } from 'valtio/react'
-import { BookOpenIcon } from 'lucide-react'
-import { fetchGuidesList, guidesStore, setGuidePublished } from '@/features/guides'
+import { BookOpenIcon, PlusIcon } from 'lucide-react'
+import { createGuide, fetchGuidesList, guidesStore, setGuidePublished } from '@/features/guides'
 import { RoutePageHeader } from '@/components/route-page-header'
 import { ClickableTableRow, InfiniteScrollSentinel, RouteSkeleton } from '@/components/shared'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import {
   Table,
@@ -18,10 +28,22 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { SITE_LOCALES } from '@/features/site/site.store'
+import { GUIDE_CATEGORIES } from '@/types/guides'
 import { toast } from 'sonner'
 import { useInfiniteScrollSentinel } from '@/hooks/use-infinite-scroll-sentinel'
 
 const PAGE_SIZE = 25
+
+function slugifyGuideTitle(title: string) {
+  return title
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+}
 
 function buildListQuery(searchParams: URLSearchParams, page: number) {
   const params = new URLSearchParams({
@@ -31,9 +53,144 @@ function buildListQuery(searchParams: URLSearchParams, page: number) {
   return params.toString()
 }
 
+function CreateGuideCard({
+  open,
+  onClose,
+}: {
+  open: boolean
+  onClose: () => void
+}) {
+  const navigate = useNavigate()
+  const store = useSnapshot(guidesStore)
+  const [title, setTitle] = useState('')
+  const [slug, setSlug] = useState('')
+  const [slugTouched, setSlugTouched] = useState(false)
+  const [category, setCategory] = useState<string>(GUIDE_CATEGORIES[0].value)
+  const [readingMeta, setReadingMeta] = useState('5 min')
+
+  useEffect(() => {
+    if (!open) {
+      setTitle('')
+      setSlug('')
+      setSlugTouched(false)
+      setCategory(GUIDE_CATEGORIES[0].value)
+      setReadingMeta('5 min')
+    }
+  }, [open])
+
+  if (!open) return null
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault()
+    const trimmedTitle = title.trim()
+    if (!trimmedTitle) {
+      toast.error('Inserisci il titolo della guida')
+      return
+    }
+    const resolvedSlug = (slugTouched ? slug : slugifyGuideTitle(trimmedTitle)).trim()
+    if (!resolvedSlug) {
+      toast.error('Inserisci uno slug valido (lettere, numeri e trattini)')
+      return
+    }
+    try {
+      const created = await createGuide({
+        title: trimmedTitle,
+        slug: resolvedSlug,
+        category,
+        readingMeta: readingMeta.trim() || undefined,
+      })
+      toast.success('Guida creata. Completa i contenuti e pubblicala quando è pronta.')
+      onClose()
+      navigate(`/guides/${encodeURIComponent(created.slug)}`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Creazione fallita')
+    }
+  }
+
+  const previewSlug = slugTouched ? slug : slugifyGuideTitle(title)
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Nuova guida</CardTitle>
+        <CardDescription>
+          La guida viene creata come bozza. Dopo il salvataggio potrai scrivere i contenuti e
+          pubblicarla.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form className="grid gap-4 sm:grid-cols-2" onSubmit={(e) => void onSubmit(e)}>
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="new-guide-title">Titolo</Label>
+            <Input
+              id="new-guide-title"
+              value={title}
+              onChange={(e) => {
+                const next = e.target.value
+                setTitle(next)
+                if (!slugTouched) setSlug(slugifyGuideTitle(next))
+              }}
+              placeholder="Es. Come scegliere un dimmer"
+              autoFocus
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="new-guide-slug">Slug URL</Label>
+            <Input
+              id="new-guide-slug"
+              value={slugTouched ? slug : previewSlug}
+              onChange={(e) => {
+                setSlugTouched(true)
+                setSlug(e.target.value.toLowerCase())
+              }}
+              placeholder="come-scegliere-un-dimmer"
+            />
+            <p className="text-xs text-muted-foreground">
+              /guide/{previewSlug || '…'}
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label>Categoria</Label>
+            <Select value={category} onValueChange={(value) => value && setCategory(value)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {GUIDE_CATEGORIES.map((cat) => (
+                  <SelectItem key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="new-guide-reading">Tempo di lettura</Label>
+            <Input
+              id="new-guide-reading"
+              value={readingMeta}
+              onChange={(e) => setReadingMeta(e.target.value)}
+              placeholder="5 min"
+            />
+          </div>
+          <div className="flex flex-col-reverse gap-2 sm:col-span-2 sm:flex-row sm:justify-end">
+            <Button type="button" variant="cancel" onClick={onClose} disabled={store.isCreating}>
+              Annulla
+            </Button>
+            <Button type="submit" variant="success" disabled={store.isCreating}>
+              {store.isCreating ? 'Creazione…' : 'Crea guida'}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  )
+}
+
 export function GuidesListPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const store = useSnapshot(guidesStore)
+  const [createOpen, setCreateOpen] = useState(false)
   const page = Number(searchParams.get('page') ?? '1')
   const listQuery = useMemo(() => buildListQuery(searchParams, page), [searchParams, page])
   const hasMore =
@@ -69,7 +226,17 @@ export function GuidesListPage() {
 
   return (
     <div className="space-y-6">
-      <RoutePageHeader description="Pubblica le guide sul sito con l'interruttore in elenco, oppure apri il dettaglio per contenuti, traduzioni e indicizzazione." />
+      <RoutePageHeader
+        description="Pubblica le guide sul sito con l'interruttore in elenco, oppure apri il dettaglio per contenuti, traduzioni e indicizzazione."
+        actions={
+          <Button onClick={() => setCreateOpen((open) => !open)}>
+            <PlusIcon className="h-4 w-4" aria-hidden />
+            Nuova guida
+          </Button>
+        }
+      />
+
+      <CreateGuideCard open={createOpen} onClose={() => setCreateOpen(false)} />
 
       {store.error ? (
         <Alert variant="destructive">
@@ -97,8 +264,7 @@ export function GuidesListPage() {
             <RouteSkeleton />
           ) : store.items.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Nessuna guida in anagrafica. Riavvia l&apos;API o ricarica: le guide di default
-              vengono create automaticamente al primo accesso.
+              Nessuna guida in anagrafica. Crea la prima con &quot;Nuova guida&quot;.
             </p>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-gray-200">

@@ -98,8 +98,8 @@ export function DesignHeroVariantPicker({ variants, selectedRef, onChange }: Pro
           return (
             <div key={`${group.attrName}:${group.title}`}>
               <div className="mb-3 flex items-baseline justify-between gap-3">
-                <span className="text-sm font-semibold text-idl-design-fg">{group.title}</span>
-                <span className="text-[13px] text-idl-design-dim">
+                <span className="text-sm font-semibold text-idl-ink">{group.title}</span>
+                <span className="text-[13px] text-idl-ink-muted">
                   {selectedInGroup ? selectedValue : '—'}
                 </span>
               </div>
@@ -127,8 +127,8 @@ export function DesignHeroVariantPicker({ variants, selectedRef, onChange }: Pro
                       className={cn(
                         'size-[38px] rounded-full border-2 transition',
                         active
-                          ? 'border-idl-glow shadow-[0_0_0_3px_#0c0c0d_inset]'
-                          : 'border-white/20 hover:border-white/35',
+                          ? 'border-idl-brass shadow-[0_0_0_3px_#fff_inset]'
+                          : 'border-idl-path-design-border hover:border-idl-brass/50',
                         matrix.className,
                       )}
                       style={{ background: swatch ?? '#8f8f93' }}
@@ -143,8 +143,8 @@ export function DesignHeroVariantPicker({ variants, selectedRef, onChange }: Pro
         return (
           <div key={`${group.attrName}:${group.title}`}>
             <div className="mb-2 flex items-baseline justify-between gap-3">
-              <span className="text-sm font-semibold text-idl-design-fg">{group.title}</span>
-              <span className="text-[13px] text-idl-design-dim">
+              <span className="text-sm font-semibold text-idl-ink">{group.title}</span>
+              <span className="text-[13px] text-idl-ink-muted">
                 {selectedInGroup ? selectedValue : '—'}
               </span>
             </div>
@@ -169,10 +169,10 @@ export function DesignHeroVariantPicker({ variants, selectedRef, onChange }: Pro
                     className={cn(
                       'rounded-lg border px-4 py-2.5 text-sm font-medium transition',
                       active
-                        ? 'border-idl-glow bg-idl-glow text-idl-design'
-                        : 'border-white/20 text-idl-design-muted hover:border-white/35',
+                        ? 'border-idl-brass bg-idl-brass text-white'
+                        : 'border-idl-path-design-border text-idl-ink-muted hover:border-idl-brass',
                       matrix.className,
-                      state === 'out_of_stock' && active && 'line-through decoration-idl-design/50',
+                      state === 'out_of_stock' && active && 'line-through decoration-white/50',
                     )}
                   >
                     {value}

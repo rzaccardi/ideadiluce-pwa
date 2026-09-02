@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useI18n } from '@/hooks/use-i18n'
 import { useIsClient } from '@/hooks/use-is-client'
@@ -33,9 +33,11 @@ export function ConfirmDialog({
 }: Props) {
   const { t } = useI18n()
   const isClient = useIsClient()
+  const ignoreBackdropUntilRef = useRef(0)
 
   useEffect(() => {
     if (!open) return
+    ignoreBackdropUntilRef.current = Date.now() + 400
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape' && !confirmPending) onCancel()
@@ -61,6 +63,7 @@ export function ConfirmDialog({
       className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen items-center justify-center bg-idl-backdrop p-4"
       role="presentation"
       onClick={() => {
+        if (Date.now() < ignoreBackdropUntilRef.current) return
         if (!confirmPending) onCancel()
       }}
     >

@@ -10,9 +10,7 @@ import { COMPANY_CONTACT } from '@/lib/company-contact'
 import { isExternalHref } from '@/lib/href'
 import { AcceptedPaymentMethods } from '@/components/payment-method-logos'
 import { SocialBrandIcon, hasSocialBrandIcon } from '@/components/site/social-brand-icons'
-import { cn } from '@/utils/cn'
 import { BrandWordmark, SectionContainer } from './primitives'
-import { FooterThemeSelect } from './FooterThemeSelect'
 import { CookiebotConsentLink } from './CookiebotConsentLink'
 import { useI18n } from '@/hooks/use-i18n'
 
@@ -74,7 +72,8 @@ function FooterLinkList({ links, lp }: { links: SiteLink[]; lp: (href: string) =
 }
 
 function FooterSocial({ links }: { links: SiteLink[] }) {
-  if (links.length === 0) return null
+  const active = links.filter((link) => Boolean(link.href) && hasSocialBrandIcon(link.label))
+  if (active.length === 0) return null
 
   const iconClassName =
     'text-idl-design-muted transition-colors group-hover:text-idl-design-fg group-focus-visible:text-idl-design-fg'
@@ -83,33 +82,18 @@ function FooterSocial({ links }: { links: SiteLink[] }) {
     <div>
       <FooterHeading>Seguici</FooterHeading>
       <div className="flex flex-wrap gap-2">
-        {links.map((link) => {
-          if (!hasSocialBrandIcon(link.label)) return null
-
-          const className =
-            'group flex h-[34px] w-[34px] items-center justify-center rounded-lg border border-white/15 transition hover:border-idl-glow/40'
-
-          if (!link.href) {
-            return (
-              <span key={link.label} className={cn(className, 'opacity-50')} aria-hidden>
-                <SocialBrandIcon label={link.label} className={iconClassName} />
-              </span>
-            )
-          }
-
-          return (
-            <ExternalLink
-              key={link.label}
-              href={link.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={className}
-              aria-label={link.label}
-            >
-              <SocialBrandIcon label={link.label} className={iconClassName} />
-            </ExternalLink>
-          )
-        })}
+        {active.map((link) => (
+          <ExternalLink
+            key={link.label}
+            href={link.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex h-[34px] w-[34px] items-center justify-center rounded-lg border border-white/15 transition hover:border-idl-glow/40"
+            aria-label={link.label}
+          >
+            <SocialBrandIcon label={link.label} className={iconClassName} />
+          </ExternalLink>
+        ))}
       </div>
     </div>
   )
@@ -230,7 +214,6 @@ export function SiteFooter({ footer }: { footer: SiteShellContent['footer'] }) {
           <div className="flex w-full flex-col items-center gap-3 sm:ml-auto sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-x-5 sm:gap-y-2">
             <FooterLegalLinks className="text-idl-design-subtle" />
             <span className="max-w-prose">{footer.legalNote}</span>
-            <FooterThemeSelect />
           </div>
         </SectionContainer>
       </Reveal>

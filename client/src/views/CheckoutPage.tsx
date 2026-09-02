@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from '@/lib/navigation'
 import { CheckoutLegalLinks } from '@/components/checkout/stripe-ui/CheckoutLegalLinks'
 import { useSnapshot } from 'valtio/react'
-import { cartStore, fetchCart, fetchRecommendations, removeItem } from '@/features/cart'
+import { cartStore, fetchCart, fetchRecommendations, removeItem, shouldRepriceCartOnLoad } from '@/features/cart'
 import { authStore, fetchMe } from '@/features/auth'
 import {
   canStartCheckout,
@@ -105,7 +105,10 @@ export function CheckoutPage() {
     }
 
     void (async () => {
-      await fetchCart({ force: true, reprice: true })
+      const reprice = shouldRepriceCartOnLoad(cartStore.cart, {
+        reservationExpiredNotice: cartStore.reservationExpiredNotice,
+      })
+      await fetchCart({ force: true, reprice })
       await fetchMe()
       if (frozenOrderId) {
         try {

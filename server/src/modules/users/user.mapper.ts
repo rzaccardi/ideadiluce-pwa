@@ -1,8 +1,8 @@
 import type { User } from '@prisma/client'
-import { prisma } from '../../lib/prisma.js'
 import type { CustomerSegmentDTO, UserAddressDTO, UserDTO } from '../../types/dto.js'
 import { paymentMethodToDTO } from '../payments/payment.types.js'
 import { pricingContextLabel } from '../pricing/pricelist.service.js'
+import { splitLine1AndStreetNumber } from '../checkout/checkout-address.validators.js'
 
 function segmentToDTO(segment: User['customerSegment']): CustomerSegmentDTO {
   if (segment === 'BUSINESS') return 'business'
@@ -15,12 +15,18 @@ export function parseShippingAddressJson(json: unknown): UserAddressDTO | null {
   const address = json as Record<string, unknown>
   if (typeof address.line1 !== 'string' || !address.line1.trim()) return null
 
+  const split = splitLine1AndStreetNumber(
+    address.line1,
+    typeof address.streetNumber === 'string' ? address.streetNumber : '',
+    address.isSnc === true,
+  )
+
   return {
     firstName: typeof address.firstName === 'string' ? address.firstName : '',
     lastName: typeof address.lastName === 'string' ? address.lastName : '',
-    line1: address.line1,
-    streetNumber: typeof address.streetNumber === 'string' ? address.streetNumber : '',
-    isSnc: address.isSnc === true,
+    line1: split.line1,
+    streetNumber: split.streetNumber,
+    isSnc: split.isSnc,
     line2: typeof address.line2 === 'string' ? address.line2 : undefined,
     city: typeof address.city === 'string' ? address.city : '',
     postalCode: typeof address.postalCode === 'string' ? address.postalCode : '',
@@ -31,7 +37,6 @@ export function parseShippingAddressJson(json: unknown): UserAddressDTO | null {
 }
 
 export async function toUserDTO(user: User): Promise<UserDTO> {
-  const map = await prisma.odooCustomerMap.findUnique({ where: { userId: user.id } })
   const isProfessional = user.isProfessional || user.customerSegment === 'PROFESSIONAL'
   return {
     id: user.id,
@@ -61,7 +66,8 @@ export async function toUserDTO(user: User): Promise<UserDTO> {
     viesAddress: user.viesAddress,
     taxValidationStatus: user.taxValidationStatus,
     taxCheckedAt: user.taxCheckedAt?.toISOString() ?? null,
-    odooPartnerId: map?.odooPartnerId ?? null,
-    odooPricelistId: user.odooPricelistId ?? null,
+    // IDs Odoo restano server-side: il listino si deriva dalla sessione, non dallo stato client.
+    odooPartnerId: null,
+    odooPricelistId: null,
   }
 }

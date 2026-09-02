@@ -2,9 +2,9 @@ import type { Request, Response } from 'express'
 import { OdooCatalogClientError, toOdooCatalogError } from '../../adapters/odoo-catalog/odooCatalogClient.js'
 import { isOdooCatalogConfigured } from '../../adapters/odoo-catalog/odooCatalogClient.js'
 import { ok } from '../../lib/api-response.js'
-import { resolvePricingContext } from '../pricing/pricelist.service.js'
 import { AppError } from '../../types/errors.js'
 import { asyncHandler } from '../../utils/async-handler.js'
+import { catalogProxyPricingQuery } from './odoo-catalog-proxy.pricing.js'
 import {
   proxyOdooCatalogFilters,
   proxyOdooCatalogProductBySlug,
@@ -32,16 +32,14 @@ function withOdooCatalogError(correlationId: string, run: () => Promise<void>) {
   })
 }
 
-async function pricingQueryFromRequest(
-  req: Request,
+function applySessionPricingCacheHeaders(
+  res: Response,
   query: Record<string, string | undefined>,
-): Promise<Record<string, string | undefined>> {
-  if (query.partner_id || query.pricelist_id) return query
-  const pricing = await resolvePricingContext(req)
-  const merged = { ...query }
-  if (pricing.partnerId != null) merged.partner_id = String(pricing.partnerId)
-  if (pricing.pricelistId != null) merged.pricelist_id = String(pricing.pricelistId)
-  return merged
+) {
+  res.vary('Cookie')
+  if (query.partner_id || query.pricelist_id) {
+    res.set('Cache-Control', 'private, no-store')
+  }
 }
 
 function catalogFilterQuery(req: Request): Record<string, string | undefined> {
@@ -78,19 +76,16 @@ export const odooCatalogProxyController = {
   products: asyncHandler(async (req: Request, res: Response) => {
     assertOdooCatalogProxyEnabled()
     await withOdooCatalogError(req.correlationId, async () => {
-      const q = await pricingQueryFromRequest(req, {
+      const q = await catalogProxyPricingQuery(req, {
         ...catalogFilterQuery(req),
         page: typeof req.query.page === 'string' ? req.query.page : undefined,
         pageSize: typeof req.query.pageSize === 'string' ? req.query.pageSize : undefined,
         per_page: typeof req.query.per_page === 'string' ? req.query.per_page : undefined,
-        partner_id: typeof req.query.partner_id === 'string' ? req.query.partner_id : undefined,
-        pricelist_id:
-          typeof req.query.pricelist_id === 'string' ? req.query.pricelist_id : undefined,
-        website: typeof req.query.website === 'string' ? req.query.website : undefined,
         enrich_spec_tags:
           typeof req.query.enrich_spec_tags === 'string' ? req.query.enrich_spec_tags : undefined,
       })
       const data = await proxyOdooCatalogProductList(q)
+      applySessionPricingCacheHeaders(res, q)
       res.json(ok(data))
     })
   }),
@@ -123,14 +118,12 @@ export const odooCatalogProxyController = {
       throw new AppError('VALIDATION_ERROR', 'Invalid product id', 'ID prodotto non valido.', 400, false)
     }
     await withOdooCatalogError(req.correlationId, async () => {
-      const q = await pricingQueryFromRequest(req, {
+      const q = await catalogProxyPricingQuery(req, {
         locale: typeof req.query.locale === 'string' ? req.query.locale : undefined,
         lang: typeof req.query.lang === 'string' ? req.query.lang : undefined,
-        partner_id: typeof req.query.partner_id === 'string' ? req.query.partner_id : undefined,
-        pricelist_id: typeof req.query.pricelist_id === 'string' ? req.query.pricelist_id : undefined,
-        website: typeof req.query.website === 'string' ? req.query.website : undefined,
       })
       const data = await proxyOdooCatalogProductDetail(productId, q)
+      applySessionPricingCacheHeaders(res, q)
       res.json(ok(data))
     })
   }),
@@ -142,14 +135,12 @@ export const odooCatalogProxyController = {
       throw new AppError('VALIDATION_ERROR', 'Missing slug', 'Slug prodotto mancante.', 400, false)
     }
     await withOdooCatalogError(req.correlationId, async () => {
-      const q = await pricingQueryFromRequest(req, {
+      const q = await catalogProxyPricingQuery(req, {
         locale: typeof req.query.locale === 'string' ? req.query.locale : undefined,
         lang: typeof req.query.lang === 'string' ? req.query.lang : undefined,
-        partner_id: typeof req.query.partner_id === 'string' ? req.query.partner_id : undefined,
-        pricelist_id: typeof req.query.pricelist_id === 'string' ? req.query.pricelist_id : undefined,
-        website: typeof req.query.website === 'string' ? req.query.website : undefined,
       })
       const data = await proxyOdooCatalogProductBySlug(slug, q)
+      applySessionPricingCacheHeaders(res, q)
       res.json(ok(data))
     })
   }),

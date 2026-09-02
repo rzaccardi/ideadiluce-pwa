@@ -8,7 +8,6 @@ import { cartStore } from '@/features/cart'
 import { isCartFlowPath, isCartPagePath } from '@/features/cart/cart.utils'
 import { cartFeedbackStore } from '@/features/cart/cart-feedback.store'
 import { CartLineStockAlert, getCartStockIssue } from '@/components/cart/CartStockAlert'
-import { CartFlyIn } from '@/components/cart/CartFlyIn'
 import { EmptyCartPrompt } from '@/components/cart/EmptyCartPrompt'
 import { CartLineThumb } from '@/components/cart/CartLineThumb'
 import { Button } from '@/components/Button'
@@ -199,7 +198,9 @@ function MiniCartPanel({
       {cart && cart.items.length > 0 ? (
         <div className={cn('mt-4', isSheet && 'shrink-0 border-t border-idl-border pt-4')}>
           <Link to={lp('/cart')}>
-            <Button className="w-full">{t('cart.floating.openCart')}</Button>
+            <Button variant="accent" className="w-full">
+              {t('cart.floating.openCart')}
+            </Button>
           </Link>
         </div>
       ) : null}
@@ -298,7 +299,6 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
 
   return (
     <div className={cn('relative', isCartPage && 'hidden lg:block')}>
-      <CartFlyIn anchor="header" />
       <button
         type="button"
         onClick={isCartPageDesktop ? undefined : () => setCartOpen(!open)}

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
 import { Providers } from '@/providers'
 import { hanken } from '@/lib/fonts'
@@ -57,6 +57,13 @@ export const metadata: Metadata = {
   ...(getGoogleSiteVerification()
     ? { verification: { google: getGoogleSiteVerification() } }
     : {}),
+}
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0c0c0d' },
+  ],
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

@@ -10,9 +10,42 @@ export type CatalogCacheLocaleStatus = {
   stale: boolean
 }
 
+export type CatalogCacheProgress = {
+  locale: string
+  phase: 'list' | 'details' | 'promote'
+  nextListPage: number
+  listTotalPages: number | null
+  entryCount: number
+  detailCount: number
+  failedDetailIds: number
+  startedAt: string
+  updatedAt: string
+  resumed: boolean
+}
+
+export type CatalogCacheHistoryLocale = {
+  locale: string
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'skipped'
+  count?: number
+  details?: number
+  listPages?: number
+  resumed?: boolean
+  error?: string
+}
+
+export type CatalogCacheHistoryEntry = {
+  startedAt: string
+  finishedAt: string | null
+  status: 'running' | 'completed' | 'failed' | 'interrupted'
+  reason: string
+  locales: CatalogCacheHistoryLocale[]
+}
+
 export type CatalogCacheStatus = {
   configured: boolean
   ttlMs: number
+  refreshHoursRome?: number[]
+  refreshTimezone?: string
   syncing: boolean
   syncStartedAt: string | null
   lastSyncFinishedAt: string | null
@@ -23,6 +56,8 @@ export type CatalogCacheStatus = {
     details: number
     syncedAt: string
   }> | null
+  progress?: CatalogCacheProgress[]
+  history?: CatalogCacheHistoryEntry[]
   locales: CatalogCacheLocaleStatus[]
 }
 

@@ -8,6 +8,7 @@ describe('isPrivateApiPath', () => {
     expect(isPrivateApiPath('/api/v1/checkout/session/abc')).toBe(true)
     expect(isPrivateApiPath('/api/v1/auth/me')).toBe(true)
     expect(isPrivateApiPath('/api/v1/users/me')).toBe(true)
+    expect(isPrivateApiPath('/api/v1/integrations/odoo/ping')).toBe(true)
     expect(isPrivateApiPath('/cart')).toBe(true)
   })
 

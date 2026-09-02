@@ -11,6 +11,13 @@ export const CATALOG_SEARCH_LIMITS = {
   duplicateCacheMs: 30_000,
 } as const
 
+/** Chip "Prova:" in Home: 5 codici Odoo stanno su una riga nel container da 1000px. */
+export const HOME_SEARCH_HINTS_DISPLAY_LIMIT = 5
+
+export function limitHomeSearchHints<T>(hints: ReadonlyArray<T>): T[] {
+  return hints.slice(0, HOME_SEARCH_HINTS_DISPLAY_LIMIT)
+}
+
 export type CatalogSearchApiBlockReason = 'too_short' | 'duplicate' | 'interval' | 'rate_limit'
 
 export type CatalogSearchApiGateState = {
@@ -75,4 +82,21 @@ export function recordProductSuggestionFetch(
     lastApiAtMs: nowMs,
     apiTimestamps: [...state.apiTimestamps.filter((t) => t >= windowStart), nowMs],
   }
+}
+
+/** Attesa prima di ritentare un suggest bloccato da interval/rate limit. */
+export function catalogSearchRetryDelayMs(
+  reason: CatalogSearchApiBlockReason,
+  state: CatalogSearchApiGateState,
+  nowMs: number,
+): number | null {
+  if (reason === 'interval') {
+    return Math.max(0, CATALOG_SEARCH_LIMITS.minApiIntervalMs - (nowMs - state.lastApiAtMs))
+  }
+  if (reason === 'rate_limit') {
+    const oldest = state.apiTimestamps.reduce((min, stamp) => Math.min(min, stamp), Number.POSITIVE_INFINITY)
+    if (!Number.isFinite(oldest)) return CATALOG_SEARCH_LIMITS.minApiIntervalMs
+    return Math.max(0, 60_000 - (nowMs - oldest))
+  }
+  return null
 }

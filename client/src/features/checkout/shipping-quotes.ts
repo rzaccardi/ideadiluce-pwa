@@ -4,6 +4,10 @@ export function isFreeShippingQuote(quote: ShippingQuoteDTO) {
   return quote.source === 'free'
 }
 
+export function isPickupQuote(quote: ShippingQuoteDTO) {
+  return quote.source === 'pickup'
+}
+
 function sortShippingQuotes(quotes: ShippingQuoteDTO[]) {
   return [...quotes].sort((a, b) => {
     const aFree = isFreeShippingQuote(a) ? 0 : 1
@@ -12,12 +16,14 @@ function sortShippingQuotes(quotes: ShippingQuoteDTO[]) {
   })
 }
 
-/** Quote visibili in checkout: sempre tutte; con spedizione gratuita attiva restano selezionabili solo consegna gratuita e ritiro in negozio. */
+/** Quote visibili in checkout: con spedizione gratuita restano solo consegna gratuita e ritiro in negozio. */
 export function filterVisibleShippingQuotes(
-  quotes: ShippingQuoteDTO[],
-  _hint: FreeShippingHintDTO | null | undefined,
+  quotes: ReadonlyArray<ShippingQuoteDTO>,
+  _hint?: FreeShippingHintDTO | null,
 ): ShippingQuoteDTO[] {
-  return sortShippingQuotes(quotes)
+  const sorted = sortShippingQuotes([...quotes])
+  if (!sorted.some(isFreeShippingQuote)) return sorted
+  return sorted.filter((q) => isFreeShippingQuote(q) || isPickupQuote(q))
 }
 
 export function isShippingQuoteSelectable(
@@ -33,10 +39,6 @@ export function isFreeShippingLocked(
   hint: FreeShippingHintDTO | null | undefined,
 ) {
   return Boolean(hint?.eligible && quotes.some(isFreeShippingQuote))
-}
-
-export function isPickupQuote(quote: ShippingQuoteDTO) {
-  return quote.source === 'pickup'
 }
 
 export function isRomePickupEligible(address: {

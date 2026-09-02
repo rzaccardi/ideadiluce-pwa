@@ -40,7 +40,7 @@ import { Input } from '@/components/ui/input'
 const PAGE_SIZE = 25
 const DEFAULT_DAYS = 30
 const DEFAULT_ODOO_LOOKBACK_DAYS = 90
-const DEFAULT_ODOO_HINT_LIMIT = 8
+const DEFAULT_ODOO_HINT_LIMIT = 5
 
 function buildListQuery(searchParams: URLSearchParams, page: number) {
   const params = new URLSearchParams({

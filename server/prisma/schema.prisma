@@ -713,6 +713,14 @@ model AbandonedCartEvent {
   @@index([createdAt])
 }
 
+/** Impostazioni UX storefront (singleton `default`). */
+model StorefrontSettings {
+  id            String   @id @default("default")
+  soundsEnabled Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
 /** Impostazioni social proof (singleton `default`). */
 model SocialProofSettings {
   id                  String    @id @default("default")

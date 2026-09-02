@@ -3,6 +3,7 @@ import { HoverLift, Stagger, StaggerItem } from '@/components/motion'
 import { BrandWordmark } from '@/components/site/primitives'
 import { SiteHeading } from '@/components/site/SiteHeading'
 import { SiteImage } from '@/components/site/SiteImage'
+import { SITE_INSET_SCROLL_TRACK_CLASS } from '@/styles/site-ui'
 import { cn } from '@/utils/cn'
 import type { LocalePathFn } from './types'
 
@@ -34,7 +35,7 @@ export function GuideCardMedia({ imageUrl, sizes }: { imageUrl?: string; sizes: 
         />
       ) : (
         <div
-          className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-idl-cream via-[#efe9df] to-[#e5dfd4]"
+          className="absolute inset-0 flex items-center justify-center bg-idl-cream"
           aria-hidden
         >
           <BrandWordmark className="h-5 opacity-45 sm:h-6" />
@@ -53,9 +54,8 @@ export function GuideCardGrid({ items, lp, variant = 'home', stagger = 0.07 }: P
       className={
         isHome
           ? cn(
-              '-mx-4 flex gap-4 overflow-x-auto scroll-smooth px-4 pb-1',
-              'snap-x snap-mandatory',
-              '[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden',
+              SITE_INSET_SCROLL_TRACK_CLASS,
+              'gap-4 pb-1',
               'sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:snap-none',
               'lg:grid-cols-4 lg:grid-rows-1',
             )

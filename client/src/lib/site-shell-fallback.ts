@@ -1,6 +1,6 @@
 import type { SiteShellContent } from '@/types/site-content'
 import { enrichNavColumns } from '@/lib/mobile-nav-visuals'
-import { COMPANY_CONTACT } from '@/lib/company-contact'
+import { COMPANY_CONTACT, COMPANY_FACEBOOK_URL } from '@/lib/company-contact'
 
 const SOCKET_ITEMS = [
   { code: 'E27', hint: 'a vite grande', href: '/attacco/e27' },
@@ -35,7 +35,11 @@ function attaccoMegaMenuColumns() {
 /** Shell di fallback: header/footer sempre pronti mentre il CMS carica. */
 export const FALLBACK_SITE_SHELL: SiteShellContent = {
   utilityBar: {
-    messages: ['Spedizioni tracciate in tutto il mondo', 'Assistenza tecnica reale'],
+    messages: [
+      'Spedizione tracciata in tutta Italia',
+      'Assistenza tecnica reale',
+      'Catalogo per professionisti',
+    ],
     links: [
       { label: 'Professionisti', href: '/professionisti' },
       { label: 'Aiuto', href: '/prodotto-non-trovato' },
@@ -219,12 +223,7 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
       email: COMPANY_CONTACT.email,
       hoursLines: [...COMPANY_CONTACT.hoursLines],
     },
-    social: [
-      { label: 'Instagram', href: '' },
-      { label: 'Facebook', href: '' },
-      { label: 'LinkedIn', href: '' },
-      { label: 'Pinterest', href: '' },
-    ],
+    social: [{ label: 'Facebook', href: COMPANY_FACEBOOK_URL }],
     columns: [
       {
         title: 'Idea di Luce',

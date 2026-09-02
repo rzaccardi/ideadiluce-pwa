@@ -16,6 +16,7 @@ import {
   TruckIcon,
   ReceiptIcon,
   RefreshCwIcon,
+  Volume2Icon,
 } from 'lucide-react'
 import { getSitePageLabel } from '@/features/site'
 
@@ -113,14 +114,6 @@ export const navSections: NavSection[] = [
         accentBgClass: 'bg-violet-50',
         match: (p) => p.startsWith('/search-analytics'),
       },
-      {
-        to: '/social-proof',
-        label: 'Social proof',
-        icon: MegaphoneIcon,
-        accentClass: 'text-emerald-600',
-        accentBgClass: 'bg-emerald-50',
-        match: (p) => p.startsWith('/social-proof'),
-      },
     ],
   },
   {
@@ -132,7 +125,7 @@ export const navSections: NavSection[] = [
         icon: LayoutTemplateIcon,
         accentClass: 'text-sky-600',
         accentBgClass: 'bg-sky-50',
-        match: (p) => p.startsWith('/site'),
+        match: (p) => p === '/site' || p.startsWith('/site/'),
       },
       {
         to: '/guides',
@@ -192,6 +185,14 @@ export const navSections: NavSection[] = [
         accentBgClass: 'bg-teal-50',
         match: (p) => p.startsWith('/tax-rules'),
       },
+      {
+        to: '/experience',
+        label: 'Esperienza',
+        icon: Volume2Icon,
+        accentClass: 'text-slate-600',
+        accentBgClass: 'bg-slate-50',
+        match: (p) => p.startsWith('/experience'),
+      },
     ],
   },
 ]
@@ -245,6 +246,12 @@ export function getBreadcrumbs(pathname: string, _search = ''): BreadcrumbItem[]
     return [
       { label: 'Fiscalità', href: '/tax-rules' },
       { label: 'Regole IVA e posizioni fiscali' },
+    ]
+  }
+  if (pathname.startsWith('/experience')) {
+    return [
+      { label: 'Esperienza', href: '/experience' },
+      { label: 'Suoni e feedback dell’interfaccia in negozio' },
     ]
   }
   if (pathname.startsWith('/social-proof')) {
@@ -303,7 +310,7 @@ export function getBreadcrumbs(pathname: string, _search = ''): BreadcrumbItem[]
       { label: getSitePageLabelFromPath(pageKey) },
     ]
   }
-  if (pathname.startsWith('/site')) {
+  if (pathname === '/site') {
     return [
       { label: 'Pagine sito', href: '/site' },
       { label: 'Pagine editoriali PWA' },
@@ -421,6 +428,15 @@ export function getPageMeta(pathname: string, _search = ''): {
       iconBgClassName: 'bg-teal-50',
     }
   }
+  if (pathname.startsWith('/experience')) {
+    return {
+      title: 'Esperienza',
+      description: 'Suoni e feedback dell’interfaccia in negozio',
+      icon: Volume2Icon,
+      iconClassName: 'text-slate-600',
+      iconBgClassName: 'bg-slate-50',
+    }
+  }
   if (pathname.startsWith('/social-proof')) {
     return {
       title: 'Social proof',
@@ -504,7 +520,7 @@ export function getPageMeta(pathname: string, _search = ''): {
       iconBgClassName: 'bg-sky-50',
     }
   }
-  if (pathname.startsWith('/site')) {
+  if (pathname === '/site') {
     return {
       title: 'Pagine sito',
       description: 'Header, footer, trust bar e homepage — testi gestiti dal backoffice',

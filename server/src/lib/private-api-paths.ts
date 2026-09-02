@@ -13,6 +13,7 @@ export const V1_PRIVATE_API_SEGMENTS = [
   'address',
   'tax',
   'vat',
+  'integrations',
 ] as const
 
 function normalizeApiPath(path: string): string {

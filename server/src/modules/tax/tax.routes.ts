@@ -18,6 +18,7 @@ import { normalizeCountryCode } from './tax.constants.js'
 import { subtotalCentsFromCartItems } from '../cart/cartTotals.js'
 import { prisma } from '../../lib/prisma.js'
 import { resolvePricingContext } from '../pricing/pricelist.service.js'
+import { vatValidatePublicRateLimit } from '../../lib/rate-limiters.js'
 
 export const taxRouter = Router()
 
@@ -66,14 +67,21 @@ taxRouter.post(
   validateRequest({ body: taxCalculateSchema }),
   asyncHandler(async (req, res) => {
     const body = req.body as z.infer<typeof taxCalculateSchema>
+    const pricing = await resolvePricingContext(req)
+    const user = req.sessionRecord?.user
+    const requested = segmentFromDto(body.customerSegment)
+    const segment = user
+      ? pricing.segment
+      : (requested === 'PROFESSIONAL' ? 'RETAIL' : (requested ?? pricing.segment))
     const breakdown = await taxService.calculateForCheckout({
       netCents: body.netCents,
       billingCountry: body.billingCountry,
       shippingCountry: body.shippingCountry,
-      customerSegment: segmentFromDto(body.customerSegment),
-      isProfessional: body.isProfessional ?? body.customerSegment === 'professional',
-      vatValid: body.vatValidated ?? null,
-      vatForceAccepted: body.vatForceAccepted,
+      customerSegment: segment,
+      isProfessional: user
+        ? user.isProfessional || user.customerSegment === 'PROFESSIONAL'
+        : false,
+      vatValid: user?.viesValid ?? null,
     })
     res.json(ok(breakdown))
   }),
@@ -106,6 +114,7 @@ export const vatRouter = Router()
 
 vatRouter.post(
   '/validate',
+  vatValidatePublicRateLimit,
   validateRequest({ body: vatValidateSchema }),
   asyncHandler(async (req, res) => {
     const body = req.body as z.infer<typeof vatValidateSchema>

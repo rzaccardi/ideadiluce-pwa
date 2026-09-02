@@ -16,6 +16,7 @@ import { ProfessionalRequestDetailPage } from '@/pages/professional-requests/pro
 import { SiteInquiriesPage } from '@/pages/site-inquiries/site-inquiries-page'
 import { SiteInquiryDetailPage } from '@/pages/site-inquiries/site-inquiry-detail-page'
 import { TaxRulesPage } from '@/pages/tax-rules/tax-rules-page'
+import { ExperiencePage } from '@/pages/experience/experience-page'
 import { SearchAnalyticsPage } from '@/pages/search-analytics/search-analytics-page'
 import { CatalogCachePage } from '@/pages/catalog-cache/catalog-cache-page'
 
@@ -92,6 +93,7 @@ export function App() {
               <Route path="restock/:id" element={<RestockDetailPage />} />
               <Route path="shipping" element={<ShippingPage />} />
               <Route path="tax-rules" element={<TaxRulesPage />} />
+              <Route path="experience" element={<ExperiencePage />} />
               <Route path="search-analytics" element={<SearchAnalyticsPage />} />
               <Route
                 path="odoo/quotations"

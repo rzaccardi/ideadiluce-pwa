@@ -9,6 +9,7 @@ import { catalogStore, fetchCatalogBootstrap } from '@/features/catalog'
 import {
   CATALOG_SEARCH_LIMITS,
   canFetchProductSuggestions,
+  catalogSearchRetryDelayMs,
   createCatalogSearchApiGateState,
   recordProductSuggestionFetch,
   sanitizeCatalogSearchInput,
@@ -87,18 +88,23 @@ export function useCatalogSearchAutocomplete({
   const cat = useSnapshot(catalogStore)
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const requestRef = useRef(0)
   const abortRef = useRef<AbortController | null>(null)
   const apiGateRef = useRef<CatalogSearchApiGateState>(createCatalogSearchApiGateState())
+  const queryRef = useRef('')
+  const resultsQueryRef = useRef<string | null>(null)
 
   const [internalQuery, setInternalQuery] = useState(defaultValue)
   const query = value ?? internalQuery
+  queryRef.current = query
 
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [groups, setGroups] = useState<CatalogSearchSuggestionGroup[]>([])
   const [activeIndex, setActiveIndex] = useState(-1)
   const [productTotal, setProductTotal] = useState<number | null>(null)
+  const [resultsQuery, setResultsQuery] = useState<string | null>(null)
   const lastResultCountRef = useRef(0)
 
   const hintStrings = useMemo(() => normalizeCatalogSearchHints(hints).strings, [hints])
@@ -118,6 +124,7 @@ export function useCatalogSearchAutocomplete({
   useEffect(() => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
+      if (retryRef.current) clearTimeout(retryRef.current)
       abortRef.current?.abort()
     }
   }, [])
@@ -206,13 +213,25 @@ export function useCatalogSearchAutocomplete({
     [locale, lp, navigate, onAfterSubmit, productTotal, query, recordRecentOnSubmit, searchSource],
   )
 
+  const clearAutocompleteResults = useCallback(() => {
+    setGroups([])
+    setOpen(false)
+    setProductTotal(null)
+    setActiveIndex(-1)
+    setLoading(false)
+    setResultsQuery(null)
+    resultsQueryRef.current = null
+  }, [])
+
+  const isCurrentQuery = useCallback((trimmed: string) => {
+    return trimmed === sanitizeCatalogSearchInput(queryRef.current)
+  }, [])
+
   const runAutocomplete = useCallback(
     async (raw: string) => {
       const trimmed = sanitizeCatalogSearchInput(raw)
       if (!enableAutocomplete || trimmed.length < CATALOG_SEARCH_LIMITS.minLocalLength) {
-        setGroups([])
-        setOpen(false)
-        setProductTotal(null)
+        clearAutocompleteResults()
         return
       }
 
@@ -224,21 +243,44 @@ export function useCatalogSearchAutocomplete({
       })
 
       const requestId = ++requestRef.current
-      setGroups(localGroups)
-      setOpen(localGroups.length > 0)
       setActiveIndex(-1)
-      setProductTotal(null)
 
-      if (trimmed.length < CATALOG_SEARCH_LIMITS.minApiLength) return
+      if (trimmed.length < CATALOG_SEARCH_LIMITS.minApiLength) {
+        if (!isCurrentQuery(trimmed)) return
+        setGroups(localGroups)
+        setOpen(localGroups.length > 0)
+        setProductTotal(null)
+        setResultsQuery(localGroups.length > 0 ? trimmed : null)
+        resultsQueryRef.current = localGroups.length > 0 ? trimmed : null
+        setLoading(localGroups.length === 0)
+        return
+      }
 
-      const gate = canFetchProductSuggestions(trimmed, apiGateRef.current, Date.now())
-      if (!gate.allowed) return
+      const now = Date.now()
+      const gate = canFetchProductSuggestions(trimmed, apiGateRef.current, now)
+      const duplicateForCurrentResults =
+        !gate.allowed && gate.reason === 'duplicate' && resultsQueryRef.current === trimmed
+
+      if (duplicateForCurrentResults) {
+        if (isCurrentQuery(trimmed)) setLoading(false)
+        return
+      }
+
+      if (!gate.allowed && (gate.reason === 'interval' || gate.reason === 'rate_limit')) {
+        const delay = Math.max(50, catalogSearchRetryDelayMs(gate.reason, apiGateRef.current, now) ?? 50)
+        if (retryRef.current) clearTimeout(retryRef.current)
+        retryRef.current = setTimeout(() => {
+          void runAutocomplete(raw)
+        }, delay)
+        setLoading(true)
+        return
+      }
 
       abortRef.current?.abort()
       const controller = new AbortController()
       abortRef.current = controller
-
       setLoading(true)
+
       try {
         const result = await api.catalog.products(
           {
@@ -250,7 +292,7 @@ export function useCatalogSearchAutocomplete({
           },
           { signal: controller.signal },
         )
-        if (requestId !== requestRef.current) return
+        if (requestId !== requestRef.current || !isCurrentQuery(trimmed)) return
 
         apiGateRef.current = recordProductSuggestionFetch(apiGateRef.current, trimmed, Date.now())
 
@@ -262,40 +304,73 @@ export function useCatalogSearchAutocomplete({
         setGroups(nextGroups)
         setOpen(nextGroups.length > 0 || trimmed.length >= CATALOG_SEARCH_LIMITS.minApiLength)
         setProductTotal(result.total)
+        setResultsQuery(trimmed)
+        resultsQueryRef.current = trimmed
         lastResultCountRef.current = productItems.length
       } catch {
         if (controller.signal.aborted) return
-        if (requestId === requestRef.current) {
+        if (requestId === requestRef.current && isCurrentQuery(trimmed)) {
           setGroups(localGroups)
           setOpen(localGroups.length > 0)
           setProductTotal(null)
+          setResultsQuery(trimmed)
+          resultsQueryRef.current = trimmed
         }
       } finally {
-        if (requestId === requestRef.current) setLoading(false)
+        if (requestId === requestRef.current && isCurrentQuery(trimmed)) setLoading(false)
       }
     },
-    [effectiveBrands, effectiveCategories, enableAutocomplete, hintStrings, locale, maxPerGroup],
+    [
+      clearAutocompleteResults,
+      effectiveBrands,
+      effectiveCategories,
+      enableAutocomplete,
+      hintStrings,
+      isCurrentQuery,
+      locale,
+      maxPerGroup,
+    ],
   )
+
+  const invalidateInFlightSearch = useCallback(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = null
+    if (retryRef.current) clearTimeout(retryRef.current)
+    retryRef.current = null
+    requestRef.current += 1
+    abortRef.current?.abort()
+    abortRef.current = null
+  }, [])
 
   const scheduleAutocomplete = useCallback(
     (raw: string) => {
       if (!enableAutocomplete) return
-      if (debounceRef.current) clearTimeout(debounceRef.current)
+      invalidateInFlightSearch()
+
+      const trimmed = sanitizeCatalogSearchInput(raw)
+      if (trimmed.length < CATALOG_SEARCH_LIMITS.minLocalLength) {
+        clearAutocompleteResults()
+        return
+      }
+
+      setLoading(true)
       debounceRef.current = setTimeout(() => {
         void runAutocomplete(raw)
       }, CATALOG_SEARCH_LIMITS.debounceMs)
     },
-    [enableAutocomplete, runAutocomplete],
+    [clearAutocompleteResults, enableAutocomplete, invalidateInFlightSearch, runAutocomplete],
   )
 
   const resetAutocomplete = useCallback(() => {
+    invalidateInFlightSearch()
     setOpen(false)
     setGroups([])
     setActiveIndex(-1)
     setProductTotal(null)
     setLoading(false)
-    abortRef.current?.abort()
-  }, [])
+    setResultsQuery(null)
+    resultsQueryRef.current = null
+  }, [invalidateInFlightSearch])
 
   return {
     query,
@@ -309,6 +384,7 @@ export function useCatalogSearchAutocomplete({
     activeIndex,
     setActiveIndex,
     productTotal,
+    resultsQuery,
     submitQuery,
     pickSuggestion,
     runAutocomplete,

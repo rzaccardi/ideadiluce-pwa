@@ -14,3 +14,6 @@ export const COMPANY_CONTACT = {
   email: 'info@ideadiluce.com',
   hoursLines: ['Lunedì – Venerdì', '9.00 – 13.00', '15.00 – 18.00'],
 } as const
+
+/** Unico profilo social ufficiale. */
+export const COMPANY_FACEBOOK_URL = 'https://www.facebook.com/ideadiluce'

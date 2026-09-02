@@ -1,5 +1,5 @@
 import { env } from '../../config/env.js'
-import { formatStreetLine } from '../../modules/checkout/checkout-address.validators.js'
+import { formatStreetLine, splitLine1AndStreetNumber } from '../../modules/checkout/checkout-address.validators.js'
 import { odooExecuteKw, type OdooCallContext } from './odooClient.js'
 import { normalizeOdooCreateId } from './odooId.js'
 import type {
@@ -91,12 +91,14 @@ async function getPartnerProfileByEmail(
   if (!partner) return null
 
   const name = typeof partner.name === 'string' ? partner.name : ''
+  const street = typeof partner.street === 'string' ? partner.street : ''
+  const split = splitLine1AndStreetNumber(street)
   const country = await countryCodeForPartner(ctx, partner.country_id)
   return {
     ...splitPartnerName(name),
-    line1: typeof partner.street === 'string' ? partner.street : '',
-    streetNumber: '',
-    isSnc: false,
+    line1: split.line1,
+    streetNumber: split.streetNumber,
+    isSnc: split.isSnc,
     line2: typeof partner.street2 === 'string' ? partner.street2 : undefined,
     city: typeof partner.city === 'string' ? partner.city : '',
     postalCode: typeof partner.zip === 'string' ? partner.zip : '',

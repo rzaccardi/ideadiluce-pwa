@@ -5,6 +5,7 @@ import { Link } from '@/lib/navigation'
 import { HoverLift } from '@/components/motion'
 import { SiteHeading } from '@/components/site/SiteHeading'
 import { useI18n } from '@/hooks/use-i18n'
+import { SITE_INSET_SCROLL_TRACK_CLASS } from '@/styles/site-ui'
 import { cn } from '@/utils/cn'
 import { GuideCardMedia, type GuideCardItem } from './GuideCardGrid'
 import type { LocalePathFn } from './types'
@@ -60,7 +61,7 @@ export function GuideCardSlider({ items, lp, className, loop = false }: Props) {
   const scrollBy = (direction: -1 | 1) => {
     const el = scrollRef.current
     if (!el) return
-    const firstCard = el.querySelector<HTMLElement>('li')
+    const firstCard = el.querySelector<HTMLElement>('li.snap-start')
     const gap = 16
     const step = firstCard ? firstCard.offsetWidth + gap : el.clientWidth * 0.85
     const { scrollLeft, scrollWidth, clientWidth } = el
@@ -113,9 +114,8 @@ export function GuideCardSlider({ items, lp, className, loop = false }: Props) {
       <ul
         ref={scrollRef}
         className={cn(
-          '-mx-4 flex gap-4 overflow-x-auto scroll-smooth px-4 pb-1 sm:mx-0 sm:px-0',
-          'snap-x snap-mandatory',
-          '[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden',
+          SITE_INSET_SCROLL_TRACK_CLASS,
+          'gap-4 pb-1',
         )}
       >
         {items.map((guide) => (

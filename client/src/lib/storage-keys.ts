@@ -7,7 +7,7 @@ export const IDEADILUCE_AUTH_SESSION_KEY = `${IDEADILUCE_STORAGE_PREFIX}auth-ses
 export const IDEADILUCE_THEME_KEY = `${IDEADILUCE_STORAGE_PREFIX}theme`
 export const IDEADILUCE_SW_CLEAN_KEY = `${IDEADILUCE_STORAGE_PREFIX}sw-clean`
 
-const CATALOG_SEARCH_RECENT_PREFIX = `${IDEADILUCE_STORAGE_PREFIX}catalog-search-recent:`
+export const CATALOG_SEARCH_RECENT_PREFIX = `${IDEADILUCE_STORAGE_PREFIX}catalog-search-recent:`
 
 export function catalogSearchRecentKey(locale: PwaLocale): string {
   return `${CATALOG_SEARCH_RECENT_PREFIX}${locale}`

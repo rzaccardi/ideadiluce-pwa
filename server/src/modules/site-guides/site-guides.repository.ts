@@ -22,6 +22,23 @@ export const siteGuideRepository = {
     return prisma.siteGuide.findUnique({ where: { slug } })
   },
 
+  create(data: {
+    slug: string
+    category: string
+    readingMeta: string
+    sortOrder: number
+    indexed: boolean
+    featured: boolean
+    published: boolean
+  }) {
+    return prisma.siteGuide.create({ data })
+  },
+
+  async maxSortOrder() {
+    const result = await prisma.siteGuide.aggregate({ _max: { sortOrder: true } })
+    return result._max.sortOrder ?? 0
+  },
+
   upsert(data: {
     slug: string
     category: string

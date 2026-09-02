@@ -21,7 +21,7 @@ export function PaymentMethodOption({ id, title, description, selected, disabled
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-[15px] font-bold text-idl-graphite">{title}</span>
-            <PaymentBrandIcons method={id} />
+            {id === 'bank_transfer' ? null : <PaymentBrandIcons method={id} />}
           </div>
           <p className="mt-1 text-[13px] leading-snug text-idl-muted">{description}</p>
           {children ? (

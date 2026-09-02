@@ -1,6 +1,7 @@
 'use client'
 
 import { Reveal } from '@/components/motion'
+import { HOME_SEARCH_HINTS_DISPLAY_LIMIT, limitHomeSearchHints } from '@/lib/catalog-search-limits'
 import { SectionContainer } from '../primitives'
 import { CatalogSearchTrigger } from '../catalog/CatalogSearchTrigger'
 
@@ -32,8 +33,10 @@ export function CatalogSearchBridge({
             variant="design"
             placeholder={placeholder}
             ctaLabel={ctaLabel}
-            hints={hints}
+            hints={limitHomeSearchHints(hints)}
             hintsLabel={hintsLabel}
+            maxHints={HOME_SEARCH_HINTS_DISPLAY_LIMIT}
+            hintsSingleLine
           />
         </div>
       </SectionContainer>

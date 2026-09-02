@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildPaletteDisplayGroups,
+  catalogSearchPaletteView,
   clampSearchActiveIndex,
   nextSearchActiveIndex,
   suggestionOptionId,
@@ -51,5 +52,79 @@ describe('nextSearchActiveIndex', () => {
 describe('suggestionOptionId', () => {
   it('genera id stabili per aria-activedescendant', () => {
     expect(suggestionOptionId('list-1', 'product:faretto')).toBe('list-1-option-product:faretto')
+  })
+})
+
+describe('catalogSearchPaletteView', () => {
+  it('resta idle sotto la lunghezza minima', () => {
+    expect(
+      catalogSearchPaletteView({ queryLength: 1, minLength: 2, loading: false, hasResults: false }),
+    ).toBe('idle')
+  })
+
+  it('mostra skeleton mentre la ricerca è in corso anche senza risultati', () => {
+    expect(
+      catalogSearchPaletteView({ queryLength: 4, minLength: 2, loading: true, hasResults: false }),
+    ).toBe('pending')
+  })
+
+  it('resta in skeleton prima della chiamata prodotti', () => {
+    expect(
+      catalogSearchPaletteView({
+        queryLength: 2,
+        minLength: 2,
+        minApiLength: 3,
+        loading: false,
+        hasResults: false,
+      }),
+    ).toBe('pending')
+  })
+
+  it('mostra vuoto solo a ricerca conclusa senza risultati', () => {
+    expect(
+      catalogSearchPaletteView({
+        queryLength: 4,
+        minLength: 2,
+        minApiLength: 3,
+        loading: false,
+        hasResults: false,
+        currentQuery: 'Lampada da tavo',
+        resultsQuery: 'Lampada da tavo',
+      }),
+    ).toBe('empty')
+  })
+
+  it('resta in skeleton se i risultati appartengono a una query precedente', () => {
+    expect(
+      catalogSearchPaletteView({
+        queryLength: 16,
+        minLength: 2,
+        minApiLength: 3,
+        loading: false,
+        hasResults: false,
+        currentQuery: 'Lampada da tavol',
+        resultsQuery: 'Lampada da tavo',
+      }),
+    ).toBe('pending')
+  })
+
+  it('resta in skeleton finché la query corrente non ha una risposta', () => {
+    expect(
+      catalogSearchPaletteView({
+        queryLength: 16,
+        minLength: 2,
+        minApiLength: 3,
+        loading: false,
+        hasResults: false,
+        currentQuery: 'Lampada da tavo',
+        resultsQuery: null,
+      }),
+    ).toBe('pending')
+  })
+
+  it('mostra i risultati quando sono arrivati', () => {
+    expect(
+      catalogSearchPaletteView({ queryLength: 4, minLength: 2, loading: false, hasResults: true }),
+    ).toBe('results')
   })
 })

@@ -9,6 +9,7 @@ import { ApiRequestError } from '@/types/api'
 import type { CartAddedFeedback } from './cart-feedback'
 import { notifyCartItemAdded } from './cart-feedback'
 import type { CartAddProductHint } from './cart-add-hint'
+import { applyOptimisticAdd, isOptimisticCartId } from './cart-optimistic'
 import { cartStore } from './cart.store'
 
 export type AddItemOptions = {
@@ -30,6 +31,7 @@ function errMessage(e: unknown) {
 }
 
 function mirrorCartToLocalStorage() {
+  if (cartStore.cart && isOptimisticCartId(cartStore.cart.id)) return
   saveLocalCartMirror(cartStore.cart)
 }
 
@@ -98,18 +100,42 @@ function queueCartFetchOptions(options?: FetchCartOptions) {
   }
 }
 
+let pendingCartMutations: Promise<void> = Promise.resolve()
+let pendingMutationCount = 0
+
+function enqueueCartMutation(task: () => Promise<void>): Promise<void> {
+  const run = pendingCartMutations.then(task, task)
+  pendingCartMutations = run.then(() => undefined, () => undefined)
+  return run
+}
+
+export async function waitForPendingCartMutations() {
+  let guard = 0
+  while (pendingMutationCount > 0 && guard < 20) {
+    await pendingCartMutations
+    guard += 1
+  }
+}
+
 export function fetchCart(options?: FetchCartOptions) {
-  if (!options?.force && cartStore.cart) {
+  if (
+    !options?.force &&
+    cartStore.cart &&
+    !isOptimisticCartId(cartStore.cart.id) &&
+    pendingMutationCount === 0
+  ) {
     return Promise.resolve()
   }
   queueCartFetchOptions(options)
   // Chiave unica: evita GET paralleli cart + cart?reprice=1 (stesso carrello, doppio Odoo).
-  return dedupeAsync('cart:get', async () => {
-    await Promise.resolve()
-    const opts = pendingCartFetch ?? {}
-    pendingCartFetch = null
-    return loadCart(opts)
-  })
+  return waitForPendingCartMutations().then(() =>
+    dedupeAsync('cart:get', async () => {
+      await Promise.resolve()
+      const opts = pendingCartFetch ?? {}
+      pendingCartFetch = null
+      return loadCart(opts)
+    }),
+  )
 }
 
 /** Verifica mirror localStorage al bootstrap (prima del primo GET). */
@@ -141,27 +167,41 @@ export async function addItem(
   options?: AddItemOptions | CartAddedFeedback,
 ) {
   const { feedback, productHint } = normalizeAddItemOptions(options)
-  cartStore.isLoading = true
   cartStore.error = null
-  try {
-    cartStore.cart = await api.cart.addItem({
-      productRef,
-      quantity,
-      variantRef,
-      productHint,
-    })
-    mirrorCartToLocalStorage()
-    notifyCartItemAdded({
-      productName: feedback?.productName ?? productRef,
-      quantity: feedback?.quantity ?? quantity,
-      imageUrl: feedback?.imageUrl,
-    })
-  } catch (e) {
-    cartStore.error = errMessage(e)
-    throw e
-  } finally {
-    cartStore.isLoading = false
-  }
+  cartStore.cart = applyOptimisticAdd({
+    cart: cartStore.cart,
+    productRef,
+    quantity,
+    variantRef: variantRef ?? null,
+    productHint,
+  })
+  notifyCartItemAdded({
+    productName: feedback?.productName ?? productHint?.name ?? productRef,
+    quantity: feedback?.quantity ?? quantity,
+    imageUrl: feedback?.imageUrl ?? productHint?.imageUrl,
+  })
+
+  pendingMutationCount += 1
+  return enqueueCartMutation(async () => {
+    try {
+      const next = await api.cart.addItem({
+        productRef,
+        quantity,
+        variantRef,
+        productHint,
+      })
+      if (pendingMutationCount <= 1) {
+        cartStore.cart = next
+        mirrorCartToLocalStorage()
+      }
+    } catch (e) {
+      cartStore.error = errMessage(e)
+      await loadCart({ skipMirrorCheck: true, silent: true })
+      throw e
+    } finally {
+      pendingMutationCount -= 1
+    }
+  })
 }
 
 export async function updateItem(id: string, quantity: number) {

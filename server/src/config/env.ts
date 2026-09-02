@@ -141,8 +141,8 @@ const envSchema = z.object({
   /** Chiave 32+ caratteri per cifrare credenziali corrieri in DB (consigliato in produzione). */
   SHIPPING_CREDENTIALS_KEY: z.string().optional(),
   /**
-   * Se valorizzato, richiede header `X-Integrations-Token` per `/api/v1/integrations/*`.
-   * Se assente, si usano le stesse regole di `requireLogin`.
+   * Token obbligatorio in produzione per `/api/v1/integrations/*` (header `X-Integrations-Token`).
+   * In sviluppo, se assente, gli endpoint richiedono un utente loggato (non sessione guest).
    */
   INTEGRATIONS_TOKEN: z.string().optional(),
   /** URL pubblico PWA per sitemap / Merchant / llms (es. https://shop.ideadiluce.it). */
@@ -186,7 +186,7 @@ const envSchema = z.object({
   SEARCH_HINTS_AUTO_SYNC_ENABLED: boolish.default(true),
   SEARCH_HINTS_STALE_HOURS: z.coerce.number().default(72),
   SEARCH_HINTS_LOOKBACK_DAYS: z.coerce.number().default(90),
-  SEARCH_HINTS_LIMIT: z.coerce.number().default(8),
+  SEARCH_HINTS_LIMIT: z.coerce.number().default(5),
 })
 
 export type Env = z.infer<typeof envSchema>

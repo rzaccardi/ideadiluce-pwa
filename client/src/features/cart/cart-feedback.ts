@@ -1,3 +1,4 @@
+import { playCartAddSound } from './cart-add-sound'
 import { cartFeedbackStore } from './cart-feedback.store'
 
 const TOAST_TTL_MS = 4_000
@@ -16,6 +17,7 @@ export type CartAddedFeedback = {
 export function notifyCartItemAdded(input: CartAddedFeedback) {
   const quantity = input.quantity ?? 1
 
+  playCartAddSound()
   cartFeedbackStore.cartPulse += 1
 
   if (isMobileViewport()) {
@@ -32,8 +34,6 @@ export function notifyCartItemAdded(input: CartAddedFeedback) {
     imageUrl: input.imageUrl,
     createdAt: Date.now(),
   })
-  cartFeedbackStore.flyInToken = cartFeedbackStore.cartPulse
-  cartFeedbackStore.flyInImageUrl = input.imageUrl ?? null
 
   window.setTimeout(() => {
     cartFeedbackStore.toasts = cartFeedbackStore.toasts.filter((t) => t.id !== id)

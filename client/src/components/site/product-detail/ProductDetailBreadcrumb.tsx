@@ -14,14 +14,6 @@ type Props = {
 }
 
 export function ProductDetailBreadcrumb({ items, lp, variant = 'design', inHero }: Props) {
-  if (inHero && variant === 'design') {
-    return (
-      <SectionContainer className="relative z-[2] pt-4 pb-0 sm:pt-5">
-        <CategoryBreadcrumb items={items} lp={lp} variant="design" />
-      </SectionContainer>
-    )
-  }
-
   if (variant === 'technical') {
     return (
       <SectionContainer className="pt-4 sm:pt-5">
@@ -31,8 +23,8 @@ export function ProductDetailBreadcrumb({ items, lp, variant = 'design', inHero 
   }
 
   return (
-    <SectionContainer className="pt-4 sm:pt-5">
-      <CategoryBreadcrumb items={items} lp={lp} variant="design" />
+    <SectionContainer className={inHero ? 'relative z-[2] pt-4 pb-0 sm:pt-5' : 'pt-4 sm:pt-5'}>
+      <CategoryBreadcrumb items={items} lp={lp} variant="design" onDark={Boolean(inHero)} />
     </SectionContainer>
   )
 }

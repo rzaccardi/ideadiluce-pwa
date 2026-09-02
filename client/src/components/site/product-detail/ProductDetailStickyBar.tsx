@@ -56,7 +56,7 @@ export function ProductDetailStickyBar({
       className={cn(
         'sticky bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom,0px)]',
         isDesign
-          ? 'border-idl-glow/20 bg-[#0c0c0d]'
+          ? 'border-idl-border bg-white/95 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur-sm'
           : 'border-idl-tech-border bg-idl-tech-panel shadow-[0_-4px_16px_rgba(0,0,0,0.05)]',
       )}
     >
@@ -65,7 +65,7 @@ export function ProductDetailStickyBar({
           <div
             className={cn(
               'relative size-10 shrink-0 overflow-hidden rounded-lg border',
-              isDesign ? 'border-white/10 bg-idl-design-elevated' : 'border-idl-tech-border bg-idl-tech-panel',
+              isDesign ? 'border-idl-path-design-border bg-idl-cream' : 'border-idl-tech-border bg-idl-tech-panel',
             )}
           >
             {imageUrl ? <SiteImage src={imageUrl} alt="" fill className="object-cover" sizes="40px" /> : null}
@@ -74,7 +74,7 @@ export function ProductDetailStickyBar({
             <div
               className={cn(
                 'truncate text-base leading-tight font-medium',
-                isDesign ? 'font-serif text-idl-design-fg' : 'font-bold text-idl-graphite',
+                isDesign ? 'font-serif text-idl-ink' : 'font-bold text-idl-graphite',
               )}
             >
               {product.name}
@@ -82,7 +82,7 @@ export function ProductDetailStickyBar({
             <div
               className={cn(
                 'truncate text-[11px]',
-                isDesign ? 'text-idl-design-dim' : 'font-mono text-idl-muted',
+                isDesign ? 'text-idl-ink-muted' : 'font-mono text-idl-muted',
               )}
             >
               {subtitle ?? identifierLine ?? product.brand?.name ?? '—'}
@@ -113,7 +113,7 @@ export function ProductDetailStickyBar({
           <span
             className={cn(
               'shrink-0 text-base font-bold sm:text-[22px]',
-              isDesign ? 'font-serif text-idl-design-fg' : 'text-idl-graphite',
+              isDesign ? 'font-serif text-idl-ink' : 'text-idl-graphite',
             )}
           >
             {formatMoney(displayPriceCents, product.currency)}
@@ -125,7 +125,7 @@ export function ProductDetailStickyBar({
             className={cn(
               'min-w-0 flex-1 rounded-lg px-4 py-3 text-sm font-bold transition disabled:opacity-60 sm:flex-none sm:px-6 sm:py-3 sm:text-sm',
               isDesign
-                ? 'bg-idl-glow text-idl-design hover:bg-[#ffffff]'
+                ? 'bg-idl-glow text-idl-design hover:bg-idl-cta-glow-hover'
                 : 'bg-idl-amber text-white dark:text-idl-design hover:bg-idl-cta-amber-hover',
             )}
           >

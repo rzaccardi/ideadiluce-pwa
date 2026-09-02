@@ -15,6 +15,7 @@ import {
   DEFAULT_AMBIENTI_IT,
   DEFAULT_HOME_IT,
   DEFAULT_SHELL_IT,
+  isAllowedSitePageKey,
   SITE_PAGE_KEYS,
 } from './site-content.defaults.js'
 import { DEFAULT_PROFESSIONISTI_IT } from './site-professionisti.defaults.js'
@@ -39,7 +40,7 @@ import type {
 } from './site.types.js'
 
 function assertPageKey(pageKey: string): SitePageKey {
-  if (!SITE_PAGE_KEYS.includes(pageKey as SitePageKey)) {
+  if (!isAllowedSitePageKey(pageKey)) {
     throw new AppError('SITE_PAGE_NOT_FOUND', 'Unknown site page', 'Pagina sito non trovata.', 404, false)
   }
   return pageKey as SitePageKey
@@ -172,6 +173,10 @@ export const siteService = {
         content: prepareContent(key, fallback.content),
         updatedAt: fallback.updatedAt.toISOString(),
       }
+    }
+
+    if (!SITE_PAGE_KEYS.includes(key)) {
+      throw new AppError('SITE_PAGE_NOT_FOUND', 'Unknown site page', 'Pagina sito non trovata.', 404, false)
     }
 
     return {
@@ -859,8 +864,9 @@ async function patchShellFooterCompany() {
       changed = true
     }
 
-    if (!content.footer.social?.length && freshSocial?.length) {
-      content.footer.social = freshSocial.map((link) => ({ ...link }))
+    const nextSocial = (freshSocial ?? []).map((link) => ({ ...link }))
+    if (JSON.stringify(content.footer.social ?? []) !== JSON.stringify(nextSocial)) {
+      content.footer.social = nextSocial
       changed = true
     }
 

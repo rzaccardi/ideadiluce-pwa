@@ -4,6 +4,7 @@ import {
   resolveAvailabilityData,
 } from '@/lib/product-availability'
 import { getSiteUrl } from '@/lib/env'
+import { COMPANY_FACEBOOK_URL } from '@/lib/company-contact'
 import { HOME_SEO_DESCRIPTION } from '@/lib/seo/home-metadata'
 import { localizePath, type PwaLocale } from '@/lib/locale'
 
@@ -77,6 +78,7 @@ export function buildOrganizationJsonLd(siteUrl: string) {
     name: 'Idea di Luce',
     url: site,
     logo: `${site}/brand/ideadiluce.svg`,
+    sameAs: [COMPANY_FACEBOOK_URL],
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',

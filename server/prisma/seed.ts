@@ -64,6 +64,15 @@ async function main() {
     update: {},
   })
 
+  await prisma.storefrontSettings.upsert({
+    where: { id: 'default' },
+    create: {
+      id: 'default',
+      soundsEnabled: true,
+    },
+    update: {},
+  })
+
   const adminEmail = (process.env.ADMIN_SEED_EMAIL ?? 'admin@ideadiluce.local').toLowerCase()
   const adminPassword = process.env.ADMIN_SEED_PASSWORD ?? 'admin123456'
   const adminPasswordHash = bcrypt.hashSync(adminPassword, 10)

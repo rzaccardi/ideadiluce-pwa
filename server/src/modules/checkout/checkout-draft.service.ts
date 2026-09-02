@@ -33,7 +33,7 @@ export const checkoutDraftService = {
 
     if (!priceLocked && body.step !== 'lock' && body.step !== 'shipping') {
       const pricing = await resolvePricingContext(req)
-      await repriceCartFromOdoo(req, cart.id, pricing)
+      await repriceCartFromOdoo({ correlationId: req.correlationId, req }, cart.id, pricing)
     }
 
     const cartFresh = await loadActiveCart(req)

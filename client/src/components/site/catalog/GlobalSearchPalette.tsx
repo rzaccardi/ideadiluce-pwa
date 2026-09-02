@@ -25,6 +25,7 @@ import {
 } from '@/lib/catalog-search-limits'
 import {
   buildPaletteDisplayGroups,
+  catalogSearchPaletteView,
   nextSearchActiveIndex,
   suggestionOptionId,
 } from '@/lib/catalog-search-palette'
@@ -101,6 +102,7 @@ export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palett
     activeIndex,
     setActiveIndex,
     productTotal,
+    resultsQuery,
     submitQuery,
     pickSuggestion,
     scheduleAutocomplete,
@@ -124,8 +126,17 @@ export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palett
   const displayGroups = buildPaletteDisplayGroups({ showIdle, recentGroup, groups })
   const displayFlat = displayGroups.flatMap((group) => group.items)
   const hasResults = displayFlat.length > 0
-  const showEmpty =
-    trimmedQuery.length >= CATALOG_SEARCH_LIMITS.minLocalLength && !loading && !hasResults
+  const resultsView = catalogSearchPaletteView({
+    queryLength: trimmedQuery.length,
+    minLength: CATALOG_SEARCH_LIMITS.minLocalLength,
+    minApiLength: CATALOG_SEARCH_LIMITS.minApiLength,
+    loading,
+    hasResults,
+    currentQuery: trimmedQuery,
+    resultsQuery,
+  })
+  const showPending = resultsView === 'pending'
+  const showEmpty = resultsView === 'empty'
   const shortcut = getGlobalSearchShortcutLabel()
   const activeDescendantId =
     activeIndex >= 0 && displayFlat[activeIndex]
@@ -243,7 +254,8 @@ export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palett
             ref={inputRef}
             value={query}
             role="combobox"
-            aria-expanded={hasResults || showEmpty}
+            aria-expanded={hasResults || showEmpty || showPending}
+            aria-busy={showPending || undefined}
             aria-controls={listId}
             aria-autocomplete="list"
             aria-activedescendant={activeDescendantId}
@@ -269,7 +281,7 @@ export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palett
               }
             }}
           />
-          {loading ? <CatalogSearchInputSpinner /> : null}
+          {showPending ? <CatalogSearchInputSpinner /> : null}
           {query ? (
             <button
               type="button"
@@ -303,10 +315,14 @@ export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palett
         </div>
       </form>
 
-      <div className="max-h-[min(52vh,520px)] overflow-y-auto overscroll-contain" key={recentVersion}>
-        {loading ? <CatalogSearchSuggestionSkeleton count={4} /> : null}
+      <div
+        className="max-h-[min(52vh,520px)] overflow-y-auto overscroll-contain"
+        key={recentVersion}
+        aria-busy={showPending || undefined}
+      >
+        {showPending ? <CatalogSearchSuggestionSkeleton count={4} /> : null}
 
-        {!loading && hasResults ? (
+        {!showPending && hasResults ? (
           <ul id={listId} role="listbox" className="py-1">
             {displayGroups.map((group) => (
               <li key={`${group.kind}-${group.items[0]?.id ?? 'empty'}`} role="presentation">
@@ -347,7 +363,7 @@ export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palett
           </ul>
         ) : null}
 
-        {!loading && showEmpty ? (
+        {showEmpty ? (
           <div className="px-5 py-10 text-center">
             <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-idl-cream text-idl-muted">
               <SearchIcon className="size-5" />
@@ -366,7 +382,7 @@ export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palett
           </div>
         ) : null}
 
-        {!loading && showIdle && searchCms?.hints?.length ? (
+        {!showPending && showIdle && searchCms?.hints?.length ? (
           <div className="border-t border-idl-border/70 px-5 py-5">
             <p className="mb-3 text-[12px] text-idl-muted">{t('catalog.searchPopularLabel')}</p>
             <div className="flex flex-wrap gap-2">

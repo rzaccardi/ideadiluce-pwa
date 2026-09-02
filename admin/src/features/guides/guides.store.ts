@@ -19,6 +19,7 @@ export const guidesStore = proxy({
   isLoading: false,
   isSaving: false,
   isTranslating: false,
+  isCreating: false,
   error: null as string | null,
   fieldSearch: '',
 })

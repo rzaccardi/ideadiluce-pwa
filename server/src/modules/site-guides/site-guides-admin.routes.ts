@@ -7,6 +7,7 @@ import { validateRequest } from '../../middlewares/validate-request.js'
 import { siteLocaleQuerySchema } from '../site/site-admin.validators.js'
 import { siteService } from '../site/site.service.js'
 import {
+  guideCreateSchema,
   guidePatchSchema,
   guideSlugParamSchema,
   siteGuideService,
@@ -28,6 +29,14 @@ siteGuidesAdminRouter.get(
       return
     }
     res.json(ok(await siteGuideService.listAdminGuides()))
+  }),
+)
+
+siteGuidesAdminRouter.post(
+  '/',
+  validateRequest({ body: guideCreateSchema }),
+  asyncHandler(async (req, res) => {
+    res.status(201).json(ok(await siteGuideService.createAdminGuide(req.body)))
   }),
 )
 

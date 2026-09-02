@@ -19,6 +19,7 @@ import { LLMS_TXT_CONTENT_TYPE } from './modules/seo/llms.service.js'
 import { sendSeoPublicAsset } from './modules/seo/seo-response.js'
 import { odooCatalogProxyRouter } from './modules/odoo-catalog-proxy/odoo-catalog-proxy.routes.js'
 import { asyncHandler } from './utils/async-handler.js'
+import { securityHeaders } from './middlewares/security-headers.js'
 
 function isDevLocalhostOrigin(origin: string): boolean {
   try {
@@ -38,11 +39,12 @@ export function createApp() {
   app.use(
     rateLimit({
       windowMs: 60_000,
-      max: env.NODE_ENV === 'production' ? 300 : 2000,
+      max: env.NODE_ENV === 'production' ? 180 : 2000,
       standardHeaders: true,
       legacyHeaders: false,
     }),
   )
+  app.use(securityHeaders)
   const corsOrigins = [...new Set([env.CLIENT_ORIGIN, env.ADMIN_ORIGIN])]
   app.use(
     cors({
@@ -64,7 +66,7 @@ export function createApp() {
   app.post('/api/v1/payments/webhook/stripe', express.raw({ type: 'application/json' }), (req, res, next) => {
     void paymentsController.stripeWebhook(req, res, next)
   })
-  app.use(express.json())
+  app.use(express.json({ limit: '512kb' }))
 
   app.use(healthRouter)
   app.get(

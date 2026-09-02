@@ -1,15 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from '@/lib/navigation'
+import { useSnapshot } from 'valtio/react'
+import { Link } from '@/lib/navigation'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { cartStore } from '@/features/cart'
+import { checkoutStore } from '@/features/checkout'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import type { CartDTO, CartItemDTO, FreeShippingHintDTO, ProductCardDTO, ShippingQuoteDTO, TaxBreakdownDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
 import { cartSubtotalCents, cartTaxCents, cartTotalCents } from '@/lib/cartTotals'
 import { isDev } from '@/lib/env'
 import { cn } from '@/utils/cn'
-import { FreeShippingNudge } from '@/components/cart/FreeShippingNudge'
 import { BrandWordmark } from '@/components/site/primitives'
 import { CheckoutCrossSellSection } from '@/components/checkout/CheckoutCrossSellSection'
 import { CheckoutTrustSignals } from '@/components/checkout/stripe-ui/CheckoutTrustSignals'
@@ -54,6 +56,7 @@ const summaryThemeClasses = {
     itemMeta: 'text-idl-muted',
     row: 'text-idl-graphite',
     rowMuted: 'text-idl-muted',
+    shippingFree: 'font-extrabold uppercase tracking-wide text-[#1f9d57]',
     border: 'border-idl-tech-chip-border',
     qtyBadge: 'bg-[#2a2a2e] text-[#f5f5f5]',
     thumbBorder: 'border-idl-tech-border',
@@ -63,6 +66,7 @@ const summaryThemeClasses = {
     itemMeta: 'text-[#b0b0b4]',
     row: 'text-[#f5f5f5]',
     rowMuted: 'text-[#b0b0b4]',
+    shippingFree: 'font-extrabold uppercase tracking-wide text-[#4ade80]',
     border: 'border-white/10',
     qtyBadge: 'bg-[#2a2a2e] text-[#f5f5f5]',
     thumbBorder: 'border-white/10',
@@ -86,8 +90,10 @@ function SummaryContent({
   const subtotal = taxBreakdown?.netCents ?? cartSubtotalCents(cart)
   const tax = cartTaxCents(cart, taxBreakdown)
   const total = cartTotalCents(cart, selectedShipping?.amountCents, taxBreakdown)
+  const hint = freeShippingHint ?? cart.freeShippingHint
   const shippingDisplay =
     selectedShipping?.amountCents ?? (cart.estimatedShipping != null && cart.estimatedShipping > 0 ? cart.estimatedShipping : null)
+  const shippingIsFree = hint?.eligible === true || shippingDisplay === 0
 
   return (
     <>
@@ -158,12 +164,6 @@ function SummaryContent({
         onAdded={onCrossSellAdded}
       />
 
-      <FreeShippingNudge
-        hint={freeShippingHint ?? cart.freeShippingHint}
-        currencyCode={cart.currencyCode}
-        className="mt-4"
-      />
-
       <dl className={cn('mt-6 space-y-2.5 border-t pt-5 text-sm', tTheme.border)}>
         <div className={cn('flex justify-between', tTheme.row)}>
           <dt>{t('checkout.summary.subtotal')}</dt>
@@ -180,12 +180,12 @@ function SummaryContent({
               <span className={cn('mt-0.5 block text-xs', tTheme.rowMuted)}>{selectedShipping.label}</span>
             ) : null}
           </dt>
-          <dd className="shrink-0 tabular-nums">
-            {shippingDisplay != null
-              ? shippingDisplay === 0
-                ? t('checkout.summary.free')
-                : formatMoney(shippingDisplay, cart.currencyCode)
-              : t('common.notAvailable')}
+          <dd className={cn('shrink-0 tabular-nums', shippingIsFree && tTheme.shippingFree)}>
+            {shippingIsFree
+              ? t('checkout.summary.shippingFree')
+              : shippingDisplay != null
+                ? formatMoney(shippingDisplay, cart.currencyCode)
+                : t('common.notAvailable')}
           </dd>
         </div>
       </dl>
@@ -309,39 +309,67 @@ export function CheckoutOrderSummary({
   )
 }
 
+const checkoutBackButtonClass = {
+  light: 'border-[#e2e6eb] text-[#14161b] hover:bg-black/5',
+  dark: 'border-white/15 text-[#f5f5f5] hover:bg-white/10',
+} as const
+
 export function CheckoutBackButton({
   theme = 'light',
   backHref = '/cart',
   backLabel,
   className,
+  confirmLeave = true,
 }: {
   theme?: SummaryTheme
   backHref?: string
   backLabel?: string
   className?: string
+  /** False sullo skeleton di bootstrap: un Link vero naviga anche se il tree si smonta. */
+  confirmLeave?: boolean
 }) {
   const { t } = useI18n()
-  const router = useRouter()
   const lp = useLocalePath()
+  const cart = useSnapshot(cartStore)
+  const checkout = useSnapshot(checkoutStore)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const label = backLabel ?? t('checkout.backToCart')
+  const href = lp(backHref)
   const dark = theme === 'dark'
+  const stillBootstrapping = Boolean(
+    checkout.initLoadingPhase ||
+      checkout.addressPrefillLoading ||
+      checkout.cartRefreshing ||
+      (cart.isLoading && !cart.cart),
+  )
+  const shouldConfirm = confirmLeave && !stillBootstrapping
+
+  function goToCart() {
+    setConfirmOpen(false)
+    window.location.assign(href)
+  }
+
   return (
     <>
-      <button
-        type="button"
-        onClick={() => {
-          // Microtask: evita che lo stesso gesto chiuda subito il dialog sul backdrop.
-          queueMicrotask(() => setConfirmOpen(true))
-        }}
+      <Link
+        href={href}
+        aria-label={label}
         className={cn(
           'relative z-[210] flex size-[38px] shrink-0 items-center justify-center rounded-full border transition',
-          dark
-            ? 'border-white/15 text-[#f5f5f5] hover:bg-white/10'
-            : 'border-[#e2e6eb] text-[#14161b] hover:bg-black/5',
+          checkoutBackButtonClass[dark ? 'dark' : 'light'],
           className,
         )}
-        aria-label={label}
+        onClick={(event) => {
+          if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+            return
+          }
+          event.preventDefault()
+          if (shouldConfirm) {
+            setConfirmOpen(true)
+            return
+          }
+          goToCart()
+        }}
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
           <path
@@ -352,20 +380,18 @@ export function CheckoutBackButton({
             strokeLinejoin="round"
           />
         </svg>
-      </button>
-      <ConfirmDialog
-        open={confirmOpen}
-        title={t('checkout.backToCartConfirmTitle')}
-        description={t('checkout.backToCartConfirmDescription')}
-        confirmLabel={t('checkout.backToCart')}
-        cancelLabel={t('common.cancel')}
-        onCancel={() => setConfirmOpen(false)}
-        onConfirm={() => {
-          setConfirmOpen(false)
-          const href = lp(backHref)
-          router.push(href)
-        }}
-      />
+      </Link>
+      {shouldConfirm || confirmOpen ? (
+        <ConfirmDialog
+          open={confirmOpen}
+          title={t('checkout.backToCartConfirmTitle')}
+          description={t('checkout.backToCartConfirmDescription')}
+          confirmLabel={t('checkout.backToCart')}
+          cancelLabel={t('common.cancel')}
+          onCancel={() => setConfirmOpen(false)}
+          onConfirm={goToCart}
+        />
+      ) : null}
     </>
   )
 }
@@ -375,12 +401,14 @@ export function CheckoutSummaryHeader({
   backHref = '/cart',
   backLabel,
   showBack = true,
+  confirmLeave = true,
   className,
 }: {
   theme?: SummaryTheme
   backHref?: string
   backLabel?: string
   showBack?: boolean
+  confirmLeave?: boolean
   className?: string
 }) {
   const { t } = useI18n()
@@ -388,9 +416,14 @@ export function CheckoutSummaryHeader({
   const dark = theme === 'dark'
 
   return (
-    <div className={cn('flex min-w-0 items-center gap-2 sm:gap-3.5', className)}>
+    <div className={cn('relative z-[210] flex min-w-0 items-center gap-2 sm:gap-3.5', className)}>
       {showBack ? (
-        <CheckoutBackButton theme={theme} backHref={backHref} backLabel={label} />
+        <CheckoutBackButton
+          theme={theme}
+          backHref={backHref}
+          backLabel={label}
+          confirmLeave={confirmLeave}
+        />
       ) : null}
       <BrandWordmark
         inverted={dark}
@@ -399,7 +432,7 @@ export function CheckoutSummaryHeader({
       <span
         className={cn(
           'ml-auto shrink-0 rounded-[5px] px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-[0.05em] sm:px-2 sm:py-1 sm:text-[10px]',
-          'bg-[#c9a24b] text-[#0c0c0d]',
+          'bg-emerald-600 text-white',
         )}
       >
         {t('checkout.summary.secureBadge')}

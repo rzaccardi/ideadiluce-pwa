@@ -137,7 +137,7 @@ function mapPricelist(row) {
     };
 }
 async function findPartnerRowsByEmail(ctx, email, limit = 10) {
-    return odooExecuteKw(ctx, 'res.partner', 'search_read', [[['email', 'ilike', email.toLowerCase().trim()]]], {
+    return odooExecuteKw(ctx, 'res.partner', 'search_read', [[['email', '=ilike', email.trim()]]], {
         fields: ['id', 'name', 'email', 'property_product_pricelist'],
         limit,
         context: saleOrderContext(),

@@ -42,14 +42,14 @@ describe('searchHintsOdooQuerySchema', () => {
   it('applica default lookback e limit', () => {
     expect(searchHintsOdooQuerySchema.parse({})).toMatchObject({
       lookbackDays: 90,
-      limit: 8,
+      limit: 5,
     })
   })
 
   it('accetta parametri custom', () => {
-    expect(searchHintsOdooQuerySchema.parse({ lookbackDays: '30', limit: '5' })).toMatchObject({
+    expect(searchHintsOdooQuerySchema.parse({ lookbackDays: '30', limit: '3' })).toMatchObject({
       lookbackDays: 30,
-      limit: 5,
+      limit: 3,
     })
   })
 })
@@ -58,7 +58,7 @@ describe('searchHintsOdooApplySchema', () => {
   it('applica default nel body', () => {
     expect(searchHintsOdooApplySchema.parse({})).toMatchObject({
       lookbackDays: 90,
-      limit: 8,
+      limit: 5,
     })
   })
 })

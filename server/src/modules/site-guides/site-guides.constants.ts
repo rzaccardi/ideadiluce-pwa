@@ -25,12 +25,37 @@ export const DEFAULT_SITE_GUIDES: GuideSeed[] = [
   { slug: 'glossario', category: 'GLOSSARIO', readingMeta: 'Riferimento', sortOrder: 70, indexed: true, featured: false },
 ]
 
+/** Slug URL: minuscole, cifre e trattini (niente doppi/iniziali/finali). */
+export const GUIDE_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+export function slugifyGuideTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+export function isValidGuideSlug(slug: string): boolean {
+  return GUIDE_SLUG_PATTERN.test(slug) && slug.length <= 120
+}
+
 export function guidePageKey(slug: string): ContentPageKey {
   return `guide-${slug}` as ContentPageKey
 }
 
 export function isGuidePageKey(pageKey: string) {
   return pageKey.startsWith('guide-') && pageKey !== 'guide'
+}
+
+/** pageKey `guide-{slug}` non presente nel catalogo CMS statico. */
+export function isDynamicGuidePageKey(pageKey: string): boolean {
+  if (!isGuidePageKey(pageKey)) return false
+  const slug = pageKey.slice('guide-'.length)
+  return isValidGuideSlug(slug)
 }
 
 export function guideSlugFromPageKey(pageKey: string) {

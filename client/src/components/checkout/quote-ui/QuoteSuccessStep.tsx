@@ -6,8 +6,8 @@ import { useI18n } from '@/hooks/use-i18n'
 import { cn } from '@/utils/cn'
 
 const primaryActionClass = cn(
-  'inline-flex w-full items-center justify-center rounded-xl bg-[#14161b] px-4 py-4',
-  'text-base font-extrabold text-white transition hover:bg-[#2a2d35]',
+  'inline-flex w-full items-center justify-center rounded-xl bg-idl-glow px-4 py-4',
+  'text-base font-extrabold text-idl-design transition hover:bg-idl-cta-glow-hover',
   checkoutActionControlClass,
 )
 

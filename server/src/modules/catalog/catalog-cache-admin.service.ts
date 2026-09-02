@@ -3,11 +3,19 @@ import { HUB_LOCALES, type HubLocale } from '../../lib/hub-locale.js'
 import { logger } from '../../lib/logger.js'
 import { AppError } from '../../types/errors.js'
 import {
+  CATALOG_INDEX_REFRESH_HOURS_ROME,
+  CATALOG_INDEX_REFRESH_TZ,
   CATALOG_INDEX_TTL_MS,
+  getCatalogIndexSyncHistory,
+  getCatalogIndexSyncProgress,
   getOdooCatalogIndexMeta,
   hydrateOdooCatalogIndexFromDisk,
   syncAllOdooCatalogIndexes,
 } from './odoo-catalog-index.service.js'
+import type {
+  CatalogIndexSyncHistoryEntry,
+  CatalogIndexSyncProgressDTO,
+} from './odoo-catalog-index-checkpoint.js'
 
 export type CatalogCacheLocaleStatus = {
   locale: HubLocale
@@ -22,6 +30,8 @@ export type CatalogCacheLocaleStatus = {
 export type CatalogCacheStatusDTO = {
   configured: boolean
   ttlMs: number
+  refreshHoursRome: number[]
+  refreshTimezone: string
   syncing: boolean
   syncStartedAt: string | null
   lastSyncFinishedAt: string | null
@@ -32,6 +42,8 @@ export type CatalogCacheStatusDTO = {
     details: number
     syncedAt: string
   }> | null
+  progress: CatalogIndexSyncProgressDTO[]
+  history: CatalogIndexSyncHistoryEntry[]
   locales: CatalogCacheLocaleStatus[]
 }
 
@@ -53,14 +65,19 @@ const syncState: SyncRunState = {
 
 async function buildStatus(): Promise<CatalogCacheStatusDTO> {
   await hydrateOdooCatalogIndexFromDisk()
+  const progress = await getCatalogIndexSyncProgress()
   return {
     configured: isOdooCatalogConfigured(),
     ttlMs: CATALOG_INDEX_TTL_MS,
-    syncing: syncState.syncing,
+    refreshHoursRome: [...CATALOG_INDEX_REFRESH_HOURS_ROME],
+    refreshTimezone: CATALOG_INDEX_REFRESH_TZ,
+    syncing: syncState.syncing || progress.length > 0,
     syncStartedAt: syncState.syncStartedAt,
     lastSyncFinishedAt: syncState.lastSyncFinishedAt,
     lastSyncError: syncState.lastSyncError,
     lastSyncLocales: syncState.lastSyncLocales,
+    progress,
+    history: await getCatalogIndexSyncHistory(),
     locales: HUB_LOCALES.map((locale) => {
       const meta = getOdooCatalogIndexMeta(locale)
       return { locale, ...meta }
@@ -70,7 +87,7 @@ async function buildStatus(): Promise<CatalogCacheStatusDTO> {
 
 async function runSyncInBackground(reason: string) {
   try {
-    const result = await syncAllOdooCatalogIndexes()
+    const result = await syncAllOdooCatalogIndexes({ force: true, reason })
     syncState.lastSyncLocales = result.locales
     syncState.lastSyncFinishedAt = new Date().toISOString()
     syncState.lastSyncError = null

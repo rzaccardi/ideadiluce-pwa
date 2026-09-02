@@ -38,7 +38,10 @@ async function partnerPricelistId(ctx: OdooCallContext, partnerId: number): Prom
   return null
 }
 
-export async function resolvePricingContext(req: Request): Promise<PricingContext> {
+export async function resolvePricingContext(
+  req: Request,
+  options?: { skipOdoo?: boolean },
+): Promise<PricingContext> {
   const user = req.sessionRecord?.user
   let segment: CustomerSegment = 'RETAIL'
   let partnerId: number | null = null
@@ -56,7 +59,7 @@ export async function resolvePricingContext(req: Request): Promise<PricingContex
   if (pricelistId == null) {
     pricelistId = envPricelistForSegment(segment)
   }
-  if (pricelistId == null && partnerId != null) {
+  if (pricelistId == null && partnerId != null && !options?.skipOdoo) {
     const ctx: OdooCallContext = { correlationId: req.correlationId }
     const fromPartner = await partnerPricelistId(ctx, partnerId)
     if (fromPartner != null) pricelistId = fromPartner

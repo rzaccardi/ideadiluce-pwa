@@ -13,6 +13,11 @@ import {
   type ProductCatalogKind,
 } from '@/lib/product-catalog-kind'
 import type { LocalePathFn } from '@/components/site/sections/types'
+import {
+  SITE_FULL_BLEED_NAV_CLASS,
+  SITE_FULL_BLEED_SPACER_CLASS,
+  SITE_FULL_BLEED_TRACK_CLASS,
+} from '@/styles/site-ui'
 import { cn } from '@/utils/cn'
 
 export type ProductSliderCardKind = ProductCatalogKind | 'auto' | 'legacy'
@@ -105,7 +110,7 @@ export function ProductSlider({
   const scrollBy = (direction: -1 | 1) => {
     const el = scrollRef.current
     if (!el) return
-    const firstCard = el.querySelector<HTMLElement>('li')
+    const firstCard = el.querySelector<HTMLElement>(`li:not(.${SITE_FULL_BLEED_SPACER_CLASS})`)
     const gap = 24
     const step = firstCard ? firstCard.offsetWidth + gap : el.clientWidth * 0.85
     const { scrollLeft, scrollWidth, clientWidth } = el
@@ -159,7 +164,12 @@ export function ProductSlider({
   return (
     <section className={cn(isContained ? 'min-w-0 overflow-hidden' : 'overflow-visible', className)}>
       {title || showNav ? (
-        <div className="mb-4 flex items-center justify-between gap-4">
+        <div
+          className={cn(
+            'mb-4 flex items-center justify-between gap-4',
+            !isContained && SITE_FULL_BLEED_NAV_CLASS,
+          )}
+        >
           {title ? <h2 className="text-lg font-semibold text-idl-graphite">{title}</h2> : <span />}
           {navButtons}
         </div>
@@ -171,17 +181,23 @@ export function ProductSlider({
           'flex gap-4 sm:gap-6',
           'overflow-x-auto overflow-y-visible scroll-smooth pb-2 snap-x snap-mandatory',
           '[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden',
-          isContained
-            ? 'w-full min-w-0'
-            : 'ml-[calc(50%-50vw)] w-screen max-w-none pl-[max(1rem,calc((100vw-72rem)/2+1rem))] pr-[max(1rem,calc((100vw-72rem)/2+1rem))]',
+          isContained ? 'w-full min-w-0' : SITE_FULL_BLEED_TRACK_CLASS,
         )}
       >
-        {products.map((p) => {
+        {isContained ? null : <li aria-hidden className={SITE_FULL_BLEED_SPACER_CLASS} />}
+        {products.map((p, index) => {
           const resolvedKind = resolveSlideCardKind(p, cardKind)
+          const isFirst = index === 0
+          const isLast = index === products.length - 1
           return (
             <li
               key={p.slug}
-              className={cn('flex shrink-0 snap-start', slideItemWidth(resolvedKind, isContained))}
+              className={cn(
+                'flex shrink-0 snap-start',
+                slideItemWidth(resolvedKind, isContained),
+                !isContained && isFirst && '[scroll-margin-inline-start:var(--site-full-bleed-gutter)]',
+                !isContained && isLast && '[scroll-margin-inline-end:var(--site-full-bleed-gutter)]',
+              )}
             >
               {resolvedKind === 'design' ? (
                 <DesignCatalogProductCard product={p} lp={lp} />
@@ -193,6 +209,7 @@ export function ProductSlider({
             </li>
           )
         })}
+        {isContained ? null : <li aria-hidden className={SITE_FULL_BLEED_SPACER_CLASS} />}
       </ul>
     </section>
   )

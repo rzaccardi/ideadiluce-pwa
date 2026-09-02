@@ -360,7 +360,8 @@ async function quotesFromDb(
 }
 
 function applyFreeShippingExclusive(lines: ShippingQuoteLine[]): ShippingQuoteLine[] {
-  return lines
+  if (!lines.some((l) => l.source === 'free')) return lines
+  return lines.filter((l) => l.source === 'free' || l.source === 'pickup')
 }
 
 function toDto(q: ShippingQuoteLine): ShippingQuoteDTO {

@@ -49,7 +49,7 @@ export default async function GuideArticlePage({ params }: PageProps) {
 
   const locale = await getRequestLocale()
   const initialContent = await fetchContentPageServer<ContentPageContent>(pageKey, locale)
-  if (initialContent && !isContentPage(initialContent)) notFound()
+  if (!initialContent || !isContentPage(initialContent)) notFound()
 
   const site = getSiteUrl().replace(/\/$/, '')
   const pageUrl = `${site}${localizePath(`/guide/${slug}`, locale)}`

@@ -13,18 +13,18 @@ type Props = {
 export function ProductDetailPageSkeleton({ variant = 'design' }: Props) {
   const { t } = useI18n()
   const isDesign = variant === 'design'
-  const boneClass = isDesign ? 'bg-idl-graphite-2' : undefined
+  const boneClass = isDesign ? 'bg-idl-cream' : undefined
 
   return (
     <div
       className={cn(
         'min-w-0 w-full overflow-x-clip pb-10',
-        isDesign ? 'bg-idl-design text-idl-design-fg' : 'bg-idl-tech-panel text-idl-graphite',
+        isDesign ? 'bg-idl-path-design text-idl-ink' : 'bg-idl-tech-panel text-idl-graphite',
       )}
       role="status"
       aria-label={t('skeleton.loadingProduct')}
     >
-      <section className={cn('relative overflow-hidden', isDesign ? 'bg-idl-design' : 'bg-idl-tech-panel')}>
+      <section className={cn('relative overflow-hidden', isDesign ? 'bg-idl-path-design' : 'bg-idl-tech-panel')}>
         <SectionContainer className={cn('py-4', !isDesign && 'pt-1')}>
           <Skeleton className={cn('h-3 w-56', boneClass)} />
         </SectionContainer>
@@ -87,14 +87,14 @@ export function ProductDetailPageSkeleton({ variant = 'design' }: Props) {
               className={cn(
                 'overflow-hidden rounded-lg border',
                 isDesign
-                  ? 'border-idl-path-design-border bg-white/5'
+                  ? 'border-idl-path-design-border bg-white'
                   : 'border-idl-tech-border bg-white',
               )}
             >
               <Skeleton
                 className={cn(
                   'w-full rounded-none',
-                  isDesign ? 'aspect-[4/5] bg-idl-graphite-2' : 'aspect-square',
+                  isDesign ? 'aspect-[4/5] bg-idl-cream' : 'aspect-square',
                   !isDesign && boneClass,
                 )}
               />

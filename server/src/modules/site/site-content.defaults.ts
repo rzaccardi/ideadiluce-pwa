@@ -6,10 +6,13 @@ import type {
   SiteShellContent,
 } from './site.types.js'
 import {
+  blankGuideArticleContent,
   CONTENT_PAGE_DEFAULTS,
   CONTENT_PAGE_KEYS,
   COMPANY_CONTACT,
+  COMPANY_FACEBOOK_URL,
 } from './site-content-pages.defaults.js'
+import { isDynamicGuidePageKey } from '../site-guides/site-guides.constants.js'
 import { DEFAULT_PROFESSIONISTI_IT } from './site-professionisti.defaults.js'
 import { enrichNavColumns } from './nav-link-visuals.js'
 
@@ -45,7 +48,11 @@ function attaccoMegaMenuColumns() {
 
 export const DEFAULT_SHELL_IT: SiteShellContent = {
   utilityBar: {
-    messages: ['Spedizioni tracciate in tutto il mondo', 'Assistenza tecnica reale'],
+    messages: [
+      'Spedizione tracciata in tutta Italia',
+      'Assistenza tecnica reale',
+      'Catalogo per professionisti',
+    ],
     links: [
       { label: 'Professionisti', href: '/professionisti' },
       { label: 'Aiuto', href: '/on-demand' },
@@ -229,12 +236,7 @@ export const DEFAULT_SHELL_IT: SiteShellContent = {
       email: COMPANY_CONTACT.email,
       hoursLines: [...COMPANY_CONTACT.hoursLines],
     },
-    social: [
-      { label: 'Instagram', href: '' },
-      { label: 'Facebook', href: '' },
-      { label: 'LinkedIn', href: '' },
-      { label: 'Pinterest', href: '' },
-    ],
+    social: [{ label: 'Facebook', href: COMPANY_FACEBOOK_URL }],
     columns: [
       {
         title: 'Idea di Luce',
@@ -567,6 +569,15 @@ export const SITE_PAGE_KEYS: SitePageKey[] = [
   ...CONTENT_PAGE_KEYS,
 ]
 
-export function defaultSiteContent(pageKey: SitePageKey) {
-  return SITE_PAGE_DEFAULTS[pageKey]
+export function isAllowedSitePageKey(pageKey: string): pageKey is SitePageKey {
+  return SITE_PAGE_KEYS.includes(pageKey as SitePageKey) || isDynamicGuidePageKey(pageKey)
 }
+
+export function defaultSiteContent(pageKey: SitePageKey) {
+  const known = SITE_PAGE_DEFAULTS[pageKey]
+  if (known !== undefined) return known
+  if (isDynamicGuidePageKey(pageKey)) return blankGuideArticleContent()
+  return known
+}
+
+export { blankGuideArticleContent }

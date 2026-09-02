@@ -16,7 +16,7 @@ export function DesignRelatedProducts({ products, lp, brandName }: Props) {
     <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
       {products.map((product) => (
         <Link key={product.slug} to={lp(`/prodotto/${product.slug}`)} className="group block">
-          <div className="relative mb-3.5 aspect-[4/5] overflow-hidden rounded-[3px] shadow-[0_0_60px_rgba(120, 120, 125,0.07)]">
+          <div className="relative mb-3.5 aspect-[4/5] overflow-hidden rounded-[3px] border border-idl-path-design-border bg-white">
             {product.imageUrl ? (
               <SiteImage
                 src={product.imageUrl}
@@ -26,7 +26,7 @@ export function DesignRelatedProducts({ products, lp, brandName }: Props) {
                 sizes="25vw"
               />
             ) : (
-              <div className="flex h-full items-center justify-center bg-idl-design-elevated text-xs text-idl-design-dim">
+              <div className="flex h-full items-center justify-center bg-white text-xs text-idl-ink-muted">
                 —
               </div>
             )}
@@ -36,16 +36,16 @@ export function DesignRelatedProducts({ products, lp, brandName }: Props) {
               brand={product.brand}
               fallbackLabel={brandName ?? product.categorySlug ?? 'IDEADILUCE'}
               size="xs"
-              className="text-idl-glow"
+              className="text-idl-brass"
             />
           </div>
-          <div className="line-clamp-2 min-h-[2lh] font-serif text-[17px] leading-snug font-medium text-idl-design-fg sm:text-[19px]">
+          <div className="line-clamp-2 min-h-[2lh] font-serif text-[17px] leading-snug font-medium text-idl-ink sm:text-[19px]">
             {product.name.split(/\s*[—–-]\s+/)[0]}
           </div>
-          <div className="mt-1 line-clamp-2 min-h-[2lh] text-[12.5px] leading-normal text-idl-design-dim">
+          <div className="mt-1 line-clamp-2 min-h-[2lh] text-[12.5px] leading-normal text-idl-ink-muted">
             {product.shortDescription ?? '\u00A0'}
           </div>
-          <div className="mt-2 text-[15px] font-bold text-idl-design-fg">
+          <div className="mt-2 text-[15px] font-bold text-idl-ink">
             {formatMoney(product.priceCents, product.currency)}
           </div>
         </Link>

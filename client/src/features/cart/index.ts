@@ -23,6 +23,7 @@ export {
   dismissReservationExpiredNotice,
   bootstrapCartSync,
   moveLineToWishlist,
+  waitForPendingCartMutations,
   resetCartForAuthChange,
 } from './cart.actions'
 export { useCartStockPolling, CART_STOCK_POLL_MS } from './useCartStockPolling'

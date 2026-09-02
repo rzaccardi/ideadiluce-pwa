@@ -57,11 +57,7 @@ type Props = {
 }
 
 const DESIGN_CTA = {
-  title: 'Stai arredando con la luce?',
-  description:
-    "Raccontaci l'ambiente o inviaci una foto: il nostro team ti aiuta a scegliere brand, finitura e composizione luminosa per dare carattere agli spazi.",
   primaryCta: { label: 'Richiedi consulenza', href: '/contatti' },
-  secondaryCta: { label: 'Scrivici', href: '/contatti' },
 }
 
 function hasHtmlMarkup(raw: string | null | undefined): boolean {
@@ -177,16 +173,12 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
   })
 
   return (
-    <div className="min-w-0 w-full overflow-x-clip bg-idl-design pb-20 text-idl-design-fg sm:pb-0">
+    <div className="min-w-0 w-full overflow-x-clip bg-idl-path-design pb-20 text-idl-ink sm:pb-0">
       {/* HERO */}
-      <section className="relative overflow-hidden bg-idl-design">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute top-10 right-[8%] hidden h-[540px] w-[540px] rounded-full bg-[radial-gradient(circle,rgba(120, 120, 125,0.20)_0%,rgba(120, 120, 125,0)_68%)] animate-idl-glow-drift lg:block"
-        />
-        <ProductDetailBreadcrumb items={breadcrumbItems} lp={lp} variant="design" inHero />
+      <section>
+        <ProductDetailBreadcrumb items={breadcrumbItems} lp={lp} variant="design" />
 
-        <SectionContainer className="relative z-[2] grid min-w-0 items-start gap-8 pb-10 pt-5 sm:gap-14 sm:pb-14 sm:pt-7 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14 lg:pb-14">
+        <SectionContainer className="grid min-w-0 items-start gap-8 pb-12 pt-1 sm:gap-14 sm:pb-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14 lg:pb-16">
           <ProductDetailGallery
             gallery={product.gallery}
             images={galleryImages}
@@ -201,35 +193,35 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
                 brand={product.brand}
                 fallbackLabel={brandLabel}
                 size="md"
-                className="text-idl-glow"
+                className="text-idl-brass"
               />
               {product.brand ? (
-                <Eyebrow variant="design" className="tracking-[0.18em] text-idl-glow">
+                <Eyebrow variant="neutral" className="tracking-[0.18em]">
                   · ICONA DEL DESIGN
                 </Eyebrow>
               ) : null}
             </div>
-            <h1 className="font-serif text-[clamp(2rem,8vw,3.375rem)] leading-none font-medium tracking-[-0.01em]">
+            <h1 className="font-serif text-[clamp(2rem,8vw,3.375rem)] leading-none font-medium tracking-[-0.01em] text-idl-ink">
               {displayTitle}
             </h1>
             {(titleRest || subtitle) ? (
-              <div className="mt-3 text-base text-idl-design-muted">
+              <div className="mt-3 text-base text-idl-ink-muted">
                 {titleRest ? <span>{titleRest}</span> : subtitle ? <span>{subtitle}</span> : null}
               </div>
             ) : null}
             {showShortDescription ? (
-              <p className="mt-3 text-sm leading-relaxed text-idl-design-muted">{shortDescription}</p>
+              <p className="mt-3 text-sm leading-relaxed text-idl-ink-muted">{shortDescription}</p>
             ) : null}
             {heroMeta.length > 0 ? (
               <div className="mt-4 flex flex-wrap gap-2">
                 {heroMeta.map(({ label, value }) => (
                   <span
                     key={`${label}:${value}`}
-                    className="rounded border border-white/12 bg-white/[0.04] px-2.5 py-1 text-[11.5px] tracking-wide text-idl-design-muted"
+                    className="rounded border border-idl-path-design-border bg-white px-2.5 py-1 text-[11.5px] tracking-wide text-idl-ink-muted"
                   >
-                    <span className="text-idl-design-dim">{label}</span>
-                    <span className="mx-1.5 text-white/20">·</span>
-                    <span className="text-idl-design-fg">{value}</span>
+                    <span className="text-idl-ink-muted">{label}</span>
+                    <span className="mx-1.5 text-idl-border-strong">·</span>
+                    <span className="text-idl-ink">{value}</span>
                   </span>
                 ))}
               </div>
@@ -239,7 +231,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
                 {specTags.map((tag) => (
                   <span
                     key={`tag:${tag}`}
-                    className="rounded-sm bg-white/[0.06] px-2 py-0.5 text-[11px] tracking-wide text-idl-design-dim"
+                    className="rounded-sm bg-idl-cream px-2 py-0.5 text-[11px] tracking-wide text-idl-ink-muted"
                   >
                     {tag}
                   </span>
@@ -248,7 +240,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
                   <Link
                     key={cat.slug}
                     to={lp(`/categoria/${cat.slug}`)}
-                    className="rounded-sm border border-white/10 px-2 py-0.5 text-[11px] tracking-wide text-idl-design-dim transition hover:border-idl-glow hover:text-idl-glow"
+                    className="rounded-sm border border-idl-path-design-border px-2 py-0.5 text-[11px] tracking-wide text-idl-ink-muted transition hover:border-idl-brass hover:text-idl-brass"
                   >
                     {cat.name}
                   </Link>
@@ -260,23 +252,23 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
                 product={product}
                 variant={selectedVariant}
                 includeBrand={false}
-                className="mt-2 text-xs text-idl-design-dim"
+                className="mt-2 text-xs text-idl-ink-muted"
               />
             </div>
 
             <div className="flex flex-wrap items-baseline gap-2 sm:gap-3.5">
-              <span className="font-serif text-[26px] font-medium sm:text-[34px]">
+              <span className="font-serif text-[26px] font-medium text-idl-ink sm:text-[34px]">
                 {formatMoney(displayPriceCents, product.currency)}
               </span>
               {priceModeLabel ? (
-                <span className="text-[13.5px] text-idl-design-dim">{priceModeLabel}</span>
+                <span className="text-[13.5px] text-idl-ink-muted">{priceModeLabel}</span>
               ) : null}
             </div>
             {isStockEnriching ? (
               <div className="mt-2 mb-[30px] flex flex-col gap-1 text-[13.5px]">
                 <div className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-idl-design-dim/40" aria-hidden />
-                  <span className="text-idl-design-muted not-italic">
+                  <span className="size-2 rounded-full bg-idl-ink-muted/40" aria-hidden />
+                  <span className="text-idl-ink-muted not-italic">
                     {t('product.availability.checking')}
                   </span>
                 </div>
@@ -285,12 +277,12 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
               <div className="mt-2 mb-[30px] flex flex-col gap-1 text-[13.5px]">
                 <div className="flex items-center gap-2">
                   <span className="size-2 rounded-full bg-[#5fb98a]" aria-hidden />
-                  <span className="text-idl-design-muted not-italic">
+                  <span className="text-idl-ink-muted not-italic">
                     {formatAvailabilityPrimaryLabel(availability)}
                   </span>
                 </div>
                 {availability.detail ? (
-                  <p className="pl-4 text-idl-design-dim">{availability.detail}</p>
+                  <p className="pl-4 text-idl-ink-muted">{availability.detail}</p>
                 ) : null}
               </div>
             ) : (
@@ -317,7 +309,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
                 type="button"
                 disabled={isStockEnriching || !availability?.canAddToCart || isAddingToCart}
                 onClick={handleAddToCart}
-                className="flex-1 rounded-lg bg-idl-glow px-4 py-[15px] text-center text-[15.5px] font-bold text-idl-design transition hover:bg-[#ffffff] disabled:opacity-60"
+                className="flex-1 rounded-lg bg-idl-glow px-4 py-[15px] text-center text-[15.5px] font-bold text-idl-design transition hover:bg-idl-cta-glow-hover disabled:opacity-60"
               >
                 {isAddingToCart ? t('product.addingToCart') : t('product.addToCart')}
               </button>
@@ -343,12 +335,12 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
 
             <ProductDetailContactLink
               href={lp('/contatti')}
-              className="mb-[22px] block rounded-lg border border-white/20 px-4 py-[13px] text-center text-[14.5px] font-semibold text-idl-design-fg transition hover:border-idl-glow hover:text-idl-glow"
+              className="mb-[22px] block rounded-lg border border-idl-path-design-border px-4 py-[13px] text-center text-[14.5px] font-semibold text-idl-ink transition hover:border-idl-brass hover:text-idl-brass"
             >
               Richiedi una consulenza sul progetto luce
             </ProductDetailContactLink>
 
-            <div className="flex flex-wrap gap-3 border-t border-white/10 pt-4 text-[12px] text-idl-design-dim sm:gap-5 sm:pt-[18px] sm:text-[12.5px]">
+            <div className="flex flex-wrap gap-3 border-t border-idl-border pt-4 text-[12px] text-idl-ink-muted sm:gap-5 sm:pt-[18px] sm:text-[12.5px]">
               <span>✓ {t('product.trust.returnBadge')}</span>
               <span>✓ Garanzia ufficiale</span>
               {product.brand?.name ? <span>✓ Prodotto originale {product.brand.name}</span> : null}
@@ -358,12 +350,12 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
       </section>
 
       {hasStorySection && storyBody ? (
-      <section className="border-t border-white/6 bg-[#0c0c0d]">
-        <SectionContainer narrow className="py-12 text-center sm:py-16">
+      <section className="border-t border-idl-border bg-idl-paper">
+        <SectionContainer narrow className="py-16 text-center sm:py-24">
           <ProductDetailSectionLabel variant="design" className="mb-6 tracking-[0.22em]">
             LA STORIA
           </ProductDetailSectionLabel>
-          <div className="mx-auto max-w-3xl font-serif text-[clamp(1.25rem,4vw,1.625rem)] leading-[1.55] text-idl-design-fg">
+          <div className="mx-auto max-w-3xl font-serif text-[clamp(1.25rem,4vw,1.625rem)] leading-[1.55] text-idl-ink">
             <p>{storyBody}</p>
           </div>
         </SectionContainer>
@@ -371,7 +363,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
       ) : null}
 
       {lifestyleHeroImage ? (
-      <section className="bg-idl-design">
+      <section>
           <div className="relative h-[420px] sm:h-[560px] lg:h-[680px]">
             <SiteImage src={lifestyleHeroImage} alt="" fill className="object-cover" sizes="100vw" />
           </div>
@@ -380,7 +372,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
 
       {hasHtmlDescription && product.longDescription?.trim() ? (
       <section className="border-t border-idl-border bg-idl-path-design">
-        <SectionContainer narrow className="py-12 sm:py-16">
+        <SectionContainer narrow className="py-16 sm:py-20">
           <ProductDetailSectionLabel variant="design" className="mb-[18px] text-idl-brass tracking-[0.18em]">
             DESCRIZIONE
           </ProductDetailSectionLabel>
@@ -405,8 +397,8 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
       ) : null}
 
       {(specRowsWithValues.length > 0 || hasDimensionsPanel || productDocuments.length > 0) ? (
-      <section className="bg-idl-paper">
-        <SectionContainer className="grid min-w-0 items-start gap-8 py-10 sm:gap-14 sm:py-14 lg:grid-cols-2 lg:py-14">
+      <section className="border-t border-idl-border bg-idl-paper">
+        <SectionContainer className="grid min-w-0 items-start gap-10 py-16 sm:gap-14 sm:py-20 lg:grid-cols-2">
           {specRowsWithValues.length > 0 ? (
           <div>
             <ProductDetailSectionLabel variant="design" className="mb-4 text-idl-brass tracking-[0.18em]">
@@ -461,7 +453,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
       ) : null}
 
       {lifestyleGridImages.length > 0 ? (
-      <section className="bg-idl-design">
+      <section>
         <div className="grid sm:grid-cols-2">
           {lifestyleGridImages.map((src) => (
             <div key={src} className="relative h-[360px] sm:h-[480px] lg:h-[600px]">
@@ -473,19 +465,19 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
       ) : null}
 
       {relatedProducts.length > 0 ? (
-      <section className="border-t border-white/6 bg-idl-design">
-        <SectionContainer className="py-12 sm:py-16">
-          <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
+      <section className="border-t border-idl-border bg-idl-path-design">
+        <SectionContainer className="py-16 sm:py-20">
+          <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
             <div>
               <ProductDetailSectionLabel variant="design" className="mb-3">
                 {product.brand ? `FIRMA ${product.brand.name.toUpperCase()}` : 'COLLEZIONE'}
               </ProductDetailSectionLabel>
-              <h2 className="font-serif text-2xl font-medium sm:text-[30px]">Altre icone da scoprire</h2>
+              <h2 className="font-serif text-2xl font-medium text-idl-ink sm:text-[30px]">Altre icone da scoprire</h2>
             </div>
             {product.brand ? (
               <Link
                 to={lp(`/brand/${product.brand.slug}`)}
-                className="text-sm font-semibold text-idl-glow hover:underline"
+                className="text-sm font-semibold text-idl-brass hover:underline"
               >
                 Tutto {product.brand.name} →
               </Link>
@@ -501,13 +493,13 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
       ) : null}
 
       {alternatives.length > 0 ? (
-        <section className="border-t border-white/6 bg-idl-design">
-          <SectionContainer className="py-12 sm:py-16">
-            <div className="mb-7">
+        <section className="border-t border-idl-border bg-idl-paper">
+          <SectionContainer className="py-16 sm:py-20">
+            <div className="mb-10">
               <ProductDetailSectionLabel variant="design" className="mb-3">
                 ALTERNATIVE
               </ProductDetailSectionLabel>
-              <h2 className="font-serif text-2xl font-medium sm:text-[30px]">Potrebbe interessarti anche</h2>
+              <h2 className="font-serif text-2xl font-medium text-idl-ink sm:text-[30px]">Potrebbe interessarti anche</h2>
             </div>
             <DesignRelatedProducts
               products={alternatives.slice(0, 8)}
@@ -519,13 +511,13 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
       ) : null}
 
       {accessories.length > 0 ? (
-        <section className="border-t border-white/6 bg-idl-design">
-          <SectionContainer className="py-12 sm:py-16">
-            <div className="mb-7">
+        <section className="border-t border-idl-border bg-idl-path-design">
+          <SectionContainer className="py-16 sm:py-20">
+            <div className="mb-10">
               <ProductDetailSectionLabel variant="design" className="mb-3">
                 ACCESSORI
               </ProductDetailSectionLabel>
-              <h2 className="font-serif text-2xl font-medium sm:text-[30px]">Completa il progetto</h2>
+              <h2 className="font-serif text-2xl font-medium text-idl-ink sm:text-[30px]">Completa il progetto</h2>
             </div>
             <DesignRelatedProducts products={accessories.slice(0, 8)} lp={lp} brandName={product.brand?.name} />
           </SectionContainer>
@@ -535,16 +527,16 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
       <CategoryCtaBanner banner={DESIGN_CTA} lp={lp} variant="design" />
 
       {designerName ? (
-      <section className="border-t border-white/6 bg-idl-design">
-        <SectionContainer className="grid items-center gap-10 py-14 sm:gap-14 lg:grid-cols-[0.8fr_1.2fr] lg:py-16">
+      <section className="border-t border-idl-border bg-idl-paper">
+        <SectionContainer className="grid items-center gap-10 py-16 sm:gap-14 lg:grid-cols-[0.8fr_1.2fr] lg:py-20">
           <div>
             <ProductDetailSectionLabel variant="design" className="mb-4">
               IL DESIGNER
             </ProductDetailSectionLabel>
-            <h2 className="mb-4 font-serif text-3xl font-medium sm:text-[38px]">{designerName}</h2>
+            <h2 className="mb-4 font-serif text-3xl font-medium text-idl-ink sm:text-[38px]">{designerName}</h2>
             <Link
               to={lp('/negozio')}
-              className="mt-6 inline-flex items-center gap-2 rounded-lg border border-white/20 px-5 py-3 text-sm font-semibold transition hover:border-idl-glow hover:text-idl-glow"
+              className="mt-6 inline-flex items-center gap-2 rounded-lg border border-idl-path-design-border px-5 py-3 text-sm font-semibold text-idl-ink transition hover:border-idl-brass hover:text-idl-brass"
             >
               Tutti i progetti del designer →
             </Link>

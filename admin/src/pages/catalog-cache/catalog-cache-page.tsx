@@ -28,6 +28,30 @@ function formatTtlHours(ttlMs: number) {
   return `${hours} h`
 }
 
+function formatRefreshHours(hours: readonly number[] | undefined, timezone: string | undefined) {
+  const tz = timezone ?? 'Europe/Rome'
+  const slots = (hours?.length ? hours : [3, 15])
+    .map((h) => `${String(h).padStart(2, '0')}:00`)
+    .join(' e ')
+  return `refresh ${slots} ${tz}`
+}
+
+function formatSyncPhase(phase: 'list' | 'details' | 'promote') {
+  if (phase === 'list') return 'Lista prodotti'
+  if (phase === 'details') return 'Dettagli prodotto'
+  return 'Salvataggio cache'
+}
+
+function formatHistoryStatus(status: string) {
+  if (status === 'running') return 'In corso'
+  if (status === 'completed') return 'Completato'
+  if (status === 'failed') return 'Fallito'
+  if (status === 'interrupted') return 'Interrotto'
+  if (status === 'skipped') return 'Saltato'
+  if (status === 'pending') return 'In attesa'
+  return status
+}
+
 export function CatalogCachePage() {
   const store = useSnapshot(catalogCacheStore)
 
@@ -36,12 +60,13 @@ export function CatalogCachePage() {
   }, [])
 
   useEffect(() => {
-    if (!store.isSyncing) return
+    const inProgress = store.isSyncing || Boolean(store.status?.progress?.length)
+    if (!inProgress) return
     const id = window.setInterval(() => {
       void refreshCatalogCacheStatus()
     }, 3000)
     return () => window.clearInterval(id)
-  }, [store.isSyncing])
+  }, [store.isSyncing, store.status?.progress?.length])
 
   if (store.isLoading && !store.status) {
     return (
@@ -77,7 +102,7 @@ export function CatalogCachePage() {
           status.syncing
             ? 'Sync in corso · aggiornamento automatico ogni 3 secondi'
             : status.configured
-              ? `Indice OdooCatalog · TTL ${formatTtlHours(status.ttlMs)} · refresh notturno 03:00 Europe/Rome`
+              ? `Indice OdooCatalog · TTL ${formatTtlHours(status.ttlMs)} · ${formatRefreshHours(status.refreshHoursRome, status.refreshTimezone)}`
               : 'Integrazione OdooCatalog non configurata'
         }
       />
@@ -104,7 +129,8 @@ export function CatalogCachePage() {
               Stato cache catalogo
             </CardTitle>
             <CardDescription>
-              Lista, ricerca, filtri e PDP usano questa cache in-memory/disco. Nessuna coda Odoo.
+              Autocompletamento ricerca globale, lista, filtri e PDP usano questa cache in-memory/disco.
+              Il sync è paginato (100 prodotti per pagina, 2 dettagli alla volta) e riprende da checkpoint se si interrompe.
             </CardDescription>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -150,6 +176,54 @@ export function CatalogCachePage() {
         </CardContent>
       </Card>
 
+      {status.progress?.length ? (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Sync in corso</CardTitle>
+            <CardDescription>
+              Checkpoint su disco: se il processo si ferma, al prossimo avvio riparte da qui.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Lingua</TableHead>
+                  <TableHead>Fase</TableHead>
+                  <TableHead className="text-right">Pagina lista</TableHead>
+                  <TableHead className="text-right">Prodotti</TableHead>
+                  <TableHead className="text-right">Dettagli</TableHead>
+                  <TableHead>Aggiornato</TableHead>
+                  <TableHead>Ripresa</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {status.progress.map((row) => (
+                  <TableRow key={row.locale}>
+                    <TableCell className="font-medium">{row.locale}</TableCell>
+                    <TableCell>{formatSyncPhase(row.phase)}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {row.nextListPage}
+                      {row.listTotalPages != null ? ` / ${row.listTotalPages}` : ''}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{row.entryCount}</TableCell>
+                    <TableCell className="text-right tabular-nums">{row.detailCount}</TableCell>
+                    <TableCell>{formatDateTime(row.updatedAt)}</TableCell>
+                    <TableCell>
+                      {row.resumed ? (
+                        <Badge variant="secondary">Ripreso</Badge>
+                      ) : (
+                        <Badge variant="outline">Nuovo</Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Per lingua</CardTitle>
@@ -190,6 +264,57 @@ export function CatalogCachePage() {
           </Table>
         </CardContent>
       </Card>
+
+      {status.history?.length ? (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Storico sync</CardTitle>
+            <CardDescription>
+              Ultimi avvii. Un sync interrotto resta in checkpoint e viene ripreso al riavvio.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Inizio</TableHead>
+                  <TableHead>Fine</TableHead>
+                  <TableHead>Esito</TableHead>
+                  <TableHead>Motivo</TableHead>
+                  <TableHead>Lingue</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {status.history.slice(0, 12).map((run) => (
+                  <TableRow key={run.startedAt}>
+                    <TableCell>{formatDateTime(run.startedAt)}</TableCell>
+                    <TableCell>{formatDateTime(run.finishedAt)}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          run.status === 'failed'
+                            ? 'destructive'
+                            : run.status === 'completed'
+                              ? 'outline'
+                              : 'secondary'
+                        }
+                      >
+                        {formatHistoryStatus(run.status)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{run.reason}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {run.locales
+                        .map((row) => `${row.locale}: ${formatHistoryStatus(row.status)}`)
+                        .join(' · ')}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   )
 }

@@ -136,6 +136,7 @@ export const catalogPublicController = {
       pricing,
     })
     const source = cacheOnly ? 'proxy-cache' : 'odoo-search'
+    res.vary('Cookie')
     if (pricing.partnerId == null && pricing.pricelistId == null) {
       res.set(
         'Cache-Control',
@@ -180,6 +181,7 @@ export const catalogPublicController = {
       pricelistId: pricing.pricelistId ?? undefined,
       pricing,
     })
+    res.vary('Cookie')
     if (pricing.partnerId == null && pricing.pricelistId == null) {
       res.set('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=120')
     } else {
@@ -222,6 +224,7 @@ export const catalogPublicController = {
       partnerId: pricing.partnerId ?? undefined,
       pricelistId: pricing.pricelistId ?? undefined,
     })
+    res.vary('Cookie')
     if (pricing.partnerId == null && pricing.pricelistId == null) {
       res.setHeader(
         'Cache-Control',

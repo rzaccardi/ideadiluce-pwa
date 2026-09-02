@@ -37,7 +37,8 @@ import { enrichCartLineProduct } from '../catalog/catalog-stock.enrich.js'
 import { unitPriceCentsFromOdoo } from '../catalog/odooPricing.service.js'
 import { subtotalCentsFromCartItems } from './cartTotals.js'
 import type { CartAddProductHint } from './cart.validators.js'
-import { buildCartLineVariantMeta } from './cart-line-variant-meta.js'
+import { buildCartLineVariantMeta, parseCartLineVariantMeta } from './cart-line-variant-meta.js'
+import { scheduleCartOdooPrep } from './cart-odoo-prep.service.js'
 
 function storedProductRef(product: ProductDetailDTO): string {
   if (product.odooTemplateId != null) {
@@ -82,18 +83,22 @@ function catalogMapFromProducts(
   return map
 }
 
-async function catalogMapForCart(
-  items: { productRef: string }[],
-  correlationId: string,
+function catalogLookupFromStoredLines(
+  items: CartItem[],
   seed: Map<string, CartCatalogEntry> = new Map(),
-): Promise<Map<string, CartCatalogEntry>> {
-  const uniqueRefs = [...new Set(items.map((item) => item.productRef))].filter((ref) => !seed.has(ref))
-  if (uniqueRefs.length === 0) return new Map(seed)
-  const productByRef = await resolveProductMapForCartLines(
-    { correlationId },
-    items.filter((item) => uniqueRefs.includes(item.productRef)),
-  )
-  return catalogMapFromProducts(productByRef, seed)
+): Map<string, CartCatalogEntry> {
+  const map = new Map(seed)
+  for (const line of items) {
+    if (map.has(line.productRef)) continue
+    const meta = parseCartLineVariantMeta(line.metadataJson)
+    map.set(line.productRef, {
+      priceCents: line.clientUnitPriceEstimate ?? 0,
+      slug: meta?.productSlug ?? line.productRef,
+      name: meta?.productName ?? line.productRef,
+      imageUrl: meta?.imageUrl ?? null,
+    })
+  }
+  return map
 }
 
 async function catalogAndAvailabilityForCart(
@@ -272,7 +277,7 @@ async function syncCartPricing(
     }
   }
   const resolvedPricing = pricing ?? (await resolvePricingContext(req))
-  await repriceCartFromOdoo(req, cartId, resolvedPricing)
+  await repriceCartFromOdoo({ correlationId: req.correlationId, req }, cartId, resolvedPricing)
 
   const afterCart = await cartRepository.getWithItems(cartId)
   for (const line of afterCart?.items ?? []) {
@@ -308,7 +313,8 @@ async function dtoFromCartId(
   if (!full) {
     throw new AppError('CART_NOT_FOUND', 'Cart not found', 'Carrello non trovato.', 404, false)
   }
-  const pricing = await resolvePricingContext(req)
+  const skipLiveCatalog = Boolean(options?.fastMutation) || options?.reprice !== true
+  const pricing = await resolvePricingContext(req, { skipOdoo: skipLiveCatalog })
   let { cart: afterExpiry, expired } = await expireCartIfNeeded(full)
   full = afterExpiry
   if (
@@ -340,14 +346,14 @@ async function dtoFromCartId(
     full.items.length > 0 &&
     !canUseCachedCartPricing(full)
 
-  const unifiedCatalogPromise = options?.fastMutation
+  const unifiedCatalogPromise = skipLiveCatalog
     ? null
     : catalogAndAvailabilityForCart(req, full.items, catalogSeed)
 
-  const catalogLookupPromise = options?.fastMutation
-    ? catalogMapForCart(full.items, req.correlationId, catalogSeed)
+  const catalogLookupPromise = skipLiveCatalog
+    ? Promise.resolve(catalogLookupFromStoredLines(full.items, catalogSeed))
     : unifiedCatalogPromise!.then((r) => r.catalog)
-  const availabilityLookupPromise = options?.fastMutation
+  const availabilityLookupPromise = skipLiveCatalog
     ? Promise.resolve(
         buildMutationAvailabilityLookup(
           full.items,
@@ -360,7 +366,7 @@ async function dtoFromCartId(
         ),
       )
     : unifiedCatalogPromise!.then((r) => r.availability)
-  const productByRefPromise = options?.fastMutation
+  const productByRefPromise = skipLiveCatalog
     ? Promise.resolve(new Map<string, ProductDetailDTO | null>())
     : unifiedCatalogPromise!.then((r) => r.productByRef)
   const repricePromise = shouldReprice
@@ -444,23 +450,9 @@ async function buildFastMutationCartDto(
     throw new AppError('CART_NOT_FOUND', 'Cart not found', 'Carrello non trovato.', 404, false)
   }
 
-  const catalogLookup = new Map<string, CartCatalogEntry>([
+  const catalogLookup = catalogLookupFromStoredLines(full.items, new Map([
     [mutation.productRef, mutation.catalog],
-  ])
-  const missingRefs = [
-    ...new Set(
-      full.items
-        .map((line) => line.productRef)
-        .filter((ref) => !catalogLookup.has(ref)),
-    ),
-  ]
-  if (missingRefs.length > 0) {
-    const extra = await catalogMapForCart(
-      full.items.filter((line) => missingRefs.includes(line.productRef)),
-      req.correlationId,
-    )
-    for (const [ref, entry] of extra) catalogLookup.set(ref, entry)
-  }
+  ]))
 
   const availabilityLookup = buildMutationAvailabilityLookup(full.items, {
     key: `${mutation.productRef}:${mutation.variantRef ?? ''}`,
@@ -633,7 +625,7 @@ function productDetailFromOdooHint(
   }
 }
 
-/** Stock + prezzo Odoo solo per la variante aggiunta (non tutte le varianti del prodotto). */
+/** Stock + prezzo Odoo solo se richiesto (checkout/reprice). L'add usa snapshot client e sync async. */
 async function resolveProductForCartLine(
   ctx: OdooCallContext,
   productRef: string,
@@ -641,6 +633,7 @@ async function resolveProductForCartLine(
   quantity: number,
   pricing: PricingContext,
   productHint?: CartAddProductHint | null,
+  options?: { liveOdoo?: boolean },
 ) {
   const product =
     productDetailFromOdooHint(productRef, variantRef, productHint) ??
@@ -649,6 +642,18 @@ async function resolveProductForCartLine(
 
   const resolvedVariantRef = resolveVariantRef(product, variantRef)
   const storedRef = storedProductRef(product)
+
+  if (options?.liveOdoo === false) {
+    const unitPriceCents =
+      productHint?.unitPriceCents ?? lineUnitPriceCents(product, resolvedVariantRef)
+    return {
+      product,
+      productRef: storedRef,
+      variantRef: resolvedVariantRef,
+      unitPriceCents,
+    }
+  }
+
   const [withStock, unitFromOdoo] = await Promise.all([
     enrichCartLineProduct(ctx, product, resolvedVariantRef, quantity),
     unitPriceCentsFromOdoo(ctx, storedRef, resolvedVariantRef, pricing),
@@ -687,6 +692,8 @@ function variantMetaFromProduct(
     variantLabel: hint?.variantLabel ?? variant?.label ?? null,
     imageUrl: hint?.imageUrl ?? variant?.imageUrl ?? product.imageUrl,
     attributes: hint?.attributes ?? variant?.attributes ?? [],
+    productName: hint?.name ?? product.name,
+    productSlug: hint?.slug ?? product.slug,
   })
 }
 
@@ -786,7 +793,7 @@ export const cartService = {
       productHint?: CartAddProductHint
     },
   ) {
-    const pricing = await resolvePricingContext(req)
+    const pricing = await resolvePricingContext(req, { skipOdoo: true })
     const ctx: OdooCallContext = { correlationId: req.correlationId, req }
     const line = await resolveProductForCartLine(
       ctx,
@@ -795,6 +802,7 @@ export const cartService = {
       input.quantity,
       pricing,
       input.productHint,
+      { liveOdoo: false },
     )
     if (!line) {
       throw new AppError('PRODUCT_NOT_FOUND', 'Unknown product', 'Prodotto non disponibile.', 404, false)
@@ -804,7 +812,6 @@ export const cartService = {
       where: { cartId: cart.id, productRef: line.productRef, variantRef: line.variantRef },
     })
     const nextQuantity = (existing?.quantity ?? 0) + input.quantity
-    await assertLineStock(req, line.product, line.variantRef, nextQuantity)
     const variantMeta = variantMetaFromProduct(line.product, line.variantRef, input.productHint)
     if (existing) {
       await cartRepository.updateItem(existing.id, {
@@ -824,52 +831,39 @@ export const cartService = {
     }
     await syncReservationAfterItemsChange(cart.id)
     const availability = availabilityFromProduct(line.product, line.variantRef, nextQuantity)
-    return buildFastMutationCartDto(req, cart.id, pricing, {
+    const dto = await buildFastMutationCartDto(req, cart.id, pricing, {
       productRef: line.productRef,
       variantRef: line.variantRef,
       availability,
       catalog: catalogEntryFromProduct(line.product, line.unitPriceCents, line.variantRef),
       product: line.product,
     })
+    scheduleCartOdooPrep({ cartId: cart.id, correlationId: req.correlationId })
+    return dto
   },
 
   async patchItem(req: Request, itemId: string, quantity: number) {
-    const pricing = await resolvePricingContext(req)
+    const pricing = await resolvePricingContext(req, { skipOdoo: true })
     const cart = await resolveOrCreateCart(req)
     const item = await cartRepository.findItem(cart.id, itemId)
     if (!item) {
       throw new AppError('LINE_NOT_FOUND', 'Line not found', 'Riga non trovata.', 404, false)
     }
-    const ctx: OdooCallContext = { correlationId: req.correlationId, req }
-    const line = await resolveProductForCartLine(
-      ctx,
-      item.productRef,
-      item.variantRef,
-      quantity,
-      pricing,
-    )
-    if (line) {
-      await assertLineStock(req, line.product, line.variantRef, quantity)
-      await cartRepository.updateItem(itemId, {
-        quantity,
-        clientUnitPriceEstimate: line.unitPriceCents,
-        metadataJson: variantMetaFromProduct(line.product, line.variantRef),
-      })
-    } else {
-      await cartRepository.updateItem(itemId, { quantity })
-    }
+    await cartRepository.updateItem(itemId, { quantity })
     await syncReservationAfterItemsChange(cart.id)
-    if (line) {
-      return buildFastMutationCartDto(req, cart.id, pricing, {
-        productRef: line.productRef,
-        variantRef: line.variantRef,
-        availability: availabilityFromProduct(line.product, line.variantRef, quantity),
-        catalog: catalogEntryFromProduct(line.product, line.unitPriceCents, line.variantRef),
-        product: line.product,
-      })
-    }
-    const { dto } = await dtoFromCartId(req, cart.id, { reprice: false, fastMutation: true })
-    return dto
+    scheduleCartOdooPrep({ cartId: cart.id, correlationId: req.correlationId })
+    const meta = parseCartLineVariantMeta(item.metadataJson)
+    return buildFastMutationCartDto(req, cart.id, pricing, {
+      productRef: item.productRef,
+      variantRef: item.variantRef,
+      availability: OPTIMISTIC_LINE_AVAILABILITY,
+      catalog: {
+        priceCents: item.clientUnitPriceEstimate ?? 0,
+        slug: meta?.productSlug ?? item.productRef,
+        name: meta?.productName ?? item.productRef,
+        imageUrl: meta?.imageUrl ?? null,
+      },
+    })
   },
 
   async removeItem(req: Request, itemId: string) {
@@ -880,6 +874,7 @@ export const cartService = {
     }
     await cartRepository.deleteItem(itemId)
     await syncReservationAfterItemsChange(cart.id)
+    scheduleCartOdooPrep({ cartId: cart.id, correlationId: req.correlationId })
     const { dto } = await dtoFromCartId(req, cart.id, { reprice: false, fastMutation: true })
     return dto
   },
@@ -895,6 +890,7 @@ export const cartService = {
       lastPricedAt: null,
     })
     await bumpCartReservation(cart.id, false)
+    scheduleCartOdooPrep({ cartId: cart.id, correlationId: req.correlationId })
     const { dto } = await dtoFromCartId(req, cart.id, { reprice: false })
     return dto
   },

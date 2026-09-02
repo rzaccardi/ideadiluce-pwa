@@ -72,7 +72,7 @@ async function partnerIdsForUser(userId: string): Promise<number[]> {
     { correlationId: `invoices-${userId}` },
     'res.partner',
     'search_read',
-    [[['email', 'ilike', user.email.toLowerCase().trim()]]],
+    [[['email', '=ilike', user.email.trim()]]],
     { fields: ['id'], limit: 5 },
   )
   return partners.map((p) => p.id)

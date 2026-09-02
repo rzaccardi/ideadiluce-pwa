@@ -4,6 +4,7 @@ import { asyncHandler } from '../../utils/async-handler.js'
 import { ok } from '../../lib/api-response.js'
 import { siteInquiryService } from './site-inquiry.service.js'
 import { siteInquirySchema } from './site-inquiry.validators.js'
+import { formSubmitRateLimit } from '../../lib/rate-limiters.js'
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -33,6 +34,7 @@ export const siteInquiryRouter = Router()
 
 siteInquiryRouter.post(
   '/',
+  formSubmitRateLimit,
   imageFields,
   asyncHandler(async (req, res) => {
     const parsed = siteInquirySchema.safeParse(req.body)

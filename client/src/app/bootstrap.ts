@@ -1,4 +1,4 @@
-import { appStore } from '@/features/app'
+import { appStore, fetchStorefrontSettings } from '@/features/app'
 import { fetchMe } from '@/features/auth'
 import { fetchCart } from '@/features/cart'
 import { isCartFlowPath } from '@/features/cart/cart.utils'
@@ -26,6 +26,7 @@ export function bootstrapSession(options?: BootstrapSessionOptions): Promise<voi
     const skipInitialCart =
       options?.pathname != null && isCartFlowPath(options.pathname)
     appStore.isBootstrapped = true
+    void fetchStorefrontSettings()
     bootstrapPromise = fetchMe()
       .then(() => (skipInitialCart ? undefined : fetchCart({ force: false })))
       .then(() => {

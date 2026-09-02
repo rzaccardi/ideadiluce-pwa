@@ -12,6 +12,7 @@ type Props = {
 
 export function CategoryCtaBanner({ banner, lp, variant = 'design' }: Props) {
   const isDesign = variant === 'design'
+  const hasCopy = Boolean(banner.title?.trim() || banner.description?.trim())
 
   return (
     <section className={cn(isDesign ? 'bg-idl-ink text-idl-design-fg' : 'border-t border-idl-amber/20 bg-idl-paper')}>
@@ -19,21 +20,34 @@ export function CategoryCtaBanner({ banner, lp, variant = 'design' }: Props) {
         className={cn(
           'flex flex-col items-stretch justify-between gap-6 py-8 sm:flex-row sm:items-center sm:gap-8',
           isDesign ? 'sm:py-12' : 'sm:py-10',
+          !hasCopy && 'sm:justify-center',
         )}
       >
-        <div className="min-w-0 max-w-xl">
-          <h2
-            className={cn(
-              'font-medium',
-              isDesign ? 'font-serif text-[22px] sm:text-[26px]' : 'text-[20px] font-extrabold tracking-tight text-idl-ink sm:text-[22px]',
-            )}
-          >
-            {banner.title}
-          </h2>
-          <p className={cn('mt-2 text-[14px] leading-relaxed sm:text-[14.5px]', isDesign ? 'text-idl-design-muted' : 'text-idl-ink-muted')}>
-            {banner.description}
-          </p>
-        </div>
+        {hasCopy ? (
+          <div className="min-w-0 max-w-xl">
+            {banner.title?.trim() ? (
+              <h2
+                className={cn(
+                  'font-medium',
+                  isDesign ? 'font-serif text-[22px] sm:text-[26px]' : 'text-[20px] font-extrabold tracking-tight text-idl-ink sm:text-[22px]',
+                )}
+              >
+                {banner.title}
+              </h2>
+            ) : null}
+            {banner.description?.trim() ? (
+              <p
+                className={cn(
+                  'text-[14px] leading-relaxed sm:text-[14.5px]',
+                  banner.title?.trim() && 'mt-2',
+                  isDesign ? 'text-idl-design-muted' : 'text-idl-ink-muted',
+                )}
+              >
+                {banner.description}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
         <div className="flex w-full shrink-0 flex-col gap-2.5 sm:w-auto sm:flex-row sm:flex-wrap sm:gap-3">
           <Link
             to={lp(banner.primaryCta.href)}

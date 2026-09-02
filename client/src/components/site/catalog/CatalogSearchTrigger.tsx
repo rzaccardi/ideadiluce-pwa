@@ -16,6 +16,10 @@ type Props = {
   variant?: CatalogSearchFieldVariant
   hints?: ReadonlyArray<HintItem>
   hintsLabel?: string
+  /** Limita i chip visibili (Home: 5 per non mandarli a capo). */
+  maxHints?: number
+  /** Una sola riga, scroll orizzontale se non bastano. */
+  hintsSingleLine?: boolean
   showHints?: boolean
   showCta?: boolean
   displayValue?: string
@@ -67,6 +71,8 @@ export function CatalogSearchTrigger({
   variant = 'design',
   hints,
   hintsLabel = 'Prova:',
+  maxHints,
+  hintsSingleLine = false,
   showHints = true,
   showCta = true,
   displayValue,
@@ -77,7 +83,9 @@ export function CatalogSearchTrigger({
 }: Props) {
   const { openSearch } = useGlobalSearch()
   const styles = VARIANT_STYLES[variant]
-  const { display: hintItems } = normalizeCatalogSearchHints(hints)
+  const { display: hintItems } = normalizeCatalogSearchHints(
+    maxHints != null ? hints?.slice(0, maxHints) : hints,
+  )
   const hasValue = Boolean(displayValue?.trim())
   const triggerLabel = ariaLabel ?? placeholder
 
@@ -120,8 +128,15 @@ export function CatalogSearchTrigger({
       </div>
 
       {showHints && hintItems.length > 0 ? (
-        <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2">
-          <span className="text-[12.5px] text-idl-muted">{hintsLabel}</span>
+        <div
+          className={cn(
+            'mt-3.5 flex items-center justify-center gap-2',
+            hintsSingleLine
+              ? 'flex-nowrap overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden'
+              : 'flex-wrap',
+          )}
+        >
+          <span className="shrink-0 text-[12.5px] text-idl-muted">{hintsLabel}</span>
           {hintItems.map((hint) => (
             <button
               key={hint.label}
@@ -129,6 +144,7 @@ export function CatalogSearchTrigger({
               onClick={() => openSearch(hint.query, searchSource)}
               className={cn(
                 ui.chipInteractive,
+                'shrink-0 whitespace-nowrap',
                 variant === 'technical'
                   ? 'rounded-[30px] border border-idl-tech-chip-border bg-idl-tech-panel px-3 py-1.5 text-[12px] text-idl-graphite-2 hover:border-idl-amber hover:text-idl-amber'
                   : 'rounded-full bg-idl-cream px-3 py-1.5 font-mono text-[12px] text-idl-ink-soft hover:text-idl-ink',

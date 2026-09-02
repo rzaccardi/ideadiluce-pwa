@@ -1,6 +1,10 @@
 import type { UserAddressDTO, UserDTO } from '@/types/dto'
 import type { AddressInput } from '@/types/integrations'
-import { formatStreetLine, isCheckoutAddressValid } from '@/lib/checkout-address.validators'
+import {
+  formatStreetLine,
+  isCheckoutAddressValid,
+  splitLine1AndStreetNumber,
+} from '@/lib/checkout-address.validators'
 
 export function emptyAddress(): AddressInput {
   return {
@@ -20,11 +24,19 @@ export function emptyAddress(): AddressInput {
 
 export function shippingAddressFromUser(user: UserDTO): AddressInput {
   const saved = user.shippingAddress
+  const split = splitLine1AndStreetNumber(
+    saved?.line1 ?? '',
+    saved?.streetNumber ?? '',
+    saved?.isSnc === true,
+  )
   return {
     ...emptyAddress(),
     ...(saved ?? {}),
     firstName: saved?.firstName || user.firstName || '',
     lastName: saved?.lastName || user.lastName || '',
+    line1: split.line1,
+    streetNumber: split.streetNumber,
+    isSnc: split.isSnc,
     phone: saved?.phone || user.phone || '',
   }
 }

@@ -28,3 +28,28 @@ export function nextSearchActiveIndex(current: number, length: number, direction
 export function suggestionOptionId(listId: string, itemId: string): string {
   return `${listId}-option-${itemId}`
 }
+
+export function catalogSearchPaletteView(options: {
+  queryLength: number
+  minLength: number
+  minApiLength?: number
+  loading: boolean
+  hasResults: boolean
+  currentQuery?: string
+  resultsQuery?: string | null
+}): 'idle' | 'pending' | 'results' | 'empty' {
+  if (options.queryLength < options.minLength) return 'idle'
+  if (options.loading) return 'pending'
+  if (
+    options.currentQuery != null &&
+    options.resultsQuery != null &&
+    options.resultsQuery !== options.currentQuery
+  ) {
+    return 'pending'
+  }
+  if (options.hasResults) return 'results'
+  const minApiLength = options.minApiLength ?? options.minLength
+  if (options.queryLength < minApiLength) return 'pending'
+  if (options.currentQuery != null && options.resultsQuery !== options.currentQuery) return 'pending'
+  return 'empty'
+}

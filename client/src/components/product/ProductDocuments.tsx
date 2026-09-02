@@ -67,7 +67,7 @@ export function ProductDocuments({
         <h2
           className={cn(
             'text-lg font-semibold tracking-tight',
-            isDesign ? 'font-serif text-idl-design-fg' : 'font-extrabold text-idl-ink',
+            isDesign ? 'font-serif text-idl-ink' : 'font-extrabold text-idl-ink',
           )}
         >
           Documenti e schede tecniche

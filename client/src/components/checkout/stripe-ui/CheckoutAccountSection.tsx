@@ -132,7 +132,7 @@ export function CheckoutAccountSection() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-black py-3 text-[15px] font-medium text-white transition hover:bg-zinc-800 disabled:opacity-50"
+            className="w-full rounded-xl bg-idl-glow py-3 text-[15px] font-extrabold text-idl-design transition hover:bg-idl-cta-glow-hover disabled:opacity-50"
           >
             {loading ? t('auth.loggingIn') : t('auth.loginSubmit')}
           </button>

@@ -1,5 +1,6 @@
 export {
   fetchGuidesList,
+  createGuide,
   fetchGuideDetail,
   updateGuideMeta,
   setGuidePublished,

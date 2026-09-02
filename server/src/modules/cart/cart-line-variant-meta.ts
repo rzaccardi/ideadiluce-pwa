@@ -5,12 +5,16 @@ export type CartLineVariantMeta = {
   variantLabel?: string | null
   imageUrl?: string | null
   attributes?: ProductVariantAttributeDTO[]
+  productName?: string | null
+  productSlug?: string | null
 }
 
 export function buildCartLineVariantMeta(input: {
   variantLabel?: string | null
   imageUrl?: string | null
   attributes?: ReadonlyArray<ProductVariantAttributeDTO> | null
+  productName?: string | null
+  productSlug?: string | null
 }): CartLineVariantMeta {
   const attributes = (input.attributes ?? [])
     .filter((a) => a.name?.trim() && a.value?.trim())
@@ -19,6 +23,8 @@ export function buildCartLineVariantMeta(input: {
     ...(input.variantLabel?.trim() ? { variantLabel: input.variantLabel.trim() } : {}),
     ...(input.imageUrl?.trim() ? { imageUrl: input.imageUrl.trim() } : {}),
     ...(attributes.length ? { attributes } : {}),
+    ...(input.productName?.trim() ? { productName: input.productName.trim() } : {}),
+    ...(input.productSlug?.trim() ? { productSlug: input.productSlug.trim() } : {}),
   }
 }
 
@@ -45,11 +51,21 @@ export function parseCartLineVariantMeta(raw: unknown): CartLineVariantMeta | nu
       : null
   const imageUrl =
     typeof obj.imageUrl === 'string' && obj.imageUrl.trim() ? obj.imageUrl.trim() : null
-  if (!variantLabel && !imageUrl && attributes.length === 0) return null
+  const productName =
+    typeof obj.productName === 'string' && obj.productName.trim()
+      ? obj.productName.trim()
+      : null
+  const productSlug =
+    typeof obj.productSlug === 'string' && obj.productSlug.trim()
+      ? obj.productSlug.trim()
+      : null
+  if (!variantLabel && !imageUrl && attributes.length === 0 && !productName && !productSlug) return null
   return {
     ...(variantLabel ? { variantLabel } : {}),
     ...(imageUrl ? { imageUrl } : {}),
     ...(attributes.length ? { attributes } : {}),
+    ...(productName ? { productName } : {}),
+    ...(productSlug ? { productSlug } : {}),
   }
 }
 

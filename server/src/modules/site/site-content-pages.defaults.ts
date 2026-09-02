@@ -25,6 +25,9 @@ export const COMPANY_CONTACT = {
   whatsapp: 'https://wa.me/39067167111',
 }
 
+/** Unico profilo social ufficiale. */
+export const COMPANY_FACEBOOK_URL = 'https://www.facebook.com/ideadiluce'
+
 export const CONTENT_PAGE_KEYS = [
   'chi-siamo',
   'lavora-con-noi',
@@ -441,4 +444,17 @@ export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> =
     'IT',
   ),
   'guide-la-natura-trend-2024': getLegacyEditorialGuideContent('la-natura-trend-2024', 'IT'),
+}
+
+/** Template vuoto per guide create dal backoffice (slug non in CONTENT_PAGE_KEYS). */
+export function blankGuideArticleContent(title = 'Nuova guida'): ContentPageContent {
+  return {
+    layout: 'article',
+    eyebrow: 'GUIDA',
+    title,
+    subtitle: '',
+    intro: '',
+    coverImage: { imageUrl: '', alt: '' },
+    blocks: [],
+  }
 }

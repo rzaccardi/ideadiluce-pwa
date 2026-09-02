@@ -28,8 +28,8 @@ import {
   resolvePrefilledAddress,
 } from '@/lib/addressAutocomplete'
 import { shippingAddressFromUser } from '@/lib/address'
-import { isCheckoutAddressValid } from '@/lib/checkout-address.validators'
-import { fetchCart } from '@/features/cart'
+import { isCheckoutAddressValid, mergeResolvedStreetNumber } from '@/lib/checkout-address.validators'
+import { fetchCart, shouldRepriceCartOnLoad, waitForPendingCartMutations } from '@/features/cart'
 import { cartStore } from '@/features/cart/cart.store'
 import {
   filterVisibleShippingQuotes,
@@ -838,14 +838,14 @@ let addressPrefillPromise: Promise<void> | null = null
 
 async function resolvePrefilledCheckoutAddressesFromAuth() {
   const shipping = checkoutStore.draft.shipping
-  if (hasPrefilledAddress(shipping)) {
+  if (hasPrefilledAddress(shipping) && !isCheckoutAddressValid(shipping)) {
     const resolved = await resolvePrefilledAddress(shipping)
     if (resolved) await applyResolvedAddress('shipping', resolved)
   }
 
   if (!checkoutStore.draft.billingSameAsShipping) {
     const billing = checkoutStore.draft.billing
-    if (hasPrefilledAddress(billing)) {
+    if (hasPrefilledAddress(billing) && !isCheckoutAddressValid(billing)) {
       const resolved = await resolvePrefilledAddress(billing)
       if (resolved) await applyResolvedAddress('billing', resolved)
     }
@@ -867,8 +867,10 @@ async function runAddressPrefillInit() {
     const shipping = checkoutStore.draft.shipping
     const billing = checkoutStore.draft.billing
     const needsGeocode =
-      hasPrefilledAddress(shipping) ||
-      (!checkoutStore.draft.billingSameAsShipping && hasPrefilledAddress(billing))
+      (hasPrefilledAddress(shipping) && !isCheckoutAddressValid(shipping)) ||
+      (!checkoutStore.draft.billingSameAsShipping &&
+        hasPrefilledAddress(billing) &&
+        !isCheckoutAddressValid(billing))
 
     if (needsGeocode) {
       checkoutStore.addressPrefillLoading = true
@@ -974,8 +976,11 @@ export async function refreshCheckoutAfterCartChange() {
     clearCheckoutPricingState()
 
     try {
-      checkoutDbg.api('fetchCart', { force: true, reprice: true })
-      await fetchCart({ force: true, reprice: true, silent: true })
+      const reprice = shouldRepriceCartOnLoad(cartStore.cart, {
+        reservationExpiredNotice: false,
+      })
+      checkoutDbg.api('fetchCart', { force: true, reprice })
+      await fetchCart({ force: true, reprice, silent: true })
 
       if (
         checkoutStepNeedsShippingRefresh(step) &&
@@ -1286,13 +1291,17 @@ export function setCheckoutAddressFields(
 }
 
 export async function applyResolvedAddress(kind: 'billing' | 'shipping', resolved: ResolvedAddress) {
+  const current = checkoutStore.draft[kind]
+  const merged = mergeResolvedStreetNumber(current, resolved)
+  const previousFingerprint = checkoutStore.shippingQuotesFingerprint
+
   setCheckoutAddressFields(
     kind,
     {
-      line1: resolved.line1,
-      streetNumber: resolved.streetNumber ?? '',
-      isSnc: false,
-      line2: resolved.line2 ?? '',
+      line1: merged.line1,
+      streetNumber: merged.streetNumber,
+      isSnc: merged.isSnc,
+      line2: resolved.line2 ?? current.line2 ?? '',
       city: resolved.city,
       postalCode: resolved.postalCode,
       country: resolved.country,
@@ -1300,19 +1309,25 @@ export async function applyResolvedAddress(kind: 'billing' | 'shipping', resolve
     { skipInvalidation: true },
   )
 
-  checkoutStore.shippingQuotes = []
-  checkoutStore.selectedShippingMethodRef = null
-  checkoutStore.shippingSelectionPersisted = false
-  checkoutStore.shippingQuotesFingerprint = null
-
-  if (kind === 'shipping') {
-    scheduleShippingQuotesFetch(0)
-  }
   if (kind === 'billing') {
     syncShippingDestinationFromBillingIfNeeded()
-    if (destinationComplete(shippingAddressPayload())) {
-      scheduleShippingQuotesFetch(0)
-    }
+  }
+
+  const nextFingerprint = shippingFingerprint(shippingAddressPayload())
+  const destinationChanged = previousFingerprint !== nextFingerprint
+
+  if (destinationChanged) {
+    checkoutStore.shippingQuotes = []
+    checkoutStore.selectedShippingMethodRef = null
+    checkoutStore.shippingSelectionPersisted = false
+    checkoutStore.shippingQuotesFingerprint = null
+  }
+
+  if (
+    destinationComplete(shippingAddressPayload()) &&
+    (destinationChanged || checkoutStore.shippingQuotes.length === 0)
+  ) {
+    scheduleShippingQuotesFetch(0)
   }
 }
 
@@ -1831,6 +1846,7 @@ export async function startCheckout(options?: { silent?: boolean }) {
   if (!options?.silent) checkoutStore.isLoading = true
   checkoutStore.error = null
   try {
+    await waitForPendingCartMutations()
     checkoutDbg.api('checkout.start', { email: ensureCheckoutEmailInDraft() })
     checkoutStore.order = await api.checkout.start({
       email: ensureCheckoutEmailInDraft(),

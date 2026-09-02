@@ -190,11 +190,9 @@ export function StripePayButton({
       disabled={disabled || loading}
       onClick={onClick}
       className={cn(
-        'w-full rounded-xl px-4 py-4 text-base font-extrabold text-white transition',
+        'w-full rounded-xl bg-idl-glow px-4 py-4 text-base font-extrabold text-idl-design transition hover:bg-idl-cta-glow-hover',
         checkoutActionControlClass,
-        isPay
-          ? 'bg-[#0c0c0d] hover:bg-idl-cta-amber-hover'
-          : 'bg-[#14161b] hover:bg-[#2a2d35]',
+        isPay && 'shadow-[0_8px_22px_rgba(240,173,87,0.38)]',
         'disabled:cursor-not-allowed disabled:opacity-50',
         loading && 'opacity-80',
         className,

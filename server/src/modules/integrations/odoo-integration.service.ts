@@ -226,6 +226,20 @@ export const odooIntegrationService = {
     }
 
     const ctx: OdooCallContext = { correlationId: req.correlationId, req }
+    const sessionEmail = req.sessionRecord?.user?.email?.toLowerCase().trim()
+    const queryEmail = query.email.toLowerCase().trim()
+    const hasIntegrationsToken = Boolean(
+      env.INTEGRATIONS_TOKEN?.trim() && req.get('x-integrations-token') === env.INTEGRATIONS_TOKEN.trim(),
+    )
+    if (!hasIntegrationsToken && sessionEmail !== queryEmail) {
+      throw new AppError(
+        'FORBIDDEN',
+        'Email mismatch',
+        'Puoi precompilare solo i dati del tuo account.',
+        403,
+        false,
+      )
+    }
     try {
       const profile = await customerAdapter.getCustomerProfileByEmail(ctx, query.email)
       return {

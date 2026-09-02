@@ -34,7 +34,7 @@ export function ProductQuantityStepper({
     <div
       className={cn(
         'flex shrink-0 items-center overflow-hidden rounded-lg border',
-        isDesign ? 'border-white/16' : 'border-idl-tech-chip-border',
+        isDesign ? 'border-idl-path-design-border' : 'border-idl-tech-chip-border',
         className,
       )}
     >
@@ -45,7 +45,7 @@ export function ProductQuantityStepper({
         aria-label="Diminuisci quantità"
         className={cn(
           'px-4 text-lg leading-[50px] transition disabled:opacity-40',
-          isDesign ? 'text-idl-design-muted hover:text-idl-design-fg' : 'text-idl-muted hover:text-idl-graphite',
+          isDesign ? 'text-idl-ink-muted hover:text-idl-ink' : 'text-idl-muted hover:text-idl-graphite',
         )}
       >
         −
@@ -53,7 +53,7 @@ export function ProductQuantityStepper({
       <span
         className={cn(
           'w-[34px] text-center text-[15px] font-bold',
-          isDesign ? 'text-idl-design-fg' : 'text-idl-graphite',
+          isDesign ? 'text-idl-ink' : 'text-idl-graphite',
         )}
         aria-live="polite"
       >
@@ -66,7 +66,7 @@ export function ProductQuantityStepper({
         aria-label="Aumenta quantità"
         className={cn(
           'px-4 text-lg leading-[50px] transition disabled:opacity-40',
-          isDesign ? 'text-idl-design-muted hover:text-idl-design-fg' : 'text-idl-muted hover:text-idl-graphite',
+          isDesign ? 'text-idl-ink-muted hover:text-idl-ink' : 'text-idl-muted hover:text-idl-graphite',
         )}
       >
         +

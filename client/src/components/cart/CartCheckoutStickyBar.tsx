@@ -4,6 +4,7 @@ import { Link } from '@/lib/navigation'
 import { formatMoney } from '@/lib/format'
 import { useI18n } from '@/hooks/use-i18n'
 import { preloadStripe } from '@/lib/stripe-loader'
+import { playCheckoutStartSound } from '@/features/checkout/checkout-start-sound'
 import { SectionContainer } from '@/components/site/primitives'
 import { Button } from '@/components/Button'
 import { cn } from '@/utils/cn'
@@ -51,6 +52,7 @@ export function CartCheckoutStickyBar({
           <Link
             to="/checkout"
             className="min-w-0 flex-1"
+            onClick={() => playCheckoutStartSound()}
             onMouseEnter={() => preloadStripe()}
             onFocus={() => preloadStripe()}
           >

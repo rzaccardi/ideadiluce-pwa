@@ -50,6 +50,29 @@ export function fetchGuidesList(query = 'page=1&pageSize=25', options?: { append
   )
 }
 
+export async function createGuide(input: {
+  title: string
+  slug?: string
+  category: string
+  readingMeta?: string
+}) {
+  guidesStore.isCreating = true
+  guidesStore.error = null
+  try {
+    const created = await adminApi<GuideDetail>('/admin/guides', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    })
+    await fetchGuidesList('page=1&pageSize=25')
+    return created
+  } catch (e) {
+    guidesStore.error = errMessage(e)
+    throw e
+  } finally {
+    guidesStore.isCreating = false
+  }
+}
+
 export async function fetchGuideDetail(slug: string) {
   guidesStore.isLoading = true
   guidesStore.error = null

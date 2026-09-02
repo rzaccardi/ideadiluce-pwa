@@ -6,8 +6,17 @@ import { siteService } from './site.service.js'
 import { siteInquiryRouter } from './site-inquiry.routes.js'
 import { siteLocaleQuerySchema, sitePageKeyParamSchema } from './site-admin.validators.js'
 import { siteGuidesPublicQuerySchema } from '../site-guides/site-guides.validators.js'
+import { getStorefrontSettingsDTO } from '../storefront-settings/storefront-settings.js'
 
 export const siteRouter = Router()
+
+siteRouter.get(
+  '/settings',
+  asyncHandler(async (_req, res) => {
+    res.set('Cache-Control', 'public, max-age=15, s-maxage=15')
+    res.json(ok(await getStorefrontSettingsDTO()))
+  }),
+)
 
 siteRouter.get(
   '/guides',

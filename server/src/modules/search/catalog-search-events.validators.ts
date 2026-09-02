@@ -34,10 +34,10 @@ export const searchAnalyticsStatsQuerySchema = z.object({
 
 export const searchHintsOdooQuerySchema = z.object({
   lookbackDays: z.coerce.number().int().min(1).max(365).default(90),
-  limit: z.coerce.number().int().min(1).max(20).default(8),
+  limit: z.coerce.number().int().min(1).max(20).default(5),
 })
 
 export const searchHintsOdooApplySchema = z.object({
   lookbackDays: z.number().int().min(1).max(365).default(90),
-  limit: z.number().int().min(1).max(20).default(8),
+  limit: z.number().int().min(1).max(20).default(5),
 })

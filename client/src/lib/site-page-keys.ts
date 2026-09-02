@@ -14,10 +14,14 @@ export const GUIDE_SLUG_TO_PAGE_KEY: Record<string, ContentPageKey> = {
 }
 
 export function guidePageKeyFromSlug(slug: string): ContentPageKey | null {
-  return GUIDE_SLUG_TO_PAGE_KEY[slug] ?? null
+  const trimmed = slug.trim()
+  if (!trimmed) return null
+  return (GUIDE_SLUG_TO_PAGE_KEY[trimmed] ?? `guide-${trimmed}`) as ContentPageKey
 }
 
-export function isGuidePageKey(pageKey: string): pageKey is ContentPageKey {
+export function isGuidePageKey(
+  pageKey: string,
+): pageKey is Extract<ContentPageKey, `guide-${string}`> {
   return pageKey.startsWith('guide-')
 }
 

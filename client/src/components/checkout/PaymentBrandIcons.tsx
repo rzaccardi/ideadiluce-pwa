@@ -2,7 +2,6 @@ import type { PwaPaymentMethodDTO } from '@/types/dto'
 import {
   AmexLogo,
   ApplePayLogo,
-  BonificoBancarioLogo,
   GooglePayLogo,
   MastercardLogo,
   PayPalLogo,
@@ -15,13 +14,7 @@ type Props = {
 }
 
 export function PaymentBrandIcons({ method, className }: Props) {
-  if (method === 'bank_transfer') {
-    return (
-      <div className={className}>
-        <BonificoBancarioLogo className="h-8" />
-      </div>
-    )
-  }
+  if (method === 'bank_transfer') return null
 
   return (
     <div className={`flex flex-wrap items-center gap-1.5 ${className ?? ''}`}>

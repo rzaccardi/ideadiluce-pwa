@@ -8,6 +8,20 @@
 /** Padding orizzontale pagine: 16px mobile, 32px tablet, 48px desktop. */
 export const SITE_PAGE_X_CLASS = 'px-4 md:px-8 lg:px-12'
 
+/**
+ * Track slider full-bleed: allinea prima/ultima card a SectionContainer
+ * (max-w-idl-wide + page-x) senza uscire dal viewport. Vedi components.css.
+ */
+export const SITE_FULL_BLEED_TRACK_CLASS = 'site-full-bleed-track'
+export const SITE_FULL_BLEED_SPACER_CLASS = 'site-full-bleed-spacer'
+
+/** Nav/header di uno slider full-bleed: stesso gutter di SectionContainer. */
+export const SITE_FULL_BLEED_NAV_CLASS = `mx-auto w-full ${SITE_PAGE_X_CLASS} max-w-idl-wide`
+
+/** Track orizzontale già dentro un container padded: niente -mx-4. */
+export const SITE_INSET_SCROLL_TRACK_CLASS =
+  'flex overflow-x-auto scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden'
+
 export const siteLayout = {
   pageX: SITE_PAGE_X_CLASS,
   containerNarrow: 'max-w-idl-narrow',

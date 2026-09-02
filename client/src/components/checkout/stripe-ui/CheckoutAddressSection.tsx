@@ -10,7 +10,7 @@ import {
   fetchAddressAutocompleteStatus,
   resolvePrefilledAddress,
 } from '@/lib/addressAutocomplete'
-import { isCheckoutAddressValid } from '@/lib/checkout-address.validators'
+import { isCheckoutAddressValid, mergeResolvedStreetNumber } from '@/lib/checkout-address.validators'
 import { checkoutStore } from '@/features/checkout'
 import { AddressAutocompleteField } from '@/components/checkout/AddressAutocompleteField'
 import { useI18n } from '@/hooks/use-i18n'
@@ -64,18 +64,18 @@ export function CheckoutAddressSection({
   const [focusStreetNumber, setFocusStreetNumber] = useState(() => needsStreetNumberChoice(address))
   const searchInputName = `${prefix}-search`
   const prefillAttemptedRef = useRef(false)
-  const addressPrefillKey = [
-    address.line1,
-    address.streetNumber,
-    address.isSnc ? 'snc' : '',
-    address.city,
-    address.postalCode,
-    address.country,
-  ].join('|')
+  const shouldFocusSearchRef = useRef(false)
+  const hasAddressCore = hasResolvedAddressCore(address)
+  const showAutocompleteSearch = autocompleteEnabled && !hasAddressCore
+  const addressGeocodeKey = [address.line1, address.city, address.postalCode, address.country].join('|')
 
   useEffect(() => {
-    prefillAttemptedRef.current = false
-  }, [addressPrefillKey])
+    if (!showAutocompleteSearch || !shouldFocusSearchRef.current) return
+    shouldFocusSearchRef.current = false
+    requestAnimationFrame(() => {
+      document.getElementById(searchInputName)?.focus()
+    })
+  }, [showAutocompleteSearch, searchInputName])
 
   useEffect(() => {
     if (address.streetNumber.trim() || address.isSnc) {
@@ -83,7 +83,7 @@ export function CheckoutAddressSection({
     } else if (hasResolvedAddressCore(address)) {
       setFocusStreetNumber(true)
     }
-  }, [addressPrefillKey, address.streetNumber, address.isSnc])
+  }, [address.streetNumber, address.isSnc, address.line1, address.city, address.postalCode, address.country])
 
   useEffect(() => {
     void (async () => {
@@ -102,15 +102,19 @@ export function CheckoutAddressSection({
   }, [])
 
   function applyResolved(resolved: ResolvedAddress) {
-    const missingStreetNumber = !resolved.streetNumber?.trim()
-    setFocusStreetNumber(missingStreetNumber)
+    const merged = mergeResolvedStreetNumber(address, resolved)
+    setFocusStreetNumber(!merged.streetNumber.trim() && !merged.isSnc)
     if (onAddressResolved) {
-      onAddressResolved(resolved)
+      onAddressResolved({
+        ...resolved,
+        line1: merged.line1,
+        streetNumber: merged.streetNumber || undefined,
+      })
       return
     }
-    onChange('line1', resolved.line1)
-    onChange('streetNumber', resolved.streetNumber ?? '')
-    onChange('isSnc', false)
+    onChange('line1', merged.line1)
+    onChange('streetNumber', merged.streetNumber)
+    onChange('isSnc', merged.isSnc)
     onChange('line2', resolved.line2 ?? '')
     onChange('city', resolved.city)
     onChange('postalCode', resolved.postalCode)
@@ -143,10 +147,11 @@ export function CheckoutAddressSection({
         checkoutStore.addressPrefillLoading = false
       }
     })()
-  }, [autocompleteEnabled, addressPrefillKey])
+  }, [autocompleteEnabled, addressGeocodeKey])
 
   function handleChangeAddress() {
     prefillAttemptedRef.current = true
+    shouldFocusSearchRef.current = true
     setFocusStreetNumber(false)
     onChange('line1', '')
     onChange('line2', '')
@@ -154,13 +159,9 @@ export function CheckoutAddressSection({
     onChange('isSnc', false)
     onChange('city', '')
     onChange('postalCode', '')
-    requestAnimationFrame(() => {
-      document.getElementById(searchInputName)?.focus()
-    })
   }
 
   const civicoRequired = needsStreetNumberChoice(address)
-  const hasAddressCore = hasResolvedAddressCore(address)
 
   return (
     <section className="space-y-4">
@@ -214,7 +215,7 @@ export function CheckoutAddressSection({
         </>
       ) : null}
 
-      {autocompleteEnabled ? (
+      {showAutocompleteSearch ? (
         <div className="rounded-[14px] border border-[#d9c9a8] bg-[#f3eee4] p-4 shadow-[0_1px_2px_rgba(20,22,27,0.04)] sm:p-5">
           <p className="text-[13px] font-bold tracking-[-0.01em] text-idl-graphite">
             {t('checkout.address.autofillBanner')}

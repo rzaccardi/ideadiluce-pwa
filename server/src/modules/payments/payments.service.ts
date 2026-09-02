@@ -417,7 +417,7 @@ export const paymentsService = {
     }
     const pricing = await resolvePricingContext(req)
     if (reusable?.orderStatus !== 'CHECKOUT_LOCKED') {
-      await repriceCartFromOdoo(req, cart.id, pricing)
+      await repriceCartFromOdoo({ correlationId: req.correlationId, req }, cart.id, pricing)
     }
     const cartFresh = await activeCartForRequest(req)
     if (reusable?.orderStatus !== 'CHECKOUT_LOCKED') {
@@ -440,17 +440,19 @@ export const paymentsService = {
     }
 
     const subtotal = subtotalCentsFromCartItems(cartForSnapshot.items) ?? 0
-    const segment =
-      segmentFromDto(body.customerSegment) ??
-      (body.isProfessional ? 'PROFESSIONAL' : pricing.segment)
+    const user = req.sessionRecord?.user
+    const segment = user
+      ? pricing.segment
+      : (segmentFromDto(body.customerSegment) === 'PROFESSIONAL'
+          ? 'RETAIL'
+          : (segmentFromDto(body.customerSegment) ?? pricing.segment))
     const taxOrder = await taxService.calculateForOrder({
       netCents: subtotal,
       billingCountry: body.billingAddress.country,
       shippingCountry: body.shippingAddress.country,
       customerSegment: segment,
-      isProfessional: body.isProfessional ?? segment === 'PROFESSIONAL',
-      vatValid: body.vatValidated ?? null,
-      vatForceAccepted: body.vatForceAccepted,
+      isProfessional: Boolean(user?.isProfessional || user?.customerSegment === 'PROFESSIONAL'),
+      vatValid: user?.viesValid ?? null,
     })
 
     await prisma.cart.update({
@@ -741,7 +743,7 @@ export const paymentsService = {
       if (snapshot) await applyCheckoutPriceSnapshot(cart.id, snapshot)
     } else if (!priceLocked) {
       const pricingCheckout = await resolvePricingContext(req)
-      await repriceCartFromOdoo(req, cart.id, pricingCheckout)
+      await repriceCartFromOdoo({ correlationId: req.correlationId, req }, cart.id, pricingCheckout)
     }
     if (!priceLocked) {
       const ctx: OdooCallContext = { correlationId: req.correlationId, req }

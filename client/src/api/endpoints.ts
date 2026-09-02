@@ -182,6 +182,9 @@ export const api = {
         `/api/v1/site/pages/${encodeURIComponent(pageKey)}?${q.toString()}`,
       )
     },
+    settings() {
+      return apiClient.get<{ soundsEnabled: boolean }>('/api/v1/site/settings')
+    },
     submitInquiry(body: {
       kind: 'product-not-found' | 'contact' | 'b2b' | 'professional-quote'
       name: string

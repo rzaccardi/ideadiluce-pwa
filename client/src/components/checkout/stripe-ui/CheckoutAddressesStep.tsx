@@ -23,7 +23,7 @@ import {
   updateDropshipAddress,
 } from '@/features/checkout'
 import { authStore } from '@/features/auth'
-import { isCheckoutAddressValid } from '@/lib/checkout-address.validators'
+import { isCheckoutAddressValid, mergeResolvedStreetNumber } from '@/lib/checkout-address.validators'
 import { CheckoutAccountSection } from './CheckoutAccountSection'
 import { CheckoutAddressSection } from './CheckoutAddressSection'
 import { CheckoutBusinessFieldsSection } from './CheckoutBusinessFieldsSection'
@@ -219,7 +219,10 @@ export function CheckoutAddressesStep() {
               address={checkout.dropshipAddress}
               onChange={(key, value) => updateDropshipAddress(key, value)}
               onAddressResolved={(resolved) => {
-                updateDropshipAddress('line1', resolved.line1)
+                const merged = mergeResolvedStreetNumber(checkoutStore.dropshipAddress, resolved)
+                updateDropshipAddress('line1', merged.line1)
+                updateDropshipAddress('streetNumber', merged.streetNumber)
+                updateDropshipAddress('isSnc', merged.isSnc)
                 updateDropshipAddress('line2', resolved.line2 ?? '')
                 updateDropshipAddress('city', resolved.city)
                 updateDropshipAddress('postalCode', resolved.postalCode)

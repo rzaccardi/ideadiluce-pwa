@@ -18,6 +18,51 @@ export function formatStreetLine(address: {
   return num ? `${street} ${num}`.trim() : street
 }
 
+const TRAILING_SNC = /[,\s]+s\.?\s*n\.?\s*c\.?\s*$/i
+const TRAILING_STREET_NUMBER = /^(.*?)[,\s]+(\d+[a-zA-Z]?(?:\s*\/\s*\d*[a-zA-Z]?)?)\s*$/
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/** Separa via e civico da stringhe tipo Odoo («Via Roma 69») senza perdere un civico già noto. */
+export function splitLine1AndStreetNumber(
+  line1: string,
+  streetNumber = '',
+  isSnc = false,
+): { line1: string; streetNumber: string; isSnc: boolean } {
+  const street = line1.trim()
+  const num = streetNumber.trim()
+
+  if (isSnc) {
+    return {
+      line1: street.replace(TRAILING_SNC, '').trim() || street,
+      streetNumber: '',
+      isSnc: true,
+    }
+  }
+
+  if (num) {
+    const dup = new RegExp(`[ ,]+${escapeRegExp(num)}\\s*$`, 'i')
+    return {
+      line1: street.replace(dup, '').trim() || street,
+      streetNumber: num,
+      isSnc: false,
+    }
+  }
+
+  if (TRAILING_SNC.test(street)) {
+    return { line1: street.replace(TRAILING_SNC, '').trim(), streetNumber: '', isSnc: true }
+  }
+
+  const match = street.match(TRAILING_STREET_NUMBER)
+  if (match?.[1]?.trim() && match[2]) {
+    return { line1: match[1].trim(), streetNumber: match[2].replace(/\s+/g, ''), isSnc: false }
+  }
+
+  return { line1: street, streetNumber: '', isSnc: false }
+}
+
 function isPostalCodeValid(country: string, postalCode: string): boolean {
   const code = postalCode.trim()
   if (country === 'IT') return IT_POSTAL.test(code)

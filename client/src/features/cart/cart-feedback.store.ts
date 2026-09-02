@@ -10,10 +10,8 @@ export type CartActivityToast = {
 
 export const cartFeedbackStore = proxy({
   toasts: [] as CartActivityToast[],
-  /** Incrementato a ogni aggiunta: trigger bounce icona e fly-in. */
+  /** Incrementato a ogni aggiunta: bounce icona carrello. */
   cartPulse: 0,
-  flyInImageUrl: null as string | null,
-  flyInToken: 0,
   /** Incrementato per aprire il mini-carrello dall'esterno (es. toast aggiunta). */
   miniCartOpenRequest: 0,
 })

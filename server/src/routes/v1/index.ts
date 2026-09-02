@@ -13,6 +13,7 @@ import { integrationsApiRouter } from '../../modules/integrations/integrations.r
 import { shippingRouter } from '../../modules/shipping/shipping.routes.js'
 import { shippingAdminRouter } from '../../modules/shipping/shipping.admin.routes.js'
 import { socialProofAdminRouter } from '../../modules/social-proof/social-proof-admin.routes.js'
+import { storefrontSettingsAdminRouter } from '../../modules/storefront-settings/storefront-settings-admin.routes.js'
 import { ordersAdminRouter } from '../../modules/orders-admin/orders-admin.routes.js'
 import { abandonedCartsAdminRouter } from '../../modules/abandoned-carts-admin/abandoned-carts-admin.routes.js'
 import { adminAuthRouter } from '../../modules/admin-auth/admin-auth.routes.js'
@@ -62,6 +63,7 @@ v1Router.use('/admin/auth', adminAuthRouter)
 v1Router.use('/admin/shipping', shippingAdminRouter)
 v1Router.use('/admin/tax-rules', taxAdminRouter)
 v1Router.use('/admin/social-proof', socialProofAdminRouter)
+v1Router.use('/admin/storefront-settings', storefrontSettingsAdminRouter)
 v1Router.use('/admin/orders', ordersAdminRouter)
 v1Router.use('/admin/abandoned-carts', abandonedCartsAdminRouter)
 v1Router.use('/admin/professional-requests', professionalRequestsAdminRouter)

@@ -1,4 +1,3 @@
-import type { Request } from 'express'
 import { env } from '../../config/env.js'
 import { isOdooConfigured, odooExecuteKw, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { prisma } from '../../lib/prisma.js'
@@ -112,7 +111,7 @@ export async function unitPriceCentsFromOdoo(
 }
 
 export async function repriceCartFromOdoo(
-  req: Request,
+  ctx: OdooCallContext,
   cartId: string,
   pricing?: PricingContext | null,
 ): Promise<void> {
@@ -125,8 +124,6 @@ export async function repriceCartFromOdoo(
   if (!cart) return
 
   if (await isCartCheckoutPriceLocked(cartId)) return
-
-  const ctx: OdooCallContext = { correlationId: req.correlationId, req }
   const unitPrices = await resolveCartLineUnitPricesCents(
     ctx,
     cart.items.map((line) => ({

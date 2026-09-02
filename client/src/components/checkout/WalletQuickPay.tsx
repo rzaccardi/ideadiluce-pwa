@@ -18,6 +18,7 @@ import { WalletExpressCheckout } from '@/components/checkout/WalletExpressChecko
 import { useLocale } from '@/context/locale-context'
 import { useI18n } from '@/hooks/use-i18n'
 import { t as translate } from '@/i18n/messages'
+import { playCheckoutStartSound } from '@/features/checkout/checkout-start-sound'
 import { cn } from '@/utils/cn'
 
 type ProductLine = {
@@ -193,6 +194,7 @@ export function WalletQuickPay({ disabled, className, productLine, cartFingerpri
         /* carrello non aggiornato: checkout mostrerà lo stato attuale */
       }
     }
+    playCheckoutStartSound()
     navigate('/checkout')
   }
 
@@ -249,7 +251,7 @@ export function WalletQuickPay({ disabled, className, productLine, cartFingerpri
       {error ? (
         <p className="mt-2 text-xs text-[#df1b41]">
           {error}{' '}
-          <Link to="/checkout" className="underline">
+          <Link to="/checkout" className="underline" onClick={() => playCheckoutStartSound()}>
             {t('walletQuickPay.openCheckout')}
           </Link>
         </p>

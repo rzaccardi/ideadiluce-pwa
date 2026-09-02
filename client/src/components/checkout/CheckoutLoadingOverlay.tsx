@@ -88,11 +88,12 @@ export function resolveCheckoutLoading(params: {
     }
   }
 
-  if (initLoadingPhase === 'account') {
+  if (initLoadingPhase === 'account' || initLoadingPhase === 'login') {
     return {
       visible: true,
       icon: 'bulb',
-      messageKey: 'checkout.loading.account',
+      messageKey:
+        initLoadingPhase === 'login' ? 'checkout.loading.accountLogin' : 'checkout.loading.account',
       scope: accountInitScope,
       blockInteraction: false,
     }

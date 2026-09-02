@@ -1,26 +1,22 @@
 import { z } from 'zod'
 import { AppError } from '../../types/errors.js'
 import { mergeSiteContentWithDefaults } from '../site/site-content.merge.js'
-import { defaultSiteContent } from '../site/site-content.defaults.js'
+import { blankGuideArticleContent, defaultSiteContent } from '../site/site-content.defaults.js'
 import { siteRepository } from '../site/site.repository.js'
 import { siteService } from '../site/site.service.js'
 import { SITE_LOCALES, normalizeSiteLocale, type SiteLocale } from '../site/site.constants.js'
 import type { ContentPageContent } from '../site/site.types.js'
 import {
   DEFAULT_SITE_GUIDES,
+  GUIDE_CATEGORIES,
+  GUIDE_SLUG_PATTERN,
   guidePageKey,
+  isValidGuideSlug,
+  slugifyGuideTitle,
   type GuideCategory,
 } from './site-guides.constants.js'
 import { siteGuideRepository } from './site-guides.repository.js'
 import { refreshSeoCaches } from '../seo/seo-cache.service.js'
-
-function assertGuideSlug(slug: string) {
-  const row = DEFAULT_SITE_GUIDES.find((guide) => guide.slug === slug)
-  if (!row) {
-    throw new AppError('SITE_GUIDE_NOT_FOUND', 'Guide not found', 'Guida non trovata.', 404, false)
-  }
-  return row
-}
 
 function localeStatus(locale: SiteLocale, row: { published: boolean; updatedAt: Date } | undefined) {
   if (locale === 'IT') {
@@ -149,7 +145,6 @@ export const siteGuideService = {
   },
 
   async getAdminGuide(slug: string) {
-    assertGuideSlug(slug)
     await this.ensureSiteGuidesSeeded()
     const guide = await siteGuideRepository.findBySlug(slug)
     if (!guide) {
@@ -202,7 +197,6 @@ export const siteGuideService = {
       published?: boolean
     },
   ) {
-    assertGuideSlug(slug)
     const guide = await siteGuideRepository.findBySlug(slug)
     if (!guide) {
       throw new AppError('SITE_GUIDE_NOT_FOUND', 'Guide not found', 'Guida non trovata.', 404, false)
@@ -212,6 +206,62 @@ export const siteGuideService = {
       void refreshSeoCaches().catch(() => undefined)
     }
     return updated
+  },
+
+  async createAdminGuide(input: {
+    title: string
+    slug?: string
+    category: GuideCategory
+    readingMeta?: string
+  }) {
+    const title = input.title.trim()
+    if (!title) {
+      throw new AppError(
+        'SITE_GUIDE_TITLE_REQUIRED',
+        'Inserisci il titolo della guida.',
+        'Inserisci il titolo della guida.',
+        400,
+        false,
+      )
+    }
+
+    const slug = (input.slug?.trim() || slugifyGuideTitle(title)).toLowerCase()
+    if (!isValidGuideSlug(slug)) {
+      throw new AppError(
+        'SITE_GUIDE_SLUG_INVALID',
+        'Lo slug può contenere solo lettere minuscole, numeri e trattini.',
+        'Lo slug può contenere solo lettere minuscole, numeri e trattini.',
+        400,
+        false,
+      )
+    }
+
+    const existing = await siteGuideRepository.findBySlug(slug)
+    if (existing) {
+      throw new AppError(
+        'SITE_GUIDE_SLUG_TAKEN',
+        'Esiste già una guida con questo slug.',
+        'Esiste già una guida con questo slug.',
+        409,
+        false,
+      )
+    }
+
+    const maxOrder = await siteGuideRepository.maxSortOrder()
+    await siteGuideRepository.create({
+      slug,
+      category: input.category,
+      readingMeta: input.readingMeta?.trim() ?? '',
+      sortOrder: maxOrder + 10,
+      indexed: true,
+      featured: false,
+      published: false,
+    })
+
+    const pageKey = guidePageKey(slug)
+    await siteRepository.upsert(pageKey, 'IT', blankGuideArticleContent(title), false)
+    void refreshSeoCaches().catch(() => undefined)
+    return this.getAdminGuide(slug)
   },
 
   async listPublicGuides(localeInput: string, options?: { featuredOnly?: boolean }) {
@@ -249,8 +299,23 @@ export const siteGuideService = {
   },
 }
 
+export const guideCreateSchema = z.object({
+  title: z.string().trim().min(1, 'Inserisci il titolo della guida.').max(200),
+  slug: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .max(120)
+    .refine((value) => value === '' || GUIDE_SLUG_PATTERN.test(value), {
+      message: 'Lo slug può contenere solo lettere minuscole, numeri e trattini.',
+    })
+    .optional(),
+  category: z.enum(GUIDE_CATEGORIES),
+  readingMeta: z.string().trim().max(40).optional(),
+})
+
 export const guidePatchSchema = z.object({
-  category: z.enum(['BASE', 'ATTACCHI', 'TECNICO', 'ACQUISTO', 'AMBIENTE', 'ARREDO', 'GLOSSARIO']).optional(),
+  category: z.enum(GUIDE_CATEGORIES).optional(),
   readingMeta: z.string().trim().max(40).optional(),
   sortOrder: z.number().int().min(0).max(9999).optional(),
   indexed: z.boolean().optional(),
@@ -259,7 +324,7 @@ export const guidePatchSchema = z.object({
 })
 
 export const guideSlugParamSchema = z.object({
-  slug: z.string().min(1).max(120),
+  slug: z.string().min(1).max(120).regex(GUIDE_SLUG_PATTERN),
 })
 
 export type GuideCategoryValue = GuideCategory

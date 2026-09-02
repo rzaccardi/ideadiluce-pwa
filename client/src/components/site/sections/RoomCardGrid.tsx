@@ -1,6 +1,7 @@
 import { Link } from '@/lib/navigation'
 import { HoverLift, Stagger, StaggerItem } from '@/components/motion'
 import { SiteHeading } from '@/components/site/SiteHeading'
+import { SITE_INSET_SCROLL_TRACK_CLASS } from '@/styles/site-ui'
 import { cn } from '@/utils/cn'
 import { RoomCardMedia } from './RoomCardMedia'
 import type { LocalePathFn } from './types'
@@ -57,10 +58,9 @@ export function RoomCardGrid({ items, lp, variant = 'home', stagger = 0.08 }: Pr
   return (
     <Stagger
       className={cn(
-        '-mx-4 flex gap-4 overflow-x-auto scroll-smooth px-4 pb-1',
-        'snap-x snap-mandatory',
-        '[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden',
-        'sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:snap-none',
+        SITE_INSET_SCROLL_TRACK_CLASS,
+        'gap-4 pb-1',
+        'sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:pb-0 sm:snap-none',
         'lg:grid-cols-3',
       )}
       stagger={stagger}

@@ -96,7 +96,7 @@ export function ProductDetailSectionLabel({
     <div
       className={cn(
         'font-mono text-[11px] tracking-[0.18em] uppercase',
-        variant === 'design' ? 'text-idl-glow' : 'text-idl-amber',
+        variant === 'design' ? 'text-idl-brass' : 'text-idl-amber',
         className,
       )}
     >

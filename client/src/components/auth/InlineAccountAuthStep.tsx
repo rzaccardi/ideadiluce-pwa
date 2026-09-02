@@ -111,10 +111,6 @@ export function InlineAccountAuthStep({
   const formsLocked = postAuthPending || authenticatedContinueLoading
 
   useEffect(() => {
-    if (email && !loginEmail) setLoginEmail(email)
-  }, [email, loginEmail])
-
-  useEffect(() => {
     if (!collectCustomerTypeOnRegister) return
     if (checkoutStore.customerSegment == null) {
       setCustomerSegment('retail')
@@ -202,7 +198,6 @@ export function InlineAccountAuthStep({
       clearAuthLoading()
       if (err instanceof ApiRequestError && err.code === 'EMAIL_TAKEN') {
         setLoginEmail(trimmedEmail)
-        onEmailChange(trimmedEmail)
         setLoginError(err.userMessage ?? err.message)
         setRegisterError(null)
       } else {
@@ -221,7 +216,7 @@ export function InlineAccountAuthStep({
     setLoginError(null)
     setLoginLoading(true)
     if (collectCustomerTypeOnRegister) {
-      checkoutStore.initLoadingPhase = 'account'
+      checkoutStore.initLoadingPhase = 'login'
     }
     const trimmedEmail = loginEmail.trim()
     try {
@@ -236,11 +231,10 @@ export function InlineAccountAuthStep({
         setPostAuthPending(false)
       }
     } catch (err) {
-      if (collectCustomerTypeOnRegister && checkoutStore.initLoadingPhase === 'account') {
+      if (collectCustomerTypeOnRegister && checkoutStore.initLoadingPhase === 'login') {
         checkoutStore.initLoadingPhase = null
       }
       setLoginPassword('')
-      onEmailChange(trimmedEmail)
       setLoginError(
         err instanceof ApiRequestError ? (err.userMessage ?? err.message) : t('checkout.account.loginError'),
       )
@@ -312,15 +306,12 @@ export function InlineAccountAuthStep({
       <StripeFieldGroup>
         <StripeInput
           type="email"
-          name="login-email"
+          id="checkout-login-email"
+          name="checkout-login-email"
           placeholder={t('common.email')}
-          autoComplete="email"
+          autoComplete="section-login username"
           value={loginEmail}
-          onChange={(e) => {
-            const next = e.target.value
-            setLoginEmail(next)
-            onEmailChange(next)
-          }}
+          onChange={(e) => setLoginEmail(e.target.value)}
           required
           disabled={formsLocked}
         />
@@ -394,9 +385,10 @@ export function InlineAccountAuthStep({
       <StripeFieldGroup>
         <StripeControlledInput
           type="email"
-          name="email"
+          id="checkout-register-email"
+          name="checkout-register-email"
           placeholder={t('checkout.emailPlaceholder')}
-          autoComplete="email"
+          autoComplete="section-register email"
           value={email}
           onValueChange={onEmailChange}
           required

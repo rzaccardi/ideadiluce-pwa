@@ -16,6 +16,16 @@ describe('cart-line-variant-meta', () => {
     expect(parseCartLineVariantMeta(meta)?.imageUrl).toBe('https://example.com/v.jpg')
   })
 
+  it('persiste nome e slug prodotto per il DTO veloce senza catalogo Odoo', () => {
+    const meta = buildCartLineVariantMeta({
+      productName: 'Lampada',
+      productSlug: 'lampada',
+      imageUrl: 'https://example.com/v.jpg',
+    })
+    expect(parseCartLineVariantMeta(meta)?.productName).toBe('Lampada')
+    expect(parseCartLineVariantMeta(meta)?.productSlug).toBe('lampada')
+  })
+
   it('ignora label numerica senza attributi', () => {
     expect(variantMetaToChips({ variantLabel: '1997' })).toEqual([])
   })

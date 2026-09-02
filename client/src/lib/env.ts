@@ -1,3 +1,5 @@
+import { resolveCookiebotCbid } from './cookiebot'
+
 export function isDev(): boolean {
   return process.env.NODE_ENV === 'development'
 }
@@ -81,5 +83,9 @@ export function getGoogleSiteVerification(): string | undefined {
 }
 
 export function getCookiebotCbid(): string | undefined {
-  return process.env.NEXT_PUBLIC_COOKIEBOT_CBID?.trim() || undefined
+  return resolveCookiebotCbid({
+    cbid: process.env.NEXT_PUBLIC_COOKIEBOT_CBID,
+    nodeEnv: process.env.NODE_ENV,
+    siteUrl: process.env.NEXT_PUBLIC_SITE_URL,
+  })
 }

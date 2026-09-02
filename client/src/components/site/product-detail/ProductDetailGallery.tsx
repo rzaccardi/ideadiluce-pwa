@@ -333,7 +333,7 @@ export function ProductDetailGallery({
         className={cn(
           'flex aspect-square items-center justify-center text-sm',
           isDesign
-            ? 'rounded bg-idl-design-elevated text-idl-design-dim'
+            ? 'rounded border border-idl-path-design-border bg-white text-idl-ink-muted'
             : 'rounded-xl border border-idl-tech-border bg-[#f7f8fa] text-idl-muted',
         )}
       >
@@ -358,7 +358,7 @@ export function ProductDetailGallery({
           <div
             className={cn(
               'flex flex-wrap gap-1.5',
-              isDesign ? 'border-b border-white/10 pb-2' : 'border-b border-idl-tech-border pb-2',
+              isDesign ? 'border-b border-idl-path-design-border pb-2' : 'border-b border-idl-tech-border pb-2',
             )}
             role="tablist"
             aria-label="Categorie gallery"
@@ -376,8 +376,8 @@ export function ProductDetailGallery({
                     'px-2.5 py-1 text-xs font-medium transition',
                     isDesign
                       ? selected
-                        ? 'text-idl-glow'
-                        : 'text-idl-design-dim hover:text-idl-design-fg'
+                        ? 'text-idl-brass'
+                        : 'text-idl-ink-muted hover:text-idl-ink'
                       : selected
                         ? 'rounded-md bg-idl-amber/15 text-idl-ink'
                         : 'rounded-md text-idl-muted hover:text-idl-ink',
@@ -395,7 +395,7 @@ export function ProductDetailGallery({
           className={cn(
             'relative aspect-square w-full overflow-hidden focus:outline-none focus-visible:ring-2',
             isDesign
-              ? 'rounded bg-idl-design-elevated shadow-[0_0_90px_rgba(120, 120, 125,0.10)] focus-visible:ring-idl-glow/40'
+              ? 'rounded border border-idl-path-design-border bg-white focus-visible:ring-idl-brass/30'
               : 'rounded-xl border border-idl-tech-border bg-[#f7f8fa] focus-visible:ring-idl-amber/30',
           )}
           onClick={openCurrentLightbox}
@@ -452,7 +452,7 @@ export function ProductDetailGallery({
                   className={cn(
                     'pointer-events-auto flex size-7 -translate-x-1 items-center justify-center rounded-full border backdrop-blur-sm transition disabled:cursor-not-allowed disabled:opacity-30',
                     isDesign
-                      ? 'border-white/15 bg-idl-design/80 text-idl-design-fg hover:border-idl-glow/40'
+                      ? 'border-idl-path-design-border bg-white/90 text-idl-ink hover:border-idl-brass/50'
                       : 'border-idl-tech-border bg-white/90 text-idl-graphite hover:border-idl-amber/50',
                   )}
                 >
@@ -466,7 +466,7 @@ export function ProductDetailGallery({
                   className={cn(
                     'pointer-events-auto flex size-7 translate-x-1 items-center justify-center rounded-full border backdrop-blur-sm transition disabled:cursor-not-allowed disabled:opacity-30',
                     isDesign
-                      ? 'border-white/15 bg-idl-design/80 text-idl-design-fg hover:border-idl-glow/40'
+                      ? 'border-idl-path-design-border bg-white/90 text-idl-ink hover:border-idl-brass/50'
                       : 'border-idl-tech-border bg-white/90 text-idl-graphite hover:border-idl-amber/50',
                   )}
                 >
@@ -505,10 +505,10 @@ export function ProductDetailGallery({
                       'aspect-square shrink-0 overflow-hidden transition',
                       isDesign
                         ? cn(
-                            'rounded-[3px] border bg-idl-design-elevated',
+                            'rounded-[3px] border bg-white',
                             selectedThumb
-                              ? 'border-idl-glow/30'
-                              : 'border-white/8 hover:border-white/20',
+                              ? 'border-idl-brass'
+                              : 'border-idl-path-design-border hover:border-idl-brass/50',
                           )
                         : cn(
                             'rounded-lg border bg-idl-tech-panel',
@@ -551,7 +551,7 @@ export function ProductDetailGallery({
               <div
                 className={cn(
                   'mt-2 flex justify-center gap-1.5',
-                  isDesign ? 'text-idl-design-dim' : 'text-idl-muted',
+                  isDesign ? 'text-idl-ink-muted' : 'text-idl-muted',
                 )}
                 role="tablist"
                 aria-label="Pagine miniature"
@@ -570,10 +570,10 @@ export function ProductDetailGallery({
                         'size-1.5 rounded-full transition',
                         activePage
                           ? isDesign
-                            ? 'bg-idl-glow'
+                            ? 'bg-idl-brass'
                             : 'bg-idl-amber'
                           : isDesign
-                            ? 'bg-white/25 hover:bg-white/40'
+                            ? 'bg-idl-border-strong hover:bg-idl-ink-muted'
                             : 'bg-idl-tech-chip hover:bg-idl-tech-chip-border',
                       )}
                     />

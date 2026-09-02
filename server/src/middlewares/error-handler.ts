@@ -3,22 +3,23 @@ import { ZodError } from 'zod'
 import { isAppError } from '../types/errors.js'
 import { errorBody } from '../lib/api-response.js'
 import { logger } from '../lib/logger.js'
-
-function validationUserMessage(err: ZodError): string {
-  const first = err.issues[0]
-  if (!first) return 'Dati non validi'
-  return `${first.path.join('.')}: ${first.message}`
-}
+import { env } from '../config/env.js'
+import { localeFromRequest, validationUserMessage } from '../lib/validation-user-message.js'
 
 export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction) {
   const correlationId = req.correlationId ?? 'unknown'
 
   if (err instanceof ZodError) {
+    const locale = localeFromRequest({
+      headers: req.headers,
+      query: req.query,
+      body: req.body,
+    })
     return res.status(400).json(
       errorBody({
         code: 'VALIDATION_ERROR',
         message: err.message,
-        userMessage: validationUserMessage(err),
+        userMessage: validationUserMessage(err, locale),
         retriable: false,
         correlationId,
         details: err.flatten(),
@@ -51,7 +52,7 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
   return res.status(500).json(
     errorBody({
       code: 'INTERNAL_ERROR',
-      message: err instanceof Error ? err.message : 'Internal error',
+      message: env.NODE_ENV === 'production' ? 'Internal error' : err instanceof Error ? err.message : 'Internal error',
       userMessage: 'Si è verificato un errore. Riprova più tardi.',
       retriable: true,
       correlationId,

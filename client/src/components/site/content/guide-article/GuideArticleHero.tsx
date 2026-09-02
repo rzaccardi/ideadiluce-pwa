@@ -31,7 +31,7 @@ export function GuideArticleHero({ title, eyebrow, coverImageUrl, coverAlt }: Pr
           <div className="absolute inset-0 bg-gradient-to-br from-idl-design via-[#2a2a2e] to-idl-design" />
         )}
         <div
-          className="absolute inset-0 bg-gradient-to-b from-idl-design/10 via-idl-design/20 to-idl-design/70"
+          className="absolute inset-0 bg-gradient-to-t from-idl-design from-[8%] via-idl-design/65 via-45% to-transparent"
           aria-hidden
         />
       </div>

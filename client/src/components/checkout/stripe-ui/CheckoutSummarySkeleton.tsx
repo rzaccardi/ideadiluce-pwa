@@ -26,7 +26,7 @@ export function CheckoutSummarySkeleton() {
   return (
     <aside className={cn(checkoutSummaryAsideClass, 'lg:flex')}>
       <div className={checkoutSummaryInnerClass}>
-        <CheckoutSummaryHeader theme="dark" />
+        <CheckoutSummaryHeader theme="dark" confirmLeave={false} />
         <p className="mt-8 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#b0b0b4]">
           {tParams('checkout.payStore', { store: CHECKOUT_STORE_NAME })}
         </p>

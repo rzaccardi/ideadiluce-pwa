@@ -94,9 +94,9 @@ export function CheckoutStepIndicator({ currentStep }: Props) {
                   className={cn(
                     'h-1 rounded-full transition-colors',
                     isCurrent
-                      ? 'bg-[#0c0c0d] shadow-[0_0_12px_rgba(120, 120, 125,0.45)]'
+                      ? 'bg-idl-glow shadow-[0_0_12px_color-mix(in_srgb,var(--color-idl-glow)_45%,transparent)]'
                       : done
-                        ? 'bg-[#14161b]'
+                        ? 'bg-idl-brass'
                         : 'bg-[#e2e6eb]',
                   )}
                 />

@@ -4,6 +4,7 @@ import { asyncHandler } from '../../utils/async-handler.js'
 import { ok } from '../../lib/api-response.js'
 import { professionalAccountService } from './professional-account.service.js'
 import { professionalAccountRequestSchema } from './professional-account.validators.js'
+import { formSubmitRateLimit } from '../../lib/rate-limiters.js'
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -14,6 +15,7 @@ export const professionalAccountRouter = Router()
 
 professionalAccountRouter.post(
   '/',
+  formSubmitRateLimit,
   upload.single('visura'),
   asyncHandler(async (req, res) => {
     const parsed = professionalAccountRequestSchema.safeParse(req.body)

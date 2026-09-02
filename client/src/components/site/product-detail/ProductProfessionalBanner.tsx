@@ -33,7 +33,7 @@ export function ProductProfessionalBanner({ variant = 'design' }: Props) {
     <section
       className={cn(
         isDesign
-          ? 'border-t border-white/10 bg-idl-design text-idl-design-fg'
+          ? 'border-t border-idl-border bg-idl-path-design text-idl-ink'
           : 'border-t border-idl-tech-border bg-idl-tech-panel text-idl-ink',
       )}
     >
@@ -42,14 +42,14 @@ export function ProductProfessionalBanner({ variant = 'design' }: Props) {
           <div className="min-w-0 max-w-2xl">
             <Eyebrow
               variant={isDesign ? 'design' : 'technical'}
-              className={cn('mb-3', isDesign ? 'text-idl-glow' : 'text-idl-amber')}
+              className={cn('mb-3', isDesign ? 'text-idl-brass' : 'text-idl-amber')}
             >
               {COPY.eyebrow}
             </Eyebrow>
             <h2
               className={cn(
                 'text-[22px] font-medium sm:text-[26px]',
-                isDesign ? 'font-serif' : 'font-extrabold tracking-tight text-idl-graphite',
+                isDesign ? 'font-serif text-idl-ink' : 'font-extrabold tracking-tight text-idl-graphite',
               )}
             >
               {COPY.title}
@@ -57,7 +57,7 @@ export function ProductProfessionalBanner({ variant = 'design' }: Props) {
             <p
               className={cn(
                 'mt-2 text-[14px] leading-relaxed sm:text-[14.5px]',
-                isDesign ? 'text-idl-design-muted' : 'text-idl-muted',
+                isDesign ? 'text-idl-ink-muted' : 'text-idl-muted',
               )}
             >
               {COPY.description}
@@ -65,7 +65,7 @@ export function ProductProfessionalBanner({ variant = 'design' }: Props) {
             <ul
               className={cn(
                 'mt-4 flex flex-wrap gap-2 text-[12.5px]',
-                isDesign ? 'text-idl-design-dim' : 'text-idl-muted',
+                isDesign ? 'text-idl-ink-muted' : 'text-idl-muted',
               )}
             >
               {COPY.bullets.map((item) => (
@@ -73,7 +73,7 @@ export function ProductProfessionalBanner({ variant = 'design' }: Props) {
                   key={item}
                   className={cn(
                     'rounded-full px-3 py-1',
-                    isDesign ? 'border border-white/15' : 'border border-idl-tech-chip-border bg-idl-tech-chip',
+                    isDesign ? 'border border-idl-path-design-border bg-white' : 'border border-idl-tech-chip-border bg-idl-tech-chip',
                   )}
                 >
                   {item}
@@ -85,7 +85,7 @@ export function ProductProfessionalBanner({ variant = 'design' }: Props) {
             to={lp('/professionisti')}
             className={cn(
               'inline-flex shrink-0 items-center justify-center rounded-lg px-5 py-3.5 text-center text-[14px] font-bold sm:text-[14.5px]',
-              isDesign ? 'bg-idl-glow text-idl-design hover:bg-[#ffffff]' : 'bg-idl-amber text-white dark:text-idl-design hover:bg-idl-cta-amber-hover',
+              isDesign ? 'bg-idl-glow text-idl-design hover:bg-idl-cta-glow-hover' : 'bg-idl-amber text-white dark:text-idl-design hover:bg-idl-cta-amber-hover',
             )}
           >
             {COPY.ctaLabel}

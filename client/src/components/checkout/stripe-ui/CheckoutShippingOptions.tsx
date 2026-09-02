@@ -2,7 +2,7 @@
 
 import type { ShippingQuoteDTO } from '@/types/dto'
 import { ShippingMethodOption } from '@/components/checkout/ShippingMethodOption'
-import { isShippingQuoteSelectable } from '@/features/checkout/shipping-quotes'
+import { filterVisibleShippingQuotes, isShippingQuoteSelectable } from '@/features/checkout/shipping-quotes'
 import { useI18n } from '@/hooks/use-i18n'
 import { cn } from '@/utils/cn'
 
@@ -46,7 +46,8 @@ export function CheckoutShippingOptions({
   onSelect,
 }: Props) {
   const { t } = useI18n()
-  const showQuotes = quotes.length > 0
+  const visibleQuotes = filterVisibleShippingQuotes(quotes)
+  const showQuotes = visibleQuotes.length > 0
   const showLoading = loading && !showQuotes
   const showBlockedPlaceholders = blocked && !showQuotes && !showLoading
 
@@ -69,9 +70,8 @@ export function CheckoutShippingOptions({
         </div>
       ) : showQuotes ? (
         <div className={cn('flex flex-col gap-3', (blocked || selectionBusy) && 'opacity-60')}>
-          {quotes.map((q) => {
+          {visibleQuotes.map((q) => {
             const selectable = isShippingQuoteSelectable(q, selectionLocked)
-            const locked = selectionLocked && !selectable
             return (
               <ShippingMethodOption
                 key={q.methodRef}
@@ -79,7 +79,6 @@ export function CheckoutShippingOptions({
                 selected={selectedRef === q.methodRef || selectingRef === q.methodRef}
                 selecting={selectingRef === q.methodRef}
                 disabled={blocked || loading || selectionBusy || !selectable}
-                locked={locked}
                 onSelect={() => {
                   if (!selectable || selectionBusy) return
                   onSelect(q.methodRef)

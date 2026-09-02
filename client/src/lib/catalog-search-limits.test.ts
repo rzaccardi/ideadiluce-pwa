@@ -1,12 +1,32 @@
 import { describe, expect, it } from 'vitest'
 import {
   CATALOG_SEARCH_LIMITS,
+  HOME_SEARCH_HINTS_DISPLAY_LIMIT,
   canFetchProductSuggestions,
+  catalogSearchRetryDelayMs,
   createCatalogSearchApiGateState,
+  limitHomeSearchHints,
   recordProductSuggestionFetch,
   sanitizeCatalogSearchInput,
   sanitizeCatalogSearchInputLive,
 } from './catalog-search-limits'
+
+describe('limitHomeSearchHints', () => {
+  it('tiene i primi 5 chip per una sola riga in Home', () => {
+    const hints = [
+      'PATR05902',
+      'SPL-493610884',
+      'GENE64087',
+      'SPL-491810884',
+      'SPL-492830140',
+      'SPL-498030140',
+      'OSRA464749',
+      'OSRA591469',
+    ]
+    expect(limitHomeSearchHints(hints)).toEqual(hints.slice(0, HOME_SEARCH_HINTS_DISPLAY_LIMIT))
+    expect(limitHomeSearchHints(hints)).toHaveLength(5)
+  })
+})
 
 describe('sanitizeCatalogSearchInput', () => {
   it('tronca query troppo lunghe', () => {
@@ -74,5 +94,18 @@ describe('canFetchProductSuggestions', () => {
     expect(canFetchProductSuggestions('E27', state, 1000 + CATALOG_SEARCH_LIMITS.minApiIntervalMs)).toEqual({
       allowed: true,
     })
+  })
+})
+
+describe('catalogSearchRetryDelayMs', () => {
+  it('attende il resto dell intervallo minimo tra chiamate', () => {
+    const state = recordProductSuggestionFetch(createCatalogSearchApiGateState(), 'Lampada da tavo', 1000)
+    expect(catalogSearchRetryDelayMs('interval', state, 1300)).toBe(700)
+  })
+
+  it('non ritenta per duplicate o too_short', () => {
+    const state = createCatalogSearchApiGateState()
+    expect(catalogSearchRetryDelayMs('duplicate', state, 1000)).toBeNull()
+    expect(catalogSearchRetryDelayMs('too_short', state, 1000)).toBeNull()
   })
 })

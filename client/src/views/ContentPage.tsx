@@ -6,6 +6,7 @@ import { fetchSitePage, hydrateSitePageContent, siteStore } from '@/features/sit
 import type { ContentPageContent, SitePageKey } from '@/types/site-content'
 import { isContentPage, isGuidePageKey } from '@/lib/site-page-keys'
 import { ContentPageView } from '@/components/site/content/ContentPageView'
+import { CookiebotDeclaration } from '@/components/site/CookiebotDeclaration'
 import { ContattiPageView } from '@/components/site/content/ContattiPageView'
 import { ChiSiamoPageView } from '@/components/site/content/ChiSiamoPageView'
 import { ChiSiamoPageSkeleton } from '@/components/site/content/ChiSiamoPageSkeleton'
@@ -112,7 +113,12 @@ export function ContentPage({ pageKey, breadcrumb, initialContent = null }: Prop
             isLoading={!content}
             skeleton={<ContentPageSkeleton />}
           >
-            {content ? <ContentPageView content={content} breadcrumb={breadcrumb} /> : null}
+            {content ? (
+              <>
+                <ContentPageView content={content} breadcrumb={breadcrumb} />
+                {pageKey === 'privacy' ? <CookiebotDeclaration /> : null}
+              </>
+            ) : null}
           </PageLoadTransition>
         </SectionContainer>
       </PageFlexBody>
