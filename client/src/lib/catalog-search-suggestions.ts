@@ -1,6 +1,7 @@
 import { ATTACCO_SEARCH, ATTACCO_SOCKETS } from '@/lib/attacco.defaults'
 import { CATALOG_SEARCH_LIMITS, sanitizeCatalogSearchInput } from '@/lib/catalog-search-limits'
-import type { CatalogPreserveParams } from '@/lib/catalog-filters'
+import type { CatalogPreserveParams, CatalogWorldTab } from '@/lib/catalog-filters'
+import { filterBrandsForCatalogWorld, filterCategoryDtosByWorld } from '@/lib/catalog-filters'
 import { attaccoPathSlugFromCode, taxonomyPath } from '@/lib/catalog-taxonomy'
 import type { CategoryDTO, PriceDisplayModeDTO } from '@/types/dto'
 import type { BrandListItemDTO } from '@/types/site-content'
@@ -129,9 +130,12 @@ function searchCategories(
   query: string,
   categories: ReadonlyArray<CategoryDTO>,
   max: number,
+  world: CatalogWorldTab = 'all',
 ): CatalogSearchSuggestion[] {
   const q = normalizeQuery(query)
   if (!q) return []
+
+  const worldQuery = world === 'all' ? '' : `&world=${world}`
 
   return categories
     .filter((category) => matchesQuery(category.name, query) || matchesQuery(category.slug, query))
@@ -140,7 +144,7 @@ function searchCategories(
       id: `category:${category.slug}`,
       kind: 'category' as const,
       label: category.name,
-      path: `/negozio?category=${encodeURIComponent(category.slug)}`,
+      path: `/negozio?category=${encodeURIComponent(category.slug)}${worldQuery}`,
     }))
 }
 
@@ -166,21 +170,30 @@ export function searchLocalCatalogSuggestions(
     categories?: ReadonlyArray<CategoryDTO>
     hints?: ReadonlyArray<string>
     maxPerGroup?: number
+    world?: CatalogWorldTab
   },
 ): CatalogSearchSuggestionGroup[] {
   const max = options.maxPerGroup ?? 4
+  const world = options.world ?? 'all'
   const q = normalizeQuery(sanitizeCatalogSearchInput(query))
   if (q.length < CATALOG_SEARCH_LIMITS.minLocalLength) return []
 
   const groups: CatalogSearchSuggestionGroup[] = []
 
-  const attacchi = searchAttacchi(query, max)
-  if (attacchi.length) groups.push({ kind: 'attacco', items: attacchi })
+  if (world !== 'design') {
+    const attacchi = searchAttacchi(query, max)
+    if (attacchi.length) groups.push({ kind: 'attacco', items: attacchi })
+  }
 
-  const brands = searchBrands(query, options.brands ?? [], max)
+  const brands = searchBrands(query, filterBrandsForCatalogWorld(options.brands ?? [], world), max)
   if (brands.length) groups.push({ kind: 'brand', items: brands })
 
-  const categories = searchCategories(query, options.categories ?? [], max)
+  const categories = searchCategories(
+    query,
+    filterCategoryDtosByWorld(options.categories ?? [], world),
+    max,
+    world,
+  )
   if (categories.length) groups.push({ kind: 'category', items: categories })
 
   const hints = searchHints(query, options.hints ?? [], max)

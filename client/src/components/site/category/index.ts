@@ -3,7 +3,11 @@ export { TechnicalCategoryView } from './TechnicalCategoryView'
 export { CategoryBreadcrumb } from './CategoryBreadcrumb'
 export { CategoryFilterSidebar } from './CategoryFilterSidebar'
 export { CategoryResultsToolbar } from './CategoryResultsToolbar'
-export { DesignCatalogProductGrid, DesignCatalogProductCard } from './DesignCatalogProductGrid'
+export {
+  DesignCatalogProductGrid,
+  DesignCatalogProductCard,
+  DesignProductCardMedia,
+} from './DesignCatalogProductGrid'
 export { TechnicalCatalogProductGrid, TechnicalCatalogProductCard } from './TechnicalCatalogProductGrid'
 export { CategoryCtaBanner } from './CategoryCtaBanner'
 export { CategoryGuideSection } from './CategoryGuideSection'

@@ -92,6 +92,8 @@ export const checkoutAddressSchema = z
       .refine((c) => ISO2.test(c), { message: 'Invalid country code' }),
     phone: z.string().trim().optional(),
     courierNotes: z.string().trim().max(500).optional(),
+    id: z.string().trim().min(1).max(64).optional(),
+    label: z.string().trim().max(120).optional(),
   })
   .superRefine((data, ctx) => {
     if (!data.isSnc && !data.streetNumber.trim()) {
@@ -138,5 +140,7 @@ export function normalizeCheckoutAddress(
     country: address.country,
     phone: address.phone,
     courierNotes: address.courierNotes,
+    id: address.id,
+    label: address.label,
   }
 }

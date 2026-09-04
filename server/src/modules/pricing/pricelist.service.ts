@@ -8,9 +8,11 @@ export type PricingContext = {
   segment: CustomerSegment
   pricelistId: number | null
   partnerId: number | null
+  /** True se i prezzi devono seguire il listino della sessione (B2B/pro/partner), non il pubblico. */
+  personalized?: boolean
 }
 
-function envPricelistForSegment(segment: CustomerSegment): number | null {
+export function envPricelistForSegment(segment: CustomerSegment): number | null {
   const raw =
     segment === 'BUSINESS'
       ? env.ODOO_PRICELIST_B2B_ID
@@ -18,6 +20,16 @@ function envPricelistForSegment(segment: CustomerSegment): number | null {
         ? env.ODOO_PRICELIST_PROFESSIONAL_ID ?? env.ODOO_PRICELIST_B2C_ID
         : env.ODOO_PRICELIST_B2C_ID
   return raw != null && raw > 0 ? raw : null
+}
+
+export function isPersonalizedPricing(pricing?: PricingContext | null): boolean {
+  if (!pricing) return false
+  if (pricing.personalized != null) return pricing.personalized
+  return (
+    pricing.partnerId != null ||
+    pricing.segment === 'BUSINESS' ||
+    pricing.segment === 'PROFESSIONAL'
+  )
 }
 
 async function partnerPricelistId(ctx: OdooCallContext, partnerId: number): Promise<number | null> {
@@ -38,34 +50,62 @@ async function partnerPricelistId(ctx: OdooCallContext, partnerId: number): Prom
   return null
 }
 
+export async function resolveAccountPricing(options: {
+  segment: CustomerSegment
+  odooPricelistId?: number | null
+  partnerId?: number | null
+  skipOdoo?: boolean
+  correlationId?: string
+}): Promise<PricingContext> {
+  const segment = options.segment
+  const partnerId = options.partnerId != null && options.partnerId > 0 ? options.partnerId : null
+  const userPricelist =
+    options.odooPricelistId != null && options.odooPricelistId > 0 ? options.odooPricelistId : null
+
+  let pricelistId = userPricelist
+  if (pricelistId == null && partnerId != null && !options.skipOdoo) {
+    const fromPartner = await partnerPricelistId(
+      { correlationId: options.correlationId ?? 'pricelist' },
+      partnerId,
+    )
+    if (fromPartner != null) pricelistId = fromPartner
+  }
+  if (pricelistId == null) {
+    pricelistId = envPricelistForSegment(segment)
+  }
+
+  const personalized = Boolean(
+    segment === 'BUSINESS' ||
+      segment === 'PROFESSIONAL' ||
+      userPricelist != null ||
+      partnerId != null,
+  )
+
+  return { segment, pricelistId, partnerId, personalized }
+}
+
 export async function resolvePricingContext(
   req: Request,
   options?: { skipOdoo?: boolean },
 ): Promise<PricingContext> {
   const user = req.sessionRecord?.user
-  let segment: CustomerSegment = 'RETAIL'
-  let partnerId: number | null = null
-  let pricelistId: number | null = null
-
-  if (user) {
-    segment = user.customerSegment
-    if (user.odooPricelistId != null && user.odooPricelistId > 0) {
-      pricelistId = user.odooPricelistId
+  if (!user) {
+    return {
+      segment: 'RETAIL',
+      pricelistId: envPricelistForSegment('RETAIL'),
+      partnerId: null,
+      personalized: false,
     }
-    const map = await prisma.odooCustomerMap.findUnique({ where: { userId: user.id } })
-    if (map) partnerId = map.odooPartnerId
   }
 
-  if (pricelistId == null) {
-    pricelistId = envPricelistForSegment(segment)
-  }
-  if (pricelistId == null && partnerId != null && !options?.skipOdoo) {
-    const ctx: OdooCallContext = { correlationId: req.correlationId }
-    const fromPartner = await partnerPricelistId(ctx, partnerId)
-    if (fromPartner != null) pricelistId = fromPartner
-  }
-
-  return { segment, pricelistId, partnerId }
+  const map = await prisma.odooCustomerMap.findUnique({ where: { userId: user.id } })
+  return resolveAccountPricing({
+    segment: user.customerSegment,
+    odooPricelistId: user.odooPricelistId,
+    partnerId: map?.odooPartnerId ?? null,
+    skipOdoo: options?.skipOdoo,
+    correlationId: req.correlationId,
+  })
 }
 
 export function pricingContextLabel(segment: CustomerSegment): string {

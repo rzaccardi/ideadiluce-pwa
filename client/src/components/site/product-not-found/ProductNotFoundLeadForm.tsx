@@ -65,9 +65,9 @@ function ChipGroup<T extends string>({
               'rounded-[30px] px-3.5 py-1.5 text-[12.5px] font-semibold transition',
               active
                 ? accent
-                  ? 'bg-idl-amber text-white dark:text-idl-design'
-                  : 'bg-idl-ink text-white'
-                : 'border border-idl-border bg-idl-cream text-idl-graphite hover:border-idl-amber/40',
+                  ? 'bg-idl-amber text-white dark:bg-white dark:text-[#0c0c0d]'
+                  : 'bg-idl-ink text-white dark:bg-white dark:text-[#0c0c0d]'
+                : 'border border-idl-border bg-idl-cream text-idl-graphite hover:border-idl-amber/40 dark:bg-idl-tech-chip',
             )}
           >
             {option.label}
@@ -162,12 +162,12 @@ export function ProductNotFoundLeadForm({ title, description, className }: Props
   return (
     <div
       className={cn(
-        'rounded-2xl border border-idl-border bg-idl-paper p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:p-8',
+        'rounded-2xl border border-idl-border bg-idl-paper p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:p-8 dark:bg-idl-tech-panel dark:shadow-none',
         className,
       )}
     >
       <div className="mb-1 flex items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-idl-border bg-idl-cream text-idl-amber">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-idl-border bg-idl-cream text-idl-amber dark:bg-idl-tech-chip">
           <CameraIcon />
         </span>
         <h2 className="text-xl font-extrabold tracking-tight text-idl-ink">

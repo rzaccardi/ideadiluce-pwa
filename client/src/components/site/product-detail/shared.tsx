@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import { CopyableEanValue } from '@/components/product/CopyableEanValue'
+import { isCopyableBarcodeLabel } from '@/lib/product-identifier-fields'
 import { ExternalLink } from '@/lib/link-title'
 import { cn } from '@/utils/cn'
 
@@ -45,6 +47,12 @@ export function ProductSpecRowItem({
 }: SpecRowProps & { compact?: boolean }) {
   if (!value?.trim() && !href) return null
   const isDesign = variant === 'design'
+  const copyable = Boolean(value?.trim()) && isCopyableBarcodeLabel(label)
+  const valueClassName = cn(
+    'min-w-0 break-words text-right font-semibold',
+    isDesign ? 'max-w-[65%] text-[14.5px] text-idl-ink' : 'max-w-[60%] text-sm text-idl-graphite',
+    (monoValue || copyable) && 'font-mono text-[14px]',
+  )
 
   return (
     <div
@@ -52,7 +60,7 @@ export function ProductSpecRowItem({
         'flex justify-between gap-4',
         isDesign
           ? 'border-b border-idl-border py-3'
-          : cn('border-b border-[#f0f2f5]', compact ? 'py-2.5' : 'px-4 py-2.5'),
+          : cn('border-b border-idl-tech-chip-border', compact ? 'py-2.5' : 'px-4 py-2.5'),
       )}
     >
       <span className={cn('shrink-0 text-[14px]', isDesign ? 'text-idl-ink-muted' : 'text-idl-muted')}>{label}</span>
@@ -68,16 +76,10 @@ export function ProductSpecRowItem({
         >
           {value}
         </ExternalLink>
+      ) : copyable && value ? (
+        <CopyableEanValue value={value} className={valueClassName} />
       ) : (
-        <ProductDetailValue
-          value={value}
-          mono={monoValue}
-          className={cn(
-            'min-w-0 break-words text-right font-semibold',
-            isDesign ? 'max-w-[65%] text-[14.5px] text-idl-ink' : 'max-w-[60%] text-sm text-idl-graphite',
-            monoValue && 'font-mono text-[14px]',
-          )}
-        />
+        <ProductDetailValue value={value} mono={monoValue} className={valueClassName} />
       )}
     </div>
   )

@@ -72,6 +72,20 @@ export function isSwatchAttribute(name: string): boolean {
   return /finitura|colore|color|finish|colour/i.test(name) && !/luce|kelvin|temperatura/i.test(name)
 }
 
+/** Hex Odoo (`html_color`) per un valore attributo; null se assente. */
+export function htmlColorForAttributeValue(
+  variants: ReadonlyArray<ProductVariantDTO>,
+  attrName: string,
+  value: string,
+): string | null {
+  for (const variant of variants) {
+    const attr = variant.attributes.find((a) => a.name === attrName && a.value === value)
+    const color = attr?.htmlColor?.trim()
+    if (color) return color
+  }
+  return null
+}
+
 function matchesDesiredAttributes(
   variant: ProductVariantDTO,
   desired: ReadonlyMap<string, string>,

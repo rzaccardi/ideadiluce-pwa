@@ -164,8 +164,8 @@ export function useCatalogSearchAutocomplete({
         onSubmitQuery(trimmed)
       } else {
         const path = buildCatalogSubmitPath(trimmed, {
-          world: world === 'all' ? undefined : world,
           ...preserveParams,
+          world: world === 'all' ? preserveParams?.world : world,
         })
         navigate(lp(path))
       }
@@ -240,6 +240,7 @@ export function useCatalogSearchAutocomplete({
         categories: effectiveCategories,
         hints: hintStrings,
         maxPerGroup,
+        world,
       })
 
       const requestId = ++requestRef.current
@@ -289,6 +290,7 @@ export function useCatalogSearchAutocomplete({
             pageSize: CATALOG_SEARCH_LIMITS.suggestPageSize,
             locale,
             suggest: true,
+            world: world === 'all' ? undefined : world,
           },
           { signal: controller.signal },
         )

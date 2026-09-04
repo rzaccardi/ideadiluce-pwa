@@ -6,10 +6,15 @@ import { cn } from '@/utils/cn'
 import {
   attributeNames,
   getMatrixValueState,
+  htmlColorForAttributeValue,
+  isSwatchAttribute,
   pickVariantForAttribute,
   subgroupAttributeValues,
   uniqueValuesForAttr,
 } from '@/lib/product-variant-attributes'
+
+/** Fallback neutro se Odoo non invia `html_color` — non un colore di un altro valore. */
+const SWATCH_FALLBACK = '#8f8f93'
 
 type Props = {
   variants: ReadonlyArray<ProductVariantDTO>
@@ -18,6 +23,7 @@ type Props = {
 }
 
 function isKelvinGroup(name: string): boolean {
+  if (isSwatchAttribute(name)) return false
   return /temperatura|colore|kelvin/i.test(name)
 }
 
@@ -25,7 +31,10 @@ export function TechnicalHeroVariantPicker({ variants, selectedRef, onChange }: 
   const groups = useMemo(() => {
     if (variants.length <= 1) return []
     return attributeNames(variants).flatMap((name) => {
-      const subgroups = subgroupAttributeValues(name, uniqueValuesForAttr(variants, name))
+      const asSwatch = isSwatchAttribute(name)
+      const subgroups = asSwatch
+        ? [{ title: name, values: uniqueValuesForAttr(variants, name) }]
+        : subgroupAttributeValues(name, uniqueValuesForAttr(variants, name))
       return subgroups.map((sub) => ({
         attrName: name,
         title: sub.title,
@@ -34,6 +43,7 @@ export function TechnicalHeroVariantPicker({ variants, selectedRef, onChange }: 
             ? 'Misura la vecchia lampadina prima di scegliere'
             : null,
         values: sub.values,
+        asSwatch,
         showKelvinBar: isKelvinGroup(name) && subgroups.length === 1,
       }))
     })
@@ -63,10 +73,15 @@ export function TechnicalHeroVariantPicker({ variants, selectedRef, onChange }: 
                 const active = selectedValue === value
                 const state = getMatrixValueState(variants, selectedRef, group.attrName, value)
                 const unavailable = state === 'unavailable'
+                const swatch = group.asSwatch
+                  ? htmlColorForAttributeValue(variants, group.attrName, value)
+                  : null
                 return (
                   <button
                     key={`${group.attrName}-${value}`}
                     type="button"
+                    aria-label={group.asSwatch ? value : undefined}
+                    aria-pressed={group.asSwatch ? active : undefined}
                     disabled={unavailable}
                     aria-disabled={unavailable || undefined}
                     title={
@@ -74,7 +89,9 @@ export function TechnicalHeroVariantPicker({ variants, selectedRef, onChange }: 
                         ? 'Combinazione non disponibile'
                         : state === 'out_of_stock'
                           ? 'Non disponibile / esaurito'
-                          : undefined
+                          : group.asSwatch
+                            ? value
+                            : undefined
                     }
                     onClick={() => {
                       if (unavailable) return
@@ -83,17 +100,24 @@ export function TechnicalHeroVariantPicker({ variants, selectedRef, onChange }: 
                       )
                     }}
                     className={cn(
-                      'rounded-[7px] px-4 py-2.5 text-[13px] font-semibold transition',
-                      group.showKelvinBar ? 'font-sans' : 'font-mono',
-                      active
-                        ? 'bg-idl-graphite text-white'
-                        : 'border border-idl-tech-chip-border bg-idl-tech-panel text-idl-graphite-2 hover:border-idl-amber/40',
+                      group.asSwatch
+                        ? 'size-[38px] rounded-full border-2 transition'
+                        : 'rounded-[7px] px-4 py-2.5 text-[13px] font-semibold transition',
+                      !group.asSwatch && (group.showKelvinBar ? 'font-sans' : 'font-mono'),
+                      group.asSwatch
+                        ? active
+                          ? 'border-idl-amber shadow-[0_0_0_3px_#fff_inset]'
+                          : 'border-idl-tech-chip-border hover:border-idl-amber/50'
+                        : active
+                          ? 'bg-idl-graphite text-white'
+                          : 'border border-idl-tech-chip-border bg-idl-tech-panel text-idl-graphite-2 hover:border-idl-amber/40',
                       unavailable && 'cursor-not-allowed opacity-35 hover:border-idl-tech-chip-border',
                       state === 'out_of_stock' && !active && 'opacity-55',
-                      state === 'out_of_stock' && active && 'line-through decoration-white/50',
+                      state === 'out_of_stock' && active && !group.asSwatch && 'line-through decoration-white/50',
                     )}
+                    style={group.asSwatch ? { background: swatch ?? SWATCH_FALLBACK } : undefined}
                   >
-                    {value}
+                    {group.asSwatch ? null : value}
                   </button>
                 )
               })}

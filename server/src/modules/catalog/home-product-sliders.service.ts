@@ -8,7 +8,9 @@ import {
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { parseHubLocale, type HubLocale } from '../../lib/hub-locale.js'
 import type { ProductCardDTO } from '../../types/dto.js'
+import { enrichProductCardsWithOdooPricing } from './catalog-pricing.enrich.js'
 import { enrichProductCardsWithStock, type ProductCardStockHint } from './catalog-stock.enrich.js'
+import type { PricingContext } from '../pricing/pricelist.service.js'
 import { catalogStorefrontService } from './catalog-storefront.service.js'
 import {
   buildHomeProductSlidersCacheKey,
@@ -34,11 +36,13 @@ const ROOM_AMBIENTE: Record<Extract<HomeProductSliderKey, `room-${string}`>, str
   'room-bagno': 'bagno',
 }
 
+type SliderPricingInput = PricingContext | { partnerId?: number | null; pricelistId?: number | null }
+
 async function resolveCardsFromTemplateIds(
   ctx: OdooCallContext,
   templateIds: number[],
   locale: HubLocale,
-  _pricing: { partnerId?: number; pricelistId?: number },
+  pricing?: SliderPricingInput | null,
 ): Promise<ProductCardDTO[]> {
   if (!isOdooCatalogConfigured() || templateIds.length === 0) return []
 
@@ -57,7 +61,19 @@ async function resolveCardsFromTemplateIds(
   const hints = resolved.filter((item): item is ProductCardStockHint => item != null)
 
   if (hints.length === 0) return []
-  return enrichProductCardsWithStock(ctx, hints)
+  const withStock = await enrichProductCardsWithStock(ctx, hints)
+  const pricingCtx: PricingContext | null = pricing
+    ? {
+        segment: 'segment' in pricing ? pricing.segment : 'RETAIL',
+        partnerId: pricing.partnerId ?? null,
+        pricelistId: pricing.pricelistId ?? null,
+        personalized:
+          'personalized' in pricing
+            ? pricing.personalized
+            : Boolean(pricing.partnerId || pricing.pricelistId),
+      }
+    : null
+  return enrichProductCardsWithOdooPricing(ctx, withStock, pricingCtx)
 }
 
 const SEGMENT_CATEGORY_SLUG: Record<TopPurchasedSegment, string> = {
@@ -65,14 +81,39 @@ const SEGMENT_CATEGORY_SLUG: Record<TopPurchasedSegment, string> = {
   technical: 'tecnico',
 }
 
+function sliderPartnerIds(pricing: SliderPricingInput): {
+  partnerId?: number
+  pricelistId?: number
+} {
+  return {
+    partnerId: pricing.partnerId ?? undefined,
+    pricelistId: pricing.pricelistId ?? undefined,
+  }
+}
+
+function sliderPricing(pricing?: SliderPricingInput | null): PricingContext | null {
+  if (!pricing) return null
+  return {
+    segment: 'segment' in pricing ? pricing.segment : 'RETAIL',
+    partnerId: pricing.partnerId ?? null,
+    pricelistId: pricing.pricelistId ?? null,
+    personalized:
+      'personalized' in pricing
+        ? pricing.personalized
+        : Boolean(pricing.partnerId || pricing.pricelistId),
+  }
+}
+
 async function topPurchasedSlider(
   ctx: OdooCallContext,
   locale: HubLocale,
-  pricing: { partnerId?: number; pricelistId?: number },
+  pricing: SliderPricingInput,
   segment: TopPurchasedSegment,
   fallbackQuery: string,
 ): Promise<ProductCardDTO[]> {
   const categorySlug = SEGMENT_CATEGORY_SLUG[segment]
+  const pricingCtx = sliderPricing(pricing)
+  const ids = sliderPartnerIds(pricing)
 
   if (!odooSearchHintsAvailable()) {
     const list = await catalogStorefrontService.listProducts(ctx, {
@@ -80,8 +121,9 @@ async function topPurchasedSlider(
       page: 1,
       pageSize: SLIDER_LIMIT,
       categorySlug,
-      partnerId: pricing.partnerId,
-      pricelistId: pricing.pricelistId,
+      partnerId: ids.partnerId,
+      pricelistId: ids.pricelistId,
+      pricing: pricingCtx,
     })
     return list.items.slice(0, SLIDER_LIMIT)
   }
@@ -106,8 +148,9 @@ async function topPurchasedSlider(
     pageSize: SLIDER_LIMIT,
     q: fallbackQuery,
     categorySlug,
-    partnerId: pricing.partnerId,
-    pricelistId: pricing.pricelistId,
+    partnerId: ids.partnerId,
+    pricelistId: ids.pricelistId,
+    pricing: pricingCtx,
   })
   if (list.items.length === 0) {
     list = await catalogStorefrontService.listProducts(ctx, {
@@ -115,8 +158,9 @@ async function topPurchasedSlider(
       page: 1,
       pageSize: SLIDER_LIMIT,
       categorySlug,
-      partnerId: pricing.partnerId,
-      pricelistId: pricing.pricelistId,
+      partnerId: ids.partnerId,
+      pricelistId: ids.pricelistId,
+      pricing: pricingCtx,
     })
   }
   const merged = [...cards]
@@ -131,7 +175,7 @@ async function topPurchasedSlider(
 async function inStockTopSlider(
   ctx: OdooCallContext,
   locale: HubLocale,
-  pricing: { partnerId?: number; pricelistId?: number },
+  pricing: SliderPricingInput,
 ): Promise<ProductCardDTO[]> {
   if (!odooSearchHintsAvailable()) return []
 
@@ -154,8 +198,8 @@ async function inStockTopSlider(
     page: 1,
     pageSize: SLIDER_LIMIT,
     q: 'lampada',
-    partnerId: pricing.partnerId,
-    pricelistId: pricing.pricelistId,
+    ...sliderPartnerIds(pricing),
+    pricing: sliderPricing(pricing),
   })
   const merged = [...inStock]
   for (const item of fallback.items) {
@@ -170,7 +214,7 @@ async function inStockTopSlider(
 async function roomAmbienteSlider(
   ctx: OdooCallContext,
   locale: HubLocale,
-  pricing: { partnerId?: number; pricelistId?: number },
+  pricing: SliderPricingInput,
   key: Extract<HomeProductSliderKey, `room-${string}`>,
 ): Promise<ProductCardDTO[]> {
   const ambiente = ROOM_AMBIENTE[key]
@@ -180,8 +224,8 @@ async function roomAmbienteSlider(
     pageSize: SLIDER_LIMIT,
     ambiente,
     categorySlug: 'arredo',
-    partnerId: pricing.partnerId,
-    pricelistId: pricing.pricelistId,
+    ...sliderPartnerIds(pricing),
+    pricing: sliderPricing(pricing),
   })
   return list.items.slice(0, SLIDER_LIMIT)
 }
@@ -193,10 +237,11 @@ export const homeProductSlidersService = {
       locale?: string
       partnerId?: number
       pricelistId?: number
+      pricing?: PricingContext | null
     },
   ): Promise<HomeProductSliderDTO[]> {
     const locale = parseHubLocale(options.locale)
-    const pricing = {
+    const pricing = options.pricing ?? {
       partnerId: options.partnerId,
       pricelistId: options.pricelistId,
     }
@@ -226,6 +271,7 @@ export const homeProductSlidersService = {
       locale?: string
       partnerId?: number
       pricelistId?: number
+      pricing?: PricingContext | null
     },
   ): Promise<HomeProductSliderDTO[]> {
     const locale = parseHubLocale(options.locale)

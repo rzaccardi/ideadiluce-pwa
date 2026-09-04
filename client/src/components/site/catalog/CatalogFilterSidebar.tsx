@@ -4,7 +4,13 @@ import type { CategoryDTO } from '@/types/dto'
 import type { BrandListItemDTO } from '@/types/site-content'
 import {
   CATALOG_PRICE_BUCKETS,
+  catalogWorldShowsDesignFilters,
+  catalogWorldShowsTechnicalFilters,
+  filterBrandsForCatalogWorld,
+  filterCategoryDtosByWorld,
+  scopeCatalogFacetsToWorld,
   type CatalogPriceBucket,
+  type CatalogWorldTab,
 } from '@/lib/catalog-filters'
 import {
   attaccoFacetToParam,
@@ -42,6 +48,8 @@ type Props = {
   inStockOnly: boolean
   /** Facet live Odoo — popola attacco / Kelvin / watt / brand / categorie. */
   facets?: CatalogFiltersDTO | null | Readonly<CatalogFiltersDTO>
+  /** Area corrente: nasconde filtri/categorie dell’altra area. */
+  world?: CatalogWorldTab
   onSelectCategory: (slug?: string) => void
   onSelectBrand: (slug?: string) => void
   onSelectTipologia?: (value?: string) => void
@@ -184,6 +192,7 @@ export function CatalogFilterSidebar({
   selectedPriceBucket,
   inStockOnly,
   facets,
+  world = 'all',
   onSelectCategory,
   onSelectBrand,
   onSelectTipologia,
@@ -198,29 +207,39 @@ export function CatalogFilterSidebar({
   className,
   showHeader = true,
 }: Props) {
-  const facetCats = facetCategoryOptions(facets)
-  const facetBrands = facetBrandOptions(facets)
-  const tipologie = facetTaxonomyOptions(facets, 'tipologie')
-  const ambienti = facetTaxonomyOptions(facets, 'ambienti')
-  const stili = facetTaxonomyOptions(facets, 'stili')
-  const sockets = facetAttaccoOptions(facets)
-  const colorTemps = facetColorTempOptions(facets)
-  const wattaggi = facetWattaggioNumericValues(facets)
+  const showDesignFilters = catalogWorldShowsDesignFilters(world)
+  const showTechnicalFilters = catalogWorldShowsTechnicalFilters(world)
+  const scopedFacets = scopeCatalogFacetsToWorld(facets, world, brands)
+  const facetCats = facetCategoryOptions(scopedFacets, world)
+  const facetBrands = facetBrandOptions(scopedFacets)
+  const tipologie = showDesignFilters ? facetTaxonomyOptions(scopedFacets, 'tipologie') : []
+  const ambienti = showDesignFilters ? facetTaxonomyOptions(scopedFacets, 'ambienti') : []
+  const stili = showDesignFilters ? facetTaxonomyOptions(scopedFacets, 'stili') : []
+  const sockets = showTechnicalFilters ? facetAttaccoOptions(scopedFacets) : []
+  const colorTemps = showTechnicalFilters ? facetColorTempOptions(scopedFacets) : []
+  const wattaggi = showTechnicalFilters ? facetWattaggioNumericValues(scopedFacets) : []
+
+  const fallbackRoots = filterCategoryDtosByWorld(rootCategories, world)
+  const fallbackSubs = filterCategoryDtosByWorld(subcategories, world)
 
   const displayRoots =
     facetCats.roots.length > 0
       ? facetCats.roots.map((c) => ({ id: c.slug, slug: c.slug, name: c.name, count: c.count }))
-      : rootCategories.map((c) => ({ id: c.id, slug: c.slug, name: c.name, count: undefined as number | undefined }))
+      : fallbackRoots.map((c) => ({ id: c.id, slug: c.slug, name: c.name, count: undefined as number | undefined }))
 
   const displaySubs =
     facetCats.children.length > 0
       ? facetCats.children.map((c) => ({ id: c.slug, slug: c.slug, name: c.name, count: c.count }))
-      : subcategories.map((c) => ({ id: c.id, slug: c.slug, name: c.name, count: undefined as number | undefined }))
+      : fallbackSubs.map((c) => ({ id: c.id, slug: c.slug, name: c.name, count: undefined as number | undefined }))
 
   const visibleBrands =
     facetBrands.length > 0
       ? facetBrands
-      : brands.map((b) => ({ slug: b.slug, name: b.name, count: b.productCount }))
+      : filterBrandsForCatalogWorld(brands, world).map((b) => ({
+          slug: b.slug,
+          name: b.name,
+          count: b.productCount,
+        }))
 
   return (
     <aside className={className}>

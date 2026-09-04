@@ -28,6 +28,13 @@ import {
   resolvePrefilledAddress,
 } from '@/lib/addressAutocomplete'
 import { shippingAddressFromUser } from '@/lib/address'
+import {
+  BILLING_SHIPPING_SELECTION,
+  OTHER_SHIPPING_SELECTION,
+  matchSavedShippingAddress,
+  savedAddressToInput,
+} from '@/lib/shipping-addresses'
+import { loadShippingAddresses } from '@/features/account'
 import { dedupeAsync } from '@/lib/async-cache'
 import { isCheckoutAddressValid, mergeResolvedStreetNumber } from '@/lib/checkout-address.validators'
 import { fetchCart, shouldRepriceCartOnLoad, waitForPendingCartMutations } from '@/features/cart'
@@ -673,6 +680,10 @@ export function isFrozenQuoteCheckout() {
   return checkoutStore.checkoutMode === 'frozen_quote'
 }
 
+export function isPaymentRetryCheckout() {
+  return checkoutStore.paymentRetryActive
+}
+
 export function cartFromFrozenQuoteSummary(detail: ThankYouOrderDTO): CartDTO {
   const items = detail.lines.map((line, index) => ({
     id: `frozen-${index}`,
@@ -822,7 +833,110 @@ export function prefillCheckoutFromAuthUser() {
 
   syncCheckoutContactFromProfile()
   syncAnagraficaCollectedFromAuthProfile()
-  initShippingFromBilling()
+}
+
+export async function loadCheckoutShippingAddresses() {
+  if (!authStore.isAuthenticated) {
+    checkoutStore.savedShippingAddresses = []
+    checkoutStore.savedShippingAddressesLoading = false
+    return
+  }
+  checkoutStore.savedShippingAddressesLoading = true
+  try {
+    const list = await loadShippingAddresses()
+    checkoutStore.savedShippingAddresses = list.addresses
+    applyCheckoutShippingAddressSelection()
+  } catch {
+    checkoutStore.savedShippingAddresses = []
+  } finally {
+    checkoutStore.savedShippingAddressesLoading = false
+  }
+}
+
+function applyCheckoutShippingAddressSelection() {
+  const addresses = checkoutStore.savedShippingAddresses
+  if (addresses.length === 0) return
+
+  const parent = addresses.find((address) => address.source === 'odoo_parent')
+  if (parent?.line1.trim()) {
+    const billing = checkoutStore.draft.billing
+    billing.line1 = parent.line1
+    billing.streetNumber = parent.streetNumber ?? billing.streetNumber
+    billing.isSnc = parent.isSnc === true
+    billing.line2 = parent.line2 ?? ''
+    billing.city = parent.city
+    billing.postalCode = parent.postalCode
+    billing.country = parent.country
+    if (parent.phone) billing.phone = parent.phone
+  }
+
+  const matched =
+    matchSavedShippingAddress(addresses, checkoutStore.draft.shipping) ??
+    addresses.find((address) => address.isDefault) ??
+    addresses[0]
+  if (!matched) return
+
+  const billingFp = [
+    checkoutStore.draft.billing.line1,
+    checkoutStore.draft.billing.city,
+    checkoutStore.draft.billing.postalCode,
+  ]
+    .join('|')
+    .toLowerCase()
+  const matchedFp = [matched.line1, matched.city, matched.postalCode].join('|').toLowerCase()
+  const sameAsBilling = matched.source === 'odoo_parent' || billingFp === matchedFp
+
+  checkoutStore.selectedShippingAddressId = matched.id
+  if (sameAsBilling) {
+    checkoutStore.draft.billingSameAsShipping = true
+    checkoutStore.draft.shipping = {
+      ...checkoutStore.draft.billing,
+      courierNotes: checkoutStore.draft.shipping.courierNotes,
+      id: matched.id,
+      label: matched.label,
+    }
+    return
+  }
+
+  checkoutStore.draft.billingSameAsShipping = false
+  checkoutStore.draft.shipping = savedAddressToInput(matched)
+}
+
+export function selectCheckoutShippingAddress(selection: string) {
+  checkoutStore.selectedShippingAddressId = selection
+  if (selection === BILLING_SHIPPING_SELECTION) {
+    setBillingSameAsShipping(true)
+    return
+  }
+  if (selection === OTHER_SHIPPING_SELECTION) {
+    checkoutStore.draft.billingSameAsShipping = false
+    const current = checkoutStore.draft.shipping
+    checkoutStore.draft.shipping = {
+      ...emptyCheckoutAddress(),
+      firstName: current.firstName,
+      lastName: current.lastName,
+      phone: current.phone,
+      country: current.country || 'IT',
+      courierNotes: current.courierNotes,
+    }
+    invalidateShippingIfDestinationChanged()
+    return
+  }
+
+  const saved = checkoutStore.savedShippingAddresses.find((address) => address.id === selection)
+  if (!saved) return
+  if (saved.source === 'odoo_parent') {
+    setBillingSameAsShipping(true)
+    checkoutStore.draft.shipping.id = saved.id
+    checkoutStore.draft.shipping.label = saved.label
+    return
+  }
+  checkoutStore.draft.billingSameAsShipping = false
+  checkoutStore.draft.shipping = savedAddressToInput(saved)
+  invalidateShippingIfDestinationChanged()
+  if (destinationComplete(shippingAddressPayload())) {
+    scheduleShippingQuotesFetch(0)
+  }
 }
 
 export function setCheckoutStep(step: CheckoutStep) {
@@ -866,6 +980,8 @@ async function runAddressPrefillInit() {
   checkoutStore.addressPrefillLoading = false
 
   try {
+    await loadCheckoutShippingAddresses()
+
     const shipping = checkoutStore.draft.shipping
     const billing = checkoutStore.draft.billing
     const needsGeocode =
@@ -886,7 +1002,9 @@ async function runAddressPrefillInit() {
 
     if (destinationComplete(shippingAddressPayload())) {
       try {
-        initShippingFromBilling()
+        if (!checkoutStore.selectedShippingAddressId || checkoutStore.draft.billingSameAsShipping) {
+          initShippingFromBilling()
+        }
         await fetchShippingQuotes()
       } catch {
         /* errore già in checkoutStore.error */
@@ -904,7 +1022,22 @@ export function initializeCheckoutNavigation(): Promise<void> {
   checkoutDbg.fn('initializeCheckoutNavigation', 'enter', {
     authenticated: authStore.isAuthenticated,
     hasPrefillPromise: Boolean(addressPrefillPromise),
+    paymentRetry: checkoutStore.paymentRetryActive,
   })
+  if (checkoutStore.paymentRetryActive) {
+    checkoutStore.addressPrefillLoading = false
+    checkoutStore.initLoadingPhase = null
+    if (!authStore.isAuthenticated) {
+      checkoutStore.currentStep = 'account'
+      checkoutDbg.fn('initializeCheckoutNavigation', 'skip', { reason: 'payment retry needs auth' })
+      return Promise.resolve()
+    }
+    if (checkoutStore.currentStep === 'account') {
+      checkoutStore.currentStep = checkoutStore.paymentRetryStep
+    }
+    checkoutDbg.fn('initializeCheckoutNavigation', 'skip', { reason: 'payment retry' })
+    return Promise.resolve()
+  }
   if (!authStore.isAuthenticated) {
     checkoutStore.currentStep = 'account'
     checkoutStore.addressPrefillLoading = false
@@ -1073,6 +1206,9 @@ export function resetCheckout(options?: { legacyLayout?: boolean }) {
   }
   checkoutStore.clientOrderRef = ''
   checkoutStore.dropshipAddress = emptyCheckoutAddress()
+  checkoutStore.savedShippingAddresses = []
+  checkoutStore.savedShippingAddressesLoading = false
+  checkoutStore.selectedShippingAddressId = null
   checkoutStore.deliveryRecipient = {
     mode: 'self',
     firstName: '',
@@ -1084,6 +1220,9 @@ export function resetCheckout(options?: { legacyLayout?: boolean }) {
   checkoutStore.anagraficaCollectedAtAccount = false
   checkoutStore.checkoutMode = 'standard'
   checkoutStore.frozenOrderSummary = null
+  checkoutStore.paymentRetryActive = false
+  checkoutStore.paymentRetryOrderId = null
+  checkoutStore.paymentRetryStep = 'payment'
   invalidateCheckoutTransitionPrefetch()
   checkoutStore.draft = {
     email: '',
@@ -1421,8 +1560,13 @@ export function canAdvanceFromStep(step: CheckoutStep): boolean {
 
 export function canStartCheckout() {
   if (checkoutStore.cartRefreshing) return false
-  if (isFrozenQuoteCheckout()) {
-    return Boolean(checkoutStore.order?.orderId) && Boolean(checkoutStore.selectedPaymentMethod)
+  if (isFrozenQuoteCheckout() || isPaymentRetryCheckout()) {
+    return (
+      Boolean(checkoutStore.order?.orderId) &&
+      Boolean(checkoutStore.selectedPaymentMethod) &&
+      authStore.isAuthenticated &&
+      checkoutStore.shippingSelectionPersisted
+    )
   }
   return (
     authStore.isAuthenticated &&
@@ -1751,7 +1895,10 @@ export function prefetchCheckoutPayment(): void {
   checkoutDbg.fn('prefetchCheckoutPayment', 'enter', { key })
   checkoutPaymentPrefetchPromise = (async () => {
     try {
-      if (!checkoutStore.order) await startCheckout({ silent: true })
+      if (!checkoutStore.order) {
+        if (isPaymentRetryCheckout()) return
+        await startCheckout({ silent: true })
+      }
       if (
         !checkoutStore.payment ||
         checkoutStore.payment.method !== checkoutStore.selectedPaymentMethod ||
@@ -1914,7 +2061,7 @@ export async function createPaymentSession(options?: { silent?: boolean }) {
       return
     }
     if (!options?.silent) checkoutStore.isLoading = true
-    checkoutStore.error = null
+    if (!checkoutStore.paymentRetryActive) checkoutStore.error = null
     try {
       checkoutDbg.api('payments.createSession', { orderId, method })
       const payment = await api.payments.createSession({
@@ -1958,7 +2105,11 @@ export async function prepareCheckoutPayment(options?: { silent?: boolean }) {
     hasPayment: Boolean(checkoutStore.payment),
     method: checkoutStore.selectedPaymentMethod,
   })
-  if (!checkoutStore.order && !isFrozenQuoteCheckout()) {
+  if (!checkoutStore.order) {
+    if (isFrozenQuoteCheckout() || isPaymentRetryCheckout()) {
+      checkoutStore.error = localeMessage('checkout.error.missingOrder')
+      throw new Error(checkoutStore.error)
+    }
     await startCheckout(options)
   }
   const payment = checkoutStore.payment
@@ -2031,12 +2182,15 @@ export async function resumeFrozenQuoteCheckout(orderId: string) {
   }
 }
 
-/** Riprende checkout dopo pagamento fallito: riusa PwaOrder, carrello intatto. */
+/** Riprende checkout dopo pagamento fallito: riusa PwaOrder e torna allo step pagamento. */
 export async function resumeCheckoutForOrder(orderId: string) {
   const detail = await api.orders.thankYou(orderId)
   if (detail.paymentStatus === 'captured') {
     throw new Error(localeMessage('checkout.error.alreadyPaid'))
   }
+  checkoutStore.paymentRetryActive = true
+  checkoutStore.paymentRetryOrderId = orderId
+  checkoutStore.frozenOrderSummary = detail
   checkoutStore.order = {
     orderId: detail.orderId,
     checkoutSessionId: '',
@@ -2051,13 +2205,52 @@ export async function resumeCheckoutForOrder(orderId: string) {
   if (detail.paymentMethod === 'stripe' || detail.paymentMethod === 'bank_transfer') {
     checkoutStore.selectedPaymentMethod = detail.paymentMethod
   }
-  checkoutStore.currentStep = 'review'
+  if (detail.shippingMethodRef) {
+    checkoutStore.selectedShippingMethodRef = detail.shippingMethodRef
+    checkoutStore.shippingSelectionPersisted = true
+    if (!checkoutStore.shippingQuotes.some((quote) => quote.methodRef === detail.shippingMethodRef)) {
+      checkoutStore.shippingQuotes = [
+        {
+          methodRef: detail.shippingMethodRef,
+          carrierCode: detail.isStorePickup ? 'pickup' : 'flat',
+          serviceCode: detail.isStorePickup ? 'pickup_roma' : 'standard',
+          label: detail.isStorePickup ? 'Ritiro in sede' : 'Spedizione',
+          amountCents: detail.shippingCents ?? 0,
+          currencyCode: detail.currencyCode,
+          etaDays: null,
+          source: detail.isStorePickup ? 'pickup' : 'flat',
+        },
+      ]
+    }
+  }
+  checkoutStore.currentStep = authStore.isAuthenticated
+    ? checkoutStore.paymentRetryStep
+    : 'account'
   checkoutStore.error = detail.lastPaymentError
   if (detail.email) checkoutStore.draft.email = detail.email
   if (detail.shippingAddress) {
-    checkoutStore.draft.shipping = { ...checkoutStore.draft.shipping, ...detail.shippingAddress }
-    if (checkoutStore.draft.billingSameAsShipping) {
-      checkoutStore.draft.billing = { ...checkoutStore.draft.shipping }
+    checkoutStore.draft.shipping = {
+      ...emptyCheckoutAddress(),
+      ...detail.shippingAddress,
+      streetNumber: detail.shippingAddress.streetNumber ?? '',
+      isSnc: detail.shippingAddress.isSnc ?? false,
+      line2: detail.shippingAddress.line2 ?? '',
+      phone: detail.shippingAddress.phone ?? '',
+      courierNotes: detail.shippingAddress.courierNotes ?? '',
+    }
+    checkoutStore.draft.billing = { ...checkoutStore.draft.shipping }
+    checkoutStore.draft.billingSameAsShipping = true
+  }
+  if (detail.taxCents != null) {
+    checkoutStore.taxBreakdown = {
+      netCents: detail.subtotalCents ?? 0,
+      taxCents: detail.taxCents,
+      grossCents: (detail.subtotalCents ?? 0) + detail.taxCents + (detail.shippingCents ?? 0),
+      taxRatePct: 0,
+      taxLabel: detail.taxLabel ?? '',
+      isEstimate: false,
+      disclaimerKey: detail.disclaimerKey ?? undefined,
+      odooFiscalPositionId: null,
     }
   }
 }

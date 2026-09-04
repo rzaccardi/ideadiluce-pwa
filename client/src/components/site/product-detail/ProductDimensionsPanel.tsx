@@ -91,6 +91,22 @@ export function ProductDimensionsPanel({
             : undefined
         }
       >
+        {dimensionRows.length > 0 ? (
+          <div>
+            {dimensionRows.map((row) => (
+              <ProductSpecRowItem
+                key={`${row.key ?? row.label}:${row.value}`}
+                label={row.label}
+                value={row.value}
+                href={row.href}
+                variant={variant}
+                monoValue
+                compact={!isDesign}
+              />
+            ))}
+          </div>
+        ) : null}
+
         {measureImages.length > 0 ? (
           <div className="space-y-3">
             {measureImages.map((item) => (
@@ -110,22 +126,6 @@ export function ProductDimensionsPanel({
                   sizes="(max-width: 1024px) 100vw, 40vw"
                 />
               </div>
-            ))}
-          </div>
-        ) : null}
-
-        {dimensionRows.length > 0 ? (
-          <div>
-            {dimensionRows.map((row) => (
-              <ProductSpecRowItem
-                key={`${row.key ?? row.label}:${row.value}`}
-                label={row.label}
-                value={row.value}
-                href={row.href}
-                variant={variant}
-                monoValue
-                compact={!isDesign}
-              />
             ))}
           </div>
         ) : null}

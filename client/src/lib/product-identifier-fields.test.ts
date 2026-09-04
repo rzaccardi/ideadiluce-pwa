@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { collectProductIdentifierFields, formatProductIdentifierInline } from './product-identifier-fields'
+import {
+  collectProductIdentifierFields,
+  formatProductIdentifierInline,
+  isCopyableBarcodeLabel,
+} from './product-identifier-fields'
 
 const labels = {
   brand: 'Marca',
@@ -75,5 +79,16 @@ describe('collectProductIdentifierFields', () => {
     )
 
     expect(line).toBe('CED 002024 · MPN 2024')
+  })
+})
+
+describe('isCopyableBarcodeLabel', () => {
+  it('riconosce etichette EAN / barcode / GTIN', () => {
+    expect(isCopyableBarcodeLabel('EAN')).toBe(true)
+    expect(isCopyableBarcodeLabel('EAN/GTIN')).toBe(true)
+    expect(isCopyableBarcodeLabel('Barcode')).toBe(true)
+    expect(isCopyableBarcodeLabel('Codice a barre')).toBe(true)
+    expect(isCopyableBarcodeLabel('Attacco')).toBe(false)
+    expect(isCopyableBarcodeLabel('SKU')).toBe(false)
   })
 })

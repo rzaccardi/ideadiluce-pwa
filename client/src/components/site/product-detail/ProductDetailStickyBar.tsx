@@ -1,15 +1,17 @@
 'use client'
 
 import { addItem } from '@/features/cart'
-import { buildCartAddHintFromDetail } from '@/features/cart/cart-add-hint'
+import {
+  buildCartAddHintFromCard,
+  buildCartAddHintFromDetail,
+} from '@/features/cart/cart-add-hint'
 import { formatMoney } from '@/lib/format'
 import type { ProductAvailabilityStatus } from '@/lib/product-availability'
-import type { ProductDetailDTO } from '@/types/dto'
+import type { ProductCardDTO, ProductDetailDTO } from '@/types/dto'
 import { SectionContainer } from '@/components/site/primitives'
 import { cn } from '@/utils/cn'
 import { SiteImage } from '@/components/site/SiteImage'
-import { buildProductSubtitle } from './shared'
-import { useProductIdentifierInline } from '@/components/product/ProductIdentifierMeta'
+import { ProductIdentifierMeta, useProductIdentifierInline } from '@/components/product/ProductIdentifierMeta'
 
 type Props = {
   product: ProductDetailDTO
@@ -45,18 +47,22 @@ export function ProductDetailStickyBar({
   variantRef,
 }: Props) {
   const isDesign = variant === 'design'
-  const subtitle = buildProductSubtitle(product)
   const selectedVariant = variantRef
     ? product.variants.find((v) => v.ref === variantRef)
     : product.variants[0]
   const identifierLine = useProductIdentifierInline(product, selectedVariant, { includeBrand: false })
+  const subtitle =
+    identifierLine ??
+    (product.specTags?.length ? product.specTags.slice(0, 3).join(' · ') : null) ??
+    product.brand?.name ??
+    null
 
   return (
     <div
       className={cn(
         'sticky bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom,0px)]',
         isDesign
-          ? 'border-idl-border bg-white/95 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur-sm dark:bg-idl-paper/95'
+          ? 'border-idl-border bg-idl-paper shadow-[0_-4px_16px_rgba(0,0,0,0.06)] dark:bg-idl-tech-panel dark:shadow-[0_-8px_24px_rgba(0,0,0,0.35)]'
           : 'border-idl-tech-border bg-idl-tech-panel shadow-[0_-4px_16px_rgba(0,0,0,0.05)]',
       )}
     >
@@ -65,7 +71,9 @@ export function ProductDetailStickyBar({
           <div
             className={cn(
               'relative size-10 shrink-0 overflow-hidden rounded-lg border',
-              isDesign ? 'border-idl-path-design-border bg-idl-cream' : 'border-idl-tech-border bg-idl-tech-panel',
+              isDesign
+                ? 'border-idl-path-design-border bg-idl-cream dark:bg-idl-tech-chip'
+                : 'border-idl-tech-border bg-idl-tech-panel',
             )}
           >
             {imageUrl ? (
@@ -87,14 +95,26 @@ export function ProductDetailStickyBar({
             >
               {product.name}
             </div>
-            <div
-              className={cn(
-                'truncate text-[11px]',
-                isDesign ? 'text-idl-ink-muted' : 'font-mono text-idl-muted',
-              )}
-            >
-              {subtitle ?? identifierLine ?? product.brand?.name ?? '—'}
-            </div>
+            {identifierLine ? (
+              <ProductIdentifierMeta
+                product={product}
+                variant={selectedVariant}
+                includeBrand={false}
+                className={cn(
+                  'truncate text-[11px]',
+                  isDesign ? 'text-idl-ink-muted' : 'text-idl-muted',
+                )}
+              />
+            ) : (
+              <div
+                className={cn(
+                  'truncate text-[11px]',
+                  isDesign ? 'text-idl-ink-muted' : 'font-mono text-idl-muted',
+                )}
+              >
+                {subtitle ?? '—'}
+              </div>
+            )}
           </div>
         </div>
 
@@ -133,8 +153,8 @@ export function ProductDetailStickyBar({
             className={cn(
               'min-w-0 flex-1 rounded-lg px-4 py-3 text-sm font-bold transition disabled:opacity-60 sm:flex-none sm:px-6 sm:py-3 sm:text-sm',
               isDesign
-                ? 'bg-idl-glow text-idl-design hover:bg-idl-cta-glow-hover'
-                : 'bg-idl-amber text-white dark:text-idl-design hover:bg-idl-cta-amber-hover',
+                ? 'bg-idl-glow text-idl-design hover:bg-idl-cta-glow-hover dark:bg-white dark:text-[#0c0c0d] dark:hover:bg-neutral-200'
+                : 'bg-idl-amber text-white hover:bg-idl-cta-amber-hover dark:bg-white dark:text-[#0c0c0d] dark:hover:bg-neutral-200',
             )}
           >
             {isAddingToCart ? addingLabel : addLabel}
@@ -145,12 +165,18 @@ export function ProductDetailStickyBar({
   )
 }
 
+export type CartExtraAddItem = {
+  product: ProductCardDTO
+  quantity?: number
+}
+
 export function createAddToCartHandler(input: {
   product: ProductDetailDTO
   quantity: number
   variantRef: string | null
   galleryImages: readonly string[]
   setIsAddingToCart: (v: boolean) => void
+  extraItems?: readonly CartExtraAddItem[]
 }) {
   return () => {
     if (input.setIsAddingToCart) {
@@ -158,15 +184,24 @@ export function createAddToCartHandler(input: {
       const selected = input.variantRef
         ? input.product.variants.find((v) => v.ref === input.variantRef)
         : input.product.variants[0]
-      void addItem(input.product.slug, input.quantity, input.variantRef, {
-        feedback: {
-          productName: input.product.name,
-          imageUrl:
-            selected?.imageUrl ?? input.galleryImages[0] ?? input.product.imageUrl,
-          quantity: input.quantity,
-        },
-        productHint: buildCartAddHintFromDetail(input.product, input.variantRef),
-      }).finally(() => input.setIsAddingToCart(false))
+      void (async () => {
+        await addItem(input.product.slug, input.quantity, input.variantRef, {
+          feedback: {
+            productName: input.product.name,
+            imageUrl:
+              selected?.imageUrl ?? input.galleryImages[0] ?? input.product.imageUrl,
+            quantity: input.quantity,
+          },
+          productHint: buildCartAddHintFromDetail(input.product, input.variantRef),
+        })
+        for (const extra of input.extraItems ?? []) {
+          if (!extra.product.slug) continue
+          await addItem(extra.product.slug, extra.quantity ?? 1, undefined, {
+            silent: true,
+            productHint: buildCartAddHintFromCard(extra.product),
+          })
+        }
+      })().finally(() => input.setIsAddingToCart(false))
     }
   }
 }

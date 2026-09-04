@@ -6,6 +6,7 @@ import { cn } from '@/utils/cn'
 import {
   attributeNames,
   getMatrixValueState,
+  htmlColorForAttributeValue,
   isSwatchAttribute,
   pickVariantForAttribute,
   subgroupAttributeValues,
@@ -13,40 +14,13 @@ import {
   type MatrixValueState,
 } from '@/lib/product-variant-attributes'
 
-const SWATCH_COLORS: Record<string, string> = {
-  bianco: '#f3efe7',
-  white: '#f3efe7',
-  arancio: '#d36a3d',
-  orange: '#d36a3d',
-  rosso: '#b3322f',
-  red: '#b3322f',
-  nero: '#1f1c17',
-  black: '#1f1c17',
-  alluminio: '#a8a8ac',
-  aluminum: '#a8a8ac',
-  aluminium: '#a8a8ac',
-  bronzo: '#8c6b45',
-  bronze: '#8c6b45',
-  oro: '#c4a35a',
-  gold: '#c4a35a',
-  cromo: '#c5c5c9',
-  chrome: '#c5c5c9',
-  argento: '#b8b8bc',
-  silver: '#b8b8bc',
-}
+/** Fallback neutro se Odoo non invia `html_color` — non un colore di un altro valore. */
+const SWATCH_FALLBACK = '#8f8f93'
 
 type Props = {
   variants: ReadonlyArray<ProductVariantDTO>
   selectedRef: string
   onChange: (ref: string) => void
-}
-
-function swatchForValue(value: string): string | null {
-  const key = value.trim().toLowerCase()
-  for (const [token, color] of Object.entries(SWATCH_COLORS)) {
-    if (key.includes(token)) return color
-  }
-  return null
 }
 
 function matrixButtonProps(state: MatrixValueState, active: boolean) {
@@ -108,7 +82,7 @@ export function DesignHeroVariantPicker({ variants, selectedRef, onChange }: Pro
                   const active = selectedValue === value
                   const state = getMatrixValueState(variants, selectedRef, group.attrName, value)
                   const matrix = matrixButtonProps(state, active)
-                  const swatch = swatchForValue(value)
+                  const swatch = htmlColorForAttributeValue(variants, group.attrName, value)
                   return (
                     <button
                       key={`${group.attrName}-${value}`}
@@ -131,7 +105,7 @@ export function DesignHeroVariantPicker({ variants, selectedRef, onChange }: Pro
                           : 'border-idl-path-design-border hover:border-idl-brass/50',
                         matrix.className,
                       )}
-                      style={{ background: swatch ?? '#8f8f93' }}
+                      style={{ background: swatch ?? SWATCH_FALLBACK }}
                     />
                   )
                 })}

@@ -37,7 +37,7 @@ function entry(id: number): OdooCatalogIndexEntry {
     searchText: `p ${id}`,
     categorySlugs: [],
     brandSlug: null,
-  } as OdooCatalogIndexEntry
+  } as unknown as OdooCatalogIndexEntry
 }
 
 describe('catalog index checkpoint', () => {

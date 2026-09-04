@@ -7,8 +7,8 @@ import { useIsClient } from '@/hooks/use-is-client'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocale } from '@/context/locale-context'
 import { useLocalePath } from '@/hooks/use-locale-path'
-import { useQueryParams } from '@/lib/navigation'
-import { parseCatalogPreserveParams } from '@/lib/catalog-filters'
+import { usePathname, useQueryParams } from '@/lib/navigation'
+import { parseCatalogPreserveParams, resolveCatalogWorldFromPath } from '@/lib/catalog-filters'
 import { useCatalogSearchAutocomplete } from '@/hooks/use-catalog-search-autocomplete'
 import { getGlobalSearchShortcutLabel } from '@/hooks/use-global-search-shortcut'
 import { catalogStore, fetchCatalogBootstrap } from '@/features/catalog'
@@ -81,8 +81,13 @@ export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palett
   const { t, tParams } = useI18n()
   const lp = useLocalePath()
   const { locale } = useLocale()
+  const pathname = usePathname()
   const [params] = useQueryParams()
   const preserveParams = useMemo(() => parseCatalogPreserveParams(params), [params])
+  const world = useMemo(
+    () => resolveCatalogWorldFromPath(pathname, params),
+    [params, pathname],
+  )
   const cat = useSnapshot(catalogStore)
   const site = useSnapshot(siteStore)
 
@@ -109,6 +114,7 @@ export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palett
     resetAutocomplete,
   } = useCatalogSearchAutocomplete({
     lp,
+    world,
     brands: cat.brands,
     categories: cat.categories,
     hints: searchCms?.hints,

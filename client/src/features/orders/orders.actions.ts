@@ -54,7 +54,8 @@ export function fetchOrderDetail(id: string) {
   if (!id) return Promise.resolve()
   if (
     !ordersStore.isDetailLoading &&
-    ordersStore.detail?.id === id &&
+    ordersStore.detail != null &&
+    ordersStore.detailId === id &&
     !ordersStore.detailError
   ) {
     return Promise.resolve()

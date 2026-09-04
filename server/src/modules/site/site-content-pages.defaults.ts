@@ -90,13 +90,13 @@ export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> =
           { value: '25+', label: 'anni di esperienza' },
           { value: '8.000+', label: 'prodotti a catalogo' },
           { value: '120+', label: 'brand selezionati' },
-          { value: '∞', label: 'spedizioni in tutto il mondo' },
+          { value: '∞', label: 'Spedizioni tracciate in tutto il mondo' },
         ],
       },
       {
         kind: 'features',
         items: [
-          { num: '01', title: 'Spedizioni mondiali', description: 'Consegna tracciata in tutto il mondo.' },
+          { num: '01', title: 'Spedizioni tracciate', description: 'In tutto il mondo' },
           { num: '02', title: 'Catalogo arredo + tecnico', description: 'Design e ricambi nello stesso posto.' },
           { num: '03', title: 'Assistenza umana', description: 'Telefono, email e WhatsApp con persone vere.' },
           { num: '04', title: 'Consulenza dedicata', description: 'Ti aiutiamo a scegliere prima e dopo l\'acquisto.' },
@@ -155,7 +155,7 @@ export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> =
       {
         kind: 'prose',
         paragraphs: [
-          'Spediamo in tutta Italia con corriere tracciato. Riceverai email con il link di tracking non appena il pacco lascia il nostro magazzino.',
+          'Spedizioni tracciate in tutto il mondo. Riceverai email con il link di tracking non appena il pacco lascia il nostro magazzino.',
           'I tempi di consegna indicati in checkout sono indicativi e possono variare per prodotti su ordinazione o isole.',
           'Per resi e recesso, contattaci entro 14 giorni dalla consegna: ti guideremo nella procedura e verificheremo lo stato del prodotto.',
         ],

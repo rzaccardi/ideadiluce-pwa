@@ -38,6 +38,8 @@ export function shippingAddressFromUser(user: UserDTO): AddressInput {
     streetNumber: split.streetNumber,
     isSnc: split.isSnc,
     phone: saved?.phone || user.phone || '',
+    id: saved?.id,
+    label: saved?.label,
   }
 }
 
@@ -62,6 +64,8 @@ export function addressInputToDto(address: AddressInput): UserAddressDTO | null 
     country: address.country.trim().toUpperCase().slice(0, 2),
     phone: address.phone?.trim() || undefined,
     courierNotes: address.courierNotes?.trim() || undefined,
+    id: address.id?.trim() || undefined,
+    label: address.label?.trim() || undefined,
   }
 }
 

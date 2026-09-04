@@ -48,7 +48,7 @@ export function ProductNotFoundPageView({ content }: Props) {
   return (
     <PageFlexShell tone="paper">
       <PageFlexBody tone="paper" className="bg-idl-cream">
-        <Reveal immediate className="relative overflow-hidden bg-idl-design text-idl-design-fg">
+        <Reveal immediate className="relative overflow-hidden bg-idl-design text-idl-design-fg dark:bg-idl-design-elevated">
           <div
             className="pointer-events-none absolute -top-16 right-[18%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,rgba(120, 120, 125,0.18)_0%,rgba(120, 120, 125,0)_68%)]"
             aria-hidden
@@ -93,7 +93,7 @@ export function ProductNotFoundPageView({ content }: Props) {
             <div className="flex flex-col gap-5 lg:sticky lg:top-24">
               {steps ? (
                 <Reveal>
-                  <div className="rounded-[14px] border border-idl-border bg-idl-paper p-6 sm:p-7">
+                  <div className="rounded-[14px] border border-idl-border bg-idl-paper p-6 sm:p-7 dark:bg-idl-tech-panel">
                     <h2 className="mb-4 text-base font-extrabold tracking-tight text-idl-ink">
                       {steps.title ?? t('productNotFound.stepsTitle')}
                     </h2>
@@ -118,7 +118,7 @@ export function ProductNotFoundPageView({ content }: Props) {
 
               {contact ? (
                 <Reveal>
-                  <div className="rounded-[14px] bg-idl-design p-6 text-idl-design-fg sm:p-7">
+                  <div className="rounded-[14px] bg-idl-design p-6 text-idl-design-fg sm:p-7 dark:border dark:border-idl-border dark:bg-idl-tech-panel">
                     <div className="mb-3.5 font-mono text-[10.5px] tracking-[0.14em] text-idl-brass">
                       {t('productNotFound.preferTalk')}
                     </div>
@@ -156,7 +156,7 @@ export function ProductNotFoundPageView({ content }: Props) {
               ) : null}
 
               <Reveal>
-                <div className="rounded-[14px] border border-idl-border bg-idl-paper p-5 sm:p-6">
+                <div className="rounded-[14px] border border-idl-border bg-idl-paper p-5 sm:p-6 dark:bg-idl-tech-panel">
                   <div className="text-sm font-bold text-idl-ink">{t('productNotFound.professionalsTitle')}</div>
                   <p className="mt-1.5 text-[12.5px] leading-relaxed text-idl-muted">
                     {t('productNotFound.professionalsBody')}
@@ -171,7 +171,7 @@ export function ProductNotFoundPageView({ content }: Props) {
               </Reveal>
 
               <Reveal>
-                <div className="overflow-hidden rounded-[14px] border border-idl-border bg-idl-paper">
+                <div className="overflow-hidden rounded-[14px] border border-idl-border bg-idl-paper dark:bg-idl-tech-panel">
                   <div
                     className="aspect-[16/9] bg-[linear-gradient(135deg,#f4f4f5_0%,#c4c4c8_55%,#9a9a9e_100%)] dark:bg-[linear-gradient(135deg,#1c1c1e_0%,#2a2a2e_55%,#3a3a3d_100%)]"
                     aria-hidden

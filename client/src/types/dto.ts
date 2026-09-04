@@ -21,6 +21,26 @@ export type UserAddressDTO = {
   country: string
   phone?: string
   courierNotes?: string
+  /** Id opaco PWA (`odoo:{partnerId}` o `local:default`). */
+  id?: string
+  label?: string
+}
+
+export type UserShippingAddressSourceDTO = 'odoo_parent' | 'odoo_delivery' | 'odoo_contact' | 'local'
+
+export type UserShippingAddressDTO = UserAddressDTO & {
+  id: string
+  label: string
+  source: UserShippingAddressSourceDTO
+  isDefault: boolean
+  canEdit: boolean
+  canDelete: boolean
+}
+
+export type UserShippingAddressListDTO = {
+  addresses: UserShippingAddressDTO[]
+  canCreate: boolean
+  odooSyncFailed: boolean
 }
 
 export type CustomerSegmentDTO = 'retail' | 'business' | 'professional'
@@ -204,6 +224,8 @@ export type ProductCardDTO = {
   priceDisplayMode: PriceDisplayModeDTO
   currency: string
   imageUrl: string | null
+  /** Foto ambientata per hover card arredo (assente se non c’è una seconda foto utile). */
+  hoverImageUrl?: string | null
   categorySlug: string | null
   brand?: ProductBrandDTO | null
   sku?: string | null
@@ -231,6 +253,8 @@ export type StockRestockRequestDTO = {
 export type ProductVariantAttributeDTO = {
   name: string
   value: string
+  /** Hex `#rrggbb` da Odoo `product.attribute.value.html_color`. */
+  htmlColor?: string | null
 }
 
 export type ProductVariantDTO = {

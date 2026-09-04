@@ -14,6 +14,7 @@ import {
   isBusinessCheckout,
   isBusinessAnagraficaComplete,
   isRomePickupEligible,
+  selectCheckoutShippingAddress,
   selectShippingMethod,
   setBillingSameAsShipping,
   setDeliveryRecipientMode,
@@ -30,6 +31,8 @@ import { CheckoutBusinessFieldsSection } from './CheckoutBusinessFieldsSection'
 import { CheckoutRetailFiscalCodeField } from './CheckoutRetailFiscalCodeField'
 import { CourierNotesField } from './CheckoutAddressFields'
 import { CheckoutShippingOptions } from './CheckoutShippingOptions'
+import { ShippingAddressPicker } from '@/components/account/ShippingAddressPicker'
+import { OTHER_SHIPPING_SELECTION } from '@/lib/shipping-addresses'
 import {
   CheckoutInfoNote,
   CheckoutPanel,
@@ -60,8 +63,15 @@ export function CheckoutAddressesStep() {
     checkout.addressPrefillLoading
   const recipient = checkout.deliveryRecipient
   const deliveryMode = recipient.mode ?? 'self'
+  const savedAddresses = checkout.savedShippingAddresses
+  const hasSavedShippingAddresses = savedAddresses.length > 0
+  const selectedSavedId = checkout.selectedShippingAddressId
   const shipToDifferentAddress = !checkout.draft.billingSameAsShipping
-  const useBillingForShipping = !shipToDifferentAddress && deliveryMode === 'self'
+  const useBillingForShipping =
+    !shipToDifferentAddress && deliveryMode === 'self' && selectedSavedId !== OTHER_SHIPPING_SELECTION
+  const showOtherShippingForm =
+    deliveryMode === 'self' &&
+    (selectedSavedId === OTHER_SHIPPING_SELECTION || (!hasSavedShippingAddresses && shipToDifferentAddress))
   const billingComplete =
     isCheckoutAddressValid(checkout.draft.billing) &&
     (!business || isBusinessAnagraficaComplete())
@@ -75,7 +85,9 @@ export function CheckoutAddressesStep() {
     if (checkoutStore.deliveryRecipient.mode == null) {
       setDeliveryRecipientMode('self')
     }
-    initShippingFromBilling()
+    if (!checkoutStore.selectedShippingAddressId && checkoutStore.savedShippingAddresses.length === 0) {
+      initShippingFromBilling()
+    }
   }, [])
 
   return (
@@ -131,7 +143,21 @@ export function CheckoutAddressesStep() {
           />
         ) : null}
 
-        {deliveryMode === 'self' ? (
+        {deliveryMode === 'self' && hasSavedShippingAddresses ? (
+          <>
+            <p className="text-sm text-idl-muted">{t('checkout.shipping.savedAddressesHint')}</p>
+            <ShippingAddressPicker
+              addresses={savedAddresses}
+              selectedId={selectedSavedId}
+              disabled={stepBusy}
+              onSelect={(id) => selectCheckoutShippingAddress(id)}
+              extraOption={{
+                id: OTHER_SHIPPING_SELECTION,
+                title: t('checkout.shipping.useOtherAddress'),
+              }}
+            />
+          </>
+        ) : deliveryMode === 'self' ? (
           <>
             <CheckoutToggleCheckbox
               checked={checkout.draft.billingSameAsShipping}
@@ -145,7 +171,10 @@ export function CheckoutAddressesStep() {
           </>
         ) : null}
 
-        {useBillingForShipping ? (
+        {useBillingForShipping ||
+        (deliveryMode === 'self' &&
+          hasSavedShippingAddresses &&
+          selectedSavedId !== OTHER_SHIPPING_SELECTION) ? (
           <div>
             <StripeFieldLabel htmlFor="ship-courier-notes">{t('checkout.address.courierNotes')}</StripeFieldLabel>
             <StripeFieldGroup>
@@ -160,7 +189,7 @@ export function CheckoutAddressesStep() {
           </div>
         ) : null}
 
-        {deliveryMode === 'self' && shipToDifferentAddress ? (
+        {showOtherShippingForm ? (
           <CheckoutAddressSection
             title={t('checkout.shippingAddress')}
             prefix="ship"

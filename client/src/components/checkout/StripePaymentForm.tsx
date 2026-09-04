@@ -185,7 +185,7 @@ export const StripePaymentForm = forwardRef<StripePaymentFormHandle, Props>(func
 
   if (checkoutState.type === 'loading') {
     return (
-      <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-500">
+      <div className="rounded-xl border border-idl-tech-border bg-idl-tech-chip px-4 py-6 text-sm text-idl-muted">
         {t('checkout.processing')}
       </div>
     )
@@ -263,7 +263,10 @@ export const StripePaymentForm = forwardRef<StripePaymentFormHandle, Props>(func
 
       <PaymentElement
         onReady={() => setPaymentReady(true)}
-        onChange={(event) => setPaymentComplete(event.complete)}
+        onChange={(event) => {
+          setPaymentComplete(event.complete)
+          if (event.complete) onError('')
+        }}
         options={{
           layout: 'tabs',
           wallets: {

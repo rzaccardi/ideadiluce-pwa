@@ -15,6 +15,7 @@ import type { z } from 'zod'
 import { professionalAccountRepository } from '../professional-account/professional-account.repository.js'
 import { normalizeProfessionalRequestStatus } from '../professional-account/professional-account.constants.js'
 import { runOdooUserProfileSync } from './users-odoo-sync.helper.js'
+import { parseOdooShippingAddressId } from '../../adapters/odoo/odoo-partner-shipping.js'
 
 type PatchMeInput = z.infer<typeof patchMeSchema>
 
@@ -64,11 +65,15 @@ async function syncUserProfileToOdoo(
   input: PatchMeInput,
 ) {
   const shipping = input.shippingAddress
+  const shippingPartnerId =
+    shipping && shipping !== null ? parseOdooShippingAddressId(shipping.id) : null
+  const writeShippingOnParent = shipping === undefined || shipping === null || !shippingPartnerId || shippingPartnerId === partnerId
+
   await customerAdapter.updateCustomerProfile(ctx, partnerId, {
     ...(input.firstName !== undefined ? { firstName: input.firstName } : {}),
     ...(input.lastName !== undefined ? { lastName: input.lastName } : {}),
     ...(input.phone !== undefined ? { phone: input.phone } : {}),
-    ...(shipping !== undefined
+    ...(writeShippingOnParent && shipping !== undefined
       ? {
           shippingAddress:
             shipping === null
@@ -88,6 +93,21 @@ async function syncUserProfileToOdoo(
         }
       : {}),
   })
+
+  if (shipping && shippingPartnerId && shippingPartnerId !== partnerId) {
+    await customerAdapter.updateDeliveryPartner(ctx, shippingPartnerId, {
+      firstName: shipping.firstName,
+      lastName: shipping.lastName,
+      line1: shipping.line1,
+      streetNumber: shipping.streetNumber ?? '',
+      isSnc: shipping.isSnc ?? false,
+      line2: shipping.line2,
+      city: shipping.city,
+      postalCode: shipping.postalCode,
+      country: shipping.country,
+      phone: shipping.phone,
+    })
+  }
 }
 
 export const usersService = {

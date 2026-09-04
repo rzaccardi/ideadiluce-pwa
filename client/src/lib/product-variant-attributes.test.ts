@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   attributeNames,
   getMatrixValueState,
+  htmlColorForAttributeValue,
   isSwatchAttribute,
   pickVariantForAttribute,
   subgroupAttributeValues,
@@ -53,6 +54,23 @@ describe('product-variant-attributes', () => {
     expect(isSwatchAttribute('Finitura')).toBe(true)
     expect(isSwatchAttribute('Versione')).toBe(false)
     expect(isSwatchAttribute('Colore luce')).toBe(false)
+  })
+
+  it('usa htmlColor Odoo del valore, senza fallback su un altro colore', () => {
+    const colored = [
+      {
+        ...v('1', [{ name: 'Colore', value: 'Nero' }]),
+        attributes: [{ name: 'Colore', value: 'Nero', htmlColor: '#1f1c17' }],
+      },
+      {
+        ...v('2', [{ name: 'Colore', value: 'Oro champagne' }]),
+        attributes: [{ name: 'Colore', value: 'Oro champagne', htmlColor: '#d4b896' }],
+      },
+      v('3', [{ name: 'Colore', value: 'Speciale' }]),
+    ]
+    expect(htmlColorForAttributeValue(colored, 'Colore', 'Nero')).toBe('#1f1c17')
+    expect(htmlColorForAttributeValue(colored, 'Colore', 'Oro champagne')).toBe('#d4b896')
+    expect(htmlColorForAttributeValue(colored, 'Colore', 'Speciale')).toBeNull()
   })
 
   it('cambia un asse tenendo l’altro (match esatto)', () => {

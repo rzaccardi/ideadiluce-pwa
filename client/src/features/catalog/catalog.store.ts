@@ -31,6 +31,8 @@ export const catalogStore = proxy({
   products: [] as ProductCardDTO[],
   /** Chiave dell'ultimo fetch server (q, categoria, brand, world, sort, pagina, locale). */
   serverFetchKey: null as string | null,
+  /** True se l'ultimo listing è stato caricato con cookie (listino sessione). */
+  sessionPriced: false,
   categories: [] as CategoryDTO[],
   brands: [] as BrandListItemDTO[],
   /** Facet live da `/catalog/filters` (opzioni navigabili per world; selezione da URL). */

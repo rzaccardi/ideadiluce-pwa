@@ -12,7 +12,10 @@ import {
   isOdooCatalogConfigured,
 } from '../../adapters/odoo-catalog/odooCatalogClient.js'
 import { toOdooCatalogLang } from '../../adapters/odoo-catalog/odooCatalogLocale.js'
-import { mapOdooCatalogListItem } from '../../adapters/odoo-catalog/odooCatalogMapper.js'
+import {
+  mapOdooCatalogListItem,
+  resolveOdooCatalogCardHoverImageUrl,
+} from '../../adapters/odoo-catalog/odooCatalogMapper.js'
 import type {
   OdooCatalogProductDetail,
   OdooCatalogProductDetailResponse,
@@ -31,6 +34,11 @@ import {
   sanitizeColorTempParam,
   type CatalogSpecFilters,
 } from './catalog-spec-filter.js'
+import {
+  inferCatalogWorldsFromCategorySlugs,
+  mergeCatalogBrandWorlds,
+  type CatalogBrandWorld,
+} from './odoo-catalog-slug.js'
 import {
   appendSyncDetails,
   appendSyncEntries,
@@ -66,6 +74,8 @@ export type BrandListItemDTO = {
   slug: string
   name: string
   productCount?: number
+  /** Aree in cui il brand ha prodotti (da categorie Odoo). */
+  worlds?: CatalogBrandWorld[]
 }
 
 type IndexBucket = {
@@ -266,14 +276,20 @@ function deriveTaxonomyFromEntries(entries: OdooCatalogIndexEntry[]): {
     }
     const brandSlug = entry.brandSlug ?? entry.brand?.slug
     if (brandSlug && entry.brand?.name) {
+      const entryWorlds = inferCatalogWorldsFromCategorySlugs([
+        entry.categorySlug,
+        ...entry.categorySlugs,
+      ])
       const existing = brands.get(brandSlug)
       if (existing) {
         existing.productCount = (existing.productCount ?? 0) + 1
+        existing.worlds = mergeCatalogBrandWorlds(existing.worlds, entryWorlds)
       } else {
         brands.set(brandSlug, {
           slug: brandSlug,
           name: entry.brand.name,
           productCount: 1,
+          worlds: entryWorlds,
         })
       }
     }
@@ -391,6 +407,9 @@ function finalizeBucket(
         entry.manufacturerCode ?? '',
       ].join(' '),
     )
+    if (!entry.hoverImageUrl) {
+      entry.hoverImageUrl = resolveOdooCatalogCardHoverImageUrl(detail, entry.imageUrl)
+    }
   }
 
   const derivedFromDetails = deriveTaxonomyFromEntries(entries)
@@ -786,7 +805,13 @@ export async function queryOdooCatalogIndex(options: {
   const page = Math.min(Math.max(1, options.page), totalPages)
   const start = (page - 1) * options.pageSize
   const items = filtered.slice(start, start + options.pageSize).map(
-    ({ searchText: _s, categorySlugs: _c, brandSlug: _b, specs: _specs, ...card }) => card,
+    ({ searchText: _s, categorySlugs: _c, brandSlug: _b, specs: _specs, ...card }) => {
+      if (card.hoverImageUrl) return card
+      const detail = bucket.detailsById[String(card.odooTemplateId)]
+      if (!detail) return card
+      const hoverImageUrl = resolveOdooCatalogCardHoverImageUrl(detail, card.imageUrl)
+      return hoverImageUrl ? { ...card, hoverImageUrl } : card
+    },
   )
 
   return {
@@ -824,8 +849,31 @@ export async function getCachedBrands(locale: HubLocale): Promise<BrandListItemD
   await hydrateOdooCatalogIndexFromDisk()
   const bucket = indexByLocale.get(locale)
   if (!bucket?.brands.length && !bucket?.entries.length) return null
-  if (bucket.brands.length) return bucket.brands
-  return deriveTaxonomyFromEntries(bucket.entries).brands
+  const derived = bucket.entries.length ? deriveTaxonomyFromEntries(bucket.entries) : null
+  if (bucket.brands.length) {
+    if (!derived) return bucket.brands
+    const worldsBySlug = new Map(derived.brands.map((brand) => [brand.slug, brand.worlds]))
+    return bucket.brands.map((brand) => ({
+      ...brand,
+      worlds: brand.worlds?.length ? brand.worlds : worldsBySlug.get(brand.slug) ?? [],
+    }))
+  }
+  return derived?.brands ?? []
+}
+
+/** Lettura cache locale senza fetch live (per arricchire le card listing). */
+export async function peekCachedProductDetails(
+  locale: HubLocale,
+): Promise<{
+  detailsById: Readonly<Record<string, OdooCatalogProductDetail>>
+  slugToId: Readonly<Record<string, number>>
+}> {
+  await hydrateOdooCatalogIndexFromDisk()
+  const bucket = indexByLocale.get(locale)
+  return {
+    detailsById: bucket?.detailsById ?? {},
+    slugToId: bucket?.slugToId ?? {},
+  }
 }
 
 /**

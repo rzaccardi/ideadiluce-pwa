@@ -12,6 +12,8 @@ import type { CatalogSort } from './catalog.store'
 import { ApiRequestError } from '@/types/api'
 import { catalogStore } from './catalog.store'
 import { seedSitePageContent, setSitePageContent } from '@/features/site'
+import { usesSessionPricelist } from '@/lib/catalog-pricing'
+import { authStore } from '@/features/auth/auth.store'
 
 function errMessage(e: unknown) {
   return e instanceof ApiRequestError ? (e.userMessage ?? e.message) : 'Errore catalogo'
@@ -232,6 +234,7 @@ export function seedCatalogProducts(
 ) {
   catalogStore.rawProducts = items
   catalogStore.serverFetchKey = serverKey
+  catalogStore.sessionPriced = false
   catalogStore.products = applyCatalogClientFilters(items, {
     ...currentClientFilters(),
     serverSideCatalogFilters: true,
@@ -354,6 +357,7 @@ async function loadProducts(filters: {
     })
     catalogStore.rawProducts = result.items
     catalogStore.serverFetchKey = catalogServerFetchKey(filters)
+    catalogStore.sessionPriced = true
     catalogStore.products = applyCatalogClientFilters(result.items, {
       ...filters,
       serverSideCatalogFilters: true,
@@ -420,12 +424,13 @@ export function fetchProducts(partialFilters?: {
     locale: catalogStore.filters.locale,
   })
 
-  if (
-    page === 1 &&
-    serverKey === catalogStore.serverFetchKey
-  ) {
-    reapplyCatalogClientFilters()
-    return Promise.resolve()
+  if (page === 1 && serverKey === catalogStore.serverFetchKey) {
+    const needsSessionPrices =
+      usesSessionPricelist(authStore.me, authStore.impersonation) && !catalogStore.sessionPriced
+    if (!needsSessionPrices) {
+      reapplyCatalogClientFilters()
+      return Promise.resolve()
+    }
   }
 
   const filters = {

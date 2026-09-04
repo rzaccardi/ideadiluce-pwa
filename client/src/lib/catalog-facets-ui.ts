@@ -12,6 +12,9 @@ import {
   CATALOG_COLOR_TEMPS,
   CATALOG_PRICE_BUCKETS,
   CATALOG_SOCKET_FILTERS,
+  filterFacetCategoriesByWorld,
+  scopeCatalogFacetsToWorld,
+  type CatalogWorldTab,
 } from '@/lib/catalog-filters'
 
 export type FacetChipOption = {
@@ -201,8 +204,9 @@ function mapCategoryNode(
  */
 export function facetCategoryOptions(
   facets: CatalogFiltersDTO | null | undefined,
+  world: CatalogWorldTab = 'all',
 ): { roots: FacetCategoryOption[]; children: FacetCategoryOption[] } {
-  const top = facets?.categories ?? []
+  const top = filterFacetCategoriesByWorld(facets?.categories ?? [], world)
   if (!top.length) return { roots: [], children: [] }
 
   if (top.length === 1 && (top[0]!.children?.length ?? 0) > 0) {
@@ -412,25 +416,27 @@ export function buildLandingFilterGroupsFromFacets(
 ): CategoryFilterGroup[] {
   if (!facets) return [...fallback]
 
+  const world = pageKey === 'design' ? 'design' : 'technical'
+  const scoped = scopeCatalogFacetsToWorld(facets as CatalogFiltersDTO, world) ?? facets
   const groups: CategoryFilterGroup[] = []
 
   if (pageKey === 'design') {
-    const tip = listFacetToCheckboxGroup('Tipologia', 'tipologia', facets.tipologie)
-    const amb = listFacetToCheckboxGroup('Ambiente', 'ambiente', facets.ambienti)
-    const stil = listFacetToCheckboxGroup('Stile', 'stile', facets.stili)
+    const tip = listFacetToCheckboxGroup('Tipologia', 'tipologia', scoped.tipologie)
+    const amb = listFacetToCheckboxGroup('Ambiente', 'ambiente', scoped.ambienti)
+    const stil = listFacetToCheckboxGroup('Stile', 'stile', scoped.stili)
     if (tip) groups.push(tip)
     if (amb) groups.push(amb)
     if (stil) groups.push(stil)
-    const brands = brandsToLandingGroup(facets.brands)
+    const brands = brandsToLandingGroup(scoped.brands)
     if (brands) groups.push(brands)
   } else {
-    const attacco = facetToLandingChip('attacco', sortByCountDesc(facets.attacchi), (i) =>
+    const attacco = facetToLandingChip('attacco', sortByCountDesc(scoped.attacchi), (i) =>
       slugToken(i.label || String(i.value)),
     )
     const kelvin = facetToLandingChip(
       'kelvin',
       sortByCountDesc(
-        facets.colorTemps.filter((o) => {
+        scoped.colorTemps.filter((o) => {
           const n = Number(String(o.value).replace(/\s/g, '').replace(/K$/i, ''))
           return Number.isFinite(n) && n > 0
         }),
@@ -446,9 +452,9 @@ export function buildLandingFilterGroupsFromFacets(
       groups.push(kelvin)
     }
     // Wattaggio: UI range dedicata (non chip) — vedi CategoryFilterSidebar.
-    const brands = brandsToLandingGroup(facets.brands)
+    const brands = brandsToLandingGroup(scoped.brands)
     if (brands) groups.push(brands)
-    const { roots: cats } = facetCategoryOptions(facets)
+    const { roots: cats } = facetCategoryOptions(scoped, 'technical')
     if (cats.length) {
       groups.push({
         kind: 'checkbox',
@@ -461,11 +467,11 @@ export function buildLandingFilterGroupsFromFacets(
         })),
       })
     }
-    if (facets.tags.length) {
+    if (scoped.tags.length) {
       groups.push({
         kind: 'chips',
         label: 'Tag',
-        options: sortByCountDesc(facets.tags).map((t) => ({
+        options: sortByCountDesc(scoped.tags).map((t) => ({
           label: t.label,
           value: `tag-${slugToken(String(t.value))}`,
           queryToken: String(t.value),

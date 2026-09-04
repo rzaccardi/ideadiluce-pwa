@@ -1,10 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSnapshot } from 'valtio/react'
 import { toast } from 'sonner'
 import { apiClient } from '@/api/client'
 import { api } from '@/api/endpoints'
 import { useLocale } from '@/context/locale-context'
+import { authStore } from '@/features/auth'
+import {
+  accountProfilePrefillFromUser,
+  professionalRequestNotesFromPrefill,
+} from '@/lib/account-profile-prefill'
 import { ui } from '@/lib/ui-classes'
 import { cn } from '@/utils/cn'
 import type { ProfessionistiPageContent } from '@/types/site-content'
@@ -15,6 +21,8 @@ type Props = {
 
 export function ProfessionalAccountForm({ registration }: Props) {
   const { locale } = useLocale()
+  const auth = useSnapshot(authStore)
+  const isLoggedIn = Boolean(auth.me)
   const [companyName, setCompanyName] = useState('')
   const [vatNumber, setVatNumber] = useState('')
   const [sector, setSector] = useState(registration.sectors[0] ?? '')
@@ -24,11 +32,41 @@ export function ProfessionalAccountForm({ registration }: Props) {
   const [phone, setPhone] = useState('')
   const [pec, setPec] = useState('')
   const [sdiCode, setSdiCode] = useState('')
+  const [fiscalCode, setFiscalCode] = useState('')
+  const [addressLine, setAddressLine] = useState('')
   const [visuraFile, setVisuraFile] = useState<File | null>(null)
   const [message, setMessage] = useState('')
   const [country, setCountry] = useState('IT')
   const [loading, setLoading] = useState(false)
   const [vatMessage, setVatMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!auth.me) return
+    const prefill = accountProfilePrefillFromUser(auth.me)
+    setCompanyName((value) => (value.trim() ? value : prefill.companyName))
+    setVatNumber((value) => (value.trim() ? value : prefill.vatNumber))
+    setContactName((value) => (value.trim() ? value : prefill.contactName))
+    setEmail((value) => (value.trim() ? value : prefill.email))
+    setPhone((value) => (value.trim() ? value : prefill.phone))
+    setPec((value) => (value.trim() ? value : prefill.pec))
+    setSdiCode((value) => (value.trim() ? value : prefill.sdiCode))
+    setFiscalCode((value) => (value.trim() ? value : prefill.fiscalCode))
+    setAddressLine((value) => (value.trim() ? value : prefill.addressLine))
+    setCountry((value) => (value !== 'IT' ? value : prefill.country || 'IT'))
+  }, [
+    auth.me?.id,
+    auth.me?.email,
+    auth.me?.firstName,
+    auth.me?.lastName,
+    auth.me?.phone,
+    auth.me?.companyName,
+    auth.me?.vatNumber,
+    auth.me?.fiscalCode,
+    auth.me?.pec,
+    auth.me?.sdiCode,
+    auth.me?.vatCountryCode,
+    auth.me?.shippingAddress,
+  ])
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -80,7 +118,12 @@ export function ProfessionalAccountForm({ registration }: Props) {
       if (phone.trim()) form.append('phone', phone.trim())
       if (pec.trim()) form.append('pec', pec.trim())
       if (sdiCode.trim()) form.append('sdiCode', sdiCode.trim())
-      if (message.trim()) form.append('message', message.trim())
+      const notes = professionalRequestNotesFromPrefill({
+        message,
+        fiscalCode,
+        addressLine,
+      })
+      if (notes) form.append('message', notes)
       form.append('locale', locale)
       form.append('country', country)
       if (visuraFile) form.append('visura', visuraFile)
@@ -90,14 +133,18 @@ export function ProfessionalAccountForm({ registration }: Props) {
         form,
       )
       toast.success('Richiesta inviata. Verificheremo la P.IVA e ti contatteremo entro 24 ore lavorative.')
-      setCompanyName('')
-      setVatNumber('')
+      const next = accountProfilePrefillFromUser(authStore.me)
+      setCompanyName(next.companyName)
+      setVatNumber(next.vatNumber)
       setSectorOther('')
-      setContactName('')
-      setEmail('')
-      setPhone('')
-      setPec('')
-      setSdiCode('')
+      setContactName(next.contactName)
+      setEmail(next.email)
+      setPhone(next.phone)
+      setPec(next.pec)
+      setSdiCode(next.sdiCode)
+      setFiscalCode(next.fiscalCode)
+      setAddressLine(next.addressLine)
+      setCountry(next.country)
       setVisuraFile(null)
       setMessage('')
     } catch (err) {
@@ -204,6 +251,28 @@ export function ProfessionalAccountForm({ registration }: Props) {
             maxLength={7}
           />
         </label>
+        {isLoggedIn ? (
+          <>
+            <label className="block text-sm">
+              <span className={ui.labelSm}>Codice fiscale</span>
+              <input
+                value={fiscalCode}
+                onChange={(e) => setFiscalCode(e.target.value.toUpperCase())}
+                className={cn(ui.input, 'mt-1.5 border-[#e3e6ea] bg-[#f7f8fa] font-mono uppercase')}
+                autoComplete="off"
+              />
+            </label>
+            <label className="block text-sm">
+              <span className={ui.labelSm}>Indirizzo</span>
+              <input
+                value={addressLine}
+                onChange={(e) => setAddressLine(e.target.value)}
+                className={cn(ui.input, 'mt-1.5 border-[#e3e6ea] bg-[#f7f8fa]')}
+                autoComplete="street-address"
+              />
+            </label>
+          </>
+        ) : null}
         <label className="block text-sm sm:col-span-2">
           <span className={ui.labelSm}>Visura camerale (PDF o immagine)</span>
           <input
@@ -232,8 +301,13 @@ export function ProfessionalAccountForm({ registration }: Props) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder={placeholders.email}
-            className={cn(ui.input, 'mt-1.5 border-[#e3e6ea] bg-[#f7f8fa]')}
+            className={cn(
+              ui.input,
+              'mt-1.5 border-[#e3e6ea] bg-[#f7f8fa]',
+              isLoggedIn && 'text-idl-muted',
+            )}
             autoComplete="email"
+            readOnly={isLoggedIn}
           />
         </label>
         <label className="block text-sm">

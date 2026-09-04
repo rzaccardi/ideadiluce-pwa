@@ -1,8 +1,9 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from '@/lib/navigation'
 import { useLocalePath } from '@/hooks/use-locale-path'
+import { useI18n } from '@/hooks/use-i18n'
 import { formatMoney } from '@/lib/format'
 import { formatPriceDisplayModeLabel } from '@/lib/price-display'
 import type { ProductCardDTO, ProductDetailDTO } from '@/types/dto'
@@ -13,6 +14,7 @@ import { CategoryCtaBanner } from '@/components/site/category/CategoryCtaBanner'
 import { SectionContainer, Eyebrow } from '@/components/site/primitives'
 import { SiteImage } from '@/components/site/SiteImage'
 import { extractProductDisplayTitle } from '@/lib/product-display-title'
+import { buildDesignerProjectsHref } from '@/lib/catalog-filters'
 import {
   findSpecValue,
   isDimensionSpecLabel,
@@ -36,6 +38,7 @@ import {
 import { ProductDetailGallery } from './ProductDetailGallery'
 import { DesignHeroVariantPicker } from './DesignHeroVariantPicker'
 import { DesignRelatedProducts } from './DesignRelatedProducts'
+import { DesignAccessoryPicker } from './DesignAccessoryPicker'
 import {
   ProductDimensionsPanel,
   hasProductDimensionsContent,
@@ -67,6 +70,7 @@ function hasHtmlMarkup(raw: string | null | undefined): boolean {
 
 export function DesignProductDetailView({ product, relatedProducts, state }: Props) {
   const lp = useLocalePath()
+  const { tParams } = useI18n()
   const {
     galleryImages,
     displayPriceCents,
@@ -132,8 +136,26 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
     ...galleryByTag.dettaglio,
   ].slice(0, 2)
 
-  const accessories = product.accessories ?? []
+  const accessories = useMemo(
+    () => (product.accessories ?? []).filter((item) => item.slug?.trim()).slice(0, 8),
+    [product.accessories],
+  )
   const alternatives = product.alternatives ?? []
+  const [selectedAccessorySlugs, setSelectedAccessorySlugs] = useState<string[]>([])
+
+  useEffect(() => {
+    setSelectedAccessorySlugs((prev) => prev.filter((slug) => accessories.some((item) => item.slug === slug)))
+  }, [accessories])
+
+  const selectedAccessories = accessories.filter((item) => selectedAccessorySlugs.includes(item.slug))
+  const accessoriesTotalCents = selectedAccessories.reduce((sum, item) => sum + (item.priceCents ?? 0), 0)
+  const combinedPriceCents = displayPriceCents + accessoriesTotalCents
+
+  function toggleAccessory(slug: string) {
+    setSelectedAccessorySlugs((prev) =>
+      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug],
+    )
+  }
   const hasDimensionsPanel = hasProductDimensionsContent(
     product,
     parsedSpecRows,
@@ -143,6 +165,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
     findSpecValue(parsedSpecRows, /designer/i) ??
     specRows.find((r) => /designer/i.test(r.label))?.value ??
     null
+  const designerProjectsHref = buildDesignerProjectsHref(designerName)
   const heroMeta = pickDesignHeroMeta(specRows)
   const categoryChips = (product.categories ?? []).filter((c) => c.slug && c.name)
   const specTags = (product.specTags ?? []).filter((t) => t.trim())
@@ -170,6 +193,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
     variantRef,
     galleryImages,
     setIsAddingToCart,
+    extraItems: selectedAccessories.map((item) => ({ product: item, quantity: 1 })),
   })
 
   return (
@@ -217,10 +241,10 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
                 {heroMeta.map(({ label, value }) => (
                   <span
                     key={`${label}:${value}`}
-                    className="rounded border border-idl-path-design-border bg-white px-2.5 py-1 text-[11.5px] tracking-wide text-idl-ink-muted dark:bg-idl-tech-panel"
+                    className="rounded border border-idl-path-design-border bg-idl-tech-chip px-2.5 py-1 text-[11.5px] tracking-wide"
                   >
                     <span className="text-idl-ink-muted">{label}</span>
-                    <span className="mx-1.5 text-idl-border-strong">·</span>
+                    <span className="mx-1.5 text-idl-ink-muted/50">·</span>
                     <span className="text-idl-ink">{value}</span>
                   </span>
                 ))}
@@ -231,7 +255,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
                 {specTags.map((tag) => (
                   <span
                     key={`tag:${tag}`}
-                    className="rounded-sm bg-idl-cream px-2 py-0.5 text-[11px] tracking-wide text-idl-ink-muted"
+                    className="rounded-sm bg-idl-tech-chip px-2 py-0.5 text-[11px] tracking-wide text-idl-ink-muted"
                   >
                     {tag}
                   </span>
@@ -295,6 +319,16 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
               onChange={setSelectedVariantRef}
             />
 
+            {accessories.length > 0 ? (
+              <DesignAccessoryPicker
+                accessories={accessories}
+                selectedSlugs={selectedAccessorySlugs}
+                onToggle={toggleAccessory}
+                lp={lp}
+                layout="compact"
+              />
+            ) : null}
+
             <div className="mb-3.5 flex min-w-0 flex-col gap-3 min-[480px]:flex-row min-[480px]:items-stretch">
               {!isStockEnriching && availability?.canAddToCart ? (
                 <ProductQuantityStepper
@@ -311,9 +345,21 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
                 onClick={handleAddToCart}
                 className="flex-1 rounded-lg bg-idl-glow px-4 py-[15px] text-center text-[15.5px] font-bold text-idl-design transition hover:bg-idl-cta-glow-hover disabled:opacity-60"
               >
-                {isAddingToCart ? t('product.addingToCart') : t('product.addToCart')}
+                {isAddingToCart
+                  ? t('product.addingToCart')
+                  : selectedAccessories.length > 0
+                    ? t('product.accessories.addWithProduct')
+                    : t('product.addToCart')}
               </button>
             </div>
+            {selectedAccessories.length > 0 ? (
+              <p className="mb-3.5 text-[12.5px] text-idl-ink-muted">
+                {tParams('product.accessories.includedTotal', {
+                  count: selectedAccessories.length,
+                  total: formatMoney(combinedPriceCents, product.currency),
+                })}
+              </p>
+            ) : null}
 
             {!isStockEnriching &&
             !availability?.canAddToCart &&
@@ -341,6 +387,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
             </ProductDetailContactLink>
 
             <div className="flex flex-wrap gap-3 border-t border-idl-border pt-4 text-[12px] text-idl-ink-muted sm:gap-5 sm:pt-[18px] sm:text-[12.5px]">
+              <span>✓ Spedizioni tracciate in tutto il mondo</span>
               <span>✓ {t('product.trust.returnBadge')}</span>
               <span>✓ Garanzia ufficiale</span>
               {product.brand?.name ? <span>✓ Prodotto originale {product.brand.name}</span> : null}
@@ -517,9 +564,18 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
               <ProductDetailSectionLabel variant="design" className="mb-3">
                 ACCESSORI
               </ProductDetailSectionLabel>
-              <h2 className="font-serif text-2xl font-medium text-idl-ink sm:text-[30px]">Completa il progetto</h2>
+              <h2 className="font-serif text-2xl font-medium text-idl-ink sm:text-[30px]">
+                {t('product.accessories.sectionHeading')}
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm text-idl-ink-muted">{t('product.accessories.subtitle')}</p>
             </div>
-            <DesignRelatedProducts products={accessories.slice(0, 8)} lp={lp} brandName={product.brand?.name} />
+            <DesignAccessoryPicker
+              accessories={accessories}
+              selectedSlugs={selectedAccessorySlugs}
+              onToggle={toggleAccessory}
+              lp={lp}
+              layout="section"
+            />
           </SectionContainer>
         </section>
       ) : null}
@@ -534,12 +590,14 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
               IL DESIGNER
             </ProductDetailSectionLabel>
             <h2 className="mb-4 font-serif text-3xl font-medium text-idl-ink sm:text-[38px]">{designerName}</h2>
+            {designerProjectsHref ? (
             <Link
-              to={lp('/negozio')}
+              to={lp(designerProjectsHref)}
               className="mt-6 inline-flex items-center gap-2 rounded-lg border border-idl-path-design-border px-5 py-3 text-sm font-semibold text-idl-ink transition hover:border-idl-brass hover:text-idl-brass"
             >
               Tutti i progetti del designer →
             </Link>
+            ) : null}
           </div>
         </SectionContainer>
       </section>
@@ -549,7 +607,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
 
       <ProductDetailStickyBar
         product={product}
-        displayPriceCents={displayPriceCents}
+        displayPriceCents={combinedPriceCents}
         imageUrl={selectedVariant?.imageUrl ?? galleryImages[0] ?? product.imageUrl}
         variantRef={variantRef}
         quantity={quantity}
@@ -565,7 +623,9 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
         canAddToCart={!isStockEnriching && (availability?.canAddToCart ?? false)}
         isAddingToCart={isAddingToCart}
         onAdd={handleAddToCart}
-        addLabel={t('product.addToCart')}
+        addLabel={
+          selectedAccessories.length > 0 ? t('product.accessories.addWithProduct') : t('product.addToCart')
+        }
         addLabelShort={t('product.addToCartShort')}
         addingLabel={t('product.addingToCart')}
         variant="design"

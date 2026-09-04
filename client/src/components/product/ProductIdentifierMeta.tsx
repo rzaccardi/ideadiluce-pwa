@@ -9,6 +9,7 @@ import {
   type ProductIdentifierFieldKey,
   type ProductIdentifierSource,
 } from '@/lib/product-identifier-fields'
+import { CopyableEanValue } from '@/components/product/CopyableEanValue'
 import { cn } from '@/utils/cn'
 
 type ProductLike = ProductIdentifierSource &
@@ -60,9 +61,17 @@ export function ProductIdentifierMeta({
   if (!fields.length) return null
 
   if (layout === 'inline') {
-    const line = formatProductIdentifierInline(fields, labels)
-    if (!line) return null
-    return <div className={cn('font-mono', className)}>{line}</div>
+    return (
+      <div className={cn('font-mono', className)}>
+        {fields.map((field, index) => (
+          <span key={field.key}>
+            {index > 0 ? ' · ' : null}
+            {labels[field.key]}{' '}
+            {field.key === 'ean' ? <CopyableEanValue value={field.value} /> : field.value}
+          </span>
+        ))}
+      </div>
+    )
   }
 
   return (
@@ -70,7 +79,9 @@ export function ProductIdentifierMeta({
       {fields.map((field) => (
         <div key={field.key} className="flex flex-wrap gap-x-2 text-sm">
           <dt className={cn('font-medium text-idl-ink-soft', labelClassName)}>{labels[field.key]}</dt>
-          <dd className={cn('font-mono', valueClassName)}>{field.value}</dd>
+          <dd className={cn('font-mono', valueClassName)}>
+            {field.key === 'ean' ? <CopyableEanValue value={field.value} /> : field.value}
+          </dd>
         </div>
       ))}
     </dl>

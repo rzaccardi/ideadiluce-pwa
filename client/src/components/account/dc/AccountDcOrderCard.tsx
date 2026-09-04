@@ -71,9 +71,14 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
     }
   }
 
+  const detailTo = `/account/orders/${order.id}`
+
   if (compact) {
     return (
-      <div className="flex flex-col gap-4 rounded-[11px] border border-idl-tech-border bg-idl-tech-panel p-4 sm:flex-row sm:items-center">
+      <Link
+        to={detailTo}
+        className="flex flex-col gap-4 rounded-[11px] border border-idl-tech-border bg-idl-tech-panel p-4 no-underline sm:flex-row sm:items-center"
+      >
         {visibleLines[0]?.imageUrl ? (
           <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-idl-tech-panel">
             <SiteImage src={visibleLines[0].imageUrl} alt="" fill className="object-contain p-1" sizes="56px" />
@@ -103,24 +108,27 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
           </div>
         </div>
         <AccountDcStatusPill label={statusLabel} tone={statusTone} />
-      </div>
+      </Link>
     )
   }
 
   return (
     <article className="overflow-hidden rounded-xl border border-idl-tech-border bg-white dark:bg-idl-tech-panel">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ededea] bg-idl-tech-panel px-[18px] py-3.5">
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+        <Link
+          to={detailTo}
+          className="flex min-w-0 flex-1 flex-wrap items-center gap-x-5 gap-y-2 no-underline"
+        >
           <span className="font-mono text-[12.5px] font-semibold text-idl-graphite">
             {formatOrderRef(order.odooSaleOrderId, locale)}
           </span>
           <span className="text-[12.5px] text-idl-muted">{formatOrderDate(order.createdAt, locale)}</span>
           <AccountDcStatusPill label={statusLabel} tone={statusTone} />
-        </div>
+        </Link>
         <div className="flex flex-wrap items-center gap-[18px]">
           <span className="text-sm font-extrabold text-idl-graphite">{total}</span>
           <Link
-            to={`/account/orders/${order.id}`}
+            to={detailTo}
             className="text-[13px] font-bold text-idl-brass no-underline hover:underline"
           >
             {t('account.orders.track')}
@@ -144,7 +152,7 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
         </div>
       </div>
       {visibleLines.length > 0 ? (
-        <div className="flex gap-2.5 px-[18px] py-3.5">
+        <Link to={detailTo} className="flex gap-2.5 px-[18px] py-3.5 no-underline">
           {visibleLines.map((line) => (
             <div
               key={`${line.productRef}-${line.variantRef ?? ''}`}
@@ -160,7 +168,7 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
               +{extraCount}
             </div>
           ) : null}
-        </div>
+        </Link>
       ) : null}
     </article>
   )

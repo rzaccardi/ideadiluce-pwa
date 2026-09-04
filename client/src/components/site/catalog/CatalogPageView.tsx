@@ -231,6 +231,7 @@ export function CatalogPageView({
     rootCategories,
     subcategories,
     brands,
+    world: worldTab,
     selectedCategorySlug,
     selectedBrandSlug,
     selectedTipologia,

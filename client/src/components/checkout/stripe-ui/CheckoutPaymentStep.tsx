@@ -16,11 +16,18 @@ import { CheckoutStepBackButton } from './CheckoutStepBackButton'
 
 type Props = {
   stripeCardDetails?: ReactNode
+  stripeFormReady?: boolean
+  stripeSessionReady?: boolean
 }
 
-export function CheckoutPaymentStep({ stripeCardDetails }: Props) {
+export function CheckoutPaymentStep({
+  stripeCardDetails,
+  stripeFormReady = false,
+  stripeSessionReady = false,
+}: Props) {
   const { t } = useI18n()
   const checkout = useSnapshot(checkoutStore)
+  const stripeSelected = checkout.selectedPaymentMethod === 'stripe'
 
   return (
     <section className="space-y-5">
@@ -35,14 +42,21 @@ export function CheckoutPaymentStep({ stripeCardDetails }: Props) {
         <CheckoutStepBackButton />
         <StripePayButton
           className="min-w-0 flex-1"
-          disabled={
-            !canAdvanceFromStep('payment') || checkout.isLoading || checkout.cartRefreshing
-          }
+          disabled={!canAdvanceFromStep('payment') || checkout.isLoading || checkout.cartRefreshing}
           loading={checkout.isLoading || checkout.cartRefreshing}
           onClick={() => {
             void (async () => {
+              if (stripeSelected && !stripeSessionReady) {
+                checkoutStore.error = t('checkout.payment.formNotReady')
+                return
+              }
+              if (stripeSelected && !stripeFormReady) {
+                checkoutStore.error = t('checkout.payment.cardIncomplete')
+                return
+              }
               try {
                 await prepareCheckoutPayment({ silent: true })
+                checkoutStore.error = null
                 advanceCheckoutStep()
               } catch {
                 /* errore in store */

@@ -1,9 +1,17 @@
 'use client'
 
+import { useState } from 'react'
+import { toast } from 'sonner'
 import { ExternalLink } from '@/lib/link-title'
 import { Link } from '@/lib/navigation'
 import { formatMoney } from '@/lib/format'
-import { invoiceStateTone } from '@/lib/invoice-display'
+import { downloadInvoicePdf } from '@/features/invoices'
+import {
+  invoicePaymentLabel,
+  invoicePaymentTone,
+  invoiceStateLabel,
+  invoiceStateTone,
+} from '@/lib/invoice-display'
 import type { InvoiceDTO } from '@/types/dto'
 import { AccountDcStatusPill } from '@/components/account/dc/AccountDcStatusPill'
 import { useI18n } from '@/hooks/use-i18n'
@@ -13,7 +21,21 @@ type Props = {
 }
 
 export function AccountOverviewInvoiceRow({ invoice }: Props) {
-  const { t } = useI18n()
+  const { locale, t } = useI18n()
+  const paymentLabel = invoicePaymentLabel(invoice.paymentState, locale)
+  const [downloading, setDownloading] = useState(false)
+
+  async function handleDownload() {
+    if (!invoice.pdfAvailable) return
+    setDownloading(true)
+    try {
+      await downloadInvoicePdf(invoice)
+    } catch {
+      toast.error(t('account.invoices.pdfDownloadError'))
+    } finally {
+      setDownloading(false)
+    }
+  }
 
   return (
     <article className="overflow-hidden rounded-xl border border-idl-tech-border bg-white dark:bg-idl-tech-panel">
@@ -23,7 +45,16 @@ export function AccountOverviewInvoiceRow({ invoice }: Props) {
           <span className="text-[12.5px] text-idl-muted">
             {invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString('it-IT') : '—'}
           </span>
-          <AccountDcStatusPill label={invoice.state} tone={invoiceStateTone(invoice.state)} />
+          <AccountDcStatusPill
+            label={invoiceStateLabel(invoice.state, locale)}
+            tone={invoiceStateTone(invoice.state)}
+          />
+          {paymentLabel ? (
+            <AccountDcStatusPill
+              label={paymentLabel}
+              tone={invoicePaymentTone(invoice.paymentState)}
+            />
+          ) : null}
         </div>
         <div className="flex items-center gap-4">
           {invoice.amountTotalCents != null ? (
@@ -32,12 +63,14 @@ export function AccountOverviewInvoiceRow({ invoice }: Props) {
             </span>
           ) : null}
           {invoice.pdfAvailable ? (
-            <Link
-              to="/account/invoices"
-              className="text-[13px] font-bold text-idl-brass no-underline hover:underline"
+            <button
+              type="button"
+              disabled={downloading}
+              onClick={() => void handleDownload()}
+              className="text-[13px] font-bold text-idl-brass disabled:opacity-50"
             >
-              {t('account.invoices.download')} →
-            </Link>
+              {downloading ? t('account.profile.saving') : `${t('account.invoices.download')} →`}
+            </button>
           ) : invoice.portalUrl ? (
             <ExternalLink
               href={invoice.portalUrl}

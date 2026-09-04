@@ -1,9 +1,11 @@
 import { accountStore } from '@/features/account'
+import { catalogStore } from '@/features/catalog/catalog.store'
 import { clearCheckoutAfterLogout, resetCheckout } from '@/features/checkout'
 import { resetInvoicesStore } from '@/features/invoices'
 import { resetOrdersStore } from '@/features/orders'
 import { resetQuotesStore } from '@/features/quotes'
 import { resetWishlistStore } from '@/features/wishlist'
+import { resetHomeProductSlidersClientCache } from '@/lib/home-product-sliders-cache'
 import { clearAuthSessionMirror } from '@/lib/auth-local-storage'
 import { setAuthUser } from './auth.store'
 
@@ -14,6 +16,9 @@ export function clearClientSessionState(options?: { scope?: ClearClientSessionSc
   clearAuthSessionMirror()
   setAuthUser(null)
   resetWishlistStore()
+  catalogStore.serverFetchKey = null
+  catalogStore.sessionPriced = false
+  resetHomeProductSlidersClientCache()
   resetOrdersStore()
   resetQuotesStore()
   resetInvoicesStore()

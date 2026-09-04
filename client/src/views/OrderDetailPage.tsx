@@ -64,7 +64,7 @@ export function OrderDetailPage() {
     }
   }, [id])
 
-  const isCurrentDetail = orders.detail?.id === id
+  const isCurrentDetail = Boolean(id) && orders.detailId === id && orders.detail != null
   const isLoading = orders.isDetailLoading || (!isCurrentDetail && !orders.detailError)
 
   async function handleReorder() {
@@ -204,16 +204,18 @@ export function OrderDetailPage() {
         )}
       </AccountDcPanel>
 
-      {order.lines.length > 0 ? (
-        <AccountDcPanel title={t('orders.detail.items')}>
+      <AccountDcPanel title={t('orders.detail.items')}>
+        {order.lines.length > 0 ? (
           <AccountDcOrderLines
             lines={order.lines}
             currencyCode={order.currencyCode}
             t={t}
             tParams={tParams}
           />
-        </AccountDcPanel>
-      ) : null}
+        ) : (
+          <p className="text-sm text-idl-muted">{t('common.notAvailable')}</p>
+        )}
+      </AccountDcPanel>
 
       <AccountDcPanel title={t('thankYou.summary.title')}>
         <dl>

@@ -7,7 +7,10 @@ export async function runOdooUserProfileSync(
   input: {
     userId: string
     partnerId: number
-    operation: 'patch_me_profile_sync' | 'patch_me_business_sync'
+    operation:
+      | 'patch_me_profile_sync'
+      | 'patch_me_business_sync'
+      | 'shipping_address_sync'
   },
   syncFn: () => Promise<void>,
 ): Promise<boolean> {

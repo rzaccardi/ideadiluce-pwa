@@ -73,8 +73,8 @@ export function CheckoutCustomerTypeCards({
               className={cn(
                 'flex items-center justify-center gap-2 rounded-[10px] px-3 py-3.5 text-sm font-bold transition sm:py-4',
                 selected
-                  ? 'bg-[#0c0c0d] text-white shadow-[0_2px_8px_rgba(12,12,13,0.25)]'
-                  : 'text-idl-muted hover:bg-white/80 hover:text-idl-graphite',
+                  ? 'bg-idl-ink text-idl-paper shadow-[0_2px_8px_rgba(12,12,13,0.25)]'
+                  : 'text-idl-muted hover:bg-idl-tech-chip hover:text-idl-graphite',
                 disabled && 'pointer-events-none opacity-60',
               )}
             >
@@ -108,8 +108,8 @@ export function CheckoutCustomerTypeCards({
             className={cn(
               'flex w-full flex-col items-start gap-3 rounded-2xl border-[1.5px] p-5 text-left transition sm:p-6',
               selected
-                ? 'border-[#0c0c0d] bg-[#0c0c0d] text-white shadow-[0_2px_10px_rgba(12,12,13,0.2)]'
-                : 'border-[#e7eaee] bg-white text-idl-graphite hover:border-[#c0c5cc] hover:bg-idl-tech-panel',
+                ? 'border-idl-ink bg-idl-ink text-idl-paper shadow-[0_2px_10px_rgba(12,12,13,0.2)]'
+                : 'border-idl-tech-border bg-idl-tech-panel text-idl-graphite hover:border-idl-border-strong',
               disabled && 'pointer-events-none opacity-60',
             )}
           >
@@ -117,8 +117,8 @@ export function CheckoutCustomerTypeCards({
               className={cn(
                 'flex size-12 shrink-0 items-center justify-center rounded-xl sm:size-14',
                 selected
-                  ? 'bg-white/12 text-white ring-1 ring-white/20'
-                  : 'bg-idl-tech-panel text-[#3a3a3d] shadow-sm ring-1 ring-[#e7eaee]',
+                  ? 'bg-idl-paper/12 text-idl-paper ring-1 ring-idl-paper/20'
+                  : 'bg-idl-tech-chip text-idl-ink-soft shadow-sm ring-1 ring-idl-tech-border',
               )}
             >
               <Icon className="size-6 sm:size-7" />
@@ -126,7 +126,7 @@ export function CheckoutCustomerTypeCards({
             <span
               className={cn(
                 'text-base font-extrabold tracking-[-0.01em] sm:text-[17px]',
-                selected ? 'text-white' : 'text-idl-graphite',
+                selected ? 'text-idl-paper' : 'text-idl-graphite',
               )}
             >
               {t(`checkout.customerType.${option}.title`)}

@@ -15,8 +15,8 @@ import { fetchSitePage, siteStore } from '@/features/site'
 import { ATTACCO_SOCKETS } from '@/lib/attacco.defaults'
 import { resolveNavDropdownHref } from '@/lib/dc-static-routes'
 import {
-  isDesignCategory,
-  primaryCategoryLabel,
+  brandAreaBadgeClassName,
+  brandAreaBadges,
   resolveHomeBrandCards,
 } from '@/lib/brand.defaults'
 import {
@@ -414,8 +414,7 @@ function MobileBrandPanel() {
       </Link>
       <div className="grid grid-cols-2 gap-2.5 overflow-hidden rounded-[10px] border border-idl-tech-border bg-white dark:bg-idl-tech-panel">
         {brands.map((brand) => {
-          const design = isDesignCategory(brand.categories)
-          const badge = primaryCategoryLabel(brand.categories)
+          const badges = brandAreaBadges(brand.categories)
           const productMeta =
             brand.productCount > 0 ? `${brand.productCount} prodotti` : 'Catalogo disponibile'
 
@@ -434,16 +433,21 @@ function MobileBrandPanel() {
                   size="sm"
                 />
               </div>
-              <span
-                className={cn(
-                  'inline-flex rounded-[5px] border px-2 py-0.5 font-mono text-[9px] tracking-[0.06em]',
-                  design
-                    ? 'border-[#ece2d2] bg-idl-path-design text-idl-brass'
-                    : 'border-idl-tech-chip-border bg-idl-tech-chip text-idl-graphite-2',
-                )}
-              >
-                {badge}
-              </span>
+              {badges.length ? (
+                <div className="flex flex-wrap justify-center gap-1">
+                  {badges.map((badge) => (
+                    <span
+                      key={badge.area}
+                      className={cn(
+                        'inline-flex rounded-[5px] border px-2 py-0.5 font-mono text-[9px] tracking-[0.06em]',
+                        brandAreaBadgeClassName(badge.area),
+                      )}
+                    >
+                      {badge.label}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
               <span className="mt-1.5 text-[10.5px] text-idl-muted">{productMeta}</span>
             </Link>
           )

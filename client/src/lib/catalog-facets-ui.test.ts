@@ -106,6 +106,42 @@ describe('catalog-facets-ui', () => {
     expect(options).toEqual([{ value: 'soggiorno', label: 'Soggiorno', count: 4 }])
   })
 
+  it('in arredo non mostra attacco/kelvin anche se i facet li includono', () => {
+    const mixed: CatalogFiltersDTO = {
+      ...facetsFixture,
+      categories: [
+        {
+          slug: 'arredo',
+          name: 'Arredo',
+          parentSlug: null,
+          count: 2,
+          children: [],
+        },
+        ...facetsFixture.categories,
+      ],
+      tipologie: [{ value: 'tavolo', label: 'Tavolo', count: 2 }],
+    }
+    const labels = buildLandingFilterGroupsFromFacets('design', mixed, []).map((g) => g.label)
+    expect(labels).toContain('Tipologia')
+    expect(labels).not.toContain('Attacco')
+    expect(labels).not.toContain('Kelvin')
+    expect(labels).not.toContain('Categoria')
+  })
+
+  it('in tecnica non mostra tipologia/ambiente/stile', () => {
+    const mixed: CatalogFiltersDTO = {
+      ...facetsFixture,
+      tipologie: [{ value: 'tavolo', label: 'Tavolo', count: 2 }],
+      ambienti: [{ value: 'soggiorno', label: 'Soggiorno', count: 1 }],
+      stili: [{ value: 'moderno', label: 'Moderno', count: 1 }],
+    }
+    const labels = buildLandingFilterGroupsFromFacets('technical', mixed, []).map((g) => g.label)
+    expect(labels).toContain('Attacco')
+    expect(labels).not.toContain('Tipologia')
+    expect(labels).not.toContain('Ambiente')
+    expect(labels).not.toContain('Stile')
+  })
+
   it('costruisce gruppi landing tecnici da facet', () => {
     const groups = buildLandingFilterGroupsFromFacets('technical', facetsFixture, [])
     const labels = groups.map((g) => g.label)

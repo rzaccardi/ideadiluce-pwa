@@ -1,4 +1,3 @@
-import type { CustomerSegment } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { logger } from '../../lib/logger.js'
 import { env } from '../../config/env.js'
@@ -8,7 +7,7 @@ import { repriceCartFromOdoo } from '../catalog/odooPricing.service.js'
 import { syncRetryJobService } from '../sync-retry/sync-retry.service.js'
 import { ACTIVE_DRAFT_ORDER_STATUSES } from '../checkout/checkout-order.types.js'
 import { isCartCheckoutPriceLocked } from '../checkout/checkout-order-sync.service.js'
-import type { PricingContext } from '../pricing/pricelist.service.js'
+import { resolveAccountPricing, type PricingContext } from '../pricing/pricelist.service.js'
 
 const orderAdapter = createOdooOrderAdapter()
 
@@ -20,21 +19,15 @@ export type CartOdooPrepInput = {
   correlationId: string
 }
 
-function envPricelistForSegment(segment: CustomerSegment): number | null {
-  const raw =
-    segment === 'BUSINESS'
-      ? env.ODOO_PRICELIST_B2B_ID
-      : segment === 'PROFESSIONAL'
-        ? env.ODOO_PRICELIST_PROFESSIONAL_ID ?? env.ODOO_PRICELIST_B2C_ID
-        : env.ODOO_PRICELIST_B2C_ID
-  return raw != null && raw > 0 ? raw : null
-}
-
-async function pricingForCart(cart: {
-  userId: string | null
-}): Promise<PricingContext> {
+async function pricingForCart(
+  cart: { userId: string | null },
+  correlationId: string,
+): Promise<PricingContext> {
   if (!cart.userId) {
-    return { segment: 'RETAIL', pricelistId: envPricelistForSegment('RETAIL'), partnerId: null }
+    return resolveAccountPricing({
+      segment: 'RETAIL',
+      correlationId,
+    })
   }
 
   const [user, map] = await Promise.all([
@@ -45,17 +38,12 @@ async function pricingForCart(cart: {
     prisma.odooCustomerMap.findUnique({ where: { userId: cart.userId } }),
   ])
 
-  const segment = user?.customerSegment ?? 'RETAIL'
-  const pricelistId =
-    user?.odooPricelistId != null && user.odooPricelistId > 0
-      ? user.odooPricelistId
-      : envPricelistForSegment(segment)
-
-  return {
-    segment,
-    pricelistId,
+  return resolveAccountPricing({
+    segment: user?.customerSegment ?? 'RETAIL',
+    odooPricelistId: user?.odooPricelistId,
     partnerId: map?.odooPartnerId ?? null,
-  }
+    correlationId,
+  })
 }
 
 async function syncDraftSaleOrderIfPresent(input: CartOdooPrepInput): Promise<void> {
@@ -113,7 +101,7 @@ export async function prepareCartAgainstOdoo(input: CartOdooPrepInput): Promise<
   if (!cart || cart.status !== 'ACTIVE') return
 
   const ctx: OdooCallContext = { correlationId: input.correlationId }
-  const pricing = await pricingForCart(cart)
+  const pricing = await pricingForCart(cart, input.correlationId)
   await repriceCartFromOdoo(ctx, input.cartId, pricing)
   await syncDraftSaleOrderIfPresent(input)
 }

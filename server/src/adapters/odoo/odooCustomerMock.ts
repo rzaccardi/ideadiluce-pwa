@@ -15,6 +15,12 @@ export function createMockOdooCustomerAdapter(): OdooCustomerAdapter {
     async getCustomerProfileByEmail(_ctx: OdooCallContext, _email: string) {
       return null
     },
+    async getCustomerAccountByEmail(_ctx: OdooCallContext, _email: string) {
+      return null
+    },
+    async getCustomerAccountByPartnerId(_ctx: OdooCallContext, _partnerId: number) {
+      return null
+    },
     async createCustomer(_ctx: OdooCallContext, _input: FindOrCreateCustomerInput) {
       return { odooPartnerId: 0 }
     },
@@ -38,6 +44,25 @@ export function createMockOdooCustomerAdapter(): OdooCustomerAdapter {
       _profile: OdooCustomerProfile,
     ): Promise<OdooCustomerResult> {
       return { odooPartnerId: 0 }
+    },
+    async listShippingDestinations(_ctx: OdooCallContext, _parentPartnerId: number) {
+      return []
+    },
+    async updateDeliveryPartner(
+      _ctx: OdooCallContext,
+      _partnerId: number,
+      _profile: OdooCustomerProfile,
+    ) {},
+    async archiveDeliveryPartner(_ctx: OdooCallContext, _partnerId: number) {},
+    async resolveOrderShippingPartner(
+      _ctx: OdooCallContext,
+      _parentPartnerId: number,
+      _input: {
+        shippingAddress?: Partial<OdooCustomerProfile> & { id?: string | null }
+        dropshipAddress?: Partial<OdooCustomerProfile> | null
+      },
+    ) {
+      return null
     },
     async syncProfessionalFlagFromPartner(_ctx: OdooCallContext, _partnerId: number) {
       return false

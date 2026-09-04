@@ -571,23 +571,27 @@ export const paymentsService = {
 
     const dropshipAddress = body.dropshipAddress ?? body.deliveryRecipient ?? null
     let odooPartnerShippingId: number | null = null
-    if (dropshipAddress && env.ODOO_ENABLED && isOdooConfigured() && odooPartnerId) {
+    if (env.ODOO_ENABLED && isOdooConfigured() && odooPartnerId) {
       try {
-        const delivery = await customerAdapter.createDeliveryPartner(ctx, odooPartnerId, {
-          firstName: dropshipAddress.firstName,
-          lastName: dropshipAddress.lastName,
-          line1: dropshipAddress.line1,
-          streetNumber: dropshipAddress.streetNumber ?? '',
-          isSnc: dropshipAddress.isSnc ?? false,
-          line2: dropshipAddress.line2,
-          city: dropshipAddress.city,
-          postalCode: dropshipAddress.postalCode,
-          country: dropshipAddress.country,
-          phone: dropshipAddress.phone,
+        const resolved = await customerAdapter.resolveOrderShippingPartner(ctx, odooPartnerId, {
+          shippingAddress: {
+            firstName: body.shippingAddress.firstName,
+            lastName: body.shippingAddress.lastName,
+            line1: body.shippingAddress.line1,
+            streetNumber: body.shippingAddress.streetNumber ?? '',
+            isSnc: body.shippingAddress.isSnc ?? false,
+            line2: body.shippingAddress.line2,
+            city: body.shippingAddress.city,
+            postalCode: body.shippingAddress.postalCode,
+            country: body.shippingAddress.country,
+            phone: body.shippingAddress.phone,
+            id: body.shippingAddress.id,
+          },
+          dropshipAddress,
         })
-        odooPartnerShippingId = delivery.odooPartnerId
+        odooPartnerShippingId = resolved?.odooPartnerId ?? null
       } catch {
-        /* dropship Odoo differito */
+        /* shipping partner Odoo differito */
       }
     }
 

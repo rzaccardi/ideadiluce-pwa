@@ -1,3 +1,31 @@
+export type CatalogBrandWorld = 'design' | 'technical'
+
+const DESIGN_CATEGORY_RE = /arredo|design|decorativ/i
+const TECHNICAL_CATEGORY_RE =
+  /tecnico|tecnica|tecnici|ricambi|lampadine|componenti|driver|alimentator/i
+
+/** Mondi catalogo (arredo/tecnico) dai slug categoria Odoo del prodotto. */
+export function inferCatalogWorldsFromCategorySlugs(
+  slugs: ReadonlyArray<string | null | undefined>,
+): CatalogBrandWorld[] {
+  const haystack = slugs.filter(Boolean).join(' ')
+  if (!haystack) return []
+  const worlds: CatalogBrandWorld[] = []
+  if (DESIGN_CATEGORY_RE.test(haystack)) worlds.push('design')
+  if (TECHNICAL_CATEGORY_RE.test(haystack)) worlds.push('technical')
+  return worlds
+}
+
+export function mergeCatalogBrandWorlds(
+  ...lists: Array<ReadonlyArray<CatalogBrandWorld> | undefined>
+): CatalogBrandWorld[] {
+  const seen = new Set<CatalogBrandWorld>()
+  for (const list of lists) {
+    for (const world of list ?? []) seen.add(world)
+  }
+  return (['design', 'technical'] as const).filter((world) => seen.has(world))
+}
+
 export function slugifyCatalogToken(value: string): string {
   return value
     .toLowerCase()

@@ -52,7 +52,7 @@ export const authController = {
   me: asyncHandler(async (req: Request, res: Response) => {
     const user = req.sessionRecord!.user!
     const impersonation = await impersonationService.getImpersonationForSession(req.sessionRecord!.id)
-    res.json(ok({ user: await authService.me(user), impersonation }))
+    res.json(ok({ user: await authService.me(user, { correlationId: req.correlationId }), impersonation }))
   }),
 
   impersonateExchange: asyncHandler(async (req: Request, res: Response) => {
@@ -102,7 +102,7 @@ export const authController = {
 
     res.json(
       ok({
-        user: user ? await authService.me(user) : null,
+        user: user ? await authService.me(user, { correlationId: req.correlationId }) : null,
         impersonation,
         expiresAt: expiresAt.toISOString(),
       }),

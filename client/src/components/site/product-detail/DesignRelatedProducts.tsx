@@ -1,7 +1,7 @@
 import { Link } from '@/lib/navigation'
 import type { ProductCardDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
-import { SiteImage } from '@/components/site/SiteImage'
+import { DesignProductCardMedia } from '@/components/site/category/DesignCatalogProductGrid'
 import { ProductBrandMark } from '@/components/product/ProductBrandMark'
 import type { LocalePathFn } from '@/components/site/sections/types'
 
@@ -16,17 +16,15 @@ export function DesignRelatedProducts({ products, lp, brandName }: Props) {
     <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
       {products.map((product) => (
         <Link key={product.slug} to={lp(`/prodotto/${product.slug}`)} className="group block">
-          <div className="relative mb-3.5 aspect-[4/5] overflow-hidden rounded-[3px] border border-idl-path-design-border bg-white dark:bg-idl-tech-panel">
+          <div className="relative mb-3.5 overflow-hidden rounded-[3px] border border-idl-path-design-border bg-white dark:bg-idl-tech-panel">
             {product.imageUrl ? (
-              <SiteImage
-                src={product.imageUrl}
-                alt=""
-                fill
-                className="object-cover transition duration-500 group-hover:scale-[1.02]"
+              <DesignProductCardMedia
+                imageUrl={product.imageUrl}
+                hoverImageUrl={product.hoverImageUrl}
                 sizes="25vw"
               />
             ) : (
-              <div className="flex h-full items-center justify-center bg-white text-xs text-idl-ink-muted dark:bg-idl-tech-panel">
+              <div className="flex aspect-[4/5] items-center justify-center bg-white text-xs text-idl-ink-muted dark:bg-idl-tech-panel">
                 —
               </div>
             )}

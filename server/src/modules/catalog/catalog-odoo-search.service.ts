@@ -25,9 +25,14 @@ import {
   sanitizeAttaccoParam,
   sanitizeColorTempParam,
 } from './catalog-spec-filter.js'
+import { enrichProductCardsWithHoverImages } from './catalog-hover-image.enrich.js'
+import { enrichProductCardsWithOdooPricing } from './catalog-pricing.enrich.js'
 import { enrichProductCardsWithStock, type ProductCardStockHint } from './catalog-stock.enrich.js'
 import type { PricingContext } from '../pricing/pricelist.service.js'
-import { canonicalizeBrandSlug } from './odoo-catalog-slug.js'
+import {
+  canonicalizeBrandSlug,
+  type CatalogBrandWorld,
+} from './odoo-catalog-slug.js'
 
 export type CatalogSearchOptions = {
   locale?: string
@@ -210,15 +215,18 @@ export async function searchCatalogProductsLive(
   try {
     const raw = await fetchOdooCatalogProductSearch(toSearchUpstream(options, locale))
     const mapped = mapOdooCatalogListResponse(raw, locale)
+    const withHover = await enrichProductCardsWithHoverImages(locale, mapped.items)
 
-    if (options.enrichStock === false) return mapped
-
-    const withHints: ProductCardStockHint[] = mapped.items.map((item) => ({
-      ...item,
-      odooTemplateId: item.odooTemplateId ?? null,
-    }))
-    const enrichedItems = await enrichProductCardsWithStock(ctx, withHints)
-    return { ...mapped, items: enrichedItems }
+    let items = withHover
+    if (options.enrichStock !== false) {
+      const withHints: ProductCardStockHint[] = withHover.map((item) => ({
+        ...item,
+        odooTemplateId: item.odooTemplateId ?? null,
+      }))
+      items = await enrichProductCardsWithStock(ctx, withHints)
+    }
+    items = await enrichProductCardsWithOdooPricing(ctx, items, options.pricing)
+    return { ...mapped, items }
   } catch (e) {
     if (e instanceof OdooCatalogClientError) throw toOdooCatalogError(e, ctx.correlationId)
     throw e
@@ -281,18 +289,68 @@ function flattenFilterCategories(
   return out
 }
 
-/** Brand hub / nav: facet live Odoo, non indice cache. */
+export type CatalogBrandWithWorlds = {
+  slug: string
+  name: string
+  productCount: number
+  worlds: CatalogBrandWorld[]
+}
+
+/** Unisce i facet brand delle due radici Odoo (`arredo` / `tecnico`). */
+export function mergeBrandsFromWorldFacets(
+  groups: ReadonlyArray<{
+    world: CatalogBrandWorld
+    brands: ReadonlyArray<{ slug: string; name: string; count: number }>
+  }>,
+): CatalogBrandWithWorlds[] {
+  const map = new Map<string, CatalogBrandWithWorlds>()
+  for (const { world, brands } of groups) {
+    for (const raw of brands) {
+      const slug = canonicalizeBrandSlug(raw.slug)
+      if (!slug) continue
+      const existing = map.get(slug)
+      if (existing) {
+        existing.productCount += raw.count
+        if (!existing.worlds.includes(world)) existing.worlds.push(world)
+      } else {
+        map.set(slug, {
+          slug,
+          name: raw.name,
+          productCount: raw.count,
+          worlds: [world],
+        })
+      }
+    }
+  }
+  for (const brand of map.values()) {
+    brand.worlds = (['design', 'technical'] as const).filter((world) => brand.worlds.includes(world))
+  }
+  return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, 'it'))
+}
+
+/** Brand hub / nav: facet live Odoo per area, non indice cache. */
 export async function listCatalogBrandsLive(
   localeInput?: string,
-): Promise<Array<{ slug: string; name: string; productCount: number }>> {
+): Promise<CatalogBrandWithWorlds[]> {
   if (!isOdooCatalogConfigured()) return []
   const locale = parseHubLocale(localeInput)
+  const [arredo, tecnico] = await Promise.all([
+    fetchOdooCatalogFilters({ locale, category: 'arredo' }),
+    fetchOdooCatalogFilters({ locale, category: 'tecnico' }),
+  ])
+  const merged = mergeBrandsFromWorldFacets([
+    { world: 'design', brands: arredo.brands ?? [] },
+    { world: 'technical', brands: tecnico.brands ?? [] },
+  ])
+  if (merged.length) return merged
+
   const raw = await fetchOdooCatalogFilters({ locale })
   return (raw.brands ?? [])
     .map((b) => ({
       slug: canonicalizeBrandSlug(b.slug),
       name: b.name,
       productCount: b.count,
+      worlds: [] as CatalogBrandWorld[],
     }))
     .sort((a, b) => a.name.localeCompare(b.name, 'it'))
 }

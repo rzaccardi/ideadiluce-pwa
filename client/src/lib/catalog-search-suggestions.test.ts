@@ -16,6 +16,20 @@ describe('searchLocalCatalogSuggestions', () => {
     expect(attacchi[0]?.path).toContain('/attacco/e27')
   })
 
+  it('in arredo nasconde suggerimenti attacco e categorie tecniche', () => {
+    const groups = searchLocalCatalogSuggestions('led', {
+      world: 'design',
+      categories: [
+        { id: '1', slug: 'arredo', name: 'Arredo LED', parentId: null },
+        { id: '2', slug: 'tecnico', name: 'LED tecnico', parentId: null },
+      ],
+    })
+    expect(groups.find((g) => g.kind === 'attacco')).toBeUndefined()
+    const categories = groups.find((g) => g.kind === 'category')?.items ?? []
+    expect(categories.map((item) => item.label)).toEqual(['Arredo LED'])
+    expect(categories[0]?.path).toContain('world=design')
+  })
+
   it('filtra marchi per nome', () => {
     const groups = searchLocalCatalogSuggestions('osr', {
       brands: [{ slug: 'osram', name: 'OSRAM' }],

@@ -8,7 +8,8 @@ import {
 } from '../modules/catalog/odoo-catalog-index.service.js'
 import { enrichProductDetailWithStock } from '../modules/catalog/catalog-stock.enrich.js'
 import { enrichProductDetailWithOdooPricing } from '../modules/catalog/catalog-pricing.enrich.js'
-import { resolvePricingContext } from '../modules/pricing/pricelist.service.js'
+import { enrichProductDetailWithAccessories } from '../modules/catalog/catalog-accessories.enrich.js'
+import { isPersonalizedPricing, resolvePricingContext } from '../modules/pricing/pricelist.service.js'
 import { siteService } from '../modules/site/site.service.js'
 import { cartQuickReorderService } from '../modules/cart/cart-quick-reorder.service.js'
 import { homeProductSlidersService } from '../modules/catalog/home-product-sliders.service.js'
@@ -137,7 +138,7 @@ export const catalogPublicController = {
     })
     const source = cacheOnly ? 'proxy-cache' : 'odoo-search'
     res.vary('Cookie')
-    if (pricing.partnerId == null && pricing.pricelistId == null) {
+    if (!isPersonalizedPricing(pricing)) {
       res.set(
         'Cache-Control',
         cacheOnly
@@ -182,7 +183,7 @@ export const catalogPublicController = {
       pricing,
     })
     res.vary('Cookie')
-    if (pricing.partnerId == null && pricing.pricelistId == null) {
+    if (!isPersonalizedPricing(pricing)) {
       res.set('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=120')
     } else {
       res.set('Cache-Control', 'private, no-store')
@@ -206,6 +207,7 @@ export const catalogPublicController = {
     const ctx = { correlationId: req.correlationId, req }
     const pricing = await resolvePricingContext(req)
     let enriched = await enrichProductDetailWithStock(ctx, product)
+    enriched = await enrichProductDetailWithAccessories(ctx, enriched)
     enriched = await enrichProductDetailWithOdooPricing(ctx, enriched, pricing)
     res.json(ok(enriched))
   }),
@@ -223,9 +225,10 @@ export const catalogPublicController = {
       locale: typeof req.query.locale === 'string' ? req.query.locale : undefined,
       partnerId: pricing.partnerId ?? undefined,
       pricelistId: pricing.pricelistId ?? undefined,
+      pricing,
     })
     res.vary('Cookie')
-    if (pricing.partnerId == null && pricing.pricelistId == null) {
+    if (!isPersonalizedPricing(pricing)) {
       res.setHeader(
         'Cache-Control',
         `public, max-age=${HOME_PRODUCT_SLIDERS_CACHE_MAX_AGE_SEC}, s-maxage=${HOME_PRODUCT_SLIDERS_CACHE_MAX_AGE_SEC}`,

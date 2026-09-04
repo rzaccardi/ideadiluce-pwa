@@ -61,7 +61,7 @@ export function StripeInput({ className, noBorder, type, ...props }: InputProps)
       type={resolvedType}
       className={cn(
         'idl-field block w-full px-[15px] py-3.5 text-[15px] outline-none',
-        'focus:ring-2 focus:ring-[#0c0c0d]/35 focus:ring-inset',
+        'focus:ring-2 focus:ring-idl-ink/35 focus:ring-inset',
         !noBorder && 'border-0',
         isPassword && 'pr-11',
         className,
@@ -130,7 +130,7 @@ export function StripeSelect({ className, children, ...props }: SelectProps) {
     <select
       className={cn(
         'idl-field block w-full appearance-none bg-[length:12px] bg-[right_12px_center] bg-no-repeat px-[15px] py-3.5 text-[15px] outline-none',
-        'focus:ring-2 focus:ring-[#0c0c0d]/35 focus:ring-inset',
+        'focus:ring-2 focus:ring-idl-ink/35 focus:ring-inset',
         "bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 12 12%22%3E%3Cpath fill=%22%236c727c%22 d=%22M2.5 4.5 6 8l3.5-3.5%22/%3E%3C/svg%3E')]",
         className,
       )}
@@ -143,12 +143,12 @@ export function StripeSelect({ className, children, ...props }: SelectProps) {
 
 export function StripeDivider({ label }: { label?: string }) {
   if (!label) {
-    return <hr className="my-6 border-0 border-t border-zinc-200" />
+    return <hr className="my-6 border-0 border-t border-idl-tech-border" />
   }
   return (
     <div className="relative my-6">
-      <hr className="border-0 border-t border-zinc-200" />
-      <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-idl-tech-panel px-3 text-xs text-zinc-500">
+      <hr className="border-0 border-t border-idl-tech-border" />
+      <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-idl-tech-chip px-3 text-xs text-idl-muted">
         {label}
       </span>
     </div>
@@ -282,4 +282,17 @@ export function StripeCheckbox({
 
 export function StripeErrorBanner({ message }: { message: string | null | undefined }) {
   return <ToastOnError message={message} />
+}
+
+/** Errore visibile nel form checkout (carta incompleta / rifiutata), non solo toast. */
+export function CheckoutInlineError({ message }: { message: string | null | undefined }) {
+  if (!message?.trim()) return null
+  return (
+    <p
+      role="alert"
+      className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/80 dark:bg-[#3a1518] dark:text-[#f5c4c4]"
+    >
+      {message}
+    </p>
+  )
 }

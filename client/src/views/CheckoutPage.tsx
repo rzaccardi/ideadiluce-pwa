@@ -24,6 +24,7 @@ import {
   refreshTaxBreakdown,
   selectedShippingQuote,
   startCheckout,
+  isPaymentRetryCheckout,
 } from '@/features/checkout'
 import type { CartDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
@@ -43,7 +44,7 @@ import { CheckoutPaymentStep } from '@/components/checkout/stripe-ui/CheckoutPay
 import { CheckoutReviewStep } from '@/components/checkout/stripe-ui/CheckoutReviewStep'
 import { CheckoutStepIndicator } from '@/components/checkout/stripe-ui/CheckoutStepIndicator'
 import { CheckoutStepBody } from '@/components/checkout/stripe-ui/CheckoutStepBody'
-import { StripeErrorBanner } from '@/components/checkout/stripe-ui/StripeFields'
+import { CheckoutInlineError } from '@/components/checkout/stripe-ui/StripeFields'
 import { LegacySiteNoticeInline } from '@/components/site/LegacySiteNoticeBanner'
 import { CheckoutPaymentSkeleton } from '@/components/checkout/CheckoutPaymentSkeleton'
 import { StripePaymentShell } from '@/components/checkout/StripePaymentShell'
@@ -99,6 +100,12 @@ export function CheckoutPage() {
     const frozenOrderId = searchParams.get('orderId')
     const isResumeFlow = Boolean(frozenOrderId || retryOrderId)
 
+    if (retryOrderId) {
+      checkoutStore.paymentRetryActive = true
+      checkoutStore.paymentRetryOrderId = retryOrderId
+      checkoutStore.paymentRetryStep = searchParams.get('step') === 'review' ? 'review' : 'payment'
+    }
+
     // Reset subito (non dopo fetchCart/fetchMe) così non si cancella input guest
     // e la precompilazione auth non viene sovrascritta dal reset tardivo.
     if (!isResumeFlow) {
@@ -124,17 +131,15 @@ export function CheckoutPage() {
       if (retryOrderId) {
         try {
           await resumeCheckoutForOrder(retryOrderId)
-          const retryStep = searchParams.get('step')
           const retryMethod = searchParams.get('method')
           if (retryMethod === 'stripe' || retryMethod === 'bank_transfer') {
             setPaymentMethod(retryMethod)
           }
-          if (retryStep === 'payment') {
-            checkoutStore.currentStep = 'payment'
-          }
           return
-        } catch {
+        } catch (e) {
+          const message = e instanceof Error ? e.message : t('checkout.error.generic')
           resetCheckout()
+          checkoutStore.error = message
           return
         }
       }
@@ -147,9 +152,32 @@ export function CheckoutPage() {
       isAuthenticated: auth.isAuthenticated,
       hasMe: Boolean(auth.me),
       frozen: isFrozenQuoteCheckout(),
+      paymentRetry: checkoutStore.paymentRetryActive,
       step: checkoutStore.currentStep,
     })
     if (isFrozenQuoteCheckout()) return
+    if (checkoutStore.paymentRetryActive) {
+      if (auth.isLoading) return
+      if (!auth.isAuthenticated) {
+        checkoutStore.currentStep = 'account'
+        return
+      }
+      void (async () => {
+        const retryOrderId = checkoutStore.paymentRetryOrderId
+        if (!checkoutStore.order && retryOrderId) {
+          try {
+            await resumeCheckoutForOrder(retryOrderId)
+          } catch (e) {
+            checkoutStore.error = e instanceof Error ? e.message : t('checkout.error.generic')
+            return
+          }
+        }
+        if (checkoutStore.currentStep === 'account') {
+          checkoutStore.currentStep = checkoutStore.paymentRetryStep
+        }
+      })()
+      return
+    }
     if (checkoutStore.initLoadingPhase || checkoutStore.addressPrefillLoading) return
     if (!auth.isLoading && auth.me) {
       void initializeCheckoutNavigation()
@@ -161,10 +189,15 @@ export function CheckoutPage() {
 
   const c = cart.cart
   const frozenCheckout = isFrozenQuoteCheckout()
-  const displayCart =
-    frozenCheckout && checkout.frozenOrderSummary
-      ? cartFromFrozenQuoteSummary({ ...checkout.frozenOrderSummary, lines: [...checkout.frozenOrderSummary.lines] })
-      : c
+  const paymentRetry = isPaymentRetryCheckout()
+  const summaryFromOrder =
+    (frozenCheckout || paymentRetry) && checkout.frozenOrderSummary
+      ? cartFromFrozenQuoteSummary({
+          ...checkout.frozenOrderSummary,
+          lines: [...checkout.frozenOrderSummary.lines],
+        })
+      : null
+  const displayCart = summaryFromOrder && (frozenCheckout || !c || c.items.length === 0) ? summaryFromOrder : c
   const step = checkout.currentStep
   const shippingQuote = selectedShippingQuote()
   const canPay =
@@ -383,7 +416,9 @@ export function CheckoutPage() {
       }
       const form = stripeFormRef.current
       if (!form?.ready) {
-        checkoutStore.error = t('checkout.payment.formNotReady')
+        checkoutStore.error = stripeMount
+          ? t('checkout.payment.cardIncomplete')
+          : t('checkout.payment.formNotReady')
         return
       }
       await form.pay()
@@ -404,8 +439,8 @@ export function CheckoutPage() {
     navigate(`/checkout/result/${paidOrderId}`, { replace: true })
   }
 
-  const isCartUnresolved = !frozenCheckout && !c
-  const isCartEmpty = !frozenCheckout && c != null && c.items.length === 0
+  const isCartUnresolved = !frozenCheckout && !paymentRetry && !c
+  const isCartEmpty = !frozenCheckout && !paymentRetry && c != null && c.items.length === 0
 
   if (isCartEmpty && !cart.isLoading) {
     return (
@@ -452,7 +487,7 @@ export function CheckoutPage() {
       onBeforeConfirm={prepareCheckoutPayment}
       onPaymentSuccess={handleStripePaymentSuccess}
       onError={(msg) => {
-        if (msg) checkoutStore.error = msg
+        checkoutStore.error = msg?.trim() ? msg : null
       }}
     />
   ) : canStartCheckout() && checkout.selectedPaymentMethod === 'stripe' ? (
@@ -521,7 +556,7 @@ export function CheckoutPage() {
 
           <CheckoutStepIndicator currentStep={step} />
 
-          {checkout.error ? <StripeErrorBanner message={checkout.error} /> : null}
+          {checkout.error ? <CheckoutInlineError message={checkout.error} /> : null}
 
           {step === 'account' ? (
             <CheckoutStepBody>
@@ -557,7 +592,11 @@ export function CheckoutPage() {
               aria-hidden={step !== 'payment'}
             >
               <CheckoutStepBody>
-                <CheckoutPaymentStep stripeCardDetails={stripeCardDetails} />
+                <CheckoutPaymentStep
+                  stripeCardDetails={stripeCardDetails}
+                  stripeFormReady={stripeReady}
+                  stripeSessionReady={Boolean(activeStripeSession)}
+                />
               </CheckoutStepBody>
             </div>
           ) : null}

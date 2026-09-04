@@ -5,6 +5,8 @@ import type { CatalogSort } from '@/features/catalog/catalog.store'
 import type { ProductCatalogKind } from '@/lib/product-catalog-kind'
 import { resolveProductCardCatalogKind } from '@/lib/product-catalog-kind'
 import { buildTechnicalCardSpecTags } from '@/lib/technical-card-spec-tags'
+import { stripLocalePrefix } from '@/lib/locale'
+import { canonicalizeBrandSlug } from '@/lib/catalog-taxonomy'
 
 function categoryLabelFromFacets(
   facets: CatalogFiltersDTO | null | undefined,
@@ -27,7 +29,164 @@ export const CATALOG_DESIGN_CATEGORY_SLUG = 'arredo'
 /** Root Odoo live (alias legacy `illuminazione-tecnica` → `tecnico` lato BFF). */
 export const CATALOG_TECHNICAL_CATEGORY_SLUG = 'tecnico'
 
+const DESIGN_ROOT_SLUGS = new Set([
+  CATALOG_DESIGN_CATEGORY_SLUG,
+  'illuminazione-arredo',
+  'illuminazione-design',
+])
+
+const TECHNICAL_ROOT_SLUGS = new Set([
+  CATALOG_TECHNICAL_CATEGORY_SLUG,
+  'illuminazione-tecnica',
+  'tecnica',
+  'prodotti-tecnici',
+])
+
 export type CatalogWorldTab = 'all' | 'design' | 'technical'
+
+export function catalogWorldShowsDesignFilters(world: CatalogWorldTab): boolean {
+  return world === 'all' || world === 'design'
+}
+
+export function catalogWorldShowsTechnicalFilters(world: CatalogWorldTab): boolean {
+  return world === 'all' || world === 'technical'
+}
+
+/** Mondo della radice categoria (slug Odoo / alias storefront). */
+export function catalogWorldOfCategorySlug(slug: string | null | undefined): CatalogWorldTab {
+  const key = slug?.trim().toLowerCase() ?? ''
+  if (!key) return 'all'
+  if (DESIGN_ROOT_SLUGS.has(key) || /arredo|design|decorativ/.test(key)) return 'design'
+  if (TECHNICAL_ROOT_SLUGS.has(key) || /tecnica|tecnici|tecnico|ricambi|lampadine|componenti|driver|alimentator/.test(key)) {
+    return 'technical'
+  }
+  return 'all'
+}
+
+function categoryDtoRoot(category: CategoryDTO, byId: Map<string, CategoryDTO>): CategoryDTO {
+  let current = category
+  const seen = new Set<string>()
+  while (current.parentId && !seen.has(current.id)) {
+    seen.add(current.id)
+    const parent = byId.get(current.parentId)
+    if (!parent) break
+    current = parent
+  }
+  return current
+}
+
+/** Tiene solo le categorie dell’area corrente (arredo ↔ tecnica). */
+export function filterCategoryDtosByWorld(
+  categories: ReadonlyArray<CategoryDTO>,
+  world: CatalogWorldTab,
+): CategoryDTO[] {
+  if (world === 'all') return [...categories]
+  const byId = new Map(categories.map((category) => [category.id, category]))
+  return categories.filter((category) => catalogWorldOfCategorySlug(categoryDtoRoot(category, byId).slug) === world)
+}
+
+/** Filtra l’albero facet: nasconde le radici dell’area opposta (arredo ↔ tecnica). */
+export function filterFacetCategoriesByWorld(
+  categories: CatalogFiltersDTO['categories'],
+  world: CatalogWorldTab,
+): CatalogFiltersDTO['categories'] {
+  if (world === 'all' || !categories.length) return categories
+  const opposite: CatalogWorldTab = world === 'design' ? 'technical' : 'design'
+  return categories.filter((node) => catalogWorldOfCategorySlug(node.slug) !== opposite)
+}
+
+export type CatalogBrandWorldRef = {
+  slug: string
+  worlds?: ReadonlyArray<'design' | 'technical'>
+}
+
+function brandWorldsLookup(
+  knownWorlds: ReadonlyArray<CatalogBrandWorldRef> | undefined,
+): Map<string, ReadonlyArray<'design' | 'technical'>> {
+  const lookup = new Map<string, ReadonlyArray<'design' | 'technical'>>()
+  for (const item of knownWorlds ?? []) {
+    if (!item.worlds?.length) continue
+    lookup.set(item.slug, item.worlds)
+    lookup.set(canonicalizeBrandSlug(item.slug), item.worlds)
+  }
+  return lookup
+}
+
+/** Brand visibili in un’area: solo quelli con prodotti in quel mondo Odoo. */
+export function filterBrandsForCatalogWorld<T extends { slug: string; worlds?: ReadonlyArray<'design' | 'technical'> }>(
+  brands: ReadonlyArray<T>,
+  world: CatalogWorldTab,
+  knownWorlds?: ReadonlyArray<CatalogBrandWorldRef>,
+): T[] {
+  if (world === 'all' || !brands.length) return [...brands]
+  const lookup = brandWorldsLookup(knownWorlds)
+  return brands.filter((brand) => {
+    const worlds =
+      brand.worlds?.length
+        ? brand.worlds
+        : (lookup.get(brand.slug) ?? lookup.get(canonicalizeBrandSlug(brand.slug)))
+    if (!worlds?.length) return true
+    return worlds.includes(world)
+  })
+}
+
+/** Azzera facet dell’area opposta (filtri + categorie + brand non pertinenti). */
+export function scopeCatalogFacetsToWorld(
+  facets: CatalogFiltersDTO | null | undefined,
+  world: CatalogWorldTab,
+  brandWorlds?: ReadonlyArray<CatalogBrandWorldRef>,
+): CatalogFiltersDTO | null | undefined {
+  if (!facets || world === 'all') return facets
+  const brands = filterBrandsForCatalogWorld(facets.brands, world, brandWorlds)
+  if (world === 'design') {
+    return {
+      ...facets,
+      brands,
+      categories: filterFacetCategoriesByWorld(facets.categories, 'design'),
+      attacchi: [],
+      wattaggi: [],
+      colorTemps: [],
+    }
+  }
+  return {
+    ...facets,
+    brands,
+    categories: filterFacetCategoriesByWorld(facets.categories, 'technical'),
+    tipologie: [],
+    ambienti: [],
+    stili: [],
+  }
+}
+
+/** Mondo catalogo da path + `?world=` (path vince sulle landing/tassonomie). */
+export function resolveCatalogWorldFromPath(
+  pathname: string,
+  searchParams?: { get(name: string): string | null } | null,
+): CatalogWorldTab {
+  const path = stripLocalePrefix(pathname)
+  const normalized = path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path
+
+  if (
+    normalized.startsWith('/illuminazione-arredo') ||
+    normalized.startsWith('/categoria-prodotto/illuminazione-arredo') ||
+    normalized.startsWith('/tipologia') ||
+    normalized.startsWith('/stile') ||
+    normalized.startsWith('/ambienti') ||
+    normalized.startsWith('/acquista-ambiente')
+  ) {
+    return 'design'
+  }
+
+  if (
+    normalized.includes('/illuminazione-tecnica') ||
+    normalized.startsWith('/attacco') ||
+    normalized.startsWith('/categoria-tecnica')
+  ) {
+    return 'technical'
+  }
+
+  return parseCatalogWorld(searchParams?.get('world'))
+}
 
 export const CATALOG_WORLD_TAB_HREFS: Record<CatalogWorldTab, string> = {
   all: '/negozio',
@@ -82,6 +241,15 @@ export function worldTabToParam(tab: CatalogWorldTab): 'design' | 'technical' | 
 export function buildCatalogApiQuery(q?: string): string | undefined {
   const trimmed = q?.trim()
   return trimmed || undefined
+}
+
+const PLACEHOLDER_DESIGNER_NAME = /^(n\/a|na|n\.d\.|—|-|\.)$/i
+
+/** Listing arredo filtrato per nome designer (`q` + world design). Null se il nome non è usabile. */
+export function buildDesignerProjectsHref(designerName: string | null | undefined): string | null {
+  const name = designerName?.trim()
+  if (!name || PLACEHOLDER_DESIGNER_NAME.test(name)) return null
+  return `/negozio?world=design&q=${encodeURIComponent(name)}`
 }
 
 /** @deprecated Usare buildCatalogApiQuery + filterProductsBySpec per attacco/Kelvin. */

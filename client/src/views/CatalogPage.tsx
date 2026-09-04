@@ -8,6 +8,7 @@ import { useI18n } from '@/hooks/use-i18n'
 import type { CatalogSort } from '@/features/catalog/catalog.store'
 import { useSnapshot } from 'valtio/react'
 import { catalogStore, fetchCatalogBootstrap, fetchCatalogFilters, fetchNextProductsPage, fetchProducts, reapplyCatalogClientFilters, seedCatalogBootstrap, seedCatalogProducts, catalogServerFetchKey } from '@/features/catalog'
+import { authStore } from '@/features/auth/auth.store'
 import type { CatalogBootstrapServerData } from '@/lib/server-catalog'
 import { siteStore } from '@/features/site'
 import type { CatalogPageContent } from '@/types/site-content'
@@ -18,10 +19,12 @@ import {
   buildActiveFilters,
   buildCatalogApiQuery,
   centsToPriceBucket,
+  filterCategoryDtosByWorld,
   parseCatalogWorld,
   priceBucketToCents,
   resolveCategoryGroups,
   resolveEffectiveCatalogCategory,
+  scopeCatalogFacetsToWorld,
   type CatalogPriceBucket,
   type CatalogWorldTab,
   worldTabToParam,
@@ -61,6 +64,7 @@ export function CatalogPage({
   const lp = useLocalePath()
   const router = useRouter()
   const { t } = useI18n()
+  const authSnap = useSnapshot(authStore)
   const [params, setParams] = useQueryParams()
   const taxonomy = forcedTaxonomy
 
@@ -82,18 +86,32 @@ export function CatalogPage({
         ? 'technical'
         : parseCatalogWorld(params.get('world'))
   const queryParam = params.get('q')?.trim() ?? ''
-  const attaccoParam =
-    taxonomy?.kind === 'attacco' ? taxonomy.value : (params.get('attacco')?.trim() ?? '')
-  const colorTempParam = params.get('colorTemp')?.trim() ?? ''
-  const wattaggioParam = params.get('wattaggio')?.trim() ?? ''
-  const wattaggioMinParam = params.get('wattaggio_min')?.trim() ?? ''
-  const wattaggioMaxParam = params.get('wattaggio_max')?.trim() ?? ''
-  const tipologiaParam =
-    taxonomy?.kind === 'tipologia' ? taxonomy.value : (params.get('tipologia')?.trim() ?? '')
-  const ambienteParam =
-    taxonomy?.kind === 'ambiente' ? taxonomy.value : (params.get('ambiente')?.trim() ?? '')
-  const stileParam =
-    taxonomy?.kind === 'stile' ? taxonomy.value : (params.get('stile')?.trim() ?? '')
+  const hideTechnicalFilters = worldTab === 'design'
+  const hideDesignFilters = worldTab === 'technical'
+  const attaccoParam = hideTechnicalFilters
+    ? ''
+    : taxonomy?.kind === 'attacco'
+      ? taxonomy.value
+      : (params.get('attacco')?.trim() ?? '')
+  const colorTempParam = hideTechnicalFilters ? '' : (params.get('colorTemp')?.trim() ?? '')
+  const wattaggioParam = hideTechnicalFilters ? '' : (params.get('wattaggio')?.trim() ?? '')
+  const wattaggioMinParam = hideTechnicalFilters ? '' : (params.get('wattaggio_min')?.trim() ?? '')
+  const wattaggioMaxParam = hideTechnicalFilters ? '' : (params.get('wattaggio_max')?.trim() ?? '')
+  const tipologiaParam = hideDesignFilters
+    ? ''
+    : taxonomy?.kind === 'tipologia'
+      ? taxonomy.value
+      : (params.get('tipologia')?.trim() ?? '')
+  const ambienteParam = hideDesignFilters
+    ? ''
+    : taxonomy?.kind === 'ambiente'
+      ? taxonomy.value
+      : (params.get('ambiente')?.trim() ?? '')
+  const stileParam = hideDesignFilters
+    ? ''
+    : taxonomy?.kind === 'stile'
+      ? taxonomy.value
+      : (params.get('stile')?.trim() ?? '')
   const tagParam =
     taxonomy?.kind === 'tag' ? taxonomy.value : (params.get('tag')?.trim() ?? '')
   const wattaggioMin = wattaggioMinParam ? Number(wattaggioMinParam) : undefined
@@ -157,9 +175,24 @@ export function CatalogPage({
 
   const visibleProducts = products
 
+  const worldCategories = useMemo(
+    () => filterCategoryDtosByWorld(categories, worldTab),
+    [categories, worldTab],
+  )
+
+  const scopedFacets = useMemo(
+    () =>
+      scopeCatalogFacetsToWorld(
+        facets as import('@/types/dto').CatalogFiltersDTO | null,
+        worldTab,
+        brands,
+      ),
+    [brands, facets, worldTab],
+  )
+
   const { rootCategories, subcategories } = useMemo(
-    () => resolveCategoryGroups(categories, categoryParam),
-    [categories, categoryParam],
+    () => resolveCategoryGroups(worldCategories, categoryParam),
+    [worldCategories, categoryParam],
   )
 
   const clientWorld = worldTab === 'all' ? undefined : worldTab
@@ -167,7 +200,7 @@ export function CatalogPage({
   const activeFilters = useMemo(
     () =>
       buildActiveFilters({
-        categories,
+        categories: worldCategories,
         brands,
         categorySlug: categoryParam,
         brandSlug: brandParam,
@@ -184,20 +217,20 @@ export function CatalogPage({
         inStockOnly,
         q: queryParam || undefined,
         world: taxonomy ? undefined : worldTab,
-        facets: facets as import('@/types/dto').CatalogFiltersDTO | null,
+        facets: scopedFacets ?? null,
       }),
     [
       ambienteParam,
       attaccoParam,
       brandParam,
       brands,
-      categories,
+      worldCategories,
       categoryParam,
       colorTempParam,
       wattaggioParam,
       wattaggioMinNum,
       wattaggioMaxNum,
-      facets,
+      scopedFacets,
       inStockOnly,
       queryParam,
       selectedPriceBucket,
@@ -365,6 +398,9 @@ export function CatalogPage({
     stileParam,
     tagParam,
     tipologiaParam,
+    authSnap.isAuthenticated,
+    authSnap.me?.customerSegment,
+    authSnap.impersonation,
   ])
 
   useEffect(() => {
@@ -587,7 +623,7 @@ export function CatalogPage({
         isLoadingMore={catalogLoadingMore}
         pendingSkeletonCount={pendingSkeletonCount}
         products={visibleProducts}
-        categories={categories}
+        categories={worldCategories}
         brands={brands}
         totalProducts={catalogPagination.total}
         shownProducts={visibleProducts.length}
@@ -609,7 +645,7 @@ export function CatalogPage({
         selectedWattaggioMax={wattaggioMaxNum}
         selectedPriceBucket={selectedPriceBucket}
         inStockOnly={inStockOnly}
-        facets={facets as import('@/types/dto').CatalogFiltersDTO | null}
+        facets={scopedFacets ?? null}
         activeFilters={activeFilters}
         sort={sortParam}
         loadMoreRef={loadMoreRef}

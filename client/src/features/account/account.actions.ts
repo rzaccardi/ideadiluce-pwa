@@ -1,7 +1,12 @@
 import { api } from '@/api/endpoints'
 import { setAuthUser } from '@/features/auth/auth.store'
 import { ApiRequestError } from '@/types/api'
-import type { UserAddressDTO, UserDTO, PwaPaymentMethodDTO } from '@/types/dto'
+import type {
+  UserAddressDTO,
+  UserDTO,
+  UserShippingAddressListDTO,
+  PwaPaymentMethodDTO,
+} from '@/types/dto'
 import { accountStore } from './account.store'
 
 function errMessage(e: unknown) {
@@ -64,4 +69,79 @@ export function clearAccountFeedback() {
   accountStore.error = null
   accountStore.message = null
   accountStore.odooSyncWarning = false
+}
+
+function applyShippingMutation(
+  result: { user: UserDTO; list: UserShippingAddressListDTO; odooSyncFailed: boolean },
+  successMessage: string,
+) {
+  applyPatchResult({ user: result.user, odooSyncFailed: result.odooSyncFailed }, successMessage)
+  return result.list
+}
+
+export async function loadShippingAddresses(): Promise<UserShippingAddressListDTO> {
+  return api.users.listShippingAddresses()
+}
+
+export async function createShippingAddress(address: UserAddressDTO): Promise<UserShippingAddressListDTO> {
+  accountStore.isSaving = true
+  accountStore.error = null
+  accountStore.message = null
+  try {
+    const result = await api.users.createShippingAddress(address)
+    return applyShippingMutation(result, 'Indirizzo aggiunto.')
+  } catch (e) {
+    accountStore.error = errMessage(e)
+    throw e
+  } finally {
+    accountStore.isSaving = false
+  }
+}
+
+export async function updateShippingAddress(
+  id: string,
+  address: UserAddressDTO,
+): Promise<UserShippingAddressListDTO> {
+  accountStore.isSaving = true
+  accountStore.error = null
+  accountStore.message = null
+  try {
+    const result = await api.users.updateShippingAddress(id, address)
+    return applyShippingMutation(result, 'Indirizzo aggiornato.')
+  } catch (e) {
+    accountStore.error = errMessage(e)
+    throw e
+  } finally {
+    accountStore.isSaving = false
+  }
+}
+
+export async function deleteShippingAddress(id: string): Promise<UserShippingAddressListDTO> {
+  accountStore.isSaving = true
+  accountStore.error = null
+  accountStore.message = null
+  try {
+    const result = await api.users.deleteShippingAddress(id)
+    return applyShippingMutation(result, 'Indirizzo eliminato.')
+  } catch (e) {
+    accountStore.error = errMessage(e)
+    throw e
+  } finally {
+    accountStore.isSaving = false
+  }
+}
+
+export async function selectShippingAddress(id: string): Promise<UserShippingAddressListDTO> {
+  accountStore.isSaving = true
+  accountStore.error = null
+  accountStore.message = null
+  try {
+    const result = await api.users.selectShippingAddress(id)
+    return applyShippingMutation(result, 'Indirizzo di spedizione selezionato.')
+  } catch (e) {
+    accountStore.error = errMessage(e)
+    throw e
+  } finally {
+    accountStore.isSaving = false
+  }
 }

@@ -9,6 +9,7 @@ import { env } from '../../config/env.js'
 import type { HubLocale } from '../../lib/hub-locale.js'
 import type { ProductDetailDTO } from '../../types/dto.js'
 import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { enrichProductDetailRelatedHoverImages } from './catalog-hover-image.enrich.js'
 import { enrichProductDetailWithStock } from './catalog-stock.enrich.js'
 import { enrichProductDetailWithOdooPricing } from './catalog-pricing.enrich.js'
 import { resolvePricingContext } from '../pricing/pricelist.service.js'
@@ -32,7 +33,10 @@ export async function resolveCatalogProduct(
   if (asId != null) {
     try {
       const res = await fetchOdooCatalogProductDetail(asId, locale)
-      return mapOdooCatalogProductDetail(res.product, locale)
+      return enrichProductDetailRelatedHoverImages(
+        locale,
+        mapOdooCatalogProductDetail(res.product, locale),
+      )
     } catch {
       return getCachedDetail(locale, asId, null)
     }
@@ -47,7 +51,10 @@ export async function resolveCatalogProduct(
   if (id != null) {
     try {
       const res = await fetchOdooCatalogProductDetail(id, locale)
-      return mapOdooCatalogProductDetail(res.product, locale)
+      return enrichProductDetailRelatedHoverImages(
+        locale,
+        mapOdooCatalogProductDetail(res.product, locale),
+      )
     } catch {
       return getCachedDetail(locale, id, productRef)
     }
@@ -67,7 +74,13 @@ async function getCachedDetail(
     (id != null ? await getCachedProductDetailById(locale, id) : null) ??
     (slug ? await getCachedProductDetailBySlug(locale, slug) : null)
   if (!raw?.product) return null
-  return { ...mapOdooCatalogProductDetail(raw.product, locale), degraded: true }
+  return {
+    ...(await enrichProductDetailRelatedHoverImages(
+      locale,
+      mapOdooCatalogProductDetail(raw.product, locale),
+    )),
+    degraded: true,
+  }
 }
 
 /** Prodotto catalogo con stock/availability e prezzi Odoo arricchiti (carrello, checkout, restock). */

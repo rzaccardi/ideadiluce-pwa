@@ -1,2 +1,7 @@
 export { invoicesStore } from './invoices.store'
-export { fetchInvoicesList, resetInvoicesStore } from './invoices.actions'
+export {
+  fetchInvoicesList,
+  resetInvoicesStore,
+  downloadInvoicePdf,
+  invoicePdfFilename,
+} from './invoices.actions'

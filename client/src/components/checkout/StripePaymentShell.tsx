@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { CheckoutElementsProvider } from '@stripe/react-stripe-js/checkout'
 import { StripePaymentForm, type StripePaymentFormHandle } from './StripePaymentForm'
-import { checkoutStripeAppearance } from './stripe-ui/constants'
+import { getCheckoutStripeAppearance } from './stripe-ui/constants'
+import { useTheme } from '@/context/theme-context'
 import { getStripePublishableKey } from '@/lib/env'
 import { normalizeStripeClientSecret } from '@/lib/stripe-client-secret'
 import { getStripePromise, preloadStripe, preloadStripeCheckoutModule, resolvePublishableKey } from '@/lib/stripe-loader'
@@ -29,6 +30,8 @@ export function StripePaymentShell({
   onBeforeConfirm,
   onPaymentSuccess,
 }: Props) {
+  const { isDark } = useTheme()
+  const stripeAppearance = getCheckoutStripeAppearance(isDark)
   const envPublishableKey = getStripePublishableKey()
   const [remotePublishableKey, setRemotePublishableKey] = useState<string | null>(null)
   const [configLoading, setConfigLoading] = useState(!envPublishableKey && !publishableKeyProp)
@@ -73,7 +76,7 @@ export function StripePaymentShell({
 
   if (configLoading) {
     return (
-      <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-500">
+      <div className="rounded-xl border border-idl-tech-border bg-idl-tech-chip px-4 py-6 text-sm text-idl-muted">
         Caricamento pagamento Stripe…
       </div>
     )
@@ -92,11 +95,12 @@ export function StripePaymentShell({
 
   return (
     <CheckoutElementsProvider
+      key={isDark ? 'stripe-dark' : 'stripe-light'}
       stripe={stripePromise}
       options={{
         clientSecret: normalizedClientSecret,
         elementsOptions: {
-          appearance: checkoutStripeAppearance,
+          appearance: stripeAppearance,
         },
       }}
     >

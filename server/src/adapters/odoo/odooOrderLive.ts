@@ -176,22 +176,25 @@ async function resolveShippingPartnerId(
   ctx: OdooCallContext,
   input: SyncSaleOrderDraftInput,
 ): Promise<number | null> {
-  if (!input.dropshipAddress) return null
-  const addr = input.dropshipAddress
-  const profile = {
-    firstName: addr.firstName,
-    lastName: addr.lastName,
-    line1: addr.line1,
-    streetNumber: addr.streetNumber ?? '',
-    isSnc: addr.isSnc ?? false,
-    line2: addr.line2,
-    city: addr.city,
-    postalCode: addr.postalCode,
-    country: addr.country,
-    phone: addr.phone,
-  }
-  const delivery = await customerAdapter.createDeliveryPartner(ctx, input.odooPartnerId, profile)
-  return delivery.odooPartnerId
+  const resolved = await customerAdapter.resolveOrderShippingPartner(ctx, input.odooPartnerId, {
+    shippingAddress: input.shippingAddress
+      ? {
+          firstName: input.shippingAddress.firstName,
+          lastName: input.shippingAddress.lastName,
+          line1: input.shippingAddress.line1,
+          streetNumber: input.shippingAddress.streetNumber ?? '',
+          isSnc: input.shippingAddress.isSnc ?? false,
+          line2: input.shippingAddress.line2,
+          city: input.shippingAddress.city,
+          postalCode: input.shippingAddress.postalCode,
+          country: input.shippingAddress.country,
+          phone: input.shippingAddress.phone,
+          id: input.shippingAddress.id,
+        }
+      : undefined,
+    dropshipAddress: input.dropshipAddress,
+  })
+  return resolved?.odooPartnerId ?? null
 }
 
 export function createLiveOdooOrderAdapter(): OdooOrderAdapter {

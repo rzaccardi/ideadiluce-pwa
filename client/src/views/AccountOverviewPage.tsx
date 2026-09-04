@@ -91,7 +91,7 @@ export function AccountOverviewPage() {
   }, [ongoingOrder?.id])
 
   const ongoingDetail =
-    ongoingOrder && orders.detail?.id === ongoingOrder.id ? orders.detail : null
+    ongoingOrder && orders.detailId === ongoingOrder.id ? orders.detail : null
   const recentOrders = orderList.slice(0, 3)
   const recentQuotes = quoteList.slice(0, 3)
   const recentInvoices = invoiceList.slice(0, 3)
@@ -121,7 +121,7 @@ export function AccountOverviewPage() {
       ) : requestRejected ? (
         <div className="rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-950">
           <p>{t('account.overview.professionalRejected')}</p>
-          <Link to="/professionisti" className={`mt-4 inline-flex ${accountDcPrimaryBtnClass}`}>
+          <Link to="/professionisti#registrazione" className={`mt-4 inline-flex ${accountDcPrimaryBtnClass}`}>
             {t('account.overview.professionalCtaLink')}
           </Link>
         </div>
@@ -130,7 +130,7 @@ export function AccountOverviewPage() {
           <div>
             <p className="text-base font-extrabold text-idl-graphite">{t('account.overview.professionalCta')}</p>
           </div>
-          <Link to="/professionisti" className={accountDcPrimaryBtnClass}>
+          <Link to="/professionisti#registrazione" className={accountDcPrimaryBtnClass}>
             {t('account.overview.professionalCtaLink')}
           </Link>
         </div>

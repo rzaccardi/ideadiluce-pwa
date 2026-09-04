@@ -2,9 +2,9 @@ import { Link } from '@/lib/navigation'
 import { Stagger, StaggerItem } from '@/components/motion'
 import { BrandNameDisplay } from '../../brand/BrandNameDisplay'
 import {
+  brandAreaBadgeClassName,
+  brandAreaBadges,
   brandCatalogHref,
-  isDesignCategory,
-  primaryCategoryLabel,
   type BrandCard,
 } from '@/lib/brand.defaults'
 import type { LocalePathFn } from '../../sections/types'
@@ -27,8 +27,7 @@ export function HomeBrandGrid({ brands, lp, stagger = 0.04 }: Props) {
       stagger={stagger}
     >
       {brands.map((brand) => {
-        const design = isDesignCategory(brand.categories)
-        const badge = primaryCategoryLabel(brand.categories)
+        const badges = brandAreaBadges(brand.categories)
         const productMeta =
           brand.productCount > 0 ? `${brand.productCount} prodotti` : 'Catalogo disponibile'
         const brandLabel = `${brand.name} — ${productMeta}`
@@ -56,16 +55,21 @@ export function HomeBrandGrid({ brands, lp, stagger = 0.04 }: Props) {
                     size="sm"
                   />
                 </div>
-                <span
-                  className={cn(
-                    'inline-flex rounded-[5px] border px-2 py-0.5 font-mono text-[10px] tracking-[0.06em]',
-                    design
-                      ? 'border-[#ece2d2] bg-idl-path-design text-idl-brass'
-                      : 'border-idl-tech-chip-border bg-idl-tech-chip text-idl-graphite-2',
-                  )}
-                >
-                  {badge}
-                </span>
+                {badges.length ? (
+                  <div className="flex flex-wrap justify-center gap-1">
+                    {badges.map((badge) => (
+                      <span
+                        key={badge.area}
+                        className={cn(
+                          'inline-flex rounded-[5px] border px-2 py-0.5 font-mono text-[10px] tracking-[0.06em]',
+                          brandAreaBadgeClassName(badge.area),
+                        )}
+                      >
+                        {badge.label}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
                 <span className="mt-2 text-[11px] text-idl-muted">{productMeta}</span>
               </Link>
               <div className="border-t border-idl-tech-panel px-3 py-2.5 text-center">

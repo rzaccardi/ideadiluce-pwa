@@ -121,6 +121,12 @@ export function collectProductIdentifierFields(
   return fields
 }
 
+const BARCODE_LABEL_RE = /\b(ean|gtin|upc|barcode)\b|codice a barre|cod\.?\s*a barre/i
+
+export function isCopyableBarcodeLabel(label: string): boolean {
+  return BARCODE_LABEL_RE.test(label.trim())
+}
+
 export function formatProductIdentifierInline(
   fields: ReadonlyArray<ProductIdentifierField>,
   labels: Record<ProductIdentifierFieldKey, string>,

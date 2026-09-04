@@ -27,6 +27,7 @@ import type {
   ProductSocialProofDTO,
   StockRestockRequestDTO,
   UserAddressDTO,
+  UserShippingAddressListDTO,
   AuthMeDTO,
   AuthRefreshDTO,
   ImpersonationInfoDTO,
@@ -777,6 +778,37 @@ export const api = {
     professionalRequest() {
       return apiClient.get<ProfessionalRequestSummaryDTO | null>('/api/v1/users/me/professional-request')
     },
+    listShippingAddresses() {
+      return apiClient.get<UserShippingAddressListDTO>('/api/v1/users/me/shipping-addresses')
+    },
+    createShippingAddress(body: UserAddressDTO) {
+      return apiClient.post<{
+        list: UserShippingAddressListDTO
+        user: UserDTO
+        odooSyncFailed: boolean
+      }>('/api/v1/users/me/shipping-addresses', body)
+    },
+    updateShippingAddress(id: string, body: UserAddressDTO) {
+      return apiClient.patch<{
+        list: UserShippingAddressListDTO
+        user: UserDTO
+        odooSyncFailed: boolean
+      }>(`/api/v1/users/me/shipping-addresses/${encodeURIComponent(id)}`, body)
+    },
+    deleteShippingAddress(id: string) {
+      return apiClient.delete<{
+        list: UserShippingAddressListDTO
+        user: UserDTO
+        odooSyncFailed: boolean
+      }>(`/api/v1/users/me/shipping-addresses/${encodeURIComponent(id)}`)
+    },
+    selectShippingAddress(id: string) {
+      return apiClient.post<{
+        list: UserShippingAddressListDTO
+        user: UserDTO
+        odooSyncFailed: boolean
+      }>(`/api/v1/users/me/shipping-addresses/${encodeURIComponent(id)}/select`)
+    },
   },
   quotes: {
     request(body: {
@@ -809,6 +841,7 @@ export const api = {
       const res = await fetch(`${base}/api/v1/invoices/${encodeURIComponent(invoiceId)}/pdf`, {
         method: 'GET',
         credentials: 'include',
+        cache: 'no-store',
         headers,
       })
 

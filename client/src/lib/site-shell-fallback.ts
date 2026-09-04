@@ -36,7 +36,7 @@ function attaccoMegaMenuColumns() {
 export const FALLBACK_SITE_SHELL: SiteShellContent = {
   utilityBar: {
     messages: [
-      'Spedizione tracciata in tutta Italia',
+      'Spedizioni tracciate in tutto il mondo',
       'Assistenza tecnica reale',
       'Catalogo per professionisti',
     ],

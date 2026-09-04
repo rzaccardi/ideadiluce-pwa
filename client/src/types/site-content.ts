@@ -416,4 +416,6 @@ export type BrandListItemDTO = {
   slug: string
   name: string
   productCount?: number
+  /** Aree in cui il brand ha prodotti (da categorie Odoo). */
+  worlds?: ReadonlyArray<CatalogWorld>
 }

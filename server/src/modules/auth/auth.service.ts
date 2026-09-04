@@ -9,7 +9,9 @@ import { authRepository } from './auth.repository.js'
 import { generateSessionToken, hashSessionToken } from '../../lib/token-hash.js'
 import { toUserDTO } from '../users/user.mapper.js'
 import { loginWithOdooCredentials } from './odoo-account-sync.service.js'
+import { hydrateUserBusinessFromOdoo } from '../users/users-odoo-business-hydrate.js'
 import { linkOrdersToUser } from '../orders/orders-user-link.service.js'
+import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { absorbCartLines, cartLineKey, type MergedCartLine } from './cart-merge.js'
 
 function sessionExpiry(): Date {
@@ -187,7 +189,11 @@ export const authService = {
         await mergeWishlistForUser(sessionId, user.id)
         await mergeOrdersForUser(sessionId, user.id, user.email)
         const fresh = await prisma.user.findUniqueOrThrow({ where: { id: user.id } })
-        return await toUserDTO(fresh)
+        const hydrated = await hydrateUserBusinessFromOdoo(
+          fresh,
+          correlationId ? { correlationId } : { correlationId: `login:${user.id}` },
+        )
+        return await toUserDTO(hydrated)
       }
     }
 
@@ -226,7 +232,8 @@ export const authService = {
     await mergeWishlistForUser(sessionId, user.id)
     await mergeOrdersForUser(sessionId, user.id, user.email)
     const fresh = await prisma.user.findUniqueOrThrow({ where: { id: user.id } })
-    return await toUserDTO(fresh)
+    const hydrated = await hydrateUserBusinessFromOdoo(fresh, { correlationId: `login:${user.id}` })
+    return await toUserDTO(hydrated)
   },
 
   async logout(sessionId: string | undefined, rawToken: string | null | undefined) {
@@ -252,8 +259,9 @@ export const authService = {
     return guest
   },
 
-  async me(user: User): Promise<UserDTO> {
-    return toUserDTO(user)
+  async me(user: User, ctx?: OdooCallContext): Promise<UserDTO> {
+    const hydrated = await hydrateUserBusinessFromOdoo(user, ctx)
+    return toUserDTO(hydrated)
   },
 
   async issueNewGuestSession(): Promise<{ token: string; sessionId: string }> {

@@ -15,13 +15,15 @@ import { cartStore } from './cart.store'
 export type AddItemOptions = {
   feedback?: CartAddedFeedback
   productHint?: CartAddProductHint
+  /** Non mostra il toast di conferma (es. accessori aggiunti insieme al prodotto). */
+  silent?: boolean
 }
 
 function normalizeAddItemOptions(
   options?: AddItemOptions | CartAddedFeedback,
 ): AddItemOptions {
   if (!options) return {}
-  if ('productHint' in options) return options
+  if ('productHint' in options || 'silent' in options) return options
   if ('productName' in options) return { feedback: options }
   return options
 }
@@ -166,7 +168,7 @@ export async function addItem(
   variantRef?: string | null,
   options?: AddItemOptions | CartAddedFeedback,
 ) {
-  const { feedback, productHint } = normalizeAddItemOptions(options)
+  const { feedback, productHint, silent } = normalizeAddItemOptions(options)
   cartStore.error = null
   cartStore.cart = applyOptimisticAdd({
     cart: cartStore.cart,
@@ -175,11 +177,13 @@ export async function addItem(
     variantRef: variantRef ?? null,
     productHint,
   })
-  notifyCartItemAdded({
-    productName: feedback?.productName ?? productHint?.name ?? productRef,
-    quantity: feedback?.quantity ?? quantity,
-    imageUrl: feedback?.imageUrl ?? productHint?.imageUrl,
-  })
+  if (!silent) {
+    notifyCartItemAdded({
+      productName: feedback?.productName ?? productHint?.name ?? productRef,
+      quantity: feedback?.quantity ?? quantity,
+      imageUrl: feedback?.imageUrl ?? productHint?.imageUrl,
+    })
+  }
 
   pendingMutationCount += 1
   return enqueueCartMutation(async () => {

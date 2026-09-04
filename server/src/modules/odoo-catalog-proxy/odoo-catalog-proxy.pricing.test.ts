@@ -5,6 +5,13 @@ import { catalogProxyPricingQuery, stripClientPricingParams } from './odoo-catal
 
 vi.mock('../pricing/pricelist.service.js', () => ({
   resolvePricingContext: vi.fn(),
+  isPersonalizedPricing: (pricing: {
+    personalized?: boolean
+    partnerId: number | null
+    segment: string
+  }) =>
+    pricing.personalized ??
+    (pricing.partnerId != null || pricing.segment === 'BUSINESS' || pricing.segment === 'PROFESSIONAL'),
 }))
 
 describe('stripClientPricingParams', () => {

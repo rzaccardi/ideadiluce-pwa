@@ -12,4 +12,6 @@ export type AddressInput = {
   country: string
   phone?: string
   courierNotes?: string
+  id?: string
+  label?: string
 }

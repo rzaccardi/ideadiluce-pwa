@@ -8,6 +8,57 @@ import { CatalogProductCardSkeleton } from '../catalog/CatalogProductCardSkeleto
 import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMeta'
 import { ProductBrandMark } from '@/components/product/ProductBrandMark'
 import type { LocalePathFn } from '../sections/types'
+import { odooCatalogImageUrlsMatch } from '@/lib/odoo-catalog/media'
+import { cn } from '@/utils/cn'
+
+type DesignProductCardMediaProps = {
+  imageUrl: string | null
+  hoverImageUrl?: string | null
+  sizes: string
+}
+
+/** Packshot su bianco; su hover (solo desktop) crossfade verso l’ambientata. */
+export function DesignProductCardMedia({
+  imageUrl,
+  hoverImageUrl,
+  sizes,
+}: DesignProductCardMediaProps) {
+  const hoverSrc =
+    hoverImageUrl && !odooCatalogImageUrlsMatch(hoverImageUrl, imageUrl)
+      ? hoverImageUrl
+      : null
+
+  return (
+    <div className="relative aspect-[4/5] overflow-hidden bg-white">
+      {imageUrl ? (
+        <SiteImage
+          src={imageUrl}
+          alt=""
+          fill
+          className={cn(
+            'object-contain p-3 transition duration-500 ease-out',
+            hoverSrc
+              ? '[@media(hover:hover)]:group-hover:opacity-0'
+              : '[@media(hover:hover)]:group-hover:scale-[1.02]',
+          )}
+          sizes={sizes}
+        />
+      ) : null}
+      {hoverSrc ? (
+        <SiteImage
+          src={hoverSrc}
+          alt=""
+          fill
+          className={cn(
+            'object-cover opacity-0 transition-opacity duration-500 ease-out',
+            '[@media(hover:hover)]:group-hover:opacity-100',
+          )}
+          sizes={sizes}
+        />
+      ) : null}
+    </div>
+  )
+}
 
 type Props = {
   product: ProductCardDTO
@@ -34,17 +85,11 @@ export const DesignCatalogProductCard = memo(function DesignCatalogProductCard({
         to={to ?? lp(`/prodotto/${product.slug}`)}
         className="group flex h-full flex-col overflow-hidden rounded border border-idl-path-design-border bg-white transition hover:border-idl-brass hover:shadow-[0_6px_20px_rgba(0,0,0,0.06)] dark:bg-idl-tech-panel"
       >
-        <div className="relative aspect-[4/5] overflow-hidden bg-idl-cream">
-          {product.imageUrl ? (
-            <SiteImage
-              src={product.imageUrl}
-              alt=""
-              fill
-              className="object-cover transition duration-500 group-hover:scale-[1.02]"
-              sizes="(max-width:768px) 50vw, 33vw"
-            />
-          ) : null}
-        </div>
+        <DesignProductCardMedia
+          imageUrl={product.imageUrl}
+          hoverImageUrl={product.hoverImageUrl}
+          sizes="(max-width:768px) 50vw, 33vw"
+        />
         <div className="flex flex-1 flex-col p-3 sm:p-4">
           <ProductBrandMark
             brand={product.brand}

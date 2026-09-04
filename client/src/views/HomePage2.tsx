@@ -18,6 +18,8 @@ import {
   writeHomeProductSlidersClientCache,
 } from '@/lib/home-product-sliders-cache'
 import { HOME_SLIDER_PRODUCT_COUNT, resolveShowcaseProducts } from '@/lib/home-product-sliders'
+import { authStore } from '@/features/auth/auth.store'
+import { usesSessionPricelist } from '@/lib/catalog-pricing'
 import { CATALOG_DESIGN_CATEGORY_SLUG } from '@/lib/catalog-filters'
 import { HomePageSkeleton } from '@/components/Skeleton'
 import { PageLoadTransition } from '@/components/motion'
@@ -43,6 +45,8 @@ export function HomePage2({
 }: Props) {
   const { locale } = useLocale()
   const snap = useSnapshot(siteStore)
+  const authSnap = useSnapshot(authStore)
+  const sessionPrices = usesSessionPricelist(authSnap.me, authSnap.impersonation)
   const [productSliders, setProductSliders] = useState<HomeProductSliderDTO[]>(
     initialProductSliders ?? [],
   )
@@ -96,22 +100,24 @@ export function HomePage2({
       void api.catalog.brands().then((data) => setHubBrands(data.items)).catch(() => setHubBrands([]))
     }
 
-    if (initialProductSliders?.length) return
+    if (!sessionPrices && initialProductSliders?.length) return
 
-    const cached = readHomeProductSlidersClientCache(locale)
-    if (cached?.length) {
-      setProductSliders(cached)
-      return
+    if (!sessionPrices) {
+      const cached = readHomeProductSlidersClientCache(locale)
+      if (cached?.length) {
+        setProductSliders(cached)
+        return
+      }
     }
 
     void api.catalog
       .homeProductSliders(locale)
       .then((data) => {
-        writeHomeProductSlidersClientCache(locale, data)
+        if (!sessionPrices) writeHomeProductSlidersClientCache(locale, data)
         setProductSliders(data)
       })
       .catch(() => setProductSliders([]))
-  }, [locale, initialProductSliders, initialBrands.length, initialFeaturedGuides.length])
+  }, [locale, initialProductSliders, initialBrands.length, initialFeaturedGuides.length, sessionPrices])
 
   useEffect(() => {
     if (!cmsContent) return

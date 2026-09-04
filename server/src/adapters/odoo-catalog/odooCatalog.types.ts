@@ -48,6 +48,14 @@ export type OdooCatalogVariantAttribute = {
   attribute_id: number
   label: string
   value: string
+  /** `product.attribute.value.html_color` (hex/RGB). */
+  html_color?: string | number | null
+  htmlColor?: string | number | null
+  color_hex?: string | null
+  hex?: string | null
+  color_rgb?: string | number | readonly number[] | null
+  rgb?: string | number | readonly number[] | { r?: number; g?: number; b?: number } | null
+  color?: string | number | null
 }
 
 export type OdooCatalogAvailability = {
@@ -97,14 +105,34 @@ export type OdooCatalogDimensions = {
   height_cm?: number | null
 }
 
+/**
+ * Relazioni sul dettaglio prodotto (`GET /api/v2/product/<id>`).
+ *
+ * Campo Odoo website_sale → `relation`:
+ * - `alternative_product_ids` → `alternative` (sinonimi / equivalenti di marca)
+ * - `accessory_product_ids` → `accessory`
+ * - `optional_product_ids` → `optional` (accessori/optional, non equivalenti)
+ *
+ * Alias accettati per gli equivalenti: `equivalent`, `equivalente`, `synonym`,
+ * `sinonimo`, `oem`, `cross_reference`. Senza questi record la PWA nasconde la sezione.
+ */
 export type OdooCatalogRelatedProduct = {
-  relation?: 'related' | 'accessory' | 'alternative' | string
+  relation?: 'related' | 'accessory' | 'alternative' | 'optional' | string
+  /** ID `product.template` quando l’API catalogo lo espone. */
+  id?: number
   slug?: string
   title?: string
   short_description?: string
   price_from?: number
   currency?: string
   image?: OdooCatalogImage
+  brand?: OdooCatalogBrand | null
+  spec_tags?: string[]
+  specs?: OdooCatalogSpec[]
+  sku?: string | null
+  manufacturer_code?: string | null
+  ced?: string | null
+  ean?: string | null
   qty_available?: number
   availability?: OdooCatalogAvailability
 }
@@ -140,6 +168,10 @@ export type OdooCatalogProductListItem = {
   price_to: number
   currency: string
   image: OdooCatalogImage
+  /** Sul dettaglio è sempre presente; in lista solo se Odoo la espone. */
+  gallery?: OdooCatalogGalleryItem[]
+  hover_image?: OdooCatalogImage
+  image_ambiente?: OdooCatalogImage
   spec_tags?: string[]
   specs?: OdooCatalogSpec[]
   qty_available?: number

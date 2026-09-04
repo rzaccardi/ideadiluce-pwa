@@ -5,8 +5,8 @@ import { Link } from '@/lib/navigation'
 import { SectionContainer } from '../../primitives'
 import { BrandNameDisplay } from '../BrandNameDisplay'
 import {
-  isDesignCategory,
-  primaryCategoryLabel,
+  brandAreaBadgeClassName,
+  brandAreaBadges,
   type BrandCard,
   type BrandCategory,
 } from '@/lib/brand.defaults'
@@ -49,8 +49,7 @@ export function BrandDirectorySection({ brands, activeFilter, lp }: Props) {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {visible.map((brand) => {
-              const design = isDesignCategory(brand.categories)
-              const badge = primaryCategoryLabel(brand.categories)
+              const badges = brandAreaBadges(brand.categories)
               return (
                 <Link
                   key={brand.slug}
@@ -65,16 +64,21 @@ export function BrandDirectorySection({ brands, activeFilter, lp }: Props) {
                       size="sm"
                     />
                   </div>
-                  <span
-                    className={cn(
-                      'mb-2.5 inline-flex self-start rounded-[5px] border px-2 py-0.5 font-mono text-[10px] tracking-[0.06em]',
-                      design
-                        ? 'border-[#ece2d2] bg-idl-path-design text-idl-brass'
-                        : 'border-idl-tech-chip-border bg-idl-tech-chip text-idl-graphite-2',
-                    )}
-                  >
-                    {badge}
-                  </span>
+                  {badges.length ? (
+                    <div className="mb-2.5 flex flex-wrap gap-1">
+                      {badges.map((badge) => (
+                        <span
+                          key={badge.area}
+                          className={cn(
+                            'inline-flex self-start rounded-[5px] border px-2 py-0.5 font-mono text-[10px] tracking-[0.06em]',
+                            brandAreaBadgeClassName(badge.area),
+                          )}
+                        >
+                          {badge.label}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                   <p className="mb-3.5 text-[13px] leading-snug text-idl-graphite-2">{brand.description}</p>
                   <p className="mb-3.5 text-[12px] text-idl-muted">{brand.productLines}</p>
                   <div className="mt-auto flex items-center justify-between">

@@ -17,6 +17,7 @@ import {
   seedCatalogBootstrap,
   seedCatalogProducts,
 } from '@/features/catalog'
+import { authStore } from '@/features/auth/auth.store'
 import type { CatalogBootstrapServerData } from '@/lib/server-catalog'
 import type { ProductCardDTO } from '@/types/dto'
 import { getCategoryLandingContent } from '@/lib/category-landing.defaults'
@@ -42,7 +43,7 @@ import {
   buildTechnicalSubtypeChipsFromFacets,
   facetWattaggioNumericValues,
 } from '@/lib/catalog-facets-ui'
-import type { CatalogPriceBucket } from '@/lib/catalog-filters'
+import { scopeCatalogFacetsToWorld, type CatalogPriceBucket } from '@/lib/catalog-filters'
 import { catalogPendingLoadCount } from '@/lib/catalog-pagination'
 import { DesignCategoryView, TechnicalCategoryView } from '@/components/site/category'
 import type { CategoryLandingKey } from '@/types/category-landing'
@@ -76,6 +77,7 @@ export function ProductCategoryLandingPage({
   const world = pageKey === 'design' ? ('design' as const) : ('technical' as const)
 
   const cat = useSnapshot(catalogStore)
+  const authSnap = useSnapshot(authStore)
   const selectedFilterValues = useMemo(() => parseCategoryLandingFilters(params), [params])
   const brandParam = params.get('brand') ?? undefined
   const inStockFromUrl = params.get('inStock') === '1' || params.get('inStock') === 'true'
@@ -84,14 +86,24 @@ export function ProductCategoryLandingPage({
   const minPriceFromUrl = params.get('minPrice') ? Number(params.get('minPrice')) * 100 : undefined
   const maxPriceFromUrl = params.get('maxPrice') ? Number(params.get('maxPrice')) * 100 : undefined
 
+  const scopedFacets = useMemo(
+    () =>
+      scopeCatalogFacetsToWorld(
+        cat.facets as import('@/types/dto').CatalogFiltersDTO | null,
+        world,
+        cat.brands,
+      ),
+    [cat.brands, cat.facets, world],
+  )
+
   const filterGroups = useMemo(
     () =>
       buildLandingFilterGroupsFromFacets(
         pageKey,
-        cat.facets as import('@/types/dto').CatalogFiltersDTO | null,
+        scopedFacets ?? null,
         content.filterGroups,
       ),
-    [pageKey, cat.facets, content.filterGroups],
+    [pageKey, scopedFacets, content.filterGroups],
   )
 
   const inStockOnly = resolveCategoryLandingInStock(selectedFilterValues, inStockFromUrl)
@@ -119,12 +131,12 @@ export function ProductCategoryLandingPage({
   const wattaggioMax =
     wattaggioMaxNum != null && Number.isFinite(wattaggioMaxNum) ? wattaggioMaxNum : undefined
   const wattaggioValues = useMemo(
-    () => facetWattaggioNumericValues(cat.facets as import('@/types/dto').CatalogFiltersDTO | null),
-    [cat.facets],
+    () => facetWattaggioNumericValues(scopedFacets ?? null),
+    [scopedFacets],
   )
 
   const landingContent = useMemo(() => {
-    const facets = cat.facets as import('@/types/dto').CatalogFiltersDTO | null
+    const facets = scopedFacets ?? null
     if (isDesign) {
       return {
         ...content,
@@ -146,11 +158,11 @@ export function ProductCategoryLandingPage({
       filterGroups,
     }
   }, [
-    cat.facets,
     content,
     filterGroups,
     isDesign,
     pageKey,
+    scopedFacets,
     specFilters.categorySlugFromFacet,
   ])
 
@@ -315,6 +327,9 @@ export function ProductCategoryLandingPage({
     specFilters.stile,
     sortParam,
     world,
+    authSnap.isAuthenticated,
+    authSnap.me?.customerSegment,
+    authSnap.impersonation,
   ])
 
   useEffect(() => {

@@ -43,9 +43,26 @@ export type OdooCustomerResult = {
   odooPartnerId: number
 }
 
+export type OdooShippingDestination = {
+  odooPartnerId: number
+  kind: 'parent' | 'delivery' | 'contact'
+  label: string
+  profile: OdooCustomerProfile
+}
+
+export type OdooCustomerAccount = {
+  contactPartnerId: number
+  commercialPartnerId: number
+  contactIsCompany: boolean
+  profile: OdooCustomerProfile
+  business: OdooBusinessProfile
+}
+
 export interface OdooCustomerAdapter {
   findCustomerByEmail(ctx: OdooCallContext, email: string): Promise<OdooCustomerResult | null>
   getCustomerProfileByEmail(ctx: OdooCallContext, email: string): Promise<OdooCustomerProfile | null>
+  getCustomerAccountByEmail(ctx: OdooCallContext, email: string): Promise<OdooCustomerAccount | null>
+  getCustomerAccountByPartnerId(ctx: OdooCallContext, partnerId: number): Promise<OdooCustomerAccount | null>
   createCustomer(ctx: OdooCallContext, input: FindOrCreateCustomerInput): Promise<OdooCustomerResult>
   findOrCreateCustomer(ctx: OdooCallContext, input: FindOrCreateCustomerInput): Promise<OdooCustomerResult>
   updateCustomerBusiness(
@@ -58,6 +75,24 @@ export interface OdooCustomerAdapter {
     parentPartnerId: number,
     profile: OdooCustomerProfile,
   ): Promise<OdooCustomerResult>
+  listShippingDestinations(
+    ctx: OdooCallContext,
+    parentPartnerId: number,
+  ): Promise<OdooShippingDestination[]>
+  updateDeliveryPartner(
+    ctx: OdooCallContext,
+    partnerId: number,
+    profile: OdooCustomerProfile,
+  ): Promise<void>
+  archiveDeliveryPartner(ctx: OdooCallContext, partnerId: number): Promise<void>
+  resolveOrderShippingPartner(
+    ctx: OdooCallContext,
+    parentPartnerId: number,
+    input: {
+      shippingAddress?: Partial<OdooCustomerProfile> & { id?: string | null }
+      dropshipAddress?: Partial<OdooCustomerProfile> | null
+    },
+  ): Promise<OdooCustomerResult | null>
   updateCustomerProfile(
     ctx: OdooCallContext,
     partnerId: number,

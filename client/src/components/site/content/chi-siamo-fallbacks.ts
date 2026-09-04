@@ -6,7 +6,7 @@ export const CHI_SIAMO_STATS: Extract<ContentBlock, { kind: 'stats' }> = {
     { value: '25+', label: 'anni di esperienza' },
     { value: '8.000+', label: 'prodotti a catalogo' },
     { value: '120+', label: 'brand selezionati' },
-    { value: '∞', label: 'spedizioni in tutto il mondo' },
+    { value: '∞', label: 'Spedizioni tracciate in tutto il mondo' },
   ],
 }
 

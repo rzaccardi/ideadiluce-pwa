@@ -61,7 +61,8 @@ function hasLiveSearchFilters(query: {
   )
 }
 
-export async function proxyOdooCatalogProductList(query: {
+export async function proxyOdooCatalogProductList(
+  query: {
   locale?: string
   lang?: string
   page?: string

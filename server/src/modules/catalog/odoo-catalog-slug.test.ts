@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   brandSlugLookupKeys,
   canonicalizeBrandSlug,
+  inferCatalogWorldsFromCategorySlugs,
+  mergeCatalogBrandWorlds,
   slugifyBrandName,
   slugifyCatalogToken,
 } from './odoo-catalog-slug.js'
@@ -20,5 +22,16 @@ describe('odoo-catalog-slug', () => {
     expect(canonicalizeBrandSlug('tlb-italy')).toBe('tlb')
     expect(canonicalizeBrandSlug('TLB')).toBe('tlb')
     expect(brandSlugLookupKeys('tlb-italy')).toEqual(expect.arrayContaining(['tlb', 'tlb-italy']))
+  })
+
+  it('infersce design/tecnico dagli slug categoria Odoo', () => {
+    expect(inferCatalogWorldsFromCategorySlugs(['arredo', 'sospensioni'])).toEqual(['design'])
+    expect(inferCatalogWorldsFromCategorySlugs(['tecnico', 'led'])).toEqual(['technical'])
+    expect(inferCatalogWorldsFromCategorySlugs(['tecnico', 'arredo'])).toEqual(['design', 'technical'])
+    expect(inferCatalogWorldsFromCategorySlugs(['led'])).toEqual([])
+  })
+
+  it('unisce i mondi brand in ordine stabile', () => {
+    expect(mergeCatalogBrandWorlds(['technical'], ['design'])).toEqual(['design', 'technical'])
   })
 })

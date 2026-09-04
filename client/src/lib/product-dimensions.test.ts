@@ -3,6 +3,7 @@ import {
   buildAllProductDimensionRows,
   collectDimensionSpecRows,
   isDimensionSpecLabel,
+  isMeasureGalleryTag,
 } from './product-specs-parse'
 
 describe('collectDimensionSpecRows', () => {
@@ -70,5 +71,20 @@ describe('buildAllProductDimensionRows', () => {
       specRows: [{ label: 'Profondità', value: '12 cm', key: 'depth_mm' }],
     })
     expect(rows.map((r) => r.label)).toEqual(['Larghezza', 'Profondità', 'Altezza'])
+  })
+})
+
+describe('isMeasureGalleryTag', () => {
+  it('riconosce i tag gallery Odoo dello schema dimensioni', () => {
+    expect(isMeasureGalleryTag('dimensioni')).toBe(true)
+    expect(isMeasureGalleryTag('Dimensioni')).toBe(true)
+    expect(isMeasureGalleryTag('  DIMENSIONI  ')).toBe(true)
+    expect(isMeasureGalleryTag('misure')).toBe(true)
+    expect(isMeasureGalleryTag('misura')).toBe(true)
+    expect(isMeasureGalleryTag('dimensions')).toBe(true)
+    expect(isMeasureGalleryTag('foto')).toBe(false)
+    expect(isMeasureGalleryTag('attacco')).toBe(false)
+    expect(isMeasureGalleryTag(null)).toBe(false)
+    expect(isMeasureGalleryTag(undefined)).toBe(false)
   })
 })

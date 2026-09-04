@@ -4,6 +4,10 @@ import { isOdooCatalogConfigured } from '../../adapters/odoo-catalog/odooCatalog
 import { ok } from '../../lib/api-response.js'
 import { AppError } from '../../types/errors.js'
 import { asyncHandler } from '../../utils/async-handler.js'
+import {
+  applySessionPricelistToOdooCatalogDetail,
+  applySessionPricelistToOdooCatalogListItems,
+} from '../catalog/catalog-pricing.enrich.js'
 import { catalogProxyPricingQuery } from './odoo-catalog-proxy.pricing.js'
 import {
   proxyOdooCatalogFilters,
@@ -85,21 +89,33 @@ export const odooCatalogProxyController = {
           typeof req.query.enrich_spec_tags === 'string' ? req.query.enrich_spec_tags : undefined,
       })
       const data = await proxyOdooCatalogProductList(q)
+      const items = await applySessionPricelistToOdooCatalogListItems(
+        { correlationId: req.correlationId, req },
+        data.items,
+        q,
+      )
       applySessionPricingCacheHeaders(res, q)
-      res.json(ok(data))
+      res.json(ok({ ...data, items }))
     })
   }),
 
   productsSearch: asyncHandler(async (req: Request, res: Response) => {
     assertOdooCatalogProxyEnabled()
     await withOdooCatalogError(req.correlationId, async () => {
-      const data = await proxyOdooCatalogProductSearch({
+      const q = await catalogProxyPricingQuery(req, {
         ...catalogFilterQuery(req),
         page: typeof req.query.page === 'string' ? req.query.page : undefined,
         pageSize: typeof req.query.pageSize === 'string' ? req.query.pageSize : undefined,
         per_page: typeof req.query.per_page === 'string' ? req.query.per_page : undefined,
       })
-      res.json(ok(data))
+      const data = await proxyOdooCatalogProductSearch(q)
+      const items = await applySessionPricelistToOdooCatalogListItems(
+        { correlationId: req.correlationId, req },
+        data.items,
+        q,
+      )
+      applySessionPricingCacheHeaders(res, q)
+      res.json(ok({ ...data, items }))
     })
   }),
 
@@ -122,7 +138,11 @@ export const odooCatalogProxyController = {
         locale: typeof req.query.locale === 'string' ? req.query.locale : undefined,
         lang: typeof req.query.lang === 'string' ? req.query.lang : undefined,
       })
-      const data = await proxyOdooCatalogProductDetail(productId, q)
+      const data = await applySessionPricelistToOdooCatalogDetail(
+        { correlationId: req.correlationId, req },
+        await proxyOdooCatalogProductDetail(productId, q),
+        q,
+      )
       applySessionPricingCacheHeaders(res, q)
       res.json(ok(data))
     })
@@ -139,7 +159,11 @@ export const odooCatalogProxyController = {
         locale: typeof req.query.locale === 'string' ? req.query.locale : undefined,
         lang: typeof req.query.lang === 'string' ? req.query.lang : undefined,
       })
-      const data = await proxyOdooCatalogProductBySlug(slug, q)
+      const data = await applySessionPricelistToOdooCatalogDetail(
+        { correlationId: req.correlationId, req },
+        await proxyOdooCatalogProductBySlug(slug, q),
+        q,
+      )
       applySessionPricingCacheHeaders(res, q)
       res.json(ok(data))
     })

@@ -125,8 +125,10 @@ export function CheckoutToggleCheckbox({
     >
       <span
         className={cn(
-          'mt-0.5 flex size-[18px] shrink-0 items-center justify-center rounded-[5px] border-[1.5px] text-[11px] text-white',
-          checked ? 'border-[#14161b] bg-[#14161b]' : 'border-[#c0c5cc] bg-idl-tech-panel',
+          'mt-0.5 flex size-[18px] shrink-0 items-center justify-center rounded-[5px] border-[1.5px] text-[11px]',
+          checked
+            ? 'border-idl-ink bg-idl-ink text-idl-paper'
+            : 'border-[#c0c5cc] bg-idl-tech-panel text-transparent',
         )}
         aria-hidden
       >
@@ -165,8 +167,8 @@ export function CheckoutSelectableCard({
   const shared = cn(
     'flex w-full cursor-pointer items-center gap-3.5 rounded-xl border-[1.5px] p-4 text-left transition sm:gap-[15px] sm:px-[18px] sm:py-4',
     selected
-      ? 'border-[#14161b] bg-[#f4f5f7] shadow-[0_0_0_3px_rgba(120, 120, 125,0.18)]'
-      : 'border-idl-tech-border bg-idl-tech-panel hover:border-[#c0c5cc]',
+      ? 'border-idl-ink bg-idl-tech-chip shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-idl-ink)_22%,transparent)]'
+      : 'border-idl-tech-border bg-idl-tech-panel hover:border-idl-border-strong',
     disabled && 'pointer-events-none opacity-60',
     className,
   )
@@ -175,7 +177,7 @@ export function CheckoutSelectableCard({
     <span
       className={cn(
         'flex size-[18px] shrink-0 items-center justify-center rounded-full border-[5px] bg-idl-tech-panel',
-        selected ? 'border-[#14161b]' : 'border-[#c0c5cc]',
+        selected ? 'border-idl-ink' : 'border-[#c0c5cc]',
       )}
       aria-hidden
     />
@@ -219,8 +221,8 @@ export function CheckoutSegmentControl<T extends string>({
           className={cn(
             'rounded-[10px] px-2 py-2.5 text-xs font-bold leading-tight transition sm:px-3 sm:text-sm',
             value === option.value
-              ? 'bg-[#0c0c0d] text-white shadow-[0_2px_8px_rgba(12,12,13,0.25)]'
-              : 'text-idl-muted hover:bg-white/80 hover:text-idl-graphite',
+              ? 'bg-idl-ink text-idl-paper shadow-[0_2px_8px_rgba(12,12,13,0.25)]'
+              : 'text-idl-muted hover:bg-idl-tech-chip hover:text-idl-graphite',
           )}
         >
           {option.label}

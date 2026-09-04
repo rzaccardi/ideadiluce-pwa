@@ -13,7 +13,8 @@ import type { PaymentSessionDTO, UserAddressDTO } from '@/types/dto'
 import { getStripePublishableKey } from '@/lib/env'
 import { normalizeStripeClientSecret } from '@/lib/stripe-client-secret'
 import { isCheckoutAddressValid } from '@/lib/checkout-address.validators'
-import { checkoutStripeAppearance } from '@/components/checkout/stripe-ui/constants'
+import { getCheckoutStripeAppearance } from '@/components/checkout/stripe-ui/constants'
+import { useTheme } from '@/context/theme-context'
 import { WalletExpressCheckout } from '@/components/checkout/WalletExpressCheckout'
 import { useLocale } from '@/context/locale-context'
 import { useI18n } from '@/hooks/use-i18n'
@@ -76,6 +77,8 @@ function shippingFingerprint(address: UserAddressDTO | null | undefined) {
 export function WalletQuickPay({ disabled, className, productLine, cartFingerprint }: Props) {
   const { t } = useI18n()
   const { locale } = useLocale()
+  const { isDark } = useTheme()
+  const stripeAppearance = getCheckoutStripeAppearance(isDark)
   const navigate = useNavigate()
   const auth = useSnapshot(authStore)
   const [stripeEnabled, setStripeEnabled] = useState<boolean | null>(null)
@@ -231,11 +234,12 @@ export function WalletQuickPay({ disabled, className, productLine, cartFingerpri
   return (
     <div className={cn('min-w-[140px] shrink-0', className)}>
       <CheckoutElementsProvider
+        key={isDark ? 'wallet-dark' : 'wallet-light'}
         stripe={stripePromise}
         options={{
           clientSecret: normalizedClientSecret,
           elementsOptions: {
-            appearance: checkoutStripeAppearance,
+            appearance: stripeAppearance,
           },
         }}
       >

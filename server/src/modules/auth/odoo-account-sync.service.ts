@@ -17,7 +17,8 @@ import {
 import { authRepository } from './auth.repository.js'
 import { authService, mergeCartsForUser, sessionExpiry } from './auth.service.js'
 import type { UserDTO } from '../../types/dto.js'
-import type { OdooCustomerProfile } from '../../adapters/odoo/odooCustomerAdapter.js'
+import type { OdooCustomerAccount, OdooCustomerProfile } from '../../adapters/odoo/odooCustomerAdapter.js'
+import { hydrateUserBusinessFromOdoo } from '../users/users-odoo-business-hydrate.js'
 
 const customerAdapter = createOdooCustomerAdapter()
 
@@ -61,11 +62,16 @@ export async function loginWithOdooCredentials(
   if (!odooUid) return null
 
   let profile: OdooCustomerProfile | null = null
+  let account: OdooCustomerAccount | null = null
   let odooPartnerId: number | null = null
 
-  profile = await customerAdapter.getCustomerProfileByEmail(ctx, normalized)
-  const partner = await customerAdapter.findCustomerByEmail(ctx, normalized)
-  odooPartnerId = partner?.odooPartnerId ?? null
+  account = await customerAdapter.getCustomerAccountByEmail(ctx, normalized)
+  profile = account?.profile ?? null
+  odooPartnerId = account?.contactPartnerId ?? null
+  if (!odooPartnerId) {
+    const partner = await customerAdapter.findCustomerByEmail(ctx, normalized)
+    odooPartnerId = partner?.odooPartnerId ?? null
+  }
   if (!odooPartnerId) {
     const portal = await findOdooPortalUserByEmail(ctx, normalized)
     odooPartnerId = portal?.odooPartnerId ?? null
@@ -79,8 +85,6 @@ export async function loginWithOdooCredentials(
       where: { id: existing.id },
       data: {
         passwordHash,
-        firstName: profile?.firstName?.trim() || existing.firstName,
-        lastName: profile?.lastName?.trim() || existing.lastName,
         phone: profile?.phone?.trim() || existing.phone,
       },
     })
@@ -129,6 +133,14 @@ export async function loginWithOdooCredentials(
     })
   }
 
+  const userId = existing?.id ?? (await authRepository.findUserByEmail(normalized))?.id
+  if (userId) {
+    const fresh = await prisma.user.findUnique({ where: { id: userId } })
+    if (fresh) {
+      await hydrateUserBusinessFromOdoo(fresh, ctx, { account, force: true })
+    }
+  }
+
   return authService.loginByVerifiedEmail(normalized, sessionId)
 }
 
@@ -146,7 +158,8 @@ export async function ensurePwaUserStubFromOdoo(
   const portal = await findOdooPortalUserByEmail(ctx, normalized)
   if (!portal) return false
 
-  const profile = await customerAdapter.getCustomerProfileByEmail(ctx, normalized)
+  const account = await customerAdapter.getCustomerAccountByPartnerId(ctx, portal.odooPartnerId)
+  const profile = account?.profile ?? null
   const user = await prisma.user.create({
     data: {
       email: normalized,
@@ -181,6 +194,11 @@ export async function ensurePwaUserStubFromOdoo(
     email: normalized,
     odooPartnerId: portal.odooPartnerId,
   })
+
+  const fresh = await prisma.user.findUnique({ where: { id: user.id } })
+  if (fresh) {
+    await hydrateUserBusinessFromOdoo(fresh, ctx, { account, force: true })
+  }
 
   return true
 }

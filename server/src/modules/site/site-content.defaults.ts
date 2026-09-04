@@ -49,7 +49,7 @@ function attaccoMegaMenuColumns() {
 export const DEFAULT_SHELL_IT: SiteShellContent = {
   utilityBar: {
     messages: [
-      'Spedizione tracciata in tutta Italia',
+      'Spedizioni tracciate in tutto il mondo',
       'Assistenza tecnica reale',
       'Catalogo per professionisti',
     ],

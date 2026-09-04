@@ -130,7 +130,8 @@ Risposta (campi del summary **più** i seguenti):
         "ced": "102261",
         "manufacturer_code": "4050300517872",
         "attributes": [
-          {"attribute_id": 5, "label": "Colore luce", "value": "Bianco freddo"}
+          {"attribute_id": 5, "label": "Colore luce", "value": "Bianco freddo"},
+          {"attribute_id": 1, "label": "Colore", "value": "Nero", "html_color": "#1F1C17"}
         ],
         "lst_price": 4.9,
         "image": {"url": "/web/image/product.product/9124/image_512", "alt": ""},
@@ -187,7 +188,7 @@ Se ti serve solo la visualizzazione, ignora `value` e usa direttamente `display`
 - Sempre presente, anche per prodotti mono-variante (array con 1 elemento).
 - `ced`: codice univoco TLB a 6 cifre, copertura 100% — è l'identificatore variante di riferimento (per carrello, deep-link documenti, ecc.).
 - `manufacturer_code`: MPN/EAN del produttore, può essere `null`.
-- `attributes[]`: coppie label/value tradotte (es. Colore luce → Bianco freddo) per costruire i selettori variante.
+- `attributes[]`: coppie label/value tradotte (es. Colore luce → Bianco freddo) per costruire i selettori variante. Per attributi colore/finitura includere `html_color` (hex da `product.attribute.value.html_color`) così i pallini swatch usano il RGB reale.
 - `lst_price`: prezzo della variante inclusi gli extra degli attributi.
 
 ### 3.4 `documents[]`
@@ -205,6 +206,37 @@ es. https://tlbdb.odoo.com/product-docs/102261/datasheet/current
 ```
 
 Se il documento non esiste → `404`.
+
+### 3.5 `related_products[]` — accessori, related ed equivalenti di marca
+
+Array opzionale sul dettaglio. La PWA **non inventa matching**: se manca o è vuoto, le sezioni correlate restano nascoste.
+
+| `relation` | Campo Odoo `product.template` (website_sale) | Uso PWA |
+|---|---|---|
+| `alternative` | **`alternative_product_ids`** | Sinonimi / equivalenti: stesso attacco e specifiche, **marca diversa**. PDP tecnica: «Stesso prodotto, altre marche». |
+| `accessory` | `accessory_product_ids` | Accessori (task separato). |
+| `optional` | `optional_product_ids` | Optional / upsell, mappato come accessorio. |
+| `related` | related generici | «Ti potrebbe interessare» — **non** usato come equivalente. |
+
+Alias accettati per gli equivalenti: `equivalent`, `equivalente`, `synonym`, `sinonimo`, `oem`, `cross_reference`.
+
+Campi attesi per ogni item (oltre a `relation`):
+
+```json
+{
+  "relation": "alternative",
+  "id": 8120,
+  "slug": "tubo-t8-36w-osram",
+  "title": "OSRAM T8 36W G13 4000K",
+  "short_description": "Tubo equivalente G13 36 W",
+  "price_from": 5.2,
+  "currency": "EUR",
+  "image": {"url": "/web/image/product.template/8120/image_512", "alt": ""},
+  "brand": {"slug": "osram", "name": "OSRAM"}
+}
+```
+
+`brand` è importante sulla PDP tecnica: è ciò che distingue le versioni identiche. `spec_tags` / `specs` sono opzionali.
 
 ---
 

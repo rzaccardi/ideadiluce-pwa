@@ -137,6 +137,33 @@ describe('mapOdooCatalogProductDetail contratto v2', () => {
     expect(dto.defaultCode).toBeNull()
   })
 
+  it('propaga html_color Odoo sugli attributi variante', () => {
+    const dto = mapOdooCatalogProductDetail(
+      {
+        ...fixtureDetail,
+        variants: [
+          {
+            ...fixtureDetail.variants[0],
+            attributes: [
+              {
+                attribute_id: 1,
+                label: 'Colore',
+                value: 'Nero opaco',
+                html_color: '#1F1C17',
+              },
+            ],
+          },
+        ],
+      },
+      'IT',
+    )
+    expect(dto.variants[0].attributes[0]).toEqual({
+      name: 'Colore',
+      value: 'Nero opaco',
+      htmlColor: '#1f1c17',
+    })
+  })
+
   it('lista card usa image_512 e non dipende da default_code', () => {
     const card = mapOdooCatalogListItem(
       {
@@ -150,5 +177,105 @@ describe('mapOdooCatalogProductDetail contratto v2', () => {
     expect(card.imageUrl).toContain('image_512')
     expect(card.defaultCode).toBeNull()
     expect(card.sku).toBe('MPN')
+    expect(card.hoverImageUrl).toBeNull()
+  })
+
+  it('card arredo: hover dalla prima foto ambiente, packshot resta image principale', () => {
+    const card = mapOdooCatalogListItem(
+      {
+        ...fixtureDetail,
+        gallery: [
+          { type: 'image', tag: 'foto', url: '/web/image/product.template/6673/image_1920', alt: '' },
+          { type: 'image', tag: 'ambiente', url: '/web/image/product.image/900/image_1920', alt: '' },
+        ],
+      },
+      'IT',
+    )
+    expect(card.imageUrl).toContain('/product.template/6673/')
+    expect(card.imageUrl).toContain('image_512')
+    expect(card.hoverImageUrl).toContain('/product.image/900/')
+    expect(card.hoverImageUrl).toContain('image_512')
+  })
+
+  it('separa equivalenti di marca da accessori e related', () => {
+    const dto = mapOdooCatalogProductDetail(
+      {
+        ...fixtureDetail,
+        related_products: [
+          {
+            relation: 'equivalent',
+            slug: 'tubo-t8-36w-osram',
+            title: 'OSRAM T8 36W G13 4000K',
+            price_from: 5.2,
+            currency: 'EUR',
+            brand: { slug: 'osram', name: 'OSRAM' },
+          },
+          {
+            relation: 'sinonimo',
+            slug: 'tubo-t8-36w-philips',
+            title: 'Philips T8 36W G13',
+            price_from: 5.5,
+            currency: 'EUR',
+            brand: { slug: 'philips', name: 'PHILIPS' },
+          },
+          {
+            relation: 'accessory',
+            slug: 'portalampade-g13',
+            title: 'Portalampade G13',
+            price_from: 1.2,
+            currency: 'EUR',
+          },
+          {
+            relation: 'related',
+            slug: 'tubo-t8-18w',
+            title: 'Tubo T8 18W',
+            price_from: 3.1,
+            currency: 'EUR',
+          },
+        ],
+      },
+      'IT',
+    )
+
+    expect((dto.alternatives ?? []).map((item) => item.slug)).toEqual([
+      'tubo-t8-36w-osram',
+      'tubo-t8-36w-philips',
+    ])
+    expect((dto.alternatives ?? []).every((item) => item.relation === 'alternative')).toBe(true)
+    expect(dto.alternatives?.[0]?.brand).toEqual({ slug: 'osram', name: 'OSRAM' })
+    expect((dto.accessories ?? []).map((item) => item.slug)).toEqual(['portalampade-g13'])
+    expect((dto.relatedProducts ?? []).map((item) => item.slug)).toEqual(['tubo-t8-18w'])
+  })
+
+  it('propaga id template sugli accessori (id esplicito o da URL immagine)', () => {
+    const dto = mapOdooCatalogProductDetail(
+      {
+        ...fixtureDetail,
+        related_products: [
+          {
+            relation: 'accessory',
+            id: 55,
+            slug: 'lampadina-e27',
+            title: 'Lampadina E27',
+            price_from: 8.9,
+            currency: 'EUR',
+          },
+          {
+            relation: 'optional',
+            slug: 'dimmer',
+            title: 'Dimmer',
+            price_from: 24,
+            currency: 'EUR',
+            image: { url: '/web/image/product.template/66/image_512', alt: '' },
+          },
+        ],
+      },
+      'IT',
+    )
+
+    expect(dto.accessories).toHaveLength(2)
+    expect(dto.accessories?.[0]?.odooTemplateId).toBe(55)
+    expect(dto.accessories?.[1]?.relation).toBe('accessory')
+    expect(dto.accessories?.[1]?.odooTemplateId).toBe(66)
   })
 })

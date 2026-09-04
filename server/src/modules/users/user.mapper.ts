@@ -33,6 +33,8 @@ export function parseShippingAddressJson(json: unknown): UserAddressDTO | null {
     country: typeof address.country === 'string' ? address.country : 'IT',
     phone: typeof address.phone === 'string' ? address.phone : undefined,
     courierNotes: typeof address.courierNotes === 'string' ? address.courierNotes : undefined,
+    id: typeof address.id === 'string' && address.id.trim() ? address.id.trim() : undefined,
+    label: typeof address.label === 'string' && address.label.trim() ? address.label.trim() : undefined,
   }
 }
 

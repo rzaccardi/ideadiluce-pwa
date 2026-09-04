@@ -27,7 +27,7 @@ export function ShippingMethodOption({ quote, selected, selecting, disabled, loc
       onSelect={onSelect}
     >
       <div className={cn('flex items-center gap-3.5 sm:gap-4', locked && 'opacity-55')}>
-        <div className="flex size-[42px] shrink-0 items-center justify-center rounded-[9px] bg-[#eef7f1] p-1 sm:p-1.5">
+        <div className="flex size-[42px] shrink-0 items-center justify-center rounded-[9px] bg-white p-1 sm:p-1.5 dark:bg-idl-cream">
           <CarrierLogo carrierCode={quote.carrierCode} source={quote.source} className="h-6 w-14 sm:h-7 sm:w-[4.5rem]" />
         </div>
         <div className="min-w-0 flex-1">

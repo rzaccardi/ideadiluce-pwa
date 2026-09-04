@@ -112,6 +112,9 @@ export function checkoutCountryLabel(code: string) {
   return CHECKOUT_COUNTRIES.find((c) => c.code === code)?.label ?? code
 }
 
+const CHECKOUT_STRIPE_FONT =
+  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+
 export const checkoutStripeAppearance = {
   theme: 'stripe' as const,
   variables: {
@@ -119,7 +122,7 @@ export const checkoutStripeAppearance = {
     colorBackground: '#ffffff',
     colorText: CHECKOUT_BRAND.fg,
     colorDanger: '#dc2626',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    fontFamily: CHECKOUT_STRIPE_FONT,
     spacingUnit: '4px',
     borderRadius: '6px',
   },
@@ -132,4 +135,47 @@ export const checkoutStripeAppearance = {
       fontWeight: '500',
     },
   },
+}
+
+/** Appearance Stripe per dark mode (tab / input / metodo selezionato). */
+export const checkoutStripeAppearanceDark = {
+  theme: 'night' as const,
+  variables: {
+    colorPrimary: '#f1e8d8',
+    colorBackground: '#1c1c1e',
+    colorText: '#e8e4dc',
+    colorTextSecondary: '#b0b0b4',
+    colorTextPlaceholder: '#6b6b70',
+    colorDanger: '#dc2626',
+    fontFamily: CHECKOUT_STRIPE_FONT,
+    spacingUnit: '4px',
+    borderRadius: '6px',
+  },
+  rules: {
+    '.Input': {
+      border: '1px solid #2e2e32',
+      backgroundColor: '#161617',
+      color: '#e8e4dc',
+      boxShadow: 'none',
+    },
+    '.Label': {
+      fontWeight: '500',
+      color: '#e8e4dc',
+    },
+    '.Tab': {
+      backgroundColor: '#161617',
+      border: '1px solid #2e2e32',
+      color: '#b0b0b4',
+    },
+    '.Tab--selected': {
+      backgroundColor: '#1c1c1e',
+      border: '1px solid #f1e8d8',
+      color: '#f1e8d8',
+      boxShadow: '0 0 0 1px #f1e8d8',
+    },
+  },
+}
+
+export function getCheckoutStripeAppearance(isDark: boolean) {
+  return isDark ? checkoutStripeAppearanceDark : checkoutStripeAppearance
 }

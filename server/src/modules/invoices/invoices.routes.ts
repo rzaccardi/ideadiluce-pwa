@@ -27,6 +27,8 @@ invoicesRouter.get(
     )
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+    res.setHeader('Cache-Control', 'private, no-store')
+    res.setHeader('Content-Length', String(buffer.length))
     res.send(buffer)
   }),
 )

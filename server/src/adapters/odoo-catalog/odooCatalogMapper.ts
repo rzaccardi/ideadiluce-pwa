@@ -11,12 +11,18 @@ import type {
   ProductVariantAttributeDTO,
   ProductVariantDTO,
 } from '../../types/dto.js'
+import { htmlColorFromOdooAttribute } from './odooAttributeColor.js'
 import {
   deriveInStockFromAvailability,
   parseOdooCatalogAvailability,
   parseOdooCatalogDocuments,
 } from './odooCatalogParsers.js'
-import { resolveOdooCatalogMediaUrl, resolveOdooCatalogMediaUrlWithSize } from './odooCatalogMedia.js'
+import {
+  odooCatalogImageUrlsMatch,
+  resolveOdooCatalogMediaUrl,
+  resolveOdooCatalogMediaUrlWithSize,
+} from './odooCatalogMedia.js'
+import { pickProductCardHoverImageUrl } from '../../lib/product-card-hover-image.js'
 import { buildTechnicalCardSpecTags } from '../../lib/technical-card-spec-tags.js'
 import { resolveTechnicalProductCardMeta } from '../../lib/technical-product-ref.js'
 import type {
@@ -95,17 +101,40 @@ function variantLabel(attributes: ProductVariantAttributeDTO[], ced: string): st
   return ced || 'Variante'
 }
 
+const ALTERNATIVE_RELATIONS = new Set([
+  'alternative',
+  'equivalent',
+  'equivalente',
+  'synonym',
+  'sinonimo',
+  'oem',
+  'cross_reference',
+  'cross-reference',
+])
+
 function normalizeRelation(
   value: string | undefined,
   fallback: ProductRelatedDTO['relation'],
 ): ProductRelatedDTO['relation'] {
-  if (value === 'accessory' || value === 'alternative' || value === 'related') return value
+  const key = value?.trim().toLowerCase()
+  if (key === 'optional' || key === 'accessory' || key === 'accessorio') return 'accessory'
+  if (key && ALTERNATIVE_RELATIONS.has(key)) return 'alternative'
+  if (key === 'related') return 'related'
   return fallback
+}
+
+function relatedTemplateId(item: OdooCatalogRelatedProduct): number {
+  if (typeof item.id === 'number' && Number.isInteger(item.id) && item.id > 0) return item.id
+  const url = item.image?.url ?? ''
+  const match = /\/product\.template\/(\d+)\//.exec(url)
+  if (!match) return 0
+  const id = Number(match[1])
+  return Number.isInteger(id) && id > 0 ? id : 0
 }
 
 function relatedToListItem(item: OdooCatalogRelatedProduct): OdooCatalogProductListItem {
   return {
-    id: 0,
+    id: relatedTemplateId(item),
     title: item.title ?? item.slug ?? '',
     slug: item.slug ?? '',
     short_description: item.short_description ?? '',
@@ -115,6 +144,13 @@ function relatedToListItem(item: OdooCatalogRelatedProduct): OdooCatalogProductL
     image: item.image ?? { url: '', alt: '' },
     availability: item.availability,
     qty_available: item.qty_available,
+    brand: item.brand ?? null,
+    spec_tags: item.spec_tags,
+    specs: item.specs,
+    sku: item.sku,
+    manufacturer_code: item.manufacturer_code,
+    ced: item.ced,
+    ean: item.ean,
   }
 }
 
@@ -185,6 +221,30 @@ function normalizeGalleryItem(item: OdooCatalogGalleryItem | { url: string; alt?
   }
 }
 
+export function resolveOdooCatalogCardHoverImageUrl(
+  product: Pick<OdooCatalogProductListItem, 'gallery'> & {
+    hover_image?: OdooCatalogProductListItem['hover_image']
+    image_ambiente?: OdooCatalogProductListItem['image_ambiente']
+  },
+  packshotUrl: string | null,
+): string | null {
+  const dedicated = resolveOdooCatalogMediaUrlWithSize(
+    product.hover_image?.url ?? product.image_ambiente?.url,
+    'image_512',
+  )
+  if (dedicated && !odooCatalogImageUrlsMatch(dedicated, packshotUrl)) return dedicated
+
+  const resolved = (product.gallery ?? []).map((item) => ({
+    type: 'type' in item ? item.type : 'image',
+    tag: 'tag' in item ? item.tag : 'foto',
+    url:
+      'type' in item && item.type === 'video'
+        ? null
+        : resolveOdooCatalogMediaUrlWithSize(item.url, 'image_512'),
+  }))
+  return pickProductCardHoverImageUrl(resolved, packshotUrl, odooCatalogImageUrlsMatch)
+}
+
 function mapGallery(raw: OdooCatalogProductDetail['gallery']): ProductGalleryItemDTO[] {
   if (!raw?.length) return []
   const items: ProductGalleryItemDTO[] = []
@@ -219,6 +279,7 @@ export function mapOdooCatalogListItem(product: OdooCatalogProductListItem, loca
   })
   const { brand, sku } = resolveTechnicalProductCardMeta(product)
   const codes = resolveListCodes(product)
+  const imageUrl = resolveOdooCatalogMediaUrlWithSize(product.image?.url, 'image_512')
 
   return {
     slug: product.slug,
@@ -229,7 +290,8 @@ export function mapOdooCatalogListItem(product: OdooCatalogProductListItem, loca
     priceCents: eurosToCents(product.price_from),
     priceDisplayMode: 'ex_vat',
     currency: product.currency || 'EUR',
-    imageUrl: resolveOdooCatalogMediaUrlWithSize(product.image?.url, 'image_512'),
+    imageUrl,
+    hoverImageUrl: resolveOdooCatalogCardHoverImageUrl(product, imageUrl),
     categorySlug: categories[0]?.slug ?? product.category_slug ?? null,
     brand,
     sku: sku ?? codes.sku,
@@ -259,10 +321,14 @@ export function mapOdooCatalogProductDetail(
   const templateSpecs = mapOdooCatalogSpecs(product.specs)
 
   const variants: ProductVariantDTO[] = (product.variants ?? []).map((v) => {
-    const attributes: ProductVariantAttributeDTO[] = (v.attributes ?? []).map((a) => ({
-      name: a.label,
-      value: a.value,
-    }))
+    const attributes: ProductVariantAttributeDTO[] = (v.attributes ?? []).map((a) => {
+      const htmlColor = htmlColorFromOdooAttribute(a)
+      return {
+        name: a.label,
+        value: a.value,
+        ...(htmlColor ? { htmlColor } : {}),
+      }
+    })
     const availability =
       parseOdooCatalogAvailability(v.availability, availabilityFlat(v)) ?? templateAvailability
     const ced = trimOrNull(v.ced)

@@ -274,11 +274,13 @@ export function brandCatalogHref(slug: string): string {
   return brandHref(slug)
 }
 
+const AREA_CATEGORIES = new Set<BrandCategory>(['design', 'tecnico', 'decorativo'])
+
 function categoryLabel(category: BrandCategory): string {
   const labels: Record<BrandCategory, string> = {
-    design: 'DESIGN',
+    design: 'ARREDO',
     tecnico: 'TECNICO',
-    decorativo: 'DECORATIVO',
+    decorativo: 'ARREDO',
     outdoor: 'OUTDOOR',
     smart: 'SMART',
     professionale: 'TECNICO · PRO',
@@ -288,16 +290,57 @@ function categoryLabel(category: BrandCategory): string {
   return labels[category]
 }
 
+function categoriesFromWorlds(
+  worlds?: ReadonlyArray<'design' | 'technical'>,
+): BrandCategory[] {
+  const out: BrandCategory[] = []
+  if (worlds?.includes('design')) out.push('design')
+  if (worlds?.includes('technical')) out.push('tecnico')
+  return out
+}
+
+/** Categorie area da Odoo (`worlds`); i tag editoriali restano da `BRAND_META`. */
+export function resolveBrandCategories(
+  hub?: Pick<BrandListItemDTO, 'worlds'>,
+  meta?: Pick<BrandMeta, 'categories'>,
+): BrandCategory[] {
+  const fromWorlds = categoriesFromWorlds(hub?.worlds)
+  const extras = (meta?.categories ?? []).filter((category) => !AREA_CATEGORIES.has(category))
+  if (fromWorlds.length) return [...fromWorlds, ...extras]
+  return meta?.categories?.length ? [...meta.categories] : []
+}
+
+export function brandAreaBadges(
+  categories: BrandCategory[],
+): Array<{ area: 'design' | 'technical'; label: string }> {
+  const badges: Array<{ area: 'design' | 'technical'; label: string }> = []
+  if (isDesignCategory(categories)) badges.push({ area: 'design', label: 'ARREDO' })
+  if (categories.includes('tecnico') || categories.includes('professionale')) {
+    badges.push({
+      area: 'technical',
+      label:
+        categories.includes('professionale') && !categories.includes('tecnico')
+          ? 'TECNICO · PRO'
+          : 'TECNICO',
+    })
+  }
+  return badges
+}
+
 export function primaryCategoryLabel(categories: BrandCategory[]): string {
-  if (categories.includes('design')) return categoryLabel('design')
-  if (categories.includes('professionale')) return categoryLabel('professionale')
-  if (categories.includes('decorativo')) return categoryLabel('decorativo')
-  if (categories.includes('tecnico')) return categoryLabel('tecnico')
-  return categoryLabel(categories[0] ?? 'tecnico')
+  const areas = brandAreaBadges(categories)
+  if (areas.length) return areas.map((badge) => badge.label).join(' · ')
+  return categories[0] ? categoryLabel(categories[0]) : ''
 }
 
 export function isDesignCategory(categories: BrandCategory[]): boolean {
   return categories.includes('design') || categories.includes('decorativo')
+}
+
+export function brandAreaBadgeClassName(area: 'design' | 'technical'): string {
+  return area === 'design'
+    ? 'border-[#ece2d2] bg-idl-path-design text-idl-brass'
+    : 'border-idl-tech-chip-border bg-idl-tech-chip text-idl-graphite-2'
 }
 
 function findBrandMeta(hub: BrandListItemDTO): BrandMeta | undefined {
@@ -328,7 +371,7 @@ function cardFromMeta(meta: BrandMeta, hub?: BrandListItemDTO): BrandCard {
     slug,
     name: hub?.name ?? meta.name,
     displayStyle: meta.displayStyle,
-    categories: meta.categories,
+    categories: resolveBrandCategories(hub, meta),
     description: meta.description,
     tags: meta.tags,
     productLines: meta.productLines,
@@ -345,7 +388,7 @@ function cardFromHub(hub: BrandListItemDTO, meta?: BrandMeta): BrandCard {
     slug,
     name: hub.name,
     displayStyle: 'bold',
-    categories: ['tecnico'],
+    categories: resolveBrandCategories(hub),
     description: '',
     tags: [],
     productLines: '',
@@ -428,7 +471,7 @@ export function mergeBrandCards(hubBrands: BrandListItemDTO[]): BrandCard[] {
       slug: hub.slug,
       name: hub.name,
       displayStyle: 'bold',
-      categories: ['tecnico'],
+      categories: resolveBrandCategories(hub),
       description: 'Marchio disponibile nel catalogo Idea di Luce.',
       tags: [],
       productLines: 'Catalogo completo',

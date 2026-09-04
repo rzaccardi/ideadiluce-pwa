@@ -3,9 +3,13 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { useSnapshot } from 'valtio/react'
-import { api } from '@/api/endpoints'
-import { fetchInvoicesList, invoicesStore } from '@/features/invoices'
-import { invoiceStateTone } from '@/lib/invoice-display'
+import { downloadInvoicePdf, fetchInvoicesList, invoicesStore } from '@/features/invoices'
+import {
+  invoicePaymentLabel,
+  invoicePaymentTone,
+  invoiceStateLabel,
+  invoiceStateTone,
+} from '@/lib/invoice-display'
 import type { InvoiceDTO } from '@/types/dto'
 import { AccountDcPanel } from '@/components/account/dc/AccountDcPanel'
 import { AccountDcStatusPill } from '@/components/account/dc/AccountDcStatusPill'
@@ -17,7 +21,7 @@ import { ExternalLink } from '@/lib/link-title'
 import { useI18n } from '@/hooks/use-i18n'
 
 export function AccountInvoicesPage() {
-  const { t } = useI18n()
+  const { locale, t } = useI18n()
   const invoices = useSnapshot(invoicesStore)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
 
@@ -29,13 +33,7 @@ export function AccountInvoicesPage() {
     if (!inv.pdfAvailable) return
     setDownloadingId(inv.id)
     try {
-      const blob = await api.invoices.downloadPdf(inv.id)
-      const url = URL.createObjectURL(blob)
-      const anchor = document.createElement('a')
-      anchor.href = url
-      anchor.download = `${inv.name}.pdf`
-      anchor.click()
-      URL.revokeObjectURL(url)
+      await downloadInvoicePdf(inv)
     } catch {
       toast.error(t('account.invoices.pdfDownloadError'))
     } finally {
@@ -59,7 +57,9 @@ export function AccountInvoicesPage() {
 
         {list && list.length > 0 ? (
           <div className="flex flex-col gap-3.5">
-            {list.map((inv) => (
+            {list.map((inv) => {
+              const paymentLabel = invoicePaymentLabel(inv.paymentState, locale)
+              return (
               <article key={inv.id} className="overflow-hidden rounded-xl border border-idl-tech-border bg-white dark:bg-idl-tech-panel">
                 <div className="flex flex-wrap items-center justify-between gap-3 bg-idl-tech-panel px-[18px] py-3.5">
                   <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
@@ -67,9 +67,15 @@ export function AccountInvoicesPage() {
                     <span className="text-[12.5px] text-idl-muted">
                       {inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleDateString('it-IT') : '—'}
                     </span>
-                    <AccountDcStatusPill label={inv.state} tone={invoiceStateTone(inv.state)} />
-                    {inv.paymentState ? (
-                      <span className="text-[12px] text-idl-muted">{inv.paymentState}</span>
+                    <AccountDcStatusPill
+                      label={invoiceStateLabel(inv.state, locale)}
+                      tone={invoiceStateTone(inv.state)}
+                    />
+                    {paymentLabel ? (
+                      <AccountDcStatusPill
+                        label={paymentLabel}
+                        tone={invoicePaymentTone(inv.paymentState)}
+                      />
                     ) : null}
                   </div>
                   <div className="flex items-center gap-[18px]">
@@ -104,7 +110,8 @@ export function AccountInvoicesPage() {
                   </div>
                 </div>
               </article>
-            ))}
+              )
+            })}
           </div>
         ) : null}
       </PageLoadTransition>

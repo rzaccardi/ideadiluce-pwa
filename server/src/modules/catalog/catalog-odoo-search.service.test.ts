@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { OdooCatalogFiltersResponse } from '../../adapters/odoo-catalog/odooCatalog.types.js'
-import { mapOdooCatalogFiltersResponse } from './catalog-odoo-search.service.js'
+import { mapOdooCatalogFiltersResponse, mergeBrandsFromWorldFacets } from './catalog-odoo-search.service.js'
 
 const fixture: OdooCatalogFiltersResponse = {
   website: { id: 2, name: 'PWA' },
@@ -84,5 +84,28 @@ describe('mapOdooCatalogFiltersResponse', () => {
     expect(dto.attacchi).toEqual([])
     expect(dto.colorTemps).toEqual([])
     expect(dto.specs).toEqual([])
+  })
+})
+
+describe('mergeBrandsFromWorldFacets', () => {
+  it('marca un brand in entrambe le aree se compare in arredo e tecnico', () => {
+    const brands = mergeBrandsFromWorldFacets([
+      { world: 'design', brands: [{ slug: 'philips', name: 'PHILIPS', count: 4 }] },
+      {
+        world: 'technical',
+        brands: [
+          { slug: 'philips', name: 'PHILIPS', count: 8 },
+          { slug: 'osram', name: 'OSRAM', count: 12 },
+        ],
+      },
+    ])
+
+    expect(brands.find((b) => b.slug === 'philips')).toMatchObject({
+      productCount: 12,
+      worlds: ['design', 'technical'],
+    })
+    expect(brands.find((b) => b.slug === 'osram')).toMatchObject({
+      worlds: ['technical'],
+    })
   })
 })

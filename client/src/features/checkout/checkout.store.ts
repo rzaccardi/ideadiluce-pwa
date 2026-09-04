@@ -9,6 +9,7 @@ import type {
   ShippingQuoteDTO,
   TaxBreakdownDTO,
   ThankYouOrderDTO,
+  UserShippingAddressDTO,
 } from '@/types/dto'
 import type { AddressInput } from '@/types/integrations'
 
@@ -73,6 +74,10 @@ export type CheckoutInitLoadingPhase =
 export const checkoutStore = proxy({
   checkoutMode: 'standard' as CheckoutMode,
   frozenOrderSummary: null as ThankYouOrderDTO | null,
+  /** Retry pagamento fallito: non resettare lo step verso account/prefill. */
+  paymentRetryActive: false,
+  paymentRetryOrderId: null as string | null,
+  paymentRetryStep: 'payment' as Extract<CheckoutStep, 'payment' | 'review'>,
   order: null as CheckoutStartDTO | null,
   payment: null as PaymentSessionDTO | null,
   result: null as PaymentConfirmDTO | null,
@@ -133,6 +138,9 @@ export const checkoutStore = proxy({
   anagraficaCollectedAtAccount: false,
   clientOrderRef: '',
   dropshipAddress: emptyCheckoutAddress(),
+  savedShippingAddresses: [] as UserShippingAddressDTO[],
+  savedShippingAddressesLoading: false,
+  selectedShippingAddressId: null as string | null,
   draft: {
     email: '',
     orderNotes: '',

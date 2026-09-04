@@ -6,6 +6,7 @@ import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odoo
 import { odooSalesService } from '../odoo/odoo-sales.service.js'
 import type { OdooSaleDocumentDTO } from '../odoo/odoo-sales.types.js'
 import { logger } from '../../lib/logger.js'
+import { loadOdooOrderLines } from './odoo-order-lines.js'
 import { loadPwaOrderLines } from './pwa-order-lines.js'
 import { cartService } from '../cart/cart.service.js'
 import type { Request } from 'express'
@@ -162,6 +163,24 @@ function enrichOrderDetail(base: OrderDTO, lines: OrderLineDTO[]): OrderDetailDT
   }
 }
 
+function parseOdooOrderId(id: string): number | null {
+  const match = /^odoo-(\d+)$/.exec(id)
+  if (!match) return null
+  const n = Number(match[1])
+  return Number.isInteger(n) && n > 0 ? n : null
+}
+
+async function resolveOrderLines(order: OrderDTO, correlationId: string): Promise<OrderLineDTO[]> {
+  if (order.pwaOrderId) {
+    const local = await loadPwaOrderLines(order.pwaOrderId)
+    if (local.length > 0) return local
+  }
+  if (order.odooSaleOrderId) {
+    return loadOdooOrderLines(order.odooSaleOrderId, correlationId)
+  }
+  return []
+}
+
 async function findOwnedPwaOrder(userId: string, id: string) {
   const pwaId = id.startsWith('pwa-') ? id.replace(/^pwa-/, '') : id
   return prisma.pwaOrder.findFirst({
@@ -230,10 +249,16 @@ export const ordersService = {
   },
 
   async getById(userId: string, id: string, correlationId = 'orders-detail'): Promise<OrderDetailDTO> {
-    if (id.startsWith('odoo-')) {
-      const order = (await this.list(userId, correlationId)).find((o) => o.id === id)
+    const odooSaleOrderId = parseOdooOrderId(id)
+    if (odooSaleOrderId != null || id.startsWith('odoo-')) {
+      const owned = await this.list(userId, correlationId)
+      const order =
+        owned.find((o) => o.id === id) ??
+        (odooSaleOrderId != null ? owned.find((o) => o.odooSaleOrderId === odooSaleOrderId) : undefined)
       if (order) {
-        return orderShipmentService.attachLive(enrichOrderDetail(order, []), correlationId)
+        const lines = await resolveOrderLines(order, correlationId)
+        const [withReturn] = await orderReturnRequestService.attachToOrders(userId, [order])
+        return orderShipmentService.attachLive(enrichOrderDetail(withReturn ?? order, lines), correlationId)
       }
       throw new AppError('ORDER_NOT_FOUND', 'Order not found', 'Ordine non trovato.', 404, false)
     }
@@ -241,8 +266,7 @@ export const ordersService = {
     const row = await ordersRepository.findForUser(userId, id)
     if (row) {
       const base = mapRow(row)
-      const pwaId = base.pwaOrderId ?? (base.id.startsWith('pwa-') ? base.id.replace(/^pwa-/, '') : null)
-      const lines = pwaId ? await loadPwaOrderLines(pwaId) : []
+      const lines = await resolveOrderLines(base, correlationId)
       const [withReturn] = await orderReturnRequestService.attachToOrders(userId, [base])
       return orderShipmentService.attachLive(enrichOrderDetail(withReturn ?? base, lines), correlationId)
     }
@@ -269,7 +293,7 @@ export const ordersService = {
       shipment: null,
       returnWindow: OPEN_RETURN_WINDOW,
     }
-    const lines = await loadPwaOrderLines(po.id)
+    const lines = await resolveOrderLines(base, correlationId)
     const [withReturn] = await orderReturnRequestService.attachToOrders(userId, [base])
     return orderShipmentService.attachLive(enrichOrderDetail(withReturn ?? base, lines), correlationId)
   },
@@ -294,8 +318,20 @@ export const ordersService = {
   },
 
   async recommendations(req: Request, userId: string, id: string): Promise<ProductCardDTO[]> {
-    const po = await findAccessiblePwaOrder(req, userId, id)
+    let po = await findAccessiblePwaOrder(req, userId, id)
     if (!po) {
+      const odooSaleOrderId = parseOdooOrderId(id)
+      if (odooSaleOrderId != null) {
+        po = await prisma.pwaOrder.findFirst({
+          where: {
+            odooSaleOrderId,
+            OR: [{ userId }, ...(req.sessionRecord?.id ? [{ sessionId: req.sessionRecord.id }] : [])],
+          },
+        })
+      }
+    }
+    if (!po) {
+      if (id.startsWith('odoo-')) return []
       throw new AppError('ORDER_NOT_FOUND', 'Order not found', 'Ordine non trovato.', 404, false)
     }
     const lines = await loadPwaOrderLines(po.id)

@@ -1,10 +1,12 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { ExternalLink } from '@/lib/link-title'
 import { Link } from '@/lib/navigation'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { formatMoney } from '@/lib/format'
+import { addItem, buildCartAddHintFromCard } from '@/features/cart'
+import { SiteImage } from '@/components/site/SiteImage'
 import { formatPriceDisplayModeLabel } from '@/lib/price-display'
 import type { ProductCardDTO, ProductDetailDTO } from '@/types/dto'
 import { ProductDescriptionHtml } from '@/components/product/ProductDescriptionHtml'
@@ -26,7 +28,9 @@ import {
   ProductSpecRowItem,
   buildProductSubtitle,
 } from './shared'
+import { CopyableEanValue } from '@/components/product/CopyableEanValue'
 import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMeta'
+import { isCopyableBarcodeLabel } from '@/lib/product-identifier-fields'
 import { ProductBrandMark } from '@/components/product/ProductBrandMark'
 import {
   ProductDetailBreadcrumb,
@@ -45,6 +49,7 @@ import {
   createAddToCartHandler,
 } from './ProductDetailStickyBar'
 import { ProductProfessionalBanner } from './ProductProfessionalBanner'
+import { TechnicalEquivalentProducts } from './TechnicalEquivalentProducts'
 import { formatAvailabilityPrimaryLabel } from '@/lib/product-availability'
 import type { useProductDetailState } from '@/hooks/use-product-detail-state'
 
@@ -81,7 +86,7 @@ function hasHtmlMarkup(raw: string | null | undefined): boolean {
   return /<\/?[a-z][\s\S]*?>/i.test(raw)
 }
 
-export function TechnicalProductDetailView({ product, relatedProducts, state }: Props) {
+export function TechnicalProductDetailView({ product, state }: Props) {
   const lp = useLocalePath()
   const {
     galleryImages,
@@ -110,9 +115,9 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
     return [...byId.values()]
   }, [product.documents, selectedVariant?.documents])
 
-  const alternativeProducts =
-    (product.alternatives?.length ? product.alternatives : relatedProducts) ?? []
-  const accessoryProducts = product.accessories ?? []
+  const equivalentProducts = product.alternatives ?? []
+  const accessoryProducts = (product.accessories ?? []).filter((item) => item.slug?.trim())
+  const [addingAccessorySlug, setAddingAccessorySlug] = useState<string | null>(null)
 
   const parsedSpecs = mergeProductAndVariantSpecs({
     productSpecs: product.specs,
@@ -234,8 +239,8 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                   className={cn(
                     'rounded-[5px] border px-[11px] py-1.5 font-mono text-[11.5px] text-idl-graphite',
                     /K$/i.test(tag) || /calda|naturale/i.test(tag)
-                      ? 'border-[#e4e4e7] bg-[#fbf1e3]'
-                      : 'border-idl-tech-chip-border bg-[#eef1f4]',
+                      ? 'border-idl-tech-chip-border bg-[#fbf1e3] dark:bg-idl-tech-chip'
+                      : 'border-idl-tech-chip-border bg-idl-tech-chip',
                   )}
                 >
                   {tag}
@@ -349,6 +354,7 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
           </div>
 
             <div className="mt-3.5 flex flex-wrap gap-[18px] text-[12.5px] text-idl-muted">
+              <span>✓ Spedizioni tracciate in tutto il mondo</span>
               <span>✓ {t('product.trust.returnBadge')}</span>
               <span>✓ Garanzia 2 anni</span>
               <span>✓ Pagamenti sicuri</span>
@@ -465,6 +471,8 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
                             <ExternalLink href={row.href} target="_blank" rel="noopener noreferrer" className="text-idl-amber underline-offset-2 hover:underline">
                               {row.value}
                             </ExternalLink>
+                          ) : row.value && isCopyableBarcodeLabel(row.label) ? (
+                            <CopyableEanValue value={row.value} />
                           ) : (
                             row.value
                           )}
@@ -523,85 +531,57 @@ export function TechnicalProductDetailView({ product, relatedProducts, state }: 
       </section>
       ) : null}
 
-      {alternativeProducts.length > 0 ? (
-      <SectionContainer className="py-10 sm:py-12">
-        <h2 className="text-xl font-extrabold tracking-tight sm:text-[22px]">Non è quella giusta?</h2>
-        <p className="mt-1.5 text-sm text-idl-muted">
-          Le alternative più simili per lunghezza, colore luce e dimmerabilità.
-        </p>
-        <div className="mt-5 overflow-hidden rounded-xl border border-idl-tech-border bg-white dark:bg-idl-tech-panel">
-          <div className="grid grid-cols-[2fr_repeat(4,1fr)_1.1fr] border-b border-idl-tech-border bg-idl-tech-panel font-mono text-[11px] tracking-wide text-idl-muted max-lg:hidden">
-            <div className="px-4 py-3">PRODOTTO</div>
-            <div className="px-3 py-3">LUNGH.</div>
-            <div className="px-3 py-3">WATT</div>
-            <div className="px-3 py-3">LUCE</div>
-            <div className="px-3 py-3">DIMMER</div>
-            <div className="px-3 py-3" />
-          </div>
-
-          <div className="border-b border-idl-tech-chip bg-amber-50/50 px-4 py-3.5 max-lg:space-y-1 lg:grid lg:grid-cols-[2fr_repeat(4,1fr)_1.1fr] lg:items-center lg:px-0">
-            <div className="text-[13.5px] font-bold lg:px-4">
-              {product.name}{' '}
-              <span className="ml-1 rounded bg-amber-100 px-1.5 py-0.5 font-mono text-[10.5px] text-idl-amber">
-                ATTUALE
-              </span>
-            </div>
-            <div className="font-mono text-[13px] max-lg:inline max-lg:mr-3 lg:px-3">
-              {findSpecValue(parsedSpecs, /lunghezza/) ?? '—'}
-            </div>
-            <div className="font-mono text-[13px] max-lg:inline max-lg:mr-3 lg:px-3">
-              {findSpecValue(parsedSpecs, /potenza|watt/) ?? '—'}
-            </div>
-            <div className="font-mono text-[13px] max-lg:inline max-lg:mr-3 lg:px-3">
-              {findSpecValue(parsedSpecs, /temperatura|kelvin|colore/) ?? '—'}
-            </div>
-            <div className="font-mono text-[13px] max-lg:inline lg:px-3">
-              {findSpecValue(parsedSpecs, /dimmer/) ?? '—'}
-            </div>
-            <div className="text-[13px] font-bold text-idl-muted max-lg:mt-1 lg:px-3">In pagina</div>
-          </div>
-
-          {alternativeProducts.slice(0, 3).map((alt) => {
-              const altTags = alt.specTags ?? buildTechnicalCardSpecTags({ name: alt.name, shortDescription: alt.shortDescription })
-              return (
-                <div
-                  key={alt.slug}
-                  className="border-b border-idl-tech-chip px-4 py-3.5 last:border-b-0 max-lg:space-y-2 lg:grid lg:grid-cols-[2fr_repeat(4,1fr)_1.1fr] lg:items-center lg:px-0"
-                >
-                  <div className="text-[13.5px] font-semibold lg:px-4">{alt.name}</div>
-                  <div className="font-mono text-[13px] text-idl-graphite max-lg:inline max-lg:mr-3 lg:px-3">
-                    {altTags[1] ?? '—'}
-                  </div>
-                  <div className="font-mono text-[13px] max-lg:inline max-lg:mr-3 lg:px-3">{altTags[0] ?? '—'}</div>
-                  <div className="font-mono text-[13px] max-lg:inline max-lg:mr-3 lg:px-3">{altTags[2] ?? '—'}</div>
-                  <div className="font-mono text-[13px] max-lg:inline lg:px-3">—</div>
-                  <Link
-                    to={lp(`/prodotto/${alt.slug}`)}
-                    className="text-[13px] font-bold text-idl-amber hover:underline max-lg:mt-1 lg:px-3"
-                  >
-                    Vedi →
-                  </Link>
-                </div>
-              )
-            })}
-        </div>
-      </SectionContainer>
-      ) : null}
+      <TechnicalEquivalentProducts
+        products={equivalentProducts}
+        currentSlug={product.slug}
+        lp={lp}
+      />
 
       {accessoryProducts.length > 0 ? (
         <SectionContainer className="border-t border-idl-tech-chip py-10 sm:py-12">
-          <h2 className="text-xl font-extrabold tracking-tight sm:text-[22px]">Accessori compatibili</h2>
-          <p className="mt-1.5 text-sm text-idl-muted">Componenti e accessori consigliati per questo prodotto.</p>
+          <h2 className="text-xl font-extrabold tracking-tight sm:text-[22px]">{t('product.accessories.title')}</h2>
+          <p className="mt-1.5 text-sm text-idl-muted">{t('product.accessories.subtitle')}</p>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {accessoryProducts.slice(0, 6).map((item) => (
-              <Link
-                key={item.slug}
-                to={lp(`/prodotto/${item.slug}`)}
-                className="rounded-xl border border-idl-tech-border bg-idl-tech-panel px-4 py-3 text-sm font-semibold transition hover:border-idl-amber"
-              >
-                {item.name}
-              </Link>
-            ))}
+            {accessoryProducts.slice(0, 6).map((item) => {
+              const isAdding = addingAccessorySlug === item.slug
+              return (
+                <div
+                  key={item.slug}
+                  className="flex items-center gap-3 rounded-xl border border-idl-tech-border bg-idl-tech-panel px-3 py-3"
+                >
+                  <Link to={lp(`/prodotto/${item.slug}`)} className="relative size-12 shrink-0 overflow-hidden rounded-lg border border-idl-tech-border bg-white">
+                    {item.imageUrl ? (
+                      <SiteImage src={item.imageUrl} alt="" fill className="object-contain p-1" sizes="48px" />
+                    ) : null}
+                  </Link>
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      to={lp(`/prodotto/${item.slug}`)}
+                      className="line-clamp-2 text-sm font-semibold hover:text-idl-amber"
+                    >
+                      {item.name}
+                    </Link>
+                    <div className="mt-0.5 font-mono text-[13px] text-idl-graphite">
+                      {formatMoney(item.priceCents, item.currency)}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isAdding}
+                    onClick={() => {
+                      setAddingAccessorySlug(item.slug)
+                      void addItem(item.slug, 1, undefined, {
+                        feedback: { productName: item.name, imageUrl: item.imageUrl },
+                        productHint: buildCartAddHintFromCard(item),
+                      }).finally(() => setAddingAccessorySlug(null))
+                    }}
+                    className="shrink-0 rounded-lg bg-idl-amber px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-idl-cta-amber-hover disabled:opacity-60"
+                  >
+                    {isAdding ? t('product.addingToCart') : t('product.addToCartShort')}
+                  </button>
+                </div>
+              )
+            })}
           </div>
         </SectionContainer>
       ) : null}
