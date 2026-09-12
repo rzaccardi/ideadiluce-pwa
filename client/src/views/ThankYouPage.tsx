@@ -6,6 +6,7 @@ import { useSnapshot } from 'valtio/react'
 import { api } from '@/api/endpoints'
 import type { ProductCardDTO, ThankYouOrderDTO } from '@/types/dto'
 import { authStore } from '@/features/auth'
+import { resetOrdersStore } from '@/features/orders'
 import { ApiRequestError } from '@/types/api'
 import { ToastOnError } from '@/components/ToastFeedback'
 import { PurchaseErrorPageView } from '@/components/checkout/purchase-error/PurchaseErrorPageView'
@@ -63,6 +64,7 @@ export function ThankYouPage() {
 
         const detail = await fetchThankYouOrder(orderId, sessionId)
         if (cancelled) return
+        resetOrdersStore()
         setOrder(detail)
 
         const paymentSucceeded =

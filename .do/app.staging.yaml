@@ -70,15 +70,15 @@ services:
       - key: ODOO_CATALOG_ENABLED
         value: "true"
       - key: ODOO_CATALOG_BASE_URL
-        value: https://tlbdb.odoo.com
+        value: https://tlbdb-shipping-1-37798006.dev.odoo.com
       - key: ODOO_WEBSITE_ID
         value: "2"
       - key: ODOO_ENABLED
         value: "true"
       - key: ODOO_URL
-        value: https://tlbdb.odoo.com/odoo
+        value: https://tlbdb-shipping-1-37798006.dev.odoo.com
       - key: ODOO_XMLRPC_URL
-        value: https://tlbdb.odoo.com
+        value: https://tlbdb-shipping-1-37798006.dev.odoo.com
       - key: STRIPE_ENABLED
         value: "true"
         scope: RUN_TIME
@@ -137,7 +137,7 @@ services:
         value: ${api.PUBLIC_URL}
         scope: BUILD_TIME
       - key: NEXT_PUBLIC_ODOO_MEDIA_BASE_URL
-        value: https://tlbdb.odoo.com
+        value: https://tlbdb-shipping-1-37798006.dev.odoo.com
         scope: BUILD_TIME
       - key: NEXT_PUBLIC_SITE_URL
         value: https://shop.ideadiluce.it

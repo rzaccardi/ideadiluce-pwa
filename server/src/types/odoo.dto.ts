@@ -104,6 +104,8 @@ export type OdooSaleDocumentListQuery = {
   partnerId?: number
   state?: string
   days?: number
+  /** Account cliente: include anche bozze/inviate con ref PWA. */
+  includePwaDrafts?: boolean
 }
 
 export type OdooPricelistListQuery = {

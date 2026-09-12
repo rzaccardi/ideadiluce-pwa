@@ -91,8 +91,9 @@ services:
         value: ${api.PUBLIC_URL}
       - key: ODOO_CATALOG_ENABLED
         value: "true"
+      # Odoo.sh staging (branch shipping-1). Prod: https://tlbdb.odoo.com
       - key: ODOO_CATALOG_BASE_URL
-        value: https://tlbdb.odoo.com
+        value: https://tlbdb-shipping-1-37798006.dev.odoo.com
       - key: ODOO_WEBSITE_ID
         value: "2"
       - key: ODOO_CATALOG_TIMEOUT_MS
@@ -100,9 +101,9 @@ services:
       - key: ODOO_ENABLED
         value: "true"
       - key: ODOO_URL
-        value: https://tlbdb.odoo.com/odoo
+        value: https://tlbdb-shipping-1-37798006.dev.odoo.com
       - key: ODOO_XMLRPC_URL
-        value: https://tlbdb.odoo.com
+        value: https://tlbdb-shipping-1-37798006.dev.odoo.com
       - key: ODOO_CATALOG_LANG
         value: it_IT
       - key: ODOO_PRODUCT_ACTION_ID
@@ -196,6 +197,7 @@ services:
       - key: ODOO_CATALOG_API_KEY
         scope: RUN_TIME
         type: SECRET
+      # Staging Odoo.sh: tlbdb-shipping-1-37798006 — da impostare nel secret ODOO_DB
       - key: ODOO_DB
         scope: RUN_TIME
         type: SECRET
@@ -259,7 +261,7 @@ services:
         value: ${api.PUBLIC_URL}
         scope: BUILD_TIME
       - key: NEXT_PUBLIC_ODOO_MEDIA_BASE_URL
-        value: https://tlbdb.odoo.com
+        value: https://tlbdb-shipping-1-37798006.dev.odoo.com
         scope: BUILD_TIME
       - key: NEXT_PUBLIC_SITE_URL
         value: https://shop.ideadiluce.it

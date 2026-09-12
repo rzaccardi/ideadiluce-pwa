@@ -19,6 +19,28 @@ export type OdooOrderSourceInput = {
   dateOrder?: string | null
 }
 
+/** Domain XML-RPC: confermati + bozze PWA (client_order_ref `PWA …`). */
+export function buildAccountSaleOrderDomain(input?: {
+  partnerIds?: number[] | null
+  includePwaDrafts?: boolean
+  states?: string[]
+}): unknown[] {
+  const states = input?.states ?? ['sale', 'done']
+  const domain: unknown[] = input?.includePwaDrafts
+    ? [
+        '|',
+        ['state', 'in', states],
+        '&',
+        ['state', 'in', ['draft', 'sent']],
+        ['client_order_ref', '=ilike', 'PWA%'],
+      ]
+    : [['state', 'in', states]]
+  if (input?.partnerIds && input.partnerIds.length > 0) {
+    domain.push(['partner_id', 'in', input.partnerIds])
+  }
+  return domain
+}
+
 export function detectOdooOrderSource(input: OdooOrderSourceInput): OdooOrderSource {
   const ref = input.clientOrderRef?.trim() ?? ''
   if (/^PWA\b/i.test(ref)) return 'pwa'

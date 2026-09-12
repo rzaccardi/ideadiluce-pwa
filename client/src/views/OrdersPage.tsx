@@ -18,7 +18,7 @@ export function OrdersPage() {
   const isLoading = orders.isListLoading || orders.list === null
 
   useEffect(() => {
-    void fetchOrdersList()
+    void fetchOrdersList({ force: true })
   }, [])
 
   return (

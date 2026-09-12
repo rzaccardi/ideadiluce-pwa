@@ -9,7 +9,7 @@ import { asyncHandler } from '../utils/async-handler.js'
 export const ordersController = {
   list: asyncHandler(async (req: Request, res: Response) => {
     const userId = req.sessionRecord!.user!.id
-    const data = await ordersService.list(userId, req.correlationId)
+    const data = await ordersService.list(userId, req.correlationId, req.sessionRecord?.id)
     res.json(ok(data))
   }),
 

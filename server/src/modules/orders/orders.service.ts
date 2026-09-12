@@ -12,6 +12,8 @@ import { cartService } from '../cart/cart.service.js'
 import type { Request } from 'express'
 import type { PwaOrder } from '@prisma/client'
 import { ACCOUNT_VISIBLE_PWA_ORDER_STATUSES } from './orders.constants.js'
+import { buildAccountPwaOrderWhere } from './orders-account-query.js'
+import { linkOrdersToUser } from './orders-user-link.service.js'
 import { orderReturnRequestService } from './order-return-request.service.js'
 import { OPEN_RETURN_WINDOW, orderShipmentService } from './order-shipment.service.js'
 
@@ -90,23 +92,22 @@ async function listOdooOrdersForUser(
   const map = await prisma.odooCustomerMap.findUnique({ where: { userId } })
 
   try {
-    if (map != null) {
-      const byPartner = await odooSalesService.listConfirmedOrders(ctx, {
+    const merged = new Map<number, OdooSaleDocumentDTO>()
+    const queries: Array<{ partnerId?: number; email?: string }> = []
+    if (map != null) queries.push({ partnerId: map.odooPartnerId })
+    queries.push({ email: user.email })
+
+    for (const query of queries) {
+      const page = await odooSalesService.listConfirmedOrders(ctx, {
         page: 1,
         pageSize: 50,
-        partnerId: map.odooPartnerId,
+        includePwaDrafts: true,
+        ...query,
       })
-      if (byPartner.items.length > 0) {
-        return byPartner.items.map(mapOdooOrder)
-      }
+      for (const item of page.items) merged.set(item.id, item)
     }
 
-    const byEmail = await odooSalesService.listConfirmedOrders(ctx, {
-      page: 1,
-      pageSize: 50,
-      email: user.email,
-    })
-    return byEmail.items.map(mapOdooOrder)
+    return [...merged.values()].map(mapOdooOrder)
   } catch (e) {
     logger.warn('orders.odoo_history_failed', { userId, err: String(e) })
     return []
@@ -114,7 +115,25 @@ async function listOdooOrdersForUser(
 }
 
 function mapPwaOrderRow(po: PwaOrder): OrderDTO | null {
-  if (!po.odooSaleOrderId) return null
+  if (!po.odooSaleOrderId && po.paymentStatus !== 'CAPTURED') return null
+  if (!po.odooSaleOrderId) {
+    return {
+      id: `pwa-${po.id}`,
+      pwaOrderId: po.id,
+      odooSaleOrderId: 0,
+      status: po.orderStatus.toLowerCase(),
+      paymentStatus: po.paymentStatus.toLowerCase(),
+      currencyCode: po.currencyCode,
+      totalAmount: po.amountTotal,
+      createdAt: (po.paidAt ?? po.createdAt).toISOString(),
+      odooPortalUrl: null,
+      source: 'pwa',
+      sourceLabel: 'E-commerce',
+      returnRequest: null,
+      shipment: null,
+      returnWindow: OPEN_RETURN_WINDOW,
+    }
+  }
 
   return {
     id: `pwa-${po.id}`,
@@ -208,24 +227,22 @@ async function findAccessiblePwaOrder(req: Request, userId: string, id: string) 
 }
 
 export const ordersService = {
-  async list(userId: string, correlationId = 'orders-list'): Promise<OrderDTO[]> {
+  async list(userId: string, correlationId = 'orders-list', sessionId?: string | null): Promise<OrderDTO[]> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { email: true },
     })
     const emailLower = user?.email.toLowerCase().trim()
 
+    if (emailLower) {
+      await linkOrdersToUser({ userId, email: emailLower, sessionId })
+    }
+
     const rows = await ordersRepository.listByUser(userId)
     const fromCache = rows.map(mapRow)
 
     const pwaOrders = await prisma.pwaOrder.findMany({
-      where: {
-        orderStatus: { in: ACCOUNT_VISIBLE_PWA_ORDER_STATUSES },
-        OR: [
-          { userId },
-          ...(emailLower ? [{ email: emailLower, userId: null }] : []),
-        ],
-      },
+      where: buildAccountPwaOrderWhere(userId, emailLower),
       orderBy: { paidAt: 'desc' },
       take: 50,
     })

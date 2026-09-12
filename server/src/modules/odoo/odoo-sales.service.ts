@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { detectOdooOrderSource, ODOO_ORDER_SOURCE_LABEL } from './odoo-order-source.js';
+import { buildAccountSaleOrderDomain, detectOdooOrderSource, ODOO_ORDER_SOURCE_LABEL } from './odoo-order-source.js';
 export { detectOdooOrderSource, ODOO_ORDER_SOURCE_LABEL };
 import { env } from '../../config/env.js';
 import { prisma } from '../../lib/prisma.js';
@@ -164,9 +164,13 @@ async function saleDocumentList(ctx, query, defaultStates) {
         };
     }
     const states = query.state ? [query.state] : defaultStates;
-    const domain = [['state', 'in', states]];
-    if (partnerIds)
-        domain.push(['partner_id', 'in', partnerIds]);
+    const domain = query.includePwaDrafts
+        ? buildAccountSaleOrderDomain({
+            partnerIds,
+            includePwaDrafts: true,
+            states,
+        })
+        : [['state', 'in', states], ...(partnerIds ? [['partner_id', 'in', partnerIds]] : [])];
     if (query.days)
         domain.push(['date_order', '>=', dateFloorForDays(query.days)]);
     const q = query.q?.trim();
