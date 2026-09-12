@@ -49,7 +49,9 @@ config({ path: path.join(repoRoot, '.env'), override: true })
 if (keepDevDbFallback && inheritedDatabaseUrl) {
   applyDevDbFallback(inheritedDatabaseUrl, inheritedDirectUrl)
 } else {
-  const persisted = readPersistedDevDbFallback()
+  const envHost = safeDbHost(process.env.DATABASE_URL ?? '')
+  const envIsLocal = !envHost || /^(localhost|127\.0\.0\.1)$/i.test(envHost)
+  const persisted = envIsLocal ? readPersistedDevDbFallback() : null
   if (persisted) applyDevDbFallback(persisted.databaseUrl, persisted.directUrl)
 }
 

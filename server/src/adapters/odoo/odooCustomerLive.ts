@@ -78,9 +78,19 @@ const PARTNER_ACCOUNT_BASE_FIELDS = [
 const PARTNER_ACCOUNT_IT_FIELDS = [
   'l10n_it_codice_fiscale',
   'l10n_it_pec_email',
-  'l10n_it_codice_destinatario',
   'l10n_it_pa_index',
+  /** Presente su localization vecchie; Odoo 18 IT usa `l10n_it_pa_index`. */
+  'l10n_it_codice_destinatario',
 ] as const
+
+/** Campi IT realmente disponibili su questa istanza (cache di processo). */
+let partnerAccountItFields: string[] | null = null
+
+function invalidPartnerFieldName(err: unknown): string | null {
+  const msg = err instanceof Error ? err.message : String(err)
+  const match = msg.match(/Invalid field '([^']+)' on model 'res\.partner'/)
+  return match?.[1] ?? null
+}
 
 async function findPartnerByEmail(ctx: OdooCallContext, email: string): Promise<OdooCustomerResult | null> {
   const domain: unknown[] = [['email', '=', email.toLowerCase().trim()]]
@@ -101,22 +111,33 @@ async function readPartnerAccountRows(
 ): Promise<OdooPartnerAccountRow[]> {
   const unique = [...new Set(ids.filter((id) => Number.isFinite(id) && id > 0))]
   if (unique.length === 0) return []
-  try {
-    return await odooExecuteKw<OdooPartnerAccountRow[]>(
-      ctx,
-      'res.partner',
-      'read',
-      [unique],
-      { fields: [...PARTNER_ACCOUNT_BASE_FIELDS, ...PARTNER_ACCOUNT_IT_FIELDS] },
-    )
-  } catch {
-    return odooExecuteKw<OdooPartnerAccountRow[]>(
-      ctx,
-      'res.partner',
-      'read',
-      [unique],
-      { fields: [...PARTNER_ACCOUNT_BASE_FIELDS] },
-    )
+
+  let itFields = partnerAccountItFields ?? [...PARTNER_ACCOUNT_IT_FIELDS]
+  for (;;) {
+    try {
+      const rows = await odooExecuteKw<OdooPartnerAccountRow[]>(
+        ctx,
+        'res.partner',
+        'read',
+        [unique],
+        { fields: [...PARTNER_ACCOUNT_BASE_FIELDS, ...itFields] },
+      )
+      partnerAccountItFields = itFields
+      return rows
+    } catch (err) {
+      const invalid = invalidPartnerFieldName(err)
+      if (invalid && itFields.includes(invalid)) {
+        itFields = itFields.filter((field) => field !== invalid)
+        continue
+      }
+      return odooExecuteKw<OdooPartnerAccountRow[]>(
+        ctx,
+        'res.partner',
+        'read',
+        [unique],
+        { fields: [...PARTNER_ACCOUNT_BASE_FIELDS] },
+      )
+    }
   }
 }
 
@@ -231,7 +252,7 @@ function businessPartnerVals(business?: OdooBusinessProfile | null): Record<stri
   if (business.vatNumber?.trim()) vals.vat = business.vatNumber.trim().toUpperCase()
   if (business.fiscalCode?.trim()) vals.l10n_it_codice_fiscale = business.fiscalCode.trim().toUpperCase()
   if (business.pec?.trim()) vals.l10n_it_pec_email = business.pec.trim()
-  if (business.sdiCode?.trim()) vals.l10n_it_codice_destinatario = business.sdiCode.trim().toUpperCase()
+  if (business.sdiCode?.trim()) vals.l10n_it_pa_index = business.sdiCode.trim().toUpperCase()
 
   const companyName =
     business.companyName?.trim() || pickViesCompanyName(business.viesName) || null

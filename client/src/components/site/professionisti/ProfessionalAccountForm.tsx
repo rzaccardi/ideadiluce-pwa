@@ -6,14 +6,21 @@ import { toast } from 'sonner'
 import { apiClient } from '@/api/client'
 import { api } from '@/api/endpoints'
 import { useLocale } from '@/context/locale-context'
+import { loadShippingAddresses } from '@/features/account'
 import { authStore } from '@/features/auth'
 import {
   accountProfilePrefillFromUser,
-  professionalRequestNotesFromPrefill,
+  pickProfessionalPrefillAddress,
+  type AccountProfilePrefill,
 } from '@/lib/account-profile-prefill'
 import { ui } from '@/lib/ui-classes'
 import { cn } from '@/utils/cn'
+import type { UserAddressDTO } from '@/types/dto'
 import type { ProfessionistiPageContent } from '@/types/site-content'
+
+function seedProfessionalPrefill(): AccountProfilePrefill {
+  return accountProfilePrefillFromUser(authStore.me)
+}
 
 type Props = {
   registration: ProfessionistiPageContent['registration']
@@ -23,37 +30,58 @@ export function ProfessionalAccountForm({ registration }: Props) {
   const { locale } = useLocale()
   const auth = useSnapshot(authStore)
   const isLoggedIn = Boolean(auth.me)
-  const [companyName, setCompanyName] = useState('')
-  const [vatNumber, setVatNumber] = useState('')
+  const [companyName, setCompanyName] = useState(() => seedProfessionalPrefill().companyName)
+  const [vatNumber, setVatNumber] = useState(() => seedProfessionalPrefill().vatNumber)
   const [sector, setSector] = useState(registration.sectors[0] ?? '')
   const [sectorOther, setSectorOther] = useState('')
-  const [contactName, setContactName] = useState('')
-  const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
-  const [pec, setPec] = useState('')
-  const [sdiCode, setSdiCode] = useState('')
-  const [fiscalCode, setFiscalCode] = useState('')
-  const [addressLine, setAddressLine] = useState('')
+  const [contactName, setContactName] = useState(() => seedProfessionalPrefill().contactName)
+  const [email, setEmail] = useState(() => seedProfessionalPrefill().email)
+  const [phone, setPhone] = useState(() => seedProfessionalPrefill().phone)
+  const [pec, setPec] = useState(() => seedProfessionalPrefill().pec)
+  const [sdiCode, setSdiCode] = useState(() => seedProfessionalPrefill().sdiCode)
+  const [fiscalCode, setFiscalCode] = useState(() => seedProfessionalPrefill().fiscalCode)
+  const [addressLine, setAddressLine] = useState(() => seedProfessionalPrefill().addressLine)
   const [visuraFile, setVisuraFile] = useState<File | null>(null)
   const [message, setMessage] = useState('')
-  const [country, setCountry] = useState('IT')
+  const [country, setCountry] = useState(() => seedProfessionalPrefill().country || 'IT')
   const [loading, setLoading] = useState(false)
   const [vatMessage, setVatMessage] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!auth.me) return
-    const prefill = accountProfilePrefillFromUser(auth.me)
-    setCompanyName((value) => (value.trim() ? value : prefill.companyName))
-    setVatNumber((value) => (value.trim() ? value : prefill.vatNumber))
-    setContactName((value) => (value.trim() ? value : prefill.contactName))
-    setEmail((value) => (value.trim() ? value : prefill.email))
-    setPhone((value) => (value.trim() ? value : prefill.phone))
-    setPec((value) => (value.trim() ? value : prefill.pec))
-    setSdiCode((value) => (value.trim() ? value : prefill.sdiCode))
-    setFiscalCode((value) => (value.trim() ? value : prefill.fiscalCode))
-    setAddressLine((value) => (value.trim() ? value : prefill.addressLine))
-    setCountry((value) => (value !== 'IT' ? value : prefill.country || 'IT'))
+    if (auth.isLoading) return
+    const user = authStore.me
+    if (!user) return
+
+    let cancelled = false
+
+    function apply(address?: UserAddressDTO | null) {
+      if (cancelled) return
+      const current = authStore.me
+      if (!current) return
+      const prefill = accountProfilePrefillFromUser(current, { address })
+      setCompanyName((value) => (value.trim() ? value : prefill.companyName))
+      setVatNumber((value) => (value.trim() ? value : prefill.vatNumber))
+      setContactName((value) => (value.trim() ? value : prefill.contactName))
+      setEmail((value) => (value.trim() ? value : prefill.email))
+      setPhone((value) => (value.trim() ? value : prefill.phone))
+      setPec((value) => (value.trim() ? value : prefill.pec))
+      setSdiCode((value) => (value.trim() ? value : prefill.sdiCode))
+      setFiscalCode((value) => (value.trim() ? value : prefill.fiscalCode))
+      setAddressLine((value) => (value.trim() ? value : prefill.addressLine))
+      setCountry((value) => (value !== 'IT' ? value : prefill.country || 'IT'))
+    }
+
+    apply(user.shippingAddress)
+
+    void loadShippingAddresses()
+      .then((list) => apply(pickProfessionalPrefillAddress(list.addresses)))
+      .catch(() => {})
+
+    return () => {
+      cancelled = true
+    }
   }, [
+    auth.isLoading,
     auth.me?.id,
     auth.me?.email,
     auth.me?.firstName,
@@ -65,6 +93,7 @@ export function ProfessionalAccountForm({ registration }: Props) {
     auth.me?.pec,
     auth.me?.sdiCode,
     auth.me?.vatCountryCode,
+    auth.me?.viesAddress,
     auth.me?.shippingAddress,
   ])
 
@@ -118,12 +147,9 @@ export function ProfessionalAccountForm({ registration }: Props) {
       if (phone.trim()) form.append('phone', phone.trim())
       if (pec.trim()) form.append('pec', pec.trim())
       if (sdiCode.trim()) form.append('sdiCode', sdiCode.trim())
-      const notes = professionalRequestNotesFromPrefill({
-        message,
-        fiscalCode,
-        addressLine,
-      })
-      if (notes) form.append('message', notes)
+      if (fiscalCode.trim()) form.append('fiscalCode', fiscalCode.trim())
+      if (addressLine.trim()) form.append('addressLine', addressLine.trim())
+      if (message.trim()) form.append('message', message.trim())
       form.append('locale', locale)
       form.append('country', country)
       if (visuraFile) form.append('visura', visuraFile)

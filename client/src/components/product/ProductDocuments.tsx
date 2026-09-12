@@ -3,6 +3,7 @@
 import type { ProductDocumentDTO } from '@/types/dto'
 import { ExternalLink } from '@/lib/link-title'
 import { getBrowserApiBase } from '@/lib/env'
+import { resolveProductDocumentHref } from '@/lib/product-documents'
 import { cn } from '@/utils/cn'
 import { useI18n } from '@/hooks/use-i18n'
 import type { MessageKey } from '@/i18n/messages'
@@ -32,22 +33,18 @@ function formatBytes(bytes: number | null | undefined): string | null {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function downloadHref(slug: string, documentId: string, variantRef?: string | null): string {
-  const base = getBrowserApiBase().replace(/\/$/, '')
-  const search = new URLSearchParams({ source: `pdp:${slug}` })
-  if (variantRef) search.set('variantRef', variantRef)
-  const prefix = base ? base : ''
-  return `${prefix}/api/v1/catalog/products/${encodeURIComponent(slug)}/documents/${encodeURIComponent(documentId)}/download?${search}`
-}
-
-function resolveDocHref(
-  doc: ProductDocumentDTO,
-  slug: string,
-  variantRef?: string | null,
-): string {
-  if (doc.publicCurrentUrl) return doc.publicCurrentUrl
-  if (/^https?:\/\//i.test(doc.url) && !doc.url.includes('/api/v1/')) return doc.url
-  return downloadHref(slug, doc.id, variantRef)
+function DownloadIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className={className} fill="none">
+      <path
+        d="M12 4v11m0 0l-4-4m4 4l4-4M5 18h14"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  )
 }
 
 export function ProductDocuments({
@@ -63,6 +60,8 @@ export function ProductDocuments({
   if (!documents.length) return null
 
   const isDesign = variant === 'design'
+  const accent = isDesign ? 'text-idl-brass' : 'text-idl-amber'
+  const apiBase = getBrowserApiBase()
 
   return (
     <section className={cn('space-y-3', className)}>
@@ -76,7 +75,7 @@ export function ProductDocuments({
           {t('product.docs.title')}
         </h2>
       ) : null}
-      <ul className="divide-y divide-idl-border rounded-lg border border-idl-border bg-idl-tech-panel">
+      <ul className="divide-y divide-idl-border rounded-lg border border-idl-border bg-idl-paper">
         {documents.map((doc) => {
           const size = formatBytes(doc.sizeBytes)
           const typeKey = doc.type ? DOC_TYPE_KEY[doc.type] : undefined
@@ -84,16 +83,29 @@ export function ProductDocuments({
           const meta = [typeLabel, doc.format?.toUpperCase() ?? doc.mimetype, size]
             .filter(Boolean)
             .join(' · ')
+          const href = resolveProductDocumentHref(doc, { slug, variantRef, apiBase })
+          const filename = doc.name?.trim() || 'documento.pdf'
           return (
             <li key={doc.id}>
               <ExternalLink
-                href={resolveDocHref(doc, slug, variantRef)}
+                href={href}
+                download={filename}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm transition hover:bg-idl-paper/80"
+                className="group flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm transition hover:bg-idl-tech-panel"
               >
-                <span className="font-medium text-idl-ink">{doc.name}</span>
-                {meta ? <span className="text-idl-muted">{meta}</span> : null}
+                <span className="flex min-w-0 items-center gap-2.5">
+                  <DownloadIcon className={cn('size-4 shrink-0', accent)} />
+                  <span className="font-medium text-idl-ink underline-offset-2 group-hover:underline">
+                    {doc.name}
+                  </span>
+                </span>
+                <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  {meta ? <span className="text-idl-muted">{meta}</span> : null}
+                  <span className={cn('font-semibold tracking-wide uppercase', accent)}>
+                    {t('product.docs.download')}
+                  </span>
+                </span>
               </ExternalLink>
             </li>
           )

@@ -5,6 +5,7 @@ import { createOdooCustomerAdapter } from '../../adapters/odoo/odooCustomerAdapt
 import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import type { OdooCustomerAccount } from '../../adapters/odoo/odooCustomerAdapter.js'
 import { buildUserBusinessPatch } from '../../adapters/odoo/odooCustomerAccount.js'
+import { logger } from '../../lib/logger.js'
 
 const customerAdapter = createOdooCustomerAdapter()
 const lastHydrateAt = new Map<string, number>()
@@ -22,7 +23,8 @@ function needsBusinessHydrate(user: User): boolean {
 
 /**
  * Compila i dati aziendali PWA vuoti dal partner commerciale Odoo.
- * Fail-open: se Odoo non risponde resta l'anagrafica locale.
+ * Risolve sempre `commercial_partner_id` (via adapter) e aggiorna la mappa
+ * se puntava a un child. Fail-open: se Odoo non risponde resta l'anagrafica locale.
  */
 export async function hydrateUserBusinessFromOdoo(
   user: User,
@@ -39,8 +41,9 @@ export async function hydrateUserBusinessFromOdoo(
 
   try {
     let account = options?.account ?? null
+    const map = await prisma.odooCustomerMap.findUnique({ where: { userId: user.id } })
+
     if (!account) {
-      const map = await prisma.odooCustomerMap.findUnique({ where: { userId: user.id } })
       if (map) {
         account = await customerAdapter.getCustomerAccountByPartnerId(ctx, map.odooPartnerId)
       }
@@ -48,8 +51,34 @@ export async function hydrateUserBusinessFromOdoo(
         account = await customerAdapter.getCustomerAccountByEmail(ctx, user.email)
       }
     }
+
     lastHydrateAt.set(user.id, Date.now())
-    if (!account) return user
+
+    if (!account) {
+      logger.warn('odoo_business_hydrate_partner_not_found', {
+        userId: user.id,
+        email: user.email,
+        mappedPartnerId: map?.odooPartnerId ?? null,
+        correlationId: ctx.correlationId,
+      })
+      return user
+    }
+
+    // Allinea la mappa al partner commerciale (sede), non a un child delivery.
+    if (
+      map &&
+      account.commercialPartnerId > 0 &&
+      map.odooPartnerId !== account.commercialPartnerId
+    ) {
+      try {
+        await prisma.odooCustomerMap.update({
+          where: { userId: user.id },
+          data: { odooPartnerId: account.commercialPartnerId },
+        })
+      } catch {
+        /* unique constraint se un altro user ha già quel partner — leave map */
+      }
+    }
 
     const patch = buildUserBusinessPatch(user, {
       contactIsCompany: account.contactIsCompany,
@@ -61,7 +90,12 @@ export async function hydrateUserBusinessFromOdoo(
     if (!patch) return user
 
     return prisma.user.update({ where: { id: user.id }, data: patch })
-  } catch {
+  } catch (err) {
+    logger.warn('odoo_business_hydrate_failed', {
+      userId: user.id,
+      err: err instanceof Error ? err.message : String(err),
+      correlationId: ctx.correlationId,
+    })
     return user
   }
 }

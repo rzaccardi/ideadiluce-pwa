@@ -334,8 +334,8 @@ export function ProductDetailGallery({
         className={cn(
           'flex aspect-square items-center justify-center text-sm',
           isDesign
-            ? 'rounded border border-idl-path-design-border bg-white text-idl-ink-muted dark:bg-idl-tech-panel'
-            : 'rounded-xl border border-idl-tech-border bg-[#f7f8fa] text-idl-muted',
+            ? 'rounded bg-white text-idl-ink-muted dark:bg-idl-tech-panel'
+            : 'rounded-xl bg-white text-idl-muted dark:bg-idl-tech-panel',
         )}
       >
         Anteprima prodotto
@@ -401,8 +401,8 @@ export function ProductDetailGallery({
           className={cn(
             'relative aspect-square w-full overflow-hidden focus:outline-none focus-visible:ring-2',
             isDesign
-              ? 'rounded border border-idl-path-design-border bg-white focus-visible:ring-idl-brass/30 dark:bg-idl-tech-panel'
-              : 'rounded-xl border border-idl-tech-border bg-[#f7f8fa] focus-visible:ring-idl-amber/30',
+              ? 'rounded bg-white focus-visible:ring-idl-brass/30 dark:bg-idl-tech-panel'
+              : 'rounded-xl bg-white focus-visible:ring-idl-amber/30 dark:bg-idl-tech-panel',
           )}
           onClick={openCurrentLightbox}
           aria-label={
@@ -435,7 +435,7 @@ export function ProductDetailGallery({
               src={current.url}
               alt={currentAlt}
               fill
-              className={imageObjectClass}
+              className={cn(imageObjectClass, isDesign && 'p-4 sm:p-6')}
               sizes="50vw"
               priority
             />
@@ -517,7 +517,7 @@ export function ProductDetailGallery({
                               : 'border-idl-path-design-border hover:border-idl-brass/50',
                           )
                         : cn(
-                            'rounded-lg border bg-idl-tech-panel',
+                            'rounded-lg border bg-white dark:bg-idl-tech-panel',
                             selectedThumb
                               ? 'border-2 border-idl-amber'
                               : 'border-idl-tech-border',

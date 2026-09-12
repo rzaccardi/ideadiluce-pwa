@@ -1,17 +1,16 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useGlobalSearchShortcut } from '@/hooks/use-global-search-shortcut'
 import type { CatalogSearchSource } from '@/types/catalog-search-events'
 
-const GlobalSearchPalette = dynamic(
-  () =>
-    import('@/components/site/catalog/GlobalSearchPalette').then((m) => ({
-      default: m.GlobalSearchPalette,
-    })),
-  { ssr: false },
-)
+const loadGlobalSearchPalette = () =>
+  import('@/components/site/catalog/GlobalSearchPalette').then((m) => ({
+    default: m.GlobalSearchPalette,
+  }))
+
+const GlobalSearchPalette = dynamic(loadGlobalSearchPalette, { ssr: false })
 
 type GlobalSearchContextValue = {
   open: boolean
@@ -29,7 +28,12 @@ export function GlobalSearchProvider({ children }: { children: ReactNode }) {
   const [initialQuery, setInitialQuery] = useState<string | undefined>(undefined)
   const [searchSource, setSearchSource] = useState<CatalogSearchSource>('palette')
 
+  useEffect(() => {
+    void loadGlobalSearchPalette()
+  }, [])
+
   const openSearch = useCallback((query?: string, source: CatalogSearchSource = 'palette') => {
+    void loadGlobalSearchPalette()
     setInitialQuery(query?.trim() ? query.trim() : undefined)
     setSearchSource(source)
     setOpen(true)
@@ -46,7 +50,9 @@ export function GlobalSearchProvider({ children }: { children: ReactNode }) {
 
   useGlobalSearchShortcut({
     onOpen: () => openSearch(undefined, 'palette'),
+    onClose: closeSearch,
     enabled: !open,
+    isOpen: open,
   })
 
   const value = useMemo(

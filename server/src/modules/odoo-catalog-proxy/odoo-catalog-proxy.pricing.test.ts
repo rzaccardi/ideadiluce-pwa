@@ -50,6 +50,26 @@ describe('catalogProxyPricingQuery', () => {
     })
   })
 
+  it('inietta il listino installatori dalla sessione professional', async () => {
+    vi.mocked(resolvePricingContext).mockResolvedValue({
+      segment: 'PROFESSIONAL',
+      partnerId: 99003,
+      pricelistId: 31,
+      personalized: true,
+    })
+
+    const result = await catalogProxyPricingQuery({} as Request, {
+      pricelist_id: '8888',
+      locale: 'IT',
+    })
+
+    expect(result).toEqual({
+      locale: 'IT',
+      partner_id: '99003',
+      pricelist_id: '31',
+    })
+  })
+
   it('non espone listino se la sessione è anonima', async () => {
     vi.mocked(resolvePricingContext).mockResolvedValue({
       segment: 'RETAIL',

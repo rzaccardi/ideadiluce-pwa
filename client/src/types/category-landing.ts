@@ -95,6 +95,7 @@ export type CategoryTipsSection = {
 }
 
 export type CategoryCtaBanner = {
+  eyebrow?: string
   title?: string
   description?: string
   primaryCta: { label: string; href: string }

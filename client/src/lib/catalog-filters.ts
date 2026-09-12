@@ -245,10 +245,16 @@ export function buildCatalogApiQuery(q?: string): string | undefined {
 
 const PLACEHOLDER_DESIGNER_NAME = /^(n\/a|na|n\.d\.|—|-|\.)$/i
 
+export function isUsableDesignerName(designerName: string | null | undefined): boolean {
+  const name = designerName?.trim()
+  if (!name) return false
+  return !PLACEHOLDER_DESIGNER_NAME.test(name)
+}
+
 /** Listing arredo filtrato per nome designer (`q` + world design). Null se il nome non è usabile. */
 export function buildDesignerProjectsHref(designerName: string | null | undefined): string | null {
   const name = designerName?.trim()
-  if (!name || PLACEHOLDER_DESIGNER_NAME.test(name)) return null
+  if (!name || !isUsableDesignerName(name)) return null
   return `/negozio?world=design&q=${encodeURIComponent(name)}`
 }
 

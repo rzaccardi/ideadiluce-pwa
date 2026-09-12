@@ -28,7 +28,10 @@ import {
   ProductSpecRowItem,
   buildProductSubtitle,
 } from './shared'
+import { ProductEanBarcode } from '@/components/product/ProductEanBarcode'
 import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMeta'
+import { collectProductIdentifierFields } from '@/lib/product-identifier-fields'
+import { mergeProductDocuments } from '@/lib/product-documents'
 import { ProductBrandMark } from '@/components/product/ProductBrandMark'
 import {
   ProductDetailBreadcrumb,
@@ -38,7 +41,9 @@ import {
 import { ProductDetailGallery } from './ProductDetailGallery'
 import { DesignHeroVariantPicker } from './DesignHeroVariantPicker'
 import { DesignRelatedProducts } from './DesignRelatedProducts'
-import { DesignAccessoryPicker } from './DesignAccessoryPicker'
+import { DesignAccessoryPicker, type AccessorySelection } from './DesignAccessoryPicker'
+import { ProductSlider } from '@/components/product/ProductSlider'
+import { useDesignRelatedSlider } from '@/hooks/use-design-related-slider'
 import {
   ProductDimensionsPanel,
   hasProductDimensionsContent,
@@ -60,6 +65,10 @@ type Props = {
 }
 
 const DESIGN_CTA = {
+  eyebrow: 'CONSULENZA',
+  title: 'Vuoi una consulenza su questo pezzo?',
+  description:
+    'Raccontaci il tuo ambiente: ti guidiamo su finitura, dimensioni e composizione luminosa per il tuo progetto.',
   primaryCta: { label: 'Richiedi consulenza', href: '/contatti' },
 }
 
@@ -71,6 +80,7 @@ function hasHtmlMarkup(raw: string | null | undefined): boolean {
 export function DesignProductDetailView({ product, relatedProducts, state }: Props) {
   const lp = useLocalePath()
   const { tParams } = useI18n()
+  const relatedSlider = useDesignRelatedSlider(product, relatedProducts)
   const {
     galleryImages,
     displayPriceCents,
@@ -102,21 +112,18 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
   const specRows = mergeDesignSpecRows(parsedSpecRows)
   const { title: displayTitle, rest: titleRest } = extractProductDisplayTitle(product.name)
   const subtitle = buildProductSubtitle(product)
+  const eanValue =
+    collectProductIdentifierFields(product, selectedVariant, { includeBrand: false }).find((field) => field.key === 'ean')
+      ?.value ?? null
   const brandLabel = product.brand?.name?.toUpperCase() ?? 'BRAND'
   const priceModeLabel = formatPriceDisplayModeLabel(
     selectedVariant?.priceDisplayMode ?? product.priceDisplayMode,
   )
 
-  const productDocuments = useMemo(() => {
-    const byId = new Map<string, NonNullable<typeof product.documents>[number]>()
-    for (const doc of product.documents ?? []) {
-      if (doc.url) byId.set(doc.id, doc)
-    }
-    for (const doc of selectedVariant?.documents ?? []) {
-      if (doc.url) byId.set(doc.id, doc)
-    }
-    return [...byId.values()]
-  }, [product.documents, selectedVariant?.documents])
+  const productDocuments = useMemo(
+    () => mergeProductDocuments(product, selectedVariant),
+    [product, selectedVariant],
+  )
 
   const galleryByTag = useMemo(() => {
     const urlsFor = (tag: string) =>
@@ -137,24 +144,57 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
   ].slice(0, 2)
 
   const accessories = useMemo(
-    () => (product.accessories ?? []).filter((item) => item.slug?.trim()).slice(0, 8),
+    () => (product.accessories ?? []).slice(0, 8),
     [product.accessories],
   )
   const alternatives = product.alternatives ?? []
-  const [selectedAccessorySlugs, setSelectedAccessorySlugs] = useState<string[]>([])
+  const [selectedAccessoryQtys, setSelectedAccessoryQtys] = useState<AccessorySelection>({})
 
   useEffect(() => {
-    setSelectedAccessorySlugs((prev) => prev.filter((slug) => accessories.some((item) => item.slug === slug)))
+    setSelectedAccessoryQtys((prev) => {
+      const next: AccessorySelection = {}
+      for (const item of accessories) {
+        const slug = item.slug?.trim()
+        if (!slug) continue
+        if (prev[slug] != null && prev[slug] > 0) next[slug] = prev[slug]
+      }
+      return next
+    })
   }, [accessories])
 
-  const selectedAccessories = accessories.filter((item) => selectedAccessorySlugs.includes(item.slug))
-  const accessoriesTotalCents = selectedAccessories.reduce((sum, item) => sum + (item.priceCents ?? 0), 0)
+  const selectedAccessories = accessories.filter(
+    (item) => item.slug && (selectedAccessoryQtys[item.slug] ?? 0) > 0,
+  )
+  const accessoriesTotalCents = selectedAccessories.reduce(
+    (sum, item) => sum + (item.priceCents ?? 0) * (selectedAccessoryQtys[item.slug] ?? 1),
+    0,
+  )
   const combinedPriceCents = displayPriceCents + accessoriesTotalCents
+  const selectedAccessoryCount = selectedAccessories.reduce(
+    (sum, item) => sum + (selectedAccessoryQtys[item.slug] ?? 1),
+    0,
+  )
 
   function toggleAccessory(slug: string) {
-    setSelectedAccessorySlugs((prev) =>
-      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug],
-    )
+    setSelectedAccessoryQtys((prev) => {
+      if (prev[slug] != null && prev[slug] > 0) {
+        const next = { ...prev }
+        delete next[slug]
+        return next
+      }
+      return { ...prev, [slug]: 1 }
+    })
+  }
+
+  function setAccessoryQuantity(slug: string, quantity: number) {
+    setSelectedAccessoryQtys((prev) => {
+      if (quantity <= 0) {
+        const next = { ...prev }
+        delete next[slug]
+        return next
+      }
+      return { ...prev, [slug]: quantity }
+    })
   }
   const hasDimensionsPanel = hasProductDimensionsContent(
     product,
@@ -193,7 +233,10 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
     variantRef,
     galleryImages,
     setIsAddingToCart,
-    extraItems: selectedAccessories.map((item) => ({ product: item, quantity: 1 })),
+    extraItems: selectedAccessories.map((item) => ({
+      product: item,
+      quantity: selectedAccessoryQtys[item.slug] ?? 1,
+    })),
   })
 
   return (
@@ -278,14 +321,33 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
                 includeBrand={false}
                 className="mt-2 text-xs text-idl-ink-muted"
               />
+              {eanValue ? (
+                <ProductEanBarcode
+                  value={eanValue}
+                  productName={displayTitle}
+                  brand={product.brand?.name}
+                  className="mt-3"
+                />
+              ) : null}
             </div>
 
             <div className="flex flex-wrap items-baseline gap-2 sm:gap-3.5">
               <span className="font-serif text-[26px] font-medium text-idl-ink sm:text-[34px]">
-                {formatMoney(displayPriceCents, product.currency)}
+                {formatMoney(
+                  selectedAccessories.length > 0 ? combinedPriceCents : displayPriceCents,
+                  product.currency,
+                )}
               </span>
               {priceModeLabel ? (
                 <span className="text-[13.5px] text-idl-ink-muted">{priceModeLabel}</span>
+              ) : null}
+              {selectedAccessories.length > 0 ? (
+                <span className="w-full text-[12.5px] text-idl-ink-muted sm:w-auto">
+                  {tParams('product.accessories.priceIncludes', {
+                    product: formatMoney(displayPriceCents, product.currency),
+                    accessories: formatMoney(accessoriesTotalCents, product.currency),
+                  })}
+                </span>
               ) : null}
             </div>
             {isStockEnriching ? (
@@ -322,8 +384,9 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
             {accessories.length > 0 ? (
               <DesignAccessoryPicker
                 accessories={accessories}
-                selectedSlugs={selectedAccessorySlugs}
+                selectedQuantities={selectedAccessoryQtys}
                 onToggle={toggleAccessory}
+                onQuantityChange={setAccessoryQuantity}
                 lp={lp}
                 layout="compact"
               />
@@ -355,7 +418,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
             {selectedAccessories.length > 0 ? (
               <p className="mb-3.5 text-[12.5px] text-idl-ink-muted">
                 {tParams('product.accessories.includedTotal', {
-                  count: selectedAccessories.length,
+                  count: selectedAccessoryCount,
                   total: formatMoney(combinedPriceCents, product.currency),
                 })}
               </p>
@@ -395,6 +458,43 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
           </div>
         </SectionContainer>
       </section>
+
+      {relatedSlider.products.length > 0 ? (
+        <section className="border-t border-idl-border bg-idl-path-design">
+          <SectionContainer className="py-16 sm:py-20">
+            <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <ProductDetailSectionLabel variant="design" className="mb-3">
+                  {relatedSlider.kind === 'designer'
+                    ? t('product.designRelated.designerEyebrow')
+                    : t('product.designRelated.similarEyebrow')}
+                </ProductDetailSectionLabel>
+                <h2 className="font-serif text-2xl font-medium text-idl-ink sm:text-[30px]">
+                  {relatedSlider.kind === 'designer' && relatedSlider.designerName
+                    ? tParams('product.designRelated.designerTitle', {
+                        name: relatedSlider.designerName,
+                      })
+                    : t('product.designRelated.similarTitle')}
+                </h2>
+              </div>
+              {relatedSlider.href ? (
+                <Link
+                  to={lp(relatedSlider.href)}
+                  className="text-sm font-semibold text-idl-brass hover:underline"
+                >
+                  {t('product.designRelated.seeAll')}
+                </Link>
+              ) : null}
+            </div>
+            <ProductSlider
+              products={relatedSlider.products}
+              variant="contained"
+              cardKind="design"
+              lp={lp}
+            />
+          </SectionContainer>
+        </section>
+      ) : null}
 
       {hasStorySection && storyBody ? (
       <section className="border-t border-idl-border bg-idl-paper">
@@ -511,34 +611,6 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
       </section>
       ) : null}
 
-      {relatedProducts.length > 0 ? (
-      <section className="border-t border-idl-border bg-idl-path-design">
-        <SectionContainer className="py-16 sm:py-20">
-          <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <ProductDetailSectionLabel variant="design" className="mb-3">
-                {product.brand ? `FIRMA ${product.brand.name.toUpperCase()}` : 'COLLEZIONE'}
-              </ProductDetailSectionLabel>
-              <h2 className="font-serif text-2xl font-medium text-idl-ink sm:text-[30px]">Altre icone da scoprire</h2>
-            </div>
-            {product.brand ? (
-              <Link
-                to={lp(`/brand/${product.brand.slug}`)}
-                className="text-sm font-semibold text-idl-brass hover:underline"
-              >
-                Tutto {product.brand.name} →
-              </Link>
-            ) : null}
-          </div>
-          <DesignRelatedProducts
-            products={relatedProducts.slice(0, 8)}
-            lp={lp}
-            brandName={product.brand?.name}
-          />
-        </SectionContainer>
-      </section>
-      ) : null}
-
       {alternatives.length > 0 ? (
         <section className="border-t border-idl-border bg-idl-paper">
           <SectionContainer className="py-16 sm:py-20">
@@ -571,8 +643,9 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
             </div>
             <DesignAccessoryPicker
               accessories={accessories}
-              selectedSlugs={selectedAccessorySlugs}
+              selectedQuantities={selectedAccessoryQtys}
               onToggle={toggleAccessory}
+              onQuantityChange={setAccessoryQuantity}
               lp={lp}
               layout="section"
             />

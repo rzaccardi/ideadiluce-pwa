@@ -40,11 +40,16 @@ export function specsToRows(
   if (!specs?.length) return []
   return specs
     .filter((s) => s.label?.trim() && s.display?.trim())
-    .map((s) => ({
-      label: s.label,
-      value: s.display,
-      ...(s.key?.trim() ? { key: s.key.trim() } : {}),
-    }))
+    .map((s) => {
+      const value = s.display
+      const href = /^https?:\/\//i.test(value.trim()) ? value.trim() : undefined
+      return {
+        label: s.label,
+        value,
+        ...(href ? { href } : {}),
+        ...(s.key?.trim() ? { key: s.key.trim() } : {}),
+      }
+    })
 }
 
 /** Estrae righe label/valore da tabella HTML specs (OdooCatalog o Hub). */

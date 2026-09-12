@@ -137,6 +137,23 @@ describe('mapOdooCatalogProductDetail contratto v2', () => {
     expect(dto.defaultCode).toBeNull()
   })
 
+  it('mappa documenti senza url se c e tipo permettono il link pubblico', () => {
+    const dto = mapOdooCatalogProductDetail(
+      {
+        ...fixtureDetail,
+        documents: [{ type: 'datasheet', name: 'DS.pdf', id: 184223 }],
+      },
+      'IT',
+    )
+    expect(dto.documents?.[0]).toMatchObject({
+      id: '184223',
+      name: 'DS.pdf',
+      type: 'datasheet',
+    })
+    expect(dto.documents?.[0]?.url).toContain('/product-docs/102261/datasheet/current')
+    expect(dto.documents?.[0]?.publicCurrentUrl).toContain('/product-docs/102261/datasheet/current')
+  })
+
   it('propaga html_color Odoo sugli attributi variante', () => {
     const dto = mapOdooCatalogProductDetail(
       {
@@ -197,6 +214,23 @@ describe('mapOdooCatalogProductDetail contratto v2', () => {
     expect(card.hoverImageUrl).toContain('image_512')
   })
 
+  it('card arredo: se image è l’ambientata usa comunque il packshot in gallery', () => {
+    const card = mapOdooCatalogListItem(
+      {
+        ...fixtureDetail,
+        image: { url: '/web/image/product.image/900/image_512', alt: '' },
+        image_ambiente: { url: '/web/image/product.image/900/image_1920', alt: '' },
+        gallery: [
+          { type: 'image', tag: 'ambiente', url: '/web/image/product.image/900/image_1920', alt: '' },
+          { type: 'image', tag: 'foto', url: '/web/image/product.template/6673/image_1920', alt: '' },
+        ],
+      },
+      'IT',
+    )
+    expect(card.imageUrl).toContain('/product.template/6673/')
+    expect(card.hoverImageUrl).toContain('/product.image/900/')
+  })
+
   it('separa equivalenti di marca da accessori e related', () => {
     const dto = mapOdooCatalogProductDetail(
       {
@@ -245,6 +279,36 @@ describe('mapOdooCatalogProductDetail contratto v2', () => {
     expect(dto.alternatives?.[0]?.brand).toEqual({ slug: 'osram', name: 'OSRAM' })
     expect((dto.accessories ?? []).map((item) => item.slug)).toEqual(['portalampade-g13'])
     expect((dto.relatedProducts ?? []).map((item) => item.slug)).toEqual(['tubo-t8-18w'])
+  })
+
+  it('mappa optional e accessori senza slug (da mostrare in PDP)', () => {
+    const dto = mapOdooCatalogProductDetail(
+      {
+        ...fixtureDetail,
+        related_products: [
+          {
+            relation: 'optional',
+            title: 'Lampadina E27',
+            price_from: 8.9,
+            currency: 'EUR',
+          },
+          {
+            relation: 'accessory',
+            slug: 'portalampade-g13',
+            title: 'Portalampade G13',
+            price_from: 1.2,
+            currency: 'EUR',
+          },
+        ],
+      },
+      'IT',
+    )
+
+    expect(dto.accessories).toHaveLength(2)
+    expect(dto.accessories?.[0]?.relation).toBe('accessory')
+    expect(dto.accessories?.[0]?.name).toBe('Lampadina E27')
+    expect(dto.accessories?.[0]?.slug?.trim()).toBeFalsy()
+    expect(dto.accessories?.[1]?.slug).toBe('portalampade-g13')
   })
 
   it('propaga id template sugli accessori (id esplicito o da URL immagine)', () => {

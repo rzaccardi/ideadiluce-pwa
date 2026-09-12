@@ -3,7 +3,6 @@
 import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { useSnapshot } from 'valtio/react'
-import { useIsClient } from '@/hooks/use-is-client'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocale } from '@/context/locale-context'
 import { useLocalePath } from '@/hooks/use-locale-path'
@@ -72,7 +71,6 @@ function KeyboardHint({ children, className }: { children: React.ReactNode; clas
 }
 
 export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palette', onClose }: Props) {
-  const isClient = useIsClient()
   const reduceMotion = useReducedMotion()
   const listId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -174,12 +172,28 @@ export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palett
       scheduleAutocomplete(initialQuery)
     }
 
-    const frame = window.requestAnimationFrame(() => inputRef.current?.focus())
+    const focusInput = () => {
+      const input = inputRef.current
+      if (!input) return false
+      input.focus({ preventScroll: true })
+      const len = input.value.length
+      input.setSelectionRange(len, len)
+      return document.activeElement === input
+    }
+
+    let nestedFrame = 0
+    const frame = window.requestAnimationFrame(() => {
+      if (focusInput()) return
+      nestedFrame = window.requestAnimationFrame(() => {
+        focusInput()
+      })
+    })
     const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
     return () => {
       window.cancelAnimationFrame(frame)
+      window.cancelAnimationFrame(nestedFrame)
       document.body.style.overflow = prevOverflow
     }
   }, [initialQuery, open, scheduleAutocomplete, setQuery])
@@ -188,14 +202,15 @@ export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palett
     if (!open) return
 
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
+      if (event.isComposing) return
+      if (event.key === 'Escape' || event.code === 'Escape') {
         event.preventDefault()
         onClose()
       }
     }
 
-    document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
+    document.addEventListener('keydown', onKeyDown, true)
+    return () => document.removeEventListener('keydown', onKeyDown, true)
   }, [onClose, open])
 
   useEffect(() => {
@@ -234,7 +249,7 @@ export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palett
     bumpRecent()
   }
 
-  if (!isClient) return null
+  if (typeof document === 'undefined') return null
 
   const viewAllLabel =
     productTotal != null && productTotal > 0
@@ -259,6 +274,7 @@ export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palett
           <input
             ref={inputRef}
             value={query}
+            autoFocus
             role="combobox"
             aria-expanded={hasResults || showEmpty || showPending}
             aria-busy={showPending || undefined}
@@ -276,6 +292,11 @@ export function GlobalSearchPalette({ open, initialQuery, searchSource = 'palett
               scheduleAutocomplete(next)
             }}
             onKeyDown={(event) => {
+              if (event.key === 'Escape' || event.code === 'Escape') {
+                event.preventDefault()
+                onClose()
+                return
+              }
               if (event.key === 'ArrowDown') {
                 event.preventDefault()
                 setActiveIndex((index) => nextSearchActiveIndex(index, displayFlat.length, 'down'))

@@ -15,5 +15,7 @@ export function usesSessionPricelist(
 ): boolean {
   if (impersonation) return true
   if (!user) return false
+  if (user.personalizedPricing) return true
+  if (user.isProfessional) return true
   return user.customerSegment === 'business' || user.customerSegment === 'professional'
 }

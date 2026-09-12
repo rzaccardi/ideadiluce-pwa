@@ -60,6 +60,8 @@ export type UserDTO = {
   pricelistLabel: string
   /** Account con condizioni listino professional (segmento PROFESSIONAL). */
   isProfessional: boolean
+  /** True se catalogo/carrello devono usare il listino sessione (B2B/pro/partner). */
+  personalizedPricing: boolean
   companyName: string | null
   vatNumber: string | null
   fiscalCode: string | null

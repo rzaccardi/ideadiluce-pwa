@@ -79,14 +79,15 @@ async function readOdooAccessoryTemplateIds(
 }
 
 /**
- * Se il catalogo v2 non porta accessori, li legge da Odoo
- * `optional_product_ids` + `accessory_product_ids` e li risolve via API catalogo (slug/prezzi reali).
+ * Se il catalogo v2 porta già `related_products` accessory/optional, li lascia (anche senza slug:
+ * la PDP li mostra ma non li rende acquistabili). Altrimenti fallback XML-RPC su
+ * `optional_product_ids` + `accessory_product_ids`.
  */
 export async function enrichProductDetailWithAccessories(
   ctx: OdooCallContext,
   product: ProductDetailDTO,
 ): Promise<ProductDetailDTO> {
-  const existing = (product.accessories ?? []).filter((item) => item.slug?.trim())
+  const existing = product.accessories ?? []
   if (existing.length > 0) {
     return { ...product, accessories: existing.map(patchRelatedTemplateId) }
   }

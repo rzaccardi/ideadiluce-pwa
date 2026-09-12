@@ -239,6 +239,7 @@ export const messages: Record<MessageKey, string> = {
   'product.docs.euSheet': 'Scheda prodotto UE',
   'product.docs.ce': 'Dichiarazione CE',
   'product.docs.instructions': 'Istruzioni',
+  'product.docs.download': 'Scarica',
   'product.addToCart': 'Aggiungi al carrello',
   'product.addToCartShort': 'Aggiungi',
   'product.addingToCart': 'Aggiunta in corso…',
@@ -256,6 +257,11 @@ export const messages: Record<MessageKey, string> = {
   'product.available': 'Disponibile',
   'product.lowStock': 'Solo {count} disponibili',
   'product.relatedTitle': 'Ti potrebbe interessare…',
+  'product.designRelated.designerEyebrow': 'IL DESIGNER',
+  'product.designRelated.designerTitle': 'Altri progetti di {name}',
+  'product.designRelated.similarEyebrow': 'SIMILI',
+  'product.designRelated.similarTitle': 'Altre icone da scoprire',
+  'product.designRelated.seeAll': 'Vedi tutti →',
   'product.accessories.title': 'Accessori compatibili',
   'product.accessories.subtitle': 'Lampadine e accessori consigliati da Odoo per questo prodotto.',
   'product.accessories.compactTitle': 'Completa con accessori',
@@ -264,7 +270,9 @@ export const messages: Record<MessageKey, string> = {
   'product.accessories.addWithProduct': 'Aggiungi insieme',
   'product.accessories.selectedCount': '{count} accessori selezionati',
   'product.accessories.viewProduct': 'Vedi scheda',
+  'product.accessories.unavailableLink': 'Scheda non disponibile',
   'product.accessories.includedTotal': 'Inclusi {count} accessori · Totale {total}',
+  'product.accessories.priceIncludes': 'Prodotto {product} + accessori {accessories}',
   'product.grid.empty': 'Nessun prodotto in elenco.',
   'product.card.noImage': 'Nessuna immagine',
   'product.quantityLabel': 'Quantità',
@@ -276,6 +284,11 @@ export const messages: Record<MessageKey, string> = {
   'product.meta.eanCopyHint': 'Clicca per copiare',
   'product.meta.eanCopied': 'Copiato',
   'product.meta.eanCopyFailed': 'Impossibile copiare il codice EAN',
+  'product.meta.eanBarcodeAria': 'Codice a barre EAN {ean}',
+  'product.meta.eanDownloadPng': 'Scarica PNG',
+  'product.meta.eanDownloadPdf': 'Scarica PDF',
+  'product.meta.eanDownloadSvg': 'Scarica SVG',
+  'product.meta.eanDownloadFailed': 'Impossibile scaricare il codice a barre',
   'product.meta.brand': 'Marca',
   'product.meta.manufacturerCode': 'MPN',
   'product.meta.ced': 'CED',
@@ -503,7 +516,8 @@ export const messages: Record<MessageKey, string> = {
   'checkout.backToCartConfirmDescription':
     'Stai per uscire dal checkout. I dati inseriti potrebbero non essere salvati.',
   'checkout.shipping.title': 'Metodo di spedizione',
-  'checkout.shipping.noMethods': 'Nessun metodo disponibile per questo indirizzo.',
+  'checkout.shipping.noMethods':
+    'Nessun metodo di spedizione disponibile per questo indirizzo. Verifica paese e CAP, oppure contattaci per una spedizione dedicata.',
   'checkout.shipping.addressIncomplete':
     'Completa l’indirizzo per selezionare il metodo di spedizione.',
   'checkout.shipping.deliveryEstimate':
@@ -822,6 +836,8 @@ export const messages: Record<MessageKey, string> = {
   'account.addresses.deleteConfirmDescription':
     'L’indirizzo verrà archiviato su Odoo e non comparirà più in checkout.',
   'account.addresses.default': 'Predefinito',
+  'account.addresses.sedeHint':
+    '«{label}» è la sede aziendale: modifica i dati da Profilo. Puoi aggiungere altri indirizzi di spedizione (child partner Odoo).',
   'account.addresses.loadError': 'Impossibile caricare gli indirizzi. Riprova.',
   'account.payments.title': 'Metodi di pagamento',
   'account.payments.current': 'Metodo preferito',

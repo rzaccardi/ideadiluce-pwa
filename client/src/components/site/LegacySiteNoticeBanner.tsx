@@ -22,7 +22,7 @@ export function LegacySiteNoticeBanner() {
   return (
     <div
       role="status"
-      className="border-b border-amber-800/40 bg-[#2c2116] text-[#f6ead6]"
+      className="border-b border-white/10 bg-idl-ink text-white"
     >
       <SectionContainer className="flex flex-col gap-2 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <p className="text-[13px] leading-snug sm:text-[13.5px]">{t('legacySite.notice.message')}</p>

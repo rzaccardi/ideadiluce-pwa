@@ -62,6 +62,43 @@ describe('enrichProductDetailWithAccessories', () => {
     envState.ODOO_ENABLED = true
   })
 
+  it('conserva accessori da API anche senza slug (mostrabili, non comprabili)', async () => {
+    const product: ProductDetailDTO = {
+      ...baseProduct,
+      accessories: [
+        {
+          slug: '',
+          locale: 'IT',
+          name: 'Lampadina senza scheda',
+          shortDescription: null,
+          priceCents: 500,
+          priceDisplayMode: 'ex_vat',
+          currency: 'EUR',
+          imageUrl: null,
+          categorySlug: null,
+          relation: 'accessory',
+        },
+        {
+          slug: 'dimmer',
+          locale: 'IT',
+          name: 'Dimmer',
+          shortDescription: null,
+          priceCents: 2400,
+          priceDisplayMode: 'ex_vat',
+          currency: 'EUR',
+          imageUrl: null,
+          categorySlug: null,
+          relation: 'accessory',
+        },
+      ],
+    }
+
+    const enriched = await enrichProductDetailWithAccessories({ correlationId: 'test' }, product)
+    expect(odooExecuteKw).not.toHaveBeenCalled()
+    expect(enriched.accessories).toHaveLength(2)
+    expect(enriched.accessories?.map((a) => a.slug)).toEqual(['', 'dimmer'])
+  })
+
   it('lascia gli accessori già presenti e ripara odooTemplateId da URL immagine', async () => {
     const product: ProductDetailDTO = {
       ...baseProduct,

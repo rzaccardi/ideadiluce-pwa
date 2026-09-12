@@ -28,6 +28,11 @@ function readString(value: unknown): string | undefined {
   return undefined
 }
 
+function readId(value: unknown): string | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return String(Math.trunc(value))
+  return readString(value)
+}
+
 function warnMissing(field: string) {
   if (process.env.NODE_ENV === 'development') {
     console.warn(`[odooCatalog] availability field missing or invalid: ${field}`)
@@ -89,19 +94,21 @@ export function parseOdooCatalogDocuments(
   if (!Array.isArray(raw)) return []
 
   const docs: ProductDocumentDTO[] = []
+  const ced = options?.ced?.trim()
   for (const item of raw) {
     if (!item || typeof item !== 'object') continue
     const r = item as Record<string, unknown>
-    const urlRaw = readString(r.url)
-    if (!urlRaw) continue
-    const url = resolveOdooCatalogMediaUrl(urlRaw) ?? urlRaw
-    const id = readString(r.id) ?? String(docs.length + 1)
-    const name = readString(r.name) ?? 'Documento'
     const type = readString(r.type) ?? null
+    const publicCurrentUrl = ced && type ? odooCatalogProductDocCurrentUrl(ced, type) : null
+    const urlRaw = readString(r.url) ?? readString(r.href) ?? readString(r.file_url)
+    const resolvedUrl = urlRaw ? (resolveOdooCatalogMediaUrl(urlRaw) ?? urlRaw) : null
+    const url = resolvedUrl ?? publicCurrentUrl
+    if (!url) continue
+    const id = readId(r.id) ?? type ?? String(docs.length + 1)
+    const name = readString(r.name) ?? 'Documento'
     const mimetype = readString(r.mimetype) ?? null
     const format =
       readString(r.format) ?? (mimetype === 'application/pdf' ? 'pdf' : null)
-    const ced = options?.ced?.trim()
     docs.push({
       id,
       name,
@@ -110,7 +117,7 @@ export function parseOdooCatalogDocuments(
       mimetype,
       sizeBytes: readNumber(r.size_bytes ?? r.sizeBytes) ?? null,
       url,
-      publicCurrentUrl: ced && type ? odooCatalogProductDocCurrentUrl(ced, type) : null,
+      publicCurrentUrl,
     })
   }
   return docs

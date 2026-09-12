@@ -4,7 +4,9 @@ import { useEffect } from 'react'
 
 type Options = {
   onOpen: () => void
+  onClose?: () => void
   enabled?: boolean
+  isOpen?: boolean
 }
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -14,11 +16,25 @@ function isEditableTarget(target: EventTarget | null): boolean {
   return target.isContentEditable
 }
 
-export function useGlobalSearchShortcut({ onOpen, enabled = true }: Options) {
+export function useGlobalSearchShortcut({
+  onOpen,
+  onClose,
+  enabled = true,
+  isOpen = false,
+}: Options) {
   useEffect(() => {
-    if (!enabled) return
+    if (!enabled && !isOpen) return
 
     function onKeyDown(event: KeyboardEvent) {
+      if (event.isComposing) return
+
+      if (isOpen && onClose && (event.key === 'Escape' || event.code === 'Escape')) {
+        event.preventDefault()
+        onClose()
+        return
+      }
+
+      if (!enabled || isOpen) return
       const key = event.key.toLowerCase()
       if (key !== 'k') return
       if (!(event.metaKey || event.ctrlKey)) return
@@ -29,7 +45,7 @@ export function useGlobalSearchShortcut({ onOpen, enabled = true }: Options) {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [enabled, onOpen])
+  }, [enabled, isOpen, onClose, onOpen])
 }
 
 export function getGlobalSearchShortcutLabel(): string {

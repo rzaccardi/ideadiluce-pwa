@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { usesSessionPricelist } from './catalog-pricing'
 import type { UserDTO } from '@/types/dto'
 
-function user(segment: UserDTO['customerSegment']): UserDTO {
+function user(
+  segment: UserDTO['customerSegment'],
+  extras?: Partial<Pick<UserDTO, 'isProfessional' | 'personalizedPricing'>>,
+): UserDTO {
   return {
     id: 'u1',
     email: 'a@example.com',
@@ -14,7 +17,10 @@ function user(segment: UserDTO['customerSegment']): UserDTO {
     status: 'ACTIVE',
     customerSegment: segment,
     pricelistLabel: '',
-    isProfessional: segment === 'professional',
+    isProfessional: extras?.isProfessional ?? segment === 'professional',
+    personalizedPricing:
+      extras?.personalizedPricing ??
+      (segment === 'business' || segment === 'professional'),
     companyName: null,
     vatNumber: null,
     fiscalCode: null,
@@ -35,16 +41,23 @@ function user(segment: UserDTO['customerSegment']): UserDTO {
 }
 
 describe('usesSessionPricelist', () => {
-  it('è falso per guest e retail', () => {
+  it('è falso per guest e retail senza listino partner', () => {
     expect(usesSessionPricelist(null, null)).toBe(false)
     expect(usesSessionPricelist(user('retail'), null)).toBe(false)
   })
 
-  it('è vero per rivenditore, installatore e impersonazione', () => {
+  it('è vero per rivenditore, installatore e impersonazione (refetch cookie vs SSR pubblico)', () => {
     expect(usesSessionPricelist(user('business'), null)).toBe(true)
     expect(usesSessionPricelist(user('professional'), null)).toBe(true)
+    expect(usesSessionPricelist(user('business', { personalizedPricing: false }), null)).toBe(true)
     expect(
       usesSessionPricelist(user('retail'), { adminEmail: 'a@bo', adminDisplayName: 'Admin' }),
+    ).toBe(true)
+  })
+
+  it('è vero per retail con personalizedPricing (listino Odoo assegnato)', () => {
+    expect(
+      usesSessionPricelist(user('retail', { personalizedPricing: true }), null),
     ).toBe(true)
   })
 })

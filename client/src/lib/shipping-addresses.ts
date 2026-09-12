@@ -68,3 +68,10 @@ export function formatShippingAddressCard(address: UserShippingAddressDTO | Addr
     lines: formatAddressSummary(address),
   }
 }
+
+/** Etichetta compatta per la select checkout (nome — via, CAP città). */
+export function formatShippingAddressSelectOption(address: UserShippingAddressDTO | AddressInput): string {
+  const card = formatShippingAddressCard(address)
+  if (!card.lines || card.lines === '—') return card.title
+  return `${card.title} — ${card.lines}`
+}

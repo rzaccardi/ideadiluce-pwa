@@ -18,6 +18,7 @@ import { resolvePricingContext } from '../pricing/pricelist.service.js'
 import { resolveFreeShippingHint } from './shipping.freeHint.js'
 import { applyOrderSurcharges, loadShippingSurchargeRules } from './shipping.surcharges.js'
 import { getStorePickupLocation } from '../../config/store-location.js'
+import { zoneMatchesCountry, zoneMatchesPostcode } from './shipping-zone-match.js'
 import type {
   FreeShippingHintDTO,
   ShippingQuoteDTO,
@@ -47,12 +48,6 @@ async function activeCart(req: Request) {
   if (!cart) throw new AppError('CART_NOT_FOUND', 'Cart not found', 'Carrello non trovato.', 404, false)
   if (cart.items.length === 0) throw new AppError('EMPTY_CART', 'Cart empty', 'Il carrello è vuoto.', 400, false)
   return cart
-}
-
-function zoneMatches(_country: string, postcodes: string[], postalCode: string): boolean {
-  if (postcodes.length === 0) return true
-  const pc = postalCode.replace(/\s/g, '')
-  return postcodes.some((p) => pc.startsWith(p.replace(/\s/g, '')))
 }
 
 function applySurcharge(amountCents: number, surchargePct: number): number {
@@ -120,8 +115,8 @@ async function resolveFixedMethodQuote(
   if (!method) return null
 
   const zone = method.zone
-  if (!zone.countries.map((c) => c.toUpperCase()).includes(address.country.toUpperCase())) return null
-  if (!zoneMatches(address.country, zone.postcodes, address.postalCode)) return null
+  if (!zoneMatchesCountry(zone.countries, address.country)) return null
+  if (!zoneMatchesPostcode(zone.postcodes, address.postalCode)) return null
   if (method.minOrderCents != null && subtotalCents < method.minOrderCents) return null
 
   if (method.type === ShippingMethodType.FREE_SHIPPING) {
@@ -243,8 +238,8 @@ async function quotesFromDb(
 
   const matchingZone = zones.find(
     (zone) =>
-      zone.countries.map((c) => c.toUpperCase()).includes(address.country.toUpperCase()) &&
-      zoneMatches(address.country, zone.postcodes, address.postalCode),
+      zoneMatchesCountry(zone.countries, address.country) &&
+      zoneMatchesPostcode(zone.postcodes, address.postalCode),
   )
   const zoneMethods = matchingZone?.methods ?? []
   const needsLiveRates = zoneHasLiveCarrierMethods(zoneMethods)
@@ -258,8 +253,8 @@ async function quotesFromDb(
 
   const lines: ShippingQuoteLine[] = []
   for (const zone of zones) {
-    if (!zone.countries.map((c) => c.toUpperCase()).includes(address.country.toUpperCase())) continue
-    if (!zoneMatches(address.country, zone.postcodes, address.postalCode)) continue
+    if (!zoneMatchesCountry(zone.countries, address.country)) continue
+    if (!zoneMatchesPostcode(zone.postcodes, address.postalCode)) continue
 
     for (const m of zone.methods) {
       if (m.minOrderCents != null && subtotalCents < m.minOrderCents) continue

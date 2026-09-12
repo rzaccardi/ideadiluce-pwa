@@ -24,7 +24,7 @@ import {
   resolveOdooCatalogMediaUrl,
   resolveOdooCatalogMediaUrlWithSize,
 } from './media'
-import { pickProductCardHoverImageUrl } from '@/lib/product-card-hover-image'
+import { resolveProductCardImagePair } from '@/lib/product-card-hover-image'
 import type {
   OdooCatalogDimensions,
   OdooCatalogGalleryItem,
@@ -233,20 +233,14 @@ function normalizeGalleryItem(item: OdooCatalogGalleryItem | { url: string; alt?
   }
 }
 
-export function resolveOdooCatalogCardHoverImageUrl(
-  product: Pick<OdooCatalogProductListItem, 'gallery'> & {
-    hover_image?: OdooCatalogProductListItem['hover_image']
-    image_ambiente?: OdooCatalogProductListItem['image_ambiente']
-  },
-  packshotUrl: string | null,
-): string | null {
-  const dedicated = resolveOdooCatalogMediaUrlWithSize(
-    product.hover_image?.url ?? product.image_ambiente?.url,
-    'image_512',
-  )
-  if (dedicated && !odooCatalogImageUrlsMatch(dedicated, packshotUrl)) return dedicated
+type OdooCatalogCardImageSource = Pick<OdooCatalogProductListItem, 'gallery'> & {
+  image?: OdooCatalogProductListItem['image']
+  hover_image?: OdooCatalogProductListItem['hover_image']
+  image_ambiente?: OdooCatalogProductListItem['image_ambiente']
+}
 
-  const resolved = (product.gallery ?? []).map((item) => ({
+function resolveCardGallery(product: OdooCatalogCardImageSource) {
+  return (product.gallery ?? []).map((item) => ({
     type: 'type' in item ? item.type : 'image',
     tag: 'tag' in item ? item.tag : 'foto',
     url:
@@ -254,7 +248,31 @@ export function resolveOdooCatalogCardHoverImageUrl(
         ? null
         : resolveOdooCatalogMediaUrlWithSize(item.url, 'image_512'),
   }))
-  return pickProductCardHoverImageUrl(resolved, packshotUrl, odooCatalogImageUrlsMatch)
+}
+
+/** Packshot su bianco + ambientata hover, anche se `image` Odoo è l’ambientata. */
+export function resolveOdooCatalogCardImageUrls(product: OdooCatalogCardImageSource): {
+  imageUrl: string | null
+  hoverImageUrl: string | null
+} {
+  const main = resolveOdooCatalogMediaUrlWithSize(product.image?.url, 'image_512')
+  const dedicated = resolveOdooCatalogMediaUrlWithSize(
+    product.hover_image?.url ?? product.image_ambiente?.url,
+    'image_512',
+  )
+  return resolveProductCardImagePair(
+    resolveCardGallery(product),
+    main,
+    odooCatalogImageUrlsMatch,
+    dedicated,
+  )
+}
+
+export function resolveOdooCatalogCardHoverImageUrl(
+  product: OdooCatalogCardImageSource,
+  _packshotUrl?: string | null,
+): string | null {
+  return resolveOdooCatalogCardImageUrls(product).hoverImageUrl
 }
 
 function mapGallery(raw: OdooCatalogProductDetail['gallery']): ProductGalleryItemDTO[] {
@@ -292,7 +310,7 @@ export function mapOdooCatalogListItem(product: OdooCatalogProductListItem, loca
   })
 
   const codes = resolveListCodes(product)
-  const imageUrl = resolveOdooCatalogMediaUrlWithSize(product.image?.url, 'image_512')
+  const { imageUrl, hoverImageUrl } = resolveOdooCatalogCardImageUrls(product)
 
   return {
     slug: product.slug,
@@ -304,7 +322,7 @@ export function mapOdooCatalogListItem(product: OdooCatalogProductListItem, loca
     priceDisplayMode: 'ex_vat',
     currency: product.currency || 'EUR',
     imageUrl,
-    hoverImageUrl: resolveOdooCatalogCardHoverImageUrl(product, imageUrl),
+    hoverImageUrl,
     categorySlug: categories[0]?.slug ?? product.category_slug ?? null,
     brand: resolveCardBrand(product),
     sku: resolveListSku(product),

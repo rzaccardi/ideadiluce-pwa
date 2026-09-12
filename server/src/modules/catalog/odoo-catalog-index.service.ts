@@ -14,7 +14,7 @@ import {
 import { toOdooCatalogLang } from '../../adapters/odoo-catalog/odooCatalogLocale.js'
 import {
   mapOdooCatalogListItem,
-  resolveOdooCatalogCardHoverImageUrl,
+  resolveOdooCatalogCardImageUrls,
 } from '../../adapters/odoo-catalog/odooCatalogMapper.js'
 import type {
   OdooCatalogProductDetail,
@@ -407,9 +407,9 @@ function finalizeBucket(
         entry.manufacturerCode ?? '',
       ].join(' '),
     )
-    if (!entry.hoverImageUrl) {
-      entry.hoverImageUrl = resolveOdooCatalogCardHoverImageUrl(detail, entry.imageUrl)
-    }
+    const pair = resolveOdooCatalogCardImageUrls(detail)
+    if (pair.imageUrl) entry.imageUrl = pair.imageUrl
+    entry.hoverImageUrl = pair.hoverImageUrl
   }
 
   const derivedFromDetails = deriveTaxonomyFromEntries(entries)
@@ -806,11 +806,14 @@ export async function queryOdooCatalogIndex(options: {
   const start = (page - 1) * options.pageSize
   const items = filtered.slice(start, start + options.pageSize).map(
     ({ searchText: _s, categorySlugs: _c, brandSlug: _b, specs: _specs, ...card }) => {
-      if (card.hoverImageUrl) return card
       const detail = bucket.detailsById[String(card.odooTemplateId)]
       if (!detail) return card
-      const hoverImageUrl = resolveOdooCatalogCardHoverImageUrl(detail, card.imageUrl)
-      return hoverImageUrl ? { ...card, hoverImageUrl } : card
+      const pair = resolveOdooCatalogCardImageUrls(detail)
+      return {
+        ...card,
+        imageUrl: pair.imageUrl ?? card.imageUrl,
+        hoverImageUrl: pair.hoverImageUrl,
+      }
     },
   )
 

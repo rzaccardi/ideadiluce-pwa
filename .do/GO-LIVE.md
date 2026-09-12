@@ -139,7 +139,7 @@ Verifica locale: `npm run stripe:setup`, `npm run stripe:webhook`.
 
 **Ticket operativi aperti (fuori PDP):**
 
-- **Spedizione internazionale:** il claim marketing “in tutto il mondo” non è operativo finché in BO non ci sono zone estere (seed attuale = solo IT) e DHL/FedEx abilitati con credenziali. Allineare anche il copy CMS di `/spedizioni` (oggi parla solo di Italia).
+- **Spedizione internazionale:** zone BO seedate per UE (ex IT) e Extra-UE/Mondo (`*` + DHL/FedEx live). Credenziali corriere in BO necessarie per quote reali (altrimenti stime fallback). Copy `/spedizioni` allineato a tracking mondiale e dazi extra-UE.
 
 **Nota:** non c’è showroom fisico — `/showroom` resta 301 → `/contatti`; il copy “Showroom a Roma” è stato rimosso da header/shell.
 

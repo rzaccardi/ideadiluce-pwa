@@ -1,4 +1,4 @@
-import type { UserDTO } from '@/types/dto'
+import type { UserAddressDTO, UserDTO, UserShippingAddressDTO } from '@/types/dto'
 import { formatStreetLine } from '@/lib/checkout-address.validators'
 
 export type AccountProfilePrefill = {
@@ -28,6 +28,7 @@ type AccountProfilePrefillSource = Pick<
   | 'pec'
   | 'sdiCode'
   | 'vatCountryCode'
+  | 'viesAddress'
   | 'shippingAddress'
 >
 
@@ -52,24 +53,45 @@ export function emptyAccountProfilePrefill(): AccountProfilePrefill {
   }
 }
 
-function formatAccountAddressLine(user: AccountProfilePrefillSource): string {
-  const address = user.shippingAddress
+function formatAccountAddressLine(address: UserAddressDTO | null | undefined): string {
   if (!address?.line1?.trim()) return ''
   const locality = [address.postalCode, address.city].filter(Boolean).join(' ')
-  return [formatStreetLine(address), locality].filter(Boolean).join(', ')
+  return [formatStreetLine(address), address.line2?.trim(), locality].filter(Boolean).join(', ')
+}
+
+function formatViesAddress(value: string | null | undefined): string {
+  return (value ?? '')
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join(', ')
+}
+
+/** Sede Odoo se c'è, altrimenti indirizzo predefinito. */
+export function pickProfessionalPrefillAddress(
+  addresses: readonly UserShippingAddressDTO[],
+): UserShippingAddressDTO | null {
+  return (
+    addresses.find((row) => row.source === 'odoo_parent' && row.line1.trim()) ??
+    addresses.find((row) => row.isDefault && row.line1.trim()) ??
+    addresses.find((row) => row.line1.trim()) ??
+    null
+  )
 }
 
 /** Anagrafica e dati aziendali da `authStore.me` / form Dati e password. */
 export function accountProfilePrefillFromUser(
   user: AccountProfilePrefillSource | null | undefined,
+  options?: { address?: UserAddressDTO | null },
 ): AccountProfilePrefill {
   if (!user) return emptyAccountProfilePrefill()
 
-  const firstName = trim(user.firstName) || trim(user.shippingAddress?.firstName)
-  const lastName = trim(user.lastName) || trim(user.shippingAddress?.lastName)
+  const address = options?.address?.line1?.trim() ? options.address : user.shippingAddress
+  const firstName = trim(user.firstName) || trim(address?.firstName)
+  const lastName = trim(user.lastName) || trim(address?.lastName)
   const country = (
     trim(user.vatCountryCode) ||
-    trim(user.shippingAddress?.country) ||
+    trim(address?.country) ||
     'IT'
   )
     .toUpperCase()
@@ -80,14 +102,14 @@ export function accountProfilePrefillFromUser(
     lastName,
     contactName: [firstName, lastName].filter(Boolean).join(' '),
     email: trim(user.email),
-    phone: trim(user.phone) || trim(user.shippingAddress?.phone),
+    phone: trim(user.phone) || trim(address?.phone),
     companyName: trim(user.companyName),
     vatNumber: trim(user.vatNumber),
     fiscalCode: trim(user.fiscalCode),
     pec: trim(user.pec),
     sdiCode: trim(user.sdiCode),
     country: country || 'IT',
-    addressLine: formatAccountAddressLine(user),
+    addressLine: formatAccountAddressLine(address) || formatViesAddress(user.viesAddress),
   }
 }
 

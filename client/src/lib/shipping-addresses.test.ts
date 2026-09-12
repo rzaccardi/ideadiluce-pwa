@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { matchSavedShippingAddress, shippingAddressFingerprint } from './shipping-addresses'
+import {
+  formatShippingAddressSelectOption,
+  matchSavedShippingAddress,
+  shippingAddressFingerprint,
+} from './shipping-addresses'
 import type { UserShippingAddressDTO } from '@/types/dto'
 
 function addr(overrides: Partial<UserShippingAddressDTO>): UserShippingAddressDTO {
@@ -57,6 +61,22 @@ describe('matchSavedShippingAddress', () => {
         country: 'IT',
       })?.id,
     ).toBe('odoo:201')
+  })
+})
+
+describe('formatShippingAddressSelectOption', () => {
+  it('unisce etichetta e riepilogo indirizzo', () => {
+    expect(
+      formatShippingAddressSelectOption(
+        addr({
+          label: 'Magazzino Lucca',
+          line1: 'Via del Corniolo',
+          streetNumber: '12',
+          city: 'Lucca',
+          postalCode: '55100',
+        }),
+      ),
+    ).toBe('Magazzino Lucca — Via del Corniolo 12, 55100 Lucca')
   })
 })
 

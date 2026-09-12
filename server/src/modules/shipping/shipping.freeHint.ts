@@ -1,12 +1,7 @@
 import { prisma } from '../../lib/prisma.js'
 import type { FreeShippingHintDTO } from '../../types/dto.js'
 import { ShippingMethodType } from '@prisma/client'
-
-function zoneMatches(_country: string, postcodes: string[], postalCode: string): boolean {
-  if (postcodes.length === 0) return true
-  const pc = postalCode.replace(/\s/g, '')
-  return postcodes.some((p) => pc.startsWith(p.replace(/\s/g, '')))
-}
+import { zoneMatchesCountry, zoneMatchesPostcode } from './shipping-zone-match.js'
 
 /** Soglia spedizione gratuita per zona/indirizzo (default IT in carrello). */
 export async function resolveFreeShippingHint(input: {
@@ -27,8 +22,8 @@ export async function resolveFreeShippingHint(input: {
   let best: { thresholdCents: number; label: string } | null = null
 
   for (const zone of zones) {
-    if (!zone.countries.map((c) => c.toUpperCase()).includes(country)) continue
-    if (!zoneMatches(country, zone.postcodes, postalCode)) continue
+    if (!zoneMatchesCountry(zone.countries, country)) continue
+    if (!zoneMatchesPostcode(zone.postcodes, postalCode)) continue
 
     for (const m of zone.methods) {
       if (m.type !== ShippingMethodType.FREE_SHIPPING) continue

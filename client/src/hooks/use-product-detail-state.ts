@@ -7,6 +7,8 @@ import { useI18n } from '@/hooks/use-i18n'
 import { useSnapshot } from 'valtio/react'
 import { api } from '@/api/endpoints'
 import { productStore, fetchProduct } from '@/features/product'
+import { authStore } from '@/features/auth'
+import { usesSessionPricelist } from '@/lib/catalog-pricing'
 import {
   getProductAvailabilityStatus,
   resolveAvailabilityData,
@@ -29,6 +31,8 @@ export function useProductDetailState({
   const { locale } = useLocale()
   const { locale: i18nLocale, t } = useI18n()
   const snap = useSnapshot(productStore)
+  const authSnap = useSnapshot(authStore)
+  const sessionPricelist = usesSessionPricelist(authSnap.me, authSnap.impersonation)
   const product =
     snap.product?.slug === slug
       ? snap.product
@@ -44,6 +48,7 @@ export function useProductDetailState({
   const [isStockEnriching, setIsStockEnriching] = useState(
     Boolean(initialProduct && initialProduct.slug === slug),
   )
+  const [pricedForSessionUser, setPricedForSessionUser] = useState(false)
 
   useEffect(() => {
     const initialMatchesLocale =
@@ -83,8 +88,40 @@ export function useProductDetailState({
       }
     }
     setIsStockEnriching(false)
+    setPricedForSessionUser(false)
     if (slug) void fetchProduct(slug, locale)
   }, [slug, locale, initialProduct, initialRelatedProducts])
+
+  /** Re-enrich dopo login B2B/pro: SSR era listino pubblico. */
+  useEffect(() => {
+    if (!sessionPricelist) {
+      setPricedForSessionUser(false)
+      return
+    }
+    if (!slug || !product || pricedForSessionUser) return
+    if (product.slug !== slug) return
+    let cancelled = false
+    setIsStockEnriching(true)
+    void api.catalog
+      .enrichProductDetail(product as ProductDetailDTO)
+      .then((enriched) => {
+        if (
+          !cancelled &&
+          productStore.currentSlug === slug &&
+          productStore.currentLocale === locale
+        ) {
+          productStore.product = enriched
+          setPricedForSessionUser(true)
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setIsStockEnriching(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [sessionPricelist, slug, locale, product, pricedForSessionUser])
 
   const variantRefsKey = product?.variants.map((v) => v.ref).join('\n') ?? ''
 

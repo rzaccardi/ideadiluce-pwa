@@ -5,6 +5,11 @@ import { isCartCheckoutPriceLocked } from '../checkout/checkout-order-sync.servi
 import { computeCartTaxCents } from '../cart/cart-tax.helper.js'
 import { parseOdooTemplateId, parseOdooVariantId } from './odooRef.js'
 import type { PricingContext } from '../pricing/pricelist.service.js'
+import {
+  applyPricelistItemToListPriceEuros,
+  eurosToCents,
+  type OdooPricelistItemRow,
+} from '../pricing/pricelist-item-price.js'
 
 type OdooPriceModel = 'product.product' | 'product.template'
 
@@ -42,7 +47,65 @@ async function readOdooListPricesCents(
     if (row.list_price == null) continue
     prices.set(row.id, Math.round(Number(row.list_price) * 100))
   }
+
+  if (pricing?.pricelistId) {
+    await overlayPricelistItemPrices(ctx, model, uniqueIds, pricing.pricelistId, prices, rows)
+  }
   return prices
+}
+
+async function overlayPricelistItemPrices(
+  ctx: OdooCallContext,
+  model: OdooPriceModel,
+  ids: number[],
+  pricelistId: number,
+  prices: Map<number, number>,
+  listRows: Array<{ id: number; list_price: number }>,
+) {
+  const productField = model === 'product.product' ? 'product_id' : 'product_tmpl_id'
+  let items: OdooPricelistItemRow[]
+  try {
+    items = await odooExecuteKw<OdooPricelistItemRow[]>(
+      ctx,
+      'product.pricelist.item',
+      'search_read',
+      [[['pricelist_id', '=', pricelistId], [productField, 'in', ids]]],
+      {
+        fields: [
+          'applied_on',
+          'compute_price',
+          'fixed_price',
+          'percent_price',
+          'price_discount',
+          'price_surcharge',
+          'min_quantity',
+          'product_id',
+          'product_tmpl_id',
+        ],
+        limit: Math.max(ids.length * 4, 80),
+      },
+    )
+  } catch {
+    return
+  }
+
+  const listEuros = new Map(listRows.map((row) => [row.id, Number(row.list_price)]))
+  for (const item of items) {
+    const targetId =
+      model === 'product.product'
+        ? Array.isArray(item.product_id)
+          ? item.product_id[0]
+          : null
+        : Array.isArray(item.product_tmpl_id)
+          ? item.product_tmpl_id[0]
+          : null
+    if (targetId == null || !ids.includes(targetId)) continue
+    const base = listEuros.get(targetId)
+    if (base == null) continue
+    const euros = applyPricelistItemToListPriceEuros(base, item)
+    if (euros == null || euros <= 0) continue
+    prices.set(targetId, eurosToCents(euros))
+  }
 }
 
 /** Prezzi unitari (centesimi) per righe carrello: al massimo 2 read Odoo (varianti + template). */

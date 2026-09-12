@@ -155,8 +155,10 @@ export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> =
       {
         kind: 'prose',
         paragraphs: [
-          'Spedizioni tracciate in tutto il mondo. Riceverai email con il link di tracking non appena il pacco lascia il nostro magazzino.',
-          'I tempi di consegna indicati in checkout sono indicativi e possono variare per prodotti su ordinazione o isole.',
+          'Spedizioni tracciate in tutto il mondo con corrieri internazionali (DHL Express e FedEx). Riceverai email con il link di tracking non appena il pacco lascia il nostro magazzino.',
+          'In Italia: spedizione standard, gratuita sopra la soglia indicata in checkout, e ritiro in sede a Roma dove disponibile. In Unione Europea e nel resto del mondo: tariffe live in checkout in base a peso, destinazione e tempi di consegna indicativi (tipicamente 1–5 giorni lavorativi con express).',
+          'Per destinazioni extra-UE i prezzi sono senza IVA italiana: dazi, IVA di importazione e eventuali spese doganali sono a carico del destinatario secondo le norme del paese di destinazione.',
+          'I tempi di consegna indicati in checkout sono indicativi e possono variare per prodotti su ordinazione, isole o formalità doganali.',
           'Per resi e recesso, contattaci entro 14 giorni dalla consegna: ti guideremo nella procedura e verificheremo lo stato del prodotto.',
         ],
       },

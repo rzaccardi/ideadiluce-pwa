@@ -66,4 +66,15 @@ describe('mergeProductAndVariantSpecs', () => {
     })
     expect(rows).toEqual([{ label: 'Wattaggio', value: '21W', key: 'wattage' }])
   })
+
+  it('rende cliccabili i valori URL (pdf e documenti)', () => {
+    const rows = specsToRows([
+      {
+        key: 'datasheet',
+        label: 'Scheda tecnica',
+        display: 'https://tlbdb.odoo.com/web/content/184223?download=true',
+      },
+    ])
+    expect(rows[0]?.href).toBe('https://tlbdb.odoo.com/web/content/184223?download=true')
+  })
 })

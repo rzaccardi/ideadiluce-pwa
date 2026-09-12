@@ -12,13 +12,16 @@ export function SectionContainer({
   children,
   className,
   narrow,
+  id,
 }: {
   children: ReactNode
   className?: string
   narrow?: boolean
+  id?: string
 }) {
   return (
     <div
+      id={id}
       className={cn(
         'mx-auto w-full',
         SITE_PAGE_X_CLASS,

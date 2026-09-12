@@ -1,4 +1,4 @@
-import { resolveOdooCatalogCardHoverImageUrl } from '../../adapters/odoo-catalog/odooCatalogMapper.js'
+import { resolveOdooCatalogCardImageUrls } from '../../adapters/odoo-catalog/odooCatalogMapper.js'
 import type { HubLocale } from '../../lib/hub-locale.js'
 import type { ProductCardDTO, ProductDetailDTO } from '../../types/dto.js'
 import { peekCachedProductDetails } from './odoo-catalog-index.service.js'
@@ -7,13 +7,12 @@ export async function enrichProductCardsWithHoverImages<T extends ProductCardDTO
   locale: HubLocale,
   items: T[],
 ): Promise<T[]> {
-  if (items.length === 0 || items.every((item) => item.hoverImageUrl)) return items
+  if (items.length === 0) return items
 
   const { detailsById, slugToId } = await peekCachedProductDetails(locale)
   if (!Object.keys(detailsById).length) return items
 
   return items.map((item) => {
-    if (item.hoverImageUrl) return item
     const id =
       item.odooTemplateId && item.odooTemplateId > 0
         ? item.odooTemplateId
@@ -21,8 +20,12 @@ export async function enrichProductCardsWithHoverImages<T extends ProductCardDTO
     if (id == null) return item
     const detail = detailsById[String(id)]
     if (!detail) return item
-    const hoverImageUrl = resolveOdooCatalogCardHoverImageUrl(detail, item.imageUrl)
-    return hoverImageUrl ? { ...item, hoverImageUrl } : item
+    const pair = resolveOdooCatalogCardImageUrls(detail)
+    return {
+      ...item,
+      imageUrl: pair.imageUrl ?? item.imageUrl,
+      hoverImageUrl: pair.hoverImageUrl,
+    }
   })
 }
 

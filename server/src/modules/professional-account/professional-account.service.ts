@@ -74,6 +74,7 @@ async function ensureProfessionalUser(params: {
   vatNumber: string
   pec?: string | null
   sdiCode?: string | null
+  fiscalCode?: string | null
   sessionUserId?: string | null
   correlationId: string
 }): Promise<{ userId: string; accountCreated: boolean; plainPassword?: string }> {
@@ -86,6 +87,7 @@ async function ensureProfessionalUser(params: {
         vatNumber: params.vatNumber,
         pec: params.pec ?? undefined,
         sdiCode: params.sdiCode ?? undefined,
+        fiscalCode: params.fiscalCode ?? undefined,
         firstName: params.firstName || undefined,
         lastName: params.lastName || undefined,
         phone: params.phone ?? undefined,
@@ -105,6 +107,7 @@ async function ensureProfessionalUser(params: {
         vatNumber: params.vatNumber,
         pec: params.pec ?? undefined,
         sdiCode: params.sdiCode ?? undefined,
+        fiscalCode: params.fiscalCode ?? undefined,
       },
     })
     return { userId: existing.id, accountCreated: false }
@@ -126,6 +129,7 @@ async function ensureProfessionalUser(params: {
         vatNumber: params.vatNumber,
         pec: params.pec ?? undefined,
         sdiCode: params.sdiCode ?? undefined,
+        fiscalCode: params.fiscalCode ?? undefined,
       },
     })
     return { userId: existing.id, accountCreated: true, plainPassword }
@@ -146,6 +150,7 @@ async function ensureProfessionalUser(params: {
       vatNumber: params.vatNumber,
       pec: params.pec ?? undefined,
       sdiCode: params.sdiCode ?? undefined,
+      fiscalCode: params.fiscalCode ?? undefined,
     },
   })
   return { userId: user.id, accountCreated: true, plainPassword }
@@ -309,6 +314,14 @@ export const professionalAccountService = {
       taxCheck.vat?.vies.name ||
       input.companyName.trim()
 
+    const structuredNotes = [
+      input.message?.trim() || null,
+      input.fiscalCode?.trim() ? `Codice fiscale: ${input.fiscalCode.trim().toUpperCase()}` : null,
+      input.addressLine?.trim() ? `Indirizzo: ${input.addressLine.trim()}` : null,
+    ]
+      .filter(Boolean)
+      .join('\n')
+
     const row = await professionalAccountRepository.create({
       companyName,
       vatNumber: normalizedVat,
@@ -320,7 +333,7 @@ export const professionalAccountService = {
       pec: input.pec?.trim() || null,
       sdiCode: input.sdiCode?.trim().toUpperCase() || null,
       visuraUrl: null,
-      message: input.message?.trim() || null,
+      message: structuredNotes || null,
       locale,
       country,
       userId: req.sessionRecord?.userId ?? null,
@@ -344,6 +357,7 @@ export const professionalAccountService = {
       vatNumber: row.vatNumber,
       pec: row.pec,
       sdiCode: row.sdiCode,
+      fiscalCode: input.fiscalCode?.trim().toUpperCase() || null,
       sessionUserId: req.sessionRecord?.userId ?? null,
       correlationId: req.correlationId,
     })

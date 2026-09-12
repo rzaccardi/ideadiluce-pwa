@@ -11,6 +11,10 @@ import {
 } from './shipping.surcharges.js'
 import type { Request } from 'express'
 import { getStorePickupLocation } from '../../config/store-location.js'
+import {
+  EU_EXCL_IT_COUNTRIES,
+  WORLDWIDE_COUNTRY_TOKEN,
+} from './shipping-zone-match.js'
 
 export const shippingAdminService = {
   async listZones() {
@@ -222,51 +226,140 @@ export async function seedDefaultShippingZones() {
   const pickupLabel = getStorePickupLocation().label
   const existing = await prisma.shippingZone.count()
   if (existing === 0) {
-  await prisma.shippingZone.create({
-    data: {
-      name: 'Italia',
-      countries: ['IT'],
-      postcodes: [],
-      priority: 10,
-      methods: {
-        create: [
-          {
-            name: 'Spedizione standard',
-            type: ShippingMethodType.FLAT_RATE,
-            flatAmountCents: 590,
-            priority: 1,
-          },
-          {
-            name: 'Spedizione gratuita',
-            type: ShippingMethodType.FREE_SHIPPING,
-            freeAboveCents: 20000,
-            priority: 2,
-          },
-          {
-            name: pickupLabel,
-            type: ShippingMethodType.PICKUP,
-            priority: 5,
-          },
-          {
-            name: 'DHL Express (live)',
-            type: ShippingMethodType.LIVE_DHL,
-            surchargePct: 0,
-            priority: 3,
-          },
-          {
-            name: 'FedEx (live)',
-            type: ShippingMethodType.LIVE_FEDEX,
-            surchargePct: 0,
-            priority: 4,
-          },
-        ],
+    await prisma.shippingZone.create({
+      data: {
+        name: 'Italia',
+        countries: ['IT'],
+        postcodes: [],
+        priority: 10,
+        methods: {
+          create: [
+            {
+              name: 'Spedizione standard',
+              type: ShippingMethodType.FLAT_RATE,
+              flatAmountCents: 590,
+              priority: 1,
+            },
+            {
+              name: 'Spedizione gratuita',
+              type: ShippingMethodType.FREE_SHIPPING,
+              freeAboveCents: 20000,
+              priority: 2,
+            },
+            {
+              name: pickupLabel,
+              type: ShippingMethodType.PICKUP,
+              priority: 5,
+            },
+            {
+              name: 'DHL Express (live)',
+              type: ShippingMethodType.LIVE_DHL,
+              surchargePct: 0,
+              priority: 3,
+            },
+            {
+              name: 'FedEx (live)',
+              type: ShippingMethodType.LIVE_FEDEX,
+              surchargePct: 0,
+              priority: 4,
+            },
+          ],
+        },
       },
-    },
-  })
+    })
   }
 
   await syncCarrierCredentialsFromEnv()
   await ensurePickupMethodAndFreeThreshold()
+  await ensureInternationalShippingZones()
+}
+
+const LIVE_CARRIER_METHODS = [
+  {
+    name: 'DHL Express (live)',
+    type: ShippingMethodType.LIVE_DHL,
+    surchargePct: 0,
+    priority: 1,
+  },
+  {
+    name: 'FedEx (live)',
+    type: ShippingMethodType.LIVE_FEDEX,
+    surchargePct: 0,
+    priority: 2,
+  },
+] as const
+
+async function ensureLiveCarrierMethods(zoneId: string) {
+  const methods = await prisma.shippingMethod.findMany({ where: { zoneId } })
+  for (const live of LIVE_CARRIER_METHODS) {
+    if (methods.some((m) => m.type === live.type)) continue
+    await prisma.shippingMethod.create({
+      data: {
+        zoneId,
+        name: live.name,
+        type: live.type,
+        surchargePct: live.surchargePct,
+        priority: live.priority,
+      },
+    })
+  }
+}
+
+/** Zone UE (ex IT) e resto del mondo: idempotente su DB già popolati. */
+async function ensureInternationalShippingZones() {
+  const euName = 'UE (esclusa Italia)'
+  let euZone = await prisma.shippingZone.findFirst({
+    where: { name: euName },
+    include: { methods: true },
+  })
+  if (!euZone) {
+    euZone = await prisma.shippingZone.create({
+      data: {
+        name: euName,
+        countries: [...EU_EXCL_IT_COUNTRIES],
+        postcodes: [],
+        priority: 5,
+        methods: { create: [...LIVE_CARRIER_METHODS] },
+      },
+      include: { methods: true },
+    })
+  } else {
+    await prisma.shippingZone.update({
+      where: { id: euZone.id },
+      data: { countries: [...EU_EXCL_IT_COUNTRIES], priority: 5, enabled: true },
+    })
+    await ensureLiveCarrierMethods(euZone.id)
+  }
+
+  const worldName = 'Extra-UE / Mondo'
+  let worldZone = await prisma.shippingZone.findFirst({
+    where: {
+      OR: [{ name: worldName }, { countries: { has: WORLDWIDE_COUNTRY_TOKEN } }],
+    },
+    include: { methods: true },
+  })
+  if (!worldZone) {
+    await prisma.shippingZone.create({
+      data: {
+        name: worldName,
+        countries: [WORLDWIDE_COUNTRY_TOKEN],
+        postcodes: [],
+        priority: 1,
+        methods: { create: [...LIVE_CARRIER_METHODS] },
+      },
+    })
+  } else {
+    await prisma.shippingZone.update({
+      where: { id: worldZone.id },
+      data: {
+        name: worldName,
+        countries: [WORLDWIDE_COUNTRY_TOKEN],
+        priority: 1,
+        enabled: true,
+      },
+    })
+    await ensureLiveCarrierMethods(worldZone.id)
+  }
 }
 
 async function ensurePickupMethodAndFreeThreshold() {

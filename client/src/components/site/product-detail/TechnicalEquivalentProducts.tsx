@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from 'react'
 import { Link } from '@/lib/navigation'
 import type { ProductCardDTO, ProductRelatedDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
@@ -5,11 +8,14 @@ import { formatPriceDisplayModeLabel } from '@/lib/price-display'
 import { extractProductDisplayTitle } from '@/lib/product-display-title'
 import { SiteImage } from '@/components/site/SiteImage'
 import { ProductBrandMark } from '@/components/product/ProductBrandMark'
+import { CopyableEanValue } from '@/components/product/CopyableEanValue'
 import { SectionContainer } from '@/components/site/primitives'
 import { inferTechnicalProductBrandFromName } from '@/lib/technical-product-ref'
+import { addItem, buildCartAddHintFromCard } from '@/features/cart'
 import type { LocalePathFn } from '@/components/site/sections/types'
 import { ProductDetailSectionLabel } from './shared'
 import { selectTechnicalEquivalents } from './technical-equivalents'
+import { useI18n } from '@/hooks/use-i18n'
 
 const MAX_EQUIVALENTS = 8
 
@@ -21,10 +27,12 @@ type Props = {
 
 /**
  * Sinonimi / equivalenti di marca sulla PDP tecnica.
- * Visibile solo se Odoo ha popolato `related_products` con relation alternative.
+ * Visibile solo se Odoo ha popolato `related_products` con relation alternative / synonym.
  */
 export function TechnicalEquivalentProducts({ products, currentSlug, lp }: Props) {
+  const { t } = useI18n()
   const items = selectTechnicalEquivalents(products, currentSlug).slice(0, MAX_EQUIVALENTS)
+  const [addingSlug, setAddingSlug] = useState<string | null>(null)
   if (items.length === 0) return null
 
   return (
@@ -46,14 +54,16 @@ export function TechnicalEquivalentProducts({ products, currentSlug, lp }: Props
           const { title } = extractProductDisplayTitle(item.name)
           const specLine = item.specTags?.filter(Boolean).slice(0, 4).join(' · ')
           const priceMode = formatPriceDisplayModeLabel(item.priceDisplayMode)
+          const ean = item.ean?.trim() || null
+          const isAdding = addingSlug === item.slug
 
           return (
             <li key={item.slug} className="border-b border-idl-tech-chip last:border-b-0">
-              <Link
-                to={lp(`/prodotto/${item.slug}`)}
-                className="flex items-center gap-3 px-4 py-3.5 transition hover:bg-amber-50/50 sm:gap-4 sm:px-5"
-              >
-                <div className="relative size-14 shrink-0 overflow-hidden rounded-lg border border-idl-tech-chip bg-idl-tech-panel sm:size-16">
+              <div className="flex items-center gap-3 px-4 py-3.5 sm:gap-4 sm:px-5">
+                <Link
+                  to={lp(`/prodotto/${item.slug}`)}
+                  className="relative size-14 shrink-0 overflow-hidden rounded-lg border border-idl-tech-chip bg-idl-tech-panel transition hover:border-idl-amber sm:size-16"
+                >
                   {item.imageUrl ? (
                     <SiteImage
                       src={item.imageUrl}
@@ -67,7 +77,7 @@ export function TechnicalEquivalentProducts({ products, currentSlug, lp }: Props
                       —
                     </span>
                   )}
-                </div>
+                </Link>
 
                 <div className="min-w-0 flex-1">
                   <ProductBrandMark
@@ -76,9 +86,12 @@ export function TechnicalEquivalentProducts({ products, currentSlug, lp }: Props
                     size="xs"
                     className="text-idl-muted"
                   />
-                  <div className="mt-0.5 truncate text-[14px] font-semibold text-idl-graphite sm:text-[15px]">
+                  <Link
+                    to={lp(`/prodotto/${item.slug}`)}
+                    className="mt-0.5 block truncate text-[14px] font-semibold text-idl-graphite hover:text-idl-amber sm:text-[15px]"
+                  >
                     {title}
-                  </div>
+                  </Link>
                   <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span className="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-wide text-idl-amber uppercase">
                       Equivalente
@@ -86,24 +99,49 @@ export function TechnicalEquivalentProducts({ products, currentSlug, lp }: Props
                     {specLine ? (
                       <span className="font-mono text-[11px] text-idl-muted">{specLine}</span>
                     ) : null}
+                    {ean ? (
+                      <span className="font-mono text-[11px] text-idl-muted">
+                        EAN <CopyableEanValue value={ean} className="font-mono text-[11px]" />
+                      </span>
+                    ) : null}
                   </div>
                 </div>
 
-                <div className="hidden shrink-0 text-right sm:block">
+                <div className="flex shrink-0 flex-col items-end gap-2">
                   {item.priceCents > 0 ? (
-                    <>
+                    <div className="text-right">
                       <div className="text-[15px] font-extrabold tracking-tight text-idl-graphite">
                         {formatMoney(item.priceCents, item.currency)}
                       </div>
                       {priceMode ? (
                         <div className="text-[11px] text-idl-muted">{priceMode}</div>
                       ) : null}
-                    </>
+                    </div>
                   ) : null}
-                  <div className="mt-1 text-[13px] font-bold text-idl-amber">Vedi scheda →</div>
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <button
+                      type="button"
+                      disabled={isAdding}
+                      onClick={() => {
+                        setAddingSlug(item.slug)
+                        void addItem(item.slug, 1, undefined, {
+                          feedback: { productName: item.name, imageUrl: item.imageUrl },
+                          productHint: buildCartAddHintFromCard(item),
+                        }).finally(() => setAddingSlug(null))
+                      }}
+                      className="rounded-lg bg-idl-amber px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-idl-cta-amber-hover disabled:opacity-60"
+                    >
+                      {isAdding ? t('product.addingToCart') : t('product.addToCartShort')}
+                    </button>
+                    <Link
+                      to={lp(`/prodotto/${item.slug}`)}
+                      className="rounded-lg border border-idl-tech-border px-2.5 py-1.5 text-xs font-bold text-idl-amber transition hover:border-idl-amber"
+                    >
+                      Vedi
+                    </Link>
+                  </div>
                 </div>
-                <span className="shrink-0 text-[13px] font-bold text-idl-amber sm:hidden">Vedi →</span>
-              </Link>
+              </div>
             </li>
           )
         })}

@@ -178,7 +178,10 @@ export const taxService = {
 
 export async function seedDefaultTaxRules(): Promise<void> {
   const existing = await taxRepository.count()
-  if (existing > 0) return
+  if (existing > 0) {
+    await ensureExtraEuTaxRule()
+    return
+  }
 
   const rules: Array<Parameters<typeof taxRepository.create>[0]> = [
     {
@@ -246,4 +249,17 @@ export async function seedDefaultTaxRules(): Promise<void> {
   for (const rule of rules) {
     await taxRepository.create(rule)
   }
+}
+
+/** Idempotente: regola EXTRA_EU anche su DB già seedati senza di essa. */
+async function ensureExtraEuTaxRule(): Promise<void> {
+  const all = await taxRepository.listAll()
+  if (all.some((r) => r.shippingCountry?.toUpperCase() === 'EXTRA_EU')) return
+  await taxRepository.create({
+    priority: 50,
+    shippingCountry: 'EXTRA_EU',
+    taxRatePct: 0,
+    taxLabel: 'Esente IVA',
+    disclaimerKey: 'extra_eu_duties',
+  })
 }

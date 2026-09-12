@@ -3,7 +3,6 @@ import { Link } from '@/lib/navigation'
 import type { ProductCardDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
 import { SiteImage } from '../SiteImage'
-import { HoverLift } from '@/components/motion'
 import { CatalogProductCardSkeleton } from '../catalog/CatalogProductCardSkeleton'
 import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMeta'
 import { ProductBrandMark } from '@/components/product/ProductBrandMark'
@@ -36,10 +35,10 @@ export function DesignProductCardMedia({
           alt=""
           fill
           className={cn(
-            'object-contain p-3 transition duration-500 ease-out',
+            'object-contain p-3',
             hoverSrc
-              ? '[@media(hover:hover)]:group-hover:opacity-0'
-              : '[@media(hover:hover)]:group-hover:scale-[1.02]',
+              ? 'transition-opacity duration-500 ease-out [@media(hover:hover)]:group-hover:opacity-0'
+              : null,
           )}
           sizes={sizes}
         />
@@ -50,7 +49,7 @@ export function DesignProductCardMedia({
           alt=""
           fill
           className={cn(
-            'object-cover opacity-0 transition-opacity duration-500 ease-out',
+            'z-[1] object-cover opacity-0 transition-opacity duration-500 ease-out',
             '[@media(hover:hover)]:group-hover:opacity-100',
           )}
           sizes={sizes}
@@ -80,48 +79,46 @@ export const DesignCatalogProductCard = memo(function DesignCatalogProductCard({
   const fallbackLabel = brandLabel ?? product.categorySlug?.toUpperCase() ?? null
 
   return (
-    <HoverLift className="h-full">
-      <Link
-        to={to ?? lp(`/prodotto/${product.slug}`)}
-        className="group flex h-full flex-col overflow-hidden rounded border border-idl-path-design-border bg-white transition hover:border-idl-brass hover:shadow-[0_6px_20px_rgba(0,0,0,0.06)] dark:bg-idl-tech-panel"
-      >
-        <DesignProductCardMedia
-          imageUrl={product.imageUrl}
-          hoverImageUrl={product.hoverImageUrl}
-          sizes="(max-width:768px) 50vw, 33vw"
+    <Link
+      to={to ?? lp(`/prodotto/${product.slug}`)}
+      className="group flex h-full flex-col overflow-hidden rounded border border-idl-path-design-border bg-white dark:bg-idl-tech-panel"
+    >
+      <DesignProductCardMedia
+        imageUrl={product.imageUrl}
+        hoverImageUrl={product.hoverImageUrl}
+        sizes="(max-width:768px) 50vw, 33vw"
+      />
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
+        <ProductBrandMark
+          brand={product.brand}
+          fallbackLabel={fallbackLabel ?? '—'}
+          size="sm"
+          className="text-idl-brass"
         />
-        <div className="flex flex-1 flex-col p-3 sm:p-4">
-          <ProductBrandMark
-            brand={product.brand}
-            fallbackLabel={fallbackLabel ?? '—'}
-            size="sm"
-            className="text-idl-brass"
-          />
-          <div className="mt-1 line-clamp-2 min-h-[2lh] font-serif text-[17px] leading-snug font-medium text-idl-ink sm:text-[19px]">
-            {product.name}
-          </div>
-          <div className="mt-1 line-clamp-2 min-h-[2lh] text-xs leading-normal text-idl-ink-muted">
-            {product.shortDescription ?? '\u00A0'}
-          </div>
-          <ProductIdentifierMeta
-            product={product}
-            includeBrand={false}
-            className="mt-1 text-[10px] tracking-[0.04em] text-idl-ink-muted"
-          />
-          <div className="mt-auto flex items-center justify-between pt-3">
-            {hidePrice ? (
-              <span className="text-[12.5px] font-bold text-idl-brass">{discoverLabel}</span>
-            ) : (
-              <>
-                <span className="text-base font-bold text-idl-ink">{formatMoney(product.priceCents, product.currency)}</span>
-                <span className="hidden text-[12.5px] font-bold text-idl-brass sm:inline">{discoverLabel}</span>
-                <span className="text-[12.5px] font-bold text-idl-brass sm:hidden">→</span>
-              </>
-            )}
-          </div>
+        <div className="mt-1 line-clamp-2 min-h-[2lh] font-serif text-[17px] leading-snug font-medium text-idl-ink sm:text-[19px]">
+          {product.name}
         </div>
-      </Link>
-    </HoverLift>
+        <div className="mt-1 line-clamp-2 min-h-[2lh] text-xs leading-normal text-idl-ink-muted">
+          {product.shortDescription ?? '\u00A0'}
+        </div>
+        <ProductIdentifierMeta
+          product={product}
+          includeBrand={false}
+          className="mt-1 text-[10px] tracking-[0.04em] text-idl-ink-muted"
+        />
+        <div className="mt-auto flex items-center justify-between pt-3">
+          {hidePrice ? (
+            <span className="text-[12.5px] font-bold text-idl-brass">{discoverLabel}</span>
+          ) : (
+            <>
+              <span className="text-base font-bold text-idl-ink">{formatMoney(product.priceCents, product.currency)}</span>
+              <span className="hidden text-[12.5px] font-bold text-idl-brass sm:inline">{discoverLabel}</span>
+              <span className="text-[12.5px] font-bold text-idl-brass sm:hidden">→</span>
+            </>
+          )}
+        </div>
+      </div>
+    </Link>
   )
 })
 

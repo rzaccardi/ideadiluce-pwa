@@ -11,6 +11,8 @@ export const professionalAccountRequestSchema = z
     phone: z.string().trim().max(40).optional(),
     pec: z.string().trim().max(120).optional(),
     sdiCode: z.string().trim().max(20).optional(),
+    fiscalCode: z.string().trim().max(32).optional(),
+    addressLine: z.string().trim().max(300).optional(),
     visuraNote: z.string().trim().max(500).optional(),
     message: z.string().trim().max(2000).optional(),
     locale: z.string().trim().max(5).optional(),

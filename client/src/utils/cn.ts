@@ -1,4 +1,4 @@
 /** Unisce classi Tailwind senza dipendenze extra. */
-export function cn(...parts: Array<string | false | undefined>) {
+export function cn(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(' ')
 }

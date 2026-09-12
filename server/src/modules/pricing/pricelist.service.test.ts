@@ -24,6 +24,7 @@ vi.mock('../../adapters/odoo/odooClient.js', () => ({
 }))
 
 import {
+  envPricelistForSegment,
   isPersonalizedPricing,
   resolveAccountPricing,
   resolvePricingContext,
@@ -41,7 +42,7 @@ describe('isPersonalizedPricing', () => {
     ).toBe(false)
   })
 
-  it('è vero per B2B e per partner con listino dedicato', () => {
+  it('è vero per B2B, professional e partner con listino dedicato', () => {
     expect(
       isPersonalizedPricing({
         segment: 'BUSINESS',
@@ -50,6 +51,21 @@ describe('isPersonalizedPricing', () => {
         personalized: true,
       }),
     ).toBe(true)
+    expect(
+      isPersonalizedPricing({
+        segment: 'PROFESSIONAL',
+        partnerId: null,
+        pricelistId: 30,
+      }),
+    ).toBe(true)
+  })
+})
+
+describe('envPricelistForSegment', () => {
+  it('mappa retail, rivenditori e installatori sui listini env', () => {
+    expect(envPricelistForSegment('RETAIL')).toBe(10)
+    expect(envPricelistForSegment('BUSINESS')).toBe(20)
+    expect(envPricelistForSegment('PROFESSIONAL')).toBe(30)
   })
 })
 
@@ -94,6 +110,19 @@ describe('resolveAccountPricing', () => {
     expect(pricing.pricelistId).toBe(10)
     expect(pricing.personalized).toBe(false)
     expect(pricing.partnerId).toBeNull()
+  })
+
+  it('senza partner usa il fallback env B2B per i rivenditori', async () => {
+    const pricing = await resolveAccountPricing({ segment: 'BUSINESS' })
+    expect(pricing.pricelistId).toBe(20)
+    expect(pricing.personalized).toBe(true)
+    expect(odooExecuteKw).not.toHaveBeenCalled()
+  })
+
+  it('senza partner usa il fallback env professional per gli installatori', async () => {
+    const pricing = await resolveAccountPricing({ segment: 'PROFESSIONAL' })
+    expect(pricing.pricelistId).toBe(30)
+    expect(pricing.personalized).toBe(true)
   })
 })
 

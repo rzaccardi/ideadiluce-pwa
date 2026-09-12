@@ -13,13 +13,13 @@ function collectDocuments(
 ): ProductDocumentDTO[] {
   const byId = new Map<string, ProductDocumentDTO>()
   for (const doc of product.documents ?? []) {
-    if (doc.url) byId.set(doc.id, doc)
+    if (doc.url || doc.publicCurrentUrl) byId.set(doc.id, doc)
   }
   const variant = variantRef
     ? product.variants.find((v) => v.ref === variantRef)
     : product.variants[0]
   for (const doc of variant?.documents ?? []) {
-    if (doc.url) byId.set(doc.id, doc)
+    if (doc.url || doc.publicCurrentUrl) byId.set(doc.id, doc)
   }
   return [...byId.values()]
 }
@@ -37,7 +37,8 @@ export const productDocumentsService = {
     }
 
     const doc = collectDocuments(product, options?.variantRef).find((d) => d.id === documentId)
-    if (!doc?.url) {
+    const downloadUrl = doc?.url || doc?.publicCurrentUrl
+    if (!doc || !downloadUrl) {
       throw new AppError(
         'DOCUMENT_NOT_FOUND',
         'Document not found',
@@ -89,6 +90,6 @@ export const productDocumentsService = {
       },
     })
 
-    return doc.url
+    return downloadUrl
   },
 }

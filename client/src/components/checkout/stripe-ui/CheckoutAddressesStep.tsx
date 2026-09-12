@@ -32,7 +32,7 @@ import { CheckoutRetailFiscalCodeField } from './CheckoutRetailFiscalCodeField'
 import { CourierNotesField } from './CheckoutAddressFields'
 import { CheckoutShippingOptions } from './CheckoutShippingOptions'
 import { ShippingAddressPicker } from '@/components/account/ShippingAddressPicker'
-import { OTHER_SHIPPING_SELECTION } from '@/lib/shipping-addresses'
+import { formatShippingAddressSelectOption, OTHER_SHIPPING_SELECTION } from '@/lib/shipping-addresses'
 import {
   CheckoutInfoNote,
   CheckoutPanel,
@@ -47,6 +47,7 @@ import {
   StripeFieldLabel,
   StripePayButton,
   StripeSectionTitle,
+  StripeSelect,
 } from './StripeFields'
 import { CheckoutStepBackButton } from './CheckoutStepBackButton'
 
@@ -65,6 +66,7 @@ export function CheckoutAddressesStep() {
   const deliveryMode = recipient.mode ?? 'self'
   const savedAddresses = checkout.savedShippingAddresses
   const hasSavedShippingAddresses = savedAddresses.length > 0
+  const hasMultipleSavedShippingAddresses = savedAddresses.length > 1
   const selectedSavedId = checkout.selectedShippingAddressId
   const shipToDifferentAddress = !checkout.draft.billingSameAsShipping
   const useBillingForShipping =
@@ -143,7 +145,29 @@ export function CheckoutAddressesStep() {
           />
         ) : null}
 
-        {deliveryMode === 'self' && hasSavedShippingAddresses ? (
+        {deliveryMode === 'self' && hasMultipleSavedShippingAddresses ? (
+          <>
+            <p className="text-sm text-idl-muted">{t('checkout.shipping.savedAddressesHint')}</p>
+            <StripeFieldGroup>
+              <StripeSelect
+                id="checkout-saved-shipping"
+                name="checkout-saved-shipping"
+                aria-label={t('checkout.shippingAddress')}
+                value={selectedSavedId ?? ''}
+                disabled={stepBusy}
+                onChange={(event) => selectCheckoutShippingAddress(event.target.value)}
+              >
+                {savedAddresses.map((address) => (
+                  <option key={address.id} value={address.id}>
+                    {formatShippingAddressSelectOption(address)}
+                    {address.isDefault ? ` (${t('account.addresses.default')})` : ''}
+                  </option>
+                ))}
+                <option value={OTHER_SHIPPING_SELECTION}>{t('checkout.shipping.useOtherAddress')}</option>
+              </StripeSelect>
+            </StripeFieldGroup>
+          </>
+        ) : deliveryMode === 'self' && hasSavedShippingAddresses ? (
           <>
             <p className="text-sm text-idl-muted">{t('checkout.shipping.savedAddressesHint')}</p>
             <ShippingAddressPicker

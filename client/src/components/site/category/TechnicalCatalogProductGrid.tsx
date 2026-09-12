@@ -6,6 +6,8 @@ import { useLocale } from '@/context/locale-context'
 import type { ProductCardDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
 import { formatTechnicalProductRefLine } from '@/lib/technical-product-ref'
+import { collectProductIdentifierFields } from '@/lib/product-identifier-fields'
+import { ProductEanBarcode } from '@/components/product/ProductEanBarcode'
 import { buildTechnicalCardSpecTags } from '@/lib/technical-card-spec-tags'
 import {
   formatAvailabilityPrimaryLabel,
@@ -53,7 +55,13 @@ export const TechnicalCatalogProductCard = memo(function TechnicalCatalogProduct
   const { locale } = useLocale()
   const selection = useTechnicalCatalogSelectionContext()
   const stock = stockLabel(product, locale)
-  const refLine = formatTechnicalProductRefLine(product)
+  const eanValue =
+    collectProductIdentifierFields(product, null, { includeBrand: false }).find((f) => f.key === 'ean')
+      ?.value ?? null
+  const refLine = formatTechnicalProductRefLine({
+    ...product,
+    ean: null,
+  })
   const tags = useMemo(
     () =>
       product.specTags ??
@@ -134,6 +142,16 @@ export const TechnicalCatalogProductCard = memo(function TechnicalCatalogProduct
             <div className="mb-3" />
           )}
         </Link>
+        {eanValue ? (
+          <div className="mb-2">
+            <ProductEanBarcode
+              value={eanValue}
+              productName={product.name}
+              brand={product.brand?.name}
+              variant="compact"
+            />
+          </div>
+        ) : null}
         <div className="mt-auto flex items-center justify-between">
           <span className="text-base font-extrabold">{formatMoney(product.priceCents, product.currency)}</span>
           <TechnicalAddToCartButton product={product} label={addLabel} />

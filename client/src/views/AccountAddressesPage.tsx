@@ -32,7 +32,7 @@ import { FadeIn } from '@/components/motion'
 type EditorMode = 'closed' | 'create' | 'edit'
 
 export function AccountAddressesPage() {
-  const { t } = useI18n()
+  const { t, tParams } = useI18n()
   const auth = useSnapshot(authStore)
   const account = useSnapshot(accountStore)
   const [list, setList] = useState<UserShippingAddressListDTO | null>(null)
@@ -185,7 +185,11 @@ export function AccountAddressesPage() {
                         ) : null}
                       </span>
                     </li>
-                  ) : null,
+                  ) : (
+                    <li key={`sede-${address.id}`} className="text-[12.5px] text-idl-muted">
+                      {tParams('account.addresses.sedeHint', { label: address.label })}
+                    </li>
+                  ),
                 )}
               </ul>
             </div>

@@ -28,9 +28,10 @@ import {
   ProductSpecRowItem,
   buildProductSubtitle,
 } from './shared'
-import { CopyableEanValue } from '@/components/product/CopyableEanValue'
+import { ProductEanBarcode } from '@/components/product/ProductEanBarcode'
 import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMeta'
-import { isCopyableBarcodeLabel } from '@/lib/product-identifier-fields'
+import { collectProductIdentifierFields, isCopyableBarcodeLabel } from '@/lib/product-identifier-fields'
+import { mergeProductDocuments } from '@/lib/product-documents'
 import { ProductBrandMark } from '@/components/product/ProductBrandMark'
 import {
   ProductDetailBreadcrumb,
@@ -50,6 +51,7 @@ import {
 } from './ProductDetailStickyBar'
 import { ProductProfessionalBanner } from './ProductProfessionalBanner'
 import { TechnicalEquivalentProducts } from './TechnicalEquivalentProducts'
+import { selectTechnicalEquivalents } from './technical-equivalents'
 import { formatAvailabilityPrimaryLabel } from '@/lib/product-availability'
 import type { useProductDetailState } from '@/hooks/use-product-detail-state'
 
@@ -104,19 +106,14 @@ export function TechnicalProductDetailView({ product, state }: Props) {
     t,
   } = state
 
-  const productDocuments = useMemo(() => {
-    const byId = new Map<string, NonNullable<typeof product.documents>[number]>()
-    for (const doc of product.documents ?? []) {
-      if (doc.url) byId.set(doc.id, doc)
-    }
-    for (const doc of selectedVariant?.documents ?? []) {
-      if (doc.url) byId.set(doc.id, doc)
-    }
-    return [...byId.values()]
-  }, [product.documents, selectedVariant?.documents])
+  const productDocuments = useMemo(
+    () => mergeProductDocuments(product, selectedVariant),
+    [product, selectedVariant],
+  )
 
   const equivalentProducts = product.alternatives ?? []
-  const accessoryProducts = (product.accessories ?? []).filter((item) => item.slug?.trim())
+  const visibleEquivalents = selectTechnicalEquivalents(equivalentProducts, product.slug)
+  const accessoryProducts = product.accessories ?? []
   const [addingAccessorySlug, setAddingAccessorySlug] = useState<string | null>(null)
 
   const parsedSpecs = mergeProductAndVariantSpecs({
@@ -141,6 +138,9 @@ export function TechnicalProductDetailView({ product, state }: Props) {
 
   const { title: displayTitle } = extractProductDisplayTitle(product.name)
   const subtitle = buildProductSubtitle(product)
+  const eanValue =
+    collectProductIdentifierFields(product, selectedVariant, { includeBrand: false }).find((field) => field.key === 'ean')
+      ?.value ?? null
   const brandEyebrow = product.brand?.name?.toUpperCase() ?? 'PRODOTTO TECNICO'
   const priceModeLabel = formatPriceDisplayModeLabel(
     selectedVariant?.priceDisplayMode ?? product.priceDisplayMode,
@@ -188,12 +188,24 @@ export function TechnicalProductDetailView({ product, state }: Props) {
     setIsAddingToCart,
   })
 
+  const showHighlightSpecs =
+    highlightSpecs.length > 0 && specGroupsWithoutDimensions.length === 0
+  const sectionNav = [
+    specGroupsWithoutDimensions.length > 0 || showHighlightSpecs
+      ? { id: 'specifiche', label: 'Specifiche' }
+      : null,
+    hasDimensionsPanel ? { id: 'dimensioni', label: 'Dimensioni' } : null,
+    productDocuments.length > 0 ? { id: 'documenti', label: 'Documenti' } : null,
+    visibleEquivalents.length > 0 ? { id: 'equivalenti', label: 'Equivalenti' } : null,
+    accessoryProducts.length > 0 ? { id: 'accessori', label: 'Accessori' } : null,
+  ].filter((item): item is { id: string; label: string } => Boolean(item))
+
   return (
     <div className="min-w-0 w-full overflow-x-clip bg-idl-tech-panel pb-20 sm:pb-0">
       <ProductDetailBreadcrumb items={breadcrumbItems} lp={lp} variant="technical" />
 
-      {/* HERO */}
-        <SectionContainer className="grid min-w-0 items-start gap-8 pb-8 pt-1 sm:gap-12 sm:pb-10 lg:grid-cols-2 lg:gap-12 lg:pb-10">
+      {/* HERO: gallery + buy box */}
+      <SectionContainer className="grid min-w-0 items-start gap-8 pb-6 pt-1 sm:gap-12 sm:pb-8 lg:grid-cols-2 lg:gap-12 lg:pb-8">
         <ProductDetailGallery
           gallery={product.gallery}
           images={galleryImages}
@@ -229,6 +241,14 @@ export function TechnicalProductDetailView({ product, state }: Props) {
               includeBrand={false}
               className="mt-3.5 text-[11.5px] text-idl-muted"
             />
+            {eanValue ? (
+              <ProductEanBarcode
+                value={eanValue}
+                productName={displayTitle}
+                brand={product.brand?.name}
+                className="mt-3.5"
+              />
+            ) : null}
           </div>
 
           {tags.length > 0 ? (
@@ -259,8 +279,8 @@ export function TechnicalProductDetailView({ product, state }: Props) {
             </div>
           ) : null}
 
-          {/* Buy box card */}
-          <div className="rounded-xl border border-idl-tech-border bg-idl-tech-panel p-4 shadow-[0_4px_16px_rgba(0,0,0,0.04)] sm:p-[22px]">
+          {/* Buy box: prezzo, disponibilità, CTA */}
+          <div className="rounded-xl border border-idl-tech-border bg-white p-4 shadow-[0_4px_16px_rgba(0,0,0,0.04)] sm:p-[22px] dark:bg-idl-tech-panel">
             <div className="mb-1.5 flex flex-wrap items-baseline gap-2">
               <span className="text-[26px] font-extrabold tracking-[-0.02em] sm:text-[30px]">
                 {formatMoney(displayPriceCents, product.currency)}
@@ -313,7 +333,7 @@ export function TechnicalProductDetailView({ product, state }: Props) {
                 type="button"
                 disabled={isStockEnriching || !availability?.canAddToCart || isAddingToCart}
                 onClick={handleAddToCart}
-                className="flex-1 rounded-lg bg-idl-amber px-4 py-3.5 text-center text-[15.5px] font-bold text-white dark:text-idl-design transition hover:bg-idl-cta-amber-hover disabled:opacity-60"
+                className="flex-1 rounded-lg bg-idl-amber px-4 py-3.5 text-center text-[15.5px] font-bold text-white transition hover:bg-idl-cta-amber-hover disabled:opacity-60 dark:text-idl-design"
               >
                 {isAddingToCart ? t('product.addingToCart') : t('product.addToCart')}
               </button>
@@ -339,7 +359,9 @@ export function TechnicalProductDetailView({ product, state }: Props) {
 
             <div className="mt-3.5 flex flex-col gap-3 border-t border-[#ededea] pt-3.5 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
-                <div className="text-[13.5px] font-bold text-idl-graphite">Non sei sicuro che sia quello giusto?</div>
+                <div className="text-[13.5px] font-bold text-idl-graphite">
+                  Non sei sicuro che sia quello giusto?
+                </div>
                 <div className="text-[12.5px] text-[#6b6b70]">
                   Inviaci una foto della vecchia lampadina o del portalampada.
                 </div>
@@ -353,49 +375,64 @@ export function TechnicalProductDetailView({ product, state }: Props) {
             </div>
           </div>
 
-            <div className="mt-3.5 flex flex-wrap gap-[18px] text-[12.5px] text-idl-muted">
-              <span>✓ Spedizioni tracciate in tutto il mondo</span>
-              <span>✓ {t('product.trust.returnBadge')}</span>
-              <span>✓ Garanzia 2 anni</span>
-              <span>✓ Pagamenti sicuri</span>
+          {/* Compatibilità in evidenza subito sotto il buy box */}
+          {hasCompatSection ? (
+            <div className="mt-4 rounded-xl border border-idl-tech-border bg-[#f7f8fa] p-4 dark:bg-idl-tech-panel sm:p-5">
+              <h2 className="mb-3 text-sm font-extrabold tracking-[-0.01em] text-idl-graphite">
+                Compatibilità rapida
+              </h2>
+              <div>
+                {compatRows.map((row) => (
+                  <ProductSpecRowItem
+                    key={row.label}
+                    label={row.label}
+                    value={row.value}
+                    variant="technical"
+                    compact
+                    monoValue={
+                      row.label !== 'Uso consigliato' && row.label !== 'Non compatibile con'
+                    }
+                  />
+                ))}
+              </div>
+              {incompatValue?.trim() ? (
+                <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-[13px] font-bold text-red-800">
+                  <span aria-hidden>⛔ </span>
+                  {incompatValue}
+                </div>
+              ) : null}
             </div>
+          ) : null}
+
+          <div className="mt-3.5 flex flex-wrap gap-[18px] text-[12.5px] text-idl-muted">
+            <span>✓ Spedizioni tracciate in tutto il mondo</span>
+            <span>✓ {t('product.trust.returnBadge')}</span>
+            <span>✓ Garanzia 2 anni</span>
+            <span>✓ Pagamenti sicuri</span>
+          </div>
         </div>
       </SectionContainer>
 
-      {hasCompatSection ? (
-      <section className="border-y border-[#ededea] bg-[#f7f8fa]">
-        <SectionContainer className="grid gap-5 py-7 sm:grid-cols-2 sm:gap-6 sm:py-[34px]">
-          <ProductDetailCard variant="technical" className="p-4 sm:p-[26px]">
-            <h2 className="mb-4 text-base font-extrabold tracking-[-0.01em]">Compatibilità rapida</h2>
-            <div>
-              {compatRows.map((row) => (
-                <ProductSpecRowItem
-                  key={row.label}
-                  label={row.label}
-                  value={row.value}
-                  variant="technical"
-                  compact
-                  monoValue={row.label !== 'Uso consigliato' && row.label !== 'Non compatibile con'}
-                />
-              ))}
-            </div>
-          </ProductDetailCard>
-
-          {incompatValue?.trim() ? (
-          <div className="flex flex-col gap-3.5">
-            <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-4">
-              <div className="flex items-center gap-2 text-sm font-bold text-red-800">
-                <span aria-hidden>⛔</span>
-                {incompatValue}
-              </div>
-            </div>
-          </div>
-          ) : <div />}
-        </SectionContainer>
-      </section>
+      {sectionNav.length > 0 ? (
+        <nav
+          className="sticky top-[72px] z-20 border-y border-idl-tech-border bg-white/95 backdrop-blur-sm dark:bg-idl-tech-panel/95"
+          aria-label="Sezioni scheda prodotto"
+        >
+          <SectionContainer className="flex gap-1 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {sectionNav.map((item) => (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                className="shrink-0 rounded-lg px-3.5 py-2 text-[13px] font-semibold text-idl-graphite-2 transition hover:bg-idl-tech-chip hover:text-idl-graphite"
+              >
+                {item.label}
+              </a>
+            ))}
+          </SectionContainer>
+        </nav>
       ) : null}
 
-      {hasDescriptionOrSpecs ? (
+      {hasDescriptionOrSpecs || showHighlightSpecs ? (
       <SectionContainer className="grid items-start gap-10 py-10 sm:gap-12 lg:grid-cols-2 lg:py-12">
         {(product.longDescription?.trim() || showPurchaseWarning) ? (
         <div>
@@ -428,8 +465,8 @@ export function TechnicalProductDetailView({ product, state }: Props) {
         </div>
         ) : <div />}
 
-        {highlightSpecs.length > 0 ? (
-        <div>
+        {showHighlightSpecs ? (
+        <div id="specifiche">
           <h2 className="mb-3.5 text-lg font-extrabold tracking-tight">Specifiche principali</h2>
           <div className="grid grid-cols-1 gap-2.5 min-[420px]:grid-cols-2">
             {highlightSpecs.map(({ label, value }) => (
@@ -450,7 +487,9 @@ export function TechnicalProductDetailView({ product, state }: Props) {
       {(specGroupsWithoutDimensions.length > 0 || hasDimensionsPanel || productDocuments.length > 0) ? (
       <section className="border-t border-idl-tech-chip bg-idl-tech-panel">
         <SectionContainer className="py-10 sm:py-12">
-          <h2 className="mb-5 text-xl font-extrabold tracking-tight">Scheda tecnica completa</h2>
+          <h2 id="specifiche" className="mb-5 scroll-mt-28 text-xl font-extrabold tracking-tight">
+            Scheda tecnica completa
+          </h2>
           <div className="grid items-start gap-10 lg:grid-cols-[1.3fr_1fr] lg:gap-11">
             {specGroupsWithoutDimensions.length > 0 ? (
             <div>
@@ -472,7 +511,13 @@ export function TechnicalProductDetailView({ product, state }: Props) {
                               {row.value}
                             </ExternalLink>
                           ) : row.value && isCopyableBarcodeLabel(row.label) ? (
-                            <CopyableEanValue value={row.value} />
+                            <ProductEanBarcode
+                              value={row.value}
+                              productName={displayTitle}
+                              brand={product.brand?.name}
+                              variant="compact"
+                              className="min-[480px]:items-end"
+                            />
                           ) : (
                             row.value
                           )}
@@ -485,7 +530,7 @@ export function TechnicalProductDetailView({ product, state }: Props) {
             </div>
             ) : <div />}
 
-            <div className="flex flex-col gap-6 lg:sticky lg:top-24">
+            <div className="flex flex-col gap-6 lg:sticky lg:top-28">
               <ProductDetailCard variant="technical">
                 <h3 className="mb-3.5 text-base font-extrabold tracking-tight">Come scegliere il ricambio corretto</h3>
                 <ol className="space-y-3">
@@ -505,14 +550,17 @@ export function TechnicalProductDetailView({ product, state }: Props) {
                 </ol>
               </ProductDetailCard>
 
-              <ProductDimensionsPanel
-                product={product}
-                specRows={parsedSpecs}
-                variantAttributes={selectedVariant?.attributes}
-                variant="technical"
-              />
+              <div id="dimensioni" className="scroll-mt-28">
+                <ProductDimensionsPanel
+                  product={product}
+                  specRows={parsedSpecs}
+                  variantAttributes={selectedVariant?.attributes}
+                  variant="technical"
+                />
+              </div>
 
               {productDocuments.length > 0 ? (
+              <div id="documenti" className="scroll-mt-28">
               <ProductDetailCard variant="technical">
                 <h3 className="mb-3 text-base font-extrabold tracking-tight">Documenti tecnici</h3>
                 <ProductDocuments
@@ -524,6 +572,7 @@ export function TechnicalProductDetailView({ product, state }: Props) {
                   showTitle={false}
                 />
               </ProductDetailCard>
+              </div>
               ) : null}
             </div>
           </div>
@@ -531,54 +580,76 @@ export function TechnicalProductDetailView({ product, state }: Props) {
       </section>
       ) : null}
 
-      <TechnicalEquivalentProducts
-        products={equivalentProducts}
-        currentSlug={product.slug}
-        lp={lp}
-      />
+      <div id="equivalenti" className="scroll-mt-28">
+        <TechnicalEquivalentProducts
+          products={equivalentProducts}
+          currentSlug={product.slug}
+          lp={lp}
+        />
+      </div>
 
       {accessoryProducts.length > 0 ? (
-        <SectionContainer className="border-t border-idl-tech-chip py-10 sm:py-12">
+        <SectionContainer id="accessori" className="scroll-mt-28 border-t border-idl-tech-chip py-10 sm:py-12">
           <h2 className="text-xl font-extrabold tracking-tight sm:text-[22px]">{t('product.accessories.title')}</h2>
           <p className="mt-1.5 text-sm text-idl-muted">{t('product.accessories.subtitle')}</p>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {accessoryProducts.slice(0, 6).map((item) => {
-              const isAdding = addingAccessorySlug === item.slug
+            {accessoryProducts.slice(0, 6).map((item, index) => {
+              const addable = Boolean(item.slug?.trim())
+              const isAdding = addable && addingAccessorySlug === item.slug
               return (
                 <div
-                  key={item.slug}
+                  key={item.slug?.trim() || `accessory-${item.odooTemplateId ?? index}`}
                   className="flex items-center gap-3 rounded-xl border border-idl-tech-border bg-idl-tech-panel px-3 py-3"
                 >
-                  <Link to={lp(`/prodotto/${item.slug}`)} className="relative size-12 shrink-0 overflow-hidden rounded-lg border border-idl-tech-border bg-white">
-                    {item.imageUrl ? (
-                      <SiteImage src={item.imageUrl} alt="" fill className="object-contain p-1" sizes="48px" />
-                    ) : null}
-                  </Link>
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      to={lp(`/prodotto/${item.slug}`)}
-                      className="line-clamp-2 text-sm font-semibold hover:text-idl-amber"
-                    >
-                      {item.name}
+                  {addable ? (
+                    <Link to={lp(`/prodotto/${item.slug}`)} className="relative size-12 shrink-0 overflow-hidden rounded-lg border border-idl-tech-border bg-white">
+                      {item.imageUrl ? (
+                        <SiteImage src={item.imageUrl} alt="" fill className="object-contain p-1" sizes="48px" />
+                      ) : null}
                     </Link>
+                  ) : (
+                    <div className="relative size-12 shrink-0 overflow-hidden rounded-lg border border-idl-tech-border bg-white">
+                      {item.imageUrl ? (
+                        <SiteImage src={item.imageUrl} alt="" fill className="object-contain p-1" sizes="48px" />
+                      ) : null}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    {addable ? (
+                      <Link
+                        to={lp(`/prodotto/${item.slug}`)}
+                        className="line-clamp-2 text-sm font-semibold hover:text-idl-amber"
+                      >
+                        {item.name}
+                      </Link>
+                    ) : (
+                      <span className="line-clamp-2 text-sm font-semibold">{item.name}</span>
+                    )}
                     <div className="mt-0.5 font-mono text-[13px] text-idl-graphite">
                       {formatMoney(item.priceCents, item.currency)}
                     </div>
+                    {!addable ? (
+                      <div className="mt-0.5 text-[11px] text-idl-muted">
+                        {t('product.accessories.unavailableLink')}
+                      </div>
+                    ) : null}
                   </div>
-                  <button
-                    type="button"
-                    disabled={isAdding}
-                    onClick={() => {
-                      setAddingAccessorySlug(item.slug)
-                      void addItem(item.slug, 1, undefined, {
-                        feedback: { productName: item.name, imageUrl: item.imageUrl },
-                        productHint: buildCartAddHintFromCard(item),
-                      }).finally(() => setAddingAccessorySlug(null))
-                    }}
-                    className="shrink-0 rounded-lg bg-idl-amber px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-idl-cta-amber-hover disabled:opacity-60"
-                  >
-                    {isAdding ? t('product.addingToCart') : t('product.addToCartShort')}
-                  </button>
+                  {addable ? (
+                    <button
+                      type="button"
+                      disabled={isAdding}
+                      onClick={() => {
+                        setAddingAccessorySlug(item.slug)
+                        void addItem(item.slug, 1, undefined, {
+                          feedback: { productName: item.name, imageUrl: item.imageUrl },
+                          productHint: buildCartAddHintFromCard(item),
+                        }).finally(() => setAddingAccessorySlug(null))
+                      }}
+                      className="shrink-0 rounded-lg bg-idl-amber px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-idl-cta-amber-hover disabled:opacity-60"
+                    >
+                      {isAdding ? t('product.addingToCart') : t('product.addToCartShort')}
+                    </button>
+                  ) : null}
                 </div>
               )
             })}
@@ -602,7 +673,7 @@ export function TechnicalProductDetailView({ product, state }: Props) {
               <details className="group overflow-hidden rounded-xl border border-amber-200 bg-idl-tech-panel shadow-sm open:shadow-md" open>
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-[15px] font-bold [&::-webkit-details-marker]:hidden">
                   Come verifico che sia il ricambio giusto?
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-idl-amber text-sm text-white dark:text-idl-design group-open:rotate-180">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-idl-amber text-sm text-white group-open:rotate-180 dark:text-idl-design">
                     +
                   </span>
                 </summary>

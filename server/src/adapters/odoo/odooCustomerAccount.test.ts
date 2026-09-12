@@ -76,6 +76,24 @@ describe('mapOdooPartnerAccount', () => {
     })
   })
 
+  it('legge lo SDI da l10n_it_pa_index (Odoo 18 IT) se destinatario non c’è', () => {
+    const company = partner({
+      id: 10,
+      name: 'LBL Elettrica SRL',
+      is_company: true,
+      vat: 'IT02705470421',
+      l10n_it_codice_fiscale: '02705470421',
+      l10n_it_pec_email: 'lblelettrica@pec.it',
+      l10n_it_pa_index: 'M5UXCR1',
+    })
+    const mapped = mapOdooPartnerAccount(company, company)
+    expect(mapped.business).toMatchObject({
+      fiscalCode: '02705470421',
+      pec: 'lblelettrica@pec.it',
+      sdiCode: 'M5UXCR1',
+    })
+  })
+
   it('non spezza la ragione sociale nei campi nome/cognome se il login è l’azienda', () => {
     const company = partner({
       id: 10,

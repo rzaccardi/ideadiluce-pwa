@@ -3,6 +3,7 @@ import type { CustomerSegmentDTO, UserAddressDTO, UserDTO } from '../../types/dt
 import { paymentMethodToDTO } from '../payments/payment.types.js'
 import { pricingContextLabel } from '../pricing/pricelist.service.js'
 import { splitLine1AndStreetNumber } from '../checkout/checkout-address.validators.js'
+import { prisma } from '../../lib/prisma.js'
 
 function segmentToDTO(segment: User['customerSegment']): CustomerSegmentDTO {
   if (segment === 'BUSINESS') return 'business'
@@ -40,6 +41,19 @@ export function parseShippingAddressJson(json: unknown): UserAddressDTO | null {
 
 export async function toUserDTO(user: User): Promise<UserDTO> {
   const isProfessional = user.isProfessional || user.customerSegment === 'PROFESSIONAL'
+  const map = await prisma.odooCustomerMap.findUnique({
+    where: { userId: user.id },
+    select: { odooPartnerId: true },
+  })
+  const hasPartner = Boolean(map?.odooPartnerId && map.odooPartnerId > 0)
+  const hasPricelist = Boolean(user.odooPricelistId && user.odooPricelistId > 0)
+  const personalizedPricing =
+    user.customerSegment === 'BUSINESS' ||
+    user.customerSegment === 'PROFESSIONAL' ||
+    isProfessional ||
+    hasPartner ||
+    hasPricelist
+
   return {
     id: user.id,
     email: user.email,
@@ -54,6 +68,7 @@ export async function toUserDTO(user: User): Promise<UserDTO> {
     customerSegment: segmentToDTO(user.customerSegment),
     pricelistLabel: isProfessional ? '' : pricingContextLabel(user.customerSegment),
     isProfessional,
+    personalizedPricing,
     companyName: user.companyName,
     vatNumber: user.vatNumber,
     fiscalCode: user.fiscalCode,
