@@ -22,13 +22,13 @@ export function LegacySiteNoticeBanner() {
   return (
     <div
       role="status"
-      className="border-b border-white/10 bg-idl-ink text-white"
+      className="border-b border-white/10 bg-idl-design text-idl-design-fg dark:border-idl-glow/25 dark:bg-idl-design-elevated"
     >
       <SectionContainer className="flex flex-col gap-2 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <p className="text-[13px] leading-snug sm:text-[13.5px]">{t('legacySite.notice.message')}</p>
         <ExternalLink
           href={notice.url}
-          className="inline-flex shrink-0 items-center justify-center rounded-md bg-idl-glow px-3 py-1.5 text-[12.5px] font-bold text-idl-design transition hover:brightness-110"
+          className="inline-flex shrink-0 items-center justify-center rounded-md bg-idl-glow px-3 py-1.5 text-[12.5px] font-bold text-[#0c0c0d] transition hover:bg-idl-cta-glow-hover"
         >
           {t('legacySite.notice.cta')}
         </ExternalLink>
@@ -46,14 +46,14 @@ export function LegacySiteNoticeInline({ className }: { className?: string }) {
     <div
       role="status"
       className={cn(
-        'mb-4 rounded-xl border border-amber-300/80 bg-amber-50 px-4 py-3 text-sm text-amber-950',
+        'mb-4 rounded-xl border border-amber-300/80 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-idl-glow/30 dark:bg-idl-design-elevated dark:text-idl-design-fg',
         className,
       )}
     >
       <p>{t('legacySite.checkout.hint')}</p>
       <ExternalLink
         href={notice.url}
-        className="mt-2 inline-flex font-semibold text-amber-950 underline decoration-amber-700/60 underline-offset-2 hover:decoration-amber-950"
+        className="mt-2 inline-flex font-semibold text-amber-950 underline decoration-amber-700/60 underline-offset-2 hover:decoration-amber-950 dark:text-idl-glow dark:decoration-idl-glow/50 dark:hover:text-idl-cta-glow-hover dark:hover:decoration-idl-glow"
       >
         {t('legacySite.notice.cta')}
       </ExternalLink>
