@@ -241,7 +241,7 @@ export type ProductCardDTO = {
   inStock?: boolean
   availability?: ProductAvailabilityDataDTO
   /** Fino a 3 hex da `attribute_lines.html_color` (card lista). */
-  colorSwatches?: string[]
+  colorSwatches?: readonly string[]
 }
 
 export type StockRestockRequestDTO = {
