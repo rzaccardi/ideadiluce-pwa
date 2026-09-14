@@ -3,6 +3,7 @@ import {
   CATALOG_SEARCH_RECENT_PREFIX,
   IDEADILUCE_AUTH_SESSION_KEY,
   IDEADILUCE_CART_MIRROR_KEY,
+  IDEADILUCE_LIGHTS_KEY,
 } from '@/lib/storage-keys'
 
 export type FirstPartyLocalStorageEntry = {
@@ -30,6 +31,12 @@ export const FIRST_PARTY_LOCAL_STORAGE: FirstPartyLocalStorageEntry[] = [
     name: `${CATALOG_SEARCH_RECENT_PREFIX}<locale>`,
     durationKey: 'privacy.storage.duration.persistent',
     purposeKey: 'privacy.storage.searchRecent.purpose',
+    categoryKey: 'privacy.storage.category.preferences',
+  },
+  {
+    name: IDEADILUCE_LIGHTS_KEY,
+    durationKey: 'privacy.storage.duration.persistent',
+    purposeKey: 'privacy.storage.lights.purpose',
     categoryKey: 'privacy.storage.category.preferences',
   },
 ]

@@ -19,17 +19,13 @@ export function DesignRelatedProducts({ products, lp, brandName }: Props) {
       {products.map((product) => (
         <Link key={product.slug} to={lp(`/prodotto/${product.slug}`)} className="group block">
           <div className="relative mb-3.5 overflow-hidden rounded-[3px] border border-idl-path-design-border bg-white dark:bg-idl-tech-panel">
-            {product.imageUrl ? (
-              <DesignProductCardMedia
-                imageUrl={product.imageUrl}
-                hoverImageUrl={product.hoverImageUrl}
-                sizes="25vw"
-              />
-            ) : (
-              <div className="flex aspect-[4/5] items-center justify-center bg-white text-xs text-idl-ink-muted dark:bg-idl-tech-panel">
-                —
-              </div>
-            )}
+            <DesignProductCardMedia
+              imageUrl={product.imageUrl}
+              hoverImageUrl={product.hoverImageUrl}
+              accesaImageUrl={product.accesaImageUrl}
+              slug={product.slug}
+              sizes="25vw"
+            />
           </div>
           <div className="mb-1">
             <ProductBrandMark

@@ -13,6 +13,7 @@ import { slideDownVariants, transitionBase } from '@/lib/motion/presets'
 import dynamic from 'next/dynamic'
 import { AttaccoMegaPanel } from './AttaccoMegaPanel'
 import { SiteHeaderActions, SiteHeaderSearch } from './SiteHeaderActions'
+import { HeaderLightsToggle } from './HeaderLightsToggle'
 
 const MobileSiteMenu = dynamic(() => import('./MobileSiteMenu').then((m) => ({ default: m.MobileSiteMenu })), {
   ssr: false,
@@ -296,6 +297,7 @@ export function SiteHeader({
           </div>
           <div className="flex shrink-0 items-center lg:gap-4">
             <SiteHeaderSearch />
+            <HeaderLightsToggle />
             <SiteHeaderActions />
           </div>
           <AnimatePresence>

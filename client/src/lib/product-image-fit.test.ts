@@ -34,14 +34,14 @@ describe('productGalleryObjectFitClass', () => {
 })
 
 describe('productCatalogObjectFitClass', () => {
-  it('usa contain nel catalogo tecnico e cover in arredo', () => {
-    expect(productCatalogObjectFitClass('technical')).toBe('object-contain')
+  it('usa cover su catalogo tecnico e arredo', () => {
+    expect(productCatalogObjectFitClass('technical')).toBe('object-cover')
     expect(productCatalogObjectFitClass('design')).toBe('object-cover')
   })
 })
 
 describe('productCardObjectFitClass', () => {
-  it('usa contain sui ricambi tecnici con foto non da cover', () => {
+  it('usa cover anche sui ricambi tecnici', () => {
     expect(
       productCardObjectFitClass(
         card({
@@ -51,7 +51,7 @@ describe('productCardObjectFitClass', () => {
           specTags: ['21W', 'IP20'],
         }),
       ),
-    ).toBe('object-contain')
+    ).toBe('object-cover')
   })
 
   it('usa cover sulle lampade d’arredo', () => {

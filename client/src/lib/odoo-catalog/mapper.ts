@@ -287,10 +287,11 @@ function resolveCardGallery(product: OdooCatalogCardImageSource) {
   }))
 }
 
-/** Packshot su bianco + ambientata hover, anche se `image` Odoo è l’ambientata. */
+/** Packshot su bianco + hover accesa/ambientata, anche se `image` Odoo è l’ambientata. */
 export function resolveOdooCatalogCardImageUrls(product: OdooCatalogCardImageSource): {
   imageUrl: string | null
   hoverImageUrl: string | null
+  accesaImageUrl: string | null
 } {
   const main = resolveOdooCatalogMediaUrlWithSize(product.image?.url, 'image_512')
   const dedicated = resolveOdooCatalogMediaUrlWithSize(
@@ -347,7 +348,7 @@ export function mapOdooCatalogListItem(product: OdooCatalogProductListItem, loca
   })
 
   const codes = resolveListCodes(product)
-  const { imageUrl, hoverImageUrl } = resolveOdooCatalogCardImageUrls(product)
+  const { imageUrl, hoverImageUrl, accesaImageUrl } = resolveOdooCatalogCardImageUrls(product)
 
   return {
     slug: product.slug,
@@ -360,6 +361,7 @@ export function mapOdooCatalogListItem(product: OdooCatalogProductListItem, loca
     currency: product.currency || 'EUR',
     imageUrl,
     hoverImageUrl,
+    accesaImageUrl,
     categorySlug: categories[0]?.slug ?? product.category_slug ?? null,
     brand: resolveCardBrand(product),
     sku: resolveListSku(product),

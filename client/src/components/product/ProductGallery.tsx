@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ViewportPortal } from '@/components/ViewportPortal'
+import { IdlMediaPlaceholder } from '@/components/site/IdlMediaPlaceholder'
 import { layers } from '@/lib/layering'
 import { cn } from '@/utils/cn'
 
@@ -65,8 +66,8 @@ export function ProductGallery({ images, alt, activeUrl }: Props) {
 
   if (!base.length) {
     return (
-      <div className="flex aspect-square items-center justify-center rounded-xl bg-idl-cream text-idl-placeholder">
-        Anteprima
+      <div className="relative aspect-square overflow-hidden rounded-xl bg-idl-cream">
+        <IdlMediaPlaceholder fill />
       </div>
     )
   }

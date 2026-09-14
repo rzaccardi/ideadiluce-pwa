@@ -17,7 +17,7 @@ import {
   resolveAvailabilityData,
 } from '@/lib/product-availability'
 import { ProductPrice } from '@/components/product/ProductPrice'
-import { SiteImage } from '@/components/site/SiteImage'
+import { ProductCardLitMedia } from '@/components/product/ProductCardLitMedia'
 import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMeta'
 import { ProductBrandMark } from '@/components/product/ProductBrandMark'
 import { productCardObjectFitClass } from '@/lib/product-image-fit'
@@ -85,35 +85,29 @@ export function ProductCard({ product, className }: Props) {
     }
   }
 
-  const imageAlt = product.name
   const imageFitClass = productCardObjectFitClass(product)
 
   return (
     <article
       className={cn(
-        'relative flex h-full flex-col overflow-hidden rounded-lg border border-idl-tech-border bg-white transition hover:border-idl-border-strong dark:bg-idl-tech-panel',
+        'group relative flex h-full flex-col overflow-hidden rounded-lg border border-idl-tech-border bg-white transition hover:border-idl-border-strong dark:bg-idl-tech-panel',
         className,
       )}
     >
       <Link to={productHref} className="block text-left">
         <div className="relative aspect-[4/3] bg-idl-cream">
-          {product.imageUrl ? (
-            <SiteImage
-              src={product.imageUrl}
-              alt={imageAlt}
-              fill
-              sizes="(max-width: 640px) 100vw, 320px"
-              className={cn(
-                imageFitClass,
-                imageFitClass === 'object-contain' && 'p-3',
-                outOfStock && 'opacity-75 saturate-50',
-              )}
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-xs text-idl-placeholder">
-              {t('product.card.noImage')}
-            </div>
-          )}
+          <ProductCardLitMedia
+            imageUrl={product.imageUrl}
+            hoverImageUrl={product.hoverImageUrl}
+            accesaImageUrl={product.accesaImageUrl}
+            slug={product.slug}
+            sizes="(max-width: 640px) 100vw, 320px"
+            imageClassName={cn(
+              imageFitClass,
+              imageFitClass === 'object-contain' && 'p-3',
+              outOfStock && 'opacity-75 saturate-50',
+            )}
+          />
           {outOfStock ? (
             <span className="absolute left-2 top-2 rounded-full bg-idl-promo-bg px-2.5 py-0.5 text-xs font-medium text-idl-promo-text ring-1 ring-idl-promo-border">
               {t('product.availability.outOfStock')}

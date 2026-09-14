@@ -9,9 +9,6 @@ export function PurchaseErrorPageSkeleton() {
 
   return (
     <div className="bg-idl-tech-panel" role="status" aria-label={t('paymentResult.loading')}>
-      <SectionContainer className="max-w-[1100px] py-4">
-        <Skeleton className="h-8 w-40" />
-      </SectionContainer>
       <SectionContainer className="max-w-[1100px] py-12 text-center">
         <Skeleton className="mx-auto size-[78px] rounded-full" />
         <Skeleton className="mx-auto mt-6 h-3 w-44" />

@@ -16,7 +16,7 @@ import {
 } from '@/lib/product-availability'
 import { useTechnicalCatalogSelectionContext } from '@/context/technical-catalog-selection-context'
 import { cn } from '@/utils/cn'
-import { SiteImage } from '../SiteImage'
+import { ProductCardLitMedia } from '@/components/product/ProductCardLitMedia'
 import { HoverLift } from '@/components/motion'
 import type { LocalePathFn } from '../sections/types'
 import { TechnicalAddToCartButton } from './TechnicalAddToCartButton'
@@ -89,7 +89,7 @@ export const TechnicalCatalogProductCard = memo(function TechnicalCatalogProduct
     <HoverLift className="h-full">
       <div
         className={cn(
-          'flex h-full flex-col rounded-lg border bg-white p-4 transition hover:border-idl-muted hover:shadow-md dark:bg-idl-tech-panel',
+          'group flex h-full flex-col rounded-lg border bg-white p-4 transition hover:border-idl-muted hover:shadow-md dark:bg-idl-tech-panel',
           checked ? 'border-idl-amber ring-1 ring-idl-amber/30' : 'border-idl-tech-border',
         )}
       >
@@ -108,15 +108,14 @@ export const TechnicalCatalogProductCard = memo(function TechnicalCatalogProduct
             ) : null}
           </div>
           <div className="relative mb-3 aspect-square overflow-hidden rounded bg-idl-tech-panel">
-            {product.imageUrl ? (
-              <SiteImage
-                src={product.imageUrl}
-                alt=""
-                fill
-                className="object-contain p-2.5"
-                sizes="25vw"
-              />
-            ) : null}
+            <ProductCardLitMedia
+              imageUrl={product.imageUrl}
+              hoverImageUrl={product.hoverImageUrl}
+              accesaImageUrl={product.accesaImageUrl}
+              slug={product.slug}
+              sizes="25vw"
+              imageClassName="object-cover"
+            />
           </div>
           {product.brand ? (
             <div className="mb-1.5">

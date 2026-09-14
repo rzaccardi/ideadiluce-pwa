@@ -1,8 +1,9 @@
 'use client'
 
-import Image from 'next/image'
 import { Link } from '@/lib/navigation'
 import { ArticleImage } from '@/components/site/content/ArticleImage'
+import { IdlMediaPlaceholder } from '@/components/site/IdlMediaPlaceholder'
+import { SiteImage } from '@/components/site/SiteImage'
 import type { ContentBlock } from '@/types/site-content'
 import { SiteLeadForm } from '@/components/site/content/SiteLeadForm'
 import { ContactPanel } from '@/components/site/content/ContactPanel'
@@ -132,7 +133,7 @@ function BlockRenderer({
             {block.items.map((item) => (
               <figure key={item.imageUrl} className="overflow-hidden rounded-xl border border-idl-tech-border bg-idl-tech-panel">
                 <div className="relative aspect-[4/3] bg-idl-cream">
-                  <Image src={item.imageUrl} alt={item.alt ?? ''} fill className="object-cover" sizes="(max-width: 768px) 100vw, 320px" />
+                  <SiteImage src={item.imageUrl} alt={item.alt ?? ''} fill className="object-cover" sizes="(max-width: 768px) 100vw, 320px" />
                 </div>
                 {item.caption ? (
                   <figcaption className="px-4 py-3 text-[13px] leading-relaxed text-idl-muted">{item.caption}</figcaption>
@@ -159,17 +160,19 @@ function BlockRenderer({
                 to={lp(item.href)}
                 className={cn(ui.card, 'block overflow-hidden p-0 hover:border-idl-brass')}
               >
-                {item.imageUrl ? (
-                  <div className="relative aspect-[4/3] w-full bg-idl-cream">
-                    <Image
+                <div className="relative aspect-[4/3] w-full bg-idl-cream">
+                  {item.imageUrl ? (
+                    <SiteImage
                       src={item.imageUrl}
                       alt={item.title}
                       fill
                       className="object-cover"
                       sizes="(max-width: 640px) 100vw, 50vw"
                     />
-                  </div>
-                ) : null}
+                  ) : (
+                    <IdlMediaPlaceholder fill />
+                  )}
+                </div>
                 <div className="p-5">
                   <div className="font-semibold text-idl-ink">{item.title}</div>
                   {item.description ? (

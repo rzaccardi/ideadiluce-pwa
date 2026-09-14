@@ -410,6 +410,7 @@ function finalizeBucket(
     const pair = resolveOdooCatalogCardImageUrls(detail)
     if (pair.imageUrl) entry.imageUrl = pair.imageUrl
     entry.hoverImageUrl = pair.hoverImageUrl
+    entry.accesaImageUrl = pair.accesaImageUrl
   }
 
   const derivedFromDetails = deriveTaxonomyFromEntries(entries)
@@ -813,6 +814,7 @@ export async function queryOdooCatalogIndex(options: {
         ...card,
         imageUrl: pair.imageUrl ?? card.imageUrl,
         hoverImageUrl: pair.hoverImageUrl,
+        accesaImageUrl: pair.accesaImageUrl,
       }
     },
   )

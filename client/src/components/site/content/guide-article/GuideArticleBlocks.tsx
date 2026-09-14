@@ -1,9 +1,10 @@
 'use client'
 
-import Image from 'next/image'
 import { Link } from '@/lib/navigation'
 import type { ContentBlock } from '@/types/site-content'
 import { GUIDE_ARTICLE_LAYOUT } from '@/components/site/content/guide-article/guide-article-utils'
+import { IdlMediaPlaceholder } from '@/components/site/IdlMediaPlaceholder'
+import { SiteImage } from '@/components/site/SiteImage'
 import { SITE_PAGE_X_CLASS } from '@/styles/site-ui'
 import { cn } from '@/utils/cn'
 
@@ -41,13 +42,17 @@ function GuideImageBlock({ block }: { block: Extract<ContentBlock, { kind: 'imag
     <GuideBodySection>
       <figure>
         <div className={cn('relative overflow-hidden rounded', aspect, 'bg-idl-cream')}>
-          <Image
-            src={block.imageUrl}
-            alt={block.alt ?? ''}
-            fill
-            className="object-cover"
-            sizes="(max-width: 820px) 100vw, 820px"
-          />
+          {block.imageUrl ? (
+            <SiteImage
+              src={block.imageUrl}
+              alt={block.alt ?? ''}
+              fill
+              className="object-cover"
+              sizes="(max-width: 820px) 100vw, 820px"
+            />
+          ) : (
+            <IdlMediaPlaceholder fill />
+          )}
         </div>
         {block.caption ? (
           <figcaption className="mt-2 text-[13px] leading-relaxed text-idl-muted">{block.caption}</figcaption>
@@ -61,7 +66,17 @@ function GuideSplitBlock({ block }: { block: Extract<ContentBlock, { kind: 'spli
   const image = (
     <figure className="m-0">
       <div className="relative aspect-[4/3] overflow-hidden rounded bg-idl-cream">
-        <Image src={block.imageUrl} alt={block.alt ?? block.title ?? ''} fill className="object-cover" sizes="(max-width: 820px) 50vw, 400px" />
+        {block.imageUrl ? (
+          <SiteImage
+            src={block.imageUrl}
+            alt={block.alt ?? block.title ?? ''}
+            fill
+            className="object-cover"
+            sizes="(max-width: 820px) 50vw, 400px"
+          />
+        ) : (
+          <IdlMediaPlaceholder fill />
+        )}
       </div>
       {block.caption ? (
         <figcaption className="mt-2 text-[13px] text-idl-muted">{block.caption}</figcaption>
@@ -107,7 +122,17 @@ function GuideGalleryBlock({ block }: { block: Extract<ContentBlock, { kind: 'ga
         {block.items.map((item) => (
           <figure key={item.imageUrl} className="m-0">
             <div className="relative aspect-[4/3] overflow-hidden rounded bg-idl-cream">
-              <Image src={item.imageUrl} alt={item.alt ?? ''} fill className="object-cover" sizes="(max-width: 640px) 100vw, 400px" />
+              {item.imageUrl ? (
+                <SiteImage
+                  src={item.imageUrl}
+                  alt={item.alt ?? ''}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 100vw, 400px"
+                />
+              ) : (
+                <IdlMediaPlaceholder fill />
+              )}
             </div>
             {item.caption ? <figcaption className="mt-2 text-[13px] text-idl-muted">{item.caption}</figcaption> : null}
           </figure>
@@ -197,17 +222,19 @@ export function GuideInspirationSection({
               to={lp(item.href)}
               className="group block text-[#f5f5f5] no-underline"
             >
-              {item.imageUrl ? (
-                <div className="relative mb-3 aspect-[4/5] overflow-hidden rounded bg-idl-design-elevated">
-                  <Image
+              <div className="relative mb-3 aspect-[4/5] overflow-hidden rounded bg-idl-design-elevated">
+                <IdlMediaPlaceholder fill inverted />
+                {item.imageUrl ? (
+                  <SiteImage
                     src={item.imageUrl}
                     alt={item.title}
                     fill
-                    className="object-cover transition duration-300 group-hover:scale-[1.02]"
+                    className="z-[1] object-cover transition duration-300 group-hover:scale-[1.02]"
                     sizes="(max-width: 640px) 50vw, 260px"
+                    showPlaceholderOnError={false}
                   />
-                </div>
-              ) : null}
+                ) : null}
+              </div>
               {item.meta || item.category ? (
                 <div className="mb-1 font-mono text-[10px] tracking-[0.08em] text-idl-glow uppercase">
                   {item.meta ?? item.category}

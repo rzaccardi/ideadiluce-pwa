@@ -213,8 +213,10 @@ export type ProductCardDTO = {
   priceDisplayMode: PriceDisplayModeDTO
   currency: string
   imageUrl: string | null
-  /** Foto ambientata per hover card arredo (assente se non c’è una seconda foto utile). */
+  /** Hover card arredo: foto accesa se presente, altrimenti ambientata. */
   hoverImageUrl?: string | null
+  /** Foto taggata `accesa` per il toggle globale luci (assente se il prodotto non ce l’ha). */
+  accesaImageUrl?: string | null
   categorySlug: string | null
   brand?: ProductBrandDTO | null
   sku?: string | null

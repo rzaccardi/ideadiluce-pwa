@@ -7,6 +7,7 @@ import { bootstrapSession } from '@/app/bootstrap'
 import { attachSessionRefreshListener } from '@/features/auth'
 import { cleanupLegacyServiceWorkers } from '@/lib/legacy-sw-cleanup'
 import { initValtioDevtools } from '@/lib/valtio-devtools'
+import { hydrateLightsStore } from '@/features/lights'
 import { AppToaster } from '@/components/ui/AppToaster'
 import { CookiebotRouteSync } from '@/components/CookiebotRouteSync'
 import { WhatsAppFloatingButton } from '@/components/site/WhatsAppFloatingButton'
@@ -43,6 +44,9 @@ export function Providers({
   }, [])
 
   useEffect(() => initValtioDevtools(), [])
+  useEffect(() => {
+    hydrateLightsStore()
+  }, [])
 
   return (
     <Suspense fallback={null}>

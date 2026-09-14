@@ -214,6 +214,42 @@ describe('mapOdooCatalogProductDetail contratto v2', () => {
     expect(card.hoverImageUrl).toContain('image_512')
   })
 
+  it('card arredo: hover dalla foto accesa al posto dell’ambiente', () => {
+    const card = mapOdooCatalogListItem(
+      {
+        ...fixtureDetail,
+        gallery: [
+          { type: 'image', tag: 'foto', url: '/web/image/product.template/6673/image_1920', alt: '' },
+          { type: 'image', tag: 'ambiente', url: '/web/image/product.image/900/image_1920', alt: '' },
+          { type: 'image', tag: 'accesa', url: '/web/image/product.image/901/image_1920', alt: '' },
+        ],
+      },
+      'IT',
+    )
+    expect(card.imageUrl).toContain('/product.template/6673/')
+    expect(card.hoverImageUrl).toContain('/product.image/901/')
+    expect(card.hoverImageUrl).toContain('image_512')
+    expect(card.accesaImageUrl).toContain('/product.image/901/')
+  })
+
+  it('card arredo: image_ambiente dedicata non batte il tab accesa', () => {
+    const card = mapOdooCatalogListItem(
+      {
+        ...fixtureDetail,
+        image_ambiente: { url: '/web/image/product.image/900/image_1920', alt: '' },
+        hover_image: { url: '/web/image/product.image/900/image_1920', alt: '' },
+        gallery: [
+          { type: 'image', tag: 'foto', url: '/web/image/product.template/6673/image_1920', alt: '' },
+          { type: 'image', tag: 'ambiente', url: '/web/image/product.image/900/image_1920', alt: '' },
+          { type: 'image', tag: 'accesa', url: '/web/image/product.image/901/image_1920', alt: '' },
+        ],
+      },
+      'IT',
+    )
+    expect(card.hoverImageUrl).toContain('/product.image/901/')
+    expect(card.accesaImageUrl).toContain('/product.image/901/')
+  })
+
   it('card arredo: se image è l’ambientata usa comunque il packshot in gallery', () => {
     const card = mapOdooCatalogListItem(
       {

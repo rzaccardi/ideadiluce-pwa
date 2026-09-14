@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { useIsClient } from '@/hooks/use-is-client'
 import { layers } from '@/lib/layering'
 import { cn } from '@/utils/cn'
+import { IdlMediaPlaceholder } from '@/components/site/IdlMediaPlaceholder'
 import { SiteImage } from '@/components/site/SiteImage'
 import type { ProductGalleryItemDTO, ProductGalleryTagDTO } from '@/types/dto'
 import {
@@ -13,6 +14,9 @@ import {
 } from '@/lib/odoo-catalog/media'
 import { isMeasureGalleryTag } from '@/lib/product-specs-parse'
 import { productGalleryObjectFitClass } from '@/lib/product-image-fit'
+import { pickDefaultFotoHoverPreview } from '@/lib/product-card-hover-image'
+import { hydrateLightsStore, lightsStore } from '@/features/lights'
+import { useSnapshot } from 'valtio/react'
 
 function LightboxCloseIcon({ className }: { className?: string }) {
   return (
@@ -208,6 +212,21 @@ export function ProductDetailGallery({
     lightboxIndex < 0 && variantHeroItem
       ? variantHeroItem
       : (displayItems[lightboxIndex] ?? current)
+  const isDefaultFotoView =
+    (current?.tag || 'foto') === 'foto' && (showingVariantHero || selectedIndex === 0)
+  const hoverPreview = useMemo(
+    () =>
+      pickDefaultFotoHoverPreview(items, current, odooCatalogImageUrlsMatch, isDefaultFotoView),
+    [items, current, isDefaultFotoView],
+  )
+  const { on: lightsOn } = useSnapshot(lightsStore)
+  const accesaPreview = hoverPreview?.tag === 'accesa' ? hoverPreview : null
+  const lightsActive = Boolean(lightsOn && accesaPreview)
+  const overlayPreview = lightsActive ? accesaPreview : hoverPreview
+
+  useEffect(() => {
+    hydrateLightsStore()
+  }, [])
 
   const openLightbox = useCallback(
     (index: number) => {
@@ -332,13 +351,13 @@ export function ProductDetailGallery({
     return (
       <div
         className={cn(
-          'flex aspect-square items-center justify-center text-sm',
+          'relative aspect-square overflow-hidden',
           isDesign
-            ? 'rounded bg-white text-idl-ink-muted dark:bg-idl-tech-panel'
-            : 'rounded-xl bg-white text-idl-muted dark:bg-idl-tech-panel',
+            ? 'rounded bg-white dark:bg-idl-tech-panel'
+            : 'rounded-xl bg-white dark:bg-idl-tech-panel',
         )}
       >
-        Anteprima prodotto
+        <IdlMediaPlaceholder fill />
       </div>
     )
   }
@@ -399,7 +418,7 @@ export function ProductDetailGallery({
         <button
           type="button"
           className={cn(
-            'relative aspect-square w-full overflow-hidden focus:outline-none focus-visible:ring-2',
+            'group relative aspect-square w-full overflow-hidden focus:outline-none focus-visible:ring-2',
             isDesign
               ? 'rounded bg-white focus-visible:ring-idl-brass/30 dark:bg-idl-tech-panel'
               : 'rounded-xl bg-white focus-visible:ring-idl-amber/30 dark:bg-idl-tech-panel',
@@ -430,15 +449,44 @@ export function ProductDetailGallery({
               </a>
             )
           ) : current ? (
-            <SiteImage
-              key={current.url}
-              src={current.url}
-              alt={currentAlt}
-              fill
-              className={cn(imageObjectClass, isDesign && 'p-4 sm:p-6')}
-              sizes="50vw"
-              priority
-            />
+            <>
+              <SiteImage
+                key={current.url}
+                src={current.url}
+                alt={currentAlt}
+                fill
+                className={cn(
+                  imageObjectClass,
+                  isDesign && 'p-4 sm:p-6',
+                  overlayPreview &&
+                    'transition-opacity duration-700 ease-out',
+                  lightsActive
+                    ? 'opacity-0'
+                    : overlayPreview
+                      ? '[@media(hover:hover)]:group-hover:opacity-0'
+                      : null,
+                )}
+                sizes="50vw"
+                priority
+              />
+              {overlayPreview ? (
+                <SiteImage
+                  src={overlayPreview.url}
+                  alt=""
+                  fill
+                  className={cn(
+                    'pointer-events-none z-[1] transition-opacity duration-700 ease-out',
+                    lightsActive
+                      ? 'opacity-100'
+                      : 'opacity-0 [@media(hover:hover)]:group-hover:opacity-100',
+                    productGalleryObjectFitClass(overlayPreview.tag),
+                    productGalleryObjectFitClass(overlayPreview.tag) === 'object-contain' &&
+                      (isDesign ? 'p-4 sm:p-6' : 'p-4 sm:p-7'),
+                  )}
+                  sizes="50vw"
+                />
+              ) : null}
+            </>
           ) : null}
         </button>
 

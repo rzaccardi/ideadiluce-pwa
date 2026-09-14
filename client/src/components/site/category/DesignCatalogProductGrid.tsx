@@ -4,59 +4,38 @@ import { memo } from 'react'
 import { Link } from '@/lib/navigation'
 import type { ProductCardDTO } from '@/types/dto'
 import { ProductPrice } from '@/components/product/ProductPrice'
-import { SiteImage } from '../SiteImage'
 import { CatalogProductCardSkeleton } from '../catalog/CatalogProductCardSkeleton'
 import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMeta'
 import { ProductBrandMark } from '@/components/product/ProductBrandMark'
 import type { LocalePathFn } from '../sections/types'
-import { odooCatalogImageUrlsMatch } from '@/lib/odoo-catalog/media'
-import { cn } from '@/utils/cn'
+import { ProductCardLitMedia } from '@/components/product/ProductCardLitMedia'
 
 type DesignProductCardMediaProps = {
   imageUrl: string | null
   hoverImageUrl?: string | null
+  accesaImageUrl?: string | null
+  slug?: string | null
   sizes: string
 }
 
-/** Packshot su bianco; su hover (solo desktop) crossfade verso l’ambientata. */
+/** Foto a riempimento; luci globali o hover (desktop) verso accesa / ambientata. */
 export function DesignProductCardMedia({
   imageUrl,
   hoverImageUrl,
+  accesaImageUrl,
+  slug,
   sizes,
 }: DesignProductCardMediaProps) {
-  const hoverSrc =
-    hoverImageUrl && !odooCatalogImageUrlsMatch(hoverImageUrl, imageUrl)
-      ? hoverImageUrl
-      : null
-
   return (
     <div className="relative aspect-[4/5] overflow-hidden bg-white">
-      {imageUrl ? (
-        <SiteImage
-          src={imageUrl}
-          alt=""
-          fill
-          className={cn(
-            'object-contain',
-            hoverSrc
-              ? 'transition-opacity duration-500 ease-out [@media(hover:hover)]:group-hover:opacity-0'
-              : null,
-          )}
-          sizes={sizes}
-        />
-      ) : null}
-      {hoverSrc ? (
-        <SiteImage
-          src={hoverSrc}
-          alt=""
-          fill
-          className={cn(
-            'z-[1] object-cover opacity-0 transition-opacity duration-500 ease-out',
-            '[@media(hover:hover)]:group-hover:opacity-100',
-          )}
-          sizes={sizes}
-        />
-      ) : null}
+      <ProductCardLitMedia
+        imageUrl={imageUrl}
+        hoverImageUrl={hoverImageUrl}
+        accesaImageUrl={accesaImageUrl}
+        slug={slug}
+        sizes={sizes}
+        imageClassName="object-cover"
+      />
     </div>
   )
 }
@@ -88,6 +67,8 @@ export const DesignCatalogProductCard = memo(function DesignCatalogProductCard({
       <DesignProductCardMedia
         imageUrl={product.imageUrl}
         hoverImageUrl={product.hoverImageUrl}
+        accesaImageUrl={product.accesaImageUrl}
+        slug={product.slug}
         sizes="(max-width:768px) 50vw, 33vw"
       />
       <div className="flex flex-1 flex-col p-3 sm:p-4">

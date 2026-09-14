@@ -21,10 +21,14 @@ export async function enrichProductCardsWithHoverImages<T extends ProductCardDTO
     const detail = detailsById[String(id)]
     if (!detail) return item
     const pair = resolveOdooCatalogCardImageUrls(detail)
+    const cacheHasAccesa = (detail.gallery ?? []).some((entry) => (entry.tag || 'foto') === 'accesa')
     return {
       ...item,
       imageUrl: pair.imageUrl ?? item.imageUrl,
-      hoverImageUrl: pair.hoverImageUrl,
+      hoverImageUrl: cacheHasAccesa
+        ? (pair.hoverImageUrl ?? item.hoverImageUrl)
+        : (item.hoverImageUrl ?? pair.hoverImageUrl),
+      accesaImageUrl: pair.accesaImageUrl ?? item.accesaImageUrl,
     }
   })
 }

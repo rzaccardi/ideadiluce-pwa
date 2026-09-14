@@ -1,7 +1,8 @@
 'use client'
 
-import Image from 'next/image'
+import { useState } from 'react'
 import { GUIDE_ARTICLE_LAYOUT, parseGuideEyebrow } from '@/components/site/content/guide-article/guide-article-utils'
+import { SiteImage } from '@/components/site/SiteImage'
 import { SITE_PAGE_X_CLASS } from '@/styles/site-ui'
 import { cn } from '@/utils/cn'
 
@@ -14,18 +15,22 @@ type Props = {
 
 export function GuideArticleHero({ title, eyebrow, coverImageUrl, coverAlt }: Props) {
   const { category, meta } = parseGuideEyebrow(eyebrow)
+  const [coverFailed, setCoverFailed] = useState(false)
+  const showCover = Boolean(coverImageUrl?.trim()) && !coverFailed
 
   return (
     <header className="relative overflow-hidden bg-idl-design">
       <div className="relative h-[280px] sm:h-[340px] lg:h-[480px]">
-        {coverImageUrl ? (
-          <Image
+        {showCover && coverImageUrl ? (
+          <SiteImage
             src={coverImageUrl}
             alt={coverAlt ?? title}
             fill
             priority
             className="object-cover"
             sizes="100vw"
+            showPlaceholderOnError={false}
+            onError={() => setCoverFailed(true)}
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-idl-design via-[#2a2a2e] to-idl-design" />

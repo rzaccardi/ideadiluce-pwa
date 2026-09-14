@@ -241,7 +241,11 @@ export async function proxyOdooCatalogProductDetail(
 ) {
   const locale = langFromQuery(query.locale, query.lang)
   try {
-    return await fetchOdooCatalogProductDetail(productId, locale)
+    const live = await fetchOdooCatalogProductDetail(productId, locale)
+    void import('../catalog/odoo-catalog-index.service.js').then((mod) =>
+      mod.rememberProductDetail(locale, live.product),
+    )
+    return live
   } catch (e) {
     const { getCachedProductDetailById } = await import('../catalog/odoo-catalog-index.service.js')
     const { markCatalogDegraded } = await import('../odoo/odoo-degraded-state.js')

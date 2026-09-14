@@ -1,5 +1,5 @@
 import type { ProductCardDTO } from '@/types/dto'
-import { resolveProductCardCatalogKind, type ProductCatalogKind } from '@/lib/product-catalog-kind'
+import type { ProductCatalogKind } from '@/lib/product-catalog-kind'
 
 export type ProductImageObjectFit = 'object-cover' | 'object-contain'
 
@@ -8,13 +8,13 @@ export function productGalleryObjectFitClass(tag: string | undefined): ProductIm
   return (tag || 'foto') === 'ambiente' ? 'object-cover' : 'object-contain'
 }
 
-/** Catalogo tecnico: foto spesso non quadrate (schede, driver). Arredo: cover. */
-export function productCatalogObjectFitClass(kind: ProductCatalogKind): ProductImageObjectFit {
-  return kind === 'technical' ? 'object-contain' : 'object-cover'
+/** Card catalogo: riempie il riquadro (cover), arredo e tecnico. */
+export function productCatalogObjectFitClass(_kind: ProductCatalogKind): ProductImageObjectFit {
+  return 'object-cover'
 }
 
-export function productCardObjectFitClass(product: ProductCardDTO): ProductImageObjectFit {
-  return productCatalogObjectFitClass(resolveProductCardCatalogKind(product))
+export function productCardObjectFitClass(_product: ProductCardDTO): ProductImageObjectFit {
+  return 'object-cover'
 }
 
 export function productSearchThumbObjectFitClass(input: {

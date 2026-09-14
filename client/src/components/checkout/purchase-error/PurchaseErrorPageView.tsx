@@ -1,12 +1,11 @@
 'use client'
 
 import type { ThankYouOrderDTO } from '@/types/dto'
-import { ExternalLink } from '@/lib/link-title'
 import { Link } from '@/lib/navigation'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { useI18n } from '@/hooks/use-i18n'
 import { formatMoney } from '@/lib/format'
-import { SectionContainer, BrandWordmark } from '@/components/site/primitives'
+import { SectionContainer } from '@/components/site/primitives'
 import { SiteImage } from '@/components/site/SiteImage'
 import { MastercardLogo, PayPalLogo, VisaLogo } from '@/components/payment-method-logos'
 import type { MessageKey } from '@/i18n/messages'
@@ -30,15 +29,6 @@ function CrossIcon() {
   return (
     <svg viewBox="0 0 52 52" width="40" height="40" fill="none" stroke="#d3382e" strokeWidth="4.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <path d="M18 18 L34 34 M34 18 L18 34" />
-    </svg>
-  )
-}
-
-function LockIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1f9d57" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <rect x="5" y="11" width="14" height="9" rx="2" />
-      <path d="M8 11 V8 a4 4 0 0 1 8 0 v3" />
     </svg>
   )
 }
@@ -91,21 +81,6 @@ export function PurchaseErrorPageView({ order }: Props) {
 
   return (
     <div className="-mx-4 bg-idl-tech-panel sm:-mx-6 lg:-mx-12">
-      <div className="border-b border-[#e4e3de] bg-[#ffffff]">
-        <SectionContainer className="flex max-w-[1100px] flex-wrap items-center justify-between gap-3 py-[18px]">
-          <Link to={lp('/')} className="text-idl-ink no-underline">
-            <BrandWordmark className="text-2xl" />
-          </Link>
-          <div className="flex items-center gap-2 text-[13px] font-semibold text-[#1f7a48]">
-            <LockIcon />
-            {t('purchaseError.securePayment')}
-          </div>
-          <ExternalLink href="tel:+39067167111" className="text-[13px] text-[#3a3a3d] no-underline">
-            {t('purchaseError.supportPhone')}
-          </ExternalLink>
-        </SectionContainer>
-      </div>
-
       <section className="border-b border-[#ededea] bg-idl-tech-panel py-10 text-center sm:py-12">
         <SectionContainer className="max-w-[1100px]">
           <div className="mx-auto mb-6 flex size-[78px] items-center justify-center rounded-full bg-[#fdeceb]">
@@ -311,18 +286,6 @@ export function PurchaseErrorPageView({ order }: Props) {
           </aside>
         </div>
       </SectionContainer>
-
-      <div className="bg-[#0c0c0d] text-[#b0b0b4]">
-        <SectionContainer className="flex max-w-[1100px] flex-wrap items-center justify-between gap-3 py-6">
-          <div className="text-[12.5px]">{t('purchaseError.footer.company')}</div>
-          <div className="text-[12.5px]">
-            {t('purchaseError.footer.help')}{' '}
-            <ExternalLink href="mailto:info@ideadiluce.com" className="font-bold text-[#c9a24b] no-underline">
-              info@ideadiluce.com
-            </ExternalLink>
-          </div>
-        </SectionContainer>
-      </div>
     </div>
   )
 }

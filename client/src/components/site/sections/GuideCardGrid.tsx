@@ -1,6 +1,6 @@
 import { Link } from '@/lib/navigation'
 import { HoverLift, Stagger, StaggerItem } from '@/components/motion'
-import { BrandWordmark } from '@/components/site/primitives'
+import { IdlMediaPlaceholder } from '@/components/site/IdlMediaPlaceholder'
 import { SiteHeading } from '@/components/site/SiteHeading'
 import { SiteImage } from '@/components/site/SiteImage'
 import { SITE_INSET_SCROLL_TRACK_CLASS } from '@/styles/site-ui'
@@ -25,22 +25,17 @@ type Props = {
 export function GuideCardMedia({ imageUrl, sizes }: { imageUrl?: string; sizes: string }) {
   return (
     <div className="relative aspect-[16/10] overflow-hidden bg-idl-cream">
+      <IdlMediaPlaceholder fill />
       {imageUrl ? (
         <SiteImage
           src={imageUrl}
           alt=""
           fill
           sizes={sizes}
-          className="object-cover transition duration-500 group-hover:scale-[1.03]"
+          showPlaceholderOnError={false}
+          className="z-[1] object-cover transition duration-500 group-hover:scale-[1.03]"
         />
-      ) : (
-        <div
-          className="absolute inset-0 flex items-center justify-center bg-idl-cream"
-          aria-hidden
-        >
-          <BrandWordmark className="h-5 opacity-45 sm:h-6" />
-        </div>
-      )}
+      ) : null}
     </div>
   )
 }

@@ -50,6 +50,9 @@ async function resolveCardsFromTemplateIds(
     templateIds.map(async (templateId): Promise<ProductCardStockHint | null> => {
       try {
         const detail = await fetchOdooCatalogProductDetail(templateId, locale)
+        void import('./odoo-catalog-index.service.js').then((mod) =>
+          mod.rememberProductDetail(locale, detail.product),
+        )
         const card = mapOdooCatalogListItem(detail.product, locale)
         return { ...card, odooTemplateId: templateId }
       } catch {

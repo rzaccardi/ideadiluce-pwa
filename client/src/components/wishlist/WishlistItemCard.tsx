@@ -9,6 +9,8 @@ import { buildCartAddHintFromCard } from '@/features/cart/cart-add-hint'
 import { removeWishlistItem } from '@/features/wishlist'
 import { ProductPrice } from '@/components/product/ProductPrice'
 import { Button } from '@/components/Button'
+import { IdlMediaPlaceholder } from '@/components/site/IdlMediaPlaceholder'
+import { SiteImage } from '@/components/site/SiteImage'
 import { useI18n } from '@/hooks/use-i18n'
 import { productCardObjectFitClass } from '@/lib/product-image-fit'
 import { cn } from '@/utils/cn'
@@ -96,21 +98,21 @@ export function WishlistItemCard({
       )}
     >
       <Link to={localize(`/prodotto/${product.slug}`)} className="block">
-        <div className="aspect-square overflow-hidden bg-idl-cream">
+        <div className="relative aspect-square overflow-hidden bg-idl-cream">
           {product.imageUrl ? (
-            <img
+            <SiteImage
               src={product.imageUrl}
               alt=""
+              fill
+              sizes="200px"
               className={cn(
-                'h-full w-full transition hover:scale-[1.02]',
+                'transition hover:scale-[1.02]',
                 imageFitClass,
                 imageFitClass === 'object-contain' && 'p-3',
               )}
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-sm text-idl-placeholder">
-              {t('product.card.noImage')}
-            </div>
+            <IdlMediaPlaceholder fill />
           )}
         </div>
       </Link>

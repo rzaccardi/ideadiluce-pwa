@@ -5,6 +5,7 @@ import {
 } from '@/lib/product-availability'
 import { catalogGrossCents } from '@/lib/price-display'
 import { COMPANY_FACEBOOK_URL } from '@/lib/company-contact'
+import { getSiteUrl } from '@/lib/env'
 import { HOME_SEO_DESCRIPTION } from '@/lib/seo/home-metadata'
 import { localizePath, type PwaLocale } from '@/lib/locale'
 
