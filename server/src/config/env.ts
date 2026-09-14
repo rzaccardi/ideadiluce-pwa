@@ -93,6 +93,11 @@ const envSchema = z.object({
   ODOO_CATALOG_BASE_URL: z.string().optional(),
   /** Bearer token API key (es. «PWA Platform»). */
   ODOO_CATALOG_API_KEY: z.string().optional(),
+  /**
+   * Token di servizio API v2 (ordini, clienti, pagamenti, stock).
+   * Se assente si usa `ODOO_CATALOG_API_KEY`. Un solo Bearer per tutto il contratto.
+   */
+  ODOO_API_TOKEN: z.string().optional(),
   /** ID website Odoo PWA (= 2). */
   ODOO_WEBSITE_ID: z.coerce.number().default(2),
   ODOO_CATALOG_TIMEOUT_MS: z.coerce.number().default(25_000),

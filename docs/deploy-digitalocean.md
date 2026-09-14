@@ -55,8 +55,8 @@ Copia l’elenco da [`.do/secrets.production.env.example`](../.do/secrets.produc
 
 | Variabile | Componente | Obbligatoria |
 |-----------|------------|--------------|
-| `ODOO_CATALOG_API_KEY` | api | Sì (catalogo Odoo REST) |
-| `ODOO_DB`, `ODOO_USERNAME`, `ODOO_PASSWORD` | api | Sì (ordini/stock XML-RPC) |
+| `ODOO_CATALOG_API_KEY` / `ODOO_API_TOKEN` | api | Sì (catalogo + REST `/api/v2` ordini/clienti/pagamenti) |
+| `ODOO_DB`, `ODOO_USERNAME`, `ODOO_PASSWORD` | api | Solo se serve XML-RPC admin (non più per checkout) |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | api | Sì se pagamenti live |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | shop (BUILD) | Sì se Stripe |
 | `DIRECT_URL` | api (BUILD+RUN) | Sì per `prisma migrate deploy` (defaultdb:25060) |

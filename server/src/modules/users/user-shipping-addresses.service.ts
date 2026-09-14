@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { env } from '../../config/env.js'
 import { createOdooCustomerAdapter } from '../../adapters/odoo/odooCustomerAdapter.js'
-import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { isOdooLiveConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { odooShippingAddressId, parseOdooShippingAddressId } from '../../adapters/odoo/odoo-partner-shipping.js'
 import { AppError } from '../../types/errors.js'
 import type { UserAddressDTO, UserShippingAddressListDTO } from '../../types/dto.js'
@@ -53,7 +53,7 @@ export const userShippingAddressesService = {
     const user = await loadUser(userId)
     const local = parseShippingAddressJson(user.shippingAddressJson)
     const map = await prisma.odooCustomerMap.findUnique({ where: { userId } })
-    const odooReady = Boolean(ctx && env.ODOO_ENABLED && isOdooConfigured() && map)
+    const odooReady = Boolean(ctx && env.ODOO_ENABLED && isOdooLiveConfigured() && map)
     let odooSyncFailed = false
     let odoo = [] as Awaited<ReturnType<typeof customerAdapter.listShippingDestinations>>
 
@@ -68,7 +68,7 @@ export const userShippingAddressesService = {
 
     return {
       addresses: mergeShippingAddressList({ odoo, local }),
-      canCreate: Boolean(map) && Boolean(env.ODOO_ENABLED && isOdooConfigured()),
+      canCreate: Boolean(map) && Boolean(env.ODOO_ENABLED && isOdooLiveConfigured()),
       odooSyncFailed,
     }
   },
@@ -78,7 +78,7 @@ export const userShippingAddressesService = {
     let address: UserAddressDTO = { ...input }
     let odooSyncFailed = false
 
-    if (ctx && env.ODOO_ENABLED && isOdooConfigured() && map) {
+    if (ctx && env.ODOO_ENABLED && isOdooLiveConfigured() && map) {
       const parentId = await commercialPartnerId(ctx, map.odooPartnerId)
       odooSyncFailed = await runOdooUserProfileSync(
         ctx,
@@ -118,7 +118,7 @@ export const userShippingAddressesService = {
     let address: UserAddressDTO = { ...input, id: addressId, label: input.label }
     let odooSyncFailed = false
 
-    if (odooId && ctx && env.ODOO_ENABLED && isOdooConfigured() && map) {
+    if (odooId && ctx && env.ODOO_ENABLED && isOdooLiveConfigured() && map) {
       const parentId = await commercialPartnerId(ctx, map.odooPartnerId)
       if (odooId === parentId) {
         throw new AppError(
@@ -161,7 +161,7 @@ export const userShippingAddressesService = {
         false,
       )
     }
-    if (!ctx || !map || !env.ODOO_ENABLED || !isOdooConfigured()) {
+    if (!ctx || !map || !env.ODOO_ENABLED || !isOdooLiveConfigured()) {
       throw new AppError(
         'ODOO_UNAVAILABLE',
         'Odoo unavailable',

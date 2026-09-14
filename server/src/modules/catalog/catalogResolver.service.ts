@@ -5,19 +5,18 @@ import {
 } from '../../adapters/odoo-catalog/odooCatalogClient.js'
 import { findOdooCatalogProductIdBySlug } from '../../adapters/odoo-catalog/odooCatalogSlugIndex.js'
 import { mapOdooCatalogProductDetail } from '../../adapters/odoo-catalog/odooCatalogMapper.js'
-import { env } from '../../config/env.js'
 import type { HubLocale } from '../../lib/hub-locale.js'
 import type { ProductDetailDTO } from '../../types/dto.js'
-import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { enrichProductDetailRelatedHoverImages } from './catalog-hover-image.enrich.js'
 import { enrichProductDetailWithStock } from './catalog-stock.enrich.js'
 import { enrichProductDetailWithOdooPricing } from './catalog-pricing.enrich.js'
 import { resolvePricingContext } from '../pricing/pricelist.service.js'
-import { listOdooStorefrontProductSlugs } from './odoo-catalog-search.service.js'
 import { parseOdooTemplateId } from './odooRef.js'
 import {
   getCachedProductDetailById,
   getCachedProductDetailBySlug,
+  listCachedCatalogProductSlugs,
 } from './odoo-catalog-index.service.js'
 import { markCatalogDegraded } from '../odoo/odoo-degraded-state.js'
 import { isCatalogCacheFallbackEnabled } from '../odoo/odoo-resilience.settings.js'
@@ -100,19 +99,18 @@ export async function resolveCatalogProductEnriched(
 
 export async function listOdooCatalogProductSlugs(
   locale: HubLocale = 'IT',
-  ctx: OdooCallContext = { correlationId: 'catalog-slugs' },
+  _ctx: OdooCallContext = { correlationId: 'catalog-slugs' },
 ): Promise<string[]> {
-  if (env.ODOO_ENABLED && isOdooConfigured()) {
-    return listOdooStorefrontProductSlugs(ctx)
-  }
-
   if (!isOdooCatalogConfigured()) return []
+
+  const indexed = await listCachedCatalogProductSlugs(locale)
+  if (indexed.length > 0) return indexed
 
   const slugs: string[] = []
   let page = 1
   while (page <= 50) {
     const list = await fetchOdooCatalogProductList({ locale, page, perPage: 100 })
-    slugs.push(...list.items.map((i) => i.slug))
+    slugs.push(...list.items.map((i) => i.slug).filter(Boolean))
     if (page >= list.total_pages) break
     page += 1
   }

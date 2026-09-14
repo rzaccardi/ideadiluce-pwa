@@ -3,6 +3,7 @@ import { prisma } from '../../lib/prisma.js'
 import { logger } from '../../lib/logger.js'
 import { publicAppUrl } from '../../lib/mail.js'
 import { sendPwaMail } from '../../adapters/odoo/odooMailAdapter.js'
+import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { escapeMailHtml } from '../../adapters/odoo/odoo-mail.templates.js'
 import { parseBankTransferInstructionsJson } from '../payments/bankTransferInstructions.js'
@@ -64,12 +65,19 @@ function firstNameSuffix(shippingJson: unknown): string {
   return typeof name === 'string' && name.trim() ? ` ${name.trim()}` : ''
 }
 
-function orderNumber(order: Pick<PwaOrder, 'id' | 'odooSaleOrderId'>): string {
+function orderNumber(order: Pick<PwaOrder, 'id' | 'odooSaleOrderId' | 'odooSaleOrderName'>): string {
+  if (order.odooSaleOrderName?.trim()) return order.odooSaleOrderName.trim()
   const year = new Date().getFullYear()
   if (order.odooSaleOrderId != null) {
     return `#IDL-${year}-${String(order.odooSaleOrderId).padStart(5, '0')}`
   }
   return `#${order.id.slice(0, 8).toUpperCase()}`
+}
+
+function orderUrl(order: Pick<PwaOrder, 'id' | 'odooSaleOrderName'>): string {
+  const name = order.odooSaleOrderName?.trim()
+  if (name) return publicAppUrl(`/account/orders/${name}`)
+  return publicAppUrl(`/account/orders/pwa-${order.id}`)
 }
 
 function formatAmount(cents: number | null | undefined, currency = 'EUR'): string {
@@ -78,12 +86,9 @@ function formatAmount(cents: number | null | undefined, currency = 'EUR'): strin
   return currency.toUpperCase() === 'EUR' ? `€ ${value}` : `${value} ${currency}`
 }
 
-function orderUrl(orderId: string): string {
-  return publicAppUrl(`/checkout/result/${orderId}`)
-}
-
 export const orderTransactionalMail = {
   async sendOrderConfirmation(order: PwaOrder, correlationId: string): Promise<void> {
+    if (isOdooApiV2Configured()) return
     if (alreadySent(order, 'orderConfirmation')) return
     try {
       await sendPwaMail(mailCtx(correlationId), {
@@ -93,7 +98,7 @@ export const orderTransactionalMail = {
           first_name_suffix: firstNameSuffix(order.shippingAddressJson),
           order_number: orderNumber(order),
           amount: formatAmount(order.amountTotal, order.currencyCode),
-          order_url: orderUrl(order.id),
+          order_url: orderUrl(order),
         },
       })
       await markSent(order.id, 'orderConfirmation')
@@ -106,6 +111,7 @@ export const orderTransactionalMail = {
   },
 
   async sendBankTransferInstructions(order: PwaOrder, correlationId: string): Promise<void> {
+    if (isOdooApiV2Configured()) return
     if (alreadySent(order, 'bankTransfer')) return
     const payment = await prisma.pwaPayment.findFirst({
       where: { orderId: order.id, method: 'BANK_TRANSFER' },
@@ -128,7 +134,7 @@ export const orderTransactionalMail = {
           reference: instructions.reference,
           amount: formatAmount(instructions.amount, instructions.currencyCode),
           note: instructions.note,
-          order_url: orderUrl(order.id),
+          order_url: orderUrl(order),
         },
       })
       await markSent(order.id, 'bankTransfer')
@@ -163,7 +169,7 @@ export const orderTransactionalMail = {
           order_number: orderNumber(order),
           carrier_line: input.carrierLabel ? ` con ${input.carrierLabel}` : '',
           tracking_html: trackingHtml,
-          order_url: orderUrl(order.id),
+          order_url: orderUrl(order),
         },
       })
       await markSent(order.id, 'shipment')

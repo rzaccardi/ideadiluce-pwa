@@ -1,7 +1,9 @@
 import { env } from '../../config/env.js'
 import { resolveVariantAvailability } from '../../modules/catalog/availability.service.js'
 import { parseOdooTemplateId, parseOdooVariantId } from '../../modules/catalog/odooRef.js'
-import { isOdooConfigured, odooExecuteKw, type OdooCallContext } from './odooClient.js'
+import { isOdooConfigured, isOdooLiveConfigured, odooExecuteKw, type OdooCallContext } from './odooClient.js'
+import { isOdooApiV2Configured } from '../odoo-api/odooApiClient.js'
+import { odooApiGetStock } from '../odoo-api/odooApi.resources.js'
 
 export type StockCheckLine = {
   productRef: string
@@ -82,12 +84,34 @@ export async function fetchVariantStockByIds(
   variantIds: number[],
 ): Promise<Map<number, VariantStockSnapshot>> {
   const result = new Map<number, VariantStockSnapshot>()
-  if (!env.ODOO_ENABLED || !isOdooConfigured() || variantIds.length === 0) {
+  if (!env.ODOO_ENABLED || !isOdooLiveConfigured() || variantIds.length === 0) {
     return result
   }
 
   const uniqueIds = [...new Set(variantIds.filter((id) => Number.isInteger(id) && id > 0))]
   if (uniqueIds.length === 0) return result
+
+  if (isOdooApiV2Configured()) {
+    try {
+      const rows = await odooApiGetStock(uniqueIds, ctx.correlationId)
+      for (const row of rows) {
+        const qty = Number(row.free_qty ?? row.qty_available ?? 0)
+        result.set(row.id, {
+          variantId: row.id,
+          stockQty: Number.isFinite(qty) ? qty : null,
+          leadTimeDays: null,
+          restockDate: null,
+          saleOk: true,
+          orderable: row.is_storable === false ? true : qty > 0 || row.in_stock !== false,
+        })
+      }
+      return result
+    } catch {
+      if (!isOdooConfigured()) return result
+    }
+  }
+
+  if (!isOdooConfigured()) return result
 
   const fields = await cachedFieldsGet(ctx, 'product.product')
   const qtyField = pickQtyField(fields)
@@ -175,7 +199,11 @@ export async function fetchFirstVariantIdsForTemplates(
   templateIds: number[],
 ): Promise<Map<number, number>> {
   const map = new Map<number, number>()
-  if (!env.ODOO_ENABLED || !isOdooConfigured() || templateIds.length === 0) {
+  if (!env.ODOO_ENABLED || !isOdooLiveConfigured() || templateIds.length === 0) {
+    return map
+  }
+
+  if (isOdooApiV2Configured() && !isOdooConfigured()) {
     return map
   }
 

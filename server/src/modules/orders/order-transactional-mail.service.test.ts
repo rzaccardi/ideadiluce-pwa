@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PwaOrder } from '@prisma/client'
 
-const { sendPwaMail, finalizeGuestAccountForOrder } = vi.hoisted(() => ({
+const { sendPwaMail, finalizeGuestAccountForOrder, apiV2 } = vi.hoisted(() => ({
   sendPwaMail: vi.fn(),
   finalizeGuestAccountForOrder: vi.fn(),
+  apiV2: { value: false },
 }))
 
 vi.mock('../../lib/prisma.js', () => ({
@@ -34,6 +35,10 @@ vi.mock('../auth/guest-account.service.js', () => ({
   finalizeGuestAccountForOrder,
 }))
 
+vi.mock('../../adapters/odoo-api/odooApiClient.js', () => ({
+  isOdooApiV2Configured: () => apiV2.value,
+}))
+
 import { prisma } from '../../lib/prisma.js'
 import { orderTransactionalMail } from './order-transactional-mail.service.js'
 
@@ -53,6 +58,7 @@ function order(overrides: Partial<PwaOrder> = {}): PwaOrder {
 describe('orderTransactionalMail', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    apiV2.value = false
     sendPwaMail.mockResolvedValue(undefined)
     finalizeGuestAccountForOrder.mockResolvedValue(undefined)
     vi.mocked(prisma.pwaOrder.findUnique).mockResolvedValue({ metadataJson: {} } as never)
@@ -70,11 +76,30 @@ describe('orderTransactionalMail', () => {
           first_name_suffix: ' Mario',
           order_number: `#IDL-${new Date().getFullYear()}-00042`,
           amount: '€ 129.00',
-          order_url: 'https://www.ideadiluce.com/checkout/result/ord-aaaaaaaa',
+          order_url: 'https://www.ideadiluce.com/account/orders/pwa-ord-aaaaaaaa',
         }),
       }),
     )
     expect(prisma.pwaOrder.update).toHaveBeenCalled()
+  })
+
+  it('usa il codice Odoo a 6 caratteri nell’URL area clienti', async () => {
+    await orderTransactionalMail.sendOrderConfirmation(order({ odooSaleOrderName: '4CSVKG' }), 'c1')
+    expect(sendPwaMail).toHaveBeenCalledWith(
+      { correlationId: 'c1' },
+      expect.objectContaining({
+        vars: expect.objectContaining({
+          order_number: '4CSVKG',
+          order_url: 'https://www.ideadiluce.com/account/orders/4CSVKG',
+        }),
+      }),
+    )
+  })
+
+  it('non manda mail ordine se è attiva l’API v2 (le manda Odoo)', async () => {
+    apiV2.value = true
+    await orderTransactionalMail.sendOrderConfirmation(order({ odooSaleOrderName: '4CSVKG' }), 'c1')
+    expect(sendPwaMail).not.toHaveBeenCalled()
   })
 
   it('non reinvia la conferma se già spedita', async () => {

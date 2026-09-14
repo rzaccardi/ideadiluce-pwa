@@ -7,7 +7,6 @@ import { logger } from '../../lib/logger.js'
 import { hashSessionToken } from '../../lib/token-hash.js'
 import { AppError } from '../../types/errors.js'
 import { requestOdooPasswordReset } from '../../adapters/odoo/odooPortalUserAdapter.js'
-import { isOdooConfigured } from '../../adapters/odoo/odooClient.js'
 import { sendPwaMail } from '../../adapters/odoo/odooMailAdapter.js'
 import { ensurePwaUserStubFromOdoo } from './odoo-account-sync.service.js'
 import { isEmergencyMode } from '../odoo/odoo-resilience.settings.js'
@@ -16,8 +15,8 @@ function resetExpiry(): Date {
   return new Date(Date.now() + env.PASSWORD_RESET_TOKEN_HOURS * 60 * 60 * 1000)
 }
 
-function odooPasswordResetEnabled(correlationId?: string): correlationId is string {
-  return Boolean(correlationId && env.ODOO_ENABLED && isOdooConfigured())
+function odooPasswordResetEnabled(_correlationId?: string): boolean {
+  return false
 }
 
 export const passwordResetService = {
@@ -27,7 +26,10 @@ export const passwordResetService = {
 
     if (odooPasswordResetEnabled(correlationId) && !emergency) {
       try {
-        const result = await requestOdooPasswordReset({ correlationId }, normalized)
+        const result = await requestOdooPasswordReset(
+          { correlationId: correlationId ?? 'password-reset' },
+          normalized,
+        )
         if (result === 'sent') return
         logger.warn('password_reset.odoo_fallback_to_pwa', {
           correlationId,

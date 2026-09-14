@@ -3,9 +3,12 @@ import { prisma } from '../../lib/prisma.js'
 import {
   getOdooPublicBaseUrl,
   isOdooConfigured,
+  isOdooLiveConfigured,
   odooExecuteKw,
   type OdooCallContext,
 } from '../../adapters/odoo/odooClient.js'
+import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
+import { odooApiGetInvoicePdf, odooApiListInvoices } from '../../adapters/odoo-api/odooApi.resources.js'
 import { AppError } from '../../types/errors.js'
 import type { InvoiceDTO } from '../../types/dto.js'
 import { logger } from '../../lib/logger.js'
@@ -77,6 +80,36 @@ function invoicePdfLikelyAvailable(state: string | null): boolean {
   return normalized === 'posted'
 }
 
+function mapApiInvoice(row: {
+  id: number
+  name?: string
+  state?: string
+  payment_state?: string
+  currency?: string
+  amount_total?: number
+  amount_total_cents?: number
+  invoice_date?: string | null
+  pdf_available?: boolean
+}): InvoiceDTO {
+  const amount =
+    row.amount_total_cents ??
+    (typeof row.amount_total === 'number' ? Math.round(row.amount_total * 100) : null)
+  return {
+    id: `odoo-invoice-${row.id}`,
+    name: row.name ?? `INV${row.id}`,
+    state: row.state ?? 'unknown',
+    paymentState: row.payment_state ?? null,
+    currencyCode: row.currency ?? 'EUR',
+    amountTotalCents: amount,
+    invoiceDate: row.invoice_date ?? null,
+    pdfAvailable:
+      typeof row.pdf_available === 'boolean'
+        ? row.pdf_available
+        : invoicePdfLikelyAvailable(row.state ?? null),
+    portalUrl: null,
+  }
+}
+
 function mapInvoice(row: Record<string, unknown>): InvoiceDTO {
   const id = typeof row.id === 'number' ? row.id : 0
   const state = text(row.state) ?? 'unknown'
@@ -102,6 +135,7 @@ function mapInvoice(row: Record<string, unknown>): InvoiceDTO {
 async function partnerIdsForUser(userId: string): Promise<number[]> {
   const map = await prisma.odooCustomerMap.findUnique({ where: { userId } })
   if (map) return [map.odooPartnerId]
+  if (isOdooApiV2Configured() || !isOdooConfigured()) return []
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } })
   if (!user?.email) return []
   const partners = await odooExecuteKw<Array<{ id: number }>>(
@@ -295,10 +329,37 @@ async function fetchInvoicePdfViaPortal(
 
 export const invoicesService = {
   async list(userId: string, correlationId: string): Promise<InvoiceDTO[]> {
-    if (!isOdooConfigured()) return []
+    if (!isOdooLiveConfigured()) return []
 
     const partnerIds = await partnerIdsForUser(userId)
     if (partnerIds.length === 0) return []
+
+    if (isOdooApiV2Configured()) {
+      try {
+        const rows = (
+          await Promise.all(partnerIds.map((id) => odooApiListInvoices(id, correlationId)))
+        ).flat()
+        const seen = new Set<number>()
+        return rows
+          .filter((row) => {
+            if (seen.has(row.id)) return false
+            seen.add(row.id)
+            return true
+          })
+          .map(mapApiInvoice)
+      } catch (e) {
+        logger.warn('invoices.odoo_api_list_failed', { userId, err: String(e) })
+        throw new AppError(
+          'INVOICES_UNAVAILABLE',
+          'Invoices list failed',
+          'Impossibile caricare le fatture al momento.',
+          503,
+          true,
+        )
+      }
+    }
+
+    if (!isOdooConfigured()) return []
 
     const ctx: OdooCallContext = { correlationId }
     try {
@@ -346,7 +407,7 @@ export const invoicesService = {
     invoicePublicId: string,
     correlationId: string,
   ): Promise<{ buffer: Buffer; filename: string }> {
-    if (!isOdooConfigured()) {
+    if (!isOdooLiveConfigured()) {
       throw new AppError(
         'INVOICES_UNAVAILABLE',
         'Odoo not configured',
@@ -357,6 +418,37 @@ export const invoicesService = {
     }
 
     const odooInvoiceId = parseInvoicePublicId(invoicePublicId)
+    if (isOdooApiV2Configured()) {
+      const partnerIds = await partnerIdsForUser(userId)
+      if (partnerIds.length === 0) {
+        throw new AppError('INVOICE_NOT_FOUND', 'Invoice not found', 'Fattura non trovata.', 404, false)
+      }
+      const listed = await this.list(userId, correlationId)
+      if (!listed.some((row) => row.id === `odoo-invoice-${odooInvoiceId}`)) {
+        throw new AppError('INVOICE_NOT_FOUND', 'Invoice not found', 'Fattura non trovata.', 404, false)
+      }
+      const buffer = await odooApiGetInvoicePdf(odooInvoiceId, partnerIds[0]!, correlationId)
+      if (!isPdfBuffer(buffer)) {
+        throw new AppError(
+          'INVOICE_PDF_UNAVAILABLE',
+          'Invoice PDF not ready',
+          'Il PDF della fattura non è ancora disponibile.',
+          404,
+          false,
+        )
+      }
+      return { buffer, filename: invoicePdfFilename(`fattura-${odooInvoiceId}`) }
+    }
+
+    if (!isOdooConfigured()) {
+      throw new AppError(
+        'INVOICES_UNAVAILABLE',
+        'Odoo not configured',
+        'Download fattura non disponibile.',
+        503,
+        false,
+      )
+    }
     const ctx: OdooCallContext = { correlationId }
     const invoice = await assertInvoiceOwnedByUser(ctx, userId, odooInvoiceId)
 

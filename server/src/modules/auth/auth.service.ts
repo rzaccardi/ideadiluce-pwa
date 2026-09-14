@@ -11,6 +11,7 @@ import { toUserDTO } from '../users/user.mapper.js'
 import { loginWithOdooCredentials } from './odoo-account-sync.service.js'
 import { hydrateUserBusinessFromOdoo } from '../users/users-odoo-business-hydrate.js'
 import { linkOrdersToUser } from '../orders/orders-user-link.service.js'
+import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { absorbCartLines, cartLineKey, type MergedCartLine } from './cart-merge.js'
 
@@ -197,7 +198,7 @@ export const authService = {
       }
     }
 
-    if (correlationId && env.ODOO_ENABLED) {
+    if (correlationId && env.ODOO_ENABLED && !isOdooApiV2Configured()) {
       const odooUser = await loginWithOdooCredentials(
         { correlationId },
         input.email,

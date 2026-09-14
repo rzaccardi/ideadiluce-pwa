@@ -108,7 +108,15 @@ export type OdooCatalogDimensions = {
  * `sinonimo`, `oem`, `cross_reference`. Senza questi record la PWA nasconde la sezione.
  */
 export type OdooCatalogRelatedProduct = {
-  relation?: 'related' | 'accessory' | 'alternative' | 'optional' | string
+  relation?:
+    | 'related'
+    | 'accessory'
+    | 'alternative'
+    | 'optional'
+    | 'suggested'
+    | 'compatible_source'
+    | 'substitute'
+    | string
   /** ID `product.template` quando l’API catalogo lo espone. */
   id?: number
   slug?: string
@@ -126,6 +134,33 @@ export type OdooCatalogRelatedProduct = {
   ean?: string | null
   qty_available?: number
   availability?: OdooCatalogAvailability
+  reason?: string | null
+}
+
+export type OdooCatalogRelatedGroups = {
+  accessories?: OdooCatalogRelatedProduct[]
+  alternatives?: OdooCatalogRelatedProduct[]
+  related?: OdooCatalogRelatedProduct[]
+  suggested?: OdooCatalogRelatedProduct[]
+  compatible_sources?: OdooCatalogRelatedProduct[]
+  substitutes?: OdooCatalogRelatedProduct[]
+}
+
+export type OdooCatalogAttributeLineValue = {
+  id?: number
+  name?: string
+  html_color?: string | number | null
+  htmlColor?: string | number | null
+  variant_ids?: number[]
+  product_ids?: number[]
+}
+
+export type OdooCatalogAttributeLine = {
+  attribute_id?: number
+  name?: string
+  display_name?: string
+  values?: OdooCatalogAttributeLineValue[]
+  value_ids?: OdooCatalogAttributeLineValue[]
 }
 
 export type OdooCatalogVariant = {
@@ -176,6 +211,8 @@ export type OdooCatalogProductListItem = {
   manufacturer_code?: string | null
   ced?: string | null
   ean?: string | null
+  /** `product.template.attribute_line` con `html_color` e `variant_ids`. */
+  attribute_lines?: OdooCatalogAttributeLine[]
   /** @deprecated Non più nel contratto v2 — solo compat lettura legacy. */
   default_code?: string | null
 }
@@ -188,6 +225,7 @@ export type OdooCatalogProductDetail = OdooCatalogProductListItem & {
   variants: OdooCatalogVariant[]
   documents: OdooCatalogProductDocument[]
   related_products?: OdooCatalogRelatedProduct[]
+  related?: OdooCatalogRelatedGroups
   ean?: string | null
   weight_kg?: number | null
   length_meters?: number | null

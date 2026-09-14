@@ -13,7 +13,7 @@ import type {
 } from '@/types/dto'
 import { buildTechnicalCardSpecTags } from '@/lib/technical-card-spec-tags'
 import { inferTechnicalProductBrandFromName } from '@/lib/technical-product-ref'
-import { htmlColorFromOdooAttribute } from '@/lib/odoo-attribute-color'
+import { htmlColorFromOdooAttribute, colorSwatchesFromAttributeLines, htmlColorFromAttributeLinesForVariant } from '@/lib/odoo-attribute-color'
 import {
   deriveInStockFromAvailability,
   parseOdooCatalogAvailability,
@@ -148,6 +148,16 @@ function normalizeRelation(
   const key = value?.trim().toLowerCase()
   if (key === 'optional' || key === 'accessory' || key === 'accessorio') return 'accessory'
   if (key && ALTERNATIVE_RELATIONS.has(key)) return 'alternative'
+  if (key === 'suggested' || key === 'suggestion') return 'suggested'
+  if (
+    key === 'compatible_source' ||
+    key === 'compatible_sources' ||
+    key === 'source' ||
+    key === 'compatible'
+  ) {
+    return 'compatible_source'
+  }
+  if (key === 'substitute' || key === 'substitutes' || key === 'replacement') return 'substitute'
   if (key === 'related') return 'related'
   return fallback
 }
@@ -210,10 +220,37 @@ function mapRelatedProduct(
   locale: PwaLocale,
   relation: ProductRelatedDTO['relation'],
 ): ProductRelatedDTO {
+  const reason = item.reason?.trim()
   return {
     ...mapOdooCatalogListItem(relatedToListItem(item), locale),
     relation: normalizeRelation(item.relation, relation),
+    ...(reason ? { reason } : {}),
   }
+}
+
+function relatedKey(item: ProductRelatedDTO): string {
+  return item.slug?.trim() || (item.odooTemplateId != null ? `id:${item.odooTemplateId}` : item.name)
+}
+
+function collectRelated(
+  product: OdooCatalogProductDetail,
+  locale: PwaLocale,
+  relation: ProductRelatedDTO['relation'],
+  grouped: OdooCatalogRelatedProduct[] | undefined,
+): ProductRelatedDTO[] {
+  const fromGroup = (grouped ?? []).map((item) => mapRelatedProduct(item, locale, relation))
+  const fromFlat = (product.related_products ?? [])
+    .filter((item) => normalizeRelation(item.relation, 'related') === relation)
+    .map((item) => mapRelatedProduct(item, locale, relation))
+  const seen = new Set<string>()
+  const out: ProductRelatedDTO[] = []
+  for (const item of [...fromGroup, ...fromFlat]) {
+    const key = relatedKey(item)
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    out.push(item)
+  }
+  return out
 }
 
 function normalizeGalleryItem(item: OdooCatalogGalleryItem | { url: string; alt?: string }): OdooCatalogGalleryItem {
@@ -332,6 +369,10 @@ export function mapOdooCatalogListItem(product: OdooCatalogProductListItem, loca
     ean: codes.ean,
     availability,
     inStock: deriveInStockFromAvailability(availability),
+    ...(() => {
+      const colorSwatches = colorSwatchesFromAttributeLines(product.attribute_lines)
+      return colorSwatches.length ? { colorSwatches } : {}
+    })(),
   }
 }
 
@@ -354,7 +395,9 @@ export function mapOdooCatalogProductDetail(
 
   const variants: ProductVariantDTO[] = (product.variants ?? []).map((v) => {
     const attributes: ProductVariantAttributeDTO[] = (v.attributes ?? []).map((a) => {
-      const htmlColor = htmlColorFromOdooAttribute(a)
+      const htmlColor =
+        htmlColorFromOdooAttribute(a) ??
+        htmlColorFromAttributeLinesForVariant(product.attribute_lines, v.id, a.label, a.value)
       return {
         name: a.label,
         value: a.value,
@@ -387,16 +430,18 @@ export function mapOdooCatalogProductDetail(
     trimOrNull(product.variants?.[0]?.manufacturer_code) ??
     trimOrNull(product.variants?.[0]?.ced) ??
     resolveListSku(product)
-  const related = product.related_products ?? []
-  const relatedProducts = related
-    .filter((r) => normalizeRelation(r.relation, 'related') === 'related')
-    .map((r) => mapRelatedProduct(r, locale, 'related'))
-  const accessories = related
-    .filter((r) => normalizeRelation(r.relation, 'related') === 'accessory')
-    .map((r) => mapRelatedProduct(r, locale, 'accessory'))
-  const alternatives = related
-    .filter((r) => normalizeRelation(r.relation, 'related') === 'alternative')
-    .map((r) => mapRelatedProduct(r, locale, 'alternative'))
+  const grouped = product.related ?? {}
+  const relatedProducts = collectRelated(product, locale, 'related', grouped.related)
+  const accessories = collectRelated(product, locale, 'accessory', grouped.accessories)
+  const alternatives = collectRelated(product, locale, 'alternative', grouped.alternatives)
+  const suggestedProducts = collectRelated(product, locale, 'suggested', grouped.suggested)
+  const compatibleSources = collectRelated(
+    product,
+    locale,
+    'compatible_source',
+    grouped.compatible_sources,
+  )
+  const substitutes = collectRelated(product, locale, 'substitute', grouped.substitutes)
 
   return {
     ...card,
@@ -421,6 +466,9 @@ export function mapOdooCatalogProductDetail(
     relatedProducts,
     accessories,
     alternatives,
+    suggestedProducts,
+    compatibleSources,
+    substitutes,
     ean:
       trimOrNull(product.ean) ??
       trimOrNull(product.variants?.[0]?.ean) ??

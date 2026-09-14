@@ -6,6 +6,9 @@ import type {
 } from '../../types/dto.js'
 import { prisma } from '../../lib/prisma.js'
 import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
+import { odooApiListOrderShipments } from '../../adapters/odoo-api/odooApi.resources.js'
+import type { OdooApiShipment } from '../../adapters/odoo-api/odooApi.types.js'
 import { odooSalesService } from '../odoo/odoo-sales.service.js'
 import { logger } from '../../lib/logger.js'
 import { trackFedexNumber } from '../../adapters/shipping/fedexClient.js'
@@ -97,6 +100,36 @@ async function fetchCarrierTrack(
   return null
 }
 
+function apiShipmentToDto(
+  shipment: OdooApiShipment,
+  pwaHint: string | null,
+): OrderShipmentDTO {
+  const trackingNumber = shipment.tracking_number?.trim() || shipment.tracking_ref?.trim() || null
+  const carrier = detectCarrier({
+    carrierName: shipment.carrier_name ?? shipment.carrier,
+    carrierCode: pwaHint,
+    trackingNumber,
+  })
+  const state = (shipment.state ?? '').toLowerCase()
+  const status: OrderShipmentStatusDTO =
+    state === 'done' || state === 'delivered'
+      ? 'shipped'
+      : state === 'cancel' || state === 'exception'
+        ? 'exception'
+        : 'preparing'
+  return pickingToShipment({
+    carrier,
+    carrierLabel:
+      shipment.carrier_name ??
+      shipment.carrier ??
+      (carrier === 'fedex' ? 'FedEx' : carrier === 'dhl' ? 'DHL' : null),
+    trackingNumber,
+    trackingUrl: shipment.tracking_url ?? null,
+    shippedAt: shipment.date_done ?? shipment.scheduled_date ?? null,
+    status,
+  })
+}
+
 async function refreshSnapshot(
   order: OrderDTO,
   correlationId: string,
@@ -104,8 +137,23 @@ async function refreshSnapshot(
   const ctx: OdooCallContext = { correlationId: `${correlationId}:shipment` }
   const pwaHint = await pwaCarrierHint(order.pwaOrderId)
 
-  let saleName: string | null = null
-  if (isOdooConfigured()) {
+  let shipment: OrderShipmentDTO | null = null
+
+  if (isOdooApiV2Configured() && order.odooSaleOrderId) {
+    try {
+      const shipments = await odooApiListOrderShipments(order.odooSaleOrderId, ctx.correlationId)
+      const primary = shipments[0]
+      if (primary) shipment = apiShipmentToDto(primary, pwaHint)
+    } catch (err) {
+      logger.warn('orders.shipment.odoo_api_failed', {
+        odooSaleOrderId: order.odooSaleOrderId,
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+  }
+
+  if (!shipment && isOdooConfigured()) {
+    let saleName: string | null = null
     try {
       const so = await odooSalesService.getOrderById(ctx, order.odooSaleOrderId)
       saleName = so?.name ?? null
@@ -115,10 +163,8 @@ async function refreshSnapshot(
         error: err instanceof Error ? err.message : String(err),
       })
     }
-  }
 
-  let picking = null
-  if (isOdooConfigured()) {
+    let picking = null
     try {
       const pickings = await listOutgoingPickings(ctx, {
         saleOrderId: order.odooSaleOrderId,
@@ -131,28 +177,32 @@ async function refreshSnapshot(
         error: err instanceof Error ? err.message : String(err),
       })
     }
+
+    const trackingNumber = picking?.trackingRef?.trim() || null
+    const carrier = detectCarrier({
+      carrierName: picking?.carrierName,
+      carrierCode: pwaHint,
+      trackingNumber,
+    })
+    const shippedAt =
+      picking?.state === 'done' ? picking.dateDone : picking?.scheduledDate ?? null
+    const baseStatus: OrderShipmentStatusDTO =
+      picking?.state === 'done' ? 'shipped' : picking ? 'preparing' : 'preparing'
+
+    shipment = pickingToShipment({
+      carrier,
+      carrierLabel: picking?.carrierName ?? (carrier === 'fedex' ? 'FedEx' : carrier === 'dhl' ? 'DHL' : null),
+      trackingNumber,
+      trackingUrl: picking?.trackingUrl ?? null,
+      shippedAt,
+      status: trackingNumber && picking?.state === 'done' ? 'in_transit' : baseStatus,
+    })
   }
 
-  const trackingNumber = picking?.trackingRef?.trim() || null
-  const carrier = detectCarrier({
-    carrierName: picking?.carrierName,
-    carrierCode: pwaHint,
-    trackingNumber,
-  })
-  const shippedAt =
-    picking?.state === 'done' ? picking.dateDone : picking?.scheduledDate ?? null
-  const baseStatus: OrderShipmentStatusDTO =
-    picking?.state === 'done' ? 'shipped' : picking ? 'preparing' : 'preparing'
+  if (!shipment) return null
 
-  let shipment = pickingToShipment({
-    carrier,
-    carrierLabel: picking?.carrierName ?? (carrier === 'fedex' ? 'FedEx' : carrier === 'dhl' ? 'DHL' : null),
-    trackingNumber,
-    trackingUrl: picking?.trackingUrl ?? null,
-    shippedAt,
-    status: trackingNumber && picking?.state === 'done' ? 'in_transit' : baseStatus,
-  })
-
+  const trackingNumber = shipment.trackingNumber
+  const carrier = shipment.carrier
   if (trackingNumber && (carrier === 'fedex' || carrier === 'dhl')) {
     try {
       const live = await fetchCarrierTrack(carrier, trackingNumber, ctx.correlationId)

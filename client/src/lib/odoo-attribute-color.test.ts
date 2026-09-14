@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { htmlColorFromOdooAttribute, parseCssColorFromOdoo } from './odoo-attribute-color'
+import { htmlColorFromOdooAttribute, parseCssColorFromOdoo, colorSwatchesFromAttributeLines } from './odoo-attribute-color'
 
 describe('parseCssColorFromOdoo', () => {
   it('normalizza hex, rgb e packed integer', () => {
@@ -49,5 +49,26 @@ describe('htmlColorFromOdooAttribute', () => {
         value: 'Alluminio anodizzato oro',
       }),
     ).toBeUndefined()
+  })
+})
+
+describe('colorSwatchesFromAttributeLines', () => {
+  it('limita a 3 colori distinti', () => {
+    expect(
+      colorSwatchesFromAttributeLines(
+        [
+          {
+            name: 'Colore',
+            values: [
+              { name: 'Nero', html_color: '#1F1C17' },
+              { name: 'Oro', html_color: '#D4B896' },
+              { name: 'Bianco', html_color: '#FFFFFF' },
+              { name: 'Rosso', html_color: '#FF0000' },
+            ],
+          },
+        ],
+        3,
+      ),
+    ).toEqual(['#1f1c17', '#d4b896', '#ffffff'])
   })
 })

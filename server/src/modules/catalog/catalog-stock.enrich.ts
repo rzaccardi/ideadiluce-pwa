@@ -5,7 +5,7 @@ import {
 } from '../../adapters/odoo/odooInventoryAdapter.js'
 import { deriveInStockFromAvailability } from '../../adapters/odoo-catalog/odooCatalogParsers.js'
 import { env } from '../../config/env.js'
-import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { isOdooLiveConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import type {
   CartLineAvailabilityDTO,
   ProductAvailabilityDataDTO,
@@ -37,7 +37,7 @@ function defaultStockSnapshot(): VariantStockSnapshot {
 }
 
 function shouldEnrichFromOdoo(): boolean {
-  return env.ODOO_ENABLED && isOdooConfigured()
+  return env.ODOO_ENABLED && isOdooLiveConfigured()
 }
 
 function resolveVariantId(variant: ProductVariantDTO): number | null {

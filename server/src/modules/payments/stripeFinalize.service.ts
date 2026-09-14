@@ -5,6 +5,7 @@ import { logger } from '../../lib/logger.js'
 import { retrieveStripeCheckoutSession } from '../../adapters/payments/stripeCheckoutAdapter.js'
 import { registerPayment } from '../../adapters/odoo/odooPaymentLive.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
 import { orderStatusToDTO, paymentMethodToDTO, paymentStatusToDTO } from './payment.types.js'
 import { env } from '../../config/env.js'
 import { createOdooPaymentAdapter } from '../../adapters/odoo/odooPaymentAdapter.js'
@@ -145,6 +146,7 @@ export async function finalizeStripeCheckout(
 
   const ctx: OdooCallContext = { correlationId: req.correlationId, req }
 
+  if (!isOdooApiV2Configured()) {
   const billing = (updated.billingAddressJson as { firstName?: string } | null) ?? null
   const amount =
     updated.amountTotal != null
@@ -183,6 +185,7 @@ export async function finalizeStripeCheckout(
       lastError: e instanceof Error ? e.message : String(e),
     }).catch(() => undefined)
   }
+  }
 
   if (env.ODOO_ENABLED && !updated.odooSaleOrderId) {
     await prisma.pwaOrder.update({
@@ -200,7 +203,7 @@ export async function finalizeStripeCheckout(
       where: { id: updated.cartId },
       include: { items: true, shippingSelection: true },
     })
-    if (cart) {
+    if (cart && !isOdooApiV2Configured()) {
       try {
         await orderAdapter.reconcileSaleOrderLines(
           ctx,

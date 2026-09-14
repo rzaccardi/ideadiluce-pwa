@@ -1,9 +1,11 @@
 /** Partner Odoo: creazione, profilo e campi fiscali B2B. */
 import { env } from '../../config/env.js'
 import { isOdooConfigured } from './odooClient.js'
+import { isOdooApiV2Configured } from '../odoo-api/odooApiClient.js'
 import type { OdooCallContext } from './odooClient.js'
 import { createMockOdooCustomerAdapter } from './odooCustomerMock.js'
 import { createLiveOdooCustomerAdapter } from './odooCustomerLive.js'
+import { createApiV2OdooCustomerAdapter } from './odooCustomerApi.js'
 
 export type OdooBusinessProfile = {
   companyName?: string | null
@@ -107,6 +109,9 @@ export interface OdooCustomerAdapter {
 }
 
 export function createOdooCustomerAdapter(): OdooCustomerAdapter {
+  if (isOdooApiV2Configured()) {
+    return createApiV2OdooCustomerAdapter()
+  }
   if (env.ODOO_ENABLED && isOdooConfigured()) {
     return createLiveOdooCustomerAdapter()
   }

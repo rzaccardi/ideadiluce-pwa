@@ -112,17 +112,24 @@ export async function enrichProductDetailWithOdooPricing(
 
   if (!isPersonalizedPricing(pricing)) return next
 
-  const [relatedProducts, accessories, alternatives] = await Promise.all([
-    priceRelatedCards(ctx, next.relatedProducts, pricing),
-    priceRelatedCards(ctx, next.accessories, pricing),
-    priceRelatedCards(ctx, next.alternatives, pricing),
-  ])
+  const [relatedProducts, accessories, alternatives, suggestedProducts, compatibleSources, substitutes] =
+    await Promise.all([
+      priceRelatedCards(ctx, next.relatedProducts, pricing),
+      priceRelatedCards(ctx, next.accessories, pricing),
+      priceRelatedCards(ctx, next.alternatives, pricing),
+      priceRelatedCards(ctx, next.suggestedProducts, pricing),
+      priceRelatedCards(ctx, next.compatibleSources, pricing),
+      priceRelatedCards(ctx, next.substitutes, pricing),
+    ])
 
   return {
     ...next,
     relatedProducts,
     accessories,
     alternatives,
+    suggestedProducts,
+    compatibleSources,
+    substitutes,
   }
 }
 

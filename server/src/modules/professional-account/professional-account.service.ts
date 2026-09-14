@@ -8,7 +8,8 @@ import { parseHubLocale } from '../../lib/hub-locale.js'
 import { isSpacesConfigured, spacesPublicUrl, uploadProductImage } from '../../adapters/spaces/spaces.storage.js'
 import { createOdooCustomerAdapter } from '../../adapters/odoo/odooCustomerAdapter.js'
 import { ensureOdooPortalUser } from '../../adapters/odoo/odooPortalUserAdapter.js'
-import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { isOdooLiveConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
 import { env } from '../../config/env.js'
 import { prisma } from '../../lib/prisma.js'
 import { generateAccountPassword } from '../../lib/generate-password.js'
@@ -173,7 +174,7 @@ async function syncOdooPartner(
     userId: string
   },
 ): Promise<{ odooPartnerId: number | null; syncError: string | null }> {
-  if (!env.ODOO_ENABLED || !isOdooConfigured()) {
+  if (!env.ODOO_ENABLED || !isOdooLiveConfigured()) {
     return { odooPartnerId: null, syncError: null }
   }
 
@@ -217,15 +218,17 @@ async function syncOdooPartner(
 
     const displayName =
       [params.firstName, params.lastName].filter(Boolean).join(' ').trim() || params.companyName
-    try {
-      await ensureOdooPortalUser(ctx, {
-        email: params.email,
-        partnerId: partner.odooPartnerId,
-        name: displayName,
-        password: generateAccountPassword(),
-      })
-    } catch {
-      /* portal opzionale */
+    if (!isOdooApiV2Configured()) {
+      try {
+        await ensureOdooPortalUser(ctx, {
+          email: params.email,
+          partnerId: partner.odooPartnerId,
+          name: displayName,
+          password: generateAccountPassword(),
+        })
+      } catch {
+        /* portal opzionale */
+      }
     }
 
     return { odooPartnerId: partner.odooPartnerId, syncError: null }

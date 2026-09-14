@@ -3,7 +3,8 @@ import { prisma } from '../../lib/prisma.js'
 import { env } from '../../config/env.js'
 import { createOdooCustomerAdapter } from '../../adapters/odoo/odooCustomerAdapter.js'
 import { ensureOdooPortalUser } from '../../adapters/odoo/odooPortalUserAdapter.js'
-import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { isOdooConfigured, isOdooLiveConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
 import { authRepository } from './auth.repository.js'
 import { authService } from './auth.service.js'
 import { AppError } from '../../types/errors.js'
@@ -73,7 +74,7 @@ export const checkoutRegisterService = {
 
     let odooPartnerId: number | null = null
 
-    if (env.ODOO_ENABLED && isOdooConfigured()) {
+    if (env.ODOO_ENABLED && isOdooLiveConfigured()) {
       try {
         const partner = await customerAdapter.findOrCreateCustomer(ctx, {
           email: normalized,
@@ -83,7 +84,7 @@ export const checkoutRegisterService = {
         })
         odooPartnerId = partner.odooPartnerId
 
-        if (odooPartnerId) {
+        if (odooPartnerId && !isOdooApiV2Configured()) {
           try {
             await ensureOdooPortalUser(ctx, {
               email: normalized,

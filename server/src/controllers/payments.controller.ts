@@ -8,6 +8,7 @@ import {
   handleStripeWebhookEvent,
 } from '../modules/payments/stripeFinalize.service.js'
 import { constructStripeWebhookEvent } from '../adapters/payments/stripeCheckoutAdapter.js'
+import { handlePaypalWebhookEvent } from '../modules/payments/paypalWebhook.service.js'
 import type {
   ConfirmPaymentBody,
   CreatePaymentSessionBody,
@@ -41,8 +42,9 @@ export const paymentsController = {
     res.status(202).json(ok({ accepted: true, note: 'Webhook Nexi ricevuto: verifica firma da collegare alle API Nexi reali.' }))
   }),
 
-  paypalWebhook: asyncHandler(async (_req: Request, res: Response) => {
-    res.status(202).json(ok({ accepted: true, note: 'Webhook PayPal ricevuto: verifica webhook da collegare alle API PayPal reali.' }))
+  paypalWebhook: asyncHandler(async (req: Request, res: Response) => {
+    const data = await handlePaypalWebhookEvent(req)
+    res.status(202).json(ok(data))
   }),
 
   stripeReturn: asyncHandler(async (req: Request, res: Response) => {

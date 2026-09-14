@@ -53,6 +53,8 @@ export type SyncSaleOrderDraftInput = {
     carrierCode?: string
     serviceCode?: string
   } | null
+  chargedCents?: number | null
+  taxRatePct?: number
 }
 
 export const ACTIVE_DRAFT_ORDER_STATUSES = [

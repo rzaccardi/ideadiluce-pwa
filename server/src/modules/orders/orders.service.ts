@@ -2,7 +2,10 @@ import { AppError } from '../../types/errors.js'
 import type { OrderDetailDTO, OrderDTO, OrderLineDTO, OrderReorderResultDTO, ProductCardDTO, InvoiceDTO } from '../../types/dto.js'
 import { ordersRepository } from './orders.repository.js'
 import { prisma } from '../../lib/prisma.js'
-import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { isOdooConfigured, isOdooLiveConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
+import { odooApiGetOrder, odooApiListOrders } from '../../adapters/odoo-api/odooApi.resources.js'
+import type { OdooApiOrder } from '../../adapters/odoo-api/odooApi.types.js'
 import { odooSalesService } from '../odoo/odoo-sales.service.js'
 import type { OdooSaleDocumentDTO } from '../odoo/odoo-sales.types.js'
 import { logger } from '../../lib/logger.js'
@@ -13,6 +16,7 @@ import type { Request } from 'express'
 import type { PwaOrder } from '@prisma/client'
 import { ACCOUNT_VISIBLE_PWA_ORDER_STATUSES } from './orders.constants.js'
 import { buildAccountPwaOrderWhere } from './orders-account-query.js'
+import { accountOrderPublicId, applyPwaOrderPublicIds, isOdooOrderPublicName } from './orders-account-id.js'
 import { linkOrdersToUser } from './orders-user-link.service.js'
 import { orderReturnRequestService } from './order-return-request.service.js'
 import { OPEN_RETURN_WINDOW, orderShipmentService } from './order-shipment.service.js'
@@ -58,6 +62,25 @@ function mapRow(r: {
   }
 }
 
+function mapApiOrder(order: OdooApiOrder): OrderDTO {
+  return {
+    id: order.name || `odoo-${order.id}`,
+    pwaOrderId: null,
+    odooSaleOrderId: order.id,
+    status: order.state ?? 'sale',
+    paymentStatus: order.payment?.reconciliation ?? null,
+    currencyCode: order.currency ?? 'EUR',
+    totalAmount: order.totals?.gross_cents ?? (order.totals?.gross != null ? Math.round(order.totals.gross * 100) : null),
+    createdAt: order.date_order ? new Date(order.date_order).toISOString() : new Date(0).toISOString(),
+    odooPortalUrl: null,
+    source: 'odoo_historical',
+    sourceLabel: 'Odoo',
+    returnRequest: null,
+    shipment: null,
+    returnWindow: OPEN_RETURN_WINDOW,
+  }
+}
+
 function mapOdooOrder(r: OdooSaleDocumentDTO): OrderDTO {
   return {
     id: `odoo-${r.id}`,
@@ -81,6 +104,21 @@ async function listOdooOrdersForUser(
   userId: string,
   ctx: OdooCallContext,
 ): Promise<OrderDTO[]> {
+  if (!isOdooLiveConfigured()) return []
+
+  const map = await prisma.odooCustomerMap.findUnique({ where: { userId } })
+
+  if (isOdooApiV2Configured()) {
+    if (!map) return []
+    try {
+      const items = await odooApiListOrders(map.odooPartnerId, 1, ctx.correlationId)
+      return items.map(mapApiOrder)
+    } catch (e) {
+      logger.warn('orders.odoo_history_failed', { userId, err: String(e) })
+      return []
+    }
+  }
+
   if (!isOdooConfigured()) return []
 
   const user = await prisma.user.findUnique({
@@ -88,8 +126,6 @@ async function listOdooOrdersForUser(
     select: { email: true },
   })
   if (!user) return []
-
-  const map = await prisma.odooCustomerMap.findUnique({ where: { userId } })
 
   try {
     const merged = new Map<number, OdooSaleDocumentDTO>()
@@ -116,29 +152,10 @@ async function listOdooOrdersForUser(
 
 function mapPwaOrderRow(po: PwaOrder): OrderDTO | null {
   if (!po.odooSaleOrderId && po.paymentStatus !== 'CAPTURED') return null
-  if (!po.odooSaleOrderId) {
-    return {
-      id: `pwa-${po.id}`,
-      pwaOrderId: po.id,
-      odooSaleOrderId: 0,
-      status: po.orderStatus.toLowerCase(),
-      paymentStatus: po.paymentStatus.toLowerCase(),
-      currencyCode: po.currencyCode,
-      totalAmount: po.amountTotal,
-      createdAt: (po.paidAt ?? po.createdAt).toISOString(),
-      odooPortalUrl: null,
-      source: 'pwa',
-      sourceLabel: 'E-commerce',
-      returnRequest: null,
-      shipment: null,
-      returnWindow: OPEN_RETURN_WINDOW,
-    }
-  }
-
   return {
-    id: `pwa-${po.id}`,
+    id: accountOrderPublicId(po),
     pwaOrderId: po.id,
-    odooSaleOrderId: po.odooSaleOrderId,
+    odooSaleOrderId: po.odooSaleOrderId ?? 0,
     status: po.orderStatus.toLowerCase(),
     paymentStatus: po.paymentStatus.toLowerCase(),
     currencyCode: po.currencyCode,
@@ -189,10 +206,36 @@ function parseOdooOrderId(id: string): number | null {
   return Number.isInteger(n) && n > 0 ? n : null
 }
 
+function mapApiOrderLines(order: OdooApiOrder): OrderLineDTO[] {
+  return (order.lines ?? [])
+    .filter((line) => !line.is_delivery)
+    .map((line) => ({
+      productRef: line.product_id != null ? String(line.product_id) : '',
+      variantRef: line.product_id != null ? String(line.product_id) : null,
+      quantity: line.qty ?? 0,
+      productSlug: null,
+      productName: line.name ?? null,
+      imageUrl: null,
+      unitPriceCents: line.price_unit_net != null ? Math.round(line.price_unit_net * 100) : null,
+      lineTotalCents: line.subtotal_net != null ? Math.round(line.subtotal_net * 100) : null,
+    }))
+}
+
 async function resolveOrderLines(order: OrderDTO, correlationId: string): Promise<OrderLineDTO[]> {
   if (order.pwaOrderId) {
     const local = await loadPwaOrderLines(order.pwaOrderId)
     if (local.length > 0) return local
+  }
+  if (order.odooSaleOrderId && isOdooApiV2Configured()) {
+    try {
+      const apiOrder = await odooApiGetOrder(order.odooSaleOrderId, correlationId)
+      return mapApiOrderLines(apiOrder)
+    } catch (e) {
+      logger.warn('orders.api_v2_lines_failed', {
+        odooSaleOrderId: order.odooSaleOrderId,
+        err: String(e),
+      })
+    }
   }
   if (order.odooSaleOrderId) {
     return loadOdooOrderLines(order.odooSaleOrderId, correlationId)
@@ -201,6 +244,16 @@ async function resolveOrderLines(order: OrderDTO, correlationId: string): Promis
 }
 
 async function findOwnedPwaOrder(userId: string, id: string) {
+  if (isOdooOrderPublicName(id)) {
+    const byName = await prisma.pwaOrder.findFirst({
+      where: {
+        userId,
+        odooSaleOrderName: { equals: id.trim(), mode: 'insensitive' },
+        orderStatus: { in: ACCOUNT_VISIBLE_PWA_ORDER_STATUSES },
+      },
+    })
+    if (byName) return byName
+  }
   const pwaId = id.startsWith('pwa-') ? id.replace(/^pwa-/, '') : id
   return prisma.pwaOrder.findFirst({
     where: {
@@ -216,12 +269,24 @@ function normalizePwaOrderId(id: string) {
 }
 
 async function findAccessiblePwaOrder(req: Request, userId: string, id: string) {
-  const pwaId = normalizePwaOrderId(id)
   const sessionId = req.sessionRecord?.id
+  const access = {
+    OR: [{ userId }, ...(sessionId ? [{ sessionId }] : [])],
+  }
+  if (isOdooOrderPublicName(id)) {
+    const byName = await prisma.pwaOrder.findFirst({
+      where: {
+        odooSaleOrderName: { equals: id.trim(), mode: 'insensitive' },
+        ...access,
+      },
+    })
+    if (byName) return byName
+  }
+  const pwaId = normalizePwaOrderId(id)
   return prisma.pwaOrder.findFirst({
     where: {
       id: pwaId,
-      OR: [{ userId }, ...(sessionId ? [{ sessionId }] : [])],
+      ...access,
     },
   })
 }
@@ -257,6 +322,7 @@ export const ordersService = {
         seenOdooIds.add(order.odooSaleOrderId)
       }
     }
+    applyPwaOrderPublicIds(fromCache, pwaOrders)
 
     const sorted = fromCache.sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -267,37 +333,48 @@ export const ordersService = {
 
   async getById(userId: string, id: string, correlationId = 'orders-detail'): Promise<OrderDetailDTO> {
     const odooSaleOrderId = parseOdooOrderId(id)
-    if (odooSaleOrderId != null || id.startsWith('odoo-')) {
+    if (odooSaleOrderId != null || id.startsWith('odoo-') || isOdooOrderPublicName(id)) {
       const owned = await this.list(userId, correlationId)
+      const needle = id.trim().toLowerCase()
       const order =
-        owned.find((o) => o.id === id) ??
+        owned.find((o) => o.id.toLowerCase() === needle) ??
         (odooSaleOrderId != null ? owned.find((o) => o.odooSaleOrderId === odooSaleOrderId) : undefined)
       if (order) {
         const lines = await resolveOrderLines(order, correlationId)
         const [withReturn] = await orderReturnRequestService.attachToOrders(userId, [order])
         return orderShipmentService.attachLive(enrichOrderDetail(withReturn ?? order, lines), correlationId)
       }
-      throw new AppError('ORDER_NOT_FOUND', 'Order not found', 'Ordine non trovato.', 404, false)
+      const named = isOdooOrderPublicName(id) ? await findOwnedPwaOrder(userId, id) : null
+      if (!named) {
+        throw new AppError('ORDER_NOT_FOUND', 'Order not found', 'Ordine non trovato.', 404, false)
+      }
     }
 
     const row = await ordersRepository.findForUser(userId, id)
     if (row) {
       const base = mapRow(row)
+      if (base.pwaOrderId) {
+        const linked = await prisma.pwaOrder.findUnique({
+          where: { id: base.pwaOrderId },
+          select: { id: true, odooSaleOrderName: true },
+        })
+        if (linked) base.id = accountOrderPublicId(linked)
+      }
       const lines = await resolveOrderLines(base, correlationId)
       const [withReturn] = await orderReturnRequestService.attachToOrders(userId, [base])
       return orderShipmentService.attachLive(enrichOrderDetail(withReturn ?? base, lines), correlationId)
     }
 
     const po = await findOwnedPwaOrder(userId, id)
-    if (!po || !po.odooSaleOrderId) {
+    if (!po || (!po.odooSaleOrderId && po.paymentStatus !== 'CAPTURED')) {
       throw new AppError('ORDER_NOT_FOUND', 'Order not found', 'Ordine non trovato.', 404, false)
     }
 
     const cache = await prisma.orderCache.findUnique({ where: { id: `pwa-${po.id}` } })
     const base: OrderDTO = {
-      id: `pwa-${po.id}`,
+      id: accountOrderPublicId(po),
       pwaOrderId: po.id,
-      odooSaleOrderId: po.odooSaleOrderId,
+      odooSaleOrderId: po.odooSaleOrderId ?? 0,
       status: po.orderStatus.toLowerCase(),
       paymentStatus: po.paymentStatus.toLowerCase(),
       currencyCode: po.currencyCode,

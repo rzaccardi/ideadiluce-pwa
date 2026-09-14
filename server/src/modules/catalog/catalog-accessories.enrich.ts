@@ -1,5 +1,6 @@
 import { env } from '../../config/env.js'
 import { isOdooConfigured, odooExecuteKw, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
 import { mapOdooCatalogListItem } from '../../adapters/odoo-catalog/odooCatalogMapper.js'
 import { parseHubLocale } from '../../lib/hub-locale.js'
 import type { ProductDetailDTO, ProductRelatedDTO } from '../../types/dto.js'
@@ -92,7 +93,7 @@ export async function enrichProductDetailWithAccessories(
     return { ...product, accessories: existing.map(patchRelatedTemplateId) }
   }
 
-  if (!env.ODOO_ENABLED || !isOdooConfigured()) return product
+  if (!env.ODOO_ENABLED || !isOdooConfigured() || isOdooApiV2Configured()) return product
   const templateId = product.odooTemplateId
   if (templateId == null || templateId <= 0) return product
 

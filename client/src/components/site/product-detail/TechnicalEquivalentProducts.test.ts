@@ -30,6 +30,7 @@ describe('selectTechnicalEquivalents', () => {
         related({ slug: 'osram-t8', name: 'OSRAM T8' }),
         related({ slug: 'portalampade', name: 'Portalampade', relation: 'accessory' }),
         related({ slug: 'altro', name: 'Altro', relation: 'related' }),
+        related({ slug: 'sostituto', name: 'Sostituto', relation: 'substitute' }),
       ],
       'attuale',
     )

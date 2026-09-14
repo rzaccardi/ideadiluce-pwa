@@ -1,9 +1,10 @@
 import { env } from '../../config/env.js'
-import {
-  getOdooPublicBaseUrl,
-  odooExecuteKw,
-  type OdooCallContext,
-} from './odooClient.js'
+import { getOdooPublicBaseUrl, odooExecuteKw, type OdooCallContext } from './odooClient.js'
+import { isOdooApiV2Configured, OdooApiV2Error } from '../odoo-api/odooApiClient.js'
+import { odooApiRegisterPayment } from '../odoo-api/odooApi.resources.js'
+import { alertOdooPaymentConflict } from '../odoo-api/odooApi.sideEffects.js'
+import { mapOdooApiPaymentMethod } from '../odoo-api/odooApi.mapping.js'
+import { prisma } from '../../lib/prisma.js'
 import { syncSaleOrderFunnelState } from './odooFunnelSync.js'
 import { AppError } from '../../types/errors.js'
 import type {
@@ -350,7 +351,7 @@ async function createPortalPaymentUrl(
   }
 }
 
-export type RegisterPaymentMethod = 'stripe' | 'bank_transfer'
+export type RegisterPaymentMethod = 'stripe' | 'bank_transfer' | 'paypal'
 
 export type RegisterPaymentInput = {
   saleOrderId: number
@@ -359,17 +360,67 @@ export type RegisterPaymentInput = {
   amountCents: number
   transactionId?: string | null
   status: 'captured' | 'pending'
+  currencyCode?: string
+}
+
+async function registerPaymentApiV2(
+  ctx: OdooCallContext,
+  input: RegisterPaymentInput,
+): Promise<'synced' | 'skipped' | 'failed'> {
+  const provider = mapOdooApiPaymentMethod(input.method === 'stripe' ? 'card' : input.method)
+  const body = {
+    provider,
+    amount_cents: input.amountCents,
+    currency: input.currencyCode || 'EUR',
+    ...(input.transactionId ? { provider_reference: input.transactionId } : {}),
+  }
+  try {
+    const { status, data } = await odooApiRegisterPayment(input.saleOrderId, body, ctx.correlationId)
+    if (
+      status === 201 ||
+      status === 200 ||
+      data?.order_state === 'sale' ||
+      data?.transaction_state === 'done' ||
+      data?.idempotent
+    ) {
+      return 'synced'
+    }
+    if (input.status === 'pending') return 'synced'
+    return 'synced'
+  } catch (e) {
+    if (e instanceof OdooApiV2Error && e.httpStatus === 409) {
+      const order = await prisma.pwaOrder.findUnique({
+        where: { id: input.pwaOrderId },
+        select: { odooSaleOrderName: true },
+      })
+      await alertOdooPaymentConflict({
+        ctx,
+        pwaOrderId: input.pwaOrderId,
+        odooSaleOrderId: input.saleOrderId,
+        odooSaleOrderName: order?.odooSaleOrderName,
+        amountCents: input.amountCents,
+        error: e,
+      })
+      return 'failed'
+    }
+    if (e instanceof OdooApiV2Error && e.httpStatus >= 500) return 'failed'
+    throw e
+  }
 }
 
 /**
- * Registra il pagamento PWA su Odoo (campi custom + sync funnel).
- * Per bonifico: stato pending; per Stripe catturato: stato paid/captured.
+ * Registra il pagamento PWA su Odoo.
+ * Con API v2: `POST /orders/<id>/payments`. Fallback XML-RPC: campi custom + action_confirm.
  */
 export async function registerPayment(
   ctx: OdooCallContext,
   input: RegisterPaymentInput,
 ): Promise<'synced' | 'skipped' | 'failed'> {
   if (!env.ODOO_ENABLED) return 'skipped'
+
+  if (isOdooApiV2Configured()) {
+    return registerPaymentApiV2(ctx, input)
+  }
 
   const orderStatus = input.status === 'captured' ? 'paid' : 'payment_pending'
   const paymentStatus = input.status === 'captured' ? 'captured' : 'pending'

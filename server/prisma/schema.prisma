@@ -512,6 +512,10 @@ model PwaOrder {
   shippingAddressJson        Json?
   odooPartnerId              Int?
   odooSaleOrderId            Int?
+  /** Codice ordine Odoo a 6 caratteri (es. 4CSVKG). */
+  odooSaleOrderName          String?
+  odooShippingAddressId      Int?
+  odooInvoiceAddressId       Int?
   providerTransactionId      String?
   lastPaymentError           String?
   checkoutStartedAt          DateTime?
@@ -552,6 +556,7 @@ model PwaOrder {
   @@index([orderStatus])
   @@index([paymentStatus])
   @@index([odooSaleOrderId])
+  @@index([odooSaleOrderName])
 }
 
 model OdooSyncQueue {

@@ -34,7 +34,7 @@ export class OdooCatalogClientError extends Error {
 }
 
 function odooCatalogApiKey(): string {
-  return env.ODOO_CATALOG_API_KEY?.trim() || env.ODOO_API_KEY?.trim() || ''
+  return env.ODOO_CATALOG_API_KEY?.trim() || env.ODOO_API_TOKEN?.trim() || env.ODOO_API_KEY?.trim() || ''
 }
 
 export function isOdooCatalogConfigured(): boolean {

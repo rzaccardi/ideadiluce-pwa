@@ -11,6 +11,7 @@ import { logger } from '../../lib/logger.js'
 import { writeIntegrationLog } from '../../lib/integration-log.js'
 import { redactForLog } from '../../lib/redact.js'
 import { AppError } from '../../types/errors.js'
+import { isOdooApiV2Configured } from '../odoo-api/odooApiClient.js'
 
 const require = createRequire(import.meta.url)
 const Serializer = require('xmlrpc/lib/serializer.js') as {
@@ -107,6 +108,11 @@ export function isOdooConfigured(): boolean {
       env.ODOO_USERNAME?.trim() &&
       typeof env.ODOO_PASSWORD === 'string',
   )
+}
+
+/** True se il flusso transazionale può parlare con Odoo (API v2 o XML-RPC). */
+export function isOdooLiveConfigured(): boolean {
+  return isOdooConfigured() || isOdooApiV2Configured()
 }
 
 export function assertOdooConfigured(): void {

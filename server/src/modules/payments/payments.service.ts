@@ -12,8 +12,7 @@ import type {
 } from '../../types/dto.js'
 import { createOdooCustomerAdapter } from '../../adapters/odoo/odooCustomerAdapter.js'
 import { createOdooOrderAdapter } from '../../adapters/odoo/odooOrderAdapter.js'
-import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
-import { isOdooConfigured } from '../../adapters/odoo/odooClient.js'
+import { isOdooLiveConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { syncSaleOrderFunnelState } from '../../adapters/odoo/odooFunnelSync.js'
 import { registerPayment } from '../../adapters/odoo/odooPaymentLive.js'
 import { createProviderPaymentSession } from '../../adapters/payments/paymentProviderAdapter.js'
@@ -379,12 +378,14 @@ function isPaymentSessionComplete(payment: PwaPayment): boolean {
   return payment.provider !== 'pending'
 }
 
-function formatDisplayOrderNumber(odooSaleOrderId: number | null, orderId: string): string {
+function formatDisplayOrderNumber(order: Pick<PwaOrder, 'id' | 'odooSaleOrderId' | 'odooSaleOrderName'>): string {
+  const name = order.odooSaleOrderName?.trim()
+  if (name) return name
   const year = new Date().getFullYear()
-  if (odooSaleOrderId != null) {
-    return `#IDL-${year}-${String(odooSaleOrderId).padStart(5, '0')}`
+  if (order.odooSaleOrderId != null) {
+    return `#IDL-${year}-${String(order.odooSaleOrderId).padStart(5, '0')}`
   }
-  return `#${orderId.slice(0, 8).toUpperCase()}`
+  return `#${order.id.slice(0, 8).toUpperCase()}`
 }
 
 function mapOrderStatus(
@@ -571,7 +572,7 @@ export const paymentsService = {
 
     const dropshipAddress = body.dropshipAddress ?? body.deliveryRecipient ?? null
     let odooPartnerShippingId: number | null = null
-    if (env.ODOO_ENABLED && isOdooConfigured() && odooPartnerId) {
+    if (env.ODOO_ENABLED && isOdooLiveConfigured() && odooPartnerId) {
       try {
         const resolved = await customerAdapter.resolveOrderShippingPartner(ctx, odooPartnerId, {
           shippingAddress: {
@@ -618,7 +619,7 @@ export const paymentsService = {
       body.clientOrderRef?.trim() ||
       existing?.clientOrderRef ||
       (existing?.id ? `PWA ${existing.id}` : undefined)
-    if (env.ODOO_ENABLED && isOdooConfigured() && odooPartnerId != null) {
+    if (env.ODOO_ENABLED && isOdooLiveConfigured() && odooPartnerId != null) {
       try {
         const orderResult = await orderAdapter.createOrUpdateSaleOrder(ctx, {
           odooPartnerId,
@@ -641,6 +642,11 @@ export const paymentsService = {
             carrierCode: shippingSel.carrierCode,
             serviceCode: shippingSel.serviceCode,
           },
+          pwaOrderId: existing?.id,
+          paymentMethod: existing?.paymentMethod ? paymentMethodToDTO(existing.paymentMethod) : null,
+          chargedCents: priceSnapshot.estimatedTotal,
+          taxRatePct: taxOrder.taxRatePct,
+          snapshotAt: priceSnapshot.pricedAt,
         })
         odooSaleOrderId = orderResult.odooSaleOrderId
       } catch {
@@ -1074,7 +1080,7 @@ export const paymentsService = {
 
     return {
       ...base,
-      displayOrderNumber: formatDisplayOrderNumber(order.odooSaleOrderId, order.id),
+      displayOrderNumber: formatDisplayOrderNumber(order),
       email: order.email,
       customerFirstName: shippingAddress?.firstName?.trim() || null,
       createdAt: order.createdAt.toISOString(),

@@ -197,6 +197,9 @@ services:
       - key: ODOO_CATALOG_API_KEY
         scope: RUN_TIME
         type: SECRET
+      - key: ODOO_API_TOKEN
+        scope: RUN_TIME
+        type: SECRET
       # Staging Odoo.sh: tlbdb-shipping-1-37798006 — da impostare nel secret ODOO_DB
       - key: ODOO_DB
         scope: RUN_TIME

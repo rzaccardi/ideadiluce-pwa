@@ -114,6 +114,8 @@ export function TechnicalProductDetailView({ product, state }: Props) {
   const equivalentProducts = product.alternatives ?? []
   const visibleEquivalents = selectTechnicalEquivalents(equivalentProducts, product.slug)
   const accessoryProducts = product.accessories ?? []
+  const suggestedProducts = product.suggestedProducts ?? []
+  const compatibleSources = product.compatibleSources ?? []
   const [addingAccessorySlug, setAddingAccessorySlug] = useState<string | null>(null)
 
   const parsedSpecs = mergeProductAndVariantSpecs({
@@ -197,6 +199,7 @@ export function TechnicalProductDetailView({ product, state }: Props) {
     hasDimensionsPanel ? { id: 'dimensioni', label: 'Dimensioni' } : null,
     productDocuments.length > 0 ? { id: 'documenti', label: 'Documenti' } : null,
     visibleEquivalents.length > 0 ? { id: 'equivalenti', label: 'Equivalenti' } : null,
+    compatibleSources.length > 0 ? { id: 'fonti', label: 'Fonti' } : null,
     accessoryProducts.length > 0 ? { id: 'accessori', label: 'Accessori' } : null,
   ].filter((item): item is { id: string; label: string } => Boolean(item))
 
@@ -354,6 +357,28 @@ export function TechnicalProductDetailView({ product, state }: Props) {
                     availability.showProductRequest ? t('product.requestProduct') : undefined
                   }
                 />
+              </div>
+            ) : null}
+
+            {!isStockEnriching && !availability?.canAddToCart && suggestedProducts.length > 0 ? (
+              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-idl-tech-border dark:bg-idl-tech-panel">
+                <p className="text-sm font-semibold text-idl-graphite">{t('product.suggested.oosBanner')}</p>
+                <ul className="mt-2 space-y-1.5">
+                  {suggestedProducts.slice(0, 3).map((item) => (
+                    <li key={item.slug?.trim() || item.name} className="text-sm">
+                      {item.slug?.trim() ? (
+                        <Link to={lp(`/prodotto/${item.slug}`)} className="font-semibold text-idl-amber hover:underline">
+                          {item.name}
+                        </Link>
+                      ) : (
+                        <span className="font-semibold">{item.name}</span>
+                      )}
+                      {item.reason ? (
+                        <span className="text-idl-muted"> — {item.reason}</span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
               </div>
             ) : null}
 
@@ -587,6 +612,50 @@ export function TechnicalProductDetailView({ product, state }: Props) {
           lp={lp}
         />
       </div>
+
+      {compatibleSources.length > 0 ? (
+        <SectionContainer id="fonti" className="scroll-mt-28 border-t border-idl-tech-chip py-10 sm:py-12">
+          <h2 className="text-xl font-extrabold tracking-tight sm:text-[22px]">{t('product.compatibleSources.title')}</h2>
+          <p className="mt-1.5 text-sm text-idl-muted">{t('product.compatibleSources.subtitle')}</p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {compatibleSources.slice(0, 6).map((item, index) => {
+              const addable = Boolean(item.slug?.trim())
+              return (
+                <div
+                  key={item.slug?.trim() || `source-${item.odooTemplateId ?? index}`}
+                  className="flex items-center gap-3 rounded-xl border border-idl-tech-border bg-idl-tech-panel px-3 py-3"
+                >
+                  {addable ? (
+                    <Link to={lp(`/prodotto/${item.slug}`)} className="relative size-12 shrink-0 overflow-hidden rounded-lg border border-idl-tech-border bg-white">
+                      {item.imageUrl ? (
+                        <SiteImage src={item.imageUrl} alt="" fill className="object-contain p-1" sizes="48px" />
+                      ) : null}
+                    </Link>
+                  ) : (
+                    <div className="relative size-12 shrink-0 overflow-hidden rounded-lg border border-idl-tech-border bg-white">
+                      {item.imageUrl ? (
+                        <SiteImage src={item.imageUrl} alt="" fill className="object-contain p-1" sizes="48px" />
+                      ) : null}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    {addable ? (
+                      <Link to={lp(`/prodotto/${item.slug}`)} className="line-clamp-2 text-sm font-semibold hover:text-idl-amber">
+                        {item.name}
+                      </Link>
+                    ) : (
+                      <span className="line-clamp-2 text-sm font-semibold">{item.name}</span>
+                    )}
+                    {item.reason ? (
+                      <div className="mt-0.5 text-[11px] text-idl-muted">{item.reason}</div>
+                    ) : null}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </SectionContainer>
+      ) : null}
 
       {accessoryProducts.length > 0 ? (
         <SectionContainer id="accessori" className="scroll-mt-28 border-t border-idl-tech-chip py-10 sm:py-12">

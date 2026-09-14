@@ -79,8 +79,6 @@ const PARTNER_ACCOUNT_IT_FIELDS = [
   'l10n_it_codice_fiscale',
   'l10n_it_pec_email',
   'l10n_it_pa_index',
-  /** Presente su localization vecchie; Odoo 18 IT usa `l10n_it_pa_index`. */
-  'l10n_it_codice_destinatario',
 ] as const
 
 /** Campi IT realmente disponibili su questa istanza (cache di processo). */

@@ -1,9 +1,11 @@
-/** Ordini: `sale.order` + righe via `execute_kw` (variante da slug `product.template`). */
+/** Ordini: API v2 `POST /orders` (preferito) oppure XML-RPC `sale.order`. */
 import { env } from '../../config/env.js'
 import { isOdooConfigured } from './odooClient.js'
+import { isOdooApiV2Configured } from '../odoo-api/odooApiClient.js'
 import type { OdooCallContext } from './odooClient.js'
 import { createMockOdooOrderAdapter } from './odooOrderMock.js'
 import { createLiveOdooOrderAdapter } from './odooOrderLive.js'
+import { createApiV2OdooOrderAdapter } from './odooOrderApi.js'
 import type { SyncSaleOrderDraftInput } from '../../modules/checkout/checkout-order.types.js'
 
 export type SaleOrderShippingLine = {
@@ -29,6 +31,11 @@ export type SaleOrderInput = {
   }>
   shippingLine?: SaleOrderShippingLine | null
   currencyCode: string
+  pwaOrderId?: string
+  paymentMethod?: string | null
+  chargedCents?: number | null
+  snapshotAt?: string
+  taxRatePct?: number
 }
 
 export type SaleOrderLineInput = {
@@ -61,6 +68,9 @@ export interface OdooOrderAdapter {
 }
 
 export function createOdooOrderAdapter(): OdooOrderAdapter {
+  if (isOdooApiV2Configured()) {
+    return createApiV2OdooOrderAdapter()
+  }
   if (env.ODOO_ENABLED && isOdooConfigured()) {
     return createLiveOdooOrderAdapter()
   }

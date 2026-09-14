@@ -951,6 +951,13 @@ export async function rememberProductDetail(
   void persistBucket(locale, bucket)
 }
 
+export async function listCachedCatalogProductSlugs(locale: HubLocale): Promise<string[]> {
+  await hydrateOdooCatalogIndexFromDisk()
+  const bucket = indexByLocale.get(locale)
+  if (!bucket) return []
+  return bucket.entries.map((entry) => entry.slug).filter((slug): slug is string => Boolean(slug?.trim()))
+}
+
 export function getOdooCatalogIndexMeta(locale: HubLocale): {
   count: number
   details: number

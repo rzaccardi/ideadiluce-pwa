@@ -114,3 +114,67 @@ export function htmlColorFromOdooAttribute(attr: object | null | undefined): str
   }
   return undefined
 }
+
+export type OdooAttributeLineValue = {
+  id?: number
+  name?: string
+  html_color?: unknown
+  htmlColor?: unknown
+  variant_ids?: number[]
+  product_ids?: number[]
+}
+
+export type OdooAttributeLine = {
+  attribute_id?: number
+  name?: string
+  display_name?: string
+  values?: OdooAttributeLineValue[]
+  value_ids?: OdooAttributeLineValue[]
+}
+
+function lineValues(line: OdooAttributeLine): OdooAttributeLineValue[] {
+  return line.values ?? line.value_ids ?? []
+}
+
+/** Fino a `max` hex distinti da `attribute_lines` (card lista). */
+export function colorSwatchesFromAttributeLines(
+  lines: OdooAttributeLine[] | undefined,
+  max = 3,
+): string[] {
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const line of lines ?? []) {
+    for (const value of lineValues(line)) {
+      const hex = htmlColorFromOdooAttribute(value)
+      if (!hex || seen.has(hex)) continue
+      seen.add(hex)
+      out.push(hex)
+      if (out.length >= max) return out
+    }
+  }
+  return out
+}
+
+/** Hex da `attribute_lines` per variante + valore attributo, se manca su `variants[].attributes`. */
+export function htmlColorFromAttributeLinesForVariant(
+  lines: OdooAttributeLine[] | undefined,
+  variantId: number,
+  attrName: string,
+  attrValue: string,
+): string | undefined {
+  const wantName = attrName.trim().toLowerCase()
+  const wantValue = attrValue.trim().toLowerCase()
+  for (const line of lines ?? []) {
+    const lineName = (line.name ?? line.display_name ?? '').trim().toLowerCase()
+    if (lineName && wantName && lineName !== wantName) continue
+    for (const value of lineValues(line)) {
+      const ids = value.variant_ids ?? value.product_ids ?? []
+      if (ids.length > 0 && !ids.includes(variantId)) continue
+      const valueName = (value.name ?? '').trim().toLowerCase()
+      if (valueName && wantValue && valueName !== wantValue) continue
+      const hex = htmlColorFromOdooAttribute(value)
+      if (hex) return hex
+    }
+  }
+  return undefined
+}

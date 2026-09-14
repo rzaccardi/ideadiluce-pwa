@@ -8,7 +8,8 @@ import {
 import { registerPayment } from '../../adapters/odoo/odooPaymentLive.js'
 import { sendPwaMail } from '../../adapters/odoo/odooMailAdapter.js'
 import { syncSaleOrderFunnelState, type OdooFunnelState } from '../../adapters/odoo/odooFunnelSync.js'
-import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { isOdooLiveConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
 import { env } from '../../config/env.js'
 import { generateAccountPassword } from '../../lib/generate-password.js'
 import { publicAppUrl } from '../../lib/mail.js'
@@ -197,6 +198,7 @@ export async function executeReconcileLines(
   pwaOrderId: string,
   payload: unknown,
 ): Promise<void> {
+  if (isOdooApiV2Configured()) return
   const order = await loadOrder(pwaOrderId)
   if (!order.odooSaleOrderId) {
     throw new AppError(
@@ -224,7 +226,9 @@ export async function executeReconcileLines(
   }
 
   if (Array.isArray(data.lines) && data.lines.length > 0) {
-    await orderAdapter.reconcileSaleOrderLines(ctx, order.odooSaleOrderId, data.lines, data.shippingLine ?? null)
+    if (!isOdooApiV2Configured()) {
+      await orderAdapter.reconcileSaleOrderLines(ctx, order.odooSaleOrderId, data.lines, data.shippingLine ?? null)
+    }
     return
   }
 
@@ -309,7 +313,7 @@ export async function executeFunnelSync(
     const result = await registerPayment(ctx, {
       saleOrderId: order.odooSaleOrderId,
       pwaOrderId: order.id,
-      method: order.paymentMethod === 'BANK_TRANSFER' ? 'bank_transfer' : 'stripe',
+      method: order.paymentMethod === 'BANK_TRANSFER' ? 'bank_transfer' : order.paymentMethod === 'PAYPAL' ? 'paypal' : 'stripe',
       amountCents: order.amountTotal ?? 0,
       transactionId: order.providerTransactionId,
       status: 'captured',
@@ -337,6 +341,7 @@ export async function executeEnsurePortalUser(
   ctx: OdooCallContext,
   input: { pwaOrderId?: string | null; userId?: string | null; payload: unknown },
 ): Promise<void> {
+  if (isOdooApiV2Configured()) return
   const payload = (input.payload ?? {}) as { email?: string; firstName?: string; lastName?: string }
   let email = payload.email?.toLowerCase().trim() ?? ''
   let partnerId: number | null = null
@@ -395,6 +400,7 @@ export async function executeEnsurePortalUser(
 }
 
 export async function executeSendMail(ctx: OdooCallContext, pwaOrderId: string): Promise<void> {
+  if (isOdooApiV2Configured()) return
   const order = await loadOrder(pwaOrderId)
   const meta = (order.metadataJson as Record<string, unknown> | null) ?? {}
   if (meta.orderConfirmationMailAt) return
@@ -481,21 +487,22 @@ export async function enqueueOrderOdooSaga(
     lastError?: string
   },
 ): Promise<void> {
-  if (!env.ODOO_ENABLED || !isOdooConfigured()) return
+  if (!env.ODOO_ENABLED || !isOdooLiveConfigured()) return
   const order = await prisma.pwaOrder.findUnique({ where: { id: pwaOrderId } })
   if (!order) return
 
   const paid = isPaidOrderStatus(order.orderStatus, order.paymentStatus)
   const meta = (order.metadataJson as Record<string, unknown> | null) ?? {}
   const ops: OdooSyncQueueOperation[] = []
+  const apiV2 = isOdooApiV2Configured()
 
   if (!order.odooPartnerId) ops.push('ensure_partner')
   if (!order.odooSaleOrderId) ops.push('ensure_sale_order')
-  if (paid || order.odooSaleOrderId) ops.push('reconcile_lines')
+  if (!apiV2 && (paid || order.odooSaleOrderId)) ops.push('reconcile_lines')
   if (paid) ops.push('funnel_sync')
-  const includePortal = opts?.includePortal ?? Boolean(order.userId || meta.createAccount)
+  const includePortal = !apiV2 && (opts?.includePortal ?? Boolean(order.userId || meta.createAccount))
   if (includePortal) ops.push('ensure_portal_user')
-  const includeMail = opts?.includeMail ?? (paid && !meta.orderConfirmationMailAt)
+  const includeMail = !apiV2 && (opts?.includeMail ?? (paid && !meta.orderConfirmationMailAt))
   if (includeMail) ops.push('send_mail')
 
   for (const operation of ops) {
@@ -515,7 +522,7 @@ export async function enqueueUserOdooSaga(
   payload: { email: string; firstName?: string | null; lastName?: string | null; phone?: string | null },
   lastError?: string,
 ): Promise<void> {
-  if (!env.ODOO_ENABLED || !isOdooConfigured()) return
+  if (!env.ODOO_ENABLED || !isOdooLiveConfigured()) return
   await enqueueOdooSyncOperation({
     userId,
     operation: 'ensure_partner',

@@ -194,7 +194,8 @@ export type ProductSpecDTO = {
 }
 
 export type ProductRelatedDTO = ProductCardDTO & {
-  relation: 'related' | 'accessory' | 'alternative'
+  relation: 'related' | 'accessory' | 'alternative' | 'suggested' | 'compatible_source' | 'substitute'
+  reason?: string | null
 }
 
 export type ProductCardDTO = {
@@ -224,6 +225,8 @@ export type ProductCardDTO = {
   /** Disponibilità acquisto (da Hub/Odoo live). */
   inStock?: boolean
   availability?: ProductAvailabilityDataDTO
+  /** Fino a 3 hex da `attribute_lines.html_color` (card lista). */
+  colorSwatches?: string[]
 }
 
 export type StockRestockRequestDTO = {
@@ -349,6 +352,9 @@ export type ProductDetailDTO = ProductCardDTO & {
   relatedProducts?: ProductRelatedDTO[]
   accessories?: ProductRelatedDTO[]
   alternatives?: ProductRelatedDTO[]
+  suggestedProducts?: ProductRelatedDTO[]
+  compatibleSources?: ProductRelatedDTO[]
+  substitutes?: ProductRelatedDTO[]
   ean?: string | null
   weightKg?: number | null
   /** Lunghezza prodotto in metri (Odoo/OdooCatalog). */

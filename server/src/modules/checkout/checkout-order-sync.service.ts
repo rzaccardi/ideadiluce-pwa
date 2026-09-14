@@ -7,7 +7,8 @@ import { createOdooCustomerAdapter } from '../../adapters/odoo/odooCustomerAdapt
 import { createOdooOrderAdapter } from '../../adapters/odoo/odooOrderAdapter.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { env } from '../../config/env.js'
-import { isOdooConfigured } from '../../adapters/odoo/odooClient.js'
+import { isOdooLiveConfigured } from '../../adapters/odoo/odooClient.js'
+import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
 import { syncCartContactEmail } from '../cart/cart-contact.service.js'
 import {
   buildCheckoutPriceSnapshot,
@@ -292,9 +293,11 @@ export async function syncCheckoutDraftOrder(
           serviceCode: shippingSel.serviceCode,
         }
       : null,
+    chargedCents: total,
+    taxRatePct: taxOrder.taxRatePct,
   }
 
-  if (env.ODOO_ENABLED && isOdooConfigured() && odooPartnerId != null) {
+  if (env.ODOO_ENABLED && isOdooLiveConfigured() && odooPartnerId != null) {
     try {
       const orderResult = await orderAdapter.syncSaleOrderDraft(ctx, draftPayload)
       odooSaleOrderId = orderResult.odooSaleOrderId
@@ -317,7 +320,7 @@ export async function syncCheckoutDraftOrder(
         finishedAt: new Date(),
       })
     }
-  } else if (env.ODOO_ENABLED && isOdooConfigured() && odooPartnerId == null) {
+  } else if (env.ODOO_ENABLED && isOdooLiveConfigured() && odooPartnerId == null) {
     odooDegraded = true
   }
 
@@ -406,7 +409,7 @@ export async function syncCheckoutDraftOrder(
 
   await syncCartContactEmail(cart.id)
 
-  if (odooSaleOrderId) {
+  if (odooSaleOrderId && !isOdooApiV2Configured()) {
     try {
       await syncSaleOrderFunnelState(ctx, odooSaleOrderId, {
         pwaOrderId: order.id,
@@ -421,7 +424,7 @@ export async function syncCheckoutDraftOrder(
     }
   }
 
-  if (odooDegraded || (env.ODOO_ENABLED && isOdooConfigured() && (!odooPartnerId || !odooSaleOrderId))) {
+  if (odooDegraded || (env.ODOO_ENABLED && isOdooLiveConfigured() && (!odooPartnerId || !odooSaleOrderId))) {
     void enqueueOrderOdooSaga(order.id, {
       includeMail: false,
       includePortal: createAccount,

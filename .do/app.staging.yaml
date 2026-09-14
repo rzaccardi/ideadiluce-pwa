@@ -85,6 +85,9 @@ services:
       - key: ODOO_CATALOG_API_KEY
         scope: RUN_TIME
         type: SECRET
+      - key: ODOO_API_TOKEN
+        scope: RUN_TIME
+        type: SECRET
       - key: ODOO_DB
         scope: RUN_TIME
         type: SECRET

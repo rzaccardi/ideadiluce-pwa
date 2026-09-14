@@ -342,4 +342,47 @@ describe('mapOdooCatalogProductDetail contratto v2', () => {
     expect(dto.accessories?.[1]?.relation).toBe('accessory')
     expect(dto.accessories?.[1]?.odooTemplateId).toBe(66)
   })
+
+  it('completa html_color da attribute_lines se manca sulla variante', () => {
+    const dto = mapOdooCatalogProductDetail(
+      {
+        ...fixtureDetail,
+        attribute_lines: [
+          {
+            name: 'Colore',
+            values: [{ name: 'Nero opaco', html_color: '#1F1C17', variant_ids: [9124] }],
+          },
+        ],
+        variants: [
+          {
+            ...fixtureDetail.variants[0],
+            attributes: [{ attribute_id: 1, label: 'Colore', value: 'Nero opaco' }],
+          },
+        ],
+      },
+      'IT',
+    )
+    expect(dto.variants[0].attributes[0]?.htmlColor).toBe('#1f1c17')
+    expect(dto.colorSwatches).toEqual(['#1f1c17'])
+  })
+
+  it('separa suggested, fonti compatibili e substitutes dagli equivalenti', () => {
+    const dto = mapOdooCatalogProductDetail(
+      {
+        ...fixtureDetail,
+        related: {
+          suggested: [{ slug: 'led-t8', title: 'LED T8', price_from: 6, currency: 'EUR', reason: 'stesso attacco' }],
+          compatible_sources: [{ slug: 'plafoniera', title: 'Plafoniera', price_from: 20, currency: 'EUR' }],
+          substitutes: [{ slug: 't5-sostituto', title: 'T5', price_from: 4, currency: 'EUR' }],
+          alternatives: [{ slug: 'osram', title: 'OSRAM', price_from: 5, currency: 'EUR' }],
+        },
+      },
+      'IT',
+    )
+    expect(dto.suggestedProducts?.map((item) => item.slug)).toEqual(['led-t8'])
+    expect(dto.suggestedProducts?.[0]?.reason).toBe('stesso attacco')
+    expect(dto.compatibleSources?.map((item) => item.slug)).toEqual(['plafoniera'])
+    expect(dto.substitutes?.map((item) => item.slug)).toEqual(['t5-sostituto'])
+    expect(dto.alternatives?.map((item) => item.slug)).toEqual(['osram'])
+  })
 })
