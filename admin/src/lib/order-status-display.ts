@@ -2,10 +2,14 @@ import type { OrdersAdminList } from '@/types/orders'
 
 export const ORDER_STATUS_LABEL: Record<string, string> = {
   CART_CREATED: 'Carrello',
+  DRAFT: 'Bozza',
   CHECKOUT_STARTED: 'Checkout',
+  CHECKOUT_LOCKED: 'Prezzi congelati',
   PAYMENT_STARTED: 'Pagamento',
   PAYMENT_PENDING: 'In attesa',
   PAID: 'Pagato',
+  PAID_SYNC_PENDING: 'Pagato — sync Odoo',
+  SYNCED: 'Sincronizzato Odoo',
   PAYMENT_FAILED: 'Fallito',
   ABANDONED: 'Abbandonato',
   CANCELLED: 'Annullato',
@@ -33,10 +37,10 @@ export const PAYMENT_STATUS_FILTER_OPTIONS = Object.entries(PAYMENT_STATUS_LABEL
 )
 
 export function orderStatusPillClass(status: string): string {
-  if (['PAID', 'CONFIRMED', 'COMPLETED'].includes(status)) {
+  if (['PAID', 'PAID_SYNC_PENDING', 'SYNCED', 'CONFIRMED', 'COMPLETED'].includes(status)) {
     return 'bg-emerald-100 text-emerald-800'
   }
-  if (['PAYMENT_PENDING', 'CHECKOUT_STARTED', 'PAYMENT_STARTED'].includes(status)) {
+  if (['PAYMENT_PENDING', 'CHECKOUT_STARTED', 'CHECKOUT_LOCKED', 'PAYMENT_STARTED', 'DRAFT'].includes(status)) {
     return 'bg-amber-100 text-amber-900 ring-1 ring-amber-300'
   }
   if (['PAYMENT_FAILED', 'ABANDONED', 'CANCELLED'].includes(status)) {
@@ -72,9 +76,9 @@ export const ORDERS_LIST_SORT_LABEL: Record<OrdersListSort, string> = {
 }
 
 export function orderListSortGroup(orderStatus: string): number {
-  if (['PAYMENT_PENDING', 'PAYMENT_FAILED'].includes(orderStatus)) return 0
-  if (['CHECKOUT_STARTED', 'PAYMENT_STARTED'].includes(orderStatus)) return 1
-  if (['PAID', 'CONFIRMED', 'COMPLETED'].includes(orderStatus)) return 2
+  if (['PAYMENT_PENDING', 'PAYMENT_FAILED', 'PAID_SYNC_PENDING'].includes(orderStatus)) return 0
+  if (['CHECKOUT_STARTED', 'CHECKOUT_LOCKED', 'PAYMENT_STARTED', 'DRAFT'].includes(orderStatus)) return 1
+  if (['PAID', 'SYNCED', 'CONFIRMED', 'COMPLETED'].includes(orderStatus)) return 2
   if (orderStatus === 'CART_CREATED') return 3
   if (['ABANDONED', 'CANCELLED'].includes(orderStatus)) return 4
   return 3

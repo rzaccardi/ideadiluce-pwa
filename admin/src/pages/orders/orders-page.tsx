@@ -205,11 +205,11 @@ export function OrdersPage() {
               search={
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="orders-q" className="text-sm text-gray-500">
-                    Cliente
+                    Cerca
                   </Label>
                   <SearchInput
                     id="orders-q"
-                    placeholder="Email o nome cliente…"
+                    placeholder="Email, nome, #IDL-… o id Odoo…"
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
                   />

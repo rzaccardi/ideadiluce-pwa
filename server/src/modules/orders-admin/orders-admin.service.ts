@@ -9,6 +9,7 @@ import { parseOdooTemplateId } from '../catalog/odooRef.js'
 import { ODOO_ORDER_SOURCE_LABEL } from '../odoo/odoo-order-source.js'
 import { odooSalesService } from '../odoo/odoo-sales.service.js'
 import { odooSyncQueueService } from '../odoo/odoo-sync-queue.service.js'
+import { buildPwaOrderSearchWhere, odooListSearchTerm } from './orders-admin.search.js'
 import type { OdooSaleDocumentDTO, OdooSaleOrderLineDTO } from '../odoo/odoo-sales.types.js'
 import type {
   OrderAdminSource,
@@ -268,25 +269,6 @@ function mapPwaListItem(o: {
 }
 
 
-function buildCustomerSearchWhere(q: string): Prisma.PwaOrderWhereInput {
-  const term = q.trim()
-  return {
-    OR: [
-      { email: { contains: term, mode: 'insensitive' } },
-      {
-        user: {
-          is: {
-            OR: [
-              { firstName: { contains: term, mode: 'insensitive' } },
-              { lastName: { contains: term, mode: 'insensitive' } },
-            ],
-          },
-        },
-      },
-    ],
-  }
-}
-
 function adminOdooCtx(req?: Request): OdooCallContext {
   return { correlationId: req?.correlationId ?? 'admin-orders', req }
 }
@@ -347,7 +329,7 @@ function buildOdooListQuery(query: {
   return {
     page: query.page,
     pageSize: query.pageSize,
-    q: q && !q.includes('@') ? q : undefined,
+    q: odooListSearchTerm(q),
     email: q?.includes('@') ? q : undefined,
     days: query.days && query.days > 0 ? query.days : undefined,
   }
@@ -438,8 +420,8 @@ function buildPwaListWhere(query: {
 }): Prisma.PwaOrderWhereInput {
   const PHASE_STATUSES = {
     cart: ['CART_CREATED'],
-    checkout: ['CHECKOUT_STARTED', 'PAYMENT_STARTED', 'PAYMENT_PENDING'],
-    paid: ['PAID', 'CONFIRMED', 'COMPLETED'],
+    checkout: ['DRAFT', 'CHECKOUT_STARTED', 'CHECKOUT_LOCKED', 'PAYMENT_STARTED', 'PAYMENT_PENDING'],
+    paid: ['PAID', 'PAID_SYNC_PENDING', 'SYNCED', 'CONFIRMED', 'COMPLETED'],
     problem: ['PAYMENT_FAILED', 'ABANDONED', 'CANCELLED'],
   } as const
 
@@ -454,7 +436,7 @@ function buildPwaListWhere(query: {
   }
   if (query.paymentStatus) where.paymentStatus = query.paymentStatus as never
   if (query.q?.trim()) {
-    Object.assign(where, buildCustomerSearchWhere(query.q))
+    Object.assign(where, buildPwaOrderSearchWhere(query.q))
   }
   return where
 }

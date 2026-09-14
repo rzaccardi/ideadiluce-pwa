@@ -1,10 +1,7 @@
 'use client'
 
-import { Link, useNavigate } from '@/lib/navigation'
-import { useState } from 'react'
-import { toast } from 'sonner'
+import { Link } from '@/lib/navigation'
 import type { OrderDTO, OrderLineDTO } from '@/types/dto'
-import { reorderOrder } from '@/features/orders'
 import { formatMoney } from '@/lib/format'
 import {
   formatOrderRef,
@@ -43,8 +40,6 @@ type Props = {
 
 export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
   const { t, tParams, locale } = useI18n()
-  const navigate = useNavigate()
-  const [reordering, setReordering] = useState(false)
   const total =
     order.totalAmount != null && order.currencyCode
       ? formatMoney(order.totalAmount, order.currencyCode)
@@ -56,20 +51,6 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
   const extraCount = lines ? Math.max(0, lines.length - visibleLines.length) : 0
   const lineCountLabel =
     lines?.length != null ? tParams('account.orders.itemCount', { count: lines.length }) : null
-
-  async function handleReorder() {
-    if (!order.pwaOrderId) return
-    setReordering(true)
-    try {
-      await reorderOrder(order.id)
-      toast.success(t('orders.reorder.success'))
-      navigate('/cart')
-    } catch (e) {
-      toast.error(String(e))
-    } finally {
-      setReordering(false)
-    }
-  }
 
   const detailTo = `/account/orders/${order.id}`
 
@@ -133,16 +114,6 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
           >
             {t('account.orders.track')}
           </Link>
-          {order.pwaOrderId ? (
-            <button
-              type="button"
-              disabled={reordering}
-              onClick={() => void handleReorder()}
-              className="text-[13px] font-bold text-idl-brass disabled:opacity-50"
-            >
-              {reordering ? t('account.orders.table.reordering') : t('account.orders.reorder')}
-            </button>
-          ) : null}
           <AccountReturnRequestButton
             orderId={order.id}
             alreadyRequested={Boolean(order.returnRequest)}

@@ -30,10 +30,14 @@ export const ORDER_JOURNEY_PHASE_FILTER_LABEL: Record<OrderJourneyPhaseFilter, s
 
 const STATUS_TO_PHASE: Record<string, OrderJourneyPhase> = {
   CART_CREATED: 'cart',
+  DRAFT: 'checkout',
   CHECKOUT_STARTED: 'checkout',
+  CHECKOUT_LOCKED: 'checkout',
   PAYMENT_STARTED: 'checkout',
   PAYMENT_PENDING: 'checkout',
   PAID: 'paid',
+  PAID_SYNC_PENDING: 'paid',
+  SYNCED: 'paid',
   CONFIRMED: 'paid',
   COMPLETED: 'paid',
   PAYMENT_FAILED: 'problem',
@@ -43,8 +47,8 @@ const STATUS_TO_PHASE: Record<string, OrderJourneyPhase> = {
 
 export const ORDER_PHASE_STATUSES: Record<OrderJourneyPhase, string[]> = {
   cart: ['CART_CREATED'],
-  checkout: ['CHECKOUT_STARTED', 'PAYMENT_STARTED', 'PAYMENT_PENDING'],
-  paid: ['PAID', 'CONFIRMED', 'COMPLETED'],
+  checkout: ['DRAFT', 'CHECKOUT_STARTED', 'CHECKOUT_LOCKED', 'PAYMENT_STARTED', 'PAYMENT_PENDING'],
+  paid: ['PAID', 'PAID_SYNC_PENDING', 'SYNCED', 'CONFIRMED', 'COMPLETED'],
   problem: ['PAYMENT_FAILED', 'ABANDONED', 'CANCELLED'],
 }
 
@@ -103,6 +107,7 @@ export function orderListRowHighlight(item: {
     return true
   }
   if (item.orderStatus === 'CHECKOUT_STARTED' && !item.paidAt) return true
+  if (item.orderStatus === 'CHECKOUT_LOCKED' && !item.paidAt) return true
   return false
 }
 

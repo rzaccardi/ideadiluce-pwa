@@ -2,6 +2,7 @@ import type Stripe from 'stripe'
 import { env } from '../../config/env.js'
 import { getStripe, isStripeConfigured } from '../../lib/stripe.js'
 import { decodeStripeClientSecret } from '../../lib/stripe-config.js'
+import { sumStripeLineItems } from '../../modules/payments/stripe-line-items.js'
 import { AppError } from '../../types/errors.js'
 
 function checkoutReturnUrl(pwaOrderId: string): string {
@@ -94,7 +95,7 @@ export async function createStripeCheckoutSession(
       metadata: sessionMetadata,
       client_reference_id: input.pwaOrderId,
     },
-    { idempotencyKey: `pwa-checkout-${input.pwaPaymentId}` },
+    { idempotencyKey: `pwa-checkout-${input.pwaPaymentId}-${sumStripeLineItems(input.lineItems)}` },
   )
 
   if (!session.client_secret) {

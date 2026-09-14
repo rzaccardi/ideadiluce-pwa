@@ -3,6 +3,7 @@ import type Stripe from 'stripe'
 import { prisma } from '../../lib/prisma.js'
 import { logger } from '../../lib/logger.js'
 import { retrieveStripeCheckoutSession } from '../../adapters/payments/stripeCheckoutAdapter.js'
+import { stripeAmountsMatch } from './stripe-line-items.js'
 import { registerPayment } from '../../adapters/odoo/odooPaymentLive.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
@@ -83,7 +84,7 @@ export async function finalizeStripeCheckout(
 
   const stripeTotal = session.amount_total ?? 0
   const expectedTotal = order.amountTotal ?? 0
-  if (expectedTotal > 0 && Math.abs(stripeTotal - expectedTotal) > 2) {
+  if (expectedTotal > 0 && !stripeAmountsMatch(stripeTotal, expectedTotal)) {
     logger.warn('stripe.amount_mismatch', {
       pwaOrderId,
       stripeTotal,

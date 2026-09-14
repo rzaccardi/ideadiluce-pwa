@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { env } from '../../config/env.js'
 import { AppError } from '../../types/errors.js'
 import type { PwaPaymentMethodDTO } from '../../types/dto.js'
+import { alignStripeLineItems } from '../../modules/payments/stripe-line-items.js'
 import {
   createStripeCheckoutSession,
   findOrCreateStripeCustomer,
@@ -20,6 +21,7 @@ export type ProviderSessionInput = {
   email: string
   correlationId: string
   lineItems?: StripeLineItemInput[]
+  taxLabel?: string | null
 }
 
 export type ProviderSessionResult = {
@@ -78,16 +80,12 @@ export async function createProviderPaymentSession(
       )
     }
     const stripeCustomerId = await findOrCreateStripeCustomer(input.email)
-    const lineItems =
-      input.lineItems ??
-      [
-        {
-          name: `Ordine ${input.orderId}`,
-          amountCents: input.amount,
-          quantity: 1,
-          currencyCode: input.currencyCode,
-        },
-      ]
+    const lineItems = alignStripeLineItems({
+      lines: input.lineItems ?? [],
+      amountCents: input.amount,
+      currencyCode: input.currencyCode,
+      taxLabel: input.taxLabel,
+    })
     const session = await createStripeCheckoutSession({
       pwaOrderId: input.orderId,
       pwaPaymentId: input.pwaPaymentId,

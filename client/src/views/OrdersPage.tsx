@@ -8,14 +8,14 @@ import { AccountDcOrderCard } from '@/components/account/dc/AccountDcOrderCard'
 import { AccountDcPanel } from '@/components/account/dc/AccountDcPanel'
 import { accountDcPrimaryBtnClass } from '@/components/account/dc/account-dc-styles'
 import { StripeErrorBanner } from '@/components/checkout/stripe-ui/StripeFields'
-import { ListSkeleton } from '@/components/Skeleton'
+import { AccountTableSkeleton } from '@/components/account/AccountTableSkeleton'
 import { PageLoadTransition } from '@/components/motion'
 import { useI18n } from '@/hooks/use-i18n'
 
 export function OrdersPage() {
   const { t } = useI18n()
   const orders = useSnapshot(ordersStore)
-  const isLoading = orders.isListLoading || orders.list === null
+  const isLoading = orders.list === null && !orders.listError
 
   useEffect(() => {
     void fetchOrdersList({ force: true })
@@ -25,8 +25,8 @@ export function OrdersPage() {
     <AccountDcPanel title={t('account.section.orders.title')}>
       {orders.listError ? <StripeErrorBanner message={orders.listError} /> : null}
 
-      <PageLoadTransition isLoading={isLoading} skeleton={<ListSkeleton />}>
-        {orders.list && orders.list.length === 0 ? (
+      <PageLoadTransition isLoading={isLoading} skeleton={<AccountTableSkeleton />}>
+        {isLoading ? null : orders.list && orders.list.length === 0 ? (
           <div className="py-8 text-center">
             <p className="text-sm font-medium text-idl-graphite">{t('account.orders.emptyTitle')}</p>
             <p className="mt-1 text-sm text-idl-muted">{t('account.orders.emptyDescription')}</p>
@@ -42,9 +42,7 @@ export function OrdersPage() {
               </Link>
             </div>
           </div>
-        ) : null}
-
-        {orders.list && orders.list.length > 0 ? (
+        ) : orders.list && orders.list.length > 0 ? (
           <div className="flex flex-col gap-3.5">
             {orders.list.map((order) => (
               <AccountDcOrderCard key={order.id} order={order} />

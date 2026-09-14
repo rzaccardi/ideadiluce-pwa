@@ -28,6 +28,7 @@ export {
   getNextCheckoutStep,
   getPreviousCheckoutStep,
   goBackCheckoutStep,
+  hasUsableCheckoutPaymentSession,
   canGoBackCheckoutStep,
   initializeCheckoutNavigation,
   isBusinessCheckout,

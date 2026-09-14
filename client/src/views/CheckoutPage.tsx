@@ -12,6 +12,7 @@ import {
   checkoutStore,
   completeBankTransferCheckout,
   createPaymentSession,
+  hasUsableCheckoutPaymentSession,
   initializeCheckoutNavigation,
   refreshCheckoutAfterCartChange,
   isFrozenQuoteCheckout,
@@ -343,7 +344,7 @@ export function CheckoutPage() {
       checkoutDbg.fn('prepareStripeSession', 'skip', { reason: 'guards failed', guards })
       return
     }
-    if (checkout.payment?.method === 'stripe' && checkout.payment.clientSecret) {
+    if (hasUsableCheckoutPaymentSession()) {
       checkoutDbg.fn('prepareStripeSession', 'skip', { reason: 'payment already exists' })
       return
     }
@@ -368,7 +369,7 @@ export function CheckoutPage() {
       checkoutPrepareKeyRef.current = prepareKey
       try {
         if (!checkoutStore.order) await startCheckout({ silent: true })
-        if (!checkoutStore.payment?.clientSecret) await createPaymentSession({ silent: true })
+        if (!hasUsableCheckoutPaymentSession()) await createPaymentSession({ silent: true })
         checkoutPrepareBlockedRef.current = false
         checkoutDbg.fn('prepareStripeSession', 'exit', {
           orderId: checkoutStore.order?.orderId,

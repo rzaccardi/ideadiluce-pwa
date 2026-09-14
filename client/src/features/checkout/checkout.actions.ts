@@ -1143,7 +1143,7 @@ export async function refreshCheckoutAfterCartChange() {
         checkoutStore.selectedPaymentMethod
       ) {
         if (!checkoutStore.order) await startCheckout({ silent: true })
-        if (!checkoutStore.payment) await createPaymentSession({ silent: true })
+        if (!hasUsableCheckoutPaymentSession()) await createPaymentSession({ silent: true })
       }
     } catch (e) {
       checkoutStore.error = errMessage(e)
@@ -1871,11 +1871,22 @@ function checkoutPaymentPrefetchFingerprint(): string {
     checkoutStore.selectedShippingMethodRef ?? '',
     checkoutStore.selectedPaymentMethod ?? '',
     checkoutStore.order?.orderId ?? '',
+    String(checkoutStore.order?.amountTotal ?? ''),
     checkoutStore.draft.email,
     checkoutStore.draft.billingSameAsShipping ? 'same' : 'diff',
     shippingFingerprint(shippingAddressPayload()),
     shippingFingerprint(billingAddressPayload()),
   ].join('|')
+}
+
+export function hasUsableCheckoutPaymentSession(): boolean {
+  const payment = checkoutStore.payment
+  const order = checkoutStore.order
+  if (!payment?.clientSecret) return false
+  if (payment.method !== checkoutStore.selectedPaymentMethod) return false
+  if (order && payment.orderId !== order.orderId) return false
+  if (order?.amountTotal != null && payment.amount !== order.amountTotal) return false
+  return true
 }
 
 /** Precarica ordine + sessione Stripe appena spedizione e dati sono completi. */
@@ -1885,7 +1896,7 @@ export function prefetchCheckoutPayment(): void {
   if (checkoutStore.selectedPaymentMethod !== 'stripe') return
   if (!canStartCheckout()) return
   if (!isSpedizioneCompartmentComplete()) return
-  if (checkoutStore.payment?.method === 'stripe' && checkoutStore.payment.clientSecret) return
+  if (hasUsableCheckoutPaymentSession()) return
   if (checkoutStore.cartRefreshing || checkoutStore.shippingSelectingRef) return
 
   const key = checkoutPaymentPrefetchFingerprint()
@@ -1899,11 +1910,7 @@ export function prefetchCheckoutPayment(): void {
         if (isPaymentRetryCheckout()) return
         await startCheckout({ silent: true })
       }
-      if (
-        !checkoutStore.payment ||
-        checkoutStore.payment.method !== checkoutStore.selectedPaymentMethod ||
-        !checkoutStore.payment.clientSecret
-      ) {
+      if (!hasUsableCheckoutPaymentSession()) {
         await createPaymentSession({ silent: true })
       }
       checkoutDbg.fn('prefetchCheckoutPayment', 'exit', {
@@ -2042,21 +2049,16 @@ export async function createPaymentSession(options?: { silent?: boolean }) {
     checkoutDbg.fn('createPaymentSession', 'skip', { reason: 'missing orderId' })
     return
   }
-  if (
-    checkoutStore.payment?.clientSecret &&
-    checkoutStore.payment.method === method &&
-    checkoutStore.payment.orderId === orderId
-  ) {
+  if (hasUsableCheckoutPaymentSession() && checkoutStore.payment?.orderId === orderId) {
     checkoutDbg.fn('createPaymentSession', 'skip', { reason: 'payment already exists' })
     return
   }
+  if (checkoutStore.payment && !hasUsableCheckoutPaymentSession()) {
+    checkoutStore.payment = null
+  }
 
   return dedupeAsync(`checkout:paymentSession:${orderId}:${method}`, async () => {
-    if (
-      checkoutStore.payment?.clientSecret &&
-      checkoutStore.payment.method === method &&
-      checkoutStore.payment.orderId === orderId
-    ) {
+    if (hasUsableCheckoutPaymentSession() && checkoutStore.payment?.orderId === orderId) {
       checkoutDbg.fn('createPaymentSession', 'skip', { reason: 'payment already exists' })
       return
     }
@@ -2113,7 +2115,7 @@ export async function prepareCheckoutPayment(options?: { silent?: boolean }) {
     await startCheckout(options)
   }
   const payment = checkoutStore.payment
-  if (!payment || payment.method !== checkoutStore.selectedPaymentMethod) {
+  if (!hasUsableCheckoutPaymentSession() || payment?.method !== checkoutStore.selectedPaymentMethod) {
     await createPaymentSession(options)
   }
   checkoutDbg.fn('prepareCheckoutPayment', 'exit', {

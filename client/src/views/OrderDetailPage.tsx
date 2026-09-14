@@ -1,15 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { ExternalLink } from '@/lib/link-title'
-import { Link, useNavigate, useParam } from '@/lib/navigation'
+import { Link, useParam } from '@/lib/navigation'
 import { useSnapshot } from 'valtio/react'
-import { toast } from 'sonner'
 import {
   fetchOrderDetail,
   fetchOrderRecommendations,
   ordersStore,
-  reorderOrder,
   resetOrderDetail,
 } from '@/features/orders'
 import { formatMoney } from '@/lib/format'
@@ -50,9 +48,7 @@ const LOCALE_DATE: Record<PwaLocale, string> = {
 export function OrderDetailPage() {
   const { locale, t, tParams } = useI18n()
   const id = useParam('id')
-  const navigate = useNavigate()
   const orders = useSnapshot(ordersStore)
-  const [reordering, setReordering] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -66,23 +62,6 @@ export function OrderDetailPage() {
 
   const isCurrentDetail = Boolean(id) && orders.detailId === id && orders.detail != null
   const isLoading = orders.isDetailLoading || (!isCurrentDetail && !orders.detailError)
-
-  async function handleReorder() {
-    if (!id) return
-    setReordering(true)
-    try {
-      const result = await reorderOrder(id)
-      toast.success(t('orders.reorder.success'))
-      if (result.skipped.length > 0) {
-        toast.message(t('orders.reorder.error'))
-      }
-      navigate('/cart')
-    } catch (e) {
-      toast.error(String(e))
-    } finally {
-      setReordering(false)
-    }
-  }
 
   if (orders.detailError && orders.detailId === id) {
     return (
@@ -143,16 +122,6 @@ export function OrderDetailPage() {
               label={paymentStatusLabel(order.paymentStatus, locale)}
               tone={paymentStatusTone(order.paymentStatus)}
             />
-          ) : null}
-          {order.pwaOrderId ? (
-            <button
-              type="button"
-              disabled={reordering}
-              onClick={() => void handleReorder()}
-              className={`${accountDcPrimaryBtnClass} !py-2 !text-xs disabled:opacity-60`}
-            >
-              {reordering ? t('account.orders.table.reordering') : t('orders.detail.reorder')}
-            </button>
           ) : null}
         </div>
 

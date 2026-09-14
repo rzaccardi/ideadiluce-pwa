@@ -19,7 +19,7 @@ import {
   quoteStatusLabelKey,
   quoteStatusTone,
 } from '@/lib/quote-payability'
-import { ListSkeleton } from '@/components/Skeleton'
+import { AccountTableSkeleton } from '@/components/account/AccountTableSkeleton'
 import { PageLoadTransition } from '@/components/motion'
 import { StripeErrorBanner } from '@/components/checkout/stripe-ui/StripeFields'
 import { useI18n } from '@/hooks/use-i18n'
@@ -32,18 +32,16 @@ export function AccountQuotesPage() {
     void fetchQuotesList()
   }, [])
 
-  const isLoading = quotes.isListLoading || quotes.list === null
+  const isLoading = quotes.list === null && !quotes.listError
 
   return (
     <AccountDcPanel title={t('account.quotes.title')} description={t('account.quotes.description')}>
       {quotes.listError ? <StripeErrorBanner message={quotes.listError} /> : null}
 
-      <PageLoadTransition isLoading={isLoading} skeleton={<ListSkeleton />}>
-        {quotes.list && quotes.list.length === 0 ? (
+      <PageLoadTransition isLoading={isLoading} skeleton={<AccountTableSkeleton />}>
+        {isLoading ? null : quotes.list && quotes.list.length === 0 ? (
           <p className="py-8 text-center text-sm text-idl-muted">{t('account.quotes.empty')}</p>
-        ) : null}
-
-        {quotes.list && quotes.list.length > 0 ? (
+        ) : quotes.list && quotes.list.length > 0 ? (
           <div className="flex flex-col gap-3.5">
             {quotes.list.map((q) => {
               const payable = isQuotePayable(q)

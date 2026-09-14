@@ -10,7 +10,6 @@ import {
   ContentPageSkeleton,
   GuideHubPageSkeleton,
   HomePageSkeleton,
-  ListSkeleton,
   ProductDetailSkeleton,
   ProfessionistiPageSkeleton,
   Skeleton,
@@ -21,6 +20,8 @@ import {
   AuthPageSkeleton,
   BrandPageSkeleton,
 } from '@/components/site/skeletons'
+import { AccountTableSkeleton } from '@/components/account/AccountTableSkeleton'
+import { accountDcPanelClass } from '@/components/account/dc/account-dc-styles'
 import { WishlistPageSkeleton } from '@/components/site/skeletons/wishlist-page-skeleton'
 import { CartPageSkeleton } from '@/components/cart/CartPageSkeleton'
 import { ThankYouPageSkeleton } from '@/components/checkout/thank-you/ThankYouPageSkeleton'
@@ -46,7 +47,12 @@ function resolveCategoryLandingVariant(pathname: string): 'design' | 'technical'
 /** Solo corpo pagina account (per `account/loading.tsx` dentro AccountLayout). */
 export function AccountPageContentSkeleton({ route }: { route: BootstrapRoute }) {
   if (route === 'account-orders') {
-    return <ListSkeleton />
+    return (
+      <section className={accountDcPanelClass}>
+        <Skeleton className="mb-5 h-6 w-40" />
+        <AccountTableSkeleton />
+      </section>
+    )
   }
 
   if (route === 'account-order-detail') {
@@ -91,15 +97,30 @@ export function AccountPageContentSkeleton({ route }: { route: BootstrapRoute })
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Skeleton className="h-12 w-full rounded-lg" />
-        <Skeleton className="h-12 w-full rounded-lg" />
+    <div className="flex flex-col gap-[18px]">
+      <div className="hidden gap-4 sm:grid sm:grid-cols-2 lg:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <div
+            key={index}
+            className="rounded-[14px] border border-idl-tech-border bg-idl-tech-panel p-[22px]"
+          >
+            <Skeleton className="h-8 w-10" />
+            <Skeleton className="mt-2 h-3.5 w-24" />
+          </div>
+        ))}
       </div>
-      <div className="rounded-md border border-idl-border bg-idl-tech-panel p-4 shadow-sm shadow-idl-ink/5">
-        <Skeleton className="mb-4 h-5 w-36" />
-        <ListSkeleton count={3} className="border-0 shadow-none" />
-      </div>
+      <section className={accountDcPanelClass}>
+        <Skeleton className="mb-5 h-5 w-36" />
+        <AccountTableSkeleton count={2} />
+      </section>
+      <section className={accountDcPanelClass}>
+        <Skeleton className="mb-5 h-5 w-32" />
+        <AccountTableSkeleton count={2} />
+      </section>
+      <section className={accountDcPanelClass}>
+        <Skeleton className="mb-5 h-5 w-40" />
+        <AccountTableSkeleton count={3} />
+      </section>
     </div>
   )
 }

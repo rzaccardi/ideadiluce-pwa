@@ -19,10 +19,10 @@ import { createProviderPaymentSession } from '../../adapters/payments/paymentPro
 import { getStripePublishableKey, getStripeClientConfig, decodeStripeClientSecret } from '../../lib/stripe-config.js'
 import { parseBankTransferInstructionsJson } from './bankTransferInstructions.js'
 import {
-  isStripeCheckoutSessionOpen,
   retrieveStripeCheckoutSession,
   type StripeLineItemInput,
 } from '../../adapters/payments/stripeCheckoutAdapter.js'
+import { stripeAmountsMatch } from './stripe-line-items.js'
 import { shippingService } from '../shipping/shipping.service.js'
 import { resolveCatalogProduct } from '../catalog/catalogResolver.service.js'
 import { repriceCartFromOdoo } from '../catalog/odooPricing.service.js'
@@ -376,6 +376,11 @@ function isPaymentSessionComplete(payment: PwaPayment): boolean {
     return payment.provider === 'bank_transfer' && payment.instructionsJson != null
   }
   return payment.provider !== 'pending'
+}
+
+function taxLabelFromOrder(order: Pick<PwaOrder, 'metadataJson'>): string | null {
+  const meta = order.metadataJson as { taxLabel?: unknown } | null
+  return typeof meta?.taxLabel === 'string' && meta.taxLabel.trim() ? meta.taxLabel.trim() : null
 }
 
 function formatDisplayOrderNumber(order: Pick<PwaOrder, 'id' | 'odooSaleOrderId' | 'odooSaleOrderName'>): string {
@@ -823,6 +828,11 @@ export const paymentsService = {
       throw new AppError('PAYMENT_ALREADY_COMPLETED', 'Already paid', 'Pagamento già completato.', 409, false)
     }
 
+    const amount = order.amountTotal ?? pricedTotal
+    if (amount <= 0) {
+      throw new AppError('PAYMENT_AMOUNT_INVALID', 'Invalid amount', 'Importo ordine non valido.', 409, false)
+    }
+
     const method = paymentMethodToPrisma(body.paymentMethod)
     let active = await prisma.pwaPayment.findFirst({
       where: {
@@ -834,16 +844,24 @@ export const paymentsService = {
     })
     if (active && isPaymentSessionComplete(active)) {
       if (active.provider === 'stripe' && active.providerSessionId) {
-        let sessionOpen = false
+        let reusable = false
         try {
-          sessionOpen = await isStripeCheckoutSessionOpen(active.providerSessionId)
+          const session = await retrieveStripeCheckoutSession(active.providerSessionId)
+          reusable =
+            session.status === 'open' &&
+            stripeAmountsMatch(session.amount_total ?? 0, amount) &&
+            stripeAmountsMatch(active.amount, amount)
         } catch {
-          sessionOpen = false
+          reusable = false
         }
-        if (sessionOpen) return mapPaymentSession(active)
+        if (reusable) return mapPaymentSession(active)
         await prisma.pwaPayment.update({
           where: { id: active.id },
-          data: { status: 'CANCELLED', failedAt: new Date() },
+          data: {
+            status: 'CANCELLED',
+            failedAt: new Date(),
+            failureReason: 'Sessione Stripe non più allineata all’importo ordine.',
+          },
         })
         active = null
       } else {
@@ -851,12 +869,19 @@ export const paymentsService = {
       }
     }
 
-    const amount = order.amountTotal ?? pricedTotal
-    if (amount <= 0) {
-      throw new AppError('PAYMENT_AMOUNT_INVALID', 'Invalid amount', 'Importo ordine non valido.', 409, false)
-    }
-
     const reusedIncomplete = Boolean(active && !isPaymentSessionComplete(active))
+    if (reusedIncomplete && active && active.amount !== amount) {
+      await prisma.pwaPayment.update({
+        where: { id: active.id },
+        data: {
+          status: 'CANCELLED',
+          failedAt: new Date(),
+          failureReason: 'Importo ordine cambiato prima del pagamento.',
+        },
+      })
+      active = null
+    }
+    const reuseIncompletePayment = Boolean(active && !isPaymentSessionComplete(active))
     let payment: PwaPayment =
       active ??
       (await prisma.pwaPayment.create({
@@ -871,7 +896,7 @@ export const paymentsService = {
       }))
 
     const stripeLines =
-      body.paymentMethod === 'stripe' && !priceLocked
+      body.paymentMethod === 'stripe'
         ? await stripeLineItemsForOrder(req, cartPriced, order.currencyCode)
         : undefined
 
@@ -888,9 +913,10 @@ export const paymentsService = {
         email: order.email,
         correlationId: req.correlationId,
         lineItems: stripeLines,
+        taxLabel: taxLabelFromOrder(order),
       })
     } catch (err) {
-      if (!reusedIncomplete && payment.provider === 'pending') {
+      if (!reuseIncompletePayment && payment.provider === 'pending') {
         await prisma.pwaPayment.delete({ where: { id: payment.id } }).catch(() => {})
       }
       throw err

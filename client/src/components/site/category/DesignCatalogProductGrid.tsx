@@ -35,7 +35,7 @@ export function DesignProductCardMedia({
           alt=""
           fill
           className={cn(
-            'object-contain p-3',
+            'object-contain',
             hoverSrc
               ? 'transition-opacity duration-500 ease-out [@media(hover:hover)]:group-hover:opacity-0'
               : null,

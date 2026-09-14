@@ -24,7 +24,7 @@ import { AccountDcStatCard } from '@/components/account/dc/AccountDcStatCard'
 import { AccountOverviewInvoiceRow } from '@/components/account/AccountOverviewInvoiceRow'
 import { AccountOverviewQuoteRow } from '@/components/account/AccountOverviewQuoteRow'
 import { accountDcPrimaryBtnClass, accountDcPromoClass } from '@/components/account/dc/account-dc-styles'
-import { ListSkeleton } from '@/components/Skeleton'
+import { AccountTableSkeleton } from '@/components/account/AccountTableSkeleton'
 import { PageLoadTransition } from '@/components/motion'
 import { StripeErrorBanner } from '@/components/checkout/stripe-ui/StripeFields'
 import { isQuotePayable } from '@/lib/quote-payability'
@@ -77,6 +77,9 @@ export function AccountOverviewPage() {
     }
   }, [auth.me?.id, auth.me?.isProfessional, auth.me?.customerSegment])
 
+  const quotesLoading = quotes.list === null && !quotes.listError
+  const invoicesLoading = invoices.list === null && !invoices.listError
+  const ordersLoading = orders.list === null && !orders.listError
   const orderList = orders.list ?? []
   const quoteList = quotes.list ?? []
   const invoiceList = invoices.list ?? []
@@ -187,10 +190,10 @@ export function AccountOverviewPage() {
       >
         {quotes.listError ? <StripeErrorBanner message={quotes.listError} /> : null}
         <PageLoadTransition
-          isLoading={quotes.isListLoading || quotes.list === null}
-          skeleton={<ListSkeleton count={2} />}
+          isLoading={quotesLoading}
+          skeleton={<AccountTableSkeleton count={2} />}
         >
-          {recentQuotes.length > 0 ? (
+          {quotesLoading ? null : recentQuotes.length > 0 ? (
             <div className="flex flex-col gap-3.5">
               {recentQuotes.map((quote) => (
                 <AccountOverviewQuoteRow key={quote.id} quote={quote} compact />
@@ -222,10 +225,10 @@ export function AccountOverviewPage() {
       >
         {invoices.listError ? <StripeErrorBanner message={invoices.listError} /> : null}
         <PageLoadTransition
-          isLoading={invoices.isListLoading || invoices.list === null}
-          skeleton={<ListSkeleton count={2} />}
+          isLoading={invoicesLoading}
+          skeleton={<AccountTableSkeleton count={2} />}
         >
-          {recentInvoices.length > 0 ? (
+          {invoicesLoading ? null : recentInvoices.length > 0 ? (
             <div className="flex flex-col gap-3.5">
               {recentInvoices.map((invoice) => (
                 <AccountOverviewInvoiceRow key={invoice.id} invoice={invoice} />
@@ -253,43 +256,39 @@ export function AccountOverviewPage() {
 
       {orders.listError ? <StripeErrorBanner message={orders.listError} /> : null}
 
-      <PageLoadTransition
-        isLoading={orders.isListLoading || orders.list === null}
-        skeleton={<ListSkeleton />}
+      <AccountDcPanel
+        title={t('account.overview.recentOrders')}
+        action={
+          orderList.length > 0 ? (
+            <Link
+              to="/account/orders"
+              className="text-[13px] font-bold text-idl-brass no-underline hover:underline"
+            >
+              {t('account.overview.myOrders')} →
+            </Link>
+          ) : null
+        }
       >
-        {recentOrders.length > 0 ? (
-          <AccountDcPanel
-            title={t('account.overview.recentOrders')}
-            action={
-              orderList.length > 0 ? (
-                <Link
-                  to="/account/orders"
-                  className="text-[13px] font-bold text-idl-brass no-underline hover:underline"
-                >
-                  {t('account.overview.myOrders')} →
-                </Link>
-              ) : null
-            }
-          >
+        <PageLoadTransition
+          isLoading={ordersLoading}
+          skeleton={<AccountTableSkeleton count={3} />}
+        >
+          {ordersLoading ? null : recentOrders.length > 0 ? (
             <div className="flex flex-col gap-3.5">
               {recentOrders.map((order) => (
                 <AccountDcOrderCard key={order.id} order={order} />
               ))}
             </div>
-          </AccountDcPanel>
-        ) : null}
-
-        {orderList.length === 0 ? (
-          <AccountDcPanel title={t('account.overview.recentOrders')}>
+          ) : (
             <div className="py-6 text-center">
               <p className="text-sm font-medium text-idl-graphite">{t('account.overview.noOrders')}</p>
               <Link to="/negozio" className={`mt-6 inline-flex ${accountDcPrimaryBtnClass}`}>
                 {t('account.overview.browseCatalog')}
               </Link>
             </div>
-          </AccountDcPanel>
-        ) : null}
-      </PageLoadTransition>
+          )}
+        </PageLoadTransition>
+      </AccountDcPanel>
     </div>
   )
 }

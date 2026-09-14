@@ -199,8 +199,10 @@ export function OrdersListTable({
               <Badge variant="destructive" className="font-normal">
                 Sync fallita
               </Badge>
+            ) : o.odooOrderName ? (
+              o.odooOrderName
             ) : o.odooSaleOrderId != null ? (
-              `#${o.odooSaleOrderId}`
+              `#IDL-${new Date(o.createdAt).getFullYear()}-${String(o.odooSaleOrderId).padStart(5, '0')}`
             ) : (
               '—'
             )}

@@ -1,10 +1,7 @@
 'use client'
 
-import { Link, useNavigate } from '@/lib/navigation'
-import { useState } from 'react'
-import { toast } from 'sonner'
+import { Link } from '@/lib/navigation'
 import type { OrderDTO } from '@/types/dto'
-import { reorderOrder } from '@/features/orders'
 import { formatMoney } from '@/lib/format'
 import {
   formatOrderRef,
@@ -36,21 +33,6 @@ function formatOrderDate(value: string, locale: PwaLocale) {
 
 export function AccountOrdersTable({ orders }: { orders: readonly OrderDTO[] }) {
   const { t, locale } = useI18n()
-  const navigate = useNavigate()
-  const [reorderingId, setReorderingId] = useState<string | null>(null)
-
-  async function handleReorder(orderId: string) {
-    setReorderingId(orderId)
-    try {
-      await reorderOrder(orderId)
-      toast.success(t('orders.reorder.success'))
-      navigate('/cart')
-    } catch (e) {
-      toast.error(String(e))
-    } finally {
-      setReorderingId(null)
-    }
-  }
 
   return (
     <div className="w-full overflow-x-auto rounded-md border border-zinc-200 bg-idl-tech-panel">
@@ -110,26 +92,12 @@ export function AccountOrdersTable({ orders }: { orders: readonly OrderDTO[] }) 
                   {total}
                 </td>
                 <td className="px-4 py-3.5 text-right">
-                  <div className="flex flex-col items-end gap-1">
-                    <Link
-                      to={`/account/orders/${order.id}`}
-                      className="text-zinc-900 underline decoration-zinc-300 underline-offset-2 hover:decoration-zinc-900"
-                    >
-                      {t('account.orders.table.detail')}
-                    </Link>
-                    {order.pwaOrderId ? (
-                      <button
-                        type="button"
-                        disabled={reorderingId === order.id}
-                        onClick={() => void handleReorder(order.id)}
-                        className="text-sm text-zinc-600 underline decoration-zinc-300 underline-offset-2 hover:text-zinc-900 disabled:opacity-50"
-                      >
-                        {reorderingId === order.id
-                          ? t('account.orders.table.reordering')
-                          : t('account.orders.table.reorder')}
-                      </button>
-                    ) : null}
-                  </div>
+                  <Link
+                    to={`/account/orders/${order.id}`}
+                    className="text-zinc-900 underline decoration-zinc-300 underline-offset-2 hover:decoration-zinc-900"
+                  >
+                    {t('account.orders.table.detail')}
+                  </Link>
                 </td>
               </tr>
             )

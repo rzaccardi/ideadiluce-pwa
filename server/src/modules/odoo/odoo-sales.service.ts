@@ -175,7 +175,13 @@ async function saleDocumentList(ctx, query, defaultStates) {
         domain.push(['date_order', '>=', dateFloorForDays(query.days)]);
     const q = query.q?.trim();
     if (q) {
-        domain.push('|', ['name', 'ilike', q], ['partner_id', 'ilike', q]);
+        const asId = Number(q);
+        if (Number.isInteger(asId) && asId > 0) {
+            domain.push('|', '|', ['id', '=', asId], ['name', 'ilike', q], ['partner_id', 'ilike', q]);
+        }
+        else {
+            domain.push('|', ['name', 'ilike', q], ['partner_id', 'ilike', q]);
+        }
     }
     const offset = (query.page - 1) * query.pageSize;
     const readFields = await saleOrderReadFields(ctx);

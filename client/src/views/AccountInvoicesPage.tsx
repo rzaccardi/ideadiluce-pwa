@@ -14,7 +14,7 @@ import type { InvoiceDTO } from '@/types/dto'
 import { AccountDcPanel } from '@/components/account/dc/AccountDcPanel'
 import { AccountDcStatusPill } from '@/components/account/dc/AccountDcStatusPill'
 import { formatMoney } from '@/lib/format'
-import { ListSkeleton } from '@/components/Skeleton'
+import { AccountTableSkeleton } from '@/components/account/AccountTableSkeleton'
 import { PageLoadTransition } from '@/components/motion'
 import { StripeErrorBanner } from '@/components/checkout/stripe-ui/StripeFields'
 import { ExternalLink } from '@/lib/link-title'
@@ -48,14 +48,12 @@ export function AccountInvoicesPage() {
       {invoices.listError ? <StripeErrorBanner message={invoices.listError} /> : null}
 
       <PageLoadTransition
-        isLoading={invoices.isListLoading || list === null}
-        skeleton={<ListSkeleton />}
+        isLoading={list === null && !invoices.listError}
+        skeleton={<AccountTableSkeleton />}
       >
-        {list && list.length === 0 ? (
+        {list == null ? null : list.length === 0 ? (
           <p className="py-8 text-center text-sm text-idl-muted">{t('account.invoices.empty')}</p>
-        ) : null}
-
-        {list && list.length > 0 ? (
+        ) : (
           <div className="flex flex-col gap-3.5">
             {list.map((inv) => {
               const paymentLabel = invoicePaymentLabel(inv.paymentState, locale)
@@ -113,7 +111,7 @@ export function AccountInvoicesPage() {
               )
             })}
           </div>
-        ) : null}
+        )}
       </PageLoadTransition>
     </AccountDcPanel>
   )

@@ -2,10 +2,14 @@ import { z } from 'zod'
 
 const orderStatusSchema = z.enum([
   'CART_CREATED',
+  'DRAFT',
   'CHECKOUT_STARTED',
+  'CHECKOUT_LOCKED',
   'PAYMENT_STARTED',
   'PAYMENT_PENDING',
   'PAID',
+  'PAID_SYNC_PENDING',
+  'SYNCED',
   'PAYMENT_FAILED',
   'ABANDONED',
   'CANCELLED',
