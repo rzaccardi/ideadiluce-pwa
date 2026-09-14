@@ -236,6 +236,7 @@ export function createApiV2OdooCustomerAdapter(): OdooCustomerAdapter {
                 line2: input.shippingAddress.line2,
                 city: input.shippingAddress.city ?? '',
                 postalCode: input.shippingAddress.postalCode ?? '',
+                province: input.shippingAddress.province,
                 country: input.shippingAddress.country ?? 'IT',
                 phone: input.phone ?? input.shippingAddress.phone,
               }

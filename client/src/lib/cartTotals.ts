@@ -77,6 +77,26 @@ export function cartTotalCents(
   return subtotal + tax + shipping
 }
 
+/** Totale da mostrare in UI: null se le righe non hanno ancora un prezzo (evita flash a 0,00 €). */
+export function cartDisplayTotalCents(
+  cart: CartLike,
+  selectedShippingAmountCents?: number | null,
+  liveTax?: { taxCents: number; netCents?: number } | null,
+): number | null {
+  if (cart.items.length === 0) return null
+  const fromLines = subtotalFromLines(cart)
+  const total = cartTotalCents(cart, selectedShippingAmountCents, liveTax)
+  if (total === 0 && fromLines === 0) {
+    const hasKnownPrice = purchasableLines(cart).some(
+      (line) =>
+        (line.lineTotalEstimateCents != null && line.lineTotalEstimateCents > 0) ||
+        (line.clientUnitPriceEstimateCents != null && line.clientUnitPriceEstimateCents > 0),
+    )
+    if (!hasKnownPrice) return null
+  }
+  return total
+}
+
 export function cartPurchasableItemCount(cart: CartLike): number {
   return purchasableLines(cart).reduce((n, i) => n + i.quantity, 0)
 }

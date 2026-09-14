@@ -82,8 +82,9 @@ export async function fetchFedexRates(
       recipient: {
         address: {
           postalCode: address.postalCode,
-          countryCode: address.country.toUpperCase(),
           city: address.city,
+          stateOrProvinceCode: address.province || undefined,
+          countryCode: address.country.toUpperCase(),
         },
       },
       pickupType: 'USE_SCHEDULED_PICKUP',

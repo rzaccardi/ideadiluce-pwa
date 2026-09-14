@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { ExpressCheckoutElement, useCheckoutElements } from '@stripe/react-stripe-js/checkout'
 import type { StripeExpressCheckoutElementConfirmEvent } from '@stripe/stripe-js'
 import { useI18n } from '@/hooks/use-i18n'
+
 type Props = {
   orderId: string
   onError?: (message: string) => void

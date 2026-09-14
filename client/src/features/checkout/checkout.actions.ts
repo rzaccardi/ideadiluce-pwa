@@ -36,7 +36,7 @@ import {
 } from '@/lib/shipping-addresses'
 import { loadShippingAddresses } from '@/features/account'
 import { dedupeAsync } from '@/lib/async-cache'
-import { isCheckoutAddressValid, mergeResolvedStreetNumber } from '@/lib/checkout-address.validators'
+import { isCheckoutAddressValid, mergeResolvedStreetNumber, isCheckoutPhoneValid } from '@/lib/checkout-address.validators'
 import { fetchCart, shouldRepriceCartOnLoad, waitForPendingCartMutations } from '@/features/cart'
 import { cartStore } from '@/features/cart/cart.store'
 import {
@@ -70,6 +70,14 @@ function billingAddressPayload() {
   return { ...checkoutStore.draft.billing }
 }
 
+export function getCheckoutBillingAddress(): AddressInput {
+  return billingAddressPayload()
+}
+
+export function getCheckoutShippingAddress(): AddressInput {
+  return shippingAddressPayload()
+}
+
 function shippingAddressForQuotes() {
   const base = shippingAddressPayload()
   return {
@@ -85,12 +93,14 @@ function destinationComplete(address: AddressInput) {
       address.city.trim() &&
       address.postalCode.trim() &&
       address.country.trim() &&
-      (address.isSnc || address.streetNumber.trim()),
+      (address.isSnc || address.streetNumber.trim()) &&
+      (address.country !== 'IT' || address.province.trim()) &&
+      isCheckoutPhoneValid(address.phone ?? ''),
   )
 }
 
 function shippingFingerprint(address: AddressInput) {
-  return [address.line1, address.streetNumber, address.isSnc ? 'snc' : '', address.city, address.postalCode, address.country]
+  return [address.line1, address.streetNumber, address.isSnc ? 'snc' : '', address.city, address.postalCode, address.province, address.country]
     .map((v) => String(v).trim().toLowerCase())
     .join('|')
 }
@@ -543,13 +553,14 @@ function ensureCheckoutEmailInDraft(): string {
   return email
 }
 
-/** true se nome e cognome sono già nel profilo o nell'indirizzo salvato. */
+/** true se nome, cognome e telefono sono già nel profilo o nell'indirizzo salvato. */
 export function hasCheckoutContactFromProfile(): boolean {
   const user = authStore.me
   if (!user) return false
   const firstName = user.firstName?.trim() || user.shippingAddress?.firstName?.trim() || ''
   const lastName = user.lastName?.trim() || user.shippingAddress?.lastName?.trim() || ''
-  return Boolean(firstName && lastName)
+  const phone = user.phone?.trim() || user.shippingAddress?.phone?.trim() || ''
+  return Boolean(firstName && lastName && isCheckoutPhoneValid(phone))
 }
 
 function syncCheckoutContactFromProfile() {
@@ -558,11 +569,14 @@ function syncCheckoutContactFromProfile() {
   const ship = checkoutStore.draft.shipping
   const profileFirst = user?.firstName?.trim() || user?.shippingAddress?.firstName?.trim() || ''
   const profileLast = user?.lastName?.trim() || user?.shippingAddress?.lastName?.trim() || ''
+  const profilePhone = user?.phone?.trim() || user?.shippingAddress?.phone?.trim() || ''
 
   if (!bill.firstName.trim() && profileFirst) bill.firstName = profileFirst
   if (!bill.lastName.trim() && profileLast) bill.lastName = profileLast
+  if (!(bill.phone ?? '').trim() && profilePhone) bill.phone = profilePhone
   if (!ship.firstName.trim()) ship.firstName = bill.firstName.trim() || profileFirst
   if (!ship.lastName.trim()) ship.lastName = bill.lastName.trim() || profileLast
+  if (!(ship.phone ?? '').trim()) ship.phone = bill.phone?.trim() || profilePhone
 }
 
 function syncShippingContactFromBillingIfNeeded() {
@@ -826,6 +840,7 @@ export function prefillCheckoutFromAuthUser() {
     billing.line2 = shipAddr.line2
     billing.city = shipAddr.city
     billing.postalCode = shipAddr.postalCode
+    billing.province = shipAddr.province
     billing.country = shipAddr.country
   }
   if (shipAddr.firstName.trim()) billing.firstName = shipAddr.firstName
@@ -866,6 +881,7 @@ function applyCheckoutShippingAddressSelection() {
     billing.line2 = parent.line2 ?? ''
     billing.city = parent.city
     billing.postalCode = parent.postalCode
+    billing.province = parent.province ?? ''
     billing.country = parent.country
     if (parent.phone) billing.phone = parent.phone
   }
@@ -1445,6 +1461,7 @@ export async function applyResolvedAddress(kind: 'billing' | 'shipping', resolve
       line2: resolved.line2 ?? current.line2 ?? '',
       city: resolved.city,
       postalCode: resolved.postalCode,
+      province: resolved.province ?? '',
       country: resolved.country,
     },
     { skipInvalidation: true },
@@ -2074,6 +2091,10 @@ export async function createPaymentSession(options?: { silent?: boolean }) {
         checkoutDbg.fn('createPaymentSession', 'skip', { reason: 'stale order after session' })
         return
       }
+      if (checkoutStore.selectedPaymentMethod !== method) {
+        checkoutDbg.fn('createPaymentSession', 'skip', { reason: 'stale method after session' })
+        return
+      }
       checkoutStore.payment = payment
       const publishableKey = checkoutStore.payment?.publishableKey
       if (publishableKey) {
@@ -2237,6 +2258,7 @@ export async function resumeCheckoutForOrder(orderId: string) {
       streetNumber: detail.shippingAddress.streetNumber ?? '',
       isSnc: detail.shippingAddress.isSnc ?? false,
       line2: detail.shippingAddress.line2 ?? '',
+      province: detail.shippingAddress.province ?? '',
       phone: detail.shippingAddress.phone ?? '',
       courierNotes: detail.shippingAddress.courierNotes ?? '',
     }

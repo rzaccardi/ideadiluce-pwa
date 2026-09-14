@@ -150,7 +150,7 @@ export async function checkoutRegister(input: {
   password: string
   firstName: string
   lastName: string
-  phone?: string
+  phone: string
   customerSegment?: 'retail' | 'business'
 }) {
   authStore.isLoading = true

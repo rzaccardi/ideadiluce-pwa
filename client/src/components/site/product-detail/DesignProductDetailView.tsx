@@ -4,8 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from '@/lib/navigation'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { useI18n } from '@/hooks/use-i18n'
-import { formatMoney } from '@/lib/format'
-import { formatPriceDisplayModeLabel } from '@/lib/price-display'
+import { ProductPrice, useFormatCatalogMoney } from '@/components/product/ProductPrice'
 import type { ProductCardDTO, ProductDetailDTO } from '@/types/dto'
 import { ProductDescriptionHtml } from '@/components/product/ProductDescriptionHtml'
 import { ProductRestockNotify } from '@/components/product/ProductRestockNotify'
@@ -80,6 +79,7 @@ function hasHtmlMarkup(raw: string | null | undefined): boolean {
 export function DesignProductDetailView({ product, relatedProducts, state }: Props) {
   const lp = useLocalePath()
   const { tParams } = useI18n()
+  const formatCatalogMoney = useFormatCatalogMoney()
   const relatedSlider = useDesignRelatedSlider(product, relatedProducts)
   const {
     galleryImages,
@@ -116,9 +116,6 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
     collectProductIdentifierFields(product, selectedVariant, { includeBrand: false }).find((field) => field.key === 'ean')
       ?.value ?? null
   const brandLabel = product.brand?.name?.toUpperCase() ?? 'BRAND'
-  const priceModeLabel = formatPriceDisplayModeLabel(
-    selectedVariant?.priceDisplayMode ?? product.priceDisplayMode,
-  )
 
   const productDocuments = useMemo(
     () => mergeProductDocuments(product, selectedVariant),
@@ -331,21 +328,19 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
               ) : null}
             </div>
 
-            <div className="flex flex-wrap items-baseline gap-2 sm:gap-3.5">
-              <span className="font-serif text-[26px] font-medium text-idl-ink sm:text-[34px]">
-                {formatMoney(
-                  selectedAccessories.length > 0 ? combinedPriceCents : displayPriceCents,
-                  product.currency,
-                )}
-              </span>
-              {priceModeLabel ? (
-                <span className="text-[13.5px] text-idl-ink-muted">{priceModeLabel}</span>
-              ) : null}
+            <div className="flex flex-col gap-1">
+              <ProductPrice
+                netCents={selectedAccessories.length > 0 ? combinedPriceCents : displayPriceCents}
+                currency={product.currency}
+                layout="inline"
+                amountClassName="font-serif text-[26px] font-medium text-idl-ink sm:text-[34px]"
+                captionClassName="text-[13.5px] text-idl-ink-muted"
+              />
               {selectedAccessories.length > 0 ? (
-                <span className="w-full text-[12.5px] text-idl-ink-muted sm:w-auto">
+                <span className="text-[12.5px] text-idl-ink-muted">
                   {tParams('product.accessories.priceIncludes', {
-                    product: formatMoney(displayPriceCents, product.currency),
-                    accessories: formatMoney(accessoriesTotalCents, product.currency),
+                    product: formatCatalogMoney(displayPriceCents, product.currency),
+                    accessories: formatCatalogMoney(accessoriesTotalCents, product.currency),
                   })}
                 </span>
               ) : null}
@@ -419,7 +414,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
               <p className="mb-3.5 text-[12.5px] text-idl-ink-muted">
                 {tParams('product.accessories.includedTotal', {
                   count: selectedAccessoryCount,
-                  total: formatMoney(combinedPriceCents, product.currency),
+                  total: formatCatalogMoney(combinedPriceCents, product.currency),
                 })}
               </p>
             ) : null}

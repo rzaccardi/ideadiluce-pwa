@@ -1,5 +1,5 @@
 import { prisma } from '../../lib/prisma.js'
-import { createOdooCustomerAdapter } from '../../adapters/odoo/odooCustomerAdapter.js'
+import { createOdooCustomerAdapter, type OdooCustomerProfile } from '../../adapters/odoo/odooCustomerAdapter.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import type { TestCheckoutAddressInput } from '../integrations/integrations.validators.js'
 import { provisionOdooAccountAfterOrder } from './odoo-account-sync.service.js'
@@ -25,8 +25,9 @@ function parseShippingAddress(json: unknown): TestCheckoutAddressInput | null {
     line2: typeof address.line2 === 'string' ? address.line2 : undefined,
     city: typeof address.city === 'string' ? address.city : '',
     postalCode: typeof address.postalCode === 'string' ? address.postalCode : '',
+    province: typeof address.province === 'string' ? address.province : '',
     country: typeof address.country === 'string' ? address.country : 'IT',
-    phone: typeof address.phone === 'string' ? address.phone : undefined,
+    phone: typeof address.phone === 'string' ? address.phone : '',
     courierNotes: typeof address.courierNotes === 'string' ? address.courierNotes : undefined,
   }
 }
@@ -42,7 +43,7 @@ export async function finalizeGuestAccountForOrder(orderId: string): Promise<voi
   const ctx: OdooCallContext = { correlationId: `guest-account:${orderId}` }
   const shipping = parseShippingAddress(order.shippingAddressJson)
 
-  let odooProfile = shipping
+  let odooProfile: OdooCustomerProfile | null = shipping
   if (!odooProfile) {
     odooProfile = await customerAdapter.getCustomerProfileByEmail(ctx, order.email)
   }

@@ -42,9 +42,13 @@ async function commercialPartnerId(
 }
 
 async function persistDefaultAddress(userId: string, address: UserAddressDTO) {
+  const phone = address.phone?.trim()
   await prisma.user.update({
     where: { id: userId },
-    data: { shippingAddressJson: jsonAddress(address) },
+    data: {
+      shippingAddressJson: jsonAddress(address),
+      ...(phone ? { phone } : {}),
+    },
   })
 }
 

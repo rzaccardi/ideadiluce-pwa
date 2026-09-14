@@ -7,7 +7,7 @@ import { useLocale } from '@/context/locale-context'
 import { addItem } from '@/features/cart'
 import { buildCartAddHintFromCard } from '@/features/cart/cart-add-hint'
 import { removeWishlistItem } from '@/features/wishlist'
-import { formatMoney } from '@/lib/format'
+import { ProductPrice } from '@/components/product/ProductPrice'
 import { Button } from '@/components/Button'
 import { useI18n } from '@/hooks/use-i18n'
 import { productCardObjectFitClass } from '@/lib/product-image-fit'
@@ -121,9 +121,13 @@ export function WishlistItemCard({
         >
           {product.name}
         </Link>
-        <p className="mt-1 text-base font-semibold text-idl-graphite">
-          {formatMoney(product.priceCents, product.currency)}
-        </p>
+        <ProductPrice
+          netCents={product.priceCents}
+          currency={product.currency}
+          className="mt-1"
+          amountClassName="text-base font-semibold text-idl-graphite"
+          captionClassName="text-xs text-idl-muted"
+        />
         {variantRef ? (
           <p className="mt-1 text-xs text-idl-muted">
             {t('product.variantLabel')} {variantRef}

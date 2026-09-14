@@ -45,7 +45,9 @@ function placeholderAddress(firstName: string, lastName: string): TestCheckoutAd
     isSnc: true,
     city: '—',
     postalCode: '00000',
+    province: '',
     country: 'IT',
+    phone: '',
   }
 }
 
@@ -560,6 +562,7 @@ export const quotesService = {
           line2: profile.line2 ?? undefined,
           city: profile.city,
           postalCode: profile.postalCode,
+          province: profile.province,
           country: profile.country,
           phone: profile.phone,
         }

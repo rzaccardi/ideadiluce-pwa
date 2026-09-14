@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { splitHighlightSegments } from '@/lib/catalog-search-highlight'
 import { suggestionOptionId } from '@/lib/catalog-search-palette'
-import { formatMoney } from '@/lib/format'
+import { ProductPrice } from '@/components/product/ProductPrice'
 import { cn } from '@/utils/cn'
 import type { CatalogSearchSuggestion, CatalogSearchSuggestionKind } from '@/lib/catalog-search-suggestions'
 import { productSearchThumbObjectFitClass } from '@/lib/product-image-fit'
@@ -176,9 +176,13 @@ export function CatalogSearchSuggestionRow({
           ) : null}
         </div>
         {product?.priceCents != null ? (
-          <div className="shrink-0 text-right text-[13px] font-semibold tabular-nums text-idl-ink">
-            {formatMoney(product.priceCents, product.currency ?? 'EUR')}
-          </div>
+          <ProductPrice
+            netCents={product.priceCents}
+            currency={product.currency ?? 'EUR'}
+            className="shrink-0 items-end text-right"
+            amountClassName="text-[13px] font-semibold tabular-nums text-idl-ink"
+            captionClassName="text-[10px] font-medium text-idl-muted"
+          />
         ) : null}
       </button>
     )

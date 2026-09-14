@@ -118,6 +118,7 @@ export function CheckoutAddressSection({
     onChange('line2', resolved.line2 ?? '')
     onChange('city', resolved.city)
     onChange('postalCode', resolved.postalCode)
+    onChange('province', resolved.province ?? '')
     onChange('country', resolved.country)
   }
 
@@ -159,6 +160,7 @@ export function CheckoutAddressSection({
     onChange('isSnc', false)
     onChange('city', '')
     onChange('postalCode', '')
+    onChange('province', '')
   }
 
   const civicoRequired = needsStreetNumberChoice(address)
@@ -199,7 +201,7 @@ export function CheckoutAddressSection({
           </div>
 
           <div>
-            <StripeFieldLabel htmlFor={`${prefix}-phone`}>{t('checkout.address.phoneOptional')}</StripeFieldLabel>
+            <StripeFieldLabel htmlFor={`${prefix}-phone`}>{t('common.phone')}</StripeFieldLabel>
             <StripeFieldGroup>
               <StripeControlledInput
                 id={`${prefix}-phone`}
@@ -208,6 +210,7 @@ export function CheckoutAddressSection({
                 placeholder="+39 333 1234567"
                 value={address.phone ?? ''}
                 autoComplete="tel"
+                required
                 onValueChange={(value) => onChange('phone', value)}
               />
             </StripeFieldGroup>

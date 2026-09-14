@@ -20,13 +20,30 @@ import { writeStructuredIntegrationLog } from '../../lib/integration-log-context
 import { sendPwaMail } from '../../adapters/odoo/odooMailAdapter.js'
 import { publicAppUrl } from '../../lib/mail.js'
 import { orderTransactionalMail } from '../orders/order-transactional-mail.service.js'
+import { canStripeReturnMutateOrder } from './payment-session-guard.js'
+import { healBankTransferFalselyMarkedFailed } from './bank-transfer-order-heal.js'
 
 const paymentUrlAdapter = createOdooPaymentAdapter()
 const orderAdapter = createOdooOrderAdapter()
 
 export async function finalizeStripeCheckoutByOrderId(req: Request, orderId: string) {
+  await healBankTransferFalselyMarkedFailed(orderId)
+
+  const order = await prisma.pwaOrder.findUnique({
+    where: { id: orderId },
+    select: { paymentMethod: true, orderStatus: true },
+  })
+  if (!order || !canStripeReturnMutateOrder(order)) {
+    return { orderId, alreadyProcessed: false }
+  }
+
   const payment = await prisma.pwaPayment.findFirst({
-    where: { orderId, provider: 'stripe', providerSessionId: { not: null } },
+    where: {
+      orderId,
+      provider: 'stripe',
+      providerSessionId: { not: null },
+      status: { in: ['CREATED', 'PENDING', 'AUTHORIZED'] },
+    },
     orderBy: { createdAt: 'desc' },
   })
   if (!payment?.providerSessionId) {
@@ -48,18 +65,28 @@ export async function finalizeStripeCheckout(
   if (session.payment_status !== 'paid') {
     const failedStatuses = ['unpaid', 'no_payment_required']
     if (failedStatuses.includes(session.payment_status)) {
-      await prisma.pwaOrder.update({
+      const current = await prisma.pwaOrder.findUnique({
         where: { id: pwaOrderId },
-        data: {
-          orderStatus: 'PAYMENT_FAILED',
-          paymentStatus: 'FAILED',
-          lastPaymentError: 'Pagamento non completato o rifiutato.',
-        },
+        select: { paymentMethod: true, orderStatus: true },
       })
-      await prisma.pwaPayment.updateMany({
-        where: { orderId: pwaOrderId, provider: 'stripe' },
-        data: { status: 'FAILED', failedAt: new Date() },
-      })
+      if (current && canStripeReturnMutateOrder(current)) {
+        await prisma.pwaOrder.update({
+          where: { id: pwaOrderId },
+          data: {
+            orderStatus: 'PAYMENT_FAILED',
+            paymentStatus: 'FAILED',
+            lastPaymentError: 'Pagamento non completato o rifiutato.',
+          },
+        })
+        await prisma.pwaPayment.updateMany({
+          where: {
+            orderId: pwaOrderId,
+            provider: 'stripe',
+            status: { in: ['CREATED', 'PENDING', 'AUTHORIZED'] },
+          },
+          data: { status: 'FAILED', failedAt: new Date() },
+        })
+      }
     }
     return { orderId: pwaOrderId, alreadyProcessed: false }
   }
@@ -372,6 +399,7 @@ export async function finalizeStripeCheckout(
         snapshotJson: {
           pwaOrderId: updated.id,
           odooPortalUrl: portalUrl,
+          ...(updated.odooSaleOrderName ? { odooSaleOrderName: updated.odooSaleOrderName } : {}),
         },
       },
       update: {
@@ -382,6 +410,7 @@ export async function finalizeStripeCheckout(
         snapshotJson: {
           pwaOrderId: updated.id,
           odooPortalUrl: portalUrl,
+          ...(updated.odooSaleOrderName ? { odooSaleOrderName: updated.odooSaleOrderName } : {}),
         },
       },
     })

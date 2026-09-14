@@ -3,7 +3,7 @@ import {
   getProductAvailabilityStatus,
   resolveAvailabilityData,
 } from '@/lib/product-availability'
-import { getSiteUrl } from '@/lib/env'
+import { catalogGrossCents } from '@/lib/price-display'
 import { COMPANY_FACEBOOK_URL } from '@/lib/company-contact'
 import { HOME_SEO_DESCRIPTION } from '@/lib/seo/home-metadata'
 import { localizePath, type PwaLocale } from '@/lib/locale'
@@ -26,7 +26,7 @@ export function buildProductJsonLd(
   const availability = getProductAvailabilityStatus({
     availability: resolveAvailabilityData(product, selectedVariant),
   })
-  const priceCents = selectedVariant?.priceCents ?? product.priceCents
+  const priceCents = catalogGrossCents(selectedVariant?.priceCents ?? product.priceCents)
   const ean = product.ean ?? selectedVariant?.ean ?? undefined
 
   return {

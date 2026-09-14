@@ -1,5 +1,6 @@
 import type { UserAddressDTO, UserDTO, UserShippingAddressDTO } from '@/types/dto'
 import { formatStreetLine } from '@/lib/checkout-address.validators'
+import { formatAddressLocality } from '@/lib/address'
 
 export type AccountProfilePrefill = {
   firstName: string
@@ -55,7 +56,7 @@ export function emptyAccountProfilePrefill(): AccountProfilePrefill {
 
 function formatAccountAddressLine(address: UserAddressDTO | null | undefined): string {
   if (!address?.line1?.trim()) return ''
-  const locality = [address.postalCode, address.city].filter(Boolean).join(' ')
+  const locality = formatAddressLocality(address)
   return [formatStreetLine(address), address.line2?.trim(), locality].filter(Boolean).join(', ')
 }
 

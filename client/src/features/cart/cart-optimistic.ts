@@ -68,19 +68,31 @@ export function cartLineMatchesAdd(
   return productMatch && variantMatch
 }
 
+function resolveOptimisticUnitPrice(
+  hint?: CartAddProductHint,
+  existing?: CartItemDTO,
+): number | null {
+  const fromHint = hint?.unitPriceCents
+  if (fromHint != null && fromHint > 0) return fromHint
+  const fromLine = existing?.clientUnitPriceEstimateCents
+  if (fromLine != null && fromLine > 0) return fromLine
+  return null
+}
+
 function recountCart(cart: CartDTO): CartDTO {
   const items = cart.items
   const itemCount = items.reduce((sum, line) => sum + line.quantity, 0)
-  const purchasable = items.filter((line) => line.purchasable)
-  const subtotal = purchasable.reduce((sum, line) => sum + (line.lineTotalEstimateCents ?? 0), 0)
+  const purchasable = items.filter((line) => line.purchasable !== false)
+  const priced = purchasable.filter((line) => line.lineTotalEstimateCents != null)
+  const subtotal = priced.reduce((sum, line) => sum + (line.lineTotalEstimateCents ?? 0), 0)
   const tax = cart.estimatedTax ?? 0
   const shipping = cart.estimatedShipping ?? 0
   return {
     ...cart,
     itemCount,
     purchasableItemCount: purchasable.reduce((sum, line) => sum + line.quantity, 0),
-    estimatedSubtotal: subtotal,
-    estimatedTotal: subtotal + tax + shipping,
+    estimatedSubtotal: priced.length > 0 ? subtotal : cart.estimatedSubtotal,
+    estimatedTotal: priced.length > 0 ? subtotal + tax + shipping : cart.estimatedTotal,
   }
 }
 
@@ -103,12 +115,20 @@ export function applyOptimisticAdd(input: {
   const existing = base.items.find((line) =>
     cartLineMatchesAdd(line, input.productRef, variantRef, hint),
   )
-  const unitPriceCents = hint?.unitPriceCents ?? existing?.clientUnitPriceEstimateCents ?? 0
+  const unitPriceCents = resolveOptimisticUnitPrice(hint, existing)
 
   if (existing) {
     existing.quantity += input.quantity
-    existing.clientUnitPriceEstimateCents = unitPriceCents
-    existing.lineTotalEstimateCents = unitPriceCents * existing.quantity
+    if (unitPriceCents != null) {
+      existing.clientUnitPriceEstimateCents = unitPriceCents
+      existing.lineTotalEstimateCents = unitPriceCents * existing.quantity
+    } else if (
+      existing.clientUnitPriceEstimateCents != null &&
+      existing.clientUnitPriceEstimateCents > 0
+    ) {
+      existing.lineTotalEstimateCents =
+        existing.clientUnitPriceEstimateCents * existing.quantity
+    }
     existing.purchasable = true
     existing.availabilityStatus = 'available'
     existing.availability = optimisticAvailability()
@@ -128,7 +148,7 @@ export function applyOptimisticAdd(input: {
     variantRef: resolvedVariantRef,
     quantity: input.quantity,
     clientUnitPriceEstimateCents: unitPriceCents,
-    lineTotalEstimateCents: unitPriceCents * input.quantity,
+    lineTotalEstimateCents: unitPriceCents != null ? unitPriceCents * input.quantity : null,
     productSlug: hint?.slug ?? input.productRef,
     productName: hint?.name ?? input.productRef,
     imageUrl: hint?.imageUrl ?? null,

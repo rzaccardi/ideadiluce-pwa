@@ -13,10 +13,11 @@ import { loadOdooOrderLines } from './odoo-order-lines.js'
 import { loadPwaOrderLines } from './pwa-order-lines.js'
 import { cartService } from '../cart/cart.service.js'
 import type { Request } from 'express'
-import type { PwaOrder } from '@prisma/client'
 import { ACCOUNT_VISIBLE_PWA_ORDER_STATUSES } from './orders.constants.js'
 import { buildAccountPwaOrderWhere } from './orders-account-query.js'
 import { accountOrderPublicId, applyPwaOrderPublicIds, isOdooOrderPublicName } from './orders-account-id.js'
+import { mapPwaOrderRow, mergePwaOrdersIntoList } from './orders-account-merge.js'
+import { formatDisplayOrderNumber } from './order-display-number.js'
 import { linkOrdersToUser } from './orders-user-link.service.js'
 import { orderReturnRequestService } from './order-return-request.service.js'
 import { OPEN_RETURN_WINDOW, orderShipmentService } from './order-shipment.service.js'
@@ -25,6 +26,12 @@ function portalFromSnapshot(snapshotJson: unknown): string | null {
   if (!snapshotJson || typeof snapshotJson !== 'object') return null
   const url = (snapshotJson as { odooPortalUrl?: string }).odooPortalUrl
   return typeof url === 'string' ? url : null
+}
+
+function nameFromSnapshot(snapshotJson: unknown): string | null {
+  if (!snapshotJson || typeof snapshotJson !== 'object') return null
+  const name = (snapshotJson as { odooSaleOrderName?: unknown }).odooSaleOrderName
+  return typeof name === 'string' && name.trim() ? name.trim() : null
 }
 
 function mapRow(r: {
@@ -44,15 +51,23 @@ function mapRow(r: {
       : r.id.startsWith('pwa-')
         ? r.id.replace(/^pwa-/, '')
         : null
+  const createdAt = r.createdAt.toISOString()
+  const odooSaleOrderName = nameFromSnapshot(snap)
   return {
     id: r.id,
     pwaOrderId,
     odooSaleOrderId: r.odooSaleOrderId,
+    orderNumber: formatDisplayOrderNumber({
+      id: r.id,
+      odooSaleOrderId: r.odooSaleOrderId,
+      odooSaleOrderName,
+      createdAt,
+    }),
     status: r.status,
     paymentStatus: r.paymentStatus,
     currencyCode: r.currencyCode,
     totalAmount: r.totalAmount,
-    createdAt: r.createdAt.toISOString(),
+    createdAt,
     odooPortalUrl: portalFromSnapshot(snap),
     source: 'pwa',
     sourceLabel: 'E-commerce',
@@ -63,15 +78,23 @@ function mapRow(r: {
 }
 
 function mapApiOrder(order: OdooApiOrder): OrderDTO {
+  const id = order.name || `odoo-${order.id}`
+  const createdAt = order.date_order ? new Date(order.date_order).toISOString() : new Date(0).toISOString()
   return {
-    id: order.name || `odoo-${order.id}`,
+    id,
     pwaOrderId: null,
     odooSaleOrderId: order.id,
+    orderNumber: formatDisplayOrderNumber({
+      id,
+      odooSaleOrderId: order.id,
+      odooSaleOrderName: order.name,
+      createdAt,
+    }),
     status: order.state ?? 'sale',
     paymentStatus: order.payment?.reconciliation ?? null,
     currencyCode: order.currency ?? 'EUR',
     totalAmount: order.totals?.gross_cents ?? (order.totals?.gross != null ? Math.round(order.totals.gross * 100) : null),
-    createdAt: order.date_order ? new Date(order.date_order).toISOString() : new Date(0).toISOString(),
+    createdAt,
     odooPortalUrl: null,
     source: 'odoo_historical',
     sourceLabel: 'Odoo',
@@ -82,15 +105,22 @@ function mapApiOrder(order: OdooApiOrder): OrderDTO {
 }
 
 function mapOdooOrder(r: OdooSaleDocumentDTO): OrderDTO {
+  const createdAt = r.dateOrder ?? new Date(0).toISOString()
   return {
     id: `odoo-${r.id}`,
     pwaOrderId: null,
     odooSaleOrderId: r.id,
+    orderNumber: formatDisplayOrderNumber({
+      id: `odoo-${r.id}`,
+      odooSaleOrderId: r.id,
+      odooSaleOrderName: r.name,
+      createdAt,
+    }),
     status: r.state,
     paymentStatus: r.invoiceStatus,
     currencyCode: r.currencyCode,
     totalAmount: r.amountTotalCents,
-    createdAt: r.dateOrder ?? new Date(0).toISOString(),
+    createdAt,
     odooPortalUrl: null,
     source: r.source,
     sourceLabel: r.sourceLabel,
@@ -147,45 +177,6 @@ async function listOdooOrdersForUser(
   } catch (e) {
     logger.warn('orders.odoo_history_failed', { userId, err: String(e) })
     return []
-  }
-}
-
-function mapPwaOrderRow(po: PwaOrder): OrderDTO | null {
-  if (!po.odooSaleOrderId && po.paymentStatus !== 'CAPTURED') return null
-  return {
-    id: accountOrderPublicId(po),
-    pwaOrderId: po.id,
-    odooSaleOrderId: po.odooSaleOrderId ?? 0,
-    status: po.orderStatus.toLowerCase(),
-    paymentStatus: po.paymentStatus.toLowerCase(),
-    currencyCode: po.currencyCode,
-    totalAmount: po.amountTotal,
-    createdAt: (po.paidAt ?? po.createdAt).toISOString(),
-    odooPortalUrl: null,
-    source: 'pwa',
-    sourceLabel: 'E-commerce',
-    returnRequest: null,
-    shipment: null,
-    returnWindow: OPEN_RETURN_WINDOW,
-  }
-}
-
-function mergePwaOrdersIntoList(fromCache: OrderDTO[], pwaOrders: PwaOrder[]) {
-  const cachePwaIds = new Set(
-    fromCache.map((o) => o.pwaOrderId).filter((id): id is string => Boolean(id)),
-  )
-  const cacheOdooIds = new Set(fromCache.map((o) => o.odooSaleOrderId))
-
-  for (const po of pwaOrders) {
-    if (cachePwaIds.has(po.id)) continue
-    if (po.odooSaleOrderId && cacheOdooIds.has(po.odooSaleOrderId)) continue
-
-    const mapped = mapPwaOrderRow(po)
-    if (!mapped) continue
-
-    fromCache.push(mapped)
-    cachePwaIds.add(po.id)
-    if (po.odooSaleOrderId) cacheOdooIds.add(po.odooSaleOrderId)
   }
 }
 
@@ -356,9 +347,23 @@ export const ordersService = {
       if (base.pwaOrderId) {
         const linked = await prisma.pwaOrder.findUnique({
           where: { id: base.pwaOrderId },
-          select: { id: true, odooSaleOrderName: true },
+          select: {
+            id: true,
+            odooSaleOrderId: true,
+            odooSaleOrderName: true,
+            createdAt: true,
+            orderStatus: true,
+            paymentStatus: true,
+          },
         })
-        if (linked) base.id = accountOrderPublicId(linked)
+        if (linked) {
+          base.id = accountOrderPublicId(linked)
+          base.orderNumber = formatDisplayOrderNumber(linked)
+          if (linked.orderStatus === 'PAYMENT_PENDING' || linked.orderStatus === 'PAYMENT_FAILED') {
+            base.status = linked.orderStatus.toLowerCase()
+            base.paymentStatus = linked.paymentStatus.toLowerCase()
+          }
+        }
       }
       const lines = await resolveOrderLines(base, correlationId)
       const [withReturn] = await orderReturnRequestService.attachToOrders(userId, [base])
@@ -366,26 +371,18 @@ export const ordersService = {
     }
 
     const po = await findOwnedPwaOrder(userId, id)
-    if (!po || (!po.odooSaleOrderId && po.paymentStatus !== 'CAPTURED')) {
+    if (!po) {
+      throw new AppError('ORDER_NOT_FOUND', 'Order not found', 'Ordine non trovato.', 404, false)
+    }
+    const mapped = mapPwaOrderRow(po)
+    if (!mapped) {
       throw new AppError('ORDER_NOT_FOUND', 'Order not found', 'Ordine non trovato.', 404, false)
     }
 
     const cache = await prisma.orderCache.findUnique({ where: { id: `pwa-${po.id}` } })
     const base: OrderDTO = {
-      id: accountOrderPublicId(po),
-      pwaOrderId: po.id,
-      odooSaleOrderId: po.odooSaleOrderId ?? 0,
-      status: po.orderStatus.toLowerCase(),
-      paymentStatus: po.paymentStatus.toLowerCase(),
-      currencyCode: po.currencyCode,
-      totalAmount: po.amountTotal,
-      createdAt: (po.paidAt ?? po.createdAt).toISOString(),
+      ...mapped,
       odooPortalUrl: cache ? portalFromSnapshot(cache.snapshotJson) : null,
-      source: 'pwa',
-      sourceLabel: 'E-commerce',
-      returnRequest: null,
-      shipment: null,
-      returnWindow: OPEN_RETURN_WINDOW,
     }
     const lines = await resolveOrderLines(base, correlationId)
     const [withReturn] = await orderReturnRequestService.attachToOrders(userId, [base])

@@ -17,6 +17,8 @@ export type UserAddressDTO = {
   line2?: string
   city: string
   postalCode: string
+  /** Sigla provincia IT (es. MI, RM) o regione/stato estero. */
+  province?: string
   /** ISO 3166-1 alpha-2 */
   country: string
   phone?: string
@@ -795,6 +797,8 @@ export type OrderDTO = {
   pwaOrderId: string | null
   /** Identificativo ordine nel gestionale (esposto dal backend come DTO, non shape DB grezza). */
   odooSaleOrderId: number
+  /** Numero ordine assegnato (es. 4CSVKG), non l’ID interno Odoo. */
+  orderNumber: string
   status: string
   paymentStatus: string | null
   currencyCode: string | null

@@ -7,6 +7,7 @@ import {
   createStripeCheckoutSession,
   findOrCreateStripeCustomer,
   type StripeLineItemInput,
+  type StripePwaAddress,
 } from './stripeCheckoutAdapter.js'
 import { isStripeConfigured } from '../../lib/stripe.js'
 
@@ -19,9 +20,12 @@ export type ProviderSessionInput = {
   amount: number
   currencyCode: string
   email: string
+  phone?: string | null
   correlationId: string
   lineItems?: StripeLineItemInput[]
   taxLabel?: string | null
+  billingAddress?: StripePwaAddress | null
+  shippingAddress?: StripePwaAddress | null
 }
 
 export type ProviderSessionResult = {
@@ -79,7 +83,12 @@ export async function createProviderPaymentSession(
         { method: input.method },
       )
     }
-    const stripeCustomerId = await findOrCreateStripeCustomer(input.email)
+    const stripeCustomerId = await findOrCreateStripeCustomer({
+      email: input.email,
+      phone: input.phone,
+      billingAddress: input.billingAddress,
+      shippingAddress: input.shippingAddress,
+    })
     const lineItems = alignStripeLineItems({
       lines: input.lineItems ?? [],
       amountCents: input.amount,
@@ -95,6 +104,8 @@ export async function createProviderPaymentSession(
       email: input.email,
       lineItems,
       stripeCustomerId,
+      billingAddress: input.billingAddress,
+      shippingAddress: input.shippingAddress,
     })
     return {
       provider: 'stripe',

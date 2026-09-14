@@ -3,6 +3,7 @@ import type { CustomerSegmentDTO, UserAddressDTO, UserDTO } from '../../types/dt
 import { paymentMethodToDTO } from '../payments/payment.types.js'
 import { pricingContextLabel } from '../pricing/pricelist.service.js'
 import { splitLine1AndStreetNumber } from '../checkout/checkout-address.validators.js'
+import { normalizeAddressProvince } from '../checkout/italian-provinces.js'
 import { prisma } from '../../lib/prisma.js'
 
 function segmentToDTO(segment: User['customerSegment']): CustomerSegmentDTO {
@@ -31,6 +32,11 @@ export function parseShippingAddressJson(json: unknown): UserAddressDTO | null {
     line2: typeof address.line2 === 'string' ? address.line2 : undefined,
     city: typeof address.city === 'string' ? address.city : '',
     postalCode: typeof address.postalCode === 'string' ? address.postalCode : '',
+    province: (() => {
+      const country = typeof address.country === 'string' ? address.country : 'IT'
+      const raw = typeof address.province === 'string' ? address.province : ''
+      return normalizeAddressProvince(country, raw) || undefined
+    })(),
     country: typeof address.country === 'string' ? address.country : 'IT',
     phone: typeof address.phone === 'string' ? address.phone : undefined,
     courierNotes: typeof address.courierNotes === 'string' ? address.courierNotes : undefined,

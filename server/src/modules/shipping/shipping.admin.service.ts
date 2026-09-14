@@ -170,8 +170,9 @@ export const shippingAdminService = {
         isSnc: shippingAddress.isSnc ?? false,
         city: shippingAddress.city,
         postalCode: shippingAddress.postalCode,
+        province: shippingAddress.province ?? '',
         country: shippingAddress.country,
-        phone: shippingAddress.phone,
+        phone: shippingAddress.phone ?? '',
         courierNotes: shippingAddress.courierNotes,
       },
     })

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { formatMoney } from '@/lib/format'
+import { useFormatCatalogMoney } from '@/components/product/ProductPrice'
 import type { ProductAvailabilityDataDTO } from '@/types/dto'
 import { useI18n } from '@/hooks/use-i18n'
 import { getProductAvailabilityStatus } from '@/lib/product-availability'
@@ -48,6 +48,7 @@ function variantChoiceLabel(
   variant: VariantItem,
   primaryAttr: string | null,
   currency: string,
+  formatPrice: (cents: number, currency: string) => string,
   basePriceCents?: number,
 ): string {
   if (primaryAttr) {
@@ -63,7 +64,7 @@ function variantChoiceLabel(
     basePriceCents != null &&
     variant.priceCents !== basePriceCents
   if (showPrice) {
-    return `${base} (${formatMoney(variant.priceCents!, currency)})`
+    return `${base} (${formatPrice(variant.priceCents!, currency)})`
   }
   return base
 }
@@ -77,6 +78,7 @@ export function ProductVariantPicker({
   className,
 }: Props) {
   const { t, locale } = useI18n()
+  const formatCatalogMoney = useFormatCatalogMoney()
   const primaryAttr = useMemo(() => primaryAttributeName(variants), [variants])
   const useButtons = variants.length <= 12
 
@@ -86,7 +88,7 @@ export function ProductVariantPicker({
   const soldOutLabel = t('product.availability.outOfStock')
 
   function formatSelectLabel(variant: VariantItem): string {
-    const base = variantChoiceLabel(variant, null, currency, basePriceCents)
+    const base = variantChoiceLabel(variant, null, currency, formatCatalogMoney, basePriceCents)
     return isVariantOutOfStock(variant, locale) ? `${base} — ${soldOutLabel}` : base
   }
 
@@ -98,7 +100,7 @@ export function ProductVariantPicker({
           {variants.map((variant) => {
             const selected = selectedRef === variant.ref
             const outOfStock = isVariantOutOfStock(variant, locale)
-            const label = variantChoiceLabel(variant, primaryAttr, currency, basePriceCents)
+            const label = variantChoiceLabel(variant, primaryAttr, currency, formatCatalogMoney, basePriceCents)
             return (
               <button
                 key={variant.ref}

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isAddressProvinceValid, normalizeAddressProvince } from './italian-provinces'
 
 const ISO2 = /^[A-Z]{2}$/
 const IT_POSTAL = /^\d{5}$/
@@ -101,9 +102,26 @@ function isPostalCodeValid(country: string, postalCode: string): boolean {
   return EU_POSTAL.test(code)
 }
 
-function isPhoneValid(phone: string): boolean {
+export function isCheckoutPhoneValid(phone: string): boolean {
   const normalized = phone.replace(/\s/g, '')
   return E164.test(normalized) || IT_MOBILE.test(phone) || IT_LANDLINE.test(phone)
+}
+
+/** Stripe Checkout confirm() accetta solo E.164. */
+export function toE164Phone(phone: string): string | undefined {
+  const trimmed = phone.trim()
+  if (!trimmed) return undefined
+  let compact = trimmed.replace(/[\s().-]/g, '')
+  if (compact.startsWith('0039')) compact = `+39${compact.slice(4)}`
+  else if (compact.startsWith('+')) {
+    /* already international */
+  } else if (compact.startsWith('39') && compact.length >= 11) {
+    compact = `+${compact}`
+  } else {
+    compact = `+39${compact}`
+  }
+  const e164 = `+${compact.replace(/\D/g, '')}`
+  return E164.test(e164) ? e164 : undefined
 }
 
 export const checkoutAddressSchema = z
@@ -116,13 +134,15 @@ export const checkoutAddressSchema = z
     line2: z.string().trim().optional(),
     city: z.string().trim().min(2),
     postalCode: z.string().trim().min(1),
+    /** Sigla provincia IT (MI, RM, …) o regione/stato estero. Obbligatoria per IT. */
+    province: z.string().trim().max(64).optional().default(''),
     country: z
       .string()
       .trim()
       .length(2)
       .transform((c) => c.toUpperCase())
       .refine((c) => ISO2.test(c), { message: 'Invalid country code' }),
-    phone: z.string().trim().optional(),
+    phone: z.string().trim().min(1),
     courierNotes: z.string().trim().max(500).optional(),
     id: z.string().trim().min(1).max(64).optional(),
     label: z.string().trim().max(120).optional(),
@@ -142,7 +162,14 @@ export const checkoutAddressSchema = z
         message: 'Invalid postal code',
       })
     }
-    if (data.phone?.trim() && !isPhoneValid(data.phone)) {
+    if (!isAddressProvinceValid(data.country, data.province)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['province'],
+        message: 'Invalid province',
+      })
+    }
+    if (!isCheckoutPhoneValid(data.phone)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['phone'],
@@ -150,6 +177,10 @@ export const checkoutAddressSchema = z
       })
     }
   })
+  .transform((data) => ({
+    ...data,
+    province: normalizeAddressProvince(data.country, data.province),
+  }))
 
 export type CheckoutAddressInput = z.infer<typeof checkoutAddressSchema>
 

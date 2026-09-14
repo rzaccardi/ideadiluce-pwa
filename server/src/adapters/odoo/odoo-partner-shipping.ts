@@ -2,6 +2,7 @@ import {
   formatStreetLine,
   splitLine1AndStreetNumber,
 } from '../../modules/checkout/checkout-address.validators.js'
+import { normalizeAddressProvince } from '../../modules/checkout/italian-provinces.js'
 import type { OdooCustomerProfile } from './odooCustomerAdapter.js'
 
 export type OdooPartnerType = 'contact' | 'invoice' | 'delivery' | 'other' | 'private'
@@ -14,6 +15,7 @@ export type OdooPartnerAddressRow = {
   street2?: string | false
   city?: string | false
   zip?: string | false
+  state_id?: [number, string] | false
   phone?: string | false
 }
 
@@ -90,6 +92,11 @@ export function odooPartnerToShippingProfile(
     line2: asTrimmed(row.street2) || undefined,
     city: asTrimmed(row.city),
     postalCode: asTrimmed(row.zip),
+    province:
+      normalizeAddressProvince(
+        country,
+        Array.isArray(row.state_id) ? String(row.state_id[1] ?? '') : '',
+      ) || undefined,
     country: country.toUpperCase() || 'IT',
     phone: asTrimmed(row.phone) || undefined,
   }

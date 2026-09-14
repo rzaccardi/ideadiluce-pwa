@@ -94,6 +94,31 @@ describe('applyOptimisticAdd', () => {
     expect(next.itemCount).toBe(2)
     expect(next.estimatedSubtotal).toBe(1800)
   })
+
+  it('usa il prezzo dell’hint anche senza odooTemplateId', () => {
+    const next = applyOptimisticAdd({
+      cart: null,
+      productRef: 'lampada',
+      quantity: 1,
+      productHint: { slug: 'lampada', name: 'Lampada', unitPriceCents: 2500 },
+    })
+    expect(next.itemCount).toBe(1)
+    expect(next.items[0]?.lineTotalEstimateCents).toBe(2500)
+    expect(next.estimatedSubtotal).toBe(2500)
+    expect(next.estimatedTotal).toBe(2500)
+  })
+
+  it('non forza il totale a zero se manca il prezzo', () => {
+    const next = applyOptimisticAdd({
+      cart: null,
+      productRef: 'lampada',
+      quantity: 1,
+      productHint: { slug: 'lampada', name: 'Lampada' },
+    })
+    expect(next.itemCount).toBe(1)
+    expect(next.items[0]?.lineTotalEstimateCents).toBeNull()
+    expect(next.items[0]?.clientUnitPriceEstimateCents).toBeNull()
+  })
 })
 
 describe('cartLineMatchesAdd', () => {

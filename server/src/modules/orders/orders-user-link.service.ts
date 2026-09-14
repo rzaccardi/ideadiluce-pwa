@@ -1,6 +1,8 @@
 import type { PwaOrder, PwaOrderStatus } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
+import { healBankTransferFalselyMarkedFailed } from '../payments/bank-transfer-order-heal.js'
 import { ACCOUNT_VISIBLE_PWA_ORDER_STATUSES } from './orders.constants.js'
+import { orderCacheFieldsForPwaOrder } from './order-cache-from-pwa.js'
 
 /** Ordini collegabili al login: checkout in corso + ordini account. */
 const LINKABLE_PWA_ORDER_STATUSES: PwaOrderStatus[] = [
@@ -19,13 +21,23 @@ function normalizeEmail(email: string) {
 }
 
 export async function ensureOrderCacheForPwaOrder(userId: string, po: PwaOrder) {
-  if (!po.odooSaleOrderId) return
+  if (po.paymentMethod === 'BANK_TRANSFER') {
+    const healed = await healBankTransferFalselyMarkedFailed(po.id)
+    if (healed) {
+      const refreshed = await prisma.pwaOrder.findUnique({ where: { id: po.id } })
+      if (refreshed) po = refreshed
+    }
+  }
+
+  const fields = orderCacheFieldsForPwaOrder(po)
+  if (!fields || !po.odooSaleOrderId) return
 
   const cacheId = `pwa-${po.id}`
   const existing = await prisma.orderCache.findUnique({ where: { id: cacheId } })
   const snapshotJson = {
     ...((existing?.snapshotJson as Record<string, unknown> | null) ?? {}),
     pwaOrderId: po.id,
+    ...(po.odooSaleOrderName ? { odooSaleOrderName: po.odooSaleOrderName } : {}),
   }
 
   await prisma.orderCache.upsert({
@@ -34,8 +46,8 @@ export async function ensureOrderCacheForPwaOrder(userId: string, po: PwaOrder) 
       id: cacheId,
       userId,
       odooSaleOrderId: po.odooSaleOrderId,
-      status: 'sale',
-      paymentStatus: 'paid',
+      status: fields.status,
+      paymentStatus: fields.paymentStatus,
       currencyCode: po.currencyCode,
       totalAmount: po.amountTotal,
       snapshotJson,
@@ -44,8 +56,8 @@ export async function ensureOrderCacheForPwaOrder(userId: string, po: PwaOrder) 
     update: {
       userId,
       odooSaleOrderId: po.odooSaleOrderId,
-      status: 'sale',
-      paymentStatus: 'paid',
+      status: fields.status,
+      paymentStatus: fields.paymentStatus,
       currencyCode: po.currencyCode,
       totalAmount: po.amountTotal,
       snapshotJson,

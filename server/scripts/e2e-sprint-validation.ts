@@ -149,7 +149,10 @@ async function main() {
         isSnc: false,
         city: 'Roma',
         postalCode: '00178',
+        province: 'RM',
         country: 'IT',
+        phone: '+393331234567',
+        province: 'RM',
       },
     }),
   })

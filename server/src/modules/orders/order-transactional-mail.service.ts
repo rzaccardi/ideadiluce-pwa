@@ -8,6 +8,7 @@ import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { escapeMailHtml } from '../../adapters/odoo/odoo-mail.templates.js'
 import { parseBankTransferInstructionsJson } from '../payments/bankTransferInstructions.js'
 import { finalizeGuestAccountForOrder } from '../auth/guest-account.service.js'
+import { formatDisplayOrderNumber } from './order-display-number.js'
 
 type MailFlag = 'orderConfirmation' | 'bankTransfer' | 'shipment' | 'abandoned'
 
@@ -65,15 +66,6 @@ function firstNameSuffix(shippingJson: unknown): string {
   return typeof name === 'string' && name.trim() ? ` ${name.trim()}` : ''
 }
 
-function orderNumber(order: Pick<PwaOrder, 'id' | 'odooSaleOrderId' | 'odooSaleOrderName'>): string {
-  if (order.odooSaleOrderName?.trim()) return order.odooSaleOrderName.trim()
-  const year = new Date().getFullYear()
-  if (order.odooSaleOrderId != null) {
-    return `#IDL-${year}-${String(order.odooSaleOrderId).padStart(5, '0')}`
-  }
-  return `#${order.id.slice(0, 8).toUpperCase()}`
-}
-
 function orderUrl(order: Pick<PwaOrder, 'id' | 'odooSaleOrderName'>): string {
   const name = order.odooSaleOrderName?.trim()
   if (name) return publicAppUrl(`/account/orders/${name}`)
@@ -96,7 +88,7 @@ export const orderTransactionalMail = {
         emailTo: order.email,
         vars: {
           first_name_suffix: firstNameSuffix(order.shippingAddressJson),
-          order_number: orderNumber(order),
+          order_number: formatDisplayOrderNumber(order),
           amount: formatAmount(order.amountTotal, order.currencyCode),
           order_url: orderUrl(order),
         },
@@ -125,7 +117,7 @@ export const orderTransactionalMail = {
         emailTo: order.email,
         vars: {
           first_name_suffix: firstNameSuffix(order.shippingAddressJson),
-          order_number: orderNumber(order),
+          order_number: formatDisplayOrderNumber(order),
           holder: instructions.holder,
           iban: instructions.iban,
           bank_name_html: instructions.bankName
@@ -166,7 +158,7 @@ export const orderTransactionalMail = {
         emailTo: order.email,
         vars: {
           first_name_suffix: firstNameSuffix(order.shippingAddressJson),
-          order_number: orderNumber(order),
+          order_number: formatDisplayOrderNumber(order),
           carrier_line: input.carrierLabel ? ` con ${input.carrierLabel}` : '',
           tracking_html: trackingHtml,
           order_url: orderUrl(order),

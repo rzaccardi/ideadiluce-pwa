@@ -4,7 +4,7 @@ import { memo, useMemo } from 'react'
 import { Link } from '@/lib/navigation'
 import { useLocale } from '@/context/locale-context'
 import type { ProductCardDTO } from '@/types/dto'
-import { formatMoney } from '@/lib/format'
+import { ProductPrice } from '@/components/product/ProductPrice'
 import { formatTechnicalProductRefLine } from '@/lib/technical-product-ref'
 import { collectProductIdentifierFields } from '@/lib/product-identifier-fields'
 import { ProductEanBarcode } from '@/components/product/ProductEanBarcode'
@@ -152,8 +152,13 @@ export const TechnicalCatalogProductCard = memo(function TechnicalCatalogProduct
             />
           </div>
         ) : null}
-        <div className="mt-auto flex items-center justify-between">
-          <span className="text-base font-extrabold">{formatMoney(product.priceCents, product.currency)}</span>
+        <div className="mt-auto flex items-end justify-between gap-2">
+          <ProductPrice
+            netCents={product.priceCents}
+            currency={product.currency}
+            amountClassName="text-base font-extrabold"
+            captionClassName="text-[10.5px] font-medium text-idl-muted"
+          />
           <TechnicalAddToCartButton product={product} label={addLabel} />
         </div>
       </div>

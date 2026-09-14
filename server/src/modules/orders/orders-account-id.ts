@@ -1,6 +1,7 @@
 import type { PwaOrder } from '@prisma/client'
 import { ODOO_ORDER_SOURCE_LABEL } from '../odoo/odoo-order-source.js'
 import type { OrderDTO } from '../../types/dto.js'
+import { formatDisplayOrderNumber } from './order-display-number.js'
 
 export function isOdooOrderPublicName(id: string): boolean {
   return /^[A-Z0-9]{6}$/i.test(id.trim())
@@ -28,6 +29,7 @@ export function applyPwaOrderPublicIds(
       (order.odooSaleOrderId ? byOdooId.get(order.odooSaleOrderId) : undefined)
     if (!po) continue
     order.id = accountOrderPublicId(po)
+    order.orderNumber = formatDisplayOrderNumber(po)
     if (!order.pwaOrderId) order.pwaOrderId = po.id
     if (order.source === 'odoo_historical' || order.source === 'odoo_manual') {
       order.source = 'pwa'

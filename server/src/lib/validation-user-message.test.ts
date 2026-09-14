@@ -15,6 +15,8 @@ const validAddress = {
   city: 'Roma',
   postalCode: '00100',
   country: 'IT',
+  phone: '+393331234567',
+  province: 'RM',
 }
 
 describe('stripValidationFieldPrefix', () => {

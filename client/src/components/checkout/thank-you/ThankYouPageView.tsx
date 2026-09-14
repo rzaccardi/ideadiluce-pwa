@@ -5,6 +5,7 @@ import { Link } from '@/lib/navigation'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { useI18n } from '@/hooks/use-i18n'
 import { formatMoney } from '@/lib/format'
+import { ProductPrice } from '@/components/product/ProductPrice'
 import { paymentMethodLabel } from '@/lib/paymentLabels'
 import { SectionContainer } from '@/components/site/primitives'
 import { SiteImage } from '@/components/site/SiteImage'
@@ -29,7 +30,9 @@ type TrackerStep = {
 function formatShippingBlock(address: UserAddressDTO | null): string[] {
   if (!address) return []
   const name = [address.firstName, address.lastName].filter(Boolean).join(' ')
-  const locality = [address.postalCode, address.city].filter(Boolean).join(' ')
+  const locality = [address.postalCode, address.city, address.province ? `(${address.province})` : '']
+    .filter(Boolean)
+    .join(' ')
   const lines = [name, [address.line1, locality].filter(Boolean).join(', ')].filter(Boolean)
   if (address.phone?.trim()) lines.push(address.phone.trim())
   return lines
@@ -400,9 +403,13 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
                     <div className="line-clamp-2 min-h-[34px] text-[13px] font-semibold leading-snug text-idl-graphite">
                       {product.name}
                     </div>
-                    <div className="mt-2.5 text-[15px] font-extrabold">
-                      {formatMoney(product.priceCents, product.currency)}
-                    </div>
+                    <ProductPrice
+                      netCents={product.priceCents}
+                      currency={product.currency}
+                      className="mt-2.5"
+                      amountClassName="text-[15px] font-extrabold"
+                      captionClassName="text-[11px] font-medium text-idl-muted"
+                    />
                   </Link>
                 )
               })}

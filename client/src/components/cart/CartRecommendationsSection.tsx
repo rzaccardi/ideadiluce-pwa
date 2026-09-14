@@ -5,7 +5,7 @@ import { Link } from '@/lib/navigation'
 import type { ProductCardDTO } from '@/types/dto'
 import { addItem } from '@/features/cart'
 import { buildCartAddHintFromCard } from '@/features/cart/cart-add-hint'
-import { formatMoney } from '@/lib/format'
+import { ProductPrice } from '@/components/product/ProductPrice'
 import { CartLineThumb } from '@/components/cart/CartLineThumb'
 import { useI18n } from '@/hooks/use-i18n'
 import { CART_CARD_SURFACE } from '@/components/cart/cart-surfaces'
@@ -52,9 +52,13 @@ function RecommendationCard({ product }: { product: ProductCardDTO }) {
         >
           {product.name}
         </Link>
-        <div className="mt-1 text-[13px] font-extrabold text-idl-graphite">
-          {formatMoney(product.priceCents, product.currency)}
-        </div>
+        <ProductPrice
+          netCents={product.priceCents}
+          currency={product.currency}
+          className="mt-1"
+          amountClassName="text-[13px] font-extrabold text-idl-graphite"
+          captionClassName="text-[10px] font-medium text-idl-muted"
+        />
       </div>
       <button
         type="button"

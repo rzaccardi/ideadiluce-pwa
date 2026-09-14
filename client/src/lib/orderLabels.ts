@@ -60,7 +60,22 @@ export function paymentStatusLabel(
   return key ? t(locale, key) : status
 }
 
-export function formatOrderRef(odooSaleOrderId: number, locale: PwaLocale = 'IT'): string {
+export function resolveAccountOrderNumber(order: {
+  id: string
+  odooSaleOrderId: number
+  orderNumber?: string | null
+}): string {
+  const assigned = order.orderNumber?.trim()
+  if (assigned) return assigned
+  if (/^[A-Z0-9]{6}$/i.test(order.id.trim())) return order.id.trim()
+  if (order.odooSaleOrderId > 0) return `#${order.odooSaleOrderId}`
+  return order.id
+}
+
+export function formatOrderRef(
+  order: { id: string; odooSaleOrderId: number; orderNumber?: string | null },
+  locale: PwaLocale = 'IT',
+): string {
   const prefix =
     locale === 'EN'
       ? 'Order'
@@ -71,7 +86,7 @@ export function formatOrderRef(odooSaleOrderId: number, locale: PwaLocale = 'IT'
           : locale === 'DE'
             ? 'Bestellung'
             : 'Ordine'
-  return `${prefix} #${odooSaleOrderId}`
+  return `${prefix} ${resolveAccountOrderNumber(order)}`
 }
 
 export type OrderStatusTone = 'success' | 'warning' | 'danger' | 'neutral'

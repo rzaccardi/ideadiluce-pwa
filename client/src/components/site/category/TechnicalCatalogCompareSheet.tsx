@@ -5,7 +5,7 @@ import { Link } from '@/lib/navigation'
 import { ViewportPortal } from '@/components/ViewportPortal'
 import { layers } from '@/lib/layering'
 import type { ProductCardDTO } from '@/types/dto'
-import { formatMoney } from '@/lib/format'
+import { ProductPrice } from '@/components/product/ProductPrice'
 import { formatTechnicalProductRefLine } from '@/lib/technical-product-ref'
 import { buildTechnicalCardSpecTags } from '@/lib/technical-card-spec-tags'
 import { cn } from '@/utils/cn'
@@ -117,7 +117,12 @@ export function TechnicalCatalogCompareSheet({ products, lp, onClose, className 
                 <td className="py-3 pr-4 text-idl-muted">Prezzo</td>
                 {rows.map(({ product }) => (
                   <td key={product.slug} className="py-3 pr-4 font-extrabold">
-                    {formatMoney(product.priceCents, product.currency)}
+                    <ProductPrice
+                      netCents={product.priceCents}
+                      currency={product.currency}
+                      amountClassName="font-extrabold"
+                      captionClassName="text-[11px] font-medium text-idl-muted"
+                    />
                   </td>
                 ))}
               </tr>

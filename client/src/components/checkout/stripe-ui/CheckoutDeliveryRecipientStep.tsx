@@ -100,22 +100,25 @@ export function CheckoutDeliveryRecipientStep() {
             <StripeControlledInput
               type="tel"
               name="recipient-phone"
-              placeholder={t('checkout.address.phoneOptional')}
+              placeholder={t('common.phone')}
               value={recipient.phone}
+              required
               onValueChange={(value) => updateDeliveryRecipientField('phone', value)}
             />
           </StripeFieldGroup>
-          <CheckoutAddressSection
-            title={t('checkout.deliveryRecipient.addressTitle')}
-            prefix="dropship"
-            showTitle={false}
-            address={checkout.dropshipAddress}
+            <CheckoutAddressSection
+              title={t('checkout.deliveryRecipient.addressTitle')}
+              prefix="dropship"
+              showTitle={false}
+              hideContactFields
+              address={checkout.dropshipAddress}
             onChange={(key, value) => updateDropshipAddress(key, value)}
             onAddressResolved={(resolved) => {
               updateDropshipAddress('line1', resolved.line1)
               updateDropshipAddress('line2', resolved.line2 ?? '')
               updateDropshipAddress('city', resolved.city)
               updateDropshipAddress('postalCode', resolved.postalCode)
+              updateDropshipAddress('province', resolved.province ?? '')
               updateDropshipAddress('country', resolved.country)
             }}
           />

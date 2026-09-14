@@ -14,6 +14,7 @@ import { ThankYouPageView } from '@/components/checkout/thank-you/ThankYouPageVi
 import { ThankYouPageSkeleton } from '@/components/checkout/thank-you/ThankYouPageSkeleton'
 import { PageLoadTransition } from '@/components/motion'
 import { useI18n } from '@/hooks/use-i18n'
+import { shouldFinalizeStripeOnThankYou } from '@/lib/checkout-payment-result'
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -53,16 +54,25 @@ export function ThankYouPage() {
       setLoading(true)
       setError(null)
       try {
-        if (sessionId || paymentIntent) {
+        const hasStripeReturnParams = Boolean(sessionId || paymentIntent)
+        if (hasStripeReturnParams) {
           await api.payments.stripeReturn({
             sessionId: sessionId ?? undefined,
             orderId: sessionId ? undefined : orderId,
           })
-        } else {
-          await api.payments.stripeReturn({ orderId })
         }
 
-        const detail = await fetchThankYouOrder(orderId, sessionId)
+        let detail = await fetchThankYouOrder(orderId, sessionId)
+        if (
+          !hasStripeReturnParams &&
+          shouldFinalizeStripeOnThankYou({
+            hasStripeReturnParams: false,
+            paymentMethod: detail.paymentMethod,
+          })
+        ) {
+          await api.payments.stripeReturn({ orderId })
+          detail = await fetchThankYouOrder(orderId, sessionId)
+        }
         if (cancelled) return
         resetOrdersStore()
         setOrder(detail)

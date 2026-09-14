@@ -87,6 +87,7 @@ async function syncUserProfileToOdoo(
                   line2: shipping.line2,
                   city: shipping.city,
                   postalCode: shipping.postalCode,
+                  province: shipping.province,
                   country: shipping.country,
                   phone: shipping.phone,
                 },
@@ -104,6 +105,7 @@ async function syncUserProfileToOdoo(
       line2: shipping.line2,
       city: shipping.city,
       postalCode: shipping.postalCode,
+      province: shipping.province,
       country: shipping.country,
       phone: shipping.phone,
     })

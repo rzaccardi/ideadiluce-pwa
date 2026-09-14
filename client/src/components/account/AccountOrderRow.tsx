@@ -62,7 +62,7 @@ export function AccountOrderRow({ order, className }: { order: OrderDTO; classNa
     >
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-[15px] font-medium text-zinc-900">{formatOrderRef(order.odooSaleOrderId, locale)}</p>
+          <p className="text-[15px] font-medium text-zinc-900">{formatOrderRef(order, locale)}</p>
           <AccountStatusBadge label={orderStatusLabel(order.status, locale)} tone={orderStatusTone(order.status)} />
           {order.paymentStatus ? (
             <AccountStatusBadge

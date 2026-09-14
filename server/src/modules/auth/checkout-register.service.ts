@@ -47,7 +47,7 @@ export const checkoutRegisterService = {
       password: string
       firstName: string
       lastName: string
-      phone?: string
+      phone: string
       customerSegment?: 'retail' | 'business'
     },
     sessionId: string,
@@ -108,7 +108,7 @@ export const checkoutRegisterService = {
           passwordHash,
           firstName: input.firstName.trim() || existing.firstName,
           lastName: input.lastName.trim() || existing.lastName,
-          phone: input.phone?.trim() || existing.phone,
+          phone: input.phone.trim() || existing.phone,
           ...(input.customerSegment
             ? { customerSegment: input.customerSegment === 'business' ? 'BUSINESS' : 'RETAIL' }
             : {}),
@@ -120,7 +120,7 @@ export const checkoutRegisterService = {
         passwordHash,
         firstName: input.firstName.trim(),
         lastName: input.lastName.trim(),
-        phone: input.phone?.trim(),
+        phone: input.phone.trim(),
         customerSegment: segment,
       })
     }

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isCheckoutPhoneValid } from '../checkout/checkout-address.validators.js'
 
 export const registerBodySchema = z.object({
   email: z.string().email(),
@@ -38,6 +39,10 @@ export const checkoutRegisterBodySchema = z.object({
   password: z.string().min(8),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  phone: z.string().optional(),
+  phone: z
+    .string()
+    .trim()
+    .min(1)
+    .refine(isCheckoutPhoneValid, { message: 'Invalid phone number' }),
   customerSegment: z.enum(['retail', 'business']).optional(),
 })

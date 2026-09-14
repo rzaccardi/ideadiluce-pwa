@@ -20,6 +20,8 @@ import { useLocale } from '@/context/locale-context'
 import { useI18n } from '@/hooks/use-i18n'
 import { t as translate } from '@/i18n/messages'
 import { playCheckoutStartSound } from '@/features/checkout/checkout-start-sound'
+import type { AddressInput } from '@/types/integrations'
+import { stripeCheckoutAddressDefaults } from '@/lib/stripe-checkout-address'
 import { cn } from '@/utils/cn'
 
 type ProductLine = {
@@ -36,16 +38,19 @@ type Props = {
   cartFingerprint?: string
 }
 
-function addressPayload(address: UserAddressDTO) {
+function addressPayload(address: UserAddressDTO): AddressInput {
   return {
     firstName: address.firstName,
     lastName: address.lastName,
     line1: address.line1,
-    line2: address.line2,
+    streetNumber: address.streetNumber ?? '',
+    isSnc: address.isSnc ?? false,
+    line2: address.line2 ?? '',
     city: address.city,
     postalCode: address.postalCode,
+    province: address.province ?? '',
     country: address.country,
-    phone: address.phone,
+    phone: address.phone ?? '',
   }
 }
 
@@ -56,6 +61,7 @@ function walletShippingReady(address: UserAddressDTO | null | undefined) {
     streetNumber: address.streetNumber ?? '',
     isSnc: address.isSnc ?? false,
     line2: address.line2 ?? '',
+    province: address.province ?? '',
     phone: address.phone ?? '',
   })
 }
@@ -69,6 +75,7 @@ function shippingFingerprint(address: UserAddressDTO | null | undefined) {
     address.line2 ?? '',
     address.city,
     address.postalCode,
+    address.province ?? '',
     address.country,
     address.phone ?? '',
   ].join(':')
@@ -187,6 +194,13 @@ export function WalletQuickPay({ disabled, className, productLine, cartFingerpri
     [session?.clientSecret],
   )
 
+  const stripeAddressDefaults = useMemo(() => {
+    const shipping = auth.me?.shippingAddress
+    if (!shipping) return undefined
+    const payload = addressPayload(shipping)
+    return stripeCheckoutAddressDefaults(payload, payload)
+  }, [auth.me?.shippingAddress])
+
   if (disabled || stripeEnabled === false) return null
 
   async function goToCheckoutWithCart() {
@@ -238,6 +252,7 @@ export function WalletQuickPay({ disabled, className, productLine, cartFingerpri
         stripe={stripePromise}
         options={{
           clientSecret: normalizedClientSecret,
+          ...(stripeAddressDefaults ? { defaultValues: stripeAddressDefaults } : {}),
           elementsOptions: {
             appearance: stripeAppearance,
           },

@@ -1,4 +1,5 @@
 import type { AddressAutocompleteProvider, AddressSuggestion, ResolvedAddress } from './types'
+import { provinceFromAddressParts } from '@/lib/italian-provinces'
 
 type MapboxFeature = {
   id: string
@@ -14,16 +15,26 @@ function parseFeature(feature: MapboxFeature): ResolvedAddress | null {
   const place = ctx.find((c) => c.id.startsWith('place.'))?.text ?? ''
   const countryCtx = ctx.find((c) => c.id.startsWith('country.'))
   const country = countryCtx?.short_code?.toUpperCase().slice(0, 2) ?? 'IT'
+  const district = ctx.find((c) => c.id.startsWith('district.'))?.text
+  const region = ctx.find((c) => c.id.startsWith('region.'))
   const streetName = feature.text ?? feature.place_name.split(',')[0] ?? ''
   const streetNumber = feature.address?.trim() ?? ''
 
   if (!streetName || !place || !postal) return null
+
+  const province = provinceFromAddressParts(
+    country,
+    district,
+    region?.text,
+    region?.short_code?.replace(/^IT-/i, ''),
+  )
 
   return {
     line1: streetName,
     streetNumber: streetNumber || undefined,
     city: place,
     postalCode: postal,
+    province: province || undefined,
     country,
   }
 }

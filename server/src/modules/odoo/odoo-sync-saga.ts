@@ -43,6 +43,7 @@ type AddressJson = {
   line2?: string
   city?: string
   postalCode?: string
+  province?: string
   country?: string
 }
 
@@ -120,6 +121,7 @@ export async function executeEnsurePartner(
               line2: billing.line2,
               city: billing.city,
               postalCode: billing.postalCode ?? '',
+              province: billing.province,
               country: billing.country ?? 'IT',
               phone: billing.phone,
             }

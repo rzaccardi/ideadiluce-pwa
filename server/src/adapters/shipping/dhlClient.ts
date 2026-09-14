@@ -51,6 +51,7 @@ export async function fetchDhlRates(
         postalCode: address.postalCode,
         cityName: address.city,
         countryCode: address.country.toUpperCase(),
+        ...(address.province ? { provinceCode: address.province } : {}),
       },
     },
     accounts: creds.accountNumber ? [{ typeCode: 'shipper', number: creds.accountNumber }] : [],

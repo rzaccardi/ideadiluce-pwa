@@ -71,7 +71,7 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
         )}
         <div className="min-w-0 flex-1">
           <div className="font-mono text-[11px] text-[#8b919b]">
-            {formatOrderRef(order.odooSaleOrderId, locale)}
+            {formatOrderRef(order, locale)}
             {lineCountLabel ? ` · ${lineCountLabel}` : null}
           </div>
           <div className="mt-0.5 text-[14.5px] font-bold text-idl-graphite">{statusLabel}</div>
@@ -101,7 +101,7 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
           className="flex min-w-0 flex-1 flex-wrap items-center gap-x-5 gap-y-2 no-underline"
         >
           <span className="font-mono text-[12.5px] font-semibold text-idl-graphite">
-            {formatOrderRef(order.odooSaleOrderId, locale)}
+            {formatOrderRef(order, locale)}
           </span>
           <span className="text-[12.5px] text-idl-muted">{formatOrderDate(order.createdAt, locale)}</span>
           <AccountDcStatusPill label={statusLabel} tone={statusTone} />

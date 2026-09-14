@@ -5,7 +5,7 @@ import {
   buildCartAddHintFromCard,
   buildCartAddHintFromDetail,
 } from '@/features/cart/cart-add-hint'
-import { formatMoney } from '@/lib/format'
+import { ProductPrice } from '@/components/product/ProductPrice'
 import type { ProductAvailabilityStatus } from '@/lib/product-availability'
 import type { ProductCardDTO, ProductDetailDTO } from '@/types/dto'
 import { SectionContainer } from '@/components/site/primitives'
@@ -138,14 +138,19 @@ export function ProductDetailStickyBar({
               ) : null}
             </div>
           ) : null}
-          <span
-            className={cn(
-              'shrink-0 text-base font-bold sm:text-[22px]',
+          <ProductPrice
+            netCents={displayPriceCents}
+            currency={product.currency}
+            className="shrink-0 items-end text-right"
+            amountClassName={cn(
+              'text-base font-bold sm:text-[22px]',
               isDesign ? 'font-serif text-idl-ink' : 'text-idl-graphite',
             )}
-          >
-            {formatMoney(displayPriceCents, product.currency)}
-          </span>
+            captionClassName={cn(
+              'text-[10px] font-medium',
+              isDesign ? 'text-idl-ink-muted' : 'text-idl-muted',
+            )}
+          />
           <button
             type="button"
             disabled={!canAddToCart || isAddingToCart}

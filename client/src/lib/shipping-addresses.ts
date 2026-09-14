@@ -2,6 +2,7 @@ import type { UserAddressDTO, UserShippingAddressDTO } from '@/types/dto'
 import type { AddressInput } from '@/types/integrations'
 import { emptyAddress, formatAddressSummary } from '@/lib/address'
 import { formatStreetLine, splitLine1AndStreetNumber } from '@/lib/checkout-address.validators'
+import { normalizeAddressProvince } from '@/lib/italian-provinces'
 
 export const BILLING_SHIPPING_SELECTION = 'billing'
 export const OTHER_SHIPPING_SELECTION = 'other'
@@ -35,6 +36,7 @@ export function savedAddressToInput(address: UserAddressDTO): AddressInput {
     line1: split.line1,
     streetNumber: split.streetNumber,
     isSnc: split.isSnc,
+    province: normalizeAddressProvince(address.country, address.province),
     phone: address.phone ?? '',
     courierNotes: address.courierNotes ?? '',
     id: address.id,

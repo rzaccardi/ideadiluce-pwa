@@ -2,12 +2,19 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { CheckoutElementsProvider } from '@stripe/react-stripe-js/checkout'
+import { useSnapshot } from 'valtio/react'
 import { StripePaymentForm, type StripePaymentFormHandle } from './StripePaymentForm'
 import { getCheckoutStripeAppearance } from './stripe-ui/constants'
 import { useTheme } from '@/context/theme-context'
 import { getStripePublishableKey } from '@/lib/env'
 import { normalizeStripeClientSecret } from '@/lib/stripe-client-secret'
 import { getStripePromise, preloadStripe, preloadStripeCheckoutModule, resolvePublishableKey } from '@/lib/stripe-loader'
+import {
+  checkoutStore,
+  getCheckoutBillingAddress,
+  getCheckoutShippingAddress,
+} from '@/features/checkout'
+import { stripeCheckoutAddressDefaults } from '@/lib/stripe-checkout-address'
 
 type Props = {
   clientSecret: string
@@ -31,6 +38,7 @@ export function StripePaymentShell({
   onPaymentSuccess,
 }: Props) {
   const { isDark } = useTheme()
+  const checkout = useSnapshot(checkoutStore)
   const stripeAppearance = getCheckoutStripeAppearance(isDark)
   const envPublishableKey = getStripePublishableKey()
   const [remotePublishableKey, setRemotePublishableKey] = useState<string | null>(null)
@@ -74,6 +82,17 @@ export function StripePaymentShell({
     [clientSecret],
   )
 
+  const stripeAddressDefaults = useMemo(
+    () => stripeCheckoutAddressDefaults(getCheckoutBillingAddress(), getCheckoutShippingAddress()),
+    [
+      checkout.draft.billing,
+      checkout.draft.shipping,
+      checkout.draft.billingSameAsShipping,
+      checkout.dropshipAddress,
+      checkout.deliveryRecipient,
+    ],
+  )
+
   if (configLoading) {
     return (
       <div className="rounded-xl border border-idl-tech-border bg-idl-tech-chip px-4 py-6 text-sm text-idl-muted">
@@ -99,6 +118,7 @@ export function StripePaymentShell({
       stripe={stripePromise}
       options={{
         clientSecret: normalizedClientSecret,
+        ...(stripeAddressDefaults ? { defaultValues: stripeAddressDefaults } : {}),
         elementsOptions: {
           appearance: stripeAppearance,
         },

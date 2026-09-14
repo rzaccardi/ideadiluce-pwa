@@ -5,6 +5,7 @@ import {
   isCheckoutAddressValid,
   splitLine1AndStreetNumber,
 } from '@/lib/checkout-address.validators'
+import { normalizeAddressProvince } from '@/lib/italian-provinces'
 
 export function emptyAddress(): AddressInput {
   return {
@@ -16,6 +17,7 @@ export function emptyAddress(): AddressInput {
     line2: '',
     city: '',
     postalCode: '',
+    province: '',
     country: 'IT',
     phone: '',
     courierNotes: '',
@@ -37,16 +39,26 @@ export function shippingAddressFromUser(user: UserDTO): AddressInput {
     line1: split.line1,
     streetNumber: split.streetNumber,
     isSnc: split.isSnc,
+    province: normalizeAddressProvince(saved?.country ?? 'IT', saved?.province),
     phone: saved?.phone || user.phone || '',
     id: saved?.id,
     label: saved?.label,
   }
 }
 
+export function formatAddressLocality(
+  address: { postalCode?: string; city?: string; province?: string } | null | undefined,
+): string {
+  if (!address) return ''
+  const province = address.province?.trim()
+  const city = address.city?.trim() ?? ''
+  const cityPart = province ? (city ? `${city} (${province})` : province) : city
+  return [address.postalCode?.trim(), cityPart].filter(Boolean).join(' ')
+}
+
 export function formatAddressSummary(address: UserAddressDTO | AddressInput | null | undefined): string {
   if (!address?.line1?.trim()) return '—'
-  const locality = [address.postalCode, address.city].filter(Boolean).join(' ')
-  return [formatStreetLine(address), locality].filter(Boolean).join(', ')
+  return [formatStreetLine(address), formatAddressLocality(address)].filter(Boolean).join(', ')
 }
 
 export function addressInputToDto(address: AddressInput): UserAddressDTO | null {
@@ -61,6 +73,7 @@ export function addressInputToDto(address: AddressInput): UserAddressDTO | null 
     line2: address.line2?.trim() || undefined,
     city: address.city.trim(),
     postalCode: address.postalCode.trim(),
+    province: address.province.trim() || undefined,
     country: address.country.trim().toUpperCase().slice(0, 2),
     phone: address.phone?.trim() || undefined,
     courierNotes: address.courierNotes?.trim() || undefined,

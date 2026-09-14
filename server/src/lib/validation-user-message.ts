@@ -67,6 +67,14 @@ const BY_SOURCE_MESSAGE: Record<string, LocalizedCopy> = {
     'Ungültige Postleitzahl.',
     'Cod poștal nevalid.',
   ),
+  'Invalid province': copy(
+    'Provincia non valida.',
+    'Invalid province.',
+    'Provincia no válida.',
+    'Province invalide.',
+    'Ungültige Provinz.',
+    'Provincie nevalidă.',
+  ),
   'Invalid phone number': copy(
     'Numero di telefono non valido.',
     'Invalid phone number.',

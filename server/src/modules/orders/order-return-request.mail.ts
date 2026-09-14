@@ -20,6 +20,8 @@ function euros(cents: number | null, currency: string | null): string {
 }
 
 function orderRef(order: OrderDetailDTO): string {
+  const assigned = order.orderNumber?.trim()
+  if (assigned) return assigned
   return `#${order.odooSaleOrderId}`
 }
 

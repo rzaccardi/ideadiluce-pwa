@@ -43,6 +43,7 @@ function formatAddress(address: {
   line2?: string
   city: string
   postalCode: string
+  province?: string
   country: string
   courierNotes?: string
 }) {
@@ -53,7 +54,9 @@ function formatAddress(address: {
     name,
     `${street}${snc}`,
     address.line2,
-    `${address.postalCode} ${address.city}`,
+    [address.postalCode, address.city, address.province ? `(${address.province})` : '']
+      .filter(Boolean)
+      .join(' '),
     address.country,
     address.courierNotes?.trim() ? `${address.courierNotes.trim()}` : null,
   ]

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Link } from '@/lib/navigation'
 import { addItem, buildCartAddHintFromCard } from '@/features/cart'
-import { formatMoney } from '@/lib/format'
+import { ProductPrice } from '@/components/product/ProductPrice'
 import { extractProductDisplayTitle } from '@/lib/product-display-title'
 import type { ProductRelatedDTO } from '@/types/dto'
 import { SiteImage } from '@/components/site/SiteImage'
@@ -130,12 +130,13 @@ export function DesignAccessoryPicker({
                       className="h-9"
                     />
                   ) : null}
-                  <span className="shrink-0 text-[13.5px] font-semibold text-idl-ink">
-                    {formatMoney(
-                      (item.priceCents ?? 0) * (checked ? qty ?? 1 : 1),
-                      item.currency,
-                    )}
-                  </span>
+                  <ProductPrice
+                    netCents={(item.priceCents ?? 0) * (checked ? qty ?? 1 : 1)}
+                    currency={item.currency}
+                    className="shrink-0 items-end text-right"
+                    amountClassName="text-[13.5px] font-semibold text-idl-ink"
+                    captionClassName="text-[10px] font-medium text-idl-ink-muted"
+                  />
                 </div>
               </li>
             )
@@ -194,12 +195,13 @@ export function DesignAccessoryPicker({
                   <span className="line-clamp-2 font-serif text-[17px] leading-snug font-medium text-idl-ink">
                     {title}
                   </span>
-                  <span className="mt-1 block text-[15px] font-bold text-idl-ink">
-                    {formatMoney(
-                      (item.priceCents ?? 0) * (checked ? qty ?? 1 : 1),
-                      item.currency,
-                    )}
-                  </span>
+                  <ProductPrice
+                    netCents={(item.priceCents ?? 0) * (checked ? qty ?? 1 : 1)}
+                    currency={item.currency}
+                    className="mt-1"
+                    amountClassName="text-[15px] font-bold text-idl-ink"
+                    captionClassName="text-[11px] font-medium text-idl-ink-muted"
+                  />
                 </span>
               </label>
               {checked && item.slug ? (

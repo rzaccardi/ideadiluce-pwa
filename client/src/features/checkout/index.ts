@@ -22,6 +22,8 @@ export {
   effectiveCustomerSegment,
   fetchShippingQuotes,
   freeShippingSelectionLocked,
+  getCheckoutBillingAddress,
+  getCheckoutShippingAddress,
   refreshTaxBreakdown,
   validateCheckoutVat,
   validateTaxFields,

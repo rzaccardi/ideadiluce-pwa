@@ -106,7 +106,10 @@ async function main() {
     isSnc: false,
     city: 'Milano',
     postalCode: '20100',
+    province: 'MI',
     country: 'IT',
+    phone: '+393331234567',
+    province: 'MI',
   }
 
   const reg = await req('POST', '/api/v1/auth/checkout-register', {

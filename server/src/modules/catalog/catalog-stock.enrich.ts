@@ -207,7 +207,7 @@ export async function enrichProductCardsWithStock(
   items: ProductCardStockHint[],
 ): Promise<ProductCardDTO[]> {
   if (!shouldEnrichFromOdoo()) {
-    return items.map(({ odooTemplateId: _omit, ...item }) => ({
+    return items.map((item) => ({
       ...item,
       inStock: deriveInStockFromAvailability(item.availability) && item.inStock !== false,
     }))
@@ -218,7 +218,7 @@ export async function enrichProductCardsWithStock(
     .filter((id): id is number => id != null && id > 0)
 
   if (templateIds.length === 0) {
-    return items.map(({ odooTemplateId: _omit, ...item }) => ({
+    return items.map((item) => ({
       ...item,
       inStock: deriveInStockFromAvailability(item.availability) && item.inStock !== false,
     }))
@@ -228,9 +228,13 @@ export async function enrichProductCardsWithStock(
   const variantIds = [...variantByTemplate.values()]
   const stockByVariant = await fetchVariantStockByIds(ctx, variantIds)
 
-  return items.map(({ odooTemplateId, ...item }) => {
+  return items.map((item) => {
+    const odooTemplateId = item.odooTemplateId
     if (odooTemplateId == null) {
-      return { ...item, inStock: deriveInStockFromAvailability(item.availability) && item.inStock !== false }
+      return {
+        ...item,
+        inStock: deriveInStockFromAvailability(item.availability) && item.inStock !== false,
+      }
     }
     const variantId = variantByTemplate.get(odooTemplateId)
     const snapshot =

@@ -19,7 +19,9 @@ import { createProviderPaymentSession } from '../../adapters/payments/paymentPro
 import { getStripePublishableKey, getStripeClientConfig, decodeStripeClientSecret } from '../../lib/stripe-config.js'
 import { parseBankTransferInstructionsJson } from './bankTransferInstructions.js'
 import {
+  parseStripePwaAddress,
   retrieveStripeCheckoutSession,
+  syncStripeCheckoutAddresses,
   type StripeLineItemInput,
 } from '../../adapters/payments/stripeCheckoutAdapter.js'
 import { stripeAmountsMatch } from './stripe-line-items.js'
@@ -37,6 +39,9 @@ import {
 import { assertCartLinesPurchasable } from '../catalog/catalog-stock.enrich.js'
 import { env } from '../../config/env.js'
 import { orderTransactionalMail } from '../orders/order-transactional-mail.service.js'
+import { formatDisplayOrderNumber } from '../orders/order-display-number.js'
+import { healBankTransferFalselyMarkedFailed } from './bank-transfer-order-heal.js'
+import { shouldRejectIncomingPaymentMethod } from './payment-session-guard.js'
 import type {
   CheckoutStartBody,
   ConfirmPaymentBody,
@@ -62,7 +67,7 @@ import { parseShippingAddressJson } from '../users/user.mapper.js'
 import { loadPwaOrderLines } from '../orders/pwa-order-lines.js'
 import { enqueueOdooSyncFailure, enqueueOrderOdooSaga } from '../odoo/odoo-sync-queue.service.js'
 import type { TestCheckoutAddressInput } from '../integrations/integrations.validators.js'
-import { isCheckoutAddressValid, normalizeCheckoutAddress } from '../checkout/checkout-address.validators.js'
+import { isCheckoutAddressValid, normalizeCheckoutAddress, toE164Phone } from '../checkout/checkout-address.validators.js'
 import {
   buildLinesSnapshot,
   findReusableCheckoutOrder,
@@ -82,6 +87,18 @@ const CART_PRICE_FRESH_MS = 2 * 60 * 1000
 function cartPricedRecently(lastPricedAt: Date | null | undefined): boolean {
   if (!lastPricedAt) return false
   return Date.now() - lastPricedAt.getTime() < CART_PRICE_FRESH_MS
+}
+
+function jsonPhone(value: unknown): string | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+  const phone = (value as { phone?: unknown }).phone
+  return typeof phone === 'string' && phone.trim() ? phone.trim() : undefined
+}
+
+function orderContactPhone(order: Pick<PwaOrder, 'billingAddressJson' | 'shippingAddressJson'>): string | undefined {
+  const raw = jsonPhone(order.billingAddressJson) ?? jsonPhone(order.shippingAddressJson)
+  if (!raw) return undefined
+  return toE164Phone(raw) ?? raw.replace(/\s/g, '')
 }
 
 function assertSession(req: Request) {
@@ -378,19 +395,24 @@ function isPaymentSessionComplete(payment: PwaPayment): boolean {
   return payment.provider !== 'pending'
 }
 
+async function cancelSupersededPayments(orderId: string, keepPaymentId: string) {
+  await prisma.pwaPayment.updateMany({
+    where: {
+      orderId,
+      id: { not: keepPaymentId },
+      status: { in: ['CREATED', 'PENDING', 'AUTHORIZED'] },
+    },
+    data: {
+      status: 'CANCELLED',
+      cancelledAt: new Date(),
+      failureReason: 'Sostituito da un altro metodo di pagamento.',
+    },
+  })
+}
+
 function taxLabelFromOrder(order: Pick<PwaOrder, 'metadataJson'>): string | null {
   const meta = order.metadataJson as { taxLabel?: unknown } | null
   return typeof meta?.taxLabel === 'string' && meta.taxLabel.trim() ? meta.taxLabel.trim() : null
-}
-
-function formatDisplayOrderNumber(order: Pick<PwaOrder, 'id' | 'odooSaleOrderId' | 'odooSaleOrderName'>): string {
-  const name = order.odooSaleOrderName?.trim()
-  if (name) return name
-  const year = new Date().getFullYear()
-  if (order.odooSaleOrderId != null) {
-    return `#IDL-${year}-${String(order.odooSaleOrderId).padStart(5, '0')}`
-  }
-  return `#${order.id.slice(0, 8).toUpperCase()}`
 }
 
 function mapOrderStatus(
@@ -575,6 +597,12 @@ export const paymentsService = {
       odooPartnerId = reusable?.odooPartnerId ?? null
     }
 
+    const checkoutPhone =
+      body.billingAddress.phone?.trim() || body.shippingAddress.phone?.trim() || ''
+    if (s.userId && checkoutPhone) {
+      await prisma.user.update({ where: { id: s.userId }, data: { phone: checkoutPhone } })
+    }
+
     const dropshipAddress = body.dropshipAddress ?? body.deliveryRecipient ?? null
     let odooPartnerShippingId: number | null = null
     if (env.ODOO_ENABLED && isOdooLiveConfigured() && odooPartnerId) {
@@ -589,6 +617,7 @@ export const paymentsService = {
             line2: body.shippingAddress.line2,
             city: body.shippingAddress.city,
             postalCode: body.shippingAddress.postalCode,
+            province: body.shippingAddress.province,
             country: body.shippingAddress.country,
             phone: body.shippingAddress.phone,
             id: body.shippingAddress.id,
@@ -844,17 +873,22 @@ export const paymentsService = {
     })
     if (active && isPaymentSessionComplete(active)) {
       if (active.provider === 'stripe' && active.providerSessionId) {
-        let reusable = false
         try {
           const session = await retrieveStripeCheckoutSession(active.providerSessionId)
-          reusable =
+          const reusable =
             session.status === 'open' &&
             stripeAmountsMatch(session.amount_total ?? 0, amount) &&
             stripeAmountsMatch(active.amount, amount)
+          if (reusable) {
+            await syncStripeCheckoutAddresses(session, {
+              billingAddress: parseStripePwaAddress(order.billingAddressJson),
+              shippingAddress: parseStripePwaAddress(order.shippingAddressJson),
+            }).catch(() => undefined)
+            return mapPaymentSession(active)
+          }
         } catch {
-          reusable = false
+          /* sessione Stripe non riusabile */
         }
-        if (reusable) return mapPaymentSession(active)
         await prisma.pwaPayment.update({
           where: { id: active.id },
           data: {
@@ -911,9 +945,12 @@ export const paymentsService = {
         amount,
         currencyCode: order.currencyCode,
         email: order.email,
+        phone: orderContactPhone(order),
         correlationId: req.correlationId,
         lineItems: stripeLines,
         taxLabel: taxLabelFromOrder(order),
+        billingAddress: parseStripePwaAddress(order.billingAddressJson),
+        shippingAddress: parseStripePwaAddress(order.shippingAddressJson),
       })
     } catch (err) {
       if (!reuseIncompletePayment && payment.provider === 'pending') {
@@ -938,6 +975,35 @@ export const paymentsService = {
         rawProviderJson: provider.raw ? jsonValue(provider.raw) : undefined,
       },
     })
+
+    const latestOrder = await prisma.pwaOrder.findUnique({
+      where: { id: order.id },
+      select: { paymentMethod: true, orderStatus: true },
+    })
+    if (latestOrder && shouldRejectIncomingPaymentMethod(latestOrder, method)) {
+      await prisma.pwaPayment.update({
+        where: { id: paymentRecord.id },
+        data: {
+          status: 'CANCELLED',
+          cancelledAt: new Date(),
+          failureReason: 'Metodo di pagamento superato da un ordine già confermato.',
+        },
+      })
+      if (latestOrder.paymentMethod) {
+        const keep = await prisma.pwaPayment.findFirst({
+          where: {
+            orderId: order.id,
+            method: latestOrder.paymentMethod,
+            status: { in: ['CREATED', 'PENDING', 'AUTHORIZED'] },
+          },
+          orderBy: { createdAt: 'desc' },
+        })
+        if (keep) return mapPaymentSession(keep)
+      }
+      throw new AppError('PAYMENT_ALREADY_COMPLETED', 'Already paid', 'Pagamento già completato.', 409, false)
+    }
+
+    await cancelSupersededPayments(order.id, paymentRecord.id)
 
     const updated = await prisma.pwaOrder.update({
       where: { id: order.id },
@@ -1022,6 +1088,7 @@ export const paymentsService = {
         lastPaymentError: paymentStatus === 'FAILED' ? 'Pagamento non riuscito o rifiutato dal provider.' : null,
       },
     })
+    await cancelSupersededPayments(updated.id, payment.id)
     await syncOrderToOdoo({ correlationId: req.correlationId, req }, updated)
 
     if (orderStatus === 'PAYMENT_PENDING' && payment.method === 'BANK_TRANSFER') {
@@ -1078,6 +1145,12 @@ export const paymentsService = {
     options?: { stripeSessionId?: string | null },
   ): Promise<ThankYouOrderDTO> {
     const order = await assertOrderAccessOrStripeSession(req, orderId, options?.stripeSessionId)
+    if (order.paymentMethod === 'BANK_TRANSFER') {
+      const healed = await healBankTransferFalselyMarkedFailed(orderId)
+      if (healed) {
+        return this.thankYou(req, orderId, options)
+      }
+    }
     const latestPayment = order.payments[0] ?? null
     const base = mapOrderStatus(order, latestPayment)
     const shippingAddress = parseShippingAddressJson(order.shippingAddressJson)

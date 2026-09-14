@@ -85,7 +85,7 @@ export function OrderDetailPage() {
   }
 
   const order = orders.detail
-  const orderRef = formatOrderRef(order.odooSaleOrderId, locale)
+  const orderRef = formatOrderRef(order, locale)
   const total =
     order.totalAmount != null && order.currencyCode
       ? formatMoney(order.totalAmount, order.currencyCode)

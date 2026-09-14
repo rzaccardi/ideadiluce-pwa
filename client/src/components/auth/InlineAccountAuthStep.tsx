@@ -15,6 +15,7 @@ import { useForgotPasswordModal } from '@/hooks/use-forgot-password-modal'
 import { useLogoutConfirm } from '@/hooks/use-logout-confirm'
 import { useI18n } from '@/hooks/use-i18n'
 import { ApiRequestError } from '@/types/api'
+import { isCheckoutPhoneValid } from '@/lib/checkout-address.validators'
 import { CheckoutBusinessFieldsSection } from '@/components/checkout/stripe-ui/CheckoutBusinessFieldsSection'
 import { CheckoutRetailFiscalCodeField } from '@/components/checkout/stripe-ui/CheckoutRetailFiscalCodeField'
 import { CheckoutCustomerTypeCards } from '@/components/checkout/stripe-ui/CheckoutCustomerTypeCards'
@@ -171,6 +172,13 @@ export function InlineAccountAuthStep({
       }
     }
 
+    const trimmedPhone = phone.trim()
+    if (!trimmedPhone || !isCheckoutPhoneValid(trimmedPhone)) {
+      setRegisterError(t(trimmedPhone ? 'validation.invalidPhone' : 'validation.required'))
+      clearAuthLoading()
+      return
+    }
+
     const trimmedEmail = email.trim()
     try {
       await checkoutRegister({
@@ -178,7 +186,7 @@ export function InlineAccountAuthStep({
         password,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        phone: phone.trim() || undefined,
+        phone: trimmedPhone,
         customerSegment: collectCustomerTypeOnRegister ? segment : undefined,
       })
       setPostAuthPending(true)
@@ -188,7 +196,7 @@ export function InlineAccountAuthStep({
           email: trimmedEmail,
           firstName: firstName.trim(),
           lastName: lastName.trim(),
-          phone: phone.trim() || undefined,
+          phone: trimmedPhone,
           customerSegment: collectCustomerTypeOnRegister ? segment : undefined,
         })
       } finally {
@@ -399,10 +407,11 @@ export function InlineAccountAuthStep({
         <StripeInput
           type="tel"
           name="phone"
-          placeholder={t('checkout.address.phoneOptional')}
+          placeholder={t('common.phone')}
           autoComplete="tel"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
+          required
           disabled={formsLocked}
         />
       </StripeFieldGroup>

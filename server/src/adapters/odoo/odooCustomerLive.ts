@@ -1,5 +1,6 @@
 import { env } from '../../config/env.js'
 import { formatStreetLine, splitLine1AndStreetNumber } from '../../modules/checkout/checkout-address.validators.js'
+import { normalizeAddressProvince } from '../../modules/checkout/italian-provinces.js'
 import { odooExecuteKw, type OdooCallContext } from './odooClient.js'
 import { normalizeOdooCreateId } from './odooId.js'
 import type {
@@ -39,6 +40,7 @@ type PartnerProfileRow = {
   city?: string | false
   zip?: string | false
   country_id?: [number, string] | false
+  state_id?: [number, string] | false
   is_company?: boolean
   parent_id?: [number, string] | false
   commercial_partner_id?: [number, string] | false
@@ -55,6 +57,7 @@ const PARTNER_ADDRESS_FIELDS = [
   'city',
   'zip',
   'country_id',
+  'state_id',
   'parent_id',
   'commercial_partner_id',
 ] as const
@@ -69,6 +72,7 @@ const PARTNER_ACCOUNT_BASE_FIELDS = [
   'city',
   'zip',
   'country_id',
+  'state_id',
   'is_company',
   'parent_id',
   'commercial_partner_id',
@@ -165,6 +169,7 @@ async function accountFromContactRow(
       line2: mapped.street2 || undefined,
       city: mapped.city,
       postalCode: mapped.zip,
+      province: normalizeAddressProvince(country, mapped.stateName) || mapped.stateName || undefined,
       country,
       phone: mapped.phone || undefined,
     },
@@ -225,6 +230,31 @@ async function countryIdForCode(ctx: OdooCallContext, code: string): Promise<num
   return rows[0]?.id ?? null
 }
 
+const stateIdCache = new Map<string, number>()
+
+async function stateIdForCode(
+  ctx: OdooCallContext,
+  countryId: number | null,
+  province: string | undefined,
+  country = 'IT',
+): Promise<number | null> {
+  const code = normalizeAddressProvince(country, province)
+  if (!countryId || !code) return null
+  const cacheKey = `${countryId}:${code}`
+  const cached = stateIdCache.get(cacheKey)
+  if (cached) return cached
+  const rows = await odooExecuteKw<Array<{ id: number }>>(
+    ctx,
+    'res.country.state',
+    'search_read',
+    [[['country_id', '=', countryId], ['code', '=', code]]],
+    { fields: ['id'], limit: 1 },
+  )
+  const id = rows[0]?.id ?? null
+  if (id) stateIdCache.set(cacheKey, id)
+  return id
+}
+
 async function getPartnerProfileByEmail(
   ctx: OdooCallContext,
   email: string,
@@ -272,6 +302,7 @@ async function addressPartnerVals(
 ): Promise<Record<string, unknown>> {
   if (!billing?.line1?.trim()) return {}
   const countryId = billing.country ? await countryIdForCode(ctx, billing.country) : null
+  const stateId = await stateIdForCode(ctx, countryId, billing.province, billing.country ?? 'IT')
   return {
     street: formatStreetLine({
       line1: billing.line1,
@@ -282,6 +313,7 @@ async function addressPartnerVals(
     city: billing.city ?? '',
     zip: billing.postalCode ?? '',
     ...(countryId ? { country_id: countryId } : {}),
+    ...(stateId ? { state_id: stateId } : {}),
   }
 }
 
@@ -352,7 +384,11 @@ async function updateCustomerBusiness(
   await odooExecuteKw<boolean>(ctx, 'res.partner', 'write', [[partnerId], vals], {})
 }
 
-function deliveryPartnerVals(profile: OdooCustomerProfile, countryId: number | null) {
+function deliveryPartnerVals(
+  profile: OdooCustomerProfile,
+  countryId: number | null,
+  stateId: number | null,
+) {
   const name = [profile.firstName, profile.lastName].filter(Boolean).join(' ').trim() || 'Destinatario'
   return {
     name,
@@ -362,6 +398,7 @@ function deliveryPartnerVals(profile: OdooCustomerProfile, countryId: number | n
     city: profile.city,
     zip: profile.postalCode,
     ...(countryId ? { country_id: countryId } : {}),
+    ...(stateId ? { state_id: stateId } : {}),
   }
 }
 
@@ -383,8 +420,9 @@ async function createDeliveryPartner(
 ): Promise<OdooCustomerResult> {
   const companyId = await companyPartnerId(ctx, parentPartnerId)
   const countryId = profile.country ? await countryIdForCode(ctx, profile.country) : null
+  const stateId = await stateIdForCode(ctx, countryId, profile.province, profile.country ?? 'IT')
   const vals = {
-    ...deliveryPartnerVals(profile, countryId),
+    ...deliveryPartnerVals(profile, countryId, stateId),
     type: 'delivery',
     parent_id: companyId,
   }
@@ -460,11 +498,12 @@ async function updateDeliveryPartner(
   profile: OdooCustomerProfile,
 ): Promise<void> {
   const countryId = profile.country ? await countryIdForCode(ctx, profile.country) : null
+  const stateId = await stateIdForCode(ctx, countryId, profile.province, profile.country ?? 'IT')
   await odooExecuteKw<boolean>(
     ctx,
     'res.partner',
     'write',
-    [[partnerId], deliveryPartnerVals(profile, countryId)],
+    [[partnerId], deliveryPartnerVals(profile, countryId, stateId)],
     {},
   )
 }
@@ -485,6 +524,7 @@ function asShippingProfile(
     line2: address.line2,
     city: address.city ?? '',
     postalCode: address.postalCode ?? '',
+    province: address.province,
     country: address.country ?? 'IT',
     phone: address.phone,
   }

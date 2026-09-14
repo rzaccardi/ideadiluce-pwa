@@ -2,7 +2,8 @@ import type { ProductCardDTO, ProductDetailDTO, ProductVariantDTO } from '@/type
 
 /** Snapshot prodotto già in memoria (catalogo/PDP) per saltare OdooCatalog su POST /cart/items. */
 export type CartAddProductHint = {
-  odooTemplateId: number
+  /** Se manca, l’hint resta solo client-side (totale ottimistico); il POST non lo invia. */
+  odooTemplateId?: number
   odooVariantId?: number | null
   slug?: string
   name?: string
@@ -10,6 +11,14 @@ export type CartAddProductHint = {
   unitPriceCents?: number
   variantLabel?: string | null
   attributes?: Array<{ name: string; value: string }>
+}
+
+/** Il backend richiede `odooTemplateId`; senza, non mandare l’hint. */
+export function toServerCartAddHint(
+  hint?: CartAddProductHint,
+): CartAddProductHint | undefined {
+  if (hint?.odooTemplateId == null || hint.odooTemplateId <= 0) return undefined
+  return hint
 }
 
 function parseOdooVariantId(variantRef: string | null | undefined): number | null {
@@ -33,9 +42,10 @@ export function buildCartAddHintFromCard(
   variantRef?: string | null,
   variant?: ProductVariantDTO | null,
 ): CartAddProductHint | undefined {
-  const odooTemplateId = product.odooTemplateId
-  if (odooTemplateId == null || odooTemplateId <= 0) return undefined
+  const unitPriceCents = variant?.priceCents ?? product.priceCents
+  if (!product.slug && !product.name && !(unitPriceCents > 0)) return undefined
 
+  const odooTemplateId = product.odooTemplateId
   const odooVariantId =
     variant?.odooVariantId ?? parseOdooVariantId(variantRef ?? null) ?? undefined
 
@@ -44,12 +54,12 @@ export function buildCartAddHintFromCard(
     .map((a) => ({ name: a.name.trim(), value: a.value.trim() }))
 
   return {
-    odooTemplateId,
+    ...(odooTemplateId != null && odooTemplateId > 0 ? { odooTemplateId } : {}),
     odooVariantId: odooVariantId ?? null,
     slug: product.slug,
     name: product.name,
     imageUrl: variant?.imageUrl ?? product.imageUrl,
-    unitPriceCents: variant?.priceCents ?? product.priceCents,
+    ...(unitPriceCents > 0 ? { unitPriceCents } : {}),
     variantLabel: variant?.label ?? null,
     ...(attributes.length ? { attributes } : {}),
   }

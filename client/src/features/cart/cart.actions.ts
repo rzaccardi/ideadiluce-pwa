@@ -8,7 +8,7 @@ import {
 import { ApiRequestError } from '@/types/api'
 import type { CartAddedFeedback } from './cart-feedback'
 import { notifyCartItemAdded } from './cart-feedback'
-import type { CartAddProductHint } from './cart-add-hint'
+import { toServerCartAddHint, type CartAddProductHint } from './cart-add-hint'
 import { applyOptimisticAdd, isOptimisticCartId } from './cart-optimistic'
 import { cartStore } from './cart.store'
 
@@ -43,8 +43,15 @@ function detectStaleCartMirror(serverCartId: string): boolean {
   return mirror.cartId !== serverCartId
 }
 
+let cartWriteGeneration = 0
+
+function markCartWrite() {
+  cartWriteGeneration += 1
+}
+
 /** Dopo login/logout: evita di mostrare il carrello guest in cache mentre si ricarica quello server. */
 export function resetCartForAuthChange() {
+  markCartWrite()
   invalidateDedupePrefix('cart:')
   cartStore.cart = null
   cartStore.recommendations = []
@@ -57,10 +64,12 @@ export function resetCartForAuthChange() {
 // cartId + scadenza riserva (vedi cart-local-storage). POST /cart/sync-from-client resta
 // legacy per sync righe guest e non viene invocato dal client.
 async function loadCart(options?: { skipMirrorCheck?: boolean; reprice?: boolean; silent?: boolean }) {
+  const generation = cartWriteGeneration
   if (!options?.silent) cartStore.isLoading = true
   cartStore.error = null
   try {
     const next = await api.cart.get({ reprice: options?.reprice })
+    if (generation !== cartWriteGeneration) return
     if (!options?.skipMirrorCheck && detectStaleCartMirror(next.id)) {
       cartStore.reservationExpiredNotice = true
     }
@@ -72,6 +81,7 @@ async function loadCart(options?: { skipMirrorCheck?: boolean; reprice?: boolean
     cartStore.cart = next
     mirrorCartToLocalStorage()
   } catch (e) {
+    if (generation !== cartWriteGeneration) return
     cartStore.error = errMessage(e)
   } finally {
     if (!options?.silent) cartStore.isLoading = false
@@ -129,15 +139,17 @@ export function fetchCart(options?: FetchCartOptions) {
     return Promise.resolve()
   }
   queueCartFetchOptions(options)
-  // Chiave unica: evita GET paralleli cart + cart?reprice=1 (stesso carrello, doppio Odoo).
-  return waitForPendingCartMutations().then(() =>
-    dedupeAsync('cart:get', async () => {
+  // Chiave unica per generazione: evita di riutilizzare un GET partito prima di un add.
+  return waitForPendingCartMutations().then(() => {
+    const generation = cartWriteGeneration
+    return dedupeAsync(`cart:get:${generation}`, async () => {
       await Promise.resolve()
+      if (cartWriteGeneration !== generation) return
       const opts = pendingCartFetch ?? {}
       pendingCartFetch = null
       return loadCart(opts)
-    }),
-  )
+    })
+  })
 }
 
 /** Verifica mirror localStorage al bootstrap (prima del primo GET). */
@@ -170,6 +182,8 @@ export async function addItem(
 ) {
   const { feedback, productHint, silent } = normalizeAddItemOptions(options)
   cartStore.error = null
+  markCartWrite()
+  pendingMutationCount += 1
   cartStore.cart = applyOptimisticAdd({
     cart: cartStore.cart,
     productRef,
@@ -185,14 +199,13 @@ export async function addItem(
     })
   }
 
-  pendingMutationCount += 1
   return enqueueCartMutation(async () => {
     try {
       const next = await api.cart.addItem({
         productRef,
         quantity,
         variantRef,
-        productHint,
+        productHint: toServerCartAddHint(productHint),
       })
       if (pendingMutationCount <= 1) {
         cartStore.cart = next
@@ -209,6 +222,7 @@ export async function addItem(
 }
 
 export async function updateItem(id: string, quantity: number) {
+  markCartWrite()
   cartStore.isLoading = true
   cartStore.error = null
   try {
@@ -224,6 +238,7 @@ export async function updateItem(id: string, quantity: number) {
 }
 
 export async function removeItem(id: string, options?: { silent?: boolean }) {
+  markCartWrite()
   if (!options?.silent) cartStore.isLoading = true
   cartStore.error = null
   try {
@@ -239,6 +254,7 @@ export async function removeItem(id: string, options?: { silent?: boolean }) {
 }
 
 export async function clearCart() {
+  markCartWrite()
   cartStore.isLoading = true
   cartStore.error = null
   try {
@@ -254,6 +270,7 @@ export async function clearCart() {
 }
 
 export async function reprice() {
+  markCartWrite()
   cartStore.isLoading = true
   cartStore.error = null
   try {

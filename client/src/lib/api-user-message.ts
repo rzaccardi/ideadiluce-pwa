@@ -8,6 +8,7 @@ const FIELD_PREFIX_RE =
 const SOURCE_TO_KEY: Record<string, MessageKey> = {
   'Street number or SNC required': 'validation.streetNumberOrSnc',
   'Invalid postal code': 'validation.invalidPostalCode',
+  'Invalid province': 'validation.invalidProvince',
   'Invalid phone number': 'validation.invalidPhone',
   'Invalid country code': 'validation.invalidCountry',
   Required: 'validation.required',
@@ -32,6 +33,7 @@ const SOURCE_TO_KEY: Record<string, MessageKey> = {
   'Inserisci il numero civico oppure seleziona «Senza numero civico».':
     'validation.streetNumberOrSnc',
   'CAP non valido.': 'validation.invalidPostalCode',
+  'Provincia non valida.': 'validation.invalidProvince',
   'Numero di telefono non valido.': 'validation.invalidPhone',
   'Codice paese non valido.': 'validation.invalidCountry',
   'Campo obbligatorio.': 'validation.required',

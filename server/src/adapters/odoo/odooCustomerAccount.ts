@@ -10,6 +10,7 @@ export type OdooPartnerAccountRow = {
   city?: string | false
   zip?: string | false
   country_id?: [number, string] | false
+  state_id?: [number, string] | false
   is_company?: boolean
   parent_id?: [number, string] | number | false
   commercial_partner_id?: [number, string] | number | false
@@ -32,6 +33,7 @@ export type MappedOdooPartnerAccount = {
   city: string
   zip: string
   countryId: OdooPartnerAccountRow['country_id']
+  stateName: string
   business: OdooBusinessProfile
 }
 
@@ -124,6 +126,9 @@ export function mapOdooPartnerAccount(
     city: odooText(contact.city) || odooText(company.city),
     zip: odooText(contact.zip) || odooText(company.zip),
     countryId: contact.country_id || company.country_id,
+    stateName:
+      odooText(Array.isArray(contact.state_id) ? contact.state_id[1] : '') ||
+      odooText(Array.isArray(company.state_id) ? company.state_id[1] : ''),
     business: {
       companyName,
       vatNumber,

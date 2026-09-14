@@ -20,6 +20,7 @@ export function profileToAddressDto(
     line2: profile.line2,
     city: profile.city,
     postalCode: profile.postalCode,
+    province: profile.province,
     country: profile.country,
     phone: profile.phone,
     ...extras,
@@ -36,6 +37,7 @@ export function addressDtoToProfile(address: UserAddressDTO): OdooCustomerProfil
     line2: address.line2,
     city: address.city,
     postalCode: address.postalCode,
+    province: address.province,
     country: address.country,
     phone: address.phone,
   }

@@ -1,6 +1,8 @@
+'use client'
+
 import { Link } from '@/lib/navigation'
 import type { ProductCardDTO } from '@/types/dto'
-import { formatMoney } from '@/lib/format'
+import { ProductPrice } from '@/components/product/ProductPrice'
 import { DesignProductCardMedia } from '@/components/site/category/DesignCatalogProductGrid'
 import { ProductBrandMark } from '@/components/product/ProductBrandMark'
 import type { LocalePathFn } from '@/components/site/sections/types'
@@ -43,9 +45,13 @@ export function DesignRelatedProducts({ products, lp, brandName }: Props) {
           <div className="mt-1 line-clamp-2 min-h-[2lh] text-[12.5px] leading-normal text-idl-ink-muted">
             {product.shortDescription ?? '\u00A0'}
           </div>
-          <div className="mt-2 text-[15px] font-bold text-idl-ink">
-            {formatMoney(product.priceCents, product.currency)}
-          </div>
+          <ProductPrice
+            netCents={product.priceCents}
+            currency={product.currency}
+            className="mt-2"
+            amountClassName="text-[15px] font-bold text-idl-ink"
+            captionClassName="text-[11px] font-medium text-idl-ink-muted"
+          />
         </Link>
       ))}
     </div>

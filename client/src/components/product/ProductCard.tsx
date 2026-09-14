@@ -16,8 +16,7 @@ import {
   getProductAvailabilityStatus,
   resolveAvailabilityData,
 } from '@/lib/product-availability'
-import { formatMoney } from '@/lib/format'
-import { formatPriceDisplayModeLabel } from '@/lib/price-display'
+import { ProductPrice } from '@/components/product/ProductPrice'
 import { SiteImage } from '@/components/site/SiteImage'
 import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMeta'
 import { ProductBrandMark } from '@/components/product/ProductBrandMark'
@@ -70,7 +69,6 @@ export function ProductCard({ product, className }: Props) {
   const outOfStock = availability.status === 'out_of_stock'
   const canAdd = availability.canAddToCart
   const isAddingToCart = pendingAction === 'cart'
-  const priceModeLabel = formatPriceDisplayModeLabel(product.priceDisplayMode)
   async function handleAddToCart() {
     if (!canAdd) return
     setPendingAction('cart')
@@ -148,12 +146,12 @@ export function ProductCard({ product, className }: Props) {
         </Link>
         <div className="mt-4 flex shrink-0 items-center justify-between gap-3">
           <div>
-            <p className="text-base font-semibold text-idl-graphite">
-              {formatMoney(product.priceCents, product.currency)}
-            </p>
-            {priceModeLabel ? (
-              <p className="text-xs text-idl-muted">{priceModeLabel}</p>
-            ) : null}
+            <ProductPrice
+              netCents={product.priceCents}
+              currency={product.currency}
+              amountClassName="text-base font-semibold text-idl-graphite"
+              captionClassName="text-xs text-idl-muted"
+            />
             {!outOfStock && availability.status !== 'available' ? (
               <p className="mt-0.5 text-xs text-idl-muted">{availabilityLabel}</p>
             ) : null}

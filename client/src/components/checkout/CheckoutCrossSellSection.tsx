@@ -5,7 +5,7 @@ import { Link } from '@/lib/navigation'
 import type { ProductCardDTO } from '@/types/dto'
 import { addItem } from '@/features/cart'
 import { buildCartAddHintFromCard } from '@/features/cart/cart-add-hint'
-import { formatMoney } from '@/lib/format'
+import { ProductPrice } from '@/components/product/ProductPrice'
 import { CartLineThumb } from '@/components/cart/CartLineThumb'
 import { useI18n } from '@/hooks/use-i18n'
 import { cn } from '@/utils/cn'
@@ -73,9 +73,13 @@ function CrossSellRow({
         >
           {product.name}
         </Link>
-        <p className={cn('mt-0.5 text-xs tabular-nums', dark ? 'text-[#b0b0b4]' : 'text-idl-muted')}>
-          {formatMoney(product.priceCents, product.currency)}
-        </p>
+        <ProductPrice
+          netCents={product.priceCents}
+          currency={product.currency}
+          className="mt-0.5"
+          amountClassName={cn('text-xs tabular-nums', dark ? 'text-[#b0b0b4]' : 'text-idl-muted')}
+          captionClassName={cn('text-[10px] font-medium', dark ? 'text-[#9298a3]' : 'text-idl-muted')}
+        />
       </div>
       <button
         type="button"

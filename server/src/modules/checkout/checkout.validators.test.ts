@@ -10,6 +10,7 @@ const billingAddress = {
   postalCode: '20121',
   country: 'IT',
   phone: '+393331234567',
+  province: 'MI',
 }
 
 const baseCheckout = {
@@ -27,6 +28,19 @@ describe('checkoutStartSchema retail fiscal code', () => {
     })
 
     expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.billingAddress.province).toBe('MI')
+      expect(result.data.shippingAddress.province).toBe('MI')
+    }
+  })
+
+  it('rejects Italian checkout without province', () => {
+    const result = checkoutStartSchema.safeParse({
+      ...baseCheckout,
+      billingAddress: { ...billingAddress, province: '' },
+      shippingAddress: { ...billingAddress, province: '' },
+    })
+    expect(result.success).toBe(false)
   })
 
   it('rejects invalid fiscal code when provided', () => {

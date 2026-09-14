@@ -8,6 +8,8 @@ export type AddressInput = {
   line2?: string
   city: string
   postalCode: string
+  /** Sigla provincia IT (es. MI, RM) o regione/stato estero. */
+  province: string
   /** ISO 3166-1 alpha-2 */
   country: string
   phone?: string

@@ -1,4 +1,5 @@
 import type { AddressAutocompleteProvider, AddressSuggestion, ResolvedAddress } from './types'
+import { provinceFromAddressParts } from '@/lib/italian-provinces'
 
 type GoogleAutocompleteResponse = {
   suggestions?: Array<{
@@ -44,6 +45,13 @@ function parsePlace(place: GooglePlaceResponse): ResolvedAddress | null {
     component(components, 'postal_town')
   const postalCode = component(components, 'postal_code')
   const country = component(components, 'country', true).toUpperCase().slice(0, 2)
+  const province = provinceFromAddressParts(
+    country,
+    component(components, 'administrative_area_level_2', true),
+    component(components, 'administrative_area_level_2'),
+    component(components, 'administrative_area_level_1', true),
+    component(components, 'administrative_area_level_1'),
+  )
 
   if (!line1 || !city || !postalCode || !country) return null
 
@@ -53,6 +61,7 @@ function parsePlace(place: GooglePlaceResponse): ResolvedAddress | null {
     line2,
     city,
     postalCode,
+    province: province || undefined,
     country,
   }
 }

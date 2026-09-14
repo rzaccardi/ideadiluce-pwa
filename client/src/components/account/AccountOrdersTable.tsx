@@ -69,7 +69,7 @@ export function AccountOrdersTable({ orders }: { orders: readonly OrderDTO[] }) 
             return (
               <tr key={order.id} className="transition hover:bg-zinc-50/80">
                 <td className="px-4 py-3.5 font-medium text-zinc-900">
-                  {formatOrderRef(order.odooSaleOrderId, locale)}
+                  {formatOrderRef(order, locale)}
                 </td>
                 <td className="px-4 py-3.5 text-zinc-600">{formatOrderDate(order.createdAt, locale)}</td>
                 <td className="px-4 py-3.5">

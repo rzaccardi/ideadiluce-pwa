@@ -126,7 +126,7 @@ export const orderReturnRequestService = {
           emailTo: PWA_ADMIN_MAIL_TO,
           replyTo: user.email,
           vars: {
-            order_ref: `#${input.order.odooSaleOrderId}`,
+            order_ref: input.order.orderNumber?.trim() || `#${input.order.odooSaleOrderId}`,
             customer_email: user.email,
             body_text: adminMail.text,
           },

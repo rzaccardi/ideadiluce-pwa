@@ -1,4 +1,5 @@
 import type { AddressInput } from '@/types/integrations'
+import { formatAddressLocality } from '@/lib/address'
 import { checkoutCountryLabel } from './constants'
 
 export function formatCheckoutStreetLine(address: AddressInput): string {
@@ -10,11 +11,7 @@ export function formatCheckoutStreetLine(address: AddressInput): string {
 }
 
 export function formatCheckoutLocalityLine(address: AddressInput): string {
-  const parts = [
-    address.postalCode.trim(),
-    address.city.trim(),
-    checkoutCountryLabel(address.country),
-  ].filter(Boolean)
+  const parts = [formatAddressLocality(address), checkoutCountryLabel(address.country)].filter(Boolean)
   return parts.join(' · ')
 }
 

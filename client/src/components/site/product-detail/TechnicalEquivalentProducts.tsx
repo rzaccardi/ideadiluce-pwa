@@ -3,8 +3,7 @@
 import { useState } from 'react'
 import { Link } from '@/lib/navigation'
 import type { ProductCardDTO, ProductRelatedDTO } from '@/types/dto'
-import { formatMoney } from '@/lib/format'
-import { formatPriceDisplayModeLabel } from '@/lib/price-display'
+import { ProductPrice } from '@/components/product/ProductPrice'
 import { extractProductDisplayTitle } from '@/lib/product-display-title'
 import { SiteImage } from '@/components/site/SiteImage'
 import { ProductBrandMark } from '@/components/product/ProductBrandMark'
@@ -53,7 +52,6 @@ export function TechnicalEquivalentProducts({ products, currentSlug, lp }: Props
           const brand = item.brand ?? inferTechnicalProductBrandFromName(item.name)
           const { title } = extractProductDisplayTitle(item.name)
           const specLine = item.specTags?.filter(Boolean).slice(0, 4).join(' · ')
-          const priceMode = formatPriceDisplayModeLabel(item.priceDisplayMode)
           const ean = item.ean?.trim() || null
           const isAdding = addingSlug === item.slug
 
@@ -109,14 +107,13 @@ export function TechnicalEquivalentProducts({ products, currentSlug, lp }: Props
 
                 <div className="flex shrink-0 flex-col items-end gap-2">
                   {item.priceCents > 0 ? (
-                    <div className="text-right">
-                      <div className="text-[15px] font-extrabold tracking-tight text-idl-graphite">
-                        {formatMoney(item.priceCents, item.currency)}
-                      </div>
-                      {priceMode ? (
-                        <div className="text-[11px] text-idl-muted">{priceMode}</div>
-                      ) : null}
-                    </div>
+                    <ProductPrice
+                      netCents={item.priceCents}
+                      currency={item.currency}
+                      className="items-end text-right"
+                      amountClassName="text-[15px] font-extrabold tracking-tight text-idl-graphite"
+                      captionClassName="text-[11px] text-idl-muted"
+                    />
                   ) : null}
                   <div className="flex flex-wrap justify-end gap-2">
                     <button

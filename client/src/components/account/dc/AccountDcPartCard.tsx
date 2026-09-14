@@ -7,7 +7,7 @@ import { useLocale } from '@/context/locale-context'
 import { addItem } from '@/features/cart'
 import { buildCartAddHintFromCard } from '@/features/cart/cart-add-hint'
 import { removeWishlistItem } from '@/features/wishlist'
-import { formatMoney } from '@/lib/format'
+import { ProductPrice } from '@/components/product/ProductPrice'
 import { SiteImage } from '@/components/site/SiteImage'
 import { useI18n } from '@/hooks/use-i18n'
 import { accountDcPrimaryBtnClass } from './account-dc-styles'
@@ -81,9 +81,12 @@ export function AccountDcPartCard({
         {product.name}
       </Link>
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[15px] font-extrabold text-idl-graphite">
-          {formatMoney(product.priceCents, product.currency)}
-        </span>
+        <ProductPrice
+          netCents={product.priceCents}
+          currency={product.currency}
+          amountClassName="text-[15px] font-extrabold text-idl-graphite"
+          captionClassName="text-[10px] font-medium text-idl-muted"
+        />
         <button
           type="button"
           disabled={product.inStock === false}

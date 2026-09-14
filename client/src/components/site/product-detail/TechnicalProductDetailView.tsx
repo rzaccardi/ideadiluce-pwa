@@ -4,10 +4,9 @@ import { useMemo, useState } from 'react'
 import { ExternalLink } from '@/lib/link-title'
 import { Link } from '@/lib/navigation'
 import { useLocalePath } from '@/hooks/use-locale-path'
-import { formatMoney } from '@/lib/format'
+import { ProductPrice } from '@/components/product/ProductPrice'
 import { addItem, buildCartAddHintFromCard } from '@/features/cart'
 import { SiteImage } from '@/components/site/SiteImage'
-import { formatPriceDisplayModeLabel } from '@/lib/price-display'
 import type { ProductCardDTO, ProductDetailDTO } from '@/types/dto'
 import { ProductDescriptionHtml } from '@/components/product/ProductDescriptionHtml'
 import { ProductRestockNotify } from '@/components/product/ProductRestockNotify'
@@ -144,9 +143,6 @@ export function TechnicalProductDetailView({ product, state }: Props) {
     collectProductIdentifierFields(product, selectedVariant, { includeBrand: false }).find((field) => field.key === 'ean')
       ?.value ?? null
   const brandEyebrow = product.brand?.name?.toUpperCase() ?? 'PRODOTTO TECNICO'
-  const priceModeLabel = formatPriceDisplayModeLabel(
-    selectedVariant?.priceDisplayMode ?? product.priceDisplayMode,
-  )
 
   const highlightSpecs = HIGHLIGHT_SPEC_LABELS.map((label) => {
     const re = new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
@@ -284,13 +280,14 @@ export function TechnicalProductDetailView({ product, state }: Props) {
 
           {/* Buy box: prezzo, disponibilità, CTA */}
           <div className="rounded-xl border border-idl-tech-border bg-white p-4 shadow-[0_4px_16px_rgba(0,0,0,0.04)] sm:p-[22px] dark:bg-idl-tech-panel">
-            <div className="mb-1.5 flex flex-wrap items-baseline gap-2">
-              <span className="text-[26px] font-extrabold tracking-[-0.02em] sm:text-[30px]">
-                {formatMoney(displayPriceCents, product.currency)}
-              </span>
-              {priceModeLabel ? (
-                <span className="text-[13.5px] text-idl-muted">{priceModeLabel}</span>
-              ) : null}
+            <div className="mb-1.5">
+              <ProductPrice
+                netCents={displayPriceCents}
+                currency={product.currency}
+                layout="inline"
+                amountClassName="text-[26px] font-extrabold tracking-[-0.02em] sm:text-[30px]"
+                captionClassName="text-[13.5px] text-idl-muted"
+              />
             </div>
             <div className="mb-[18px] flex flex-col gap-1 text-sm">
               <div className="flex flex-wrap items-center gap-2">
@@ -694,9 +691,13 @@ export function TechnicalProductDetailView({ product, state }: Props) {
                     ) : (
                       <span className="line-clamp-2 text-sm font-semibold">{item.name}</span>
                     )}
-                    <div className="mt-0.5 font-mono text-[13px] text-idl-graphite">
-                      {formatMoney(item.priceCents, item.currency)}
-                    </div>
+                    <ProductPrice
+                      netCents={item.priceCents}
+                      currency={item.currency}
+                      className="mt-0.5"
+                      amountClassName="font-mono text-[13px] text-idl-graphite"
+                      captionClassName="text-[11px] text-idl-muted"
+                    />
                     {!addable ? (
                       <div className="mt-0.5 text-[11px] text-idl-muted">
                         {t('product.accessories.unavailableLink')}

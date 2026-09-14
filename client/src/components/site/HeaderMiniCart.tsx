@@ -19,7 +19,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { formatMoney } from '@/lib/format'
-import { cartTotalCents } from '@/lib/cartTotals'
+import { cartDisplayTotalCents } from '@/lib/cartTotals'
 import { AnimatePresence, motion, useReducedMotion } from '@/lib/motion-client'
 import { transitionBase } from '@/lib/motion/presets'
 import { cn } from '@/utils/cn'
@@ -173,7 +173,7 @@ function MiniCartPanel({
                       {tParams('orders.detail.quantity', { count: item.quantity })}
                     </p>
                   </div>
-                  {item.lineTotalEstimateCents != null ? (
+                  {item.lineTotalEstimateCents != null && item.lineTotalEstimateCents > 0 ? (
                     <span className="shrink-0 text-xs font-medium text-idl-ink-soft">
                       {formatMoney(item.lineTotalEstimateCents, cart.currencyCode)}
                     </span>
@@ -280,8 +280,9 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
     }
   }, [open])
 
-  const itemCount = cart?.itemCount ?? 0
-  const total = cart && cart.items.length > 0 ? cartTotalCents(cart) : null
+  const itemCountFromLines = cart?.items.reduce((sum, line) => sum + line.quantity, 0) ?? 0
+  const itemCount = Math.max(cart?.itemCount ?? 0, itemCountFromLines)
+  const total = cart && cart.items.length > 0 ? cartDisplayTotalCents(cart) : null
 
   // Checkout: nascosto ovunque. Pagina carrello: nascosto su mobile via CSS (evita branch SSR su viewport).
   if (isCartFlow && !isCartPage) return null

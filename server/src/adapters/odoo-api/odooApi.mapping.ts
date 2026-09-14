@@ -1,4 +1,5 @@
 import { formatStreetLine } from '../../modules/checkout/checkout-address.validators.js'
+import { normalizeAddressProvince } from '../../modules/checkout/italian-provinces.js'
 import type {
   FindOrCreateCustomerInput,
   OdooBusinessProfile,
@@ -81,6 +82,8 @@ export function buildOdooApiCustomerWrite(input: FindOrCreateCustomerInput): Odo
     if (addr.postalCode?.trim()) payload.zip = addr.postalCode.trim()
     if (addr.city?.trim()) payload.city = addr.city.trim()
     if (addr.country?.trim()) payload.country_code = addr.country.trim().toUpperCase()
+    const province = normalizeAddressProvince(addr.country ?? 'IT', addr.province)
+    if (province) payload.state_code = province
   }
   applyBusiness(payload, input.business)
   return payload
@@ -100,13 +103,16 @@ export function buildOdooApiAddressWrite(
   profile: OdooCustomerProfile,
   email?: string | null,
 ): OdooApiAddressWrite {
+  const country = profile.country?.trim().toUpperCase() || undefined
+  const province = normalizeAddressProvince(country ?? 'IT', profile.province)
   return {
     name: [profile.firstName, profile.lastName].filter(Boolean).join(' ').trim() || profile.firstName,
     street: formatStreetLine(profile),
     street2: profile.line2?.trim() || undefined,
     zip: profile.postalCode,
     city: profile.city,
-    country_code: profile.country?.trim().toUpperCase() || undefined,
+    country_code: country,
+    state_code: province || undefined,
     phone: profile.phone,
     email: email?.trim() || undefined,
     type: 'delivery',
@@ -126,6 +132,7 @@ export function odooApiAddressToProfile(addr: OdooApiAddress, fallbackEmail?: st
     line2: addr.street2?.trim() || undefined,
     city: addr.city?.trim() || '',
     postalCode: addr.zip?.trim() || '',
+    province: normalizeAddressProvince(addr.country_code ?? 'IT', addr.state_code) || undefined,
     country: (addr.country_code ?? 'IT').toUpperCase(),
     phone: addr.phone?.trim() || undefined,
   }
@@ -146,6 +153,7 @@ export function odooApiCustomerToAccount(customer: OdooApiCustomer): OdooCustome
         line2: customer.street2?.trim() || undefined,
         city: customer.city?.trim() || '',
         postalCode: customer.zip?.trim() || '',
+        province: normalizeAddressProvince(customer.country_code ?? 'IT', customer.state_code) || undefined,
         country: (customer.country_code ?? 'IT').toUpperCase(),
         phone: customer.phone?.trim() || undefined,
       }

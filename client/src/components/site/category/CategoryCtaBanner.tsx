@@ -23,7 +23,9 @@ export function CategoryCtaBanner({ banner, lp, variant = 'design' }: Props) {
   return (
     <Reveal
       className={cn(
-        isDesign ? 'bg-idl-ink text-idl-design-fg' : 'border-t border-idl-amber/20 bg-idl-paper',
+        isDesign
+          ? 'bg-idl-design text-idl-design-fg dark:border-y dark:border-idl-glow/25'
+          : 'border-t border-idl-amber/20 bg-idl-paper',
       )}
     >
       <SectionContainer
@@ -48,7 +50,7 @@ export function CategoryCtaBanner({ banner, lp, variant = 'design' }: Props) {
                 className={cn(
                   'font-medium',
                   isDesign
-                    ? 'font-serif text-[24px] leading-tight sm:text-[28px]'
+                    ? 'font-serif text-[24px] leading-tight text-idl-design-fg sm:text-[28px]'
                     : 'text-[20px] font-extrabold tracking-tight text-idl-ink sm:text-[22px]',
                 )}
               >

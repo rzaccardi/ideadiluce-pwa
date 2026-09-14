@@ -37,6 +37,8 @@ export type OdooCustomerProfile = {
   line2?: string
   city: string
   postalCode: string
+  /** Sigla provincia IT (es. MI, RM) o regione/stato estero. */
+  province?: string
   country: string
   phone?: string
 }

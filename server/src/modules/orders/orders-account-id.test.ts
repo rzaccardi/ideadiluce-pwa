@@ -12,6 +12,7 @@ function order(partial: Partial<OrderDTO>): OrderDTO {
     id: 'pwa-ord-1',
     pwaOrderId: 'ord-1',
     odooSaleOrderId: 88,
+    orderNumber: '#IDL-2026-00088',
     status: 'sale',
     paymentStatus: 'paid',
     currencyCode: 'EUR',
@@ -56,5 +57,7 @@ describe('applyPwaOrderPublicIds', () => {
     expect(list[1]?.pwaOrderId).toBe('ord-1')
     expect(list[1]?.source).toBe('pwa')
     expect(list[1]?.sourceLabel).toBe('E-commerce')
+    expect(list[0]?.orderNumber).toBe('4CSVKG')
+    expect(list[1]?.orderNumber).toBe('4CSVKG')
   })
 })

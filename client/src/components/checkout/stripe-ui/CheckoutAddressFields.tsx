@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from 'react'
 import type { AddressInput } from '@/types/integrations'
 import { useLocalControlledField } from '@/hooks/use-local-controlled-field'
 import { useI18n } from '@/hooks/use-i18n'
+import { ITALIAN_PROVINCES, normalizeAddressProvince } from '@/lib/italian-provinces'
 import { CHECKOUT_COUNTRIES } from './constants'
 import {
   StripeFieldGroup,
@@ -53,6 +54,45 @@ export function CheckoutAddressFields({
     if (value.trim()) onChange('isSnc', false)
   }
 
+  function handleCountryChange(value: string) {
+    const country = value.toUpperCase().slice(0, 2)
+    onChange('country', country)
+    onChange('province', normalizeAddressProvince(country, address.province))
+  }
+
+  function provinceControl(className?: string) {
+    if (address.country === 'IT') {
+      return (
+        <StripeSelect
+          name={`${prefix}-province`}
+          value={ITALIAN_PROVINCES.some((row) => row.code === address.province) ? address.province : ''}
+          autoComplete="address-level1"
+          disabled={locked}
+          className={cn(lockedClass, className)}
+          onChange={(e) => onChange('province', e.target.value.toUpperCase())}
+        >
+          <option value="">{t('checkout.address.province')}</option>
+          {ITALIAN_PROVINCES.map((row) => (
+            <option key={row.code} value={row.code}>
+              {row.code} — {row.name}
+            </option>
+          ))}
+        </StripeSelect>
+      )
+    }
+    return (
+      <StripeControlledInput
+        name={`${prefix}-province`}
+        placeholder={t('checkout.address.province')}
+        value={address.province}
+        autoComplete="address-level1"
+        readOnly={locked}
+        className={cn(lockedClass, className)}
+        onValueChange={(value) => onChange('province', value)}
+      />
+    )
+  }
+
   if (isCard) {
     return (
       <div className="space-y-4">
@@ -64,7 +104,7 @@ export function CheckoutAddressFields({
               autoComplete="country"
               disabled={locked}
               className={lockedClass}
-              onChange={(e) => onChange('country', e.target.value.toUpperCase().slice(0, 2))}
+              onChange={(e) => handleCountryChange(e.target.value)}
             >
               {CHECKOUT_COUNTRIES.map((c) => (
                 <option key={c.code} value={c.code}>
@@ -147,7 +187,7 @@ export function CheckoutAddressFields({
           </StripeFieldGroup>
         </FieldBlock>
 
-        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_8.5rem]">
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_6.75rem_8.5rem]">
           <FieldBlock label={t('checkout.address.city')}>
             <StripeFieldGroup>
               <StripeControlledInput
@@ -160,6 +200,9 @@ export function CheckoutAddressFields({
                 onValueChange={(value) => onChange('city', value)}
               />
             </StripeFieldGroup>
+          </FieldBlock>
+          <FieldBlock label={t('checkout.address.province')}>
+            <StripeFieldGroup>{provinceControl()}</StripeFieldGroup>
           </FieldBlock>
           <FieldBlock label={t('checkout.address.postalCode')}>
             <StripeFieldGroup>
@@ -202,7 +245,7 @@ export function CheckoutAddressFields({
         autoComplete="country"
         disabled={locked}
         className={lockedClass}
-        onChange={(e) => onChange('country', e.target.value.toUpperCase().slice(0, 2))}
+        onChange={(e) => handleCountryChange(e.target.value)}
       >
         {CHECKOUT_COUNTRIES.map((c) => (
           <option key={c.code} value={c.code}>
@@ -259,7 +302,7 @@ export function CheckoutAddressFields({
         className={lockedClass}
         onValueChange={(value) => onChange('line2', value)}
       />
-      <div className="grid grid-cols-1 gap-0 sm:grid-cols-[1fr_auto] sm:[&>*+*]:border-l sm:[&>*+*]:border-idl-tech-border">
+      <div className="grid grid-cols-1 gap-0 sm:grid-cols-[minmax(0,1fr)_6.75rem_7rem] sm:[&>*+*]:border-l sm:[&>*+*]:border-idl-tech-border">
         <StripeControlledInput
           name={`${prefix}-city`}
           placeholder={t('checkout.address.city')}
@@ -269,6 +312,7 @@ export function CheckoutAddressFields({
           className={lockedClass}
           onValueChange={(value) => onChange('city', value)}
         />
+        {provinceControl()}
         <StripeControlledInput
           name={`${prefix}-postalCode`}
           placeholder={t('checkout.address.postalCode')}

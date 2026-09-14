@@ -25,6 +25,7 @@ const FIELD_LABELS: Record<string, string> = {
   streetNumber: 'Civico',
   city: 'Città',
   postalCode: 'CAP',
+  province: 'Provincia',
   country: 'Paese',
 }
 
@@ -39,6 +40,7 @@ export function ShippingPage() {
     isSnc: false,
     city: 'Milano',
     postalCode: '20100',
+    province: 'MI',
     country: 'IT',
   })
   const [surchargeForm, setSurchargeForm] = useState({
@@ -296,6 +298,7 @@ export function ShippingPage() {
                         'streetNumber',
                         'city',
                         'postalCode',
+                        'province',
                         'country',
                       ] as const
                     ).map((k) => (

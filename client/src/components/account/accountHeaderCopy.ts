@@ -50,7 +50,7 @@ export function resolveAccountSection(
                 ? 'ro-RO'
                 : 'de-DE'
     return {
-      title: formatOrderRef(o.odooSaleOrderId, locale),
+      title: formatOrderRef(o, locale),
       description: new Date(o.createdAt).toLocaleDateString(dateLocale, {
         day: 'numeric',
         month: 'long',

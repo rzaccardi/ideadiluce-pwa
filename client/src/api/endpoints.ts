@@ -85,7 +85,7 @@ export const api = {
       password: string
       firstName: string
       lastName: string
-      phone?: string
+      phone: string
       customerSegment?: 'retail' | 'business'
     }) {
       return apiClient.post<{ user: UserDTO }>('/api/v1/auth/checkout-register', body)
@@ -720,26 +720,8 @@ export const api = {
       productRef?: string
       quantity?: number
       variantRef?: string | null
-      shippingAddress?: {
-        firstName: string
-        lastName: string
-        line1: string
-        line2?: string
-        city: string
-        postalCode: string
-        country: string
-        phone?: string
-      }
-      billingAddress?: {
-        firstName: string
-        lastName: string
-        line1: string
-        line2?: string
-        city: string
-        postalCode: string
-        country: string
-        phone?: string
-      }
+      shippingAddress?: AddressInput
+      billingAddress?: AddressInput
     }) {
       return apiClient.post<PaymentSessionDTO>('/api/v1/payments/prepare-wallet-checkout', body)
     },

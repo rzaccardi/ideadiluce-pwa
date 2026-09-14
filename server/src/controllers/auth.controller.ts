@@ -35,7 +35,8 @@ export const authController = {
       password: string
       firstName: string
       lastName: string
-      phone?: string
+      phone: string
+      customerSegment?: 'retail' | 'business'
     }
     const sessionId = req.sessionRecord!.id
     const user = await checkoutRegisterService.register(body, sessionId, req.correlationId)

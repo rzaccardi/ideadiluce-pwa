@@ -7,11 +7,16 @@ import {
   useCheckoutElements,
 } from '@stripe/react-stripe-js/checkout'
 import type {
-  StripeCheckoutContact,
   StripeExpressCheckoutElementConfirmEvent,
 } from '@stripe/stripe-js'
 import { useSnapshot } from 'valtio/react'
-import { checkoutStore, refreshStaleStripePaymentSession } from '@/features/checkout'
+import {
+  checkoutStore,
+  getCheckoutBillingAddress,
+  getCheckoutShippingAddress,
+  refreshStaleStripePaymentSession,
+} from '@/features/checkout'
+import { toStripeCheckoutContact } from '@/lib/stripe-checkout-address'
 import { StripeDivider, StripeFieldGroup, StripeFieldLabel, StripeInput } from './stripe-ui/StripeFields'
 import { useI18n } from '@/hooks/use-i18n'
 
@@ -19,24 +24,15 @@ function formatCardholderName(firstName: string, lastName: string) {
   return [firstName.trim(), lastName.trim()].filter(Boolean).join(' ')
 }
 
-function buildConfirmBillingDetails(cardholderName: string): {
-  phoneNumber?: string
-  billingAddress: StripeCheckoutContact
-} {
-  const draft = checkoutStore.draft
-  const addr = draft.billingSameAsShipping ? draft.shipping : draft.billing
+/** Billing/shipping per Stripe confirm(). Non passare phoneNumber: Checkout Elements lo rifiuta. */
+function buildConfirmAddressDetails(cardholderName: string) {
+  const billing = getCheckoutBillingAddress()
+  const shipping = getCheckoutShippingAddress()
+  const shippingName =
+    [shipping.firstName.trim(), shipping.lastName.trim()].filter(Boolean).join(' ') || cardholderName
   return {
-    phoneNumber: addr.phone?.trim() || undefined,
-    billingAddress: {
-      name: cardholderName.trim(),
-      address: {
-        country: addr.country,
-        line1: addr.line1,
-        line2: addr.line2 || null,
-        city: addr.city,
-        postal_code: addr.postalCode,
-      },
-    },
+    billingAddress: toStripeCheckoutContact(cardholderName, billing),
+    shippingAddress: toStripeCheckoutContact(shippingName, shipping),
   }
 }
 
@@ -122,7 +118,7 @@ export const StripePaymentForm = forwardRef<StripePaymentFormHandle, Props>(func
         throw new Error(t('checkout.payment.cardholderNameRequired'))
       }
       return checkoutState.checkout.confirm({
-        ...buildConfirmBillingDetails(name),
+        ...buildConfirmAddressDetails(name),
         ...(expressCheckoutConfirmEvent ? { expressCheckoutConfirmEvent } : {}),
       })
     },

@@ -58,6 +58,7 @@ export function emptyCheckoutAddress(): AddressInput {
     line2: '',
     city: '',
     postalCode: '',
+    province: '',
     country: 'IT',
     phone: '',
     courierNotes: '',

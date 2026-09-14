@@ -1,7 +1,9 @@
+'use client'
+
 import { memo } from 'react'
 import { Link } from '@/lib/navigation'
 import type { ProductCardDTO } from '@/types/dto'
-import { formatMoney } from '@/lib/format'
+import { ProductPrice } from '@/components/product/ProductPrice'
 import { SiteImage } from '../SiteImage'
 import { CatalogProductCardSkeleton } from '../catalog/CatalogProductCardSkeleton'
 import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMeta'
@@ -106,14 +108,21 @@ export const DesignCatalogProductCard = memo(function DesignCatalogProductCard({
           includeBrand={false}
           className="mt-1 text-[10px] tracking-[0.04em] text-idl-ink-muted"
         />
-        <div className="mt-auto flex items-center justify-between pt-3">
+        <div className="mt-auto flex items-start justify-between gap-2 pt-3">
           {hidePrice ? (
             <span className="text-[12.5px] font-bold text-idl-brass">{discoverLabel}</span>
           ) : (
             <>
-              <span className="text-base font-bold text-idl-ink">{formatMoney(product.priceCents, product.currency)}</span>
-              <span className="hidden text-[12.5px] font-bold text-idl-brass sm:inline">{discoverLabel}</span>
-              <span className="text-[12.5px] font-bold text-idl-brass sm:hidden">→</span>
+              <ProductPrice
+                netCents={product.priceCents}
+                currency={product.currency}
+                amountClassName="text-base font-bold text-idl-ink"
+                captionClassName="text-[10.5px] font-medium text-idl-ink-muted"
+              />
+              <span className="hidden shrink-0 pt-0.5 text-[12.5px] font-bold text-idl-brass sm:inline">
+                {discoverLabel}
+              </span>
+              <span className="pt-0.5 text-[12.5px] font-bold text-idl-brass sm:hidden">→</span>
             </>
           )}
         </div>

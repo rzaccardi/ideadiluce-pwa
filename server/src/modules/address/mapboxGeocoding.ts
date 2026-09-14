@@ -1,4 +1,5 @@
 import type { AddressSuggestion, ResolvedAddress } from './types.js'
+import { provinceFromAddressParts } from '../checkout/italian-provinces.js'
 
 type MapboxFeature = {
   id: string
@@ -14,13 +15,22 @@ function parseFeature(feature: MapboxFeature): ResolvedAddress | null {
   const place = ctx.find((c) => c.id.startsWith('place.'))?.text ?? ''
   const countryCtx = ctx.find((c) => c.id.startsWith('country.'))
   const country = countryCtx?.short_code?.toUpperCase().slice(0, 2) ?? 'IT'
+  const district = ctx.find((c) => c.id.startsWith('district.'))?.text
+  const region = ctx.find((c) => c.id.startsWith('region.'))
   const street = feature.address
     ? `${feature.address} ${feature.text ?? ''}`.trim()
     : (feature.text ?? feature.place_name.split(',')[0] ?? '')
 
   if (!street || !place || !postal) return null
 
-  return { line1: street, city: place, postalCode: postal, country }
+  const province = provinceFromAddressParts(
+    country,
+    district,
+    region?.text,
+    region?.short_code?.replace(/^IT-/i, ''),
+  )
+
+  return { line1: street, city: place, postalCode: postal, province: province || undefined, country }
 }
 
 export async function mapboxSearch(

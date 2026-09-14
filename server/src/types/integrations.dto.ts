@@ -12,6 +12,7 @@ export type TestCheckoutAddressDTO = {
   line2?: string
   city: string
   postalCode: string
+  province?: string
   country: string
   phone?: string
   courierNotes?: string
