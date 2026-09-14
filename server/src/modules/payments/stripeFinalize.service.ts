@@ -4,6 +4,10 @@ import { prisma } from '../../lib/prisma.js'
 import { logger } from '../../lib/logger.js'
 import { retrieveStripeCheckoutSession } from '../../adapters/payments/stripeCheckoutAdapter.js'
 import { stripeAmountsMatch } from './stripe-line-items.js'
+import {
+  parseOdooSaleOrderIdFromStripeMetadata,
+  resolveOdooSaleOrderIdForFinalize,
+} from './stripe-odoo-link.js'
 import { registerPayment } from '../../adapters/odoo/odooPaymentLive.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
@@ -82,6 +86,11 @@ export async function finalizeStripeCheckout(
       ? session.payment_intent
       : session.payment_intent?.id ?? null
 
+  const odooSaleOrderId = resolveOdooSaleOrderIdForFinalize({
+    fromStripe: parseOdooSaleOrderIdFromStripeMetadata(session.metadata),
+    fromOrder: order.odooSaleOrderId,
+  })
+
   const stripeTotal = session.amount_total ?? 0
   const expectedTotal = order.amountTotal ?? 0
   if (expectedTotal > 0 && !stripeAmountsMatch(stripeTotal, expectedTotal)) {
@@ -89,11 +98,15 @@ export async function finalizeStripeCheckout(
       pwaOrderId,
       stripeTotal,
       expectedTotal,
+      odooSaleOrderId,
       correlationId: req.correlationId,
     })
     await prisma.pwaOrder.update({
       where: { id: order.id },
       data: {
+        ...(odooSaleOrderId != null && order.odooSaleOrderId !== odooSaleOrderId
+          ? { odooSaleOrderId }
+          : {}),
         lastPaymentError: `Importo Stripe (${stripeTotal}) diverso da ordine (${expectedTotal}). Conferma Odoo bloccata.`,
       },
     })
@@ -132,11 +145,13 @@ export async function finalizeStripeCheckout(
       providerTransactionId: paymentIntentId,
       paidAt: new Date(),
       lastPaymentError: null,
+      ...(odooSaleOrderId != null ? { odooSaleOrderId } : {}),
       ...(req.sessionRecord?.user?.id && !order.userId
         ? { userId: req.sessionRecord.user.id }
         : {}),
     },
   })
+  const saleOrderId = updated.odooSaleOrderId ?? odooSaleOrderId
 
   await prisma.cart.update({
     where: { id: updated.cartId },
@@ -188,7 +203,7 @@ export async function finalizeStripeCheckout(
   }
   }
 
-  if (env.ODOO_ENABLED && !updated.odooSaleOrderId) {
+  if (env.ODOO_ENABLED && !saleOrderId) {
     await prisma.pwaOrder.update({
       where: { id: updated.id },
       data: { orderStatus: 'PAID_SYNC_PENDING', odooLastSyncStatus: 'FAILED' },
@@ -199,7 +214,7 @@ export async function finalizeStripeCheckout(
     })
   }
 
-  if (env.ODOO_ENABLED && updated.odooSaleOrderId) {
+  if (env.ODOO_ENABLED && saleOrderId) {
     const cart = await prisma.cart.findUnique({
       where: { id: updated.cartId },
       include: { items: true, shippingSelection: true },
@@ -208,7 +223,7 @@ export async function finalizeStripeCheckout(
       try {
         await orderAdapter.reconcileSaleOrderLines(
           ctx,
-          updated.odooSaleOrderId,
+          saleOrderId,
           cart.items.map((i) => ({
             productRef: i.productRef,
             variantRef: i.variantRef,
@@ -239,7 +254,7 @@ export async function finalizeStripeCheckout(
           operation: 'reconcile_lines',
           payload: {
             pwaOrderId: updated.id,
-            odooSaleOrderId: updated.odooSaleOrderId,
+            odooSaleOrderId: saleOrderId,
             lines: cart.items.map((i) => ({
               productRef: i.productRef,
               variantRef: i.variantRef,
@@ -263,7 +278,7 @@ export async function finalizeStripeCheckout(
           correlationId: ctx.correlationId,
           success: false,
           orderId: updated.id,
-          odooSaleOrderId: updated.odooSaleOrderId ?? undefined,
+          odooSaleOrderId: saleOrderId ?? undefined,
           error: msg,
           extra: { step: 'reconcile_lines', sessionId: session.id },
         })
@@ -282,7 +297,7 @@ export async function finalizeStripeCheckout(
       }
     }
     const funnelResult = await registerPayment(ctx, {
-      saleOrderId: updated.odooSaleOrderId,
+      saleOrderId,
       pwaOrderId: updated.id,
       method: 'stripe',
       amountCents: updated.amountTotal ?? stripeTotal,
@@ -317,7 +332,7 @@ export async function finalizeStripeCheckout(
         correlationId: ctx.correlationId,
         success: false,
         orderId: updated.id,
-        odooSaleOrderId: updated.odooSaleOrderId ?? undefined,
+        odooSaleOrderId: saleOrderId ?? undefined,
         error: 'Conferma ordine Odoo fallita dopo pagamento Stripe',
         extra: { step: 'funnel_sync', sessionId: session.id },
       })
@@ -333,12 +348,12 @@ export async function finalizeStripeCheckout(
     }
   }
 
-  if (updated.userId && updated.odooSaleOrderId) {
+  if (updated.userId && saleOrderId) {
     let portalUrl: string | null = null
     try {
       const urlResult = await paymentUrlAdapter.createPortalPaymentUrl(ctx, {
         documentModel: 'sale.order',
-        documentId: updated.odooSaleOrderId,
+        documentId: saleOrderId,
       })
       portalUrl = urlResult.paymentUrl
     } catch {
@@ -349,7 +364,7 @@ export async function finalizeStripeCheckout(
       create: {
         id: `pwa-${updated.id}`,
         userId: updated.userId,
-        odooSaleOrderId: updated.odooSaleOrderId,
+        odooSaleOrderId: saleOrderId,
         status: 'sale',
         paymentStatus: 'paid',
         currencyCode: updated.currencyCode,
@@ -397,7 +412,7 @@ export async function finalizeStripeCheckout(
     correlationId: ctx.correlationId,
     success: updated.orderStatus !== 'PAID_SYNC_PENDING',
     orderId: updated.id,
-    odooSaleOrderId: updated.odooSaleOrderId ?? undefined,
+    odooSaleOrderId: saleOrderId ?? undefined,
     extra: {
       sessionId: session.id,
       paymentIntentId,

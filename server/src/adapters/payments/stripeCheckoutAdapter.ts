@@ -3,6 +3,7 @@ import { env } from '../../config/env.js'
 import { getStripe, isStripeConfigured } from '../../lib/stripe.js'
 import { decodeStripeClientSecret } from '../../lib/stripe-config.js'
 import { sumStripeLineItems } from '../../modules/payments/stripe-line-items.js'
+import { STRIPE_ODOO_SALE_ORDER_ID_META } from '../../modules/payments/stripe-odoo-link.js'
 import { AppError } from '../../types/errors.js'
 
 function checkoutReturnUrl(pwaOrderId: string): string {
@@ -68,7 +69,8 @@ export async function createStripeCheckoutSession(
     pwa_order_id: input.pwaOrderId,
     pwa_payment_id: input.pwaPaymentId,
     cart_id: input.cartId,
-    odoo_sale_order_id: input.odooSaleOrderId != null ? String(input.odooSaleOrderId) : '',
+    [STRIPE_ODOO_SALE_ORDER_ID_META]:
+      input.odooSaleOrderId != null ? String(input.odooSaleOrderId) : '',
     correlation_id: input.correlationId,
   }
 
