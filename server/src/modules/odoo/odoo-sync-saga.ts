@@ -28,6 +28,7 @@ import {
   type EnqueueOdooSyncInput,
   type OdooSyncQueueOperation,
 } from './odoo-sync-operations.js'
+import { isWebsitePartnerUsable } from './odoo-website-partner.js'
 
 const customerAdapter = createOdooCustomerAdapter()
 const orderAdapter = createOdooOrderAdapter()
@@ -101,13 +102,28 @@ export async function executeEnsurePartner(
 
   if (input.pwaOrderId) {
     const order = await loadOrder(input.pwaOrderId)
-    if (order.odooPartnerId) return
+    if (await isWebsitePartnerUsable(ctx, customerAdapter, order.odooPartnerId)) return
     const billing = asAddress(order.billingAddressJson)
     const partner = await customerAdapter.findOrCreateCustomer(ctx, {
       email: payload.email ?? order.email,
       firstName: payload.firstName ?? billing?.firstName,
       lastName: payload.lastName ?? billing?.lastName,
       phone: payload.phone ?? billing?.phone,
+      billingAddress:
+        billing?.line1 && billing.city
+          ? {
+              firstName: billing.firstName ?? '',
+              lastName: billing.lastName ?? '',
+              line1: billing.line1,
+              streetNumber: billing.streetNumber ?? '',
+              isSnc: billing.isSnc ?? false,
+              line2: billing.line2,
+              city: billing.city,
+              postalCode: billing.postalCode ?? '',
+              country: billing.country ?? 'IT',
+              phone: billing.phone,
+            }
+          : undefined,
     })
     await prisma.pwaOrder.update({
       where: { id: order.id },
@@ -127,7 +143,7 @@ export async function executeEnsurePartner(
     throw new AppError('USER_NOT_FOUND', 'User not found', 'Utente non trovato.', 404, false)
   }
   const existingMap = await prisma.odooCustomerMap.findUnique({ where: { userId: user.id } })
-  if (existingMap?.odooPartnerId) return
+  if (await isWebsitePartnerUsable(ctx, customerAdapter, existingMap?.odooPartnerId)) return
 
   const partner = await customerAdapter.findOrCreateCustomer(ctx, {
     email: payload.email ?? user.email,
@@ -157,35 +173,47 @@ export async function executeEnsureSaleOrder(ctx: OdooCallContext, pwaOrderId: s
   })
   const fiscal = (order.fiscalJson as CheckoutFiscalInput | null) ?? null
 
-  const result = await orderAdapter.syncSaleOrderDraft(ctx, {
-    odooPartnerId: order.odooPartnerId,
-    odooSaleOrderId: order.odooSaleOrderId,
-    pwaOrderId: order.id,
-    clientOrderRef: order.clientOrderRef ?? `PWA ${order.id}`,
-    orderNotes: order.orderNotes,
-    courierNotes: order.courierNotes,
-    paymentMethod: order.paymentMethod ? paymentMethodToDTO(order.paymentMethod) : null,
-    billingAddress: (order.billingAddressJson as TestCheckoutAddressInput | null) ?? null,
-    shippingAddress: (order.shippingAddressJson as TestCheckoutAddressInput | null) ?? null,
-    dropshipAddress: (order.dropshipAddressJson as TestCheckoutAddressInput | null) ?? null,
-    fiscal,
-    currencyCode: order.currencyCode,
-    lines:
-      cart?.items.map((i) => ({
-        productRef: i.productRef,
-        variantRef: i.variantRef,
-        quantity: i.quantity,
-        unitPriceCents: i.clientUnitPriceEstimate ?? undefined,
-      })) ?? [],
-    shippingLine: cart?.shippingSelection
-      ? {
-          label: cart.shippingSelection.label,
-          amountCents: cart.shippingSelection.amountCents,
-          carrierCode: cart.shippingSelection.carrierCode,
-          serviceCode: cart.shippingSelection.serviceCode,
-        }
-      : null,
-  })
+  let result
+  try {
+    result = await orderAdapter.syncSaleOrderDraft(ctx, {
+      odooPartnerId: order.odooPartnerId,
+      odooSaleOrderId: order.odooSaleOrderId,
+      pwaOrderId: order.id,
+      clientOrderRef: order.clientOrderRef ?? `PWA ${order.id}`,
+      orderNotes: order.orderNotes,
+      courierNotes: order.courierNotes,
+      paymentMethod: order.paymentMethod ? paymentMethodToDTO(order.paymentMethod) : null,
+      billingAddress: (order.billingAddressJson as TestCheckoutAddressInput | null) ?? null,
+      shippingAddress: (order.shippingAddressJson as TestCheckoutAddressInput | null) ?? null,
+      dropshipAddress: (order.dropshipAddressJson as TestCheckoutAddressInput | null) ?? null,
+      fiscal,
+      currencyCode: order.currencyCode,
+      lines:
+        cart?.items.map((i) => ({
+          productRef: i.productRef,
+          variantRef: i.variantRef,
+          quantity: i.quantity,
+          unitPriceCents: i.clientUnitPriceEstimate ?? undefined,
+        })) ?? [],
+      shippingLine: cart?.shippingSelection
+        ? {
+            label: cart.shippingSelection.label,
+            amountCents: cart.shippingSelection.amountCents,
+            carrierCode: cart.shippingSelection.carrierCode,
+            serviceCode: cart.shippingSelection.serviceCode,
+          }
+        : null,
+    })
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e)
+    if (/customer_id|non appartenente al sito|Cliente .+ non trovato/i.test(message)) {
+      await prisma.pwaOrder.update({
+        where: { id: order.id },
+        data: { odooPartnerId: null },
+      })
+    }
+    throw e
+  }
 
   await prisma.pwaOrder.update({
     where: { id: order.id },
@@ -496,7 +524,7 @@ export async function enqueueOrderOdooSaga(
   const ops: OdooSyncQueueOperation[] = []
   const apiV2 = isOdooApiV2Configured()
 
-  if (!order.odooPartnerId) ops.push('ensure_partner')
+  if (apiV2 || !order.odooPartnerId) ops.push('ensure_partner')
   if (!order.odooSaleOrderId) ops.push('ensure_sale_order')
   if (!apiV2 && (paid || order.odooSaleOrderId)) ops.push('reconcile_lines')
   if (paid) ops.push('funnel_sync')
@@ -514,6 +542,12 @@ export async function enqueueOrderOdooSaga(
       immediate: true,
     }
     await enqueueOdooSyncOperation(input)
+  }
+
+  if (paid) {
+    void import('../../jobs/odooSyncRetry.job.js')
+      .then((mod) => mod.processOdooSyncRetryQueue())
+      .catch(() => undefined)
   }
 }
 

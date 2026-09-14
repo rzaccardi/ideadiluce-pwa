@@ -1,13 +1,13 @@
 import type { OdooSyncQueueStatus, Prisma } from '@prisma/client'
 import type { Request } from 'express'
-import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { isOdooConfigured, isOdooLiveConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { env } from '../../config/env.js'
 import { logger } from '../../lib/logger.js'
 import { prisma } from '../../lib/prisma.js'
 import { AppError } from '../../types/errors.js'
 import type { OdooSyncQueueItemDTO, OdooSyncQueueListDTO } from '../../types/odoo.dto.js'
 import { sendPwaMail, PWA_ADMIN_MAIL_TO } from '../../adapters/odoo/odooMailAdapter.js'
-import { earlierSagaOperations, toOperationDto } from './odoo-sync-operations.js'
+import { earlierSagaOperations, sagaIndex, toOperationDto } from './odoo-sync-operations.js'
 import { executeQueueOperation } from './odoo-sync-saga.js'
 import {
   backoffMs,
@@ -274,7 +274,7 @@ export const odooSyncQueueService = {
   },
 
   async processDueItems(correlationId = 'odoo-sync-retry-job'): Promise<{ processed: number; failed: number }> {
-    if (!env.ODOO_ENABLED || !isOdooConfigured()) {
+    if (!env.ODOO_ENABLED || !isOdooLiveConfigured()) {
       return { processed: 0, failed: 0 }
     }
 
@@ -286,6 +286,11 @@ export const odooSyncQueueService = {
       orderBy: { nextRetryAt: 'asc' },
       take: 20,
     })
+    due.sort(
+      (a, b) =>
+        sagaIndex(a.operation) - sagaIndex(b.operation) ||
+        a.nextRetryAt.getTime() - b.nextRetryAt.getTime(),
+    )
 
     let processed = 0
     let failed = 0

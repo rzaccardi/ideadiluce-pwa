@@ -236,15 +236,34 @@ export async function syncCheckoutDraftOrder(
   const orderRow = existing
   let odooPartnerId = orderRow.odooPartnerId
   let odooDegraded = false
-  if (odooPartnerId == null || orderRow.email !== input.email) {
+  if (env.ODOO_ENABLED && isOdooLiveConfigured()) {
     try {
       const partner = await customerAdapter.findOrCreateCustomer(ctx, {
         email: input.email,
         firstName: input.billingAddress.firstName,
         lastName: input.billingAddress.lastName,
         phone: input.billingAddress.phone,
+        billingAddress: input.billingAddress,
       })
       odooPartnerId = partner.odooPartnerId
+      if (s.userId) {
+        await prisma.odooCustomerMap.upsert({
+          where: { userId: s.userId },
+          create: {
+            userId: s.userId,
+            odooPartnerId,
+            syncStatus: 'SYNCED',
+            lastSyncAt: new Date(),
+            guestEmail: input.email.toLowerCase().trim(),
+          },
+          update: {
+            odooPartnerId,
+            syncStatus: 'SYNCED',
+            lastSyncAt: new Date(),
+            guestEmail: input.email.toLowerCase().trim(),
+          },
+        })
+      }
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e)
       odooDegraded = true

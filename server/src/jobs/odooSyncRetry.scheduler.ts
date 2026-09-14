@@ -5,18 +5,23 @@ const INTERVAL_MS = 5 * 60 * 1000
 let timer: ReturnType<typeof setInterval> | null = null
 let running = false
 
+async function tick(): Promise<void> {
+  if (running) return
+  running = true
+  try {
+    await processOdooSyncRetryQueue()
+  } catch {
+    /* logged in job */
+  } finally {
+    running = false
+  }
+}
+
 export function startOdooSyncRetryScheduler(): void {
   if (timer) return
+  void tick()
   timer = setInterval(() => {
-    if (running) return
-    running = true
-    void processOdooSyncRetryQueue()
-      .catch(() => {
-        /* logged in job */
-      })
-      .finally(() => {
-        running = false
-      })
+    void tick()
   }, INTERVAL_MS)
   timer.unref?.()
 }
