@@ -137,6 +137,8 @@ export const checkoutStore = proxy({
   termsAccepted: false,
   /** Dati fiscali/azienda raccolti allo step account (registrazione checkout). */
   anagraficaCollectedAtAccount: false,
+  /** Checkout ospite: email confermata senza login. */
+  guestCheckoutAccepted: false,
   clientOrderRef: '',
   dropshipAddress: emptyCheckoutAddress(),
   savedShippingAddresses: [] as UserShippingAddressDTO[],

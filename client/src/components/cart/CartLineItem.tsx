@@ -150,6 +150,22 @@ export function CartLineItem({ line, currencyCode, stockInsufficient, isLoading,
         <div className="flex items-center gap-3.5">
           <CartQuantityStepper
             value={line.quantity}
+            max={
+              !line.availability.isOrderable &&
+              line.availability.stockQty != null &&
+              line.availability.stockQty > 0
+                ? line.availability.stockQty
+                : undefined
+            }
+            maxHint={
+              !line.availability.isOrderable &&
+              line.availability.stockQty != null &&
+              line.availability.stockQty > 0
+                ? tParams('product.qty.maxStockHint', {
+                    count: line.availability.stockQty + 1,
+                  })
+                : undefined
+            }
             disabled={unpurchasable || isLoading}
             onChange={(quantity) => void updateItem(line.id, quantity)}
           />

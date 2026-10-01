@@ -34,7 +34,7 @@ export function DesignProductCardMedia({
         accesaImageUrl={accesaImageUrl}
         slug={slug}
         sizes={sizes}
-        imageClassName="object-cover"
+        imageClassName="object-contain object-center"
       />
     </div>
   )

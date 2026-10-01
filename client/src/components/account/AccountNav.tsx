@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import { ExternalLink } from '@/lib/link-title'
 import { NavLink, usePathname } from '@/lib/navigation'
 import { useI18n } from '@/hooks/use-i18n'
+import { useLocalePath } from '@/hooks/use-locale-path'
 import { ACCOUNT_PRIMARY_NAV, ACCOUNT_SECONDARY_NAV } from '@/lib/account-nav-items'
 import { cn } from '@/utils/cn'
 import {
@@ -21,6 +22,7 @@ function navLinkClass(isActive: boolean) {
 
 export function AccountNav() {
   const { t } = useI18n()
+  const lp = useLocalePath()
   const pathname = usePathname()
   const navRef = useRef<HTMLElement>(null)
 
@@ -34,7 +36,7 @@ export function AccountNav() {
       {ACCOUNT_PRIMARY_NAV.map((item) => (
         <NavLink
           key={item.to}
-          to={item.to}
+          to={lp(item.to)}
           end={item.end}
           className={({ isActive }) => navLinkClass(isActive)}
         >
@@ -45,7 +47,7 @@ export function AccountNav() {
       {ACCOUNT_SECONDARY_NAV.map((item) => (
         <NavLink
           key={item.to}
-          to={item.to}
+          to={lp(item.to)}
           end={item.end}
           className={({ isActive }) => navLinkClass(isActive)}
         >
@@ -53,7 +55,7 @@ export function AccountNav() {
         </NavLink>
       ))}
       <ExternalLink
-        href="/contatti"
+        href={lp('/contatti')}
         className={cn(
           'flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-[9px] px-3.5 py-2.5 text-sm font-semibold no-underline transition lg:w-full lg:py-3',
           accountDcNavInactiveClass,

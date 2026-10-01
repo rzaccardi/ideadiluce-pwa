@@ -11,9 +11,11 @@ import { toUserDTO } from '../users/user.mapper.js'
 import { loginWithOdooCredentials } from './odoo-account-sync.service.js'
 import { hydrateUserBusinessFromOdoo } from '../users/users-odoo-business-hydrate.js'
 import { linkOrdersToUser } from '../orders/orders-user-link.service.js'
-import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { absorbCartLines, cartLineKey, type MergedCartLine } from './cart-merge.js'
+import { sendPwaMail, PWA_ADMIN_MAIL_TO } from '../../adapters/odoo/odooMailAdapter.js'
+import { publicAppUrl } from '../../lib/mail.js'
+import { logger } from '../../lib/logger.js'
 
 function sessionExpiry(): Date {
   return new Date(Date.now() + env.SESSION_DAYS * 24 * 60 * 60 * 1000)
@@ -144,8 +146,11 @@ export const authService = {
       lastName?: string
       phone?: string
       customerSegment?: 'retail' | 'business'
+      companyName?: string
+      vatNumber?: string
     },
     sessionId: string,
+    correlationId?: string,
   ): Promise<UserDTO> {
     const existing = await authRepository.findUserByEmail(input.email)
     if (existing) {
@@ -160,6 +165,17 @@ export const authService = {
     const passwordHash = bcrypt.hashSync(input.password, 10)
     const segment: CustomerSegment =
       input.customerSegment === 'business' ? 'BUSINESS' : 'RETAIL'
+    if (segment === 'BUSINESS') {
+      if (!input.companyName?.trim() || !input.vatNumber?.trim()) {
+        throw new AppError(
+          'VALIDATION_ERROR',
+          'Business registration requires company name and VAT',
+          'Per un account azienda sono obbligatori ragione sociale e Partita IVA.',
+          400,
+          false,
+        )
+      }
+    }
     const user = await authRepository.createUser({
       email: input.email,
       passwordHash,
@@ -167,12 +183,52 @@ export const authService = {
       lastName: input.lastName,
       phone: input.phone,
       customerSegment: segment,
+      companyName: segment === 'BUSINESS' ? input.companyName : undefined,
+      vatNumber: segment === 'BUSINESS' ? input.vatNumber : undefined,
     })
     await authRepository.linkSessionToUser(sessionId, user.id, sessionExpiry())
     await mergeCartsForUser(sessionId, user.id)
     await mergeWishlistForUser(sessionId, user.id)
     await mergeOrdersForUser(sessionId, user.id, user.email)
     const fresh = await prisma.user.findUniqueOrThrow({ where: { id: user.id } })
+
+    const mailCtx = { correlationId: correlationId ?? `register:${user.id}` }
+    const firstNameSuffix = fresh.firstName?.trim() ? ` ${fresh.firstName.trim()}` : ''
+    try {
+      await sendPwaMail(mailCtx, {
+        templateKey: 'account_welcome',
+        emailTo: fresh.email,
+        vars: {
+          first_name_suffix: firstNameSuffix,
+          email: fresh.email,
+          login_url: publicAppUrl('/login'),
+        },
+      })
+      if (segment === 'BUSINESS') {
+        await sendPwaMail(mailCtx, {
+          templateKey: 'business_registration_admin',
+          emailTo: PWA_ADMIN_MAIL_TO,
+          vars: {
+            customer_email: fresh.email,
+            body_text: [
+              `Nuova registrazione azienda da /register`,
+              `Email: ${fresh.email}`,
+              `Nome: ${[fresh.firstName, fresh.lastName].filter(Boolean).join(' ') || '—'}`,
+              `Telefono: ${fresh.phone ?? '—'}`,
+              `Ragione sociale: ${fresh.companyName ?? '—'}`,
+              `P.IVA: ${fresh.vatNumber ?? '—'}`,
+            ].join('\n'),
+          },
+        })
+      }
+    } catch (e) {
+      logger.warn('auth.register.welcome_mail_failed', {
+        correlationId: mailCtx.correlationId,
+        userId: user.id,
+        error: e instanceof Error ? e.message : String(e),
+      })
+    }
+
     return await toUserDTO(fresh)
   },
 
@@ -198,7 +254,8 @@ export const authService = {
       }
     }
 
-    if (correlationId && env.ODOO_ENABLED && !isOdooApiV2Configured()) {
+    // Fallback Odoo anche con API v2: utenti legacy (es. QA) possono avere solo credenziali portal.
+    if (correlationId && env.ODOO_ENABLED) {
       const odooUser = await loginWithOdooCredentials(
         { correlationId },
         input.email,

@@ -67,8 +67,8 @@ export function LocaleProvider({ children, initialLocale, initialMessages }: Loc
       const unprefixed = stripLocalePrefix(currentPath)
       const target = localizePath(`${unprefixed}${search ? `?${search}` : ''}`, next)
       applyDocumentLocale(next)
+      setLocale(next)
       void preloadLocale(next).then(() => {
-        setLocale(next)
         router.push(target)
       })
     },

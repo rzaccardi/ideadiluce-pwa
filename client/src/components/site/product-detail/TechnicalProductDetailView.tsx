@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { ExternalLink } from '@/lib/link-title'
 import { Link } from '@/lib/navigation'
 import { useLocalePath } from '@/hooks/use-locale-path'
+import { useI18n } from '@/hooks/use-i18n'
 import { ProductPrice } from '@/components/product/ProductPrice'
 import { addItem, buildCartAddHintFromCard } from '@/features/cart'
 import { SiteImage } from '@/components/site/SiteImage'
@@ -89,6 +90,7 @@ function hasHtmlMarkup(raw: string | null | undefined): boolean {
 
 export function TechnicalProductDetailView({ product, state }: Props) {
   const lp = useLocalePath()
+  const { tParams } = useI18n()
   const {
     galleryImages,
     displayPriceCents,
@@ -104,6 +106,11 @@ export function TechnicalProductDetailView({ product, state }: Props) {
     isStockEnriching,
     t,
   } = state
+
+  const maxHint =
+    maxQuantity != null
+      ? tParams('product.qty.maxStockHint', { count: maxQuantity + 1 })
+      : undefined
 
   const productDocuments = useMemo(
     () => mergeProductDocuments(product, selectedVariant),
@@ -310,13 +317,10 @@ export function TechnicalProductDetailView({ product, state }: Props) {
                       ? formatAvailabilityPrimaryLabel(availability)
                       : t('product.availability.orderable')}
                 </span>
-                {!isStockEnriching && availability?.status === 'available' ? (
-                  <span className="text-[13px] text-idl-muted">· spedizione entro 24/48h</span>
+                {!isStockEnriching && availability?.detail ? (
+                  <span className="text-[13px] text-idl-muted">· {availability.detail}</span>
                 ) : null}
               </div>
-              {!isStockEnriching && availability?.detail ? (
-                <p className="text-[13px] text-idl-muted">{availability.detail}</p>
-              ) : null}
             </div>
 
             <div className="flex min-w-0 flex-col gap-3 min-[480px]:flex-row min-[480px]:items-stretch">
@@ -325,6 +329,7 @@ export function TechnicalProductDetailView({ product, state }: Props) {
                   value={quantity}
                   min={1}
                   max={maxQuantity}
+                  maxHint={maxHint}
                   onChange={setQuantity}
                   variant="technical"
                 />

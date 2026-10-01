@@ -1,18 +1,20 @@
 /**
- * Matrice decisionale disponibilità (Sprint 1 Task 5).
+ * Matrice decisionale disponibilità (fornitori / lead time).
  *
- * | scenario              | stock | req | saleOk | orderable | unrecoverable | status      | purchasable | restock CTA | product req CTA | checkout |
- * |-----------------------|-------|-----|--------|-----------|---------------|-------------|-------------|-------------|-----------------|----------|
- * | disponibile           | 5     | 1   | true   | true      | false         | available   | yes         | no          | no              | yes      |
- * | qty>stock ordinabile    | 2     | 5   | true   | true      | false         | orderable   | yes         | no          | no              | yes      |
- * | stock 0 ordinabile      | 0     | 1   | true   | true      | false         | orderable   | yes         | yes         | no              | yes      |
- * | esaurito non ordinabile | 0     | 1   | true   | false     | false         | out_of_stock| no          | no          | yes             | no       |
- * | fuori produzione        | 0     | 1   | false  | *         | true          | out_of_stock| no          | no          | yes             | no       |
+ * | S   | Fornitori | Q   | Esito |
+ * |-----|-----------|-----|-------|
+ * | 0   | assenti   | ≥1  | Caso 3 — out_of_stock, Avvisami |
+ * | 0   | presenti  | ≥1  | Caso 2 — orderable, BASE+LT |
+ * | >0  | assenti   | ≤S  | Caso 1 — available, BASE |
+ * | >0  | assenti   | >S  | Edge — out_of_stock (UI cap a S) |
+ * | >0  | presenti  | ≤S  | Caso 1 — available, BASE |
+ * | >0  | presenti  | >S  | Caso 2 — orderable, BASE+LT |
  */
 import { describe, expect, it } from 'vitest'
 import {
   isProductRequestEligible,
   isRestockNotifyEligible,
+  resolveCartDeliveryLeadDays,
   resolveVariantAvailability,
   snapshotToAvailabilityData,
 } from './availability.service.js'
@@ -25,35 +27,65 @@ function snap(partial: Partial<VariantStockSnapshot>): VariantStockSnapshot {
     restockDate: null,
     leadTimeDays: null,
     saleOk: true,
-    orderable: true,
+    orderable: false,
+    hasSuppliers: false,
     ...partial,
   }
 }
 
-describe('resolveVariantAvailability', () => {
-  it('stock sufficiente → available, purchasable', () => {
-    const r = resolveVariantAvailability({ stockQty: 5, orderable: true }, 1)
+describe('resolveVariantAvailability — matrice requisiti', () => {
+  it('Caso 1: Q ≤ S → available, lead 0', () => {
+    const r = resolveVariantAvailability({ stockQty: 5, orderable: true, leadTimeDays: 7 }, 1)
     expect(r.state).toBe('available')
     expect(r.purchasable).toBe(true)
+    expect(r.effectiveLeadDays).toBe(0)
   })
 
-  it('qty > stock ma ordinabile → orderable, purchasable', () => {
-    const r = resolveVariantAvailability({ stockQty: 2, orderable: true }, 5)
+  it('Caso 1 con fornitori e Q ≤ S → available (non orderable)', () => {
+    const r = resolveVariantAvailability({ stockQty: 4, orderable: true, leadTimeDays: 5 }, 4)
+    expect(r.state).toBe('available')
+    expect(r.effectiveLeadDays).toBe(0)
+  })
+
+  it('Caso 2: Q > S con fornitori → orderable, lead = LT', () => {
+    const r = resolveVariantAvailability(
+      { stockQty: 2, orderable: true, leadTimeDays: 5 },
+      5,
+    )
     expect(r.state).toBe('orderable')
     expect(r.purchasable).toBe(true)
-    expect(r.warning).toContain('2')
+    expect(r.effectiveLeadDays).toBe(5)
+    expect(r.warning).toBeNull()
   })
 
-  it('stock 0 ordinabile → orderable', () => {
-    const r = resolveVariantAvailability({ stockQty: 0, orderable: true }, 1)
+  it('Caso 2: S = 0 con fornitori → orderable', () => {
+    const r = resolveVariantAvailability(
+      { stockQty: 0, orderable: true, leadTimeDays: 10 },
+      1,
+    )
     expect(r.state).toBe('orderable')
     expect(r.purchasable).toBe(true)
+    expect(r.effectiveLeadDays).toBe(10)
   })
 
-  it('stock 0 non ordinabile → out_of_stock', () => {
+  it('Caso 2: LT 0 con fornitori → orderable, lead 0 (solo BASE)', () => {
+    const r = resolveVariantAvailability({ stockQty: 0, orderable: true, leadTimeDays: 0 }, 1)
+    expect(r.state).toBe('orderable')
+    expect(r.effectiveLeadDays).toBe(0)
+  })
+
+  it('Caso 3: S = 0 senza fornitori → out_of_stock, non purchasable', () => {
     const r = resolveVariantAvailability({ stockQty: 0, orderable: false }, 1)
     expect(r.state).toBe('out_of_stock')
     expect(r.purchasable).toBe(false)
+    expect(r.showRequestProduct).toBe(false)
+  })
+
+  it('Edge: Q > S senza fornitori, S > 0 → out_of_stock', () => {
+    const r = resolveVariantAvailability({ stockQty: 4, orderable: false }, 5)
+    expect(r.state).toBe('out_of_stock')
+    expect(r.purchasable).toBe(false)
+    expect(r.warning).toContain('4')
   })
 
   it('sale_ok false → out_of_stock, richiesta prodotto', () => {
@@ -61,13 +93,23 @@ describe('resolveVariantAvailability', () => {
     expect(r.state).toBe('out_of_stock')
     expect(r.showRequestProduct).toBe(true)
   })
+
+  it('orderable undefined → non backorder (conservativo)', () => {
+    const r = resolveVariantAvailability({ stockQty: 0 }, 1)
+    expect(r.state).toBe('out_of_stock')
+    expect(r.purchasable).toBe(false)
+  })
 })
 
 describe('snapshotToAvailabilityData — semantica DTO', () => {
-  it('isOrderable = backorder commerciale, non canAddToCart', () => {
-    const dto = snapshotToAvailabilityData(snap({ stockQty: 5, orderable: true }), 1)
+  it('isOrderable = ha fornitori', () => {
+    const dto = snapshotToAvailabilityData(
+      snap({ stockQty: 5, orderable: true, hasSuppliers: true, leadTimeDays: 3 }),
+      1,
+    )
     expect(dto.isOrderable).toBe(true)
     expect(dto.isUnrecoverable).toBe(false)
+    expect(dto.customerLeadTimeDays).toBe(3)
   })
 
   it('isUnrecoverable solo con sale_ok false', () => {
@@ -76,7 +118,7 @@ describe('snapshotToAvailabilityData — semantica DTO', () => {
     expect(dto.isOrderable).toBe(false)
   })
 
-  it('esaurito non ordinabile non è unrecoverable', () => {
+  it('esaurito senza fornitori non è unrecoverable', () => {
     const dto = snapshotToAvailabilityData(snap({ stockQty: 0, orderable: false }), 1)
     expect(dto.isUnrecoverable).toBe(false)
     expect(dto.isOrderable).toBe(false)
@@ -84,27 +126,54 @@ describe('snapshotToAvailabilityData — semantica DTO', () => {
 })
 
 describe('CTA restock / richiesta prodotto', () => {
-  it('RESTOCK_NOTIFY su stock 0 ordinabile', () => {
-    const dto = snapshotToAvailabilityData(snap({ stockQty: 0, orderable: true }), 1)
+  it('Avvisami su Caso 3 (stock 0, nessun fornitore)', () => {
+    const dto = snapshotToAvailabilityData(snap({ stockQty: 0, orderable: false }), 1)
     expect(isRestockNotifyEligible(dto)).toBe(true)
     expect(isProductRequestEligible(dto)).toBe(false)
   })
 
-  it('PRODUCT_REQUEST su unrecoverable', () => {
+  it('nessun Avvisami su Caso 2 (stock 0 con fornitori)', () => {
+    const dto = snapshotToAvailabilityData(
+      snap({ stockQty: 0, orderable: true, hasSuppliers: true, leadTimeDays: 5 }),
+      1,
+    )
+    expect(isRestockNotifyEligible(dto)).toBe(false)
+    expect(isProductRequestEligible(dto)).toBe(false)
+  })
+
+  it('PRODUCT_REQUEST solo su unrecoverable', () => {
     const dto = snapshotToAvailabilityData(snap({ stockQty: 0, saleOk: false }), 1)
     expect(isProductRequestEligible(dto)).toBe(true)
     expect(isRestockNotifyEligible(dto)).toBe(false)
   })
 
-  it('PRODUCT_REQUEST su esaurito non ordinabile', () => {
-    const dto = snapshotToAvailabilityData(snap({ stockQty: 0, orderable: false }), 1)
-    expect(isProductRequestEligible(dto)).toBe(true)
-    expect(isRestockNotifyEligible(dto)).toBe(false)
-  })
-
   it('nessuna CTA se disponibile', () => {
-    const dto = snapshotToAvailabilityData(snap({ stockQty: 3, orderable: true }), 1)
+    const dto = snapshotToAvailabilityData(
+      snap({ stockQty: 3, orderable: true, hasSuppliers: true }),
+      1,
+    )
     expect(isRestockNotifyEligible(dto)).toBe(false)
     expect(isProductRequestEligible(dto)).toBe(false)
+  })
+})
+
+describe('resolveCartDeliveryLeadDays — tempo peggiore', () => {
+  it('max tra righe miste Caso 1 + Caso 2', () => {
+    const days = resolveCartDeliveryLeadDays([
+      { purchasable: true, effectiveLeadDays: null },
+      { purchasable: true, effectiveLeadDays: 5 },
+      { purchasable: true, effectiveLeadDays: 12 },
+      { purchasable: false, effectiveLeadDays: 99 },
+    ])
+    expect(days).toBe(12)
+  })
+
+  it('null se tutte le righe sono Caso 1 (lead 0)', () => {
+    expect(
+      resolveCartDeliveryLeadDays([
+        { purchasable: true, effectiveLeadDays: null },
+        { purchasable: true, effectiveLeadDays: 0 },
+      ]),
+    ).toBeNull()
   })
 })

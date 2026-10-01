@@ -140,7 +140,7 @@ function CatalogProductResults({
       <div
         className={cn(
           'transition-opacity duration-200',
-          isLoading && products.length > 0 && 'pointer-events-none opacity-60',
+          isLoading && products.length > 0 && 'opacity-60',
         )}
       >
         <CatalogProductGrid

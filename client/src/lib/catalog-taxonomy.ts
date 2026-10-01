@@ -167,17 +167,36 @@ export function buildBrandTaxonomy(slug: string, name: string): CatalogTaxonomyC
   }
 }
 
+/** Alias slug CMS/WP ↔ slug search Odoo (categorie tecniche). */
+const CATEGORY_SLUG_ALIASES: Record<string, string> = {
+  alogena: 'alogene',
+  fluorescenza: 'fluorescente',
+  'lampade-scarica': 'scarica',
+  'lampada-scarica': 'scarica',
+}
+
+export function canonicalizeCategorySlug(slug: string): string {
+  const normalized = slug.trim().toLowerCase()
+  if (!normalized) return normalized
+  return CATEGORY_SLUG_ALIASES[normalized] ?? normalized
+}
+
 export function buildCategoryTaxonomy(
   slug: string,
   options?: { label?: string; world?: 'design' | 'technical' },
 ): CatalogTaxonomyContext {
-  const value = slug.trim().toLowerCase()
+  const raw = slug.trim().toLowerCase()
+  const value = canonicalizeCategorySlug(raw)
   return {
     kind: 'category',
     value,
     label: options?.label ?? value,
     world: options?.world ?? 'technical',
-    hubPath: '/negozio',
+    category: options?.world === 'design' ? 'arredo' : 'tecnico',
+    hubPath:
+      options?.world === 'design'
+        ? '/illuminazione-arredo'
+        : '/categoria-prodotto/illuminazione-tecnica',
     hubLabel: 'Categoria',
   }
 }

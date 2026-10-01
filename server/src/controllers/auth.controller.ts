@@ -16,9 +16,11 @@ export const authController = {
       lastName?: string
       phone?: string
       customerSegment?: 'retail' | 'business'
+      companyName?: string
+      vatNumber?: string
     }
     const sessionId = req.sessionRecord!.id
-    const user = await authService.register(body, sessionId)
+    const user = await authService.register(body, sessionId, req.correlationId)
     res.status(201).json(ok({ user }))
   }),
 

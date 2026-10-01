@@ -14,29 +14,15 @@ export function getCartLineAvailabilityDisplay(line: CartItemDTO): {
     return { tone: 'unavailable', messageKey: 'cart.line.unavailable' }
   }
 
-  const stockQty = line.availability.stockQty
-  if (line.availabilityStatus === 'limited' && stockQty != null && stockQty > 0) {
-    return {
-      tone: 'limited',
-      messageKey: 'cart.line.lowStock',
-      params: { qty: stockQty },
-    }
-  }
-
   const leadDays = line.availability.effectiveLeadDays
-  if (leadDays != null && leadDays > 0 && leadDays <= 2) {
-    return { tone: 'available', messageKey: 'cart.line.availableFast' }
-  }
-
-  if (leadDays != null && leadDays > 2) {
-    return {
-      tone: 'available',
-      messageKey: 'cart.line.availableLead',
-      params: { days: leadDays },
+  if (line.availability.state === 'orderable' || (leadDays != null && leadDays > 0)) {
+    if (leadDays != null && leadDays > 0) {
+      return {
+        tone: 'available',
+        messageKey: 'cart.line.availableLead',
+        params: { days: leadDays },
+      }
     }
-  }
-
-  if (line.availability.state === 'orderable') {
     return { tone: 'limited', messageKey: 'cart.line.orderable' }
   }
 

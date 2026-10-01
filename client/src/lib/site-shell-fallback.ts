@@ -51,7 +51,7 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
         kind: 'dropdown',
         id: 'arredo',
         label: 'Arredo',
-        href: '/categoria-prodotto/illuminazione-arredo',
+        href: '/illuminazione-arredo',
         panel: {
           columns: enrichNavColumns([
             {
@@ -120,7 +120,7 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
       {
         kind: 'dropdown',
         id: 'tecnico',
-        label: 'Tecnico',
+        label: 'Tecnica',
         href: '/categoria-prodotto/illuminazione-tecnica',
         panel: {
           columns: enrichNavColumns([
@@ -169,9 +169,9 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
               links: [
                 { label: 'Kelvin & CRI', href: '/guide/luce-calda-naturale-fredda' },
                 { label: 'Lumen vs watt', href: '/guide/scegliere-lampadina-led' },
-                { label: 'Dimmerabilità', href: '/guide/scegliere-lampadina-led' },
+                { label: 'Dimmerabilità', href: '/guide/glossario' },
                 { label: 'Grado IP', href: '/guide/glossario' },
-                { label: 'Retrofit LED', href: '/guide/scegliere-lampadina-led' },
+                { label: 'Retrofit LED', href: '/guide/lampadina-r7s' },
               ],
             },
           ]),

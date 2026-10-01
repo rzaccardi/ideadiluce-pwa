@@ -9,6 +9,9 @@ import { authRepository } from './auth.repository.js'
 import { authService } from './auth.service.js'
 import { AppError } from '../../types/errors.js'
 import type { UserDTO } from '../../types/dto.js'
+import { sendPwaMail } from '../../adapters/odoo/odooMailAdapter.js'
+import { publicAppUrl } from '../../lib/mail.js'
+import { logger } from '../../lib/logger.js'
 
 const customerAdapter = createOdooCustomerAdapter()
 
@@ -128,6 +131,27 @@ export const checkoutRegisterService = {
     const user = await authRepository.findUserByEmail(normalized)
     if (!user) {
       throw new AppError('REGISTER_FAILED', 'Register failed', 'Registrazione non riuscita.', 500, false)
+    }
+
+    if (!existing) {
+      const firstNameSuffix = user.firstName?.trim() ? ` ${user.firstName.trim()}` : ''
+      try {
+        await sendPwaMail(ctx, {
+          templateKey: 'account_welcome',
+          emailTo: user.email,
+          vars: {
+            first_name_suffix: firstNameSuffix,
+            email: user.email,
+            login_url: publicAppUrl('/login'),
+          },
+        })
+      } catch (e) {
+        logger.warn('checkout_register.welcome_mail_failed', {
+          correlationId,
+          userId: user.id,
+          error: e instanceof Error ? e.message : String(e),
+        })
+      }
     }
 
     if (odooPartnerId) {

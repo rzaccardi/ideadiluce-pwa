@@ -7,6 +7,7 @@ import {
   buildStileTaxonomy,
   buildTipologiaTaxonomy,
   canonicalizeBrandSlug,
+  canonicalizeCategorySlug,
   resolveAttaccoCodeFromPathSlug,
   taxonomyPageTitle,
   taxonomyPath,
@@ -47,5 +48,21 @@ describe('catalog-taxonomy', () => {
     const t = buildBrandTaxonomy('tlb-italy', 'TLB')
     expect(t.value).toBe('tlb')
     expect(taxonomyPageTitle(t)).toBe('TLB')
+  })
+
+  it('canonica alias categorie tecniche WP → slug Odoo', () => {
+    expect(canonicalizeCategorySlug('alogena')).toBe('alogene')
+    expect(canonicalizeCategorySlug('fluorescenza')).toBe('fluorescente')
+    expect(canonicalizeCategorySlug('lampade-scarica')).toBe('scarica')
+    expect(canonicalizeCategorySlug('lampada-scarica')).toBe('scarica')
+    expect(canonicalizeCategorySlug('led')).toBe('led')
+    expect(canonicalizeCategorySlug('ALOGENA')).toBe('alogene')
+  })
+
+  it('buildCategoryTaxonomy applica alias e hub tecnica', () => {
+    const t = buildCategoryTaxonomy('alogena')
+    expect(t.value).toBe('alogene')
+    expect(t.world).toBe('technical')
+    expect(t.hubPath).toBe('/categoria-prodotto/illuminazione-tecnica')
   })
 })

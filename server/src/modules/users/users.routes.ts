@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { validateRequest } from '../../middlewares/validate-request.js'
 import { requireLogin } from '../../middlewares/session.js'
 import { patchBusinessSchema } from '../checkout/checkout.validators.js'
-import { patchMeSchema } from './users.validators.js'
+import { changePasswordSchema, patchMeSchema } from './users.validators.js'
 import {
   shippingAddressIdParamSchema,
   upsertShippingAddressSchema,
@@ -35,6 +35,11 @@ usersRouter.post(
   usersController.selectShippingAddress,
 )
 usersRouter.patch('/me', validateRequest({ body: patchMeSchema }), usersController.patchMe)
+usersRouter.post(
+  '/me/change-password',
+  validateRequest({ body: changePasswordSchema }),
+  usersController.changePassword,
+)
 usersRouter.patch(
   '/me/business',
   validateRequest({ body: patchBusinessSchema }),

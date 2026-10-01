@@ -1,18 +1,19 @@
 import type { ProductAvailabilityDataDTO } from '../../types/dto.js'
 import type { VariantStockSnapshot } from '../../adapters/odoo/odooInventoryAdapter.js'
 
-/** Fallback lead time (giorni lavorativi) quando Odoo non espone date. */
-export const RESTOCK_LEAD_DAYS_FALLBACK = 10
-
 export type ProductAvailabilityState = 'available' | 'orderable' | 'out_of_stock'
 
 export type VariantAvailabilityInput = {
   stockQty?: number | null
   restockDate?: string | null
+  /** Lead time max fornitori (giorni). */
   leadTimeDays?: number | null
   /** Prodotto vendibile (sale_ok). Default true se non noto. */
   saleOk?: boolean
-  /** Ordinabile con stock insufficiente o zero. */
+  /**
+   * Ordinabile oltre lo stock: true solo se esiste almeno un fornitore.
+   * Default false (conservativo) se non noto.
+   */
   orderable?: boolean
 }
 
@@ -24,7 +25,7 @@ export type VariantAvailability = {
   effectiveLeadDays: number
   canAddToCart: boolean
   showRequestProduct: boolean
-  /** Alias di canAddToCart per integrazione carrello (Plan 04). */
+  /** Alias di canAddToCart per integrazione carrello. */
   purchasable: boolean
   warning: string | null
 }
@@ -40,17 +41,11 @@ export function daysUntilIsoDate(iso: string | null | undefined): number | null 
   return diff > 0 ? diff : null
 }
 
-function resolveEffectiveLeadDays(
-  input: VariantAvailabilityInput,
-  restockDays: number | null,
-  forOrderable: boolean,
-): number {
-  if (!forOrderable) return 0
-  return Math.max(
-    restockDays ?? 0,
-    input.leadTimeDays ?? 0,
-    RESTOCK_LEAD_DAYS_FALLBACK,
-  )
+/** Lead effettivo Caso 2: LT fornitore (senza floor artificiale). */
+function resolveOrderableLeadDays(input: VariantAvailabilityInput): number {
+  const lt = input.leadTimeDays
+  if (lt != null && Number.isFinite(lt) && lt > 0) return lt
+  return 0
 }
 
 export function resolveVariantAvailability(
@@ -59,8 +54,8 @@ export function resolveVariantAvailability(
 ): VariantAvailability {
   const stockQty = input.stockQty ?? null
   const saleOk = input.saleOk !== false
-  const restockDays = daysUntilIsoDate(input.restockDate ?? null)
   const hasStockData = stockQty != null
+  const backorderAllowed = input.orderable === true
 
   if (!saleOk) {
     return {
@@ -76,6 +71,7 @@ export function resolveVariantAvailability(
     }
   }
 
+  // Caso 1: Q ≤ S
   if (hasStockData && stockQty >= requestedQty) {
     return {
       state: 'available',
@@ -90,14 +86,9 @@ export function resolveVariantAvailability(
     }
   }
 
-  const backorderAllowed = input.orderable !== false
-
+  // Caso 2: Q > S (o S=0) con fornitori
   if (backorderAllowed) {
-    const effectiveLeadDays = resolveEffectiveLeadDays(input, restockDays, true)
-    const warning =
-      hasStockData && stockQty > 0 && stockQty < requestedQty
-        ? `Disponibili solo ${stockQty} pezzi (ne hai richiesti ${requestedQty}).`
-        : null
+    const effectiveLeadDays = resolveOrderableLeadDays(input)
     return {
       state: 'orderable',
       stockQty,
@@ -107,10 +98,12 @@ export function resolveVariantAvailability(
       canAddToCart: true,
       showRequestProduct: false,
       purchasable: true,
-      warning,
+      warning: null,
     }
   }
 
+  // Edge / Caso 3: senza fornitori — non acquistabile oltre S
+  // (lato UI edge case con S>0 si cap-pa a S prima di arrivare qui)
   return {
     state: 'out_of_stock',
     stockQty,
@@ -118,9 +111,12 @@ export function resolveVariantAvailability(
     leadTimeDays: input.leadTimeDays ?? null,
     effectiveLeadDays: 0,
     canAddToCart: false,
-    showRequestProduct: true,
+    showRequestProduct: false,
     purchasable: false,
-    warning: 'Prodotto non più disponibile.',
+    warning:
+      hasStockData && stockQty != null && stockQty > 0
+        ? `Disponibili solo ${stockQty} pezzi (ne hai richiesti ${requestedQty}).`
+        : 'Prodotto non più disponibile.',
   }
 }
 
@@ -134,31 +130,32 @@ export function resolveCartDeliveryLeadDays(
   return Math.max(...leadDays)
 }
 
-/** Prodotto commercialmente ordinabile in backorder (sale_ok + allow out of stock). */
+/** Backorder consentito: sale_ok + almeno un fornitore (`orderable`). */
 export function isBackorderAllowedFromSnapshot(snapshot: {
   saleOk: boolean
   orderable: boolean
 }): boolean {
-  return snapshot.saleOk && snapshot.orderable !== false
+  return snapshot.saleOk && snapshot.orderable === true
 }
 
-/** CTA «Avvisami al restock»: stock zero, backorder consentito, non irrecuperabile. */
+/**
+ * CTA «Avvisami quando disponibile»: Caso 3 —
+ * stock zero, nessun fornitore, non irrecuperabile.
+ */
 export function isRestockNotifyEligible(
   availability: ProductAvailabilityDataDTO | null | undefined,
 ): boolean {
   if (!availability || availability.isUnrecoverable) return false
   if (availability.qtyAvailable > 0) return false
-  return availability.isOrderable === true
+  return availability.isOrderable !== true
 }
 
-/** CTA «Richiedi prodotto»: fuori produzione o non ordinabile con stock insufficiente. */
+/** CTA «Richiedi prodotto»: solo fuori produzione / irrecuperabile. */
 export function isProductRequestEligible(
   availability: ProductAvailabilityDataDTO | null | undefined,
 ): boolean {
   if (!availability) return false
-  if (availability.isUnrecoverable === true) return true
-  if (availability.qtyAvailable > 0) return false
-  return availability.isOrderable !== true
+  return availability.isUnrecoverable === true
 }
 
 /** Converte snapshot Odoo nel DTO availability consumato da storefront e carrello. */
@@ -182,11 +179,15 @@ export function snapshotToAvailabilityData(
 
   return {
     qtyAvailable,
-    /** Backorder commerciale (non equivale a canAddToCart). */
+    /** Backorder commerciale = ha fornitori (non equivale a canAddToCart). */
     isOrderable: backorderAllowed,
     restockDate: snapshot.restockDate,
     customerLeadTimeDays:
-      resolved.effectiveLeadDays > 0 ? resolved.effectiveLeadDays : snapshot.leadTimeDays,
+      resolved.effectiveLeadDays > 0
+        ? resolved.effectiveLeadDays
+        : snapshot.leadTimeDays != null && snapshot.leadTimeDays > 0
+          ? snapshot.leadTimeDays
+          : null,
     /** Fuori produzione / sale_ok false — distinto da semplice esaurito non ordinabile. */
     isUnrecoverable: !snapshot.saleOk,
   }
@@ -200,7 +201,8 @@ export function mergeAvailabilityData(
   const isUnrecoverable = odoo.isUnrecoverable === true || existing.isUnrecoverable === true
   return {
     qtyAvailable: odoo.qtyAvailable,
-    isOrderable: isUnrecoverable ? false : odoo.isOrderable || existing.isOrderable,
+    // Odoo live vince su isOrderable (fornitori); non OR con catalogo stale
+    isOrderable: isUnrecoverable ? false : odoo.isOrderable,
     restockDate: odoo.restockDate ?? existing.restockDate ?? null,
     customerLeadTimeDays: odoo.customerLeadTimeDays ?? existing.customerLeadTimeDays ?? null,
     isUnrecoverable,
@@ -209,12 +211,14 @@ export function mergeAvailabilityData(
 
 export function variantAvailabilityToCartLine(
   avail: VariantAvailability,
+  isOrderable: boolean,
 ): {
   state: ProductAvailabilityState
   stockQty: number | null
   effectiveLeadDays: number | null
   warning: string | null
   purchasable: boolean
+  isOrderable: boolean
 } {
   return {
     state: avail.state,
@@ -222,5 +226,6 @@ export function variantAvailabilityToCartLine(
     effectiveLeadDays: avail.effectiveLeadDays > 0 ? avail.effectiveLeadDays : null,
     warning: avail.warning,
     purchasable: avail.purchasable,
+    isOrderable,
   }
 }

@@ -50,17 +50,19 @@ export function LoginPageView() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
+    authStore.error = null
     try {
       await login(email, password)
       notify.success(t('auth.loggedIn'))
       navigate(from, { replace: true })
     } catch (err) {
       setPassword('')
-      notify.error(
+      const message =
         err instanceof ApiRequestError
           ? (err.userMessage ?? err.message)
-          : (authStore.error ?? t('auth.loginError')),
-      )
+          : (authStore.error ?? t('auth.loginError'))
+      authStore.error = message
+      notify.error(message)
     }
   }
 
@@ -79,6 +81,11 @@ export function LoginPageView() {
         </>
       }
     >
+      {auth.error ? (
+        <p className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900">
+          {auth.error}
+        </p>
+      ) : null}
       <AuthCard>
         <AuthCardHeader title={t('login.welcomeTitle')} subtitle={t('login.subtitle')} />
 
@@ -93,7 +100,10 @@ export function LoginPageView() {
                 autoComplete="email"
                 placeholder={t('auth.emailPlaceholder')}
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  if (auth.error) authStore.error = null
+                }}
                 required
                 disabled={isBusy}
               />
@@ -117,7 +127,10 @@ export function LoginPageView() {
                 autoComplete="current-password"
                 placeholder={t('login.passwordPlaceholder')}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  if (auth.error) authStore.error = null
+                }}
                 required
                 disabled={isBusy}
                 showPasswordLabel={t('login.showPassword')}

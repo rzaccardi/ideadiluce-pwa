@@ -6,6 +6,8 @@ import { cn } from '@/utils/cn'
 type Props = {
   value: number
   min?: number
+  max?: number
+  maxHint?: string
   disabled?: boolean
   onChange: (next: number) => void
   className?: string
@@ -14,18 +16,22 @@ type Props = {
 export function CartQuantityStepper({
   value,
   min = 1,
+  max,
+  maxHint,
   disabled = false,
   onChange,
   className,
 }: Props) {
   const [draft, setDraft] = useState(value)
+  const atMax = max != null && draft >= max
 
   useEffect(() => {
     setDraft(value)
   }, [value])
 
   function commit(next: number) {
-    const clamped = Math.max(min, next)
+    let clamped = Math.max(min, next)
+    if (max != null) clamped = Math.min(max, clamped)
     setDraft(clamped)
     if (clamped !== value) onChange(clamped)
   }
@@ -52,10 +58,11 @@ export function CartQuantityStepper({
       </span>
       <button
         type="button"
-        disabled={disabled}
+        disabled={disabled || atMax}
+        title={atMax && maxHint ? maxHint : undefined}
+        aria-label={atMax && maxHint ? maxHint : 'Aumenta quantità'}
         onClick={() => commit(draft + 1)}
         className="flex h-[34px] w-8 items-center justify-center text-[17px] text-idl-muted transition hover:bg-idl-tech-panel disabled:cursor-not-allowed"
-        aria-label="Aumenta quantità"
       >
         +
       </button>

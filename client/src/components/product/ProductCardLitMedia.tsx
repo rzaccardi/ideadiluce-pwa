@@ -28,7 +28,7 @@ export function ProductCardLitMedia({
   accesaImageUrl,
   slug,
   sizes,
-  imageClassName = 'object-cover',
+  imageClassName = 'object-contain object-center',
 }: Props) {
   const { on: lightsOn } = useSnapshot(lightsStore)
   const reduceMotion = useReducedMotion()

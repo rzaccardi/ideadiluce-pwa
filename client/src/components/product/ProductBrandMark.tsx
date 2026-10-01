@@ -54,17 +54,16 @@ export function ProductBrandMark({
   if (logoSrc) {
     const h = HEIGHT[size]
     return (
-      <span className={cn('inline-flex max-w-full items-center', className)}>
+      <span className={cn('inline-flex max-w-full items-center justify-start', className)}>
         <img
           src={logoSrc}
           alt={label ?? ''}
           height={h}
-          width={Math.round(h * 2.8)}
           decoding="async"
           loading="lazy"
           draggable={false}
-          className="max-h-full max-w-[8.5rem] object-contain object-left dark:hidden"
-          style={{ height: h, width: 'auto' }}
+          className="block max-h-full max-w-[8.5rem] object-contain object-left dark:hidden"
+          style={{ height: h, width: 'auto', marginInline: 0 }}
         />
         {label ? (
           <span

@@ -57,7 +57,8 @@ export function CheckoutStepIndicator({ currentStep }: Props) {
   const auth = useSnapshot(authStore)
   const checkout = useSnapshot(checkoutStore)
   const activeGroup = groupIndex(currentStep)
-  const accountConfirmed = currentStep === 'account' && auth.isAuthenticated
+  const accountConfirmed =
+    currentStep === 'account' && (auth.isAuthenticated || checkout.guestCheckoutAccepted)
   const pageTitle = t(
     checkoutStepPageTitleKey(currentStep, { accountConfirmed }),
   )

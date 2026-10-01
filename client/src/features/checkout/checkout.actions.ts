@@ -138,7 +138,7 @@ function checkoutTransitionPrefetchFingerprint(): string {
 }
 
 function canPrefetchCheckoutTransition(): boolean {
-  if (!authStore.isAuthenticated) return false
+  if (!isCheckoutAccountReady()) return false
   if (isFrozenQuoteCheckout()) return false
   if (checkoutStore.cartRefreshing || checkoutStore.shippingSelectingRef) return false
   return canAdvanceFromStep('addresses')
@@ -539,6 +539,29 @@ function isCheckoutEmailValid(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)
 }
 
+/** Account step ok: autenticato oppure ospite con email confermata. */
+export function isCheckoutAccountReady(): boolean {
+  if (!isCheckoutEmailValid(resolveCheckoutEmail())) return false
+  return authStore.isAuthenticated || checkoutStore.guestCheckoutAccepted
+}
+
+/** Accetta checkout ospite con email valida e passa allo step successivo. */
+export function acceptGuestCheckout() {
+  const email = resolveCheckoutEmail()
+  if (!isCheckoutEmailValid(email)) {
+    checkoutStore.error = localeMessage('checkout.error.incompleteStep')
+    return false
+  }
+  checkoutStore.guestCheckoutAccepted = true
+  checkoutStore.error = null
+  if (checkoutStore.customerSegment == null) {
+    checkoutStore.customerSegment = 'retail'
+  }
+  const next = getNextCheckoutStep('account')
+  if (next) checkoutStore.currentStep = next
+  return true
+}
+
 export function resolveCheckoutEmail(): string {
   const fromDraft = checkoutStore.draft.email.trim()
   if (fromDraft) return fromDraft
@@ -559,8 +582,29 @@ export function hasCheckoutContactFromProfile(): boolean {
   if (!user) return false
   const firstName = user.firstName?.trim() || user.shippingAddress?.firstName?.trim() || ''
   const lastName = user.lastName?.trim() || user.shippingAddress?.lastName?.trim() || ''
-  const phone = user.phone?.trim() || user.shippingAddress?.phone?.trim() || ''
+  // Preferisci il telefono già presente nel draft destinazione (quote spedizione).
+  const phone =
+    checkoutStore.draft.shipping.phone?.trim() ||
+    checkoutStore.draft.billing.phone?.trim() ||
+    user.phone?.trim() ||
+    user.shippingAddress?.phone?.trim() ||
+    ''
   return Boolean(firstName && lastName && isCheckoutPhoneValid(phone))
+}
+
+/** Indirizzo destinazione completo tranne il telefono (per evidenziare il campo). */
+export function isShippingBlockedByMissingPhone(): boolean {
+  const address = shippingAddressPayload()
+  const addressWithoutPhone =
+    Boolean(
+      address.line1.trim() &&
+        address.city.trim() &&
+        address.postalCode.trim() &&
+        address.country.trim() &&
+        (address.isSnc || address.streetNumber.trim()) &&
+        (address.country !== 'IT' || address.province.trim()),
+    )
+  return addressWithoutPhone && !isCheckoutPhoneValid(address.phone ?? '')
 }
 
 function syncCheckoutContactFromProfile() {
@@ -599,7 +643,7 @@ function syncShippingDestinationFromBillingIfNeeded() {
 }
 
 export function isAnagraficaCompartmentComplete(): boolean {
-  if (!authStore.isAuthenticated) return false
+  if (!isCheckoutAccountReady()) return false
   if (effectiveCustomerSegment() == null) return false
   if (!isCheckoutEmailValid(resolveCheckoutEmail())) return false
   return addressComplete(checkoutStore.draft.billing) && businessBillingComplete()
@@ -716,6 +760,7 @@ export function cartFromFrozenQuoteSummary(detail: ThankYouOrderDTO): CartDTO {
       stockQty: line.quantity,
       effectiveLeadDays: null,
       warning: null,
+      isOrderable: false,
     },
   }))
   return {
@@ -752,7 +797,7 @@ export function shouldSkipCheckoutStep(step: CheckoutStep): boolean {
   if (isFrozenQuoteCheckout()) {
     return step !== 'payment' && step !== 'review'
   }
-  if (step === 'account' && authStore.isAuthenticated) return true
+  if (step === 'account' && isCheckoutAccountReady()) return true
   if (step === 'customer_type' && effectiveCustomerSegment() != null) return true
   return false
 }
@@ -784,7 +829,7 @@ export function getPreviousCheckoutStep(from: CheckoutStep): CheckoutStep | null
 }
 
 export function resolveInitialCheckoutStep(): CheckoutStep {
-  if (!authStore.isAuthenticated) return 'account'
+  if (!isCheckoutAccountReady()) return 'account'
   const segment = segmentFromAuth()
   if (segment) checkoutStore.customerSegment = segment
   return getNextCheckoutStep('account') ?? 'addresses'
@@ -1055,6 +1100,10 @@ export function initializeCheckoutNavigation(): Promise<void> {
     return Promise.resolve()
   }
   if (!authStore.isAuthenticated) {
+    if (checkoutStore.guestCheckoutAccepted && isCheckoutEmailValid(resolveCheckoutEmail())) {
+      checkoutDbg.fn('initializeCheckoutNavigation', 'skip', { reason: 'guest checkout' })
+      return Promise.resolve()
+    }
     checkoutStore.currentStep = 'account'
     checkoutStore.addressPrefillLoading = false
     checkoutStore.initLoadingPhase = null
@@ -1234,6 +1283,7 @@ export function resetCheckout(options?: { legacyLayout?: boolean }) {
   }
   checkoutStore.termsAccepted = false
   checkoutStore.anagraficaCollectedAtAccount = false
+  checkoutStore.guestCheckoutAccepted = false
   checkoutStore.checkoutMode = 'standard'
   checkoutStore.frozenOrderSummary = null
   checkoutStore.paymentRetryActive = false
@@ -1280,6 +1330,7 @@ export function clearCheckoutAfterLogout() {
   checkoutStore.clientOrderRef = ''
   checkoutStore.anagraficaCollectedAtAccount = false
   checkoutStore.termsAccepted = false
+  checkoutStore.guestCheckoutAccepted = false
   invalidateCheckoutTransitionPrefetch()
   checkoutStore.deliveryRecipient = {
     mode: 'self',
@@ -1540,7 +1591,7 @@ export function canAdvanceFromStep(step: CheckoutStep): boolean {
   if (checkoutStore.cartRefreshing) return false
   switch (step) {
     case 'account':
-      return authStore.isAuthenticated && isCheckoutEmailValid(resolveCheckoutEmail())
+      return isCheckoutAccountReady()
     case 'customer_type':
       return effectiveCustomerSegment() != null
     case 'addresses':
@@ -1581,12 +1632,12 @@ export function canStartCheckout() {
     return (
       Boolean(checkoutStore.order?.orderId) &&
       Boolean(checkoutStore.selectedPaymentMethod) &&
-      authStore.isAuthenticated &&
+      isCheckoutAccountReady() &&
       checkoutStore.shippingSelectionPersisted
     )
   }
   return (
-    authStore.isAuthenticated &&
+    isCheckoutAccountReady() &&
     isCheckoutEmailValid(resolveCheckoutEmail()) &&
     addressComplete(checkoutStore.draft.shipping) &&
     addressComplete(billingAddressPayload()) &&
@@ -1739,7 +1790,8 @@ export async function fetchShippingQuotes(options?: { skipAutoSelect?: boolean }
       shippingAddress: shippingAddressForQuotes(),
     })
     checkoutStore.freeShippingHint = res.freeShippingHint
-    checkoutStore.deliveryEstimateDays = res.deliveryEstimateDays ?? null
+    checkoutStore.deliveryEstimateDays =
+      res.deliveryEstimateDays ?? cartStore.cart?.deliveryLeadDays ?? null
     checkoutStore.shippingQuotes = filterVisibleShippingQuotes(res.quotes, res.freeShippingHint)
     checkoutStore.shippingQuotesFingerprint = requestedFp
     if (!options?.skipAutoSelect) {
@@ -1908,7 +1960,7 @@ export function hasUsableCheckoutPaymentSession(): boolean {
 
 /** Precarica ordine + sessione Stripe appena spedizione e dati sono completi. */
 export function prefetchCheckoutPayment(): void {
-  if (!authStore.isAuthenticated) return
+  if (!isCheckoutAccountReady()) return
   if (checkoutStore.checkoutMode === 'frozen_quote') return
   if (checkoutStore.selectedPaymentMethod !== 'stripe') return
   if (!canStartCheckout()) return
@@ -1943,7 +1995,7 @@ export function prefetchCheckoutPayment(): void {
 }
 
 function canSyncCheckoutDraft(step: CheckoutDraftStep): boolean {
-  if (!authStore.isAuthenticated) return false
+  if (!isCheckoutAccountReady()) return false
   switch (step) {
     case 'details':
       return isAnagraficaCompartmentComplete()
@@ -2022,9 +2074,9 @@ export async function syncCheckoutDraft(step: CheckoutDraftStep, options?: { sil
 
 export async function startCheckout(options?: { silent?: boolean }) {
   checkoutDbg.fn('startCheckout', 'enter', { silent: options?.silent, step: checkoutStore.currentStep })
-  if (!authStore.isAuthenticated) {
+  if (!isCheckoutAccountReady()) {
     checkoutStore.error = localeMessage('checkout.error.authRequired')
-    checkoutDbg.fn('startCheckout', 'skip', { reason: 'not authenticated' })
+    checkoutDbg.fn('startCheckout', 'skip', { reason: 'account not ready' })
     throw new Error(checkoutStore.error)
   }
   if (!options?.silent) checkoutStore.isLoading = true

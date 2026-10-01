@@ -12,6 +12,7 @@ import { usesSessionPricelist } from '@/lib/catalog-pricing'
 import {
   getProductAvailabilityStatus,
   resolveAvailabilityData,
+  resolveMaxOrderableQty,
 } from '@/lib/product-availability'
 import type { ProductCardDTO, ProductDetailDTO } from '@/types/dto'
 
@@ -179,12 +180,13 @@ export function useProductDetailState({
         locale: i18nLocale,
       })
     : null
-  const maxQuantity =
-    availability?.status === 'available' &&
-    availabilityData != null &&
-    availabilityData.qtyAvailable > 0
-      ? availabilityData.qtyAvailable
-      : undefined
+  const maxQuantity = resolveMaxOrderableQty(availabilityData)
+
+  useEffect(() => {
+    if (maxQuantity != null && quantity > maxQuantity) {
+      setQuantity(maxQuantity)
+    }
+  }, [maxQuantity, quantity])
 
   return {
     slug,
@@ -199,6 +201,7 @@ export function useProductDetailState({
     galleryImages,
     displayPriceCents,
     availability,
+    availabilityData,
     maxQuantity,
     isAddingToCart,
     setIsAddingToCart,

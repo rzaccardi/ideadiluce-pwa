@@ -55,6 +55,12 @@ const BRAND_LOGO_ALIASES: Record<string, string> = {
   '3f-filippi': '3f-filippi',
   carlobezzi: 'carlo-bezzi',
   'carlo-bezzi': 'carlo-bezzi',
+  // Alias slug Odoo → asset già presenti
+  flos: 'flos',
+  artemide: 'artemide',
+  foscarini: 'foscarini',
+  'i-guzzini': 'iguzzini',
+  iguzzini: 'iguzzini',
 }
 
 function normalizeLogoKey(slug: string): string {

@@ -21,6 +21,8 @@ import { authStore } from '@/features/auth/auth.store'
 import type { CatalogBootstrapServerData } from '@/lib/server-catalog'
 import type { ProductCardDTO } from '@/types/dto'
 import { getCategoryLandingContent } from '@/lib/category-landing.defaults'
+import { translateCategoryFilterGroups } from '@/lib/translate-category-filter-groups'
+import { useI18n } from '@/hooks/use-i18n'
 import {
   buildCategoryLandingActiveFilters,
   buildCategoryLandingSearchQuery,
@@ -69,6 +71,7 @@ export function ProductCategoryLandingPage({
   initialPagination,
 }: Props) {
   const { locale } = useLocale()
+  const { t } = useI18n()
   const lp = useLocalePath()
   const [params, setParams] = useQueryParams()
   const content = getCategoryLandingContent(pageKey)
@@ -98,12 +101,15 @@ export function ProductCategoryLandingPage({
 
   const filterGroups = useMemo(
     () =>
-      buildLandingFilterGroupsFromFacets(
-        pageKey,
-        scopedFacets ?? null,
-        content.filterGroups,
+      translateCategoryFilterGroups(
+        buildLandingFilterGroupsFromFacets(
+          pageKey,
+          scopedFacets ?? null,
+          content.filterGroups,
+        ),
+        t,
       ),
-    [pageKey, scopedFacets, content.filterGroups],
+    [pageKey, scopedFacets, content.filterGroups, t],
   )
 
   const inStockOnly = resolveCategoryLandingInStock(selectedFilterValues, inStockFromUrl)
@@ -137,9 +143,16 @@ export function ProductCategoryLandingPage({
 
   const landingContent = useMemo(() => {
     const facets = scopedFacets ?? null
+    const chrome = {
+      filtersTitle: isDesign ? t('catalog.filters') : t('catalog.filtersTechnical'),
+      filtersResetLabel: t('catalog.resetFilters'),
+      sortLabel: t('catalog.sortLabel'),
+      loadMoreLabel: t('catalog.loadMore'),
+    }
     if (isDesign) {
       return {
         ...content,
+        ...chrome,
         typeTiles: buildDesignTypeTilesFromFacets(facets, content.typeTiles),
         stats: buildLandingStatsFromFacets(facets, content.stats),
         filterGroups,
@@ -147,6 +160,7 @@ export function ProductCategoryLandingPage({
     }
     return {
       ...content,
+      ...chrome,
       subtypeChips: buildTechnicalSubtypeChipsFromFacets(facets, {
         fallback: content.subtypeChips,
         baseHref:
@@ -164,6 +178,7 @@ export function ProductCategoryLandingPage({
     pageKey,
     scopedFacets,
     specFilters.categorySlugFromFacet,
+    t,
   ])
 
   const effectiveQuery = buildCategoryLandingSearchQuery({

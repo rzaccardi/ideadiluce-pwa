@@ -133,7 +133,7 @@ export const DEFAULT_SHELL_IT: SiteShellContent = {
       {
         kind: 'dropdown',
         id: 'tecnico',
-        label: 'Tecnico',
+        label: 'Tecnica',
         href: '/categoria-prodotto/illuminazione-tecnica',
         panel: {
           columns: enrichNavColumns([
@@ -182,9 +182,9 @@ export const DEFAULT_SHELL_IT: SiteShellContent = {
               links: [
                 { label: 'Kelvin & CRI', href: '/guide/luce-calda-naturale-fredda' },
                 { label: 'Lumen vs watt', href: '/guide/scegliere-lampadina-led' },
-                { label: 'Dimmerabilità', href: '/guide/scegliere-lampadina-led' },
+                { label: 'Dimmerabilità', href: '/guide/glossario' },
                 { label: 'Grado IP', href: '/guide/glossario' },
-                { label: 'Retrofit LED', href: '/guide/scegliere-lampadina-led' },
+                { label: 'Retrofit LED', href: '/guide/lampadina-r7s' },
               ],
             },
           ]),
@@ -519,13 +519,55 @@ export const DEFAULT_GUIDE_IT: EditorialPageContent = {
   subtitle: 'Ti aiutiamo a scegliere con consapevolezza, dal design alla tecnica.',
   intro: 'Articoli pratici su attacchi, temperatura colore, dimmerabilità e scelta delle lampadine.',
   items: [
-    { category: 'BASE', title: 'Luce calda, naturale o fredda?', meta: '5 min', href: '/guide/luce-calda-naturale-fredda' },
-    { category: 'BASE', title: 'Come scegliere la lampadina LED', meta: '5 min', href: '/guide/scegliere-lampadina-led' },
-    { category: 'ATTACCHI', title: 'GU10 o GU5.3: qual è la differenza?', meta: '4 min', href: '/guide/gu10-gu53' },
-    { category: 'TECNICO', title: 'Alimentatore per striscia LED', meta: '6 min', href: '/guide/alimentatore-striscia-led' },
-    { category: 'ACQUISTO', title: 'Come scegliere una lampadina R7s', meta: '6 min', href: '/guide/lampadina-r7s' },
-    { category: 'AMBIENTE', title: 'Come illuminare il soggiorno', meta: '7 min', href: '/guide/illuminare-soggiorno' },
-    { category: 'GLOSSARIO', title: 'Glossario tecnico', meta: 'Riferimento', href: '/guide/glossario' },
+    {
+      category: 'BASE',
+      title: 'Luce calda, naturale o fredda?',
+      meta: '5 min',
+      href: '/guide/luce-calda-naturale-fredda',
+      imageUrl: 'https://ideadiluce.com/wp-content/uploads/2024/06/copertina-articolo2.jpg',
+    },
+    {
+      category: 'BASE',
+      title: 'Come scegliere la lampadina LED',
+      meta: '5 min',
+      href: '/guide/scegliere-lampadina-led',
+      imageUrl: '/site/images/prod-bulb.webp',
+    },
+    {
+      category: 'ATTACCHI',
+      title: 'GU10 o GU5.3: qual è la differenza?',
+      meta: '4 min',
+      href: '/guide/gu10-gu53',
+      imageUrl: '/site/images/prod-spot.webp',
+    },
+    {
+      category: 'TECNICO',
+      title: 'Alimentatore per striscia LED',
+      meta: '6 min',
+      href: '/guide/alimentatore-striscia-led',
+      imageUrl: '/site/images/prod-driver.webp',
+    },
+    {
+      category: 'ACQUISTO',
+      title: 'Come scegliere una lampadina R7s',
+      meta: '6 min',
+      href: '/guide/lampadina-r7s',
+      imageUrl: '/site/images/prod-r7s.webp',
+    },
+    {
+      category: 'AMBIENTE',
+      title: 'Come illuminare il soggiorno',
+      meta: '7 min',
+      href: '/guide/illuminare-soggiorno',
+      imageUrl: '/site/images/room-soggiorno.webp',
+    },
+    {
+      category: 'GLOSSARIO',
+      title: 'Glossario tecnico',
+      meta: 'Riferimento',
+      href: '/guide/glossario',
+      imageUrl: '/site/images/prod-bulb.webp',
+    },
   ],
   cta: { label: 'Hai dubbi? Contattaci →', href: '/contatti' },
 }

@@ -72,7 +72,7 @@ export function CatalogHeroSection({
       <SectionContainer className="py-6 sm:py-7">
         <div className="mb-3.5 font-mono text-[11.5px] text-idl-muted">
           <Link to={lp('/')} className="hover:text-idl-ink">
-            Home
+            {t('breadcrumb.home')}
           </Link>
           {breadcrumbParent ? (
             <>
@@ -92,18 +92,18 @@ export function CatalogHeroSection({
               {title}
             </h1>
             <p className="mt-1.5 text-[14.5px] text-idl-muted">
-              {subtitle ?? 'Arredo e tecnica in un unico negozio.'}{' '}
+              {subtitle ?? t('catalog.heroSubtitle')}{' '}
               <span className="font-bold text-idl-ink">
-                {totalProducts.toLocaleString('it-IT')}
+                {totalProducts.toLocaleString()}
               </span>{' '}
-              prodotti.
+              {t('catalog.heroProductCount')}
             </p>
           </div>
 
           {showWorldTabs ? (
             <div className="-mx-4 flex w-full gap-1 overflow-x-auto rounded-[30px] border border-idl-tech-chip-border bg-idl-tech-chip p-1 px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:mx-0 sm:w-auto sm:gap-1.5 sm:overflow-visible sm:px-1.5 sm:pb-1 [&::-webkit-scrollbar]:hidden">
               <TabLink active={worldTab === 'all'} href={lp(CATALOG_WORLD_TAB_HREFS.all)}>
-                Tutti
+                {t('catalog.worldAll')}
               </TabLink>
               <TabLink active={worldTab === 'design'} href={lp(CATALOG_WORLD_TAB_HREFS.design)}>
                 {designLabel}

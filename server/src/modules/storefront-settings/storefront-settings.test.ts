@@ -65,4 +65,21 @@ describe('mapStorefrontSettings', () => {
       legacySiteUrl: 'https://old.ideadiluce.it/',
     })
   })
+
+  it('preserva notice on (default go-live)', () => {
+    expect(
+      mapStorefrontSettings({
+        id: 'default',
+        soundsEnabled: true,
+        legacySiteNoticeEnabled: true,
+        legacySiteUrl: '',
+        createdAt: new Date('2026-09-02T00:00:00.000Z'),
+        updatedAt: new Date('2026-09-02T00:00:00.000Z'),
+      }),
+    ).toEqual({
+      soundsEnabled: true,
+      legacySiteNoticeEnabled: true,
+      legacySiteUrl: DEFAULT_LEGACY_SITE_URL,
+    })
+  })
 })

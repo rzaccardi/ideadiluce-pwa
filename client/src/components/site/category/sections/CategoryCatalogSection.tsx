@@ -154,7 +154,7 @@ export function CategoryCatalogSection({
               <div
                 className={cn(
                   'transition-opacity duration-200',
-                  loading && products.length > 0 && 'pointer-events-none opacity-60',
+                  loading && products.length > 0 && 'opacity-60',
                 )}
               >
                 <DesignCatalogProductGrid
@@ -194,7 +194,7 @@ export function CategoryCatalogSection({
               <div
                 className={cn(
                   'transition-opacity duration-200',
-                  loading && products.length > 0 && 'pointer-events-none opacity-60',
+                  loading && products.length > 0 && 'opacity-60',
                 )}
               >
                 <TechnicalCatalogProductGrid

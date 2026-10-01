@@ -443,15 +443,6 @@ export const paymentsService = {
     const s = assertSession(req)
     assertLocalTaxFields(body)
     assertEuVatRequirement(body)
-    if (!s.userId) {
-      throw new AppError(
-        'AUTH_REQUIRED',
-        'Login required',
-        'Accedi per completare l’ordine.',
-        401,
-        false,
-      )
-    }
     const cart = await activeCartForRequest(req)
     const ctx: OdooCallContext = { correlationId: req.correlationId, req }
     const idempotencyKey = resolveIdempotencyKey(req, body.idempotencyKey, cart.updatedAt)
@@ -791,15 +782,6 @@ export const paymentsService = {
 
   async createPaymentSession(req: Request, body: CreatePaymentSessionBody): Promise<PaymentSessionDTO> {
     const s = assertSession(req)
-    if (!s.userId) {
-      throw new AppError(
-        'AUTH_REQUIRED',
-        'Login required',
-        'Accedi per completare l’ordine.',
-        401,
-        false,
-      )
-    }
     const order = await assertOrderAccess(req, body.orderId)
     const inflightKey = `${order.id}:${body.paymentMethod}`
     const pending = inflightPaymentSessions.get(inflightKey)

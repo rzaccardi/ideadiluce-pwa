@@ -11,3 +11,8 @@ export const patchMeSchema = z.object({
     .optional()
     .nullable(),
 })
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8).max(128),
+})

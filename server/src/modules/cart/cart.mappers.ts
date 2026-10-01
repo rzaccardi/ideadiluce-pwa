@@ -23,6 +23,7 @@ const defaultAvailability: CartLineAvailabilityDTO = {
   stockQty: null,
   effectiveLeadDays: null,
   warning: null,
+  isOrderable: false,
 }
 
 function resolveLineVariantDisplay(
@@ -134,6 +135,7 @@ export function mapCartToDTO(
         stockQty: avail.stockQty,
         effectiveLeadDays: avail.effectiveLeadDays,
         warning: avail.warning,
+        isOrderable: avail.isOrderable,
       },
     }
   })

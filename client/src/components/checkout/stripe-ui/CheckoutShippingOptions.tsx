@@ -12,6 +12,7 @@ type Props = {
   selectingRef: string | null
   loading: boolean
   blocked?: boolean
+  blockedReason?: string
   selectionLocked?: boolean
   onSelect: (methodRef: string) => void
 }
@@ -42,6 +43,7 @@ export function CheckoutShippingOptions({
   selectingRef,
   loading,
   blocked = false,
+  blockedReason,
   selectionLocked = false,
   onSelect,
 }: Props) {
@@ -50,13 +52,14 @@ export function CheckoutShippingOptions({
   const showQuotes = visibleQuotes.length > 0
   const showLoading = loading && !showQuotes
   const showBlockedPlaceholders = blocked && !showQuotes && !showLoading
+  const blockedMessage = blockedReason ?? t('checkout.shipping.addressIncomplete')
 
   const selectionBusy = Boolean(selectingRef)
 
   return (
     <section className={cn((blocked || selectionBusy) && 'pointer-events-none')}>
       {blocked ? (
-        <p className="mb-3 text-sm text-idl-muted">{t('checkout.shipping.addressIncomplete')}</p>
+        <p className="mb-3 text-sm font-medium text-red-600">{blockedMessage}</p>
       ) : null}
 
       {showLoading ? (

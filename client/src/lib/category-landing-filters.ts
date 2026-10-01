@@ -179,6 +179,7 @@ export function resolveCategoryLandingInStock(
   inStockFromUrl: boolean,
 ): boolean {
   if (inStockFromUrl) return true
+  if (selected.has('stock-order') && !selected.has('stock-in')) return false
   return selected.has('stock-in')
 }
 

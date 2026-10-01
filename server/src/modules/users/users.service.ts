@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client'
 import type { CustomerSegment } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 import { prisma } from '../../lib/prisma.js'
 import { createOdooCustomerAdapter } from '../../adapters/odoo/odooCustomerAdapter.js'
 import { isOdooConfigured } from '../../adapters/odoo/odooClient.js'
@@ -10,7 +11,7 @@ import { paymentMethodToPrisma } from '../payments/payment.types.js'
 import { taxValidationService } from '../tax/tax-validation.service.js'
 import { AppError } from '../../types/errors.js'
 import { toUserDTO } from './user.mapper.js'
-import type { patchMeSchema } from './users.validators.js'
+import type { changePasswordSchema, patchMeSchema } from './users.validators.js'
 import type { z } from 'zod'
 import { professionalAccountRepository } from '../professional-account/professional-account.repository.js'
 import { normalizeProfessionalRequestStatus } from '../professional-account/professional-account.constants.js'
@@ -18,6 +19,7 @@ import { runOdooUserProfileSync } from './users-odoo-sync.helper.js'
 import { parseOdooShippingAddressId } from '../../adapters/odoo/odoo-partner-shipping.js'
 
 type PatchMeInput = z.infer<typeof patchMeSchema>
+type ChangePasswordInput = z.infer<typeof changePasswordSchema>
 
 export type UserPatchResult = {
   user: Awaited<ReturnType<typeof toUserDTO>>
@@ -113,6 +115,42 @@ async function syncUserProfileToOdoo(
 }
 
 export const usersService = {
+  async changePassword(userId: string, input: ChangePasswordInput): Promise<void> {
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user?.passwordHash) {
+      throw new AppError(
+        'PASSWORD_NOT_SET',
+        'Password not set',
+        'Questo account non ha una password locale da modificare.',
+        400,
+        false,
+      )
+    }
+    const ok = bcrypt.compareSync(input.currentPassword, user.passwordHash)
+    if (!ok) {
+      throw new AppError(
+        'INVALID_CREDENTIALS',
+        'Current password invalid',
+        'La password attuale non è corretta.',
+        400,
+        false,
+      )
+    }
+    if (input.currentPassword === input.newPassword) {
+      throw new AppError(
+        'VALIDATION_ERROR',
+        'Password unchanged',
+        'La nuova password deve essere diversa da quella attuale.',
+        400,
+        false,
+      )
+    }
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: bcrypt.hashSync(input.newPassword, 10) },
+    })
+  },
+
   async patchMe(userId: string, input: PatchMeInput, ctx?: OdooCallContext): Promise<UserPatchResult> {
     const user = await prisma.user.update({
       where: { id: userId },

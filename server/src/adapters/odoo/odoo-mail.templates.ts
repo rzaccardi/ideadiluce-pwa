@@ -4,6 +4,8 @@ export const PWA_ADMIN_MAIL_TO = 'info@ideadiluce.com'
 export const PWA_MAIL_TEMPLATE_KEYS = [
   'generic',
   'account_credentials',
+  'account_welcome',
+  'business_registration_admin',
   'professional_account_customer',
   'quote_received_customer',
   'quote_request_admin',
@@ -55,6 +57,22 @@ export const PWA_MAIL_TEMPLATES: Record<PwaMailTemplateKey, PwaMailTemplateDef> 
 <p>Email: {{email}}<br/>Password temporanea: {{password}}</p>
 <p>Accedi da: <a href="{{login_url}}">{{login_url}}</a></p>
 <p>Ti consigliamo di cambiare la password dopo il primo accesso.</p>`),
+  },
+  account_welcome: {
+    key: 'account_welcome',
+    name: '[PWA] Benvenuto account cliente',
+    subject: 'Benvenuto su Idea di Luce',
+    bodyHtml: wrap(`<p>Ciao{{first_name_suffix}},</p>
+<p>Il tuo account è stato creato correttamente.</p>
+<p>Email: {{email}}</p>
+<p>Accedi da: <a href="{{login_url}}">{{login_url}}</a></p>
+<p>Se non hai richiesto tu la registrazione, contattaci a ${PWA_ADMIN_MAIL_TO}.</p>`),
+  },
+  business_registration_admin: {
+    key: 'business_registration_admin',
+    name: '[PWA] Registrazione azienda — interno',
+    subject: '[Idea di Luce] Nuova registrazione azienda — {{customer_email}}',
+    bodyHtml: wrap('<pre style="white-space:pre-wrap;font-family:inherit">{{body_text}}</pre>'),
   },
   professional_account_customer: {
     key: 'professional_account_customer',

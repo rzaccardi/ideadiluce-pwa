@@ -10,6 +10,7 @@ import {
   checkoutStore,
   freeShippingSelectionLocked,
   hasCheckoutContactFromProfile,
+  isShippingBlockedByMissingPhone,
   initShippingFromBilling,
   isBusinessCheckout,
   isBusinessAnagraficaComplete,
@@ -78,6 +79,8 @@ export function CheckoutAddressesStep() {
     isCheckoutAddressValid(checkout.draft.billing) &&
     (!business || isBusinessAnagraficaComplete())
   const shippingSectionReady = billingComplete && canFetchShippingQuotes()
+  const phoneBlockingShipping = isShippingBlockedByMissingPhone()
+  const hideContact = hasCheckoutContactFromProfile() && !phoneBlockingShipping
   const continueBusy =
     stepBusy ||
     checkout.shippingQuotesLoading ||
@@ -123,7 +126,8 @@ export function CheckoutAddressesStep() {
         title={t('checkout.billingAddress')}
         prefix="bill"
         showTitle
-        hideContactFields={hasCheckoutContactFromProfile()}
+        hideContactFields={hideContact}
+        highlightPhoneError={phoneBlockingShipping}
         address={checkout.draft.billing}
         onChange={(key, value) => updateCheckoutAddress('billing', key, value)}
         onAddressResolved={(resolved) =>
@@ -220,7 +224,7 @@ export function CheckoutAddressesStep() {
             showTitle={false}
             address={checkout.draft.shipping}
             showCourierNotes
-            hideContactFields={hasCheckoutContactFromProfile()}
+            hideContactFields={hideContact}
             onChange={(key, value) => updateCheckoutAddress('shipping', key, value)}
             onAddressResolved={(resolved) =>
               void applyResolvedAddress('shipping', resolved).catch(() => {})
@@ -299,6 +303,11 @@ export function CheckoutAddressesStep() {
           selectingRef={checkout.shippingSelectingRef}
           loading={checkout.shippingQuotesLoading}
           blocked={!shippingSectionReady}
+          blockedReason={
+            phoneBlockingShipping
+              ? t('checkout.shipping.phoneRequired')
+              : t('checkout.shipping.addressIncomplete')
+          }
           selectionLocked={freeShippingSelectionLocked()}
           onSelect={(ref) => {
             void selectShippingMethod(ref).catch(() => {})

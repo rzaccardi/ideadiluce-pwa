@@ -21,11 +21,19 @@ export type StockCheckResult = {
 export type VariantStockSnapshot = {
   variantId: number
   stockQty: number | null
+  /** Lead time max (giorni) dai fornitori `product.supplierinfo`. */
   leadTimeDays: number | null
   restockDate: string | null
   saleOk: boolean
+  /** True se esiste almeno un fornitore (backorder oltre stock). */
   orderable: boolean
+  hasSuppliers: boolean
   defaultCode?: string | null
+}
+
+type SupplierLeadInfo = {
+  hasSuppliers: boolean
+  leadTimeMax: number | null
 }
 
 function pickQtyField(fields: Record<string, unknown>): string | null {
@@ -78,6 +86,135 @@ function m2oTemplateId(value: unknown): number | null {
   return null
 }
 
+function m2oId(value: unknown): number | null {
+  if (Array.isArray(value) && typeof value[0] === 'number') return value[0]
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  return null
+}
+
+/**
+ * Lead time max e presenza fornitori da `product.supplierinfo` (Acquisti Odoo).
+ * Conservativo: se il modello non è leggibile → nessun fornitore.
+ */
+export async function fetchSupplierLeadByVariantIds(
+  ctx: OdooCallContext,
+  variantIds: number[],
+  variantToTemplate: Map<number, number>,
+): Promise<Map<number, SupplierLeadInfo>> {
+  const empty = new Map<number, SupplierLeadInfo>()
+  for (const id of variantIds) {
+    empty.set(id, { hasSuppliers: false, leadTimeMax: null })
+  }
+  if (!isOdooConfigured() || variantIds.length === 0) return empty
+
+  try {
+    const fields = await cachedFieldsGet(ctx, 'product.supplierinfo')
+    const readFields = ['delay']
+    const hasProductId = 'product_id' in fields
+    const hasTmplId = 'product_tmpl_id' in fields
+    if (hasProductId) readFields.push('product_id')
+    if (hasTmplId) readFields.push('product_tmpl_id')
+    if (!hasProductId && !hasTmplId) return empty
+
+    const domain: unknown[] = []
+    if (hasProductId) {
+      domain.push(['product_id', 'in', variantIds])
+    }
+    const templateIds = [
+      ...new Set(
+        [...variantToTemplate.values()].filter((id) => Number.isInteger(id) && id > 0),
+      ),
+    ]
+    if (hasTmplId && templateIds.length > 0) {
+      if (domain.length > 0) {
+        domain.unshift('|')
+      }
+      domain.push(['product_tmpl_id', 'in', templateIds])
+    }
+    if (domain.length === 0) return empty
+
+    const rows = await odooExecuteKw<Array<Record<string, unknown>>>(
+      ctx,
+      'product.supplierinfo',
+      'search_read',
+      [domain],
+      { fields: readFields, limit: 5000 },
+    )
+
+    const byVariant = new Map<number, number[]>()
+    const byTemplate = new Map<number, number[]>()
+
+    for (const row of rows) {
+      const delayRaw = readNumberField(row, 'delay')
+      const delay = delayRaw != null && delayRaw >= 0 ? delayRaw : 0
+      const productId = hasProductId ? m2oId(row.product_id) : null
+      const tmplId = hasTmplId ? m2oId(row.product_tmpl_id) : null
+
+      // Riga specifica variante (product_id valorizzato)
+      if (productId != null && productId > 0) {
+        const list = byVariant.get(productId) ?? []
+        list.push(delay)
+        byVariant.set(productId, list)
+        continue
+      }
+      // Riga a livello template (vale per tutte le varianti del template)
+      if (tmplId != null && tmplId > 0) {
+        const list = byTemplate.get(tmplId) ?? []
+        list.push(delay)
+        byTemplate.set(tmplId, list)
+      }
+    }
+
+    const result = new Map<number, SupplierLeadInfo>()
+    for (const variantId of variantIds) {
+      const delays: number[] = [...(byVariant.get(variantId) ?? [])]
+      const tmplId = variantToTemplate.get(variantId)
+      if (tmplId != null) {
+        delays.push(...(byTemplate.get(tmplId) ?? []))
+      }
+      if (delays.length === 0) {
+        result.set(variantId, { hasSuppliers: false, leadTimeMax: null })
+        continue
+      }
+      result.set(variantId, {
+        hasSuppliers: true,
+        leadTimeMax: Math.max(...delays),
+      })
+    }
+    return result
+  } catch {
+    return empty
+  }
+}
+
+async function resolveVariantTemplateMap(
+  ctx: OdooCallContext,
+  variantIds: number[],
+): Promise<Map<number, number>> {
+  const map = new Map<number, number>()
+  if (!isOdooConfigured() || variantIds.length === 0) return map
+
+  try {
+    const rows = await odooExecuteKw<Array<Record<string, unknown>>>(
+      ctx,
+      'product.product',
+      'read',
+      [variantIds],
+      { fields: ['product_tmpl_id'] },
+    )
+    for (const row of rows) {
+      const variantId = readNumberField(row, 'id')
+      const tmplId = m2oTemplateId(row.product_tmpl_id)
+      if (variantId != null && tmplId != null) {
+        map.set(variantId, tmplId)
+      }
+    }
+  } catch {
+    // ignore — supplierinfo userà solo match per product_id
+  }
+  return map
+}
+
 /** Batch read stock/lead/orderable da Odoo per varianti `product.product`. */
 export async function fetchVariantStockByIds(
   ctx: OdooCallContext,
@@ -91,18 +228,30 @@ export async function fetchVariantStockByIds(
   const uniqueIds = [...new Set(variantIds.filter((id) => Number.isInteger(id) && id > 0))]
   if (uniqueIds.length === 0) return result
 
+  // Path API v2: qty da v2, fornitori da RPC se disponibile
   if (isOdooApiV2Configured()) {
     try {
       const rows = await odooApiGetStock(uniqueIds, ctx.correlationId)
+      const variantToTemplate = isOdooConfigured()
+        ? await resolveVariantTemplateMap(ctx, uniqueIds)
+        : new Map<number, number>()
+      const suppliers = isOdooConfigured()
+        ? await fetchSupplierLeadByVariantIds(ctx, uniqueIds, variantToTemplate)
+        : new Map<number, SupplierLeadInfo>()
+
       for (const row of rows) {
         const qty = Number(row.free_qty ?? row.qty_available ?? 0)
+        const supplier = suppliers.get(row.id) ?? { hasSuppliers: false, leadTimeMax: null }
+        const saleOk = true
+        const hasSuppliers = supplier.hasSuppliers
         result.set(row.id, {
           variantId: row.id,
           stockQty: Number.isFinite(qty) ? qty : null,
-          leadTimeDays: null,
+          leadTimeDays: supplier.leadTimeMax,
           restockDate: null,
-          saleOk: true,
-          orderable: row.is_storable === false ? true : qty > 0 || row.in_stock !== false,
+          saleOk,
+          hasSuppliers,
+          orderable: saleOk && hasSuppliers,
         })
       }
       return result
@@ -118,7 +267,6 @@ export async function fetchVariantStockByIds(
   const readFields = ['sale_ok', 'product_tmpl_id']
   if ('default_code' in fields) readFields.push('default_code')
   if (qtyField) readFields.push(qtyField)
-  if ('sale_delay' in fields) readFields.push('sale_delay')
   for (const key of ['x_restock_date', 'restock_date', 'date_planned']) {
     if (key in fields) readFields.push(key)
   }
@@ -131,50 +279,25 @@ export async function fetchVariantStockByIds(
     { fields: readFields },
   )
 
-  const templateIds = [
-    ...new Set(
-      rows
-        .map((row) => m2oTemplateId(row.product_tmpl_id))
-        .filter((id): id is number => id != null),
-    ),
-  ]
-
-  const templateOrderable = new Map<number, boolean>()
-  if (templateIds.length > 0) {
-    const templateFields = await cachedFieldsGet(ctx, 'product.template')
-    const templateReadFields = ['sale_ok']
-    if ('allow_out_of_stock_order' in templateFields) {
-      templateReadFields.push('allow_out_of_stock_order')
-    }
-    const templates = await odooExecuteKw<Array<Record<string, unknown>>>(
-      ctx,
-      'product.template',
-      'read',
-      [templateIds],
-      { fields: templateReadFields },
-    )
-    for (const tpl of templates) {
-      const id = readNumberField(tpl, 'id')
-      if (id == null) continue
-      const saleOk = readBoolField(tpl, 'sale_ok', true)
-      const allowOut =
-        'allow_out_of_stock_order' in tpl
-          ? readBoolField(tpl, 'allow_out_of_stock_order', false)
-          : saleOk
-      templateOrderable.set(id, saleOk && allowOut)
+  const variantToTemplate = new Map<number, number>()
+  for (const row of rows) {
+    const variantId = readNumberField(row, 'id')
+    const templateId = m2oTemplateId(row.product_tmpl_id)
+    if (variantId != null && templateId != null) {
+      variantToTemplate.set(variantId, templateId)
     }
   }
+
+  const suppliers = await fetchSupplierLeadByVariantIds(ctx, uniqueIds, variantToTemplate)
 
   for (const row of rows) {
     const variantId = readNumberField(row, 'id')
     if (variantId == null) continue
-    const templateId = m2oTemplateId(row.product_tmpl_id)
     const saleOk = readBoolField(row, 'sale_ok', true)
     const stockQty = qtyField ? readNumberField(row, qtyField) : null
-    const leadTimeDays = readNumberField(row, 'sale_delay')
     const restockDate = readRestockDate(row)
-    const templateAllowsOrder = templateId != null ? (templateOrderable.get(templateId) ?? saleOk) : saleOk
-    const orderable = saleOk && templateAllowsOrder
+    const supplier = suppliers.get(variantId) ?? { hasSuppliers: false, leadTimeMax: null }
+    const hasSuppliers = supplier.hasSuppliers
     const defaultCodeRaw = row.default_code
     const defaultCode =
       typeof defaultCodeRaw === 'string' && defaultCodeRaw.trim() ? defaultCodeRaw.trim() : null
@@ -182,10 +305,11 @@ export async function fetchVariantStockByIds(
     result.set(variantId, {
       variantId,
       stockQty,
-      leadTimeDays,
+      leadTimeDays: supplier.leadTimeMax,
       restockDate,
       saleOk,
-      orderable,
+      hasSuppliers,
+      orderable: saleOk && hasSuppliers,
       defaultCode,
     })
   }
@@ -381,7 +505,7 @@ export async function estimateCartMaxLengthMeters(
   return maxLength
 }
 
-/** Max lead time (giorni) tra le righe carrello da Odoo. */
+/** Max lead time (giorni) tra le righe carrello da fornitori Odoo. */
 export async function estimateCartMaxLeadDays(
   ctx: OdooCallContext,
   lines: Array<{ productRef: string; variantRef?: string | null; quantity: number }>,
@@ -390,25 +514,30 @@ export async function estimateCartMaxLeadDays(
     return null
   }
 
-  const fields = await cachedFieldsGet(ctx, 'product.product')
-  if (!('sale_delay' in fields)) return null
-
   const variantIds = await resolveVariantIds(ctx, lines)
   const uniqueIds = [...new Set(variantIds.filter((id): id is number => id != null))]
-  const rows = uniqueIds.length
-    ? await odooExecuteKw<Array<Record<string, unknown>>>(
-        ctx,
-        'product.product',
-        'read',
-        [uniqueIds],
-        { fields: ['sale_delay'] },
-      )
-    : []
+  if (uniqueIds.length === 0) return null
+
+  const snapshots = await fetchVariantStockByIds(ctx, uniqueIds)
   const leadDays: number[] = []
-  for (const row of rows) {
-    const days = readNumberField(row, 'sale_delay')
-    if (days != null && days > 0) {
-      leadDays.push(days)
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index]!
+    const variantId = variantIds[index]
+    if (variantId == null) continue
+    const snap = snapshots.get(variantId)
+    if (!snap) continue
+    const availability = resolveVariantAvailability(
+      {
+        stockQty: snap.stockQty,
+        restockDate: snap.restockDate,
+        leadTimeDays: snap.leadTimeDays,
+        saleOk: snap.saleOk,
+        orderable: snap.orderable,
+      },
+      line.quantity,
+    )
+    if (availability.purchasable && availability.effectiveLeadDays > 0) {
+      leadDays.push(availability.effectiveLeadDays)
     }
   }
 

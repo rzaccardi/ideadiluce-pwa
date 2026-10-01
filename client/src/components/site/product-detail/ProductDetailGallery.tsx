@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useIsClient } from '@/hooks/use-is-client'
+import { useI18n } from '@/hooks/use-i18n'
 import { layers } from '@/lib/layering'
 import { cn } from '@/utils/cn'
 import { IdlMediaPlaceholder } from '@/components/site/IdlMediaPlaceholder'
@@ -57,15 +58,15 @@ export const GALLERY_TAG_ORDER: ProductGalleryTagDTO[] = [
   'certificazione',
 ]
 
-const GALLERY_TAG_LABEL: Record<string, string> = {
-  foto: 'Foto',
-  attacco: 'Attacco',
-  misure: 'Misure',
-  accesa: 'Accesa',
-  applicazione: 'Applicazione',
-  ambiente: 'Ambiente',
-  dettaglio: 'Dettaglio',
-  certificazione: 'Certificazione',
+const GALLERY_TAG_LABEL_KEYS: Record<string, 'gallery.tag.foto' | 'gallery.tag.attacco' | 'gallery.tag.misure' | 'gallery.tag.accesa' | 'gallery.tag.applicazione' | 'gallery.tag.ambiente' | 'gallery.tag.dettaglio' | 'gallery.tag.certificazione'> = {
+  foto: 'gallery.tag.foto',
+  attacco: 'gallery.tag.attacco',
+  misure: 'gallery.tag.misure',
+  accesa: 'gallery.tag.accesa',
+  applicazione: 'gallery.tag.applicazione',
+  ambiente: 'gallery.tag.ambiente',
+  dettaglio: 'gallery.tag.dettaglio',
+  certificazione: 'gallery.tag.certificazione',
 }
 
 function youtubeEmbedUrl(url: string): string | null {
@@ -119,6 +120,7 @@ export function ProductDetailGallery({
   activeUrl,
   variant = 'design',
 }: Props) {
+  const { t } = useI18n()
   const items = useMemo((): ProductGalleryItemDTO[] => {
     const raw: ProductGalleryItemDTO[] = (() => {
       if (gallery?.length) return [...gallery]
@@ -153,6 +155,15 @@ export function ProductDetailGallery({
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
+  const [lightboxZoom, setLightboxZoom] = useState(1)
+  const [lightboxPan, setLightboxPan] = useState({ x: 0, y: 0 })
+  const lightboxDragRef = useRef<{
+    active: boolean
+    startX: number
+    startY: number
+    originX: number
+    originY: number
+  } | null>(null)
   /** Se true, l’utente ha scelto una thumb; altrimenti la hero segue la variante (`activeUrl`). */
   const [manualBrowse, setManualBrowse] = useState(false)
   const isClient = useIsClient()
@@ -231,6 +242,8 @@ export function ProductDetailGallery({
   const openLightbox = useCallback(
     (index: number) => {
       setLightboxIndex(index)
+      setLightboxZoom(1)
+      setLightboxPan({ x: 0, y: 0 })
       setLightboxOpen(true)
     },
     [],
@@ -238,6 +251,8 @@ export function ProductDetailGallery({
 
   const openCurrentLightbox = useCallback(() => {
     if (current?.type !== 'image') return
+    setLightboxZoom(1)
+    setLightboxPan({ x: 0, y: 0 })
     if (showingVariantHero) {
       setLightboxIndex(-1)
       setLightboxOpen(true)
@@ -245,6 +260,27 @@ export function ProductDetailGallery({
     }
     openLightbox(selectedIndex)
   }, [current?.type, showingVariantHero, openLightbox, selectedIndex])
+
+  const closeLightbox = useCallback(() => {
+    setLightboxOpen(false)
+    setLightboxZoom(1)
+    setLightboxPan({ x: 0, y: 0 })
+  }, [])
+
+  const toggleLightboxZoom = useCallback((clientX?: number, clientY?: number) => {
+    setLightboxZoom((z) => {
+      if (z > 1) {
+        setLightboxPan({ x: 0, y: 0 })
+        return 1
+      }
+      if (clientX != null && clientY != null && typeof window !== 'undefined') {
+        const cx = window.innerWidth / 2
+        const cy = window.innerHeight / 2
+        setLightboxPan({ x: (cx - clientX) * 0.4, y: (cy - clientY) * 0.4 })
+      }
+      return 2.5
+    })
+  }, [])
 
   const selectThumb = useCallback((index: number) => {
     setManualBrowse(true)
@@ -313,6 +349,8 @@ export function ProductDetailGallery({
 
   const goPrev = useCallback(() => {
     if (!displayItems.length) return
+    setLightboxZoom(1)
+    setLightboxPan({ x: 0, y: 0 })
     setLightboxIndex((i) => {
       if (i < 0) return displayItems.length - 1
       return (i - 1 + displayItems.length) % displayItems.length
@@ -321,6 +359,8 @@ export function ProductDetailGallery({
 
   const goNext = useCallback(() => {
     if (!displayItems.length) return
+    setLightboxZoom(1)
+    setLightboxPan({ x: 0, y: 0 })
     setLightboxIndex((i) => {
       if (i < 0) return 0
       return (i + 1) % displayItems.length
@@ -330,13 +370,13 @@ export function ProductDetailGallery({
   useEffect(() => {
     if (!lightboxOpen) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setLightboxOpen(false)
+      if (e.key === 'Escape') closeLightbox()
       if (e.key === 'ArrowLeft') goPrev()
       if (e.key === 'ArrowRight') goNext()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [lightboxOpen, goPrev, goNext])
+  }, [lightboxOpen, goPrev, goNext, closeLightbox])
 
   useEffect(() => {
     if (!lightboxOpen) return
@@ -408,7 +448,7 @@ export function ProductDetailGallery({
                         : 'rounded-md text-idl-muted hover:text-idl-ink',
                   )}
                 >
-                  {GALLERY_TAG_LABEL[tag] ?? tag}
+                  {GALLERY_TAG_LABEL_KEYS[tag] ? t(GALLERY_TAG_LABEL_KEYS[tag]) : tag}
                 </button>
               )
             })}
@@ -425,7 +465,7 @@ export function ProductDetailGallery({
           )}
           onClick={openCurrentLightbox}
           aria-label={
-            current?.type === 'video' ? 'Video prodotto' : 'Ingrandisci immagine prodotto'
+            current?.type === 'video' ? t('gallery.videoProduct') : t('gallery.zoomImage')
           }
         >
           {current?.type === 'video' ? (
@@ -648,17 +688,17 @@ export function ProductDetailGallery({
               )}
               role="dialog"
               aria-modal="true"
-              aria-label="Galleria prodotto"
-              onClick={() => setLightboxOpen(false)}
+              aria-label={t('gallery.lightboxLabel')}
+              onClick={closeLightbox}
             >
               <button
                 type="button"
-                className={cn(lightboxControlClass, 'absolute right-4 top-4')}
+                className={cn(lightboxControlClass, 'absolute right-4 top-4 z-10')}
                 onClick={(e) => {
                   e.stopPropagation()
-                  setLightboxOpen(false)
+                  closeLightbox()
                 }}
-                aria-label="Chiudi galleria"
+                aria-label={t('gallery.close')}
               >
                 <LightboxCloseIcon className="size-5" />
               </button>
@@ -668,13 +708,13 @@ export function ProductDetailGallery({
                     type="button"
                     className={cn(
                       lightboxControlClass,
-                      'absolute left-3 top-1/2 -translate-y-1/2 sm:left-5',
+                      'absolute left-3 top-1/2 z-10 -translate-y-1/2 sm:left-5',
                     )}
                     onClick={(e) => {
                       e.stopPropagation()
                       goPrev()
                     }}
-                    aria-label="Immagine precedente"
+                    aria-label={t('gallery.prev')}
                   >
                     <LightboxChevronIcon direction="left" className="size-6" />
                   </button>
@@ -682,24 +722,81 @@ export function ProductDetailGallery({
                     type="button"
                     className={cn(
                       lightboxControlClass,
-                      'absolute right-3 top-1/2 -translate-y-1/2 sm:right-5',
+                      'absolute right-3 top-1/2 z-10 -translate-y-1/2 sm:right-5',
                     )}
                     onClick={(e) => {
                       e.stopPropagation()
                       goNext()
                     }}
-                    aria-label="Immagine successiva"
+                    aria-label={t('gallery.next')}
                   >
                     <LightboxChevronIcon direction="right" className="size-6" />
                   </button>
                 </>
               ) : null}
-              <img
-                src={lightboxItem.url}
-                alt={lightboxItem.alt?.trim() || alt}
-                className="max-h-[calc(100dvh-2rem)] max-w-full object-contain"
+              <div
+                className={cn(
+                  'relative max-h-[calc(100dvh-2rem)] max-w-full overflow-hidden',
+                  lightboxZoom > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in',
+                )}
                 onClick={(e) => e.stopPropagation()}
-              />
+                onWheel={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  const delta = e.deltaY > 0 ? -0.25 : 0.25
+                  setLightboxZoom((z) => {
+                    const next = Math.min(4, Math.max(1, z + delta))
+                    if (next <= 1) setLightboxPan({ x: 0, y: 0 })
+                    return next
+                  })
+                }}
+                onPointerDown={(e) => {
+                  if (lightboxZoom <= 1) return
+                  e.currentTarget.setPointerCapture(e.pointerId)
+                  lightboxDragRef.current = {
+                    active: true,
+                    startX: e.clientX,
+                    startY: e.clientY,
+                    originX: lightboxPan.x,
+                    originY: lightboxPan.y,
+                  }
+                }}
+                onPointerMove={(e) => {
+                  const drag = lightboxDragRef.current
+                  if (!drag?.active) return
+                  setLightboxPan({
+                    x: drag.originX + (e.clientX - drag.startX),
+                    y: drag.originY + (e.clientY - drag.startY),
+                  })
+                }}
+                onPointerUp={() => {
+                  if (lightboxDragRef.current) lightboxDragRef.current.active = false
+                }}
+                onPointerCancel={() => {
+                  if (lightboxDragRef.current) lightboxDragRef.current.active = false
+                }}
+              >
+                <img
+                  src={lightboxItem.url}
+                  alt={lightboxItem.alt?.trim() || alt}
+                  className="max-h-[calc(100dvh-2rem)] max-w-full select-none object-contain transition-transform duration-150"
+                  style={{
+                    transform: `translate(${lightboxPan.x}px, ${lightboxPan.y}px) scale(${lightboxZoom})`,
+                  }}
+                  draggable={false}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation()
+                    toggleLightboxZoom(e.clientX, e.clientY)
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (lightboxZoom <= 1) toggleLightboxZoom(e.clientX, e.clientY)
+                  }}
+                />
+              </div>
+              <p className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs text-white">
+                {lightboxZoom > 1 ? t('gallery.zoomHintOut') : t('gallery.zoomHintIn')}
+              </p>
             </div>,
             document.body,
           )

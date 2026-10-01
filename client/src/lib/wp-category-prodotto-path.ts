@@ -25,7 +25,7 @@ export function resolveInternalPathFromWpView(view: WpCategoryProdottoView): str
   switch (view.kind) {
     case 'landing':
       if (view.pageKey === 'design') return '/illuminazione-arredo'
-      if (view.pageKey === 'technical') return '/illuminazione-tecnica'
+      if (view.pageKey === 'technical') return '/categoria-prodotto/illuminazione-tecnica'
       return '/categoria-prodotto/illuminazione-tecnica/prodotti-tecnici'
     case 'ambiente-hub':
       return '/acquista-ambiente'

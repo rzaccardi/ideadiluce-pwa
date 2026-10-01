@@ -401,7 +401,10 @@ const PRICE_STOCK_GROUPS: CategoryFilterGroup[] = [
   {
     kind: 'checkbox',
     label: 'Disponibilità',
-    options: [{ label: 'Pronta consegna', value: 'stock-in' }],
+    options: [
+      { label: 'Pronta consegna', value: 'stock-in' },
+      { label: 'Su ordinazione', value: 'stock-order' },
+    ],
   },
 ]
 

@@ -6,7 +6,7 @@ export const appStore = proxy({
   isBootstrapped: false,
   /** Flag globale BO: se false nessun suono UI (chime carrello, ecc.). Default true. */
   soundsEnabled: true,
-  /** Barra go-live visibile in negozio. Default off finché non si attiva dal BO. */
-  legacySiteNoticeEnabled: false,
+  /** Barra go-live visibile in negozio. Default on: link «sito precedente» sempre raggiungibile. */
+  legacySiteNoticeEnabled: true,
   legacySiteUrl: DEFAULT_LEGACY_SITE_URL,
 })

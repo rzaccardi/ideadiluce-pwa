@@ -3,11 +3,12 @@ import type { z } from 'zod'
 import { ok } from '../lib/api-response.js'
 import { usersService } from '../modules/users/users.service.js'
 import { userShippingAddressesService } from '../modules/users/user-shipping-addresses.service.js'
-import type { patchMeSchema } from '../modules/users/users.validators.js'
+import type { changePasswordSchema, patchMeSchema } from '../modules/users/users.validators.js'
 import type { upsertShippingAddressSchema } from '../modules/users/user-shipping-addresses.validators.js'
 import { asyncHandler } from '../utils/async-handler.js'
 
 type PatchMeBody = z.infer<typeof patchMeSchema>
+type ChangePasswordBody = z.infer<typeof changePasswordSchema>
 type ShippingAddressBody = z.infer<typeof upsertShippingAddressSchema>
 
 export const usersController = {
@@ -18,6 +19,12 @@ export const usersController = {
       req,
     })
     res.json(ok(result))
+  }),
+
+  changePassword: asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.sessionRecord!.user!.id
+    await usersService.changePassword(userId, req.body as ChangePasswordBody)
+    res.json(ok({ ok: true }))
   }),
 
   patchBusiness: asyncHandler(async (req: Request, res: Response) => {

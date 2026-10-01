@@ -28,7 +28,7 @@ export function normalizeDcStaticPath(pathname: string): string {
 }
 
 const NAV_DROPDOWN_HREFS: Record<string, string> = {
-  arredo: '/categoria-prodotto/illuminazione-arredo',
+  arredo: '/illuminazione-arredo',
   tecnico: '/categoria-prodotto/illuminazione-tecnica',
   attacco: '/attacco',
 }
@@ -39,8 +39,20 @@ export function resolveNavDropdownHref(id: string, href?: string): string {
 
 export function resolveDcActiveNavId(pathname: string): DcActiveNavId | null {
   const path = normalizeDcStaticPath(pathname)
-  if (path.startsWith('/categoria-prodotto/illuminazione-arredo')) return 'arredo'
-  if (path.includes('/illuminazione-tecnica')) return 'tecnico'
+  if (
+    path.startsWith('/illuminazione-arredo') ||
+    path.startsWith('/categoria-prodotto/illuminazione-arredo') ||
+    path.startsWith('/tipologia/') ||
+    path.startsWith('/stile/')
+  ) {
+    return 'arredo'
+  }
+  if (
+    path.includes('/illuminazione-tecnica') ||
+    path.startsWith('/categoria-tecnica')
+  ) {
+    return 'tecnico'
+  }
   if (path.startsWith('/attacco')) return 'attacco'
   if (path.startsWith('/ambienti')) return 'ambienti'
   if (path.startsWith('/brand')) return 'brand'

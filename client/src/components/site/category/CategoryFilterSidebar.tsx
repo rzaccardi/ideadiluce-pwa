@@ -1,6 +1,7 @@
 'use client'
 
 import type { CategoryFilterGroup } from '@/types/category-landing'
+import { useI18n } from '@/hooks/use-i18n'
 import { cn } from '@/utils/cn'
 import {
   ExpandableFilterList,
@@ -40,6 +41,7 @@ export function CategoryFilterSidebar({
   wattaggioMax,
   onSelectWattaggioRange,
 }: Props) {
+  const { t } = useI18n()
   const isDesign = variant === 'design'
   const tone = isDesign ? 'design' : 'tech'
   const showWattRange =
@@ -165,7 +167,7 @@ export function CategoryFilterSidebar({
       {showWattRange ? (
         <div className="border-t border-idl-tech-border py-4">
           <div className="mb-2.5 font-mono text-[11px] tracking-[0.1em] text-idl-muted uppercase">
-            Wattaggio
+            {t('catalog.wattaggio')}
           </div>
           <WattaggioRangeFilter
             values={wattaggioValues}

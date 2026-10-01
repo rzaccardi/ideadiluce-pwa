@@ -8,11 +8,11 @@ import { ApiRequestError } from '@/types/api'
 import { AuthLoadingOverlay } from '@/components/site/auth/AuthLoadingOverlay'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
+import { notify } from '@/lib/notify'
 import {
   AuthBrassLink,
   AuthCard,
   AuthCardHeader,
-  AuthCheckbox,
   AuthField,
   AuthFieldGroup,
   AuthFooterText,
@@ -25,6 +25,9 @@ import {
   LockIcon,
   UserIcon,
 } from '@/components/site/auth/auth-ui'
+import { cn } from '@/utils/cn'
+
+type AccountType = 'retail' | 'business'
 
 export function RegisterPageView() {
   const { t } = useI18n()
@@ -38,7 +41,11 @@ export function RegisterPageView() {
   const [password, setPassword] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
-  const [isBusiness, setIsBusiness] = useState(searchParams.get('business') === '1')
+  const [accountType, setAccountType] = useState<AccountType>(
+    searchParams.get('business') === '1' ? 'business' : 'retail',
+  )
+  const [companyName, setCompanyName] = useState('')
+  const [vatNumber, setVatNumber] = useState('')
 
   const loginHref =
     from !== accountPath
@@ -47,15 +54,24 @@ export function RegisterPageView() {
 
   const isBusy = auth.isLoading || auth.isHydrating
   const busyMessage = auth.isHydrating ? t('auth.preparingAccount') : t('auth.registering')
+  const isBusiness = accountType === 'business'
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
+    authStore.error = null
+    if (isBusiness && (!companyName.trim() || !vatNumber.trim())) {
+      authStore.error = t('register.businessFieldsRequired')
+      return
+    }
     try {
       await register(email, password, {
         firstName: firstName || undefined,
         lastName: lastName || undefined,
-        customerSegment: isBusiness ? 'business' : 'retail',
+        customerSegment: accountType,
+        companyName: isBusiness ? companyName.trim() : undefined,
+        vatNumber: isBusiness ? vatNumber.trim() : undefined,
       })
+      notify.success(t('auth.accountCreated'))
       navigate(from, { replace: true })
     } catch (err) {
       if (err instanceof ApiRequestError) {
@@ -82,6 +98,38 @@ export function RegisterPageView() {
         <AuthCardHeader title={t('register.title')} subtitle={t('register.subtitle')} />
 
         <form onSubmit={(e) => void onSubmit(e)}>
+          <AuthFieldGroup>
+            <AuthLabel>{t('register.accountType')}</AuthLabel>
+            <div className="grid grid-cols-2 gap-2" role="group" aria-label={t('register.accountType')}>
+              <button
+                type="button"
+                disabled={isBusy}
+                onClick={() => setAccountType('retail')}
+                className={cn(
+                  'rounded-lg border px-3 py-2.5 text-sm font-semibold transition',
+                  accountType === 'retail'
+                    ? 'border-idl-ink bg-idl-ink text-white'
+                    : 'border-[#e4e4df] bg-white text-idl-ink-soft hover:border-idl-ink/40',
+                )}
+              >
+                {t('register.accountTypePrivate')}
+              </button>
+              <button
+                type="button"
+                disabled={isBusy}
+                onClick={() => setAccountType('business')}
+                className={cn(
+                  'rounded-lg border px-3 py-2.5 text-sm font-semibold transition',
+                  accountType === 'business'
+                    ? 'border-idl-ink bg-idl-ink text-white'
+                    : 'border-[#e4e4df] bg-white text-idl-ink-soft hover:border-idl-ink/40',
+                )}
+              >
+                {t('register.accountTypeBusiness')}
+              </button>
+            </div>
+          </AuthFieldGroup>
+
           <AuthFieldGroup>
             <AuthLabel htmlFor="register-first-name">{t('common.firstName')}</AuthLabel>
             <AuthField icon={<UserIcon />}>
@@ -111,6 +159,42 @@ export function RegisterPageView() {
               />
             </AuthField>
           </AuthFieldGroup>
+
+          {isBusiness ? (
+            <>
+              <AuthFieldGroup>
+                <AuthLabel htmlFor="register-company-name">{t('checkout.billing.companyName')}</AuthLabel>
+                <AuthField icon={<UserIcon />}>
+                  <AuthTextInput
+                    id="register-company-name"
+                    name="companyName"
+                    autoComplete="organization"
+                    placeholder={t('checkout.billing.companyName')}
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    required
+                    disabled={isBusy}
+                  />
+                </AuthField>
+              </AuthFieldGroup>
+
+              <AuthFieldGroup>
+                <AuthLabel htmlFor="register-vat-number">{t('checkout.billing.vatNumber')}</AuthLabel>
+                <AuthField icon={<UserIcon />}>
+                  <AuthTextInput
+                    id="register-vat-number"
+                    name="vatNumber"
+                    autoComplete="off"
+                    placeholder={t('checkout.billing.vatNumber')}
+                    value={vatNumber}
+                    onChange={(e) => setVatNumber(e.target.value)}
+                    required
+                    disabled={isBusy}
+                  />
+                </AuthField>
+              </AuthFieldGroup>
+            </>
+          ) : null}
 
           <AuthFieldGroup>
             <AuthLabel htmlFor="register-email">{t('common.email')}</AuthLabel>
@@ -147,10 +231,6 @@ export function RegisterPageView() {
               />
             </AuthField>
           </AuthFieldGroup>
-
-          <AuthCheckbox checked={isBusiness} onChange={setIsBusiness}>
-            {t('register.business')}
-          </AuthCheckbox>
 
           <AuthSubmitButton disabled={isBusy}>
             {isBusy ? busyMessage : t('auth.registerSubmit')}

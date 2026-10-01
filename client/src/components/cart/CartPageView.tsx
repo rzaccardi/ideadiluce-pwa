@@ -6,6 +6,7 @@ import type { CartDTO, CartItemDTO, CartStockInsufficientDTO, ProductCardDTO } f
 import { clearCart } from '@/features/cart'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { CartCompatibilitySupport } from '@/components/cart/CartCompatibilitySupport'
+import { CartDeliveryBanner } from '@/components/cart/CartDeliveryBanner'
 import { CartFreeShippingBanner } from '@/components/cart/CartFreeShippingBanner'
 import { CartHeroSection } from '@/components/cart/CartHeroSection'
 import { CartLineItem } from '@/components/cart/CartLineItem'
@@ -93,6 +94,7 @@ export function CartPageView({ state }: Props) {
         <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1fr)_372px] lg:gap-8">
           <div className="flex min-w-0 flex-col gap-[18px]">
             <CartFreeShippingBanner hint={cart.freeShippingHint} currencyCode={cart.currencyCode} />
+            <CartDeliveryBanner deliveryLeadDays={cart.deliveryLeadDays ?? null} />
 
             <div className={CART_CARD_SURFACE_OVERFLOW}>
               {cart.items.map((line, index) => (

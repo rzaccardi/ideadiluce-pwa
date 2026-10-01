@@ -53,7 +53,12 @@ async function applyRefreshResult(fallbackUser?: UserDTO) {
   const { user, impersonation, expiresAt } = await api.auth.refresh()
   const resolvedUser = user ?? fallbackUser ?? null
   if (resolvedUser) {
-    setAuthUser(resolvedUser, impersonation, expiresAt)
+    // Sempre persistere il mirror: senza expiresAt il reload tratterebbe l'utente come guest.
+    const resolvedExpiresAt =
+      expiresAt ??
+      authStore.sessionExpiresAt ??
+      new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    setAuthUser(resolvedUser, impersonation, resolvedExpiresAt)
   } else {
     clearAuthSessionMirror()
     setAuthUser(null)
@@ -65,8 +70,25 @@ async function establishAuthenticatedSession(
   fallbackUser?: UserDTO,
   options?: { hydrateScope?: HydrateSessionStoresScope },
 ) {
-  const user = await applyRefreshResult(fallbackUser)
+  let lastError: unknown
+  let user: UserDTO | null = null
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      user = await applyRefreshResult(fallbackUser)
+      if (user) break
+    } catch (e) {
+      lastError = e
+      if (attempt === 0) {
+        await new Promise((r) => setTimeout(r, 150))
+        continue
+      }
+      throw e
+    }
+  }
   if (!user) {
+    clearAuthSessionMirror()
+    setAuthUser(null)
+    if (lastError instanceof ApiRequestError) throw lastError
     throw new ApiRequestError(
       'UNAUTHORIZED',
       'Session not established',
@@ -202,6 +224,8 @@ export async function register(
     lastName?: string
     phone?: string
     customerSegment?: 'retail' | 'business'
+    companyName?: string
+    vatNumber?: string
   },
 ) {
   authStore.isLoading = true
@@ -214,6 +238,8 @@ export async function register(
       lastName: extra?.lastName,
       phone: extra?.phone,
       customerSegment: extra?.customerSegment,
+      companyName: extra?.companyName,
+      vatNumber: extra?.vatNumber,
     })
     await establishAuthenticatedSession(user)
   } catch (e) {

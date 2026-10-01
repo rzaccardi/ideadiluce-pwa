@@ -59,6 +59,8 @@ export const api = {
       lastName?: string
       phone?: string
       customerSegment?: 'retail' | 'business'
+      companyName?: string
+      vatNumber?: string
     }) {
       return apiClient.post<{ user: UserDTO }>('/api/v1/auth/register', body)
     },
@@ -746,6 +748,9 @@ export const api = {
       preferredPaymentMethod?: PwaPaymentMethodDTO | null
     }) {
       return apiClient.patch<UserPatchResponseDTO>('/api/v1/users/me', body)
+    },
+    changePassword(body: { currentPassword: string; newPassword: string }) {
+      return apiClient.post<{ ok: boolean }>('/api/v1/users/me/change-password', body)
     },
     patchBusiness(body: {
       customerSegment?: 'retail' | 'business'

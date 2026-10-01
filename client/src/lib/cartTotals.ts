@@ -34,12 +34,17 @@ export function cartSubtotalCents(cart: CartLike): number {
   return shouldUsePersistedSubtotal(cart, fromLines) ? cart.estimatedSubtotal! : fromLines
 }
 
+/**
+ * Importo spedizione da mostrare/sommare.
+ * Solo con metodo selezionato: non usare `estimatedShipping` residuo (es. flat €5,90
+ * da una sessione precedente) prima di login/indirizzo.
+ */
 export function cartShippingCents(
-  cart: CartLike,
+  _cart: CartLike,
   selectedShippingAmountCents?: number | null,
-): number {
+): number | null {
   if (selectedShippingAmountCents != null) return selectedShippingAmountCents
-  return cart.estimatedShipping ?? 0
+  return null
 }
 
 export function cartTaxCents(cart: CartLike, liveTax?: { taxCents: number } | null): number {
@@ -63,10 +68,12 @@ export function cartTotalCents(
 ): number {
   const subtotal = liveTax?.netCents ?? cartSubtotalCents(cart)
   const tax = cartTaxCents(cart, liveTax)
-  const shipping = cartShippingCents(cart, selectedShippingAmountCents)
+  const shipping = cartShippingCents(cart, selectedShippingAmountCents) ?? 0
   const fromLines = subtotalFromLines(cart)
   const persisted = shouldUsePersistedSubtotal(cart, fromLines)
+  // Il totale persistito include spesso la spedizione: usalo solo se il metodo è scelto.
   if (
+    selectedShippingAmountCents != null &&
     !liveTax &&
     persisted &&
     cart.estimatedTotal != null &&

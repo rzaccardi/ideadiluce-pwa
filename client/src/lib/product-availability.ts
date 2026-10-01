@@ -7,9 +7,6 @@ import type {
   ProductVariantDTO,
 } from '@/types/dto'
 
-export const RESTOCK_LEAD_DAYS_FALLBACK = 10
-export const LOW_STOCK_THRESHOLD = 10
-
 export type ProductAvailabilityStatus = 'available' | 'orderable' | 'out_of_stock'
 
 export type ProductAvailabilityResult = {
@@ -19,7 +16,6 @@ export type ProductAvailabilityResult = {
   canAddToCart: boolean
   showProductRequest: boolean
   showRestockNotify: boolean
-  lowStockLabel?: string
   schemaOrgAvailability: string
   leadTimeDays?: number
   restockDate?: string
@@ -87,67 +83,60 @@ function orderableDetail(
   locale: PwaLocale,
   leadTimeDays: number | null,
   restockDate: string | null,
-  useFallbackCopy: boolean,
 ): string {
-  if (useFallbackCopy) {
-    return t(locale, 'product.availability.orderableFallback')
-  }
   if (restockDate) {
     return tParams(locale, 'product.availability.shippedByDate', {
       date: formatRestockDate(restockDate, locale),
     })
   }
   if (leadTimeDays != null && leadTimeDays > 0) {
-    return tParams(locale, 'product.availability.shippedInDays', { days: leadTimeDays })
+    return tParams(locale, 'product.availability.basePlusLead', { days: leadTimeDays })
   }
-  return t(locale, 'product.availability.orderableFallback')
+  // LT = 0 o assente ma fornitore presente → solo BASE
+  return t(locale, 'product.availability.baseShipping')
 }
 
-function buildAvailable(locale: PwaLocale, qtyAvailable: number): ProductAvailabilityResult {
-  const lowStockLabel =
-    qtyAvailable <= LOW_STOCK_THRESHOLD
-      ? tParams(locale, 'product.availability.lowStock', { count: qtyAvailable })
-      : undefined
+function buildAvailable(locale: PwaLocale): ProductAvailabilityResult {
   return {
     status: 'available',
     label: t(locale, 'product.availability.available'),
+    detail: t(locale, 'product.availability.baseShipping'),
     canAddToCart: true,
     showProductRequest: false,
     showRestockNotify: false,
-    lowStockLabel,
     schemaOrgAvailability: 'https://schema.org/InStock',
   }
 }
 
 function buildOrderable(
   locale: PwaLocale,
-  qtyAvailable: number,
   leadTimeDays: number | null,
   restockDate: string | null,
-  useFallbackCopy: boolean,
 ): ProductAvailabilityResult {
-  const effectiveLead =
-    leadTimeDays != null && leadTimeDays > 0 ? leadTimeDays : RESTOCK_LEAD_DAYS_FALLBACK
+  const effectiveLead = leadTimeDays != null && leadTimeDays > 0 ? leadTimeDays : 0
   return {
     status: 'orderable',
     label: t(locale, 'product.availability.orderable'),
-    detail: orderableDetail(locale, effectiveLead, restockDate, useFallbackCopy),
+    detail: orderableDetail(locale, effectiveLead > 0 ? effectiveLead : null, restockDate),
     canAddToCart: true,
     showProductRequest: false,
-    showRestockNotify: qtyAvailable <= 0,
+    showRestockNotify: false,
     schemaOrgAvailability: 'https://schema.org/PreOrder',
-    leadTimeDays: effectiveLead,
+    leadTimeDays: effectiveLead > 0 ? effectiveLead : undefined,
     restockDate: restockDate ?? undefined,
   }
 }
 
-function buildOutOfStock(locale: PwaLocale, showProductRequest: boolean): ProductAvailabilityResult {
+function buildOutOfStock(
+  locale: PwaLocale,
+  opts: { showProductRequest: boolean; showRestockNotify: boolean },
+): ProductAvailabilityResult {
   return {
     status: 'out_of_stock',
     label: t(locale, 'product.availability.outOfStock'),
     canAddToCart: false,
-    showProductRequest,
-    showRestockNotify: false,
+    showProductRequest: opts.showProductRequest,
+    showRestockNotify: opts.showRestockNotify,
     schemaOrgAvailability: 'https://schema.org/OutOfStock',
   }
 }
@@ -166,7 +155,7 @@ export function resolveAvailabilityData(
   if (stockQty != null) {
     return {
       qtyAvailable: Math.max(0, stockQty),
-      isOrderable: inStock !== false,
+      isOrderable: false,
       isUnrecoverable: inStock === false && stockQty <= 0,
     }
   }
@@ -179,9 +168,10 @@ export function resolveAvailabilityData(
     }
   }
 
+  // Senza dati stock espliciti: non assumere fornitori
   return {
     qtyAvailable: 1,
-    isOrderable: true,
+    isOrderable: false,
   }
 }
 
@@ -195,7 +185,7 @@ export function getProductAvailabilityStatus(input: {
   const avail = input.availability
 
   if (!avail) {
-    return buildOutOfStock(locale, false)
+    return buildOutOfStock(locale, { showProductRequest: false, showRestockNotify: false })
   }
 
   const {
@@ -209,22 +199,29 @@ export function getProductAvailabilityStatus(input: {
   const leadTimeDays = resolveLeadTimeDays(customerLeadTimeDays, rawRestockDate)
 
   if (isUnrecoverable === true) {
-    return buildOutOfStock(locale, true)
+    return buildOutOfStock(locale, { showProductRequest: true, showRestockNotify: false })
   }
 
+  // Caso 1: Q ≤ S
   if (qtyAvailable > 0 && requestedQty <= qtyAvailable) {
-    return buildAvailable(locale, qtyAvailable)
+    return buildAvailable(locale)
   }
 
+  // Caso 2: Q > S (o S=0) con fornitori
   if (isOrderable) {
-    return buildOrderable(locale, qtyAvailable, leadTimeDays, restockDate, false)
+    return buildOrderable(locale, leadTimeDays, restockDate)
   }
 
-  return buildOutOfStock(locale, true)
+  // Caso 3: S = 0, nessun fornitore → Avvisami
+  // Edge con S > 0 gestito dal cap qty in PDP (qui Q > S senza fornitori = non acquistabile)
+  return buildOutOfStock(locale, {
+    showProductRequest: false,
+    showRestockNotify: qtyAvailable <= 0,
+  })
 }
 
 export function formatAvailabilityPrimaryLabel(result: ProductAvailabilityResult): string {
-  return result.lowStockLabel ?? result.label
+  return result.label
 }
 
 export function isCatalogProductPurchasable(
@@ -239,3 +236,13 @@ export function isCatalogProductPurchasable(
   )
 }
 
+/** Max qty ordinabile quando non ci sono fornitori (edge case). */
+export function resolveMaxOrderableQty(
+  availability: ProductAvailabilityDataDTO | null | undefined,
+): number | undefined {
+  if (!availability) return undefined
+  if (availability.isUnrecoverable) return undefined
+  if (availability.isOrderable) return undefined
+  if (availability.qtyAvailable > 0) return availability.qtyAvailable
+  return undefined
+}

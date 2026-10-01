@@ -14,6 +14,8 @@ export const authRepository = {
     lastName?: string | null
     phone?: string | null
     customerSegment?: CustomerSegment
+    companyName?: string | null
+    vatNumber?: string | null
   }) {
     return prisma.user.create({
       data: {
@@ -23,6 +25,8 @@ export const authRepository = {
         lastName: data.lastName ?? null,
         phone: data.phone ?? null,
         customerSegment: data.customerSegment ?? 'RETAIL',
+        companyName: data.companyName?.trim() || null,
+        vatNumber: data.vatNumber?.trim() || null,
       },
     })
   },

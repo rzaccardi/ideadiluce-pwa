@@ -30,7 +30,7 @@ function cartWithLine(overrides?: Partial<CartDTO['items'][number]>): CartDTO {
         imageUrl: null,
         purchasable: true,
         availabilityStatus: 'available',
-        availability: { state: 'available', stockQty: 4, effectiveLeadDays: null, warning: null },
+        availability: { state: 'available', stockQty: 4, effectiveLeadDays: null, warning: null, isOrderable: false },
         ...overrides,
       },
     ],
@@ -129,6 +129,17 @@ describe('cartLineMatchesAdd', () => {
         'lampada',
         '88',
         { odooTemplateId: 1997, odooVariantId: 88, slug: 'lampada' },
+      ),
+    ).toBe(true)
+  })
+
+  it('accorpa se manca la variante su un lato', () => {
+    expect(
+      cartLineMatchesAdd(
+        { productRef: '1997', productSlug: 'lampada', variantRef: '88' },
+        'lampada',
+        null,
+        { odooTemplateId: 1997, slug: 'lampada' },
       ),
     ).toBe(true)
   })

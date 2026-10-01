@@ -19,7 +19,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { formatMoney } from '@/lib/format'
-import { cartDisplayTotalCents } from '@/lib/cartTotals'
+import { cartDisplayTotalCents, cartSubtotalCents } from '@/lib/cartTotals'
 import { AnimatePresence, motion, useReducedMotion } from '@/lib/motion-client'
 import { transitionBase } from '@/lib/motion/presets'
 import { cn } from '@/utils/cn'
@@ -123,7 +123,7 @@ function MiniCartPanel({
             <dd className="mt-0.5 text-base font-semibold tabular-nums text-idl-graphite">{itemCount}</dd>
           </div>
           <div className="rounded-lg border border-idl-border/60 bg-idl-tech-panel px-3 py-2.5">
-            <dt className="text-xs text-idl-muted">{t('cart.floating.estimatedTotal')}</dt>
+            <dt className="text-xs text-idl-muted">{t('cart.floating.subtotal')}</dt>
             <dd className="mt-0.5 text-base font-semibold tabular-nums text-idl-graphite">
               {cart && total != null ? formatMoney(total, cart.currencyCode) : '—'}
             </dd>
@@ -282,7 +282,11 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
 
   const itemCountFromLines = cart?.items.reduce((sum, line) => sum + line.quantity, 0) ?? 0
   const itemCount = Math.max(cart?.itemCount ?? 0, itemCountFromLines)
-  const total = cart && cart.items.length > 0 ? cartDisplayTotalCents(cart) : null
+  // Solo subtotale: IVA/spedizione solo nell'ultima fase checkout (non “Totale stimato”).
+  const total =
+    cart && cart.items.length > 0
+      ? cartSubtotalCents(cart) || cartDisplayTotalCents(cart)
+      : null
 
   // Checkout: nascosto ovunque. Pagina carrello: nascosto su mobile via CSS (evita branch SSR su viewport).
   if (isCartFlow && !isCartPage) return null

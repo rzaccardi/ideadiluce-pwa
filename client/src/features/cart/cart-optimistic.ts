@@ -41,7 +41,17 @@ function optimisticAvailability(): CartItemDTO['availability'] {
     stockQty: null,
     effectiveLeadDays: null,
     warning: null,
+    isOrderable: false,
   }
+}
+
+function normalizeVariantKey(value: string | null | undefined): string | null {
+  if (value == null) return null
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  const legacy = /^VAR-(\d+)$/i.exec(trimmed)
+  if (legacy) return legacy[1]
+  return trimmed
 }
 
 export function cartLineMatchesAdd(
@@ -57,15 +67,20 @@ export function cartLineMatchesAdd(
   if (hint?.odooTemplateId != null) inputKeys.add(String(hint.odooTemplateId))
   if (hint?.slug) inputKeys.add(hint.slug)
   const productMatch = [...inputKeys].some((key) => lineKeys.has(key))
+  if (!productMatch) return false
 
   const variantHint = hint?.odooVariantId != null ? String(hint.odooVariantId) : null
-  const lineVariant = line.variantRef ?? null
-  const inputVariant = variantRef ?? null
-  const variantMatch =
-    lineVariant === inputVariant ||
-    (variantHint != null && (lineVariant === variantHint || inputVariant === variantHint))
+  const lineVariant = normalizeVariantKey(line.variantRef)
+  const inputVariant = normalizeVariantKey(variantRef)
+  const hintVariant = normalizeVariantKey(variantHint)
 
-  return productMatch && variantMatch
+  // Stesso prodotto senza variante esplicita su un lato → accorpa (evita doppie righe).
+  if (lineVariant == null || inputVariant == null) return true
+  if (lineVariant === inputVariant) return true
+  if (hintVariant != null && (lineVariant === hintVariant || inputVariant === hintVariant)) {
+    return true
+  }
+  return false
 }
 
 function resolveOptimisticUnitPrice(
@@ -86,13 +101,14 @@ function recountCart(cart: CartDTO): CartDTO {
   const priced = purchasable.filter((line) => line.lineTotalEstimateCents != null)
   const subtotal = priced.reduce((sum, line) => sum + (line.lineTotalEstimateCents ?? 0), 0)
   const tax = cart.estimatedTax ?? 0
-  const shipping = cart.estimatedShipping ?? 0
   return {
     ...cart,
     itemCount,
     purchasableItemCount: purchasable.reduce((sum, line) => sum + line.quantity, 0),
     estimatedSubtotal: priced.length > 0 ? subtotal : cart.estimatedSubtotal,
-    estimatedTotal: priced.length > 0 ? subtotal + tax + shipping : cart.estimatedTotal,
+    // Non includere spedizione stimata residua nel totale ottimistico.
+    estimatedTotal: priced.length > 0 ? subtotal + tax : cart.estimatedTotal,
+    estimatedShipping: null,
   }
 }
 

@@ -3,6 +3,7 @@
 import { useSnapshot } from 'valtio/react'
 import { fetchCart } from '@/features/cart'
 import {
+  acceptGuestCheckout,
   checkoutStore,
   initShippingFromBilling,
   markAnagraficaCollectedAtAccount,
@@ -13,6 +14,11 @@ import {
 } from '@/features/checkout'
 import { useI18n } from '@/hooks/use-i18n'
 import { InlineAccountAuthStep } from '@/components/auth/InlineAccountAuthStep'
+import {
+  StripeControlledInput,
+  StripeFieldGroup,
+  StripePayButton,
+} from '@/components/checkout/stripe-ui/StripeFields'
 
 export function CheckoutRegistrationStep() {
   const { t } = useI18n()
@@ -27,6 +33,7 @@ export function CheckoutRegistrationStep() {
     customerSegment?: 'retail' | 'business' | null
   }) {
     updateCheckoutEmail(info.email)
+    checkoutStore.guestCheckoutAccepted = false
     if (info.mode === 'register') {
       if (info.customerSegment) setCustomerSegment(info.customerSegment)
       markAnagraficaCollectedAtAccount()
@@ -42,14 +49,45 @@ export function CheckoutRegistrationStep() {
     await prepareCheckoutAfterAuth()
   }
 
+  const guestEmailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(checkout.draft.email.trim())
+
   return (
-    <InlineAccountAuthStep
-      email={checkout.draft.email}
-      onEmailChange={updateCheckoutEmail}
-      registerContinueLabel={t('checkout.account.createAndContinue')}
-      onAuthSuccess={handleAuthSuccess}
-      logoutScope="checkout"
-      collectCustomerTypeOnRegister
-    />
+    <div className="space-y-6">
+      <InlineAccountAuthStep
+        email={checkout.draft.email}
+        onEmailChange={updateCheckoutEmail}
+        registerContinueLabel={t('checkout.account.createAndContinue')}
+        onAuthSuccess={handleAuthSuccess}
+        logoutScope="checkout"
+        collectCustomerTypeOnRegister
+      />
+
+      <div className="relative py-1">
+        <div className="absolute inset-0 flex items-center" aria-hidden>
+          <div className="w-full border-t border-idl-tech-border" />
+        </div>
+        <p className="relative mx-auto w-fit bg-idl-tech-panel px-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#9298a3]">
+          {t('checkout.account.orDivider')}
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        <p className="text-sm text-zinc-600">{t('checkout.account.guestHint')}</p>
+        <StripeFieldGroup>
+          <StripeControlledInput
+            type="email"
+            name="guest-email"
+            placeholder={t('common.email')}
+            autoComplete="email"
+            value={checkout.draft.email}
+            onValueChange={updateCheckoutEmail}
+            required
+          />
+        </StripeFieldGroup>
+        <StripePayButton className="w-full" disabled={!guestEmailOk} onClick={() => acceptGuestCheckout()}>
+          {t('checkout.account.continueAsGuest')}
+        </StripePayButton>
+      </div>
+    </div>
   )
 }

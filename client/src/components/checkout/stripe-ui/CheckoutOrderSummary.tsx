@@ -92,9 +92,8 @@ function SummaryContent({
   const tax = cartTaxCents(cart, taxBreakdown)
   const total = cartTotalCents(cart, selectedShipping?.amountCents, taxBreakdown)
   const hint = freeShippingHint ?? cart.freeShippingHint
-  const shippingDisplay =
-    selectedShipping?.amountCents ?? (cart.estimatedShipping != null && cart.estimatedShipping > 0 ? cart.estimatedShipping : null)
-  const shippingIsFree = hint?.eligible === true || shippingDisplay === 0
+  const shippingDisplay = selectedShipping?.amountCents ?? null
+  const shippingIsFree = selectedShipping != null && (hint?.eligible === true || shippingDisplay === 0)
 
   return (
     <>
@@ -186,7 +185,7 @@ function SummaryContent({
               ? t('checkout.summary.shippingFree')
               : shippingDisplay != null
                 ? formatMoney(shippingDisplay, cart.currencyCode)
-                : t('common.notAvailable')}
+                : t('checkout.summary.shippingPending')}
           </dd>
         </div>
       </dl>

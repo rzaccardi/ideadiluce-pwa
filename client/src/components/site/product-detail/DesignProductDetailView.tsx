@@ -97,6 +97,11 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
     t,
   } = state
 
+  const maxHint =
+    maxQuantity != null
+      ? tParams('product.qty.maxStockHint', { count: maxQuantity + 1 })
+      : undefined
+
   const breadcrumbItems = buildProductBreadcrumbItems({
     productName: product.name,
     category: product.categories?.[0] ?? null,
@@ -393,6 +398,7 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
                   value={quantity}
                   min={1}
                   max={maxQuantity}
+                  maxHint={maxHint}
                   onChange={setQuantity}
                   variant="design"
                 />

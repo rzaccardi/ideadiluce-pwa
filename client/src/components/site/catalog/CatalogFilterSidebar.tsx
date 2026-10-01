@@ -23,6 +23,7 @@ import {
   type FacetChipOption,
 } from '@/lib/catalog-facets-ui'
 import type { CatalogFiltersDTO } from '@/types/dto'
+import { useI18n } from '@/hooks/use-i18n'
 import { cn } from '@/utils/cn'
 import {
   ExpandableFilterList,
@@ -207,12 +208,14 @@ export function CatalogFilterSidebar({
   className,
   showHeader = true,
 }: Props) {
+  const { t } = useI18n()
   const showDesignFilters = catalogWorldShowsDesignFilters(world)
   const showTechnicalFilters = catalogWorldShowsTechnicalFilters(world)
   const scopedFacets = scopeCatalogFacetsToWorld(facets, world, brands)
   const facetCats = facetCategoryOptions(scopedFacets, world)
   const facetBrands = facetBrandOptions(scopedFacets)
-  const tipologie = showDesignFilters ? facetTaxonomyOptions(scopedFacets, 'tipologie') : []
+  const tipKey = selectedTipologia?.trim().toLowerCase() || undefined
+  const tipologie = showDesignFilters && !tipKey ? facetTaxonomyOptions(scopedFacets, 'tipologie') : []
   const ambienti = showDesignFilters ? facetTaxonomyOptions(scopedFacets, 'ambienti') : []
   const stili = showDesignFilters ? facetTaxonomyOptions(scopedFacets, 'stili') : []
   const sockets = showTechnicalFilters ? facetAttaccoOptions(scopedFacets) : []
@@ -222,15 +225,36 @@ export function CatalogFilterSidebar({
   const fallbackRoots = filterCategoryDtosByWorld(rootCategories, world)
   const fallbackSubs = filterCategoryDtosByWorld(subcategories, world)
 
-  const displayRoots =
+  const allFacetRoots =
     facetCats.roots.length > 0
       ? facetCats.roots.map((c) => ({ id: c.slug, slug: c.slug, name: c.name, count: c.count }))
       : fallbackRoots.map((c) => ({ id: c.id, slug: c.slug, name: c.name, count: undefined as number | undefined }))
 
-  const displaySubs =
+  const allFacetSubs =
     facetCats.children.length > 0
-      ? facetCats.children.map((c) => ({ id: c.slug, slug: c.slug, name: c.name, count: c.count }))
-      : fallbackSubs.map((c) => ({ id: c.id, slug: c.slug, name: c.name, count: undefined as number | undefined }))
+      ? facetCats.children.map((c) => ({
+          id: c.slug,
+          slug: c.slug,
+          name: c.name,
+          count: c.count,
+          parentSlug: c.parentSlug ?? undefined,
+        }))
+      : fallbackSubs.map((c) => ({
+          id: c.id,
+          slug: c.slug,
+          name: c.name,
+          count: undefined as number | undefined,
+          parentSlug: undefined as string | undefined,
+        }))
+
+  // Su /tipologia/{slug}: non mostrare altre tipologie né nipoti globali (es. "Sospensione 2").
+  const displayRoots = tipKey
+    ? allFacetRoots.filter((c) => c.slug.toLowerCase() === tipKey)
+    : allFacetRoots
+
+  const displaySubs = tipKey
+    ? allFacetSubs.filter((c) => (c.parentSlug ?? '').toLowerCase() === tipKey)
+    : allFacetSubs
 
   const visibleBrands =
     facetBrands.length > 0
@@ -245,15 +269,15 @@ export function CatalogFilterSidebar({
     <aside className={className}>
       {showHeader ? (
         <div className="mb-3.5 flex items-center justify-between">
-          <div className="text-[15px] font-extrabold tracking-tight">Filtri</div>
+          <div className="text-[15px] font-extrabold tracking-tight">{t('catalog.filters')}</div>
           <button type="button" onClick={onReset} className="text-[12.5px] font-bold text-idl-amber">
-            Azzera
+            {t('catalog.resetFilters')}
           </button>
         </div>
       ) : null}
 
       {displayRoots.length > 0 ? (
-        <FilterGroup label="Categoria">
+        <FilterGroup label={t('catalog.categoryLabel')}>
           <ExpandableFilterList
             items={displayRoots}
             initialVisible={FILTER_LIST_INITIAL_VISIBLE}
@@ -275,7 +299,7 @@ export function CatalogFilterSidebar({
       ) : null}
 
       {displaySubs.length > 0 ? (
-        <FilterGroup label="Sottocategoria">
+        <FilterGroup label={t('catalog.subcategory')}>
           <ExpandableFilterList
             items={displaySubs}
             initialVisible={FILTER_LIST_INITIAL_VISIBLE}
@@ -297,7 +321,7 @@ export function CatalogFilterSidebar({
       ) : null}
 
       {tipologie.length > 0 && onSelectTipologia ? (
-        <FilterGroup label="Tipologia">
+        <FilterGroup label={t('catalog.tipologia')}>
           <ExpandableFilterList
             items={tipologie}
             initialVisible={FILTER_LIST_INITIAL_VISIBLE}
@@ -319,7 +343,7 @@ export function CatalogFilterSidebar({
       ) : null}
 
       {ambienti.length > 0 && onSelectAmbiente ? (
-        <FilterGroup label="Ambiente">
+        <FilterGroup label={t('catalog.ambiente')}>
           <ExpandableFilterList
             items={ambienti}
             initialVisible={FILTER_LIST_INITIAL_VISIBLE}
@@ -341,7 +365,7 @@ export function CatalogFilterSidebar({
       ) : null}
 
       {stili.length > 0 && onSelectStile ? (
-        <FilterGroup label="Stile">
+        <FilterGroup label={t('catalog.stile')}>
           <ExpandableFilterList
             items={stili}
             initialVisible={FILTER_LIST_INITIAL_VISIBLE}
@@ -368,7 +392,7 @@ export function CatalogFilterSidebar({
       ) : null}
 
       {sockets.length > 0 ? (
-        <FilterGroup label="Attacco">
+        <FilterGroup label={t('catalog.attacco')}>
           <ChipGroup
             options={sockets}
             isActive={(opt) =>
@@ -386,7 +410,7 @@ export function CatalogFilterSidebar({
       ) : null}
 
       {wattaggi.length >= 2 && onSelectWattaggioRange ? (
-        <FilterGroup label="Wattaggio">
+        <FilterGroup label={t('catalog.wattaggio')}>
           <WattaggioRangeFilter
             values={wattaggi}
             min={selectedWattaggioMin}
@@ -398,7 +422,7 @@ export function CatalogFilterSidebar({
       ) : null}
 
       {visibleBrands.length > 0 ? (
-        <FilterGroup label="Brand">
+        <FilterGroup label={t('catalog.brand')}>
           <ExpandableFilterList
             items={visibleBrands}
             initialVisible={FILTER_LIST_INITIAL_VISIBLE}
@@ -420,7 +444,7 @@ export function CatalogFilterSidebar({
       ) : null}
 
       {colorTemps.length > 0 ? (
-        <FilterGroup label="Temperatura colore">
+        <FilterGroup label={t('catalog.colorTemp')}>
           <ChipGroup
             options={colorTemps}
             isActive={(opt) => selectedColorTemp === opt.value}
@@ -429,7 +453,7 @@ export function CatalogFilterSidebar({
         </FilterGroup>
       ) : null}
 
-      <FilterGroup label="Prezzo">
+      <FilterGroup label={t('catalog.price')}>
         <div className="space-y-0.5">
           {CATALOG_PRICE_BUCKETS.map((bucket) => (
             <CheckboxRow
@@ -444,10 +468,10 @@ export function CatalogFilterSidebar({
         </div>
       </FilterGroup>
 
-      <FilterGroup label="Disponibilità">
+      <FilterGroup label={t('catalog.availability')}>
         <CheckboxRow
           checked={inStockOnly}
-          label="Pronta consegna"
+          label={t('catalog.readyToShip')}
           onClick={() => onToggleInStock(!inStockOnly)}
         />
       </FilterGroup>

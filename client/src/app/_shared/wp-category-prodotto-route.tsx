@@ -7,9 +7,14 @@ import { localizePath } from '@/lib/locale'
 import { getRequestLocale } from '@/lib/locale-server'
 import { buildMetadata } from '@/lib/seo'
 import { buildBreadcrumbJsonLd, buildCollectionPageJsonLd } from '@/lib/seo/json-ld'
-import { fetchCatalogProductsServer, fetchCategoryMetaServer } from '@/lib/server-catalog'
+import {
+  fetchCatalogBootstrapServer,
+  fetchCatalogProductsServer,
+  fetchCategoryMetaServer,
+} from '@/lib/server-catalog'
 import { fetchContentPageServer } from '@/lib/server-site-cache'
 import { isEditorialPage } from '@/lib/site-page-keys'
+import { buildCategoryTaxonomy, humanizeSlug } from '@/lib/catalog-taxonomy'
 import {
   resolveWpCategoryProdottoView,
   wpCategoryProdottoPathFromSegments,
@@ -17,7 +22,7 @@ import {
 import type { EditorialPageContent } from '@/types/site-content'
 import { AmbienteRoomView } from '@/views/AmbienteRoomView'
 import { AmbientiPage } from '@/views/AmbientiPage'
-import { CategoryPage } from '@/views/CategoryPage'
+import { CatalogPage } from '@/views/CatalogPage'
 import { CategoryLandingRoutePage } from '@/app/_shared/category-landing-route'
 
 type RouteProps = {
@@ -147,14 +152,22 @@ export async function WpCategoryProdottoRoute({ segments }: RouteProps) {
 
     case 'catalog': {
       const categorySlug = view.categorySlug || undefined
-      const [category, productsRes] = await Promise.all([
-        categorySlug ? fetchCategoryMetaServer(categorySlug, locale) : Promise.resolve(null),
+      const world = view.rootWorld ?? 'design'
+      const taxonomy = buildCategoryTaxonomy(categorySlug ?? view.displaySlug, {
+        world,
+        label: undefined,
+      })
+      const [category, productsRes, initialBootstrap] = await Promise.all([
+        categorySlug ? fetchCategoryMetaServer(taxonomy.value, locale) : Promise.resolve(null),
         fetchCatalogProductsServer(locale, {
-          category: categorySlug,
-          pageSize: 48,
+          category: taxonomy.value,
+          pageSize: 24,
+          world,
         }),
+        fetchCatalogBootstrapServer(locale),
       ])
-      const name = category?.name ?? view.displaySlug.replace(/-/g, ' ')
+      const name = category?.name ?? humanizeSlug(view.displaySlug)
+      taxonomy.label = name
       return (
         <>
           <JsonLdGraph
@@ -172,10 +185,18 @@ export async function WpCategoryProdottoRoute({ segments }: RouteProps) {
               ]),
             ]}
           />
-          <CategoryPage
-            categorySlug={categorySlug ?? view.displaySlug}
+          <CatalogPage
+            forcedTaxonomy={taxonomy}
             initialProducts={productsRes.items}
-            initialCategoryName={name}
+            initialBootstrap={initialBootstrap}
+            initialPagination={{
+              page: productsRes.page,
+              pageSize: productsRes.pageSize,
+              total: productsRes.total,
+              totalPages: productsRes.totalPages,
+              hasNextPage: productsRes.hasNextPage,
+              hasPreviousPage: productsRes.hasPreviousPage,
+            }}
           />
         </>
       )

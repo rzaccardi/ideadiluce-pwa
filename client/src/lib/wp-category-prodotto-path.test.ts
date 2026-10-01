@@ -11,6 +11,24 @@ describe('wp-category-prodotto-path', () => {
     expect(resolveWpCategoryProdottoView(['illuminazione-arredo', 'sospensione'])?.kind).toBe('catalog')
   })
 
+  it('mappa landing tecnica e prodotti tecnici', () => {
+    const tech = resolveWpCategoryProdottoView(['illuminazione-tecnica'])
+    expect(tech).toEqual({ kind: 'landing', pageKey: 'technical' })
+    expect(resolveInternalPathFromWpView(tech!)).toBe('/categoria-prodotto/illuminazione-tecnica')
+
+    const products = resolveWpCategoryProdottoView(['illuminazione-tecnica', 'prodotti-tecnici'])
+    expect(products).toEqual({ kind: 'landing', pageKey: 'technical-products' })
+    expect(resolveInternalPathFromWpView(products!)).toBe(
+      '/categoria-prodotto/illuminazione-tecnica/prodotti-tecnici',
+    )
+  })
+
+  it('espone path interno arredo su landing design', () => {
+    const design = resolveWpCategoryProdottoView(['illuminazione-arredo'])
+    expect(design).toEqual({ kind: 'landing', pageKey: 'design' })
+    expect(resolveInternalPathFromWpView(design!)).toBe('/illuminazione-arredo')
+  })
+
   it('mappa ambienti WP', () => {
     const room = resolveWpCategoryProdottoView(['ambienti', 'camera-da-letto'])
     expect(room?.kind).toBe('ambiente-room')
@@ -25,6 +43,7 @@ describe('wp-category-prodotto-path', () => {
         '/categoria-prodotto/illuminazione-tecnica/led/ar111',
       )
       expect(resolveInternalPathFromWpView(view)).toBe('/categoria/ar111')
+      expect(view.rootWorld).toBe('technical')
     }
   })
 })

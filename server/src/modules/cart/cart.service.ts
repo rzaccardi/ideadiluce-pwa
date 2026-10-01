@@ -203,6 +203,7 @@ const OPTIMISTIC_LINE_AVAILABILITY: CartLineAvailabilityDTO & { purchasable: boo
   stockQty: null,
   effectiveLeadDays: null,
   warning: null,
+  isOrderable: false,
   purchasable: true,
 }
 
@@ -561,7 +562,7 @@ function availabilityFromProduct(
     },
     quantity,
   )
-  return variantAvailabilityToCartLine(resolved)
+  return variantAvailabilityToCartLine(resolved, availabilityData.isOrderable === true)
 }
 
 /** Prodotto minimo da ref Odoo + hint client: evita round-trip OdooCatalog su add-to-cart. */
@@ -808,9 +809,19 @@ export const cartService = {
       throw new AppError('PRODUCT_NOT_FOUND', 'Unknown product', 'Prodotto non disponibile.', 404, false)
     }
     const cart = await resolveOrCreateCart(req)
-    const existing = await prisma.cartItem.findFirst({
+    const existingExact = await prisma.cartItem.findFirst({
       where: { cartId: cart.id, productRef: line.productRef, variantRef: line.variantRef },
     })
+    // Accorpa anche se una riga precedente ha variantRef null (add senza variante / hint incompleto).
+    const existing =
+      existingExact ??
+      (line.variantRef != null
+        ? await prisma.cartItem.findFirst({
+            where: { cartId: cart.id, productRef: line.productRef, variantRef: null },
+          })
+        : await prisma.cartItem.findFirst({
+            where: { cartId: cart.id, productRef: line.productRef },
+          }))
     const nextQuantity = (existing?.quantity ?? 0) + input.quantity
     const variantMeta = variantMetaFromProduct(line.product, line.variantRef, input.productHint)
     if (existing) {
@@ -818,6 +829,9 @@ export const cartService = {
         quantity: nextQuantity,
         clientUnitPriceEstimate: line.unitPriceCents,
         metadataJson: variantMeta,
+        ...(existing.variantRef == null && line.variantRef != null
+          ? { variantRef: line.variantRef }
+          : {}),
       })
     } else {
       await cartRepository.addItem({

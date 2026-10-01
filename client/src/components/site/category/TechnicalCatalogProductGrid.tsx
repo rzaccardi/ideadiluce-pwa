@@ -114,7 +114,7 @@ export const TechnicalCatalogProductCard = memo(function TechnicalCatalogProduct
               accesaImageUrl={product.accesaImageUrl}
               slug={product.slug}
               sizes="25vw"
-              imageClassName="object-cover"
+              imageClassName="object-contain object-center"
             />
           </div>
           {product.brand ? (

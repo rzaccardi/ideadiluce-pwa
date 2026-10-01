@@ -32,7 +32,8 @@ function defaultStockSnapshot(): VariantStockSnapshot {
     leadTimeDays: null,
     restockDate: null,
     saleOk: true,
-    orderable: true,
+    orderable: false,
+    hasSuppliers: false,
   }
 }
 
@@ -104,6 +105,7 @@ function availabilityForCartLine(
       effectiveLeadDays: null,
       warning: null,
       purchasable: true,
+      isOrderable: false,
     }
   }
 
@@ -117,7 +119,7 @@ function availabilityForCartLine(
     },
     line.quantity,
   )
-  return variantAvailabilityToCartLine(resolved)
+  return variantAvailabilityToCartLine(resolved, availabilityData.isOrderable === true)
 }
 
 function applyAvailabilityToVariant(
@@ -317,6 +319,7 @@ export async function buildCartAvailabilityLookup(
         stockQty: null,
         effectiveLeadDays: null,
         warning: 'Prodotto non più disponibile.',
+        isOrderable: false,
         purchasable: false,
       })
       continue

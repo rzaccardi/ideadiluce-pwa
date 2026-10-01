@@ -10,7 +10,7 @@ import {
   fetchAddressAutocompleteStatus,
   resolvePrefilledAddress,
 } from '@/lib/addressAutocomplete'
-import { isCheckoutAddressValid, mergeResolvedStreetNumber } from '@/lib/checkout-address.validators'
+import { isCheckoutAddressValid, isCheckoutPhoneValid, mergeResolvedStreetNumber } from '@/lib/checkout-address.validators'
 import { checkoutStore } from '@/features/checkout'
 import { AddressAutocompleteField } from '@/components/checkout/AddressAutocompleteField'
 import { useI18n } from '@/hooks/use-i18n'
@@ -30,6 +30,8 @@ type Props = {
   showTitle?: boolean
   /** Nasconde nome, cognome e telefono (es. indirizzo di sola fatturazione). */
   hideContactFields?: boolean
+  /** Evidenzia il telefono mancante/non valido (metodi spedizione bloccati). */
+  highlightPhoneError?: boolean
   onChange: <K extends keyof AddressInput>(key: K, value: AddressInput[K]) => void
   onAddressResolved?: (resolved: ResolvedAddress) => void
 }
@@ -54,6 +56,7 @@ export function CheckoutAddressSection({
   showCourierNotes = false,
   showTitle = false,
   hideContactFields = false,
+  highlightPhoneError = false,
   onChange,
   onAddressResolved,
 }: Props) {
@@ -164,6 +167,11 @@ export function CheckoutAddressSection({
   }
 
   const civicoRequired = needsStreetNumberChoice(address)
+  const phoneInvalid =
+    highlightPhoneError ||
+    (Boolean((address.phone ?? '').trim()) && !isCheckoutPhoneValid(address.phone ?? ''))
+  const showPhoneError =
+    highlightPhoneError && !isCheckoutPhoneValid(address.phone ?? '')
 
   return (
     <section className="space-y-4">
@@ -202,7 +210,13 @@ export function CheckoutAddressSection({
 
           <div>
             <StripeFieldLabel htmlFor={`${prefix}-phone`}>{t('common.phone')}</StripeFieldLabel>
-            <StripeFieldGroup>
+            <StripeFieldGroup
+              className={
+                phoneInvalid
+                  ? 'border-red-400 shadow-[0_0_0_1px_rgba(248,113,113,0.45)]'
+                  : undefined
+              }
+            >
               <StripeControlledInput
                 id={`${prefix}-phone`}
                 name={`${prefix}-phone`}
@@ -211,9 +225,15 @@ export function CheckoutAddressSection({
                 value={address.phone ?? ''}
                 autoComplete="tel"
                 required
+                aria-invalid={phoneInvalid || undefined}
                 onValueChange={(value) => onChange('phone', value)}
               />
             </StripeFieldGroup>
+            {showPhoneError ? (
+              <p className="mt-1.5 text-sm font-medium text-red-600">
+                {t('checkout.shipping.phoneRequired')}
+              </p>
+            ) : null}
           </div>
         </>
       ) : null}

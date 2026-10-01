@@ -50,7 +50,7 @@ function hintFromPanel(panel: SiteMegaMenuPanel, socket: (typeof MEGA_SOCKETS)[n
   return socket.hint
 }
 
-export function AttaccoMegaPanel() {
+export function AttaccoMegaPanel({ onNavigate }: { onNavigate?: () => void }) {
   const lp = useLocalePath()
   const reduceMotion = useReducedMotion()
   const { pages } = useSnapshot(siteStore)
@@ -66,6 +66,7 @@ export function AttaccoMegaPanel() {
           <Link
             key={socket.key}
             to={lp(socket.href)}
+            onClick={onNavigate}
             className="flex items-center gap-3 rounded-lg border border-idl-tech-border bg-white p-3 transition hover:border-idl-amber dark:bg-idl-tech-panel"
           >
             <AttaccoSocketIcon icon={socket.icon} size={28} />
@@ -77,6 +78,7 @@ export function AttaccoMegaPanel() {
         ))}
         <Link
           to={lp('/attacco')}
+          onClick={onNavigate}
           className="flex items-center justify-center rounded-lg border border-dashed border-idl-tech-border bg-idl-tech-panel p-3 text-center transition hover:border-idl-amber"
         >
           <span className="text-[13px] font-bold text-idl-graphite-2">
@@ -92,6 +94,7 @@ export function AttaccoMegaPanel() {
           </div>
           <Link
             to={lp(panel.promo.ctaHref)}
+            onClick={onNavigate}
             className="inline-flex shrink-0 items-center justify-center rounded-md bg-idl-amber px-4 py-2 text-[12.5px] font-bold whitespace-nowrap text-white dark:text-idl-design transition-colors hover:bg-idl-cta-amber-hover sm:ml-4"
           >
             {panel.promo.ctaLabel}

@@ -37,7 +37,7 @@ export async function getStorefrontSettings(): Promise<StorefrontSettings> {
     data: {
       id: 'default',
       soundsEnabled: true,
-      legacySiteNoticeEnabled: false,
+      legacySiteNoticeEnabled: true,
       legacySiteUrl: DEFAULT_LEGACY_SITE_URL,
     },
   })

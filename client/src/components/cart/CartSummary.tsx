@@ -81,7 +81,7 @@ export function CartSummary({
   const total = cartTotalCents(cart)
   const blocked = hasBlockedLines ?? cartHasBlockedLines(cart)
   const quoteDisabled = checkoutDisabled || blocked || noPurchasableLines
-  const shippingFree = shipping === 0 || cart.freeShippingHint?.eligible === true
+  const shippingFree = shipping != null && (shipping === 0 || cart.freeShippingHint?.eligible === true)
   const taxRate = cart.taxBreakdown?.taxRatePct ?? 22
 
   return (
@@ -100,8 +100,12 @@ export function CartSummary({
           </div>
           <div className="flex justify-between py-1">
             <dt>{t('cart.summary.shipping')}</dt>
-            <dd className={shippingFree ? 'font-bold text-[#1f9d57]' : undefined}>
-              {shippingFree ? t('cart.summary.shippingFree') : formatMoney(shipping, cart.currencyCode)}
+            <dd className={shipping != null && shippingFree ? 'font-bold text-[#1f9d57]' : undefined}>
+              {shipping == null
+                ? t('cart.summary.shippingPending')
+                : shippingFree
+                  ? t('cart.summary.shippingFree')
+                  : formatMoney(shipping, cart.currencyCode)}
             </dd>
           </div>
         </dl>
@@ -113,7 +117,11 @@ export function CartSummary({
           </span>
         </div>
 
-        {tax > 0 ? (
+        {shipping == null ? (
+          <p className="mt-0.5 text-right text-[11.5px] text-[#9298a3]">
+            {t('cart.summary.estimatesDisclaimer')}
+          </p>
+        ) : tax > 0 ? (
           <p className="mt-0.5 text-right text-[11.5px] text-[#9298a3]">
             {tParams('cart.summary.taxIncluded', {
               rate: taxRate,

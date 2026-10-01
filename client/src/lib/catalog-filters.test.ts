@@ -190,6 +190,7 @@ describe('scope catalog worlds', () => {
   })
 
   it('risolve il mondo dal path di area', () => {
+    expect(resolveCatalogWorldFromPath('/illuminazione-arredo')).toBe('design')
     expect(resolveCatalogWorldFromPath('/categoria-prodotto/illuminazione-arredo')).toBe('design')
     expect(resolveCatalogWorldFromPath('/en/tipologia/sospensione')).toBe('design')
     expect(resolveCatalogWorldFromPath('/categoria-prodotto/illuminazione-tecnica')).toBe(

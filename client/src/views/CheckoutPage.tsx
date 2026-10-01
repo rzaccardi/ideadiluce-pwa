@@ -184,7 +184,9 @@ export function CheckoutPage() {
       void initializeCheckoutNavigation()
     }
     if (!auth.isLoading && !auth.isAuthenticated && checkoutStore.currentStep !== 'account') {
-      checkoutStore.currentStep = 'account'
+      if (!checkoutStore.guestCheckoutAccepted) {
+        checkoutStore.currentStep = 'account'
+      }
     }
   }, [auth.isLoading, auth.isAuthenticated, auth.me])
 

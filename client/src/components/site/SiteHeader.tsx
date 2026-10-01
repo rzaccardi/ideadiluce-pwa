@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from '@/lib/motion-client'
 import { Link, usePathname } from '@/lib/navigation'
 import { useLocalePath } from '@/hooks/use-locale-path'
-import type { DcActiveNavId } from '@/lib/dc-static-routes'
+import { resolveNavDropdownHref, type DcActiveNavId } from '@/lib/dc-static-routes'
 import type { SiteMegaMenuPanel, SiteShellContent } from '@/types/site-content'
 import { cn } from '@/utils/cn'
 import { ui } from '@/lib/ui-classes'
@@ -36,9 +36,11 @@ function NavActiveBar({ tone }: { tone: 'design' | 'technical' | 'neutral' }) {
 function MegaPanel({
   panel,
   variant,
+  onNavigate,
 }: {
   panel: SiteMegaMenuPanel
   variant: 'design' | 'technical'
+  onNavigate?: () => void
 }) {
   const lp = useLocalePath()
   const reduceMotion = useReducedMotion()
@@ -66,6 +68,7 @@ function MegaPanel({
                 <Link
                   key={link.href + link.label}
                   to={lp(link.href)}
+                  onClick={onNavigate}
                   className={cn(
                     'transition-colors hover:underline',
                     dark ? 'text-idl-design-muted hover:text-idl-glow' : 'text-idl-graphite-2 hover:text-idl-amber',
@@ -105,6 +108,7 @@ function MegaPanel({
           </p>
           <Link
             to={lp(panel.promo.ctaHref)}
+            onClick={onNavigate}
             className={cn(
               'inline-block rounded-md px-4 py-2.5 text-[13px] font-bold whitespace-nowrap transition-colors',
               panel.promo.variant === 'design'
@@ -249,14 +253,14 @@ export function SiteHeader({
             <Link to={lp('/')} className="rounded-sm transition-opacity hover:opacity-80">
               <BrandWordmark className="text-[22px] md:text-[24px] lg:text-[28px] dark:brightness-0 dark:invert" />
             </Link>
-            <nav className="hidden items-center gap-5 text-[14.5px] font-medium lg:flex">
+            <nav className="hidden min-w-0 shrink items-center gap-5 overflow-visible text-[14.5px] font-medium lg:flex">
               {nav.items.map((item) =>
                 item.kind === 'link' ? (
                   <Link
                     key={item.id}
                     to={lp(item.href)}
                     className={cn(
-                      'group relative py-1.5',
+                      'group relative whitespace-nowrap py-1.5',
                       activeNavId === item.id
                         ? ui.headerNavLinkActive
                         : ui.headerNavLink,
@@ -273,24 +277,41 @@ export function SiteHeader({
                     />
                   </Link>
                 ) : (
-                  <button
+                  <div
                     key={item.id}
-                    type="button"
                     className={cn(
-                      'relative py-1.5 transition-colors',
+                      'relative flex items-center gap-0.5 whitespace-nowrap py-1.5 transition-colors',
                       isDropdownActive(item.id)
                         ? item.id === 'arredo'
                           ? ui.headerNavLinkActive
                           : 'text-idl-amber hover:text-idl-cta-amber-hover'
                         : ui.headerNavLink,
                     )}
-                    onClick={() => setOpenMenu((cur) => (cur === item.id ? null : item.id))}
+                    onMouseEnter={() => setOpenMenu(item.id)}
                   >
-                    {item.label} ▾
+                    <Link
+                      to={lp(resolveNavDropdownHref(item.id, item.href))}
+                      className="whitespace-nowrap"
+                      onClick={() => setOpenMenu(null)}
+                    >
+                      {item.label}
+                    </Link>
+                    <button
+                      type="button"
+                      aria-label={`${item.label} menu`}
+                      aria-expanded={openMenu === item.id}
+                      className="inline-flex items-center px-0.5"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setOpenMenu((cur) => (cur === item.id ? null : item.id))
+                      }}
+                    >
+                      <span aria-hidden>▾</span>
+                    </button>
                     {isDropdownActive(item.id) ? (
                       <NavActiveBar tone={item.id === 'arredo' ? 'design' : 'technical'} />
                     ) : null}
-                  </button>
+                  </div>
                 ),
               )}
             </nav>
@@ -302,12 +323,13 @@ export function SiteHeader({
           </div>
           <AnimatePresence>
             {activeDropdown?.id === 'attacco' ? (
-              <AttaccoMegaPanel key="attacco" />
+              <AttaccoMegaPanel key="attacco" onNavigate={closeMenu} />
             ) : activeDropdown && activeDropdown.panel.columns.length > 0 ? (
               <MegaPanel
                 key={activeDropdown.id}
                 panel={activeDropdown.panel}
                 variant={activeDropdown.id === 'arredo' ? 'design' : 'technical'}
+                onNavigate={closeMenu}
               />
             ) : null}
           </AnimatePresence>

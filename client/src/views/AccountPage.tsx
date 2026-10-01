@@ -32,6 +32,12 @@ export function AccountPage() {
   const [sdiCode, setSdiCode] = useState(auth.me?.sdiCode ?? '')
   const [taxValidation, setTaxValidation] = useState<TaxValidationResultDTO | null>(null)
   const [taxValidating, setTaxValidating] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null)
+  const [passwordSaving, setPasswordSaving] = useState(false)
 
   useEffect(() => {
     if (!auth.me) return
@@ -74,6 +80,32 @@ export function AccountPage() {
       return res
     } finally {
       setTaxValidating(false)
+    }
+  }
+
+  async function onChangePassword(e: React.FormEvent) {
+    e.preventDefault()
+    setPasswordError(null)
+    setPasswordSuccess(null)
+    if (newPassword.length < 8) {
+      setPasswordError(t('account.profile.passwordTooShort'))
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError(t('account.profile.passwordMismatch'))
+      return
+    }
+    setPasswordSaving(true)
+    try {
+      await api.users.changePassword({ currentPassword, newPassword })
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      setPasswordSuccess(t('account.profile.passwordChanged'))
+    } catch {
+      setPasswordError(t('account.profile.passwordChangeError'))
+    } finally {
+      setPasswordSaving(false)
     }
   }
 
@@ -271,6 +303,73 @@ export function AccountPage() {
               />
             </StripeFieldGroup>
           </div>
+        </div>
+      </AccountDcPanel>
+
+      <AccountDcPanel
+        title={t('account.profile.passwordTitle')}
+        description={t('account.profile.passwordHint')}
+      >
+        <div className="grid gap-3.5 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <StripeFieldLabel htmlFor="profile-current-password">
+              {t('account.profile.currentPassword')}
+            </StripeFieldLabel>
+            <StripeFieldGroup className="mt-1.5">
+              <StripeInput
+                id="profile-current-password"
+                type="password"
+                name="currentPassword"
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+              />
+            </StripeFieldGroup>
+          </div>
+          <div>
+            <StripeFieldLabel htmlFor="profile-new-password">
+              {t('account.profile.newPassword')}
+            </StripeFieldLabel>
+            <StripeFieldGroup className="mt-1.5">
+              <StripeInput
+                id="profile-new-password"
+                type="password"
+                name="newPassword"
+                autoComplete="new-password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </StripeFieldGroup>
+          </div>
+          <div>
+            <StripeFieldLabel htmlFor="profile-confirm-password">
+              {t('account.profile.confirmPassword')}
+            </StripeFieldLabel>
+            <StripeFieldGroup className="mt-1.5">
+              <StripeInput
+                id="profile-confirm-password"
+                type="password"
+                name="confirmPassword"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </StripeFieldGroup>
+          </div>
+        </div>
+        {passwordError ? <p className="mt-3 text-sm font-medium text-red-600">{passwordError}</p> : null}
+        {passwordSuccess ? (
+          <p className="mt-3 text-sm font-medium text-emerald-700">{passwordSuccess}</p>
+        ) : null}
+        <div className="mt-4">
+          <button
+            type="button"
+            disabled={passwordSaving || !currentPassword || !newPassword}
+            onClick={(e) => void onChangePassword(e)}
+            className={`${accountDcPrimaryBtnClass} disabled:opacity-60`}
+          >
+            {passwordSaving ? t('account.profile.saving') : t('account.profile.changePassword')}
+          </button>
         </div>
       </AccountDcPanel>
 

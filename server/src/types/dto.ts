@@ -391,6 +391,8 @@ export type CartLineAvailabilityDTO = {
   stockQty: number | null
   effectiveLeadDays: number | null
   warning: string | null
+  /** True se esistono fornitori (backorder oltre stock consentito). */
+  isOrderable: boolean
 }
 
 export type CartLineAvailabilityStatusDTO = 'available' | 'blocked' | 'limited'

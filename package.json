@@ -30,6 +30,7 @@
     "hub:migrate:dev": "npm run db:migrate:dev --workspace=@ideadiluce/hub-api",
     "hub:generate": "npm run db:generate --workspace=@ideadiluce/hub-api",
     "smoke:prod": "node server/scripts/smoke-production.mjs",
+    "audit:catalog-media": "npx tsx server/scripts/audit-catalog-media.ts",
     "test:api": "node server/scripts/api-integration-test.mjs",
     "stripe:setup": "node server/scripts/stripe-setup.mjs",
     "stripe:webhook": "stripe listen --forward-to localhost:4100/api/v1/payments/webhook/stripe",
