@@ -76,7 +76,7 @@ describe('formatShippingAddressSelectOption', () => {
           postalCode: '55100',
         }),
       ),
-    ).toBe('Magazzino Lucca — Via del Corniolo 12, 55100 Lucca')
+    ).toBe('Magazzino Lucca - Via del Corniolo 12, 55100 Lucca')
   })
 })
 

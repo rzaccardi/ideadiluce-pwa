@@ -14,7 +14,7 @@ export type OdooCatalogAdapter = CatalogAdapter
 export function createOdooCatalogAdapter(): CatalogAdapter {
   if (env.ODOO_ENABLED && !isOdooConfigured()) {
     logger.warn(
-      'odoo.catalog: ODOO_ENABLED ma configurazione incompleta — uso catalogo mock',
+      'odoo.catalog: ODOO_ENABLED ma configurazione incompleta - uso catalogo mock',
     )
   }
   if (env.ODOO_ENABLED && isOdooConfigured()) {

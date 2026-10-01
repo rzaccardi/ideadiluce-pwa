@@ -21,7 +21,7 @@ export const LEGACY_EDITORIAL_GUIDES_I18N: Record<
           kind: 'prose',
           paragraphs: [
             'Lighting plays a fundamental role in creating the perfect atmosphere in every room. How do you choose between warm and cool light? Colour temperature is measured in Kelvin (K): lower values give a soft, welcoming glow like candlelight; higher values recall crisp morning daylight.',
-            'Warm light, between 2400K and 2700K, feels soft and inviting. Cool light, between 4000K and 6500K, is brighter — ideal where focus and visibility matter.',
+            'Warm light, between 2400K and 2700K, feels soft and inviting. Cool light, between 4000K and 6500K, is brighter - ideal where focus and visibility matter.',
           ],
         },
         {
@@ -31,7 +31,7 @@ export const LEGACY_EDITORIAL_GUIDES_I18N: Record<
             'Bedroom: prefer warm light, especially bedside lamps, to support relaxation and sleep.',
             'Office: cool light improves concentration and productivity.',
             'Kitchen: many prefer cool or neutral light for a clean look and better visibility while cooking.',
-            'Bathroom: mix both — cool for makeup and shaving, warm for a relaxing evening bath.',
+            'Bathroom: mix both - cool for makeup and shaving, warm for a relaxing evening bath.',
             'Dining room: warm light creates a welcoming atmosphere at mealtimes.',
           ],
         },
@@ -88,7 +88,7 @@ export const LEGACY_EDITORIAL_GUIDES_I18N: Record<
           kind: 'prose',
           paragraphs: [
             'A luminous emotion takes shape with Artemide Calipso, a design artwork that captures lunar beauty. Born from an algorithm, its fractal geometry creates an organic ensemble of light circles, offering optimal visual comfort and a unique atmosphere.',
-            'Perfect for any setting, Calipso blends high performance with distinctive expressiveness — a hallmark of Artemide design lighting. With Calipso, light becomes emotion: technology merges with art and the moon enters your home.',
+            'Perfect for any setting, Calipso blends high performance with distinctive expressiveness - a hallmark of Artemide design lighting. With Calipso, light becomes emotion: technology merges with art and the moon enters your home.',
             'Discover how technology and design fuse for an unforgettable lighting experience. Let Calipso inspire you and transform your spaces with its enveloping glow.',
           ],
         },
@@ -232,7 +232,7 @@ export const LEGACY_EDITORIAL_GUIDES_I18N: Record<
             'Dormitorio: privilegia la luz cálida, especialmente en las lámparas de mesita, para favorecer el relax y el sueño.',
             'Oficina: la luz fría mejora la concentración y la productividad.',
             'Cocina: muchos prefieren luz fría o neutra para un aspecto limpio y mejor visibilidad al cocinar.',
-            'Baño: puedes combinar ambas — fría para maquillaje y afeitado, cálida para un baño relajante por la noche.',
+            'Baño: puedes combinar ambas - fría para maquillaje y afeitado, cálida para un baño relajante por la noche.',
             'Comedor: la luz cálida es perfecta para una atmósfera acogedora durante las comidas.',
           ],
         },
@@ -423,7 +423,7 @@ export const LEGACY_EDITORIAL_GUIDES_I18N: Record<
           kind: 'prose',
           paragraphs: [
             'L\'éclairage joue un rôle fondamental dans l\'atmosphère de chaque pièce. Comment choisir entre lumière chaude et froide ? La température de couleur se mesure en Kelvin (K) : les valeurs basses donnent une lueur douce et chaleureuse ; les valeurs hautes rappellent la lumière du matin.',
-            'La lumière chaude, entre 2400K et 2700K, émet une lueur douce et accueillante. La lumière froide, entre 4000K et 6500K, est plus brillante — idéale là où concentration et visibilité comptent.',
+            'La lumière chaude, entre 2400K et 2700K, émet une lueur douce et accueillante. La lumière froide, entre 4000K et 6500K, est plus brillante - idéale là où concentration et visibilité comptent.',
           ],
         },
         {
@@ -433,7 +433,7 @@ export const LEGACY_EDITORIAL_GUIDES_I18N: Record<
             'Chambre : privilégiez la lumière chaude, surtout pour les lampes de chevet, pour favoriser détente et sommeil.',
             'Bureau : la lumière froide améliore concentration et productivité.',
             'Cuisine : beaucoup préfèrent une lumière froide ou neutre pour un aspect net et une meilleure visibilité.',
-            'Salle de bain : combinez les deux — froide pour maquillage et rasage, chaude pour un bain relaxant le soir.',
+            'Salle de bain : combinez les deux - froide pour maquillage et rasage, chaude pour un bain relaxant le soir.',
             'Salle à manger : la lumière chaude crée une atmosphère conviviale aux repas.',
           ],
         },
@@ -624,7 +624,7 @@ export const LEGACY_EDITORIAL_GUIDES_I18N: Record<
           kind: 'prose',
           paragraphs: [
             'Beleuchtung spielt eine zentrale Rolle für die Atmosphäre in jedem Raum. Wie wählt man zwischen warmem und kaltem Licht? Die Farbtemperatur wird in Kelvin (K) gemessen: niedrige Werte geben ein weiches, einladendes Leuchten; hohe Werte erinnern an Morgenlicht.',
-            'Warmes Licht zwischen 2400K und 2700K wirkt weich und einladend. Kaltes Licht zwischen 4000K und 6500K ist heller — ideal, wo Konzentration und Sichtbarkeit zählen.',
+            'Warmes Licht zwischen 2400K und 2700K wirkt weich und einladend. Kaltes Licht zwischen 4000K und 6500K ist heller - ideal, wo Konzentration und Sichtbarkeit zählen.',
           ],
         },
         {
@@ -634,7 +634,7 @@ export const LEGACY_EDITORIAL_GUIDES_I18N: Record<
             'Schlafzimmer: warmes Licht bevorzugen, besonders bei Nachttischlampen, für Entspannung und Schlaf.',
             'Büro: kaltes Licht verbessert Konzentration und Produktivität.',
             'Küche: viele bevorzugen kaltes oder neutrales Licht für ein sauberes Erscheinungsbild und bessere Sicht beim Kochen.',
-            'Bad: beides kombinieren — kalt für Make-up und Rasur, warm für ein entspannendes Abendbad.',
+            'Bad: beides kombinieren - kalt für Make-up und Rasur, warm für ein entspannendes Abendbad.',
             'Esszimmer: warmes Licht schafft eine einladende Atmosphäre beim Essen.',
           ],
         },
@@ -691,7 +691,7 @@ export const LEGACY_EDITORIAL_GUIDES_I18N: Record<
           kind: 'prose',
           paragraphs: [
             'Eine leuchtende Emotion nimmt Gestalt an mit Artemide Calipso, einem Designkunstwerk, das die Schönheit des Mondes einfängt. Aus einem Algorithmus geboren, schafft seine fraktale Geometrie ein organisches Ensemble aus Lichtkreisen mit optimalem Sehkomfort.',
-            'Perfekt für jede Umgebung vereint Calipso hohe Leistung mit unverwechselbarer Ausdruckskraft — ein Markenzeichen der Artemide-Designbeleuchtung. Mit Calipso wird Licht zur Emotion: Technologie verschmilzt mit Kunst.',
+            'Perfekt für jede Umgebung vereint Calipso hohe Leistung mit unverwechselbarer Ausdruckskraft - ein Markenzeichen der Artemide-Designbeleuchtung. Mit Calipso wird Licht zur Emotion: Technologie verschmilzt mit Kunst.',
             'Entdecken Sie, wie Technologie und Design für ein unvergessliches Lichterlebnis verschmelzen. Lassen Sie sich von Calipso inspirieren und verwandeln Sie Ihre Räume mit seinem umhüllenden Licht.',
           ],
         },
@@ -825,7 +825,7 @@ export const LEGACY_EDITORIAL_GUIDES_I18N: Record<
           kind: 'prose',
           paragraphs: [
             'Iluminatul joacă un rol esențial în crearea atmosferei potrivite în fiecare încăpere. Cum alegi între lumina caldă și cea rece? Temperatura de culoare se măsoară în Kelvin (K): valorile mici dau o strălucire blândă, primitoare, ca flacăra unei lumânări; valorile mari amintesc de lumina limpede a dimineții.',
-            'Lumina caldă, între 2400K și 2700K, este moale și primitoare. Lumina rece, între 4000K și 6500K, este mai strălucitoare — ideală acolo unde contează concentrarea și vizibilitatea.',
+            'Lumina caldă, între 2400K și 2700K, este moale și primitoare. Lumina rece, între 4000K și 6500K, este mai strălucitoare - ideală acolo unde contează concentrarea și vizibilitatea.',
           ],
         },
         {
@@ -835,7 +835,7 @@ export const LEGACY_EDITORIAL_GUIDES_I18N: Record<
             'Dormitor: preferă lumina caldă, mai ales la veiozele de noptieră, pentru relaxare și somn.',
             'Birou: lumina rece îmbunătățește concentrarea și productivitatea.',
             'Bucătărie: mulți aleg lumina rece sau neutră, pentru un aspect curat și o vizibilitate mai bună la gătit.',
-            'Baie: combină ambele — rece pentru machiaj și bărbierit, caldă pentru o baie relaxantă seara.',
+            'Baie: combină ambele - rece pentru machiaj și bărbierit, caldă pentru o baie relaxantă seara.',
             'Sala de mese: lumina caldă creează o atmosferă primitoare la masă.',
           ],
         },
@@ -892,7 +892,7 @@ export const LEGACY_EDITORIAL_GUIDES_I18N: Record<
           kind: 'prose',
           paragraphs: [
             'O emoție luminoasă prinde formă cu Artemide Calipso, o lucrare de design care surprinde frumusețea lunară. Născută dintr-un algoritm, geometria sa fractală creează un ansamblu organic de cercuri de lumină, oferind un confort vizual optim și o atmosferă unică.',
-            'Potrivită în orice ambient, Calipso îmbină performanța ridicată cu o expresivitate distinctivă — semnătură a iluminatului de design Artemide. Cu Calipso, lumina devine emoție: tehnologia se topește în artă, iar luna pătrunde în casă.',
+            'Potrivită în orice ambient, Calipso îmbină performanța ridicată cu o expresivitate distinctivă - semnătură a iluminatului de design Artemide. Cu Calipso, lumina devine emoție: tehnologia se topește în artă, iar luna pătrunde în casă.',
             'Descoperă cum se împletesc tehnologia și designul într-o experiență de iluminat de neuitat. Lasă-te inspirat de Calipso și transformă-ți spațiile cu strălucirea sa învăluitoare.',
           ],
         },

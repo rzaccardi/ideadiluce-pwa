@@ -162,7 +162,7 @@ export function GuideDetailPage() {
       <div className="flex flex-col gap-4">
         <SitePageHeader
           title={guide?.locales.find((l) => l.locale === 'IT')?.title ?? getGuideLabel(slug)}
-          description={`Slug: /guide/${slug} · ${guide?.published ? 'Online sul sito' : 'Bozza — non visibile ai visitatori'}.`}
+          description={`Slug: /guide/${slug} · ${guide?.published ? 'Online sul sito' : 'Bozza - non visibile ai visitatori'}.`}
         />
         <DetailPageActionBar
           stickyOnMobile

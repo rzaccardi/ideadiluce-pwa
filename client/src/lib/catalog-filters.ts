@@ -63,6 +63,19 @@ export function catalogWorldOfCategorySlug(slug: string | null | undefined): Cat
   return 'all'
 }
 
+/**
+ * true se la categoria è assente o è la radice del mondo (hub catalogo).
+ * Usata per mostrare tile tipologiche / chip sottotipi solo sul catalogo base.
+ */
+export function isCatalogWorldHubCategory(
+  slug: string | null | undefined,
+  world: 'design' | 'technical',
+): boolean {
+  const key = slug?.trim().toLowerCase() ?? ''
+  if (!key) return true
+  return world === 'design' ? DESIGN_ROOT_SLUGS.has(key) : TECHNICAL_ROOT_SLUGS.has(key)
+}
+
 function categoryDtoRoot(category: CategoryDTO, byId: Map<string, CategoryDTO>): CategoryDTO {
   let current = category
   const seen = new Set<string>()
@@ -589,7 +602,7 @@ export function designCardBrandLabel(
   product: ProductCardDTO,
   categories: ReadonlyArray<CategoryDTO>,
 ): string {
-  return categoryNameBySlug(categories, product.categorySlug)?.toUpperCase() ?? '—'
+  return categoryNameBySlug(categories, product.categorySlug)?.toUpperCase() ?? '-'
 }
 
 export type { ProductCatalogKind }

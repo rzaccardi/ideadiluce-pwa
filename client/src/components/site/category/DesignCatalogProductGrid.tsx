@@ -9,6 +9,8 @@ import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMet
 import { ProductBrandMark } from '@/components/product/ProductBrandMark'
 import type { LocalePathFn } from '../sections/types'
 import { ProductCardLitMedia } from '@/components/product/ProductCardLitMedia'
+import { productCatalogObjectFitClass } from '@/lib/product-image-fit'
+import { cn } from '@/utils/cn'
 
 type DesignProductCardMediaProps = {
   imageUrl: string | null
@@ -18,7 +20,7 @@ type DesignProductCardMediaProps = {
   sizes: string
 }
 
-/** Foto a riempimento; luci globali o hover (desktop) verso accesa / ambientata. */
+/** Cover + stesso object-position su base/accesa: hover luci allineato come in scheda. */
 export function DesignProductCardMedia({
   imageUrl,
   hoverImageUrl,
@@ -26,6 +28,8 @@ export function DesignProductCardMedia({
   slug,
   sizes,
 }: DesignProductCardMediaProps) {
+  const imageFitClass = productCatalogObjectFitClass('design')
+
   return (
     <div className="relative aspect-[4/5] overflow-hidden bg-white">
       <ProductCardLitMedia
@@ -34,7 +38,7 @@ export function DesignProductCardMedia({
         accesaImageUrl={accesaImageUrl}
         slug={slug}
         sizes={sizes}
-        imageClassName="object-contain object-center"
+        imageClassName={cn(imageFitClass, 'object-center')}
       />
     </div>
   )
@@ -74,7 +78,7 @@ export const DesignCatalogProductCard = memo(function DesignCatalogProductCard({
       <div className="flex flex-1 flex-col p-3 sm:p-4">
         <ProductBrandMark
           brand={product.brand}
-          fallbackLabel={fallbackLabel ?? '—'}
+          fallbackLabel={fallbackLabel ?? '-'}
           size="sm"
           className="text-idl-brass"
         />

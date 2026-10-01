@@ -51,7 +51,7 @@ export const AMBIENTI_HERO = {
   h1: 'Ambienti',
   title: 'Trova la luce giusta per ogni ambiente',
   subtitle:
-    'Scegli uno spazio, lasciati ispirare da ambienti reali e scopri i prodotti — e i componenti necessari — per ricreare lo stesso effetto luminoso a casa tua.',
+    'Scegli uno spazio, lasciati ispirare da ambienti reali e scopri i prodotti - e i componenti necessari - per ricreare lo stesso effetto luminoso a casa tua.',
   primaryCta: { label: 'Esplora gli ambienti', href: '#ambienti' },
   secondaryCta: { label: 'Guarda i look', href: '#shop-the-look' },
 }
@@ -140,7 +140,7 @@ export const AMBIENTI_ROOM_META: AmbientiRoomMeta[] = [
 export const AMBIENTI_SHOP_THE_LOOK = {
   title: 'Cucina moderna con isola',
   subtitle:
-    'Tocca i punti luce per scoprire i prodotti usati nella scena — e i componenti necessari per installarli.',
+    'Tocca i punti luce per scoprire i prodotti usati nella scena - e i componenti necessari per installarli.',
   imageUrl: '/site/images/look-cucina.webp',
   tip: 'Usa 4000K sul piano lavoro per vedere bene i colori dei cibi e 3000K su tavolo e isola per un\'atmosfera più accogliente.',
   total: '€ 232',

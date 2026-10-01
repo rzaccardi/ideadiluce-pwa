@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { BrandDisplayStyle } from '@/lib/brand.defaults'
-import { resolveBrandLogoSrc } from '@/lib/brand-logo'
+import { BrandCatalogLogo } from '@/components/site/brand/BrandCatalogLogo'
+import { resolveBrandLogo } from '@/lib/brand-logo'
 import { cn } from '@/utils/cn'
 
 type Props = {
@@ -78,20 +79,18 @@ export function BrandNameDisplay({ name, style, size = 'md', className, slug }: 
     )
   }
 
-  const logoSrc = resolveBrandLogoSrc(slug) ?? resolveBrandLogoSrc(name)
-  if (logoSrc) {
+  const logo = resolveBrandLogo(slug) ?? resolveBrandLogo(name)
+  if (logo) {
     const h = LOGO_HEIGHT[size]
     return withDarkModeName(
-      <img
-        src={logoSrc}
+      <BrandCatalogLogo
+        src={logo.src}
         alt={name}
         height={h}
-        width={Math.round(h * 2.8)}
-        decoding="async"
-        loading="lazy"
-        className={cn('max-w-full w-auto object-contain', className)}
-        style={{ height: h }}
-        draggable={false}
+        content={logo.content}
+        align="center"
+        maxWidthRem={10}
+        className={className}
       />,
       name,
       size,

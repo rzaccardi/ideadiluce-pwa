@@ -22,6 +22,7 @@ import {
   facetWattaggioNumericValues,
   type FacetChipOption,
 } from '@/lib/catalog-facets-ui'
+import { translateCatalogTaxonomyLabel } from '@/lib/catalog-taxonomy-i18n'
 import type { CatalogFiltersDTO } from '@/types/dto'
 import { useI18n } from '@/hooks/use-i18n'
 import { cn } from '@/utils/cn'
@@ -287,7 +288,7 @@ export function CatalogFilterSidebar({
             renderItem={(category) => (
               <CheckboxRow
                 checked={selectedCategorySlug === category.slug}
-                label={category.name}
+                label={translateCatalogTaxonomyLabel(category.slug, t, category.name)}
                 count={category.count}
                 onClick={() =>
                   onSelectCategory(selectedCategorySlug === category.slug ? undefined : category.slug)
@@ -309,7 +310,7 @@ export function CatalogFilterSidebar({
             renderItem={(category) => (
               <CheckboxRow
                 checked={selectedCategorySlug === category.slug}
-                label={category.name}
+                label={translateCatalogTaxonomyLabel(category.slug, t, category.name)}
                 count={category.count}
                 onClick={() =>
                   onSelectCategory(selectedCategorySlug === category.slug ? undefined : category.slug)
@@ -331,7 +332,7 @@ export function CatalogFilterSidebar({
             renderItem={(opt) => (
               <CheckboxRow
                 checked={selectedTipologia === opt.value}
-                label={opt.label}
+                label={translateCatalogTaxonomyLabel(opt.value, t, opt.label)}
                 count={opt.count}
                 onClick={() =>
                   onSelectTipologia(selectedTipologia === opt.value ? undefined : opt.value)
@@ -353,7 +354,7 @@ export function CatalogFilterSidebar({
             renderItem={(opt) => (
               <CheckboxRow
                 checked={selectedAmbiente === opt.value}
-                label={opt.label}
+                label={translateCatalogTaxonomyLabel(opt.value, t, opt.label)}
                 count={opt.count}
                 onClick={() =>
                   onSelectAmbiente(selectedAmbiente === opt.value ? undefined : opt.value)
@@ -381,7 +382,7 @@ export function CatalogFilterSidebar({
               return (
                 <CheckboxRow
                   checked={checked}
-                  label={opt.label}
+                  label={translateCatalogTaxonomyLabel(opt.value, t, opt.label)}
                   count={opt.count}
                   onClick={() => onSelectStile(checked ? undefined : opt.value)}
                 />

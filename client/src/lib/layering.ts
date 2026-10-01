@@ -1,9 +1,22 @@
-/** Z-index condivisi — ordine dal basso verso l'alto. */
+/** Z-index condivisi — ordine dal basso verso l'alto (dentro/fuori dallo sticky chrome). */
 export const layers = {
-  megaBackdrop: 'z-40',
+  /**
+   * Sticky chrome container (`site-chrome`) — sopra il contenuto pagina.
+   * I valori sotto vivono DENTRO questo contesto (`isolate`).
+   */
   headerBar: 'z-50',
-  utilityBar: 'z-[55]',
-  megaPanel: 'z-[56]',
+  /** Banner legacy + utility strip — sotto backdrop e mega quando il menu è aperto. */
+  utilityBar: 'z-10',
+  /** Dimmer mega menu — copre banner/utility; sotto header nav + pannello. */
+  megaBackdrop: 'z-40',
+  /** Riga header (nav/azioni) + host del mega panel (sopra il backdrop). */
+  headerNav: 'z-[45]',
+  /** Pannello mega — sopra il contenuto della riga header. */
+  megaPanel: 'z-[46]',
+  /**
+   * Language / account / mini-cart dropdown.
+   * La utility bar si alza a questo livello solo mentre il dropdown lingua è aperto.
+   */
   headerDropdown: 'z-[60]',
   mobileNav: 'z-[65]',
   sheetBackdrop: 'z-[70]',

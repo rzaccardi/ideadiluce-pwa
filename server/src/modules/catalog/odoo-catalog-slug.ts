@@ -48,6 +48,8 @@ export function slugifyBrandName(name: string): string {
 const BRAND_SLUG_ALIASES: Record<string, string> = {
   'tlb-italy': 'tlb',
   tlbitaly: 'tlb',
+  'fontana-arte': 'fontanaarte',
+  ideallux: 'ideal-lux',
 }
 
 export function canonicalizeBrandSlug(slug: string): string {

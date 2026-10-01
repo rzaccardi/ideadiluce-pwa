@@ -28,7 +28,7 @@ vi.mock('../odoo-api/odooApi.resources.js', () => ({
 
 import { fetchVariantStockByIds } from './odooInventoryAdapter.js'
 
-describe('fetchVariantStockByIds — supplierinfo', () => {
+describe('fetchVariantStockByIds - supplierinfo', () => {
   beforeEach(() => {
     odooExecuteKw.mockReset()
     envState.ODOO_ENABLED = true

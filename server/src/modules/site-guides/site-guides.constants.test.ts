@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
+  DEFAULT_SITE_GUIDES,
   isDynamicGuidePageKey,
   isValidGuideSlug,
   slugifyGuideTitle,
 } from './site-guides.constants.js'
-import { blankGuideArticleContent } from '../site/site-content-pages.defaults.js'
-import { defaultSiteContent, isAllowedSitePageKey } from '../site/site-content.defaults.js'
+import { blankGuideArticleContent, CONTENT_PAGE_DEFAULTS } from '../site/site-content-pages.defaults.js'
+import { DEFAULT_SHELL_IT, defaultSiteContent, isAllowedSitePageKey } from '../site/site-content.defaults.js'
 import { guideCreateSchema } from './site-guides.service.js'
 
 describe('slugifyGuideTitle', () => {
@@ -36,6 +37,36 @@ describe('guide slug / pageKey', () => {
     expect(isAllowedSitePageKey('guide-articolo-custom')).toBe(true)
     expect(isAllowedSitePageKey('home')).toBe(true)
     expect(isAllowedSitePageKey('not-a-page')).toBe(false)
+  })
+
+  it('include guide tecniche distinte nel seed', () => {
+    const slugs = DEFAULT_SITE_GUIDES.map((guide) => guide.slug)
+    expect(slugs).toEqual(expect.arrayContaining(['dimmerabilita', 'grado-ip', 'retrofit-led']))
+    expect(CONTENT_PAGE_DEFAULTS['guide-dimmerabilita'].title).toMatch(/Dimmerabilità/i)
+    expect(CONTENT_PAGE_DEFAULTS['guide-grado-ip'].title).toMatch(/Grado IP/i)
+    expect(CONTENT_PAGE_DEFAULTS['guide-retrofit-led'].title).toMatch(/Retrofit LED/i)
+  })
+})
+
+describe('GUIDE TECNICHE mega menu', () => {
+  it('assegna href distinti a ogni voce', () => {
+    const tecnico = DEFAULT_SHELL_IT.nav.items.find(
+      (item) => item.kind === 'dropdown' && item.id === 'tecnico',
+    )
+    expect(tecnico?.kind).toBe('dropdown')
+    if (tecnico?.kind !== 'dropdown') return
+
+    const guideCol = tecnico.panel.columns.find((col) => col.title === 'GUIDE TECNICHE')
+    expect(guideCol).toBeDefined()
+    const hrefs = guideCol!.links.map((link) => link.href)
+    expect(hrefs).toEqual([
+      '/guide/luce-calda-naturale-fredda',
+      '/guide/scegliere-lampadina-led',
+      '/guide/dimmerabilita',
+      '/guide/grado-ip',
+      '/guide/retrofit-led',
+    ])
+    expect(new Set(hrefs).size).toBe(hrefs.length)
   })
 })
 

@@ -233,14 +233,14 @@ export async function repriceCartFromOdoo(
     isEstimate: true,
   })
   const tax = taxResult.taxCents
-  const shipping = cart.shippingSelection?.amountCents ?? cart.estimatedShipping ?? 0
+  const shipping = cart.shippingSelection?.amountCents ?? null
   await prisma.cart.update({
     where: { id: cart.id },
     data: {
       estimatedSubtotal: subtotal,
       estimatedTax: tax,
       estimatedShipping: shipping,
-      estimatedTotal: subtotal + tax + shipping,
+      estimatedTotal: subtotal + tax + (shipping ?? 0),
       lastPricedAt: new Date(),
     },
   })

@@ -1,5 +1,5 @@
 import { env } from '../../config/env.js'
-import { sendMail } from '../../lib/mail.js'
+import { isSmtpConfigured, sendMail } from '../../lib/mail.js'
 import { logger } from '../../lib/logger.js'
 import { normalizeOdooCreateId } from './odooId.js'
 import { isOdooConfigured, odooExecuteKw, type OdooCallContext } from './odooClient.js'
@@ -106,15 +106,47 @@ async function createTemplate(ctx: OdooCallContext, key: PwaMailTemplateKey): Pr
   return normalizeOdooCreateId(created)
 }
 
-async function ensureTemplateId(ctx: OdooCallContext, key: PwaMailTemplateKey): Promise<number> {
+async function writeTemplateSeed(ctx: OdooCallContext, templateId: number, key: PwaMailTemplateKey): Promise<void> {
+  const def = PWA_MAIL_TEMPLATES[key]
+  await odooExecuteKw(ctx, 'mail.template', 'write', [[templateId], { subject: def.subject, body_html: def.bodyHtml }], {})
+}
+
+async function ensureTemplateId(
+  ctx: OdooCallContext,
+  key: PwaMailTemplateKey,
+  opts?: { updateExisting?: boolean },
+): Promise<number> {
   const cached = templateIdCache.get(key)
-  if (cached != null) return cached
+  if (cached != null && !opts?.updateExisting) return cached
 
   const def = PWA_MAIL_TEMPLATES[key]
   const existing = await findTemplateId(ctx, def.name)
   const id = existing ?? (await createTemplate(ctx, key))
+  if (existing != null && opts?.updateExisting) {
+    await writeTemplateSeed(ctx, id, key)
+  }
   templateIdCache.set(key, id)
   return id
+}
+
+/**
+ * Assicura che tutti i `mail.template` `[PWA] …` esistano in Odoo (create se mancanti).
+ * Con `updateExisting` riscrive subject/body dal seed in codice (utile dopo fix copy).
+ */
+export async function ensureAllPwaMailTemplates(
+  ctx?: OdooCallContext,
+  opts?: { updateExisting?: boolean },
+): Promise<Array<{ key: PwaMailTemplateKey; id: number; name: string }>> {
+  if (!env.ODOO_ENABLED || !isOdooConfigured()) {
+    throw new Error('Odoo non configurato: impossibile sincronizzare i mail.template PWA')
+  }
+  const callCtx = mailContext(ctx)
+  const out: Array<{ key: PwaMailTemplateKey; id: number; name: string }> = []
+  for (const key of Object.keys(PWA_MAIL_TEMPLATES) as PwaMailTemplateKey[]) {
+    const id = await ensureTemplateId(callCtx, key, opts)
+    out.push({ key, id, name: PWA_MAIL_TEMPLATES[key].name })
+  }
+  return out
 }
 
 async function readTemplateContent(
@@ -184,7 +216,17 @@ async function sendViaOdooMail(
 
   const created = await odooExecuteKw<unknown>(ctx, 'mail.mail', 'create', [vals], {})
   const mailId = normalizeOdooCreateId(created)
-  await odooExecuteKw(ctx, 'mail.mail', 'send', [[mailId]], {})
+  try {
+    await odooExecuteKw(ctx, 'mail.mail', 'send', [[mailId]], {})
+  } catch (e) {
+    // Odoo 18: `mail.mail.send` restituisce None → XML-RPC non può marshalarlo anche se l'invio è ok.
+    const msg = e instanceof Error ? e.message : String(e)
+    if (!msg.includes('cannot marshal None unless allow_none is enabled')) throw e
+    logger.info('odoo.mail_send_none_response', {
+      correlationId: ctx.correlationId,
+      mailId,
+    })
+  }
   await assertOdooMailAccepted(ctx, mailId)
 }
 
@@ -270,6 +312,36 @@ async function sendViaSmtpFallback(input: PwaMailInput, to: string, vars: Record
   })
 }
 
+/** Fallback SMTP dopo fallimento Odoo: richiede SMTP reale, altrimenti rilancia l'errore Odoo. */
+async function trySmtpFallbackAfterOdooFailure(
+  callCtx: OdooCallContext,
+  input: PwaMailInput,
+  to: string,
+  vars: Record<string, string>,
+  odooError: unknown,
+  isSmtpFallbackEnabled: () => Promise<boolean>,
+): Promise<void> {
+  if (!(await isSmtpFallbackEnabled())) {
+    throw odooError
+  }
+  if (!isSmtpConfigured()) {
+    logger.error('odoo.mail_smtp_fallback_unavailable', {
+      correlationId: callCtx.correlationId,
+      to,
+      templateKey: input.templateKey,
+      error: odooError instanceof Error ? odooError.message : String(odooError),
+      hint: 'Odoo mail fallita e SMTP_ENABLED/SMTP_HOST non configurati: email non consegnata',
+    })
+    throw odooError
+  }
+  logger.warn('odoo.mail_smtp_fallback', {
+    correlationId: callCtx.correlationId,
+    to,
+    templateKey: input.templateKey,
+  })
+  await sendViaSmtpFallback(input, to, vars)
+}
+
 /**
  * Invia una email transazionale tramite Odoo (`mail.template` + `mail.mail`).
  * Se Odoo è giù o in modalità emergenza, usa SMTP di fallback.
@@ -317,16 +389,8 @@ export async function sendPwaMail(ctx: OdooCallContext | undefined, input: PwaMa
         templateKey: input.templateKey,
         error: e.message,
       })
-      if (await isSmtpFallbackEnabled()) {
-        logger.warn('odoo.mail_smtp_fallback', {
-          correlationId: callCtx.correlationId,
-          to,
-          templateKey: input.templateKey,
-        })
-        await sendViaSmtpFallback(input, to, vars)
-        return
-      }
-      throw e
+      await trySmtpFallbackAfterOdooFailure(callCtx, input, to, vars, e, isSmtpFallbackEnabled)
+      return
     }
     logger.warn('odoo.mail_template_send_failed', {
       correlationId: callCtx.correlationId,
@@ -352,16 +416,7 @@ export async function sendPwaMail(ctx: OdooCallContext | undefined, input: PwaMa
         templateKey: input.templateKey,
         error: inner instanceof Error ? inner.message : String(inner),
       })
-      if (await isSmtpFallbackEnabled()) {
-        logger.warn('odoo.mail_smtp_fallback', {
-          correlationId: callCtx.correlationId,
-          to,
-          templateKey: input.templateKey,
-        })
-        await sendViaSmtpFallback(input, to, vars)
-        return
-      }
-      throw inner
+      await trySmtpFallbackAfterOdooFailure(callCtx, input, to, vars, inner, isSmtpFallbackEnabled)
     }
   }
 }

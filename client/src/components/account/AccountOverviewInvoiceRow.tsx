@@ -43,7 +43,7 @@ export function AccountOverviewInvoiceRow({ invoice }: Props) {
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <span className="font-mono text-[12.5px] font-semibold text-idl-graphite">{invoice.name}</span>
           <span className="text-[12.5px] text-idl-muted">
-            {invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString('it-IT') : '—'}
+            {invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString('it-IT') : '-'}
           </span>
           <AccountDcStatusPill
             label={invoiceStateLabel(invoice.state, locale)}

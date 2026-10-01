@@ -741,6 +741,7 @@ export const api = {
   },
   users: {
     patchMe(body: {
+      email?: string
       firstName?: string
       lastName?: string
       phone?: string | null

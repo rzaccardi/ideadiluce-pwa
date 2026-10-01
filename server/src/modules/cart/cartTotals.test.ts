@@ -38,4 +38,21 @@ describe('resolveCartEstimateTotals', () => {
     expect(result.estimatedTax).toBe(36)
     expect(result.estimatedTotal).toBe(200)
   })
+
+  it('senza metodo spedizione non riusa un totale che includeva la flat residua', () => {
+    const result = resolveCartEstimateTotals(
+      {
+        estimatedSubtotal: 2500,
+        estimatedTax: 0,
+        estimatedShipping: null,
+        estimatedTotal: 3090,
+        lastPricedAt: new Date('2026-06-01'),
+      },
+      2500,
+      0,
+    )
+
+    expect(result.estimatedShipping).toBeNull()
+    expect(result.estimatedTotal).toBe(2500)
+  })
 })

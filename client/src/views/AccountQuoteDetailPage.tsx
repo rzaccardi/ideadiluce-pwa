@@ -90,13 +90,13 @@ export function AccountQuoteDetailPage() {
                   value={
                     detail.estimatedTotal != null
                       ? formatMoney(detail.estimatedTotal, detail.currencyCode)
-                      : '—'
+                      : '-'
                   }
                 />
                 {detail.validityDate ? (
                   <AccountDcDetailRow
                     label={t('account.quotes.validUntil')}
-                    value={formatQuoteValidityDate(detail.validityDate) ?? '—'}
+                    value={formatQuoteValidityDate(detail.validityDate) ?? '-'}
                   />
                 ) : null}
               </dl>

@@ -82,7 +82,7 @@ function assertDeepLReady() {
     throw new AppError(
       'DEEPL_NOT_CONFIGURED',
       'DeepL not configured',
-      'DeepL non configurato — imposta DEEPL_ENABLED e DEEPL_API_KEY sul server.',
+      'DeepL non configurato - imposta DEEPL_ENABLED e DEEPL_API_KEY sul server.',
       503,
       false,
     )
@@ -685,8 +685,14 @@ async function patchShellMegaMenuColumns() {
         const needsPanelRefresh =
           currentJson !== freshJson &&
           (id === 'arredo'
-            ? !currentJson.includes('tipologia=sospensione') || !currentJson.includes('IN EVIDENZA')
-            : !currentJson.includes('GUIDE TECNICHE') || !currentJson.includes('category=strip'))
+            ? !currentJson.includes('tipologia=sospensione') ||
+              !currentJson.includes('IN EVIDENZA') ||
+              currentJson.includes('/brand/davide-groppi')
+            : !currentJson.includes('GUIDE TECNICHE') ||
+              !currentJson.includes('category=strip') ||
+              !currentJson.includes('/guide/dimmerabilita') ||
+              !currentJson.includes('/guide/grado-ip') ||
+              !currentJson.includes('/guide/retrofit-led'))
 
         if (needsPanelRefresh) {
           item.panel = structuredClone(fresh.panel)
@@ -704,6 +710,12 @@ async function patchShellMegaMenuColumns() {
           const freshLink = freshColumn.links[linkIndex]
           const currentLink = currentColumn.links[linkIndex]
           if (!freshLink || !currentLink) continue
+          if (currentLink.href.includes('/brand/davide-groppi')) {
+            currentLink.href = '/brand/eglo'
+            if (/davide\s*groppi/i.test(currentLink.label)) currentLink.label = freshLink.label
+            changed = true
+            continue
+          }
           if (currentLink.href !== freshLink.href) {
             currentLink.href = freshLink.href
             changed = true

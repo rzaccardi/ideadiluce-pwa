@@ -115,7 +115,7 @@ export const checkoutDbg = {
 
 if (typeof window !== 'undefined' && isEnabled()) {
   console.info(
-    '%c[checkout] debug attivo — filtra la console con "checkout". Comandi: __checkoutDebug.dump(), __checkoutDebug.reset()',
+    '%c[checkout] debug attivo - filtra la console con "checkout". Comandi: __checkoutDebug.dump(), __checkoutDebug.reset()',
     'color:#60a5fa;font-weight:bold',
   )
   ;(window as Window & { __checkoutDebug?: typeof checkoutDbg }).__checkoutDebug = checkoutDbg

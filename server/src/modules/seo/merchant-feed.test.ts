@@ -90,7 +90,7 @@ describe('offersForProduct', () => {
     expect(offers).toHaveLength(2)
     expect(offers[0]?.id).toBe('100001')
     expect(offers[1]?.id).toBe('100002')
-    expect(offers[1]?.title).toBe('Lampada a sospensione — Bianco')
+    expect(offers[1]?.title).toBe('Lampada a sospensione - Bianco')
     expect(offers[1]?.priceCents).toBe(13900)
     expect(offers.every((o) => o.itemGroupId === 'SKU-100')).toBe(true)
   })

@@ -13,8 +13,6 @@ import {
   cartHasBlockedLines,
   cartShippingCents,
   cartSubtotalCents,
-  cartTaxCents,
-  cartTotalCents,
 } from '@/lib/cartTotals'
 import { Button } from '@/components/Button'
 import { ProfessionalCartBanner } from '@/components/cart/PricelistBadge'
@@ -74,15 +72,13 @@ export function CartSummary({
   noPurchasableLines,
   hasBlockedLines,
 }: Props) {
-  const { t, tParams } = useI18n()
+  const { t } = useI18n()
+  // Solo subtotale in carrello: totale (IVA/spedizione) solo nelle fasi finali checkout.
   const subtotal = cartSubtotalCents(cart)
-  const tax = cartTaxCents(cart)
   const shipping = cartShippingCents(cart)
-  const total = cartTotalCents(cart)
   const blocked = hasBlockedLines ?? cartHasBlockedLines(cart)
   const quoteDisabled = checkoutDisabled || blocked || noPurchasableLines
   const shippingFree = shipping != null && (shipping === 0 || cart.freeShippingHint?.eligible === true)
-  const taxRate = cart.taxBreakdown?.taxRatePct ?? 22
 
   return (
     <aside className={cn('flex flex-col gap-4', className)}>
@@ -94,10 +90,6 @@ export function CartSummary({
         <ProfessionalCartBanner className="mb-4" />
 
         <dl className="space-y-1 text-[13.5px] text-[#5b616b]">
-          <div className="flex justify-between py-1">
-            <dt>{t('cart.summary.subtotal')}</dt>
-            <dd>{formatMoney(subtotal, cart.currencyCode)}</dd>
-          </div>
           <div className="flex justify-between py-1">
             <dt>{t('cart.summary.shipping')}</dt>
             <dd className={shipping != null && shippingFree ? 'font-bold text-[#1f9d57]' : undefined}>
@@ -111,9 +103,9 @@ export function CartSummary({
         </dl>
 
         <div className="mt-2 flex items-baseline justify-between border-t border-idl-tech-border pt-3.5">
-          <span className="text-base font-extrabold text-idl-graphite">{t('cart.summary.total')}</span>
+          <span className="text-base font-extrabold text-idl-graphite">{t('cart.summary.subtotal')}</span>
           <span className="text-[22px] font-extrabold text-idl-graphite">
-            {formatMoney(total, cart.currencyCode)}
+            {formatMoney(subtotal, cart.currencyCode)}
           </span>
         </div>
 
@@ -121,18 +113,7 @@ export function CartSummary({
           <p className="mt-0.5 text-right text-[11.5px] text-[#9298a3]">
             {t('cart.summary.estimatesDisclaimer')}
           </p>
-        ) : tax > 0 ? (
-          <p className="mt-0.5 text-right text-[11.5px] text-[#9298a3]">
-            {tParams('cart.summary.taxIncluded', {
-              rate: taxRate,
-              amount: formatMoney(tax, cart.currencyCode),
-            })}
-          </p>
-        ) : (
-          <p className="mt-0.5 text-right text-[11.5px] text-[#9298a3]">
-            {t('cart.summary.estimatesDisclaimer')}
-          </p>
-        )}
+        ) : null}
 
         {showCheckoutCta ? (
           <div className="mt-[18px] space-y-3">

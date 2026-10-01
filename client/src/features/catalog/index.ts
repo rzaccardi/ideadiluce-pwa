@@ -12,4 +12,5 @@ export {
   seedCatalogBootstrap,
   seedCatalogProducts,
   catalogServerFetchKey,
+  catalogFacetsFetchKey,
 } from './catalog.actions'

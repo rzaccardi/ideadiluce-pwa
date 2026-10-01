@@ -1,6 +1,6 @@
 'use client'
 
-import type { ProductCardDTO, ThankYouOrderDTO, UserAddressDTO } from '@/types/dto'
+import type { ProductCardDTO, ThankYouOrderDTO } from '@/types/dto'
 import { Link } from '@/lib/navigation'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { useI18n } from '@/hooks/use-i18n'
@@ -13,6 +13,7 @@ import { BankTransferInstructionsTable } from '@/components/checkout/BankTransfe
 import type { MessageKey } from '@/i18n/messages'
 import { productCardObjectFitClass } from '@/lib/product-image-fit'
 import { cn } from '@/utils/cn'
+import { formatThankYouAddressBlock, thankYouAddressesEqual } from './thank-you-address'
 
 type Props = {
   order: ThankYouOrderDTO
@@ -27,17 +28,6 @@ type TrackerStep = {
   state: 'done' | 'active' | 'upcoming'
 }
 
-function formatShippingBlock(address: UserAddressDTO | null): string[] {
-  if (!address) return []
-  const name = [address.firstName, address.lastName].filter(Boolean).join(' ')
-  const locality = [address.postalCode, address.city, address.province ? `(${address.province})` : '']
-    .filter(Boolean)
-    .join(' ')
-  const lines = [name, [address.line1, locality].filter(Boolean).join(', ')].filter(Boolean)
-  if (address.phone?.trim()) lines.push(address.phone.trim())
-  return lines
-}
-
 function trackerSteps(order: ThankYouOrderDTO, t: (key: MessageKey) => string): TrackerStep[] {
   const paid = order.paymentStatus === 'captured'
   const pending = order.paymentStatus === 'pending'
@@ -47,15 +37,15 @@ function trackerSteps(order: ThankYouOrderDTO, t: (key: MessageKey) => string): 
       { id: '1', label: t('thankYou.tracker.confirmed'), hint: t('thankYou.tracker.now'), state: 'active' },
       { id: '2', label: t('thankYou.tracker.preparing'), hint: t('thankYou.tracker.afterPayment'), state: 'upcoming' },
       { id: '3', label: t('thankYou.tracker.shipped'), hint: '24/48h', state: 'upcoming' },
-      { id: '4', label: t('thankYou.tracker.delivered'), hint: '—', state: 'upcoming' },
+      { id: '4', label: t('thankYou.tracker.delivered'), hint: '-', state: 'upcoming' },
     ]
   }
 
   return [
     { id: '1', label: t('thankYou.tracker.confirmed'), hint: t('thankYou.tracker.now'), state: 'done' },
-    { id: '2', label: t('thankYou.tracker.preparing'), hint: paid ? t('thankYou.tracker.today') : '—', state: paid ? 'active' : 'upcoming' },
+    { id: '2', label: t('thankYou.tracker.preparing'), hint: paid ? t('thankYou.tracker.today') : '-', state: paid ? 'active' : 'upcoming' },
     { id: '3', label: t('thankYou.tracker.shipped'), hint: '24/48h', state: 'upcoming' },
-    { id: '4', label: t('thankYou.tracker.delivered'), hint: '—', state: 'upcoming' },
+    { id: '4', label: t('thankYou.tracker.delivered'), hint: '-', state: 'upcoming' },
   ]
 }
 
@@ -130,7 +120,9 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
   const { locale, t, tParams } = useI18n()
   const lp = useLocalePath()
   const steps = trackerSteps(order, t)
-  const shippingLines = formatShippingBlock(order.shippingAddress)
+  const shippingLines = formatThankYouAddressBlock(order.shippingAddress)
+  const billingLines = formatThankYouAddressBlock(order.billingAddress)
+  const sameAddresses = thankYouAddressesEqual(order.billingAddress, order.shippingAddress)
   const currency = order.currencyCode || 'EUR'
   const subtotal =
     order.subtotalCents != null ? formatMoney(order.subtotalCents, currency) : null
@@ -140,6 +132,9 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
       : order.shippingCents <= 0
         ? t('thankYou.shippingFree')
         : formatMoney(order.shippingCents, currency)
+  const taxLabel = order.taxLabel?.trim() || t('thankYou.summary.vat')
+  const taxAmount =
+    order.taxCents != null && order.taxCents > 0 ? formatMoney(order.taxCents, currency) : null
   const total =
     order.amountTotal != null ? formatMoney(order.amountTotal, currency) : t('common.notAvailable')
 
@@ -250,7 +245,7 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
                       <div className="text-sm font-bold whitespace-nowrap text-idl-graphite">
                         {line.lineTotalCents != null
                           ? formatMoney(line.lineTotalCents, currency)
-                          : '—'}
+                          : '-'}
                       </div>
                     </li>
                   ))}
@@ -291,13 +286,18 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
                   </span>
                 </div>
               ) : null}
+              {taxAmount ? (
+                <div className="flex justify-between py-1 text-[13.5px] text-[#5b616b]">
+                  <span>{taxLabel}</span>
+                  <span>{taxAmount}</span>
+                </div>
+              ) : (
+                <p className="py-1 text-right text-[11.5px] text-[#9298a3]">{taxLabel}</p>
+              )}
               <div className="mt-2 flex items-baseline justify-between border-t border-[#ededea] pt-3">
                 <span className="text-[15px] font-extrabold">{t('thankYou.summary.total')}</span>
                 <span className="text-[21px] font-extrabold">{total}</span>
               </div>
-              <p className="text-right text-[11.5px] text-[#9298a3]">
-                {order.taxLabel ?? t('thankYou.summary.vat')}
-              </p>
 
               {order.disclaimerKey === 'extra_eu_duties' ? (
                 <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-left text-xs leading-relaxed text-amber-950">
@@ -307,16 +307,31 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
                 </p>
               ) : null}
 
+              {billingLines.length > 0 ? (
+                <div className="mt-4 border-t border-[#ededea] pt-4">
+                  <div className="font-mono text-[10px] tracking-[0.1em] text-[#8b919b] uppercase">
+                    {t('thankYou.summary.billTo')}
+                  </div>
+                  <div className="mt-2 text-[13.5px] leading-relaxed text-[#3f4651]">
+                    {billingLines.map((line) => (
+                      <div key={`bill-${line}`}>{line}</div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
               {shippingLines.length > 0 ? (
                 <div className="mt-4 border-t border-[#ededea] pt-4">
                   <div className="font-mono text-[10px] tracking-[0.1em] text-[#8b919b] uppercase">
-                    {t('thankYou.summary.shipTo')}
+                    {sameAddresses ? t('thankYou.summary.shipToSame') : t('thankYou.summary.shipTo')}
                   </div>
-                  <div className="mt-2 text-[13.5px] leading-relaxed text-[#3f4651]">
-                    {shippingLines.map((line) => (
-                      <div key={line}>{line}</div>
-                    ))}
-                  </div>
+                  {!sameAddresses ? (
+                    <div className="mt-2 text-[13.5px] leading-relaxed text-[#3f4651]">
+                      {shippingLines.map((line) => (
+                        <div key={`ship-${line}`}>{line}</div>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
 

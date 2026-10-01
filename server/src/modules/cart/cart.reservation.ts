@@ -37,9 +37,15 @@ export async function clearExpiredReservation(cartId: string): Promise<void> {
   })
 }
 
+/** Allineato a `cartRepository.getWithItems` (items + shippingSelection). */
+export type CartWithItems = Cart & {
+  items: CartItem[]
+  shippingSelection?: { amountCents: number } | null
+}
+
 export async function expireCartIfNeeded(
-  cart: Cart & { items: CartItem[] },
-): Promise<{ cart: Cart & { items: CartItem[] }; expired: boolean }> {
+  cart: CartWithItems,
+): Promise<{ cart: CartWithItems; expired: boolean }> {
   if (!isCartReservationEnabled() || cart.items.length === 0) {
     return { cart, expired: false }
   }

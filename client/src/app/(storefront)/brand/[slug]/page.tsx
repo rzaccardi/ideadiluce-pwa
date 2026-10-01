@@ -12,6 +12,7 @@ import {
   canonicalizeBrandSlug,
   humanizeSlug,
 } from '@/lib/catalog-taxonomy'
+import { findBrandMetaBySlug } from '@/lib/brand.defaults'
 import { fetchBrandMetaServer, fetchCatalogBootstrapServer, fetchCatalogProductsServer } from '@/lib/server-catalog'
 
 export const revalidate = 1800
@@ -25,14 +26,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const locale = await getRequestLocale()
   const filterSlug = canonicalizeBrandSlug(slug)
   const brand = await fetchBrandMetaServer(filterSlug, locale)
-  const name = brand?.name ?? humanizeSlug(filterSlug)
+  const known = findBrandMetaBySlug(filterSlug)
+  const name = brand?.name ?? known?.name ?? humanizeSlug(filterSlug)
   const { canonical, alternates } = buildLocalizedPageSeo({
     currentLocale: locale,
     pathForLocale: () => brandSeoPath(brand?.slug ?? filterSlug),
   })
   return buildMetadata({
     title: name,
-    description: `Catalogo prodotti ${name} — lampade e illuminazione su Idea di Luce.`,
+    description: `Catalogo prodotti ${name} - lampade e illuminazione su Idea di Luce.`,
     canonical,
     alternates,
   })
@@ -43,6 +45,7 @@ export default async function BrandSlugPage({ params }: PageProps) {
   const locale = await getRequestLocale()
   const filterSlug = canonicalizeBrandSlug(slug)
   const brand = await fetchBrandMetaServer(filterSlug, locale)
+  const known = findBrandMetaBySlug(filterSlug)
   const canonicalSlug = brand?.slug ?? filterSlug
 
   const [productsRes, initialBootstrap] = await Promise.all([
@@ -51,9 +54,12 @@ export default async function BrandSlugPage({ params }: PageProps) {
   ])
 
   const name =
-    brand?.name ?? productsRes.items[0]?.brand?.name ?? humanizeSlug(canonicalSlug)
+    brand?.name ??
+    known?.name ??
+    productsRes.items[0]?.brand?.name ??
+    humanizeSlug(canonicalSlug)
 
-  if (!brand && productsRes.total === 0) {
+  if (!brand && !known && productsRes.total === 0) {
     notFound()
   }
 

@@ -33,7 +33,7 @@ function snap(partial: Partial<VariantStockSnapshot>): VariantStockSnapshot {
   }
 }
 
-describe('resolveVariantAvailability — matrice requisiti', () => {
+describe('resolveVariantAvailability - matrice requisiti', () => {
   it('Caso 1: Q ≤ S → available, lead 0', () => {
     const r = resolveVariantAvailability({ stockQty: 5, orderable: true, leadTimeDays: 7 }, 1)
     expect(r.state).toBe('available')
@@ -101,7 +101,7 @@ describe('resolveVariantAvailability — matrice requisiti', () => {
   })
 })
 
-describe('snapshotToAvailabilityData — semantica DTO', () => {
+describe('snapshotToAvailabilityData - semantica DTO', () => {
   it('isOrderable = ha fornitori', () => {
     const dto = snapshotToAvailabilityData(
       snap({ stockQty: 5, orderable: true, hasSuppliers: true, leadTimeDays: 3 }),
@@ -157,7 +157,7 @@ describe('CTA restock / richiesta prodotto', () => {
   })
 })
 
-describe('resolveCartDeliveryLeadDays — tempo peggiore', () => {
+describe('resolveCartDeliveryLeadDays - tempo peggiore', () => {
   it('max tra righe miste Caso 1 + Caso 2', () => {
     const days = resolveCartDeliveryLeadDays([
       { purchasable: true, effectiveLeadDays: null },

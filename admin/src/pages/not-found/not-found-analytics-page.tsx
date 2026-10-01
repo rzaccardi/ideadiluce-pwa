@@ -453,7 +453,7 @@ export function NotFoundAnalyticsPage() {
                       <TableCell className="max-w-[220px] truncate text-sm text-muted-foreground">
                         {top
                           ? topReferrerLabel(top.referrer, top.referrerKind)
-                          : '—'}
+                          : '-'}
                       </TableCell>
                       <TableCell>
                         {row.redirect ? (

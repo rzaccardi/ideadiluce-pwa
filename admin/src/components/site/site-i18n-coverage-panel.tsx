@@ -120,7 +120,7 @@ export function SiteI18nCoveragePanel({
       <CardContent className="space-y-4">
         {!deeplReady ? (
           <p className="text-sm text-amber-700">
-            DeepL non è configurato sul server — puoi modificare i testi manualmente, ma la traduzione
+            DeepL non è configurato sul server: puoi modificare i testi manualmente, ma la traduzione
             automatica non è disponibile.
           </p>
         ) : null}

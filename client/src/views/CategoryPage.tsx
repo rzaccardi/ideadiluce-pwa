@@ -13,6 +13,7 @@ import { PageLoadTransition } from '@/components/motion'
 import { useLocale } from '@/context/locale-context'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { useI18n } from '@/hooks/use-i18n'
+import { catalogWorldOfCategorySlug } from '@/lib/catalog-filters'
 import { toPwaLocale } from '@/lib/odoo-catalog/lookup'
 import type { ProductCardDTO } from '@/types/dto'
 
@@ -69,6 +70,9 @@ export function CategoryPage({ initialProducts, initialCategoryName = null, cate
 
   const title = categoryName ?? slug
   const intro = `Scopri la selezione ${title.toLowerCase()} su Idea di Luce: lampade e componenti per illuminazione d'arredo e tecnica, con filtri per brand, prezzo e disponibilità.`
+  const categoryWorld = catalogWorldOfCategorySlug(slug)
+  const forceKind =
+    categoryWorld === 'design' || categoryWorld === 'technical' ? categoryWorld : undefined
 
   return (
     <PageFlexShell tone="paper">
@@ -86,7 +90,7 @@ export function CategoryPage({ initialProducts, initialCategoryName = null, cate
                 ]}
               />
               <PageHeader title={title} description={intro} />
-              <ProductGrid products={products} />
+              <ProductGrid products={products} forceKind={forceKind} />
               <div className="mt-10 flex flex-wrap gap-4 text-sm">
                 <Link to={lp('/ambienti')} className="font-bold text-idl-brass">
                   Scegli per ambiente →

@@ -128,9 +128,7 @@ export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Pro
           <div>
             <p className="font-semibold text-idl-graphite">{t('checkout.billingAddress')}</p>
             <pre className="mt-1 whitespace-pre-wrap font-sans">
-              {formatAddress(
-                checkout.draft.billingSameAsShipping ? checkout.draft.shipping : checkout.draft.billing,
-              )}
+              {formatAddress(checkout.draft.billing)}
             </pre>
           </div>
           <div>

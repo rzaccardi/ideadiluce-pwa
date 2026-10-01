@@ -83,6 +83,33 @@ describe('applyOptimisticAdd', () => {
     expect(next.estimatedSubtotal).toBe(2000)
   })
 
+  it('accorpa slug vs template id e VAR- vs id numerico', () => {
+    const next = applyOptimisticAdd({
+      cart: cartWithLine({ productRef: 'lampada', productSlug: 'lampada', variantRef: 'VAR-88' }),
+      productRef: 'lampada',
+      quantity: 3,
+      variantRef: '88',
+      productHint: { odooTemplateId: 1997, odooVariantId: 88, slug: 'lampada', unitPriceCents: 1000 },
+    })
+    expect(next.items).toHaveLength(1)
+    expect(next.items[0]?.quantity).toBe(4)
+    expect(next.items[0]?.productRef).toBe('1997')
+    expect(next.items[0]?.variantRef).toBe('88')
+  })
+
+  it('accorpa add senza variante su riga già variante', () => {
+    const next = applyOptimisticAdd({
+      cart: cartWithLine(),
+      productRef: 'lampada',
+      quantity: 1,
+      variantRef: null,
+      productHint: { odooTemplateId: 1997, slug: 'lampada', unitPriceCents: 1000 },
+    })
+    expect(next.items).toHaveLength(1)
+    expect(next.items[0]?.quantity).toBe(2)
+    expect(next.items[0]?.variantRef).toBe('88')
+  })
+
   it('aggiunge una riga nuova per un altro prodotto', () => {
     const next = applyOptimisticAdd({
       cart: cartWithLine(),
@@ -140,6 +167,17 @@ describe('cartLineMatchesAdd', () => {
         'lampada',
         null,
         { odooTemplateId: 1997, slug: 'lampada' },
+      ),
+    ).toBe(true)
+  })
+
+  it('accorpa VAR-88 con id numerico', () => {
+    expect(
+      cartLineMatchesAdd(
+        { productRef: '1997', productSlug: 'lampada', variantRef: 'VAR-88' },
+        'lampada',
+        '88',
+        { odooTemplateId: 1997, odooVariantId: 88, slug: 'lampada' },
       ),
     ).toBe(true)
   })

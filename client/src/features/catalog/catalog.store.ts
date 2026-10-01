@@ -37,6 +37,8 @@ export const catalogStore = proxy({
   brands: [] as BrandListItemDTO[],
   /** Facet live da `/catalog/filters` (opzioni navigabili per world; selezione da URL). */
   facets: null as CatalogFiltersDTO | null,
+  /** Chiave dell’ultimo fetch facet (`q|world|locale`) — evita round-trip ridondanti. */
+  facetsFetchKey: null as string | null,
   filters: {
     categorySlug: undefined,
     q: undefined,

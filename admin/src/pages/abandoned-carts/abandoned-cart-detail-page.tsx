@@ -93,7 +93,7 @@ export function AbandonedCartDetailPage() {
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <DetailField label="Email">
-              <DetailValue>{cart.contactEmail ?? '—'}</DetailValue>
+              <DetailValue>{cart.contactEmail ?? '-'}</DetailValue>
             </DetailField>
             <DetailField label="Utente">
               <DetailValue>
@@ -132,7 +132,7 @@ export function AbandonedCartDetailPage() {
                 <DetailValue>
                   {cart.cart.estimatedTotal != null
                     ? formatMoney(cart.cart.estimatedTotal, 'EUR')
-                    : '—'}
+                    : '-'}
                 </DetailValue>
               </DetailField>
               <DetailField label="Creato">
@@ -144,7 +144,7 @@ export function AbandonedCartDetailPage() {
                 <DetailValue>
                   {cart.cart.abandonedAt
                     ? new Date(cart.cart.abandonedAt).toLocaleString('it-IT')
-                    : '—'}
+                    : '-'}
                 </DetailValue>
               </DetailField>
             </CardContent>
@@ -178,13 +178,13 @@ export function AbandonedCartDetailPage() {
                       ) : null}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {line.variantRef ?? '—'}
+                      {line.variantRef ?? '-'}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{line.quantity}</TableCell>
                     <TableCell className="text-right tabular-nums">
                       {line.unitEstimateCents != null
                         ? formatMoney(line.unitEstimateCents, 'EUR')
-                        : '—'}
+                        : '-'}
                     </TableCell>
                   </TableRow>
                 ))}

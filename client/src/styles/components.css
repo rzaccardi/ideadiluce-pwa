@@ -527,3 +527,12 @@ html[data-theme='dark'] .bg-zinc-100 {
 html[data-theme='dark'] .text-zinc-600 {
   color: var(--color-idl-ink-muted);
 }
+
+/*
+ * Loghi brand catalogo (`/brands/*.jpg`): canvas bianco → multiply
+ * nasconde l’alone su cream / off-white. Usato da BrandCatalogLogo.
+ * In dark mode i componenti nascondono l’img (fallback testuale).
+ */
+.idl-brand-logo-img {
+  mix-blend-mode: multiply;
+}

@@ -20,7 +20,10 @@ export const DEFAULT_SITE_GUIDES: GuideSeed[] = [
   { slug: 'scegliere-lampadina-led', category: 'BASE', readingMeta: '5 min', sortOrder: 20, indexed: true, featured: true },
   { slug: 'gu10-gu53', category: 'ATTACCHI', readingMeta: '4 min', sortOrder: 30, indexed: true, featured: false },
   { slug: 'alimentatore-striscia-led', category: 'TECNICO', readingMeta: '6 min', sortOrder: 40, indexed: true, featured: false },
+  { slug: 'dimmerabilita', category: 'TECNICO', readingMeta: '5 min', sortOrder: 45, indexed: true, featured: false },
+  { slug: 'grado-ip', category: 'TECNICO', readingMeta: '4 min', sortOrder: 46, indexed: true, featured: false },
   { slug: 'lampadina-r7s', category: 'ACQUISTO', readingMeta: '6 min', sortOrder: 50, indexed: true, featured: false },
+  { slug: 'retrofit-led', category: 'ACQUISTO', readingMeta: '6 min', sortOrder: 55, indexed: true, featured: false },
   { slug: 'illuminare-soggiorno', category: 'AMBIENTE', readingMeta: '7 min', sortOrder: 60, indexed: true, featured: false },
   { slug: 'glossario', category: 'GLOSSARIO', readingMeta: 'Riferimento', sortOrder: 70, indexed: true, featured: false },
 ]

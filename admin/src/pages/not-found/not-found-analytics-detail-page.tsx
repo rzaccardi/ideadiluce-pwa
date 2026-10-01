@@ -181,7 +181,7 @@ export function NotFoundAnalyticsDetailPage() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <SitePageHeader
           title={path}
-          description={`${detail ? detail.hits.toLocaleString('it-IT') : '—'} visualizzazioni · ${NOT_FOUND_PATH_KIND_LABELS[detail?.pathKind ?? ''] ?? detail?.pathKind ?? ''}`}
+          description={`${detail ? detail.hits.toLocaleString('it-IT') : '-'} visualizzazioni · ${NOT_FOUND_PATH_KIND_LABELS[detail?.pathKind ?? ''] ?? detail?.pathKind ?? ''}`}
         />
         <DetailPageActionBar
           secondary={

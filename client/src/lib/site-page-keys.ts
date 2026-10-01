@@ -9,6 +9,9 @@ export const GUIDE_SLUG_TO_PAGE_KEY: Record<string, ContentPageKey> = {
   'lampadina-r7s': 'guide-lampadina-r7s',
   'illuminare-soggiorno': 'guide-illuminare-soggiorno',
   glossario: 'guide-glossario',
+  dimmerabilita: 'guide-dimmerabilita',
+  'grado-ip': 'guide-grado-ip',
+  'retrofit-led': 'guide-retrofit-led',
   'scegliere-lampadina-led': 'guide-scegliere-lampadina-led',
   'alimentatore-striscia-led': 'guide-alimentatore-striscia-led',
 }

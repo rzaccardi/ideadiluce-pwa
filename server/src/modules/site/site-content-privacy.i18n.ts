@@ -109,7 +109,7 @@ export const DEFAULT_PRIVACY_EN: ContentPageContent = {
       kind: 'prose',
       title: 'Cookies',
       paragraphs: [
-        'This Site uses cookies — small text files installed on users\' devices to improve browsing, personalise content and ads, provide social features and analyse traffic. See the Cookie Policy for details.',
+        'This Site uses cookies - small text files installed on users\' devices to improve browsing, personalise content and ads, provide social features and analyse traffic. See the Cookie Policy for details.',
       ],
     },
     {
@@ -121,29 +121,29 @@ export const DEFAULT_PRIVACY_EN: ContentPageContent = {
       kind: 'prose',
       title: 'Newsletter',
       paragraphs: [
-        'Mailchimp (Intuit Inc.) — email address management and sending service. Processing location: UNITED STATES. Users may unsubscribe via the link in each commercial communication.',
+        'Mailchimp (Intuit Inc.) - email address management and sending service. Processing location: UNITED STATES. Users may unsubscribe via the link in each commercial communication.',
       ],
     },
     {
       kind: 'prose',
       title: 'Social network buttons',
       paragraphs: [
-        'Facebook and Instagram (Meta Platforms Ireland Limited) — interaction with social networks. Personal Data collected: Cookies, Usage data. Processing location: IRELAND – UNITED STATES.',
+        'Facebook and Instagram (Meta Platforms Ireland Limited) - interaction with social networks. Personal Data collected: Cookies, Usage data. Processing location: IRELAND – UNITED STATES.',
       ],
     },
     {
       kind: 'prose',
       title: 'Payment management',
       paragraphs: [
-        'NEXI (Nexi S.p.A.), PayPal (Paypal Europe S.a.r.l.), Apple Pay (Apple Payments Inc.), Google Pay (Google Ireland Limited) — online payment services. See each provider\'s privacy policy for details.',
+        'NEXI (Nexi S.p.A.), PayPal (Paypal Europe S.a.r.l.), Apple Pay (Apple Payments Inc.), Google Pay (Google Ireland Limited) - online payment services. See each provider\'s privacy policy for details.',
       ],
     },
     {
       kind: 'prose',
       title: 'Statistics',
       paragraphs: [
-        'Google Analytics (Google Ireland Limited) — traffic analysis with IP anonymisation enabled. Opt-out: https://tools.google.com/dlpage/gaoptout?hl=en. Processing location: IRELAND and in some cases UNITED STATES.',
-        'Facebook Pixel (Meta Platforms Ireland Limited) — conversion tracking. Processing location: Ireland and in some cases UNITED STATES.',
+        'Google Analytics (Google Ireland Limited) - traffic analysis with IP anonymisation enabled. Opt-out: https://tools.google.com/dlpage/gaoptout?hl=en. Processing location: IRELAND and in some cases UNITED STATES.',
+        'Facebook Pixel (Meta Platforms Ireland Limited) - conversion tracking. Processing location: Ireland and in some cases UNITED STATES.',
       ],
     },
     {
@@ -535,7 +535,7 @@ export const DEFAULT_PRIVACY_RO: ContentPageContent = {
       kind: 'prose',
       title: 'Cookie-uri',
       paragraphs: [
-        'Acest Site folosește cookie-uri — fișiere text mici instalate pe dispozitivele utilizatorilor pentru a îmbunătăți navigarea, a personaliza conținutul și reclamele, a oferi funcții sociale și a analiza traficul. Detalii în Politica de cookie-uri.',
+        'Acest Site folosește cookie-uri - fișiere text mici instalate pe dispozitivele utilizatorilor pentru a îmbunătăți navigarea, a personaliza conținutul și reclamele, a oferi funcții sociale și a analiza traficul. Detalii în Politica de cookie-uri.',
       ],
     },
     {
@@ -547,29 +547,29 @@ export const DEFAULT_PRIVACY_RO: ContentPageContent = {
       kind: 'prose',
       title: 'Newsletter',
       paragraphs: [
-        'Mailchimp (Intuit Inc.) — serviciu de gestionare a adreselor de e-mail și de trimitere. Locul prelucrării: STATELE UNITE. Utilizatorii se pot dezabona prin linkul din fiecare comunicare comercială.',
+        'Mailchimp (Intuit Inc.) - serviciu de gestionare a adreselor de e-mail și de trimitere. Locul prelucrării: STATELE UNITE. Utilizatorii se pot dezabona prin linkul din fiecare comunicare comercială.',
       ],
     },
     {
       kind: 'prose',
       title: 'Butoane rețele sociale',
       paragraphs: [
-        'Facebook și Instagram (Meta Platforms Ireland Limited) — interacțiune cu rețelele sociale. Date Personale colectate: Cookie-uri, Date de utilizare. Locul prelucrării: IRLANDA – STATELE UNITE.',
+        'Facebook și Instagram (Meta Platforms Ireland Limited) - interacțiune cu rețelele sociale. Date Personale colectate: Cookie-uri, Date de utilizare. Locul prelucrării: IRLANDA – STATELE UNITE.',
       ],
     },
     {
       kind: 'prose',
       title: 'Gestionarea plăților',
       paragraphs: [
-        'NEXI (Nexi S.p.A.), PayPal (Paypal Europe S.a.r.l.), Apple Pay (Apple Payments Inc.), Google Pay (Google Ireland Limited) — servicii de plată online. Consultați politica de confidențialitate a fiecărui furnizor pentru detalii.',
+        'NEXI (Nexi S.p.A.), PayPal (Paypal Europe S.a.r.l.), Apple Pay (Apple Payments Inc.), Google Pay (Google Ireland Limited) - servicii de plată online. Consultați politica de confidențialitate a fiecărui furnizor pentru detalii.',
       ],
     },
     {
       kind: 'prose',
       title: 'Statistici',
       paragraphs: [
-        'Google Analytics (Google Ireland Limited) — analiză de trafic cu anonimizarea IP activată. Opt-out: https://tools.google.com/dlpage/gaoptout?hl=en. Locul prelucrării: IRLANDA și, în unele cazuri, STATELE UNITE.',
-        'Facebook Pixel (Meta Platforms Ireland Limited) — urmărirea conversiilor. Locul prelucrării: Irlanda și, în unele cazuri, STATELE UNITE.',
+        'Google Analytics (Google Ireland Limited) - analiză de trafic cu anonimizarea IP activată. Opt-out: https://tools.google.com/dlpage/gaoptout?hl=en. Locul prelucrării: IRLANDA și, în unele cazuri, STATELE UNITE.',
+        'Facebook Pixel (Meta Platforms Ireland Limited) - urmărirea conversiilor. Locul prelucrării: Irlanda și, în unele cazuri, STATELE UNITE.',
       ],
     },
     {

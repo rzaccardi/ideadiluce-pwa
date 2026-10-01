@@ -83,6 +83,29 @@ export function cartLineMatchesAdd(
   return false
 }
 
+function canonicalizeOptimisticLine(
+  line: CartItemDTO,
+  variantRef: string | null,
+  hint?: CartAddProductHint,
+) {
+  if (hint?.odooTemplateId != null) {
+    line.productRef = String(hint.odooTemplateId)
+  }
+  if (hint?.slug) {
+    line.productSlug = hint.slug
+  }
+  const nextVariant =
+    hint?.odooVariantId != null
+      ? String(hint.odooVariantId)
+      : normalizeVariantKey(variantRef)
+  const currentVariant = normalizeVariantKey(line.variantRef)
+  if (currentVariant == null && nextVariant != null) {
+    line.variantRef = nextVariant
+  } else if (currentVariant != null && nextVariant != null && currentVariant === nextVariant) {
+    line.variantRef = nextVariant
+  }
+}
+
 function resolveOptimisticUnitPrice(
   hint?: CartAddProductHint,
   existing?: CartItemDTO,
@@ -135,6 +158,7 @@ export function applyOptimisticAdd(input: {
 
   if (existing) {
     existing.quantity += input.quantity
+    canonicalizeOptimisticLine(existing, variantRef, hint)
     if (unitPriceCents != null) {
       existing.clientUnitPriceEstimateCents = unitPriceCents
       existing.lineTotalEstimateCents = unitPriceCents * existing.quantity

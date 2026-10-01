@@ -74,7 +74,7 @@ export function DesignHeroVariantPicker({ variants, selectedRef, onChange }: Pro
               <div className="mb-3 flex items-baseline justify-between gap-3">
                 <span className="text-sm font-semibold text-idl-ink">{group.title}</span>
                 <span className="text-[13px] text-idl-ink-muted">
-                  {selectedInGroup ? selectedValue : '—'}
+                  {selectedInGroup ? selectedValue : '-'}
                 </span>
               </div>
               <div className="flex flex-wrap gap-3">
@@ -119,7 +119,7 @@ export function DesignHeroVariantPicker({ variants, selectedRef, onChange }: Pro
             <div className="mb-2 flex items-baseline justify-between gap-3">
               <span className="text-sm font-semibold text-idl-ink">{group.title}</span>
               <span className="text-[13px] text-idl-ink-muted">
-                {selectedInGroup ? selectedValue : '—'}
+                {selectedInGroup ? selectedValue : '-'}
               </span>
             </div>
             <div className="flex flex-wrap gap-2">

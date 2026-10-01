@@ -230,7 +230,7 @@ export function PurchaseErrorPageView({ order }: Props) {
                       <div className="text-[13px] font-bold whitespace-nowrap text-idl-graphite">
                         {line.lineTotalCents != null
                           ? formatMoney(line.lineTotalCents, currency)
-                          : '—'}
+                          : '-'}
                       </div>
                     </li>
                   ))}

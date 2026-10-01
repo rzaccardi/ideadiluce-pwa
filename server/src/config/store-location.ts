@@ -21,7 +21,7 @@ export function getStorePickupLocation(): StorePickupLocation {
   const city = env.STORE_PICKUP_CITY?.trim() || 'Roma'
   const country = env.STORE_PICKUP_COUNTRY?.trim() || 'IT'
   const label =
-    env.STORE_PICKUP_LABEL?.trim() || `Ritiro gratuito — ${line1}, ${city}`
+    env.STORE_PICKUP_LABEL?.trim() || `Ritiro gratuito - ${line1}, ${city}`
   const displayAddress = `${line1}, ${postalCode} ${city}${country !== 'IT' ? ` (${country})` : ''}`
   return { label, line1, postalCode, city, country, displayAddress }
 }

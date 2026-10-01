@@ -28,8 +28,13 @@ export function SiteHeaderActions() {
 
 export function SiteHeaderSearch() {
   return (
-    <div className="hidden min-w-0 lg:block lg:max-w-[240px] xl:max-w-[280px]">
-      <HeaderCatalogSearch variant="bar" className="w-full" />
-    </div>
+    <>
+      <div className="hidden shrink-0 lg:block xl:hidden">
+        <HeaderCatalogSearch variant="icon" />
+      </div>
+      <div className="hidden min-w-0 shrink-0 xl:block xl:w-[220px] 2xl:w-[280px]">
+        <HeaderCatalogSearch variant="bar" className="w-full" />
+      </div>
+    </>
   )
 }

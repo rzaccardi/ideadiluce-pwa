@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 
-const DEFAULT_LEGACY_SITE_URL = 'https://old.ideadiluce.it'
+const DEFAULT_LEGACY_SITE_URL = 'https://old.ideadiluce.com/'
 
 export function ExperiencePage() {
   const ux = useSnapshot(storefrontSettingsStore)
@@ -107,7 +107,7 @@ export function ExperiencePage() {
               <CardTitle>Sito precedente (go-live)</CardTitle>
               <CardDescription>
                 Mostra in alto, in checkout e nel footer un invito a continuare su
-                old.ideadiluce.it se il nuovo sito ha problemi. Attivalo al lancio e
+                old.ideadiluce.com se il nuovo sito ha problemi. Attivalo al lancio e
                 spegnilo quando è stabile.
               </CardDescription>
             </div>

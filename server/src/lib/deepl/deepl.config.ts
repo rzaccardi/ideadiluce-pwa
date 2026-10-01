@@ -15,9 +15,9 @@ export const deeplConfig = {
 
 export function assertDeepLEnabled() {
   if (!deeplConfig.enabled) {
-    throw new Error('DeepL disabilitato — imposta DEEPL_ENABLED=true.')
+    throw new Error('DeepL disabilitato - imposta DEEPL_ENABLED=true.')
   }
   if (!deeplConfig.apiKey) {
-    throw new Error('DeepL non configurato — imposta DEEPL_API_KEY.')
+    throw new Error('DeepL non configurato - imposta DEEPL_API_KEY.')
   }
 }

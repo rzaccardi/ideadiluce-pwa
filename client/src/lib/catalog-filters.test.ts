@@ -6,6 +6,7 @@ import {
   filterBrandsForCatalogWorld,
   filterCategoryDtosByWorld,
   filterProductsBySpec,
+  isCatalogWorldHubCategory,
   productMatchesSpecFilter,
   resolveCatalogWorldFromPath,
   resolveEffectiveCatalogCategory,
@@ -44,7 +45,7 @@ describe('buildDesignerProjectsHref', () => {
     expect(buildDesignerProjectsHref(null)).toBeNull()
     expect(buildDesignerProjectsHref('  ')).toBeNull()
     expect(buildDesignerProjectsHref('n/a')).toBeNull()
-    expect(buildDesignerProjectsHref('—')).toBeNull()
+    expect(buildDesignerProjectsHref('-')).toBeNull()
   })
 })
 
@@ -201,5 +202,13 @@ describe('scope catalog worlds', () => {
       'design',
     )
     expect(resolveCatalogWorldFromPath('/negozio')).toBe('all')
+  })
+
+  it('riconosce categorie hub vs foglia', () => {
+    expect(isCatalogWorldHubCategory(undefined, 'design')).toBe(true)
+    expect(isCatalogWorldHubCategory('arredo', 'design')).toBe(true)
+    expect(isCatalogWorldHubCategory('tavolo', 'design')).toBe(false)
+    expect(isCatalogWorldHubCategory('tecnico', 'technical')).toBe(true)
+    expect(isCatalogWorldHubCategory('led', 'technical')).toBe(false)
   })
 })

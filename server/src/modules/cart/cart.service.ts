@@ -38,6 +38,11 @@ import { unitPriceCentsFromOdoo } from '../catalog/odooPricing.service.js'
 import { subtotalCentsFromCartItems } from './cartTotals.js'
 import type { CartAddProductHint } from './cart.validators.js'
 import { buildCartLineVariantMeta, parseCartLineVariantMeta } from './cart-line-variant-meta.js'
+import {
+  findMergableCartLine,
+  normalizeCartVariantRef,
+  planCoalesceDuplicateCartLines,
+} from './cart-line-identity.js'
 import { scheduleCartOdooPrep } from './cart-odoo-prep.service.js'
 
 function storedProductRef(product: ProductDetailDTO): string {
@@ -235,12 +240,13 @@ async function persistCartTotalsEstimate(
     customerSegment: pricing.segment,
     isProfessional: pricing.segment === 'PROFESSIONAL',
   })
-  const shipping = shippingCents ?? 0
+  // Solo se c'è un metodo selezionato: niente flat €5,90 “fantasma” senza indirizzo.
+  const shipping = shippingCents
   await cartRepository.updateTotals(cartId, {
     estimatedSubtotal: subtotal,
     estimatedTax: taxBreakdown.taxCents,
     estimatedShipping: shipping,
-    estimatedTotal: subtotal + taxBreakdown.taxCents + shipping,
+    estimatedTotal: subtotal + taxBreakdown.taxCents + (shipping ?? 0),
     lastPricedAt: new Date(),
   })
 }
@@ -316,8 +322,13 @@ async function dtoFromCartId(
   }
   const skipLiveCatalog = Boolean(options?.fastMutation) || options?.reprice !== true
   const pricing = await resolvePricingContext(req, { skipOdoo: skipLiveCatalog })
-  let { cart: afterExpiry, expired } = await expireCartIfNeeded(full)
-  full = afterExpiry
+  // Non riassegnare il ritorno di expireCartIfNeeded: perde il tipo Prisma con shippingSelection.
+  const { expired } = await expireCartIfNeeded(full)
+  if (expired) {
+    const afterExpiry = await cartRepository.getWithItems(cartId)
+    if (afterExpiry) full = afterExpiry
+    else full = { ...full, items: [] }
+  }
   if (
     isCartReservationEnabled() &&
     full.items.length > 0 &&
@@ -415,7 +426,7 @@ async function dtoFromCartId(
       full.items,
       pricing,
       shipCountry,
-      full.estimatedShipping,
+      full.shippingSelection?.amountCents ?? null,
     )
     const refreshed = await cartRepository.getWithItems(cartId)
     if (refreshed) full = refreshed
@@ -480,7 +491,7 @@ async function buildFastMutationCartDto(
     full.items,
     pricing,
     shipCountry,
-    full.estimatedShipping,
+    full.shippingSelection?.amountCents ?? null,
   )
   const refreshed = await cartRepository.getWithItems(cartId)
   if (refreshed) full = refreshed
@@ -518,9 +529,25 @@ async function syncReservationAfterItemsChange(cartId: string) {
 }
 
 function resolveVariantRef(product: ProductDetailDTO, variantRef: string | null | undefined) {
-  if (product.variants.length === 0) return variantRef ?? null
-  const selectedRef = variantRef ?? product.variants[0]?.ref ?? null
-  if (selectedRef && !product.variants.some((variant) => variant.ref === selectedRef)) {
+  const normalizedInput = normalizeCartVariantRef(variantRef)
+  if (product.variants.length === 0) return normalizedInput
+
+  if (normalizedInput == null) {
+    return normalizeCartVariantRef(product.variants[0]?.ref) ?? product.variants[0]?.ref ?? null
+  }
+
+  const matched = product.variants.find((variant) => {
+    const refNorm = normalizeCartVariantRef(variant.ref)
+    if (refNorm === normalizedInput) return true
+    if (
+      variant.odooVariantId != null &&
+      formatOdooVariantRef(variant.odooVariantId) === normalizedInput
+    ) {
+      return true
+    }
+    return false
+  })
+  if (!matched) {
     throw new AppError(
       'VARIANT_NOT_FOUND',
       'Unknown product variant',
@@ -529,12 +556,33 @@ function resolveVariantRef(product: ProductDetailDTO, variantRef: string | null 
       false,
     )
   }
-  return selectedRef
+  return normalizeCartVariantRef(matched.ref) ?? matched.ref
 }
 
 function selectedVariant(product: ProductDetailDTO, variantRef: string | null) {
   if (!variantRef) return product.variants[0]
-  return product.variants.find((v) => v.ref === variantRef) ?? product.variants[0]
+  const normalized = normalizeCartVariantRef(variantRef)
+  return (
+    product.variants.find((v) => normalizeCartVariantRef(v.ref) === normalized) ??
+    product.variants.find((v) => v.ref === variantRef) ??
+    product.variants.find((v) => String(v.odooVariantId) === normalized) ??
+    product.variants[0]
+  )
+}
+
+async function coalesceDuplicateCartLines(cartId: string): Promise<void> {
+  const items = await prisma.cartItem.findMany({ where: { cartId } })
+  const plans = planCoalesceDuplicateCartLines(items)
+  for (const plan of plans) {
+    await cartRepository.updateItem(plan.keep.id, {
+      quantity: plan.quantity,
+      productRef: plan.productRef,
+      variantRef: plan.variantRef,
+    })
+    for (const id of plan.removeIds) {
+      await cartRepository.deleteItem(id)
+    }
+  }
 }
 
 function lineUnitPriceCents(product: ProductDetailDTO, variantRef: string | null): number {
@@ -780,6 +828,7 @@ async function assertLineStock(
 export const cartService = {
   async get(req: Request) {
     const cart = await resolveOrCreateCart(req)
+    await coalesceDuplicateCartLines(cart.id)
     const reprice = req.query.reprice === '1' || req.query.reprice === 'true'
     const { dto } = await dtoFromCartId(req, cart.id, { reprice })
     return dto
@@ -809,35 +858,34 @@ export const cartService = {
       throw new AppError('PRODUCT_NOT_FOUND', 'Unknown product', 'Prodotto non disponibile.', 404, false)
     }
     const cart = await resolveOrCreateCart(req)
-    const existingExact = await prisma.cartItem.findFirst({
-      where: { cartId: cart.id, productRef: line.productRef, variantRef: line.variantRef },
+    // Ripulisci eventuali doppioni legacy (slug vs template, VAR- vs id) prima del merge.
+    await coalesceDuplicateCartLines(cart.id)
+    const cartItems = await prisma.cartItem.findMany({ where: { cartId: cart.id } })
+    const existing = findMergableCartLine(cartItems, {
+      productRef: line.productRef,
+      variantRef: line.variantRef,
+      productSlug: input.productHint?.slug ?? line.product.slug,
     })
-    // Accorpa anche se una riga precedente ha variantRef null (add senza variante / hint incompleto).
-    const existing =
-      existingExact ??
-      (line.variantRef != null
-        ? await prisma.cartItem.findFirst({
-            where: { cartId: cart.id, productRef: line.productRef, variantRef: null },
-          })
-        : await prisma.cartItem.findFirst({
-            where: { cartId: cart.id, productRef: line.productRef },
-          }))
     const nextQuantity = (existing?.quantity ?? 0) + input.quantity
     const variantMeta = variantMetaFromProduct(line.product, line.variantRef, input.productHint)
+    const canonicalVariantRef = normalizeCartVariantRef(line.variantRef) ?? line.variantRef
     if (existing) {
       await cartRepository.updateItem(existing.id, {
         quantity: nextQuantity,
         clientUnitPriceEstimate: line.unitPriceCents,
         metadataJson: variantMeta,
-        ...(existing.variantRef == null && line.variantRef != null
-          ? { variantRef: line.variantRef }
+        productRef: line.productRef,
+        ...(canonicalVariantRef != null &&
+        (existing.variantRef == null ||
+          normalizeCartVariantRef(existing.variantRef) !== canonicalVariantRef)
+          ? { variantRef: canonicalVariantRef }
           : {}),
       })
     } else {
       await cartRepository.addItem({
         cart: { connect: { id: cart.id } },
         productRef: line.productRef,
-        variantRef: line.variantRef,
+        variantRef: canonicalVariantRef,
         quantity: input.quantity,
         clientUnitPriceEstimate: line.unitPriceCents,
         metadataJson: variantMeta,
@@ -937,13 +985,22 @@ export const cartService = {
         }
         const variantRef = resolveVariantRef(product, line.variantRef)
         const productRef = storedProductRef(product)
-        const existing = await prisma.cartItem.findFirst({
-          where: { cartId: cart.id, productRef, variantRef },
-        })
+        const existing = findMergableCartLine(
+          await prisma.cartItem.findMany({ where: { cartId: cart.id } }),
+          {
+            productRef,
+            variantRef,
+            productSlug: product.slug,
+          },
+        )
         const nextQuantity = (existing?.quantity ?? 0) + line.quantity
         await assertLineStock(req, product, variantRef, nextQuantity)
         if (existing) {
-          await cartRepository.updateItem(existing.id, { quantity: nextQuantity })
+          await cartRepository.updateItem(existing.id, {
+            quantity: nextQuantity,
+            productRef,
+            ...(variantRef != null && existing.variantRef == null ? { variantRef } : {}),
+          })
         } else {
           await cartRepository.addItem({
             cart: { connect: { id: cart.id } },
@@ -1005,14 +1062,21 @@ export const cartService = {
         const variantRef = resolveVariantRef(product, line.variantRef)
         const productRef = storedProductRef(product)
         const unitPriceCents = lineUnitPriceCents(product, variantRef)
-        const existing = await prisma.cartItem.findFirst({
-          where: { cartId: cart.id, productRef, variantRef },
-        })
+        const existing = findMergableCartLine(
+          await prisma.cartItem.findMany({ where: { cartId: cart.id } }),
+          {
+            productRef,
+            variantRef,
+            productSlug: product.slug,
+          },
+        )
         if (existing) {
           const nextQty = Math.max(existing.quantity, line.quantity)
           await cartRepository.updateItem(existing.id, {
             quantity: nextQty,
             clientUnitPriceEstimate: unitPriceCents,
+            productRef,
+            ...(variantRef != null && existing.variantRef == null ? { variantRef } : {}),
           })
         } else {
           await cartRepository.addItem({

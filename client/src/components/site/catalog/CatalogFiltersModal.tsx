@@ -4,6 +4,8 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useIsClient } from '@/hooks/use-is-client'
+import { useI18n } from '@/hooks/use-i18n'
+import { useLocale } from '@/context/locale-context'
 import { transitionBase } from '@/lib/motion/presets'
 import { layers } from '@/lib/layering'
 import { cn } from '@/utils/cn'
@@ -26,6 +28,8 @@ export function CatalogFiltersModal({
 }: Props) {
   const isClient = useIsClient()
   const reduceMotion = useReducedMotion()
+  const { t, tParams } = useI18n()
+  const { locale } = useLocale()
 
   useEffect(() => {
     if (!open) return
@@ -56,7 +60,7 @@ export function CatalogFiltersModal({
           <motion.button
             key="catalog-filters-backdrop"
             type="button"
-            aria-label="Chiudi filtri"
+            aria-label={t('catalog.closeFilters')}
             className={cn('fixed inset-0 bg-idl-backdrop lg:hidden', layers.modal)}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -88,19 +92,19 @@ export function CatalogFiltersModal({
                 type="button"
                 onClick={onClose}
                 className="rounded-lg px-2 py-1 text-[13px] font-semibold text-idl-muted hover:text-idl-ink"
-                aria-label="Chiudi filtri"
+                aria-label={t('catalog.closeFilters')}
               >
                 ✕
               </button>
               <h2 id="catalog-filters-modal-title" className="text-[15px] font-extrabold tracking-tight text-idl-ink">
-                Filtri
+                {t('catalog.filters')}
               </h2>
               <button
                 type="button"
                 onClick={sidebarProps.onReset}
                 className="text-[12.5px] font-bold text-idl-amber"
               >
-                Azzera
+                {t('catalog.resetFilters')}
               </button>
             </div>
 
@@ -116,7 +120,9 @@ export function CatalogFiltersModal({
                 onClick={onClose}
                 className="w-full rounded-lg bg-idl-ink px-4 py-3 text-[14px] font-bold text-white transition hover:bg-[#2a2d35]"
               >
-                Mostra {totalProducts.toLocaleString('it-IT')} prodotti
+                {tParams('catalog.showProductsCount', {
+                  count: totalProducts.toLocaleString(locale.toLowerCase()),
+                })}
               </button>
             </div>
           </motion.section>

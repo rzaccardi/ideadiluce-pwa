@@ -343,7 +343,7 @@ export function MerchantCenterPanel() {
                       <TableCell className="text-xs text-gray-500">
                         {row.issues.length
                           ? row.issues.map((issue) => ISSUE_LABELS[issue]).join(', ')
-                          : '—'}
+                          : '-'}
                       </TableCell>
                     </TableRow>
                   ))}

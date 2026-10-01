@@ -23,6 +23,9 @@ const CONTENT_PAGE_TITLES: Partial<Record<ContentPageKey, string>> = {
   'guide-lampadina-r7s': 'Come scegliere una lampadina R7s',
   'guide-illuminare-soggiorno': 'Come illuminare il soggiorno',
   'guide-glossario': 'Glossario tecnico',
+  'guide-dimmerabilita': 'Dimmerabilità: come regolare la luce senza problemi',
+  'guide-grado-ip': 'Grado IP: protezione da polvere e acqua',
+  'guide-retrofit-led': "Retrofit LED: sostituire senza rifare l'impianto",
   'guide-scegliere-lampadina-led': 'Come scegliere la lampadina LED giusta',
   'guide-alimentatore-striscia-led': "Come calcolare l'alimentatore per una striscia LED",
 }

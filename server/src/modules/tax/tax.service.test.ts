@@ -79,7 +79,7 @@ function seedLikeRules(): TaxRule[] {
 
 const NET = 10_000
 
-describe('findMatchingTaxRule — matrice IVA core', () => {
+describe('findMatchingTaxRule - matrice IVA core', () => {
   const rules = seedLikeRules()
 
   it('B2C Italia → 22%', () => {
@@ -154,7 +154,7 @@ describe('findMatchingTaxRule — matrice IVA core', () => {
   })
 })
 
-describe('buildTaxBreakdown — importi', () => {
+describe('buildTaxBreakdown - importi', () => {
   const rules = seedLikeRules()
 
   it('calcola tax e gross per B2C IT', () => {
@@ -183,7 +183,7 @@ describe('buildTaxBreakdown — importi', () => {
   })
 })
 
-describe('vatForceAccepted — simulazione calculate', () => {
+describe('vatForceAccepted - simulazione calculate', () => {
   const rules = seedLikeRules()
 
   it('con vatForceAccepted tratta vatValid come false (no reverse charge UE)', () => {

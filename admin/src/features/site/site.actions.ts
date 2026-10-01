@@ -151,7 +151,7 @@ function parseDraftContent(locale: SiteLocale = siteStore.locale) {
     try {
       return JSON.parse(siteStore.draftJson) as unknown
     } catch {
-      throw new Error('JSON non valido — correggi la sintassi prima di salvare.')
+      throw new Error('JSON non valido - correggi la sintassi prima di salvare.')
     }
   }
   return draft?.content ?? siteStore.draftContent

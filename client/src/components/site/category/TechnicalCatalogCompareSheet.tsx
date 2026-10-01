@@ -109,7 +109,7 @@ export function TechnicalCatalogCompareSheet({ products, lp, onClose, className 
                 <td className="py-3 pr-4 text-idl-muted">Codice</td>
                 {rows.map(({ product, refLine }) => (
                   <td key={product.slug} className="py-3 pr-4 font-mono text-[12px] text-idl-graphite-2">
-                    {refLine ?? '—'}
+                    {refLine ?? '-'}
                   </td>
                 ))}
               </tr>
@@ -131,7 +131,7 @@ export function TechnicalCatalogCompareSheet({ products, lp, onClose, className 
                   <td className="py-3 pr-4 font-mono text-[12px] text-idl-muted">{tag}</td>
                   {rows.map(({ product, tags }) => (
                     <td key={product.slug} className="py-3 pr-4 text-idl-graphite-2">
-                      {tags.includes(tag) ? '✓' : '—'}
+                      {tags.includes(tag) ? '✓' : '-'}
                     </td>
                   ))}
                 </tr>

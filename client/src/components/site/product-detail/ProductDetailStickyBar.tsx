@@ -112,7 +112,7 @@ export function ProductDetailStickyBar({
                   isDesign ? 'text-idl-ink-muted' : 'font-mono text-idl-muted',
                 )}
               >
-                {subtitle ?? '—'}
+                {subtitle ?? '-'}
               </div>
             )}
           </div>

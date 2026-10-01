@@ -46,6 +46,9 @@ export const CONTENT_PAGE_KEYS = [
   'guide-lampadina-r7s',
   'guide-illuminare-soggiorno',
   'guide-glossario',
+  'guide-dimmerabilita',
+  'guide-grado-ip',
+  'guide-retrofit-led',
   'guide-scegliere-lampadina-led',
   'guide-alimentatore-striscia-led',
 ] as const
@@ -61,6 +64,9 @@ export const GUIDE_SLUG_TO_PAGE_KEY: Record<string, ContentPageKey> = {
   'lampadina-r7s': 'guide-lampadina-r7s',
   'illuminare-soggiorno': 'guide-illuminare-soggiorno',
   glossario: 'guide-glossario',
+  dimmerabilita: 'guide-dimmerabilita',
+  'grado-ip': 'guide-grado-ip',
+  'retrofit-led': 'guide-retrofit-led',
   'scegliere-lampadina-led': 'guide-scegliere-lampadina-led',
   'alimentatore-striscia-led': 'guide-alimentatore-striscia-led',
 }
@@ -81,7 +87,7 @@ export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> =
         kind: 'prose',
         paragraphs: [
           'Da oltre 25 anni selezioniamo brand di design e componentistica tecnica, con un catalogo che unisce arredo e ricambi difficili da trovare.',
-          'Il nostro team ti aiuta a scegliere lampade, lampadine e accessori — anche quando hai solo una foto dell\'attacco o un codice poco leggibile.',
+          'Il nostro team ti aiuta a scegliere lampade, lampadine e accessori - anche quando hai solo una foto dell\'attacco o un codice poco leggibile.',
         ],
       },
       {
@@ -390,6 +396,112 @@ export const CONTENT_PAGE_DEFAULTS: Record<ContentPageKey, ContentPageContent> =
           { title: 'Grado IP', description: 'Protezione da polvere e acqua (es. IP44 per bagno).' },
           { title: 'Dimmerabile', description: 'Compatibilità con regolatori di luce; verifica driver e lampada.' },
         ],
+      },
+      {
+        kind: 'cards',
+        title: 'Approfondisci',
+        items: [
+          { title: 'Dimmerabilità', description: 'Come scegliere lampade e driver dimmerabili', href: '/guide/dimmerabilita' },
+          { title: 'Grado IP', description: 'Protezione in bagno, esterno e ambienti umidi', href: '/guide/grado-ip' },
+          { title: 'Retrofit LED', description: 'Sostituire alogene e fluorescenti con LED', href: '/guide/retrofit-led' },
+        ],
+      },
+    ],
+  },
+
+  'guide-dimmerabilita': {
+    layout: 'article',
+    eyebrow: 'TECNICO · 5 MIN',
+    title: 'Dimmerabilità: come regolare la luce senza problemi',
+    subtitle: 'Lampada, driver e dimmer devono essere compatibili: ecco cosa controllare.',
+    blocks: [
+      {
+        kind: 'prose',
+        paragraphs: [
+          'Una lampada o una lampadina è dimmerabile solo se lo dichiara esplicitamente. Con il LED serve anche un driver compatibile con il tipo di regolatore (trailing edge, leading edge, 0–10V, DALI).',
+          'Se mescoli un dimmer a taglio di fase pensato per alogene con un LED non idoneo, puoi avere sfarfallio, rumore o spegnimenti improvvisi. Controlla sempre la scheda tecnica o chiedici il codice del dimmer e della sorgente.',
+          'Per strisce LED verifica se il controller/dimmer lavora in tensione costante (12/24V) o se serve un driver dimmerabile dedicato.',
+        ],
+      },
+      {
+        kind: 'features',
+        items: [
+          { title: 'LED dimmerabile', description: 'Marcatura "dimmable" su lampada o driver; potenza minima del dimmer rispettata.' },
+          { title: 'Tipo di dimmer', description: 'Trailing edge (RC) spesso ideale per LED; leading edge tipico delle alogene.' },
+          { title: 'Carico minimo', description: 'Alcuni dimmer richiedono un carico minimo: con pochi watt LED possono non partire.' },
+        ],
+      },
+      {
+        kind: 'cta',
+        title: 'Cerchi driver o dimmer?',
+        primaryLabel: 'Vedi driver e alimentatori →',
+        primaryHref: '/categoria-tecnica/driver',
+        variant: 'accent',
+      },
+    ],
+  },
+
+  'guide-grado-ip': {
+    layout: 'article',
+    eyebrow: 'TECNICO · 4 MIN',
+    title: 'Grado IP: protezione da polvere e acqua',
+    subtitle: 'Come leggere IP20, IP44, IP65 e scegliere la lampada giusta per bagno ed esterno.',
+    blocks: [
+      {
+        kind: 'prose',
+        paragraphs: [
+          'Il grado IP (Ingress Protection) indica quanto un apparecchio resiste a solidi e liquidi. La prima cifra riguarda polvere/corpi solidi (0–6), la seconda l\'acqua (0–9).',
+          'In casa, IP20 è tipico degli interni asciutti. In bagno, vicino a doccia o lavabo, serve almeno IP44 (spruzzi). Per esterni esposti alla pioggia punta a IP65 o superiore, salvo indicazioni del produttore.',
+          'Non basta "avere un po\' di protezione": un faretto da giardino con IP incompleto o un portalampade non sigillato possono rovinarsi in poco tempo.',
+        ],
+      },
+      {
+        kind: 'features',
+        items: [
+          { title: 'IP20', description: 'Interni asciutti: camera, soggiorno, corridoio.' },
+          { title: 'IP44', description: 'Spruzzi: zone bagno, portici riparati, ambienti umidi.' },
+          { title: 'IP65+', description: 'Getti e pioggia: giardino, facciate, area doccia esterna.' },
+        ],
+      },
+      {
+        kind: 'cta',
+        title: 'Illuminazione per esterni',
+        primaryLabel: 'Esplora ambienti esterni →',
+        primaryHref: '/ambienti/esterno',
+        variant: 'accent',
+      },
+    ],
+  },
+
+  'guide-retrofit-led': {
+    layout: 'article',
+    eyebrow: 'ACQUISTO · 6 MIN',
+    title: 'Retrofit LED: sostituire senza rifare l\'impianto',
+    subtitle: 'Attacco, watt equivalenti, reattori e quando conviene passare al LED.',
+    blocks: [
+      {
+        kind: 'prose',
+        paragraphs: [
+          'Il retrofit LED sostituisce alogene, fluorescenti o scariche con una sorgente LED sullo stesso attacco (E27, GU10, R7s, G13…). L\'obiettivo è ridurre consumi e calore senza cambiare portalampade, quando è possibile.',
+          'Controlla sempre: attacco e dimensioni (il LED può essere più lungo o largo), tensione (230V vs 12V), lumen desiderati e se serve bypassare reattore o starter (tipico sui tubi T8).',
+          'Per R7s lineari misura la lunghezza (78 o 118 mm). Per faretti GU10/GU5.3 verifica tensione e trasformatore. In dubbio, inviaci foto e codice: indichiamo l\'alternativa LED corretta.',
+        ],
+      },
+      {
+        kind: 'cards',
+        title: 'Casi frequenti',
+        items: [
+          { title: 'R7s lineare', description: 'Lunghezza e watt per faretti e applique lineari', href: '/guide/lampadina-r7s' },
+          { title: 'GU10 vs GU5.3', description: '230V o 12V: non sono intercambiabili', href: '/guide/gu10-gu53' },
+          { title: 'Scegliere il LED', description: 'Attacco, lumen e temperatura colore', href: '/guide/scegliere-lampadina-led' },
+        ],
+      },
+      {
+        kind: 'cta',
+        title: 'Trova la lampadina LED',
+        primaryLabel: 'Scegli per attacco →',
+        primaryHref: '/attacco',
+        variant: 'accent',
       },
     ],
   },

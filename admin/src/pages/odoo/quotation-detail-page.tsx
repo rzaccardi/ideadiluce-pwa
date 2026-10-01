@@ -193,18 +193,18 @@ export function OdooQuotationDetailPage() {
                 quotation.lines.map((line) => (
                   <TableRow key={line.id}>
                     <TableCell className="min-w-0">
-                      <p className="truncate font-medium">{line.productName ?? '—'}</p>
+                      <p className="truncate font-medium">{line.productName ?? '-'}</p>
                     </TableCell>
                     <TableCell className="text-right">{line.quantity}</TableCell>
                     <TableCell className="text-right whitespace-nowrap">
                       {line.unitPriceCents != null
                         ? formatMoney(line.unitPriceCents, quotation.currencyCode ?? 'EUR')
-                        : '—'}
+                        : '-'}
                     </TableCell>
                     <TableCell className="text-right whitespace-nowrap">
                       {line.subtotalCents != null
                         ? formatMoney(line.subtotalCents, quotation.currencyCode ?? 'EUR')
-                        : '—'}
+                        : '-'}
                     </TableCell>
                     <TableCell>
                       <OdooHubProductLink odooProductId={line.productId} />

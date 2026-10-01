@@ -43,7 +43,7 @@ function placeholderAddress(firstName: string, lastName: string): TestCheckoutAd
     line1: 'Da definire',
     streetNumber: '',
     isSnc: true,
-    city: '—',
+    city: '-',
     postalCode: '00000',
     province: '',
     country: 'IT',

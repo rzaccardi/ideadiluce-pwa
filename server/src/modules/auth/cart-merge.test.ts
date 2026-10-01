@@ -63,4 +63,36 @@ describe('cart-merge', () => {
     expect(lines).toHaveLength(2)
     expect(cartLineKey('lampada-a', '1')).not.toBe(cartLineKey('lampada-a', '2'))
   })
+
+  it('accorpa slug/template e VAR-/id come stessa riga', () => {
+    const lines = mergeCartItemLists([
+      {
+        items: [
+          {
+            productRef: '1997',
+            variantRef: '88',
+            quantity: 1,
+            clientUnitPriceEstimate: 1000,
+            metadataJson: { productSlug: 'lampada' },
+          },
+        ],
+      },
+      {
+        items: [
+          {
+            productRef: 'lampada',
+            variantRef: 'VAR-88',
+            quantity: 2,
+            clientUnitPriceEstimate: 1100,
+            metadataJson: { productSlug: 'lampada' },
+          },
+        ],
+      },
+    ])
+
+    expect(lines).toHaveLength(1)
+    expect(lines[0]?.quantity).toBe(3)
+    expect(lines[0]?.productRef).toBe('1997')
+    expect(lines[0]?.variantRef).toBe('88')
+  })
 })

@@ -30,7 +30,7 @@ export function HomeBrandGrid({ brands, lp, stagger = 0.04 }: Props) {
         const badges = brandAreaBadges(brand.categories)
         const productMeta =
           brand.productCount > 0 ? `${brand.productCount} prodotti` : 'Catalogo disponibile'
-        const brandLabel = `${brand.name} — ${productMeta}`
+        const brandLabel = `${brand.name} - ${productMeta}`
 
         return (
           <StaggerItem key={brand.slug} className="min-w-0">

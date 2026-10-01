@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, type ReactNode } from 'react'
+import { useI18n } from '@/hooks/use-i18n'
 import { cn } from '@/utils/cn'
 
 export const FILTER_LIST_INITIAL_VISIBLE = 8
@@ -27,6 +28,7 @@ export function ExpandableFilterList<T>({
   listClassName,
   tone = 'tech',
 }: Props<T>) {
+  const { t, tParams } = useI18n()
   const [expanded, setExpanded] = useState(() =>
     isSelected ? items.slice(initialVisible).some(isSelected) : false,
   )
@@ -54,7 +56,7 @@ export function ExpandableFilterList<T>({
             tone === 'design' ? 'text-idl-brass' : 'text-idl-amber',
           )}
         >
-          {expanded ? 'Mostra meno' : `Mostra tutti (${items.length})`}
+          {expanded ? t('catalog.showLess') : tParams('catalog.showAllCount', { count: items.length })}
         </button>
       ) : null}
     </div>

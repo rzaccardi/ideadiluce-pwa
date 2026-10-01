@@ -72,7 +72,7 @@ export function OrdersSummaryBadges({ items, total }: OrdersSummaryBadgesProps) 
       {paidSyncPending > 0 ? (
         <Badge className="gap-1 bg-orange-100 text-orange-900 hover:bg-orange-100">
           <AlertTriangleIcon className="h-3 w-3" aria-hidden />
-          {paidSyncPending} pagati — sync in attesa
+          {paidSyncPending} pagati - sync in attesa
         </Badge>
       ) : null}
     </div>

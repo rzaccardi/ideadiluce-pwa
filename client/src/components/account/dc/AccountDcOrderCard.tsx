@@ -43,7 +43,7 @@ export function AccountDcOrderCard({ order, lines, compact = false }: Props) {
   const total =
     order.totalAmount != null && order.currencyCode
       ? formatMoney(order.totalAmount, order.currencyCode)
-      : '—'
+      : '-'
   const displayStatus = orderDisplayStatus(order)
   const statusLabel = orderStatusLabel(displayStatus, locale)
   const statusTone = orderStatusTone(displayStatus)

@@ -186,13 +186,13 @@ export function OrdersListTable({
           </TableCell>
           <TableCell className="text-center tabular-nums text-sm">{o.lineItemCount}</TableCell>
           <TableCell className="text-right font-medium tabular-nums">
-            {o.amountTotal != null ? formatMoney(o.amountTotal, o.currencyCode) : '—'}
+            {o.amountTotal != null ? formatMoney(o.amountTotal, o.currencyCode) : '-'}
           </TableCell>
           <TableCell
             className="max-w-[120px] truncate text-muted-foreground"
             title={o.paymentMethod ?? undefined}
           >
-            {o.paymentMethod ?? '—'}
+            {o.paymentMethod ?? '-'}
           </TableCell>
           <TableCell className="text-xs tabular-nums text-muted-foreground">
             {o.odooLastSyncStatus === 'FAILED' ? (
@@ -204,7 +204,7 @@ export function OrdersListTable({
             ) : o.odooSaleOrderId != null ? (
               `#IDL-${new Date(o.createdAt).getFullYear()}-${String(o.odooSaleOrderId).padStart(5, '0')}`
             ) : (
-              '—'
+              '-'
             )}
           </TableCell>
           <TableCell

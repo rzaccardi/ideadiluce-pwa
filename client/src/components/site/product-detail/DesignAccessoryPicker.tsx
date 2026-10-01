@@ -168,7 +168,7 @@ export function DesignAccessoryPicker({
                 {item.imageUrl ? (
                   <SiteImage src={item.imageUrl} alt="" fill className="object-cover" sizes="33vw" />
                 ) : (
-                  <div className="flex h-full items-center justify-center text-xs text-idl-ink-muted">—</div>
+                  <div className="flex h-full items-center justify-center text-xs text-idl-ink-muted">-</div>
                 )}
               </Link>
             ) : (
@@ -176,7 +176,7 @@ export function DesignAccessoryPicker({
                 {item.imageUrl ? (
                   <SiteImage src={item.imageUrl} alt="" fill className="object-cover" sizes="33vw" />
                 ) : (
-                  <div className="flex h-full items-center justify-center text-xs text-idl-ink-muted">—</div>
+                  <div className="flex h-full items-center justify-center text-xs text-idl-ink-muted">-</div>
                 )}
               </div>
             )}

@@ -221,8 +221,9 @@ export function createApiV2OdooCustomerAdapter(): OdooCustomerAdapter {
     async updateCustomerProfile(ctx, partnerId, input) {
       try {
         const current = await odooApiGetCustomer(partnerId, ctx.correlationId)
+        const email = (input.email ?? current.email).toLowerCase().trim()
         const payload = buildOdooApiCustomerWrite({
-          email: current.email,
+          email,
           firstName: input.firstName ?? current.name,
           lastName: input.lastName,
           phone: input.phone,
@@ -242,7 +243,7 @@ export function createApiV2OdooCustomerAdapter(): OdooCustomerAdapter {
               }
             : undefined,
         })
-        await upsertWithValidate(ctx, { ...payload, email: current.email })
+        await upsertWithValidate(ctx, { ...payload, email })
       } catch (e) {
         wrap(e, ctx)
       }

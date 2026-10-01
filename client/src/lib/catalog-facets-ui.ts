@@ -142,7 +142,7 @@ export function facetWattaggioNumericValues(
 }
 
 export function formatWattLabel(watts: number): string {
-  if (!Number.isFinite(watts)) return '—'
+  if (!Number.isFinite(watts)) return '-'
   const rounded = Math.round(watts * 10) / 10
   return Number.isInteger(rounded) ? `${rounded} W` : `${rounded} W`
 }

@@ -47,17 +47,17 @@ function statusBadgeVariant(
 }
 
 function formatPct(value: number | null): string {
-  if (value == null) return '—'
+  if (value == null) return '-'
   return `${value.toLocaleString('it-IT', { maximumFractionDigits: 3 })}%`
 }
 
 function formatMs(value: number | null): string {
-  if (value == null) return '—'
+  if (value == null) return '-'
   return `${Math.round(value)} ms`
 }
 
 function sslLabel(iso: string | null): string {
-  if (!iso) return '—'
+  if (!iso) return '-'
   const warn = sslExpiryWarning(iso)
   const when = formatDateTime(iso)
   if (warn === 'expired') return `Scaduto ${when}`
@@ -227,7 +227,7 @@ export function UptimePage() {
           <AlertTriangleIcon />
           <AlertTitle>Certificato SSL in scadenza</AlertTitle>
           <AlertDescription>
-            {sslSoon.map((m) => m.name).join(', ')} — rinnovo da verificare su DigitalOcean o sul
+            {sslSoon.map((m) => m.name).join(', ')} - rinnovo da verificare su DigitalOcean o sul
             dominio custom.
           </AlertDescription>
         </Alert>
@@ -424,7 +424,7 @@ export function UptimePage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden text-sm text-gray-500 sm:table-cell">
-                      {incident.reason || (incident.durationSeconds ? `${incident.durationSeconds} s` : '—')}
+                      {incident.reason || (incident.durationSeconds ? `${incident.durationSeconds} s` : '-')}
                     </TableCell>
                   </TableRow>
                 ))}

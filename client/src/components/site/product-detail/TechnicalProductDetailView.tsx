@@ -376,7 +376,7 @@ export function TechnicalProductDetailView({ product, state }: Props) {
                         <span className="font-semibold">{item.name}</span>
                       )}
                       {item.reason ? (
-                        <span className="text-idl-muted"> — {item.reason}</span>
+                        <span className="text-idl-muted"> - {item.reason}</span>
                       ) : null}
                     </li>
                   ))}

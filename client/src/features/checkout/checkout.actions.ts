@@ -592,19 +592,46 @@ export function hasCheckoutContactFromProfile(): boolean {
   return Boolean(firstName && lastName && isCheckoutPhoneValid(phone))
 }
 
-/** Indirizzo destinazione completo tranne il telefono (per evidenziare il campo). */
+/** Indirizzo (via/città/CAP/…) completo senza richiedere il telefono. */
+function isAddressReadyWithoutPhone(address: AddressInput): boolean {
+  const country = address.country.trim().toUpperCase()
+  return Boolean(
+    address.line1.trim() &&
+      address.city.trim() &&
+      address.postalCode.trim() &&
+      country &&
+      (address.isSnc || address.streetNumber.trim()) &&
+      (country !== 'IT' || address.province.trim()),
+  )
+}
+
+/**
+ * True quando manca un telefono valido e l’indirizzo è già pronto:
+ * - destinazione spedizione senza telefono, oppure
+ * - telefono fatturazione mancante (campo in alto) mentre la destinazione è pronta
+ *   (billingComplete blocca i metodi anche se lo shipping ha già un phone da Odoo).
+ */
 export function isShippingBlockedByMissingPhone(): boolean {
-  const address = shippingAddressPayload()
-  const addressWithoutPhone =
-    Boolean(
-      address.line1.trim() &&
-        address.city.trim() &&
-        address.postalCode.trim() &&
-        address.country.trim() &&
-        (address.isSnc || address.streetNumber.trim()) &&
-        (address.country !== 'IT' || address.province.trim()),
-    )
-  return addressWithoutPhone && !isCheckoutPhoneValid(address.phone ?? '')
+  const shipping = shippingAddressPayload()
+  const billing = billingAddressPayload()
+  const shippingReady = isAddressReadyWithoutPhone(shipping)
+  const billingReady = isAddressReadyWithoutPhone(billing)
+  if (!shippingReady && !billingReady) return false
+
+  const shippingPhoneOk = isCheckoutPhoneValid(shipping.phone ?? '')
+  const billingPhoneOk = isCheckoutPhoneValid(billing.phone ?? '')
+
+  if ((checkoutStore.deliveryRecipient.mode ?? 'self') === 'other') {
+    return shippingReady && !shippingPhoneOk
+  }
+
+  if (shippingReady) return !shippingPhoneOk || !billingPhoneOk
+  return billingReady && !billingPhoneOk
+}
+
+function pickBestCheckoutPhone(...candidates: Array<string | null | undefined>): string {
+  const trimmed = candidates.map((value) => (value ?? '').trim()).filter(Boolean)
+  return trimmed.find((value) => isCheckoutPhoneValid(value)) ?? trimmed[0] ?? ''
 }
 
 function syncCheckoutContactFromProfile() {
@@ -614,13 +641,14 @@ function syncCheckoutContactFromProfile() {
   const profileFirst = user?.firstName?.trim() || user?.shippingAddress?.firstName?.trim() || ''
   const profileLast = user?.lastName?.trim() || user?.shippingAddress?.lastName?.trim() || ''
   const profilePhone = user?.phone?.trim() || user?.shippingAddress?.phone?.trim() || ''
+  const bestPhone = pickBestCheckoutPhone(bill.phone, ship.phone, profilePhone)
 
   if (!bill.firstName.trim() && profileFirst) bill.firstName = profileFirst
   if (!bill.lastName.trim() && profileLast) bill.lastName = profileLast
-  if (!(bill.phone ?? '').trim() && profilePhone) bill.phone = profilePhone
+  if (!(bill.phone ?? '').trim() && bestPhone) bill.phone = bestPhone
   if (!ship.firstName.trim()) ship.firstName = bill.firstName.trim() || profileFirst
   if (!ship.lastName.trim()) ship.lastName = bill.lastName.trim() || profileLast
-  if (!(ship.phone ?? '').trim()) ship.phone = bill.phone?.trim() || profilePhone
+  if (!(ship.phone ?? '').trim() && bestPhone) ship.phone = bestPhone
 }
 
 function syncShippingContactFromBillingIfNeeded() {
@@ -629,6 +657,15 @@ function syncShippingContactFromBillingIfNeeded() {
   if (!ship.firstName.trim() && bill.firstName.trim()) ship.firstName = bill.firstName
   if (!ship.lastName.trim() && bill.lastName.trim()) ship.lastName = bill.lastName
   if (!(ship.phone ?? '').trim() && (bill.phone ?? '').trim()) ship.phone = bill.phone
+}
+
+/** Allinea il telefono del contatto in alto (billing) se presente solo sulla destinazione. */
+function syncBillingContactFromShippingIfNeeded() {
+  const ship = checkoutStore.draft.shipping
+  const bill = checkoutStore.draft.billing
+  if (!(bill.phone ?? '').trim() && (ship.phone ?? '').trim()) bill.phone = ship.phone
+  if (!bill.firstName.trim() && ship.firstName.trim()) bill.firstName = ship.firstName
+  if (!bill.lastName.trim() && ship.lastName.trim()) bill.lastName = ship.lastName
 }
 
 function syncShippingDestinationFromBillingIfNeeded() {
@@ -890,8 +927,12 @@ export function prefillCheckoutFromAuthUser() {
   }
   if (shipAddr.firstName.trim()) billing.firstName = shipAddr.firstName
   if (shipAddr.lastName.trim()) billing.lastName = shipAddr.lastName
+  if (shipAddr.phone?.trim() && !(billing.phone ?? '').trim()) {
+    billing.phone = shipAddr.phone
+  }
 
   syncCheckoutContactFromProfile()
+  syncBillingContactFromShippingIfNeeded()
   syncAnagraficaCollectedFromAuthProfile()
 }
 
@@ -956,11 +997,15 @@ function applyCheckoutShippingAddressSelection() {
       id: matched.id,
       label: matched.label,
     }
+    syncCheckoutContactFromProfile()
     return
   }
 
   checkoutStore.draft.billingSameAsShipping = false
   checkoutStore.draft.shipping = savedAddressToInput(matched)
+  syncBillingContactFromShippingIfNeeded()
+  syncShippingContactFromBillingIfNeeded()
+  syncCheckoutContactFromProfile()
 }
 
 export function selectCheckoutShippingAddress(selection: string) {
@@ -994,6 +1039,8 @@ export function selectCheckoutShippingAddress(selection: string) {
   }
   checkoutStore.draft.billingSameAsShipping = false
   checkoutStore.draft.shipping = savedAddressToInput(saved)
+  syncBillingContactFromShippingIfNeeded()
+  syncShippingContactFromBillingIfNeeded()
   invalidateShippingIfDestinationChanged()
   if (destinationComplete(shippingAddressPayload())) {
     scheduleShippingQuotesFetch(0)
@@ -1397,6 +1444,13 @@ export function updateDeliveryRecipientField(
   value: string,
 ) {
   checkoutStore.deliveryRecipient[key] = value
+  if ((checkoutStore.deliveryRecipient.mode ?? 'self') !== 'other') return
+  if (key === 'phone' || key === 'firstName' || key === 'lastName') {
+    invalidateShippingIfDestinationChanged()
+    if (destinationComplete(shippingAddressPayload())) {
+      scheduleShippingQuotesFetch(0)
+    }
+  }
 }
 
 export function updateDropshipAddress<K extends keyof AddressInput>(key: K, value: AddressInput[K]) {
@@ -1456,10 +1510,16 @@ export function updateCheckoutAddress<K extends AddressKey>(
 ) {
   checkoutStore.draft[kind][key] = value
   if (kind === 'billing') {
+    if (key === 'phone' || key === 'firstName' || key === 'lastName') {
+      syncShippingContactFromBillingIfNeeded()
+    }
     syncShippingDestinationFromBillingIfNeeded()
     if (destinationComplete(shippingAddressPayload())) {
       scheduleShippingQuotesFetch()
     }
+  }
+  if (kind === 'shipping' && (key === 'phone' || key === 'firstName' || key === 'lastName')) {
+    syncBillingContactFromShippingIfNeeded()
   }
   invalidateShippingIfDestinationChanged()
   if (kind === 'shipping') {

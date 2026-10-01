@@ -393,7 +393,7 @@ export const professionalAccountService = {
     const viesLabel = vatValidated
       ? 'VIES: valida'
       : viesUnavailable
-        ? 'VIES: non disponibile — da verificare'
+        ? 'VIES: non disponibile - da verificare'
         : 'VIES: non verificata'
 
     const lines = [
@@ -410,7 +410,7 @@ export const professionalAccountService = {
       row.sdiCode ? `Codice SDI: ${row.sdiCode}` : null,
       visuraUrl ? `Visura: ${visuraUrl}` : visuraFile ? 'Visura: allegata a questa email' : null,
       odoo.odooPartnerId ? `Partner Odoo: #${odoo.odooPartnerId}` : null,
-      odoo.syncError ? `Sync Odoo: fallita — ${odoo.syncError}` : null,
+      odoo.syncError ? `Sync Odoo: fallita - ${odoo.syncError}` : null,
       userResult.accountCreated ? `Account PWA creato (userId: ${userResult.userId})` : `Utente collegato: ${userResult.userId}`,
       `Lingua: ${row.locale}`,
       `ID richiesta: ${row.id}`,
@@ -427,30 +427,63 @@ export const professionalAccountService = {
     })
 
     const ctx: OdooCallContext = { correlationId: req.correlationId, req }
-    await sendPwaMail(ctx, {
-      templateKey: 'professional_request_admin',
-      emailTo: PWA_ADMIN_MAIL_TO,
-      vars: {
-        company_name: row.companyName,
-        body_text: lines.join('\n'),
-      },
-      attachments:
-        visuraFile && !visuraUrl
-          ? [{ filename: visuraFile.originalname, content: visuraFile.buffer, mimetype: visuraFile.mimetype }]
-          : undefined,
-    })
+    const firstNameSuffix = firstName ? ` ${firstName}` : ''
 
-    if (userResult.accountCreated && userResult.plainPassword) {
+    try {
       await sendPwaMail(ctx, {
-        templateKey: 'professional_account_customer',
+        templateKey: 'professional_request_admin',
+        emailTo: PWA_ADMIN_MAIL_TO,
+        vars: {
+          company_name: row.companyName,
+          body_text: lines.join('\n'),
+        },
+        attachments:
+          visuraFile && !visuraUrl
+            ? [{ filename: visuraFile.originalname, content: visuraFile.buffer, mimetype: visuraFile.mimetype }]
+            : undefined,
+      })
+    } catch (err) {
+      logger.warn('professional-account.admin_mail_failed', {
+        id: row.id,
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+
+    try {
+      await sendPwaMail(ctx, {
+        templateKey: 'professional_request_customer',
         emailTo: email,
         vars: {
-          first_name_suffix: firstName ? ` ${firstName}` : '',
-          email,
-          password: userResult.plainPassword,
-          login_url: publicAppUrl('/login'),
+          first_name_suffix: firstNameSuffix,
         },
       })
+    } catch (err) {
+      logger.warn('professional-account.customer_mail_failed', {
+        id: row.id,
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+
+    if (userResult.accountCreated && userResult.plainPassword) {
+      try {
+        await sendPwaMail(ctx, {
+          templateKey: 'account_credentials',
+          emailTo: email,
+          vars: {
+            first_name_suffix: firstNameSuffix,
+            intro:
+              'Abbiamo creato un accesso al portale Idea di Luce insieme alla tua richiesta account professionisti.',
+            email,
+            password: userResult.plainPassword,
+            login_url: publicAppUrl('/login'),
+          },
+        })
+      } catch (err) {
+        logger.warn('professional-account.credentials_mail_failed', {
+          id: row.id,
+          error: err instanceof Error ? err.message : String(err),
+        })
+      }
     }
 
     return {

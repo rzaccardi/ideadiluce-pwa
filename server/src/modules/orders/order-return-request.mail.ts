@@ -14,7 +14,7 @@ export type ReturnRequestMailInput = {
 type MailContent = { subject: string; text: string }
 
 function euros(cents: number | null, currency: string | null): string {
-  if (cents == null) return '—'
+  if (cents == null) return '-'
   const code = currency || 'EUR'
   return `${(cents / 100).toFixed(2)} ${code}`
 }
@@ -50,14 +50,14 @@ function lineSummary(order: OrderDetailDTO): string {
       const name = line.productName ?? line.productRef
       const qty = `x${line.quantity}`
       const total = euros(line.lineTotalCents, order.currencyCode)
-      return `- ${name} (${line.productRef}) ${qty} — ${total}`
+      return `- ${name} (${line.productRef}) ${qty} - ${total}`
     })
     .join('\n')
 }
 
 export function buildAdminReturnRequestEmail(input: ReturnRequestMailInput): MailContent {
   const { order } = input
-  const name = input.customerName?.trim() || '—'
+  const name = input.customerName?.trim() || '-'
   const text = [
     'Tipo: Richiesta di reso / recesso',
     `ID richiesta: ${input.requestId}`,
@@ -79,7 +79,7 @@ export function buildAdminReturnRequestEmail(input: ReturnRequestMailInput): Mai
     .join('\n')
 
   return {
-    subject: `[Idea di Luce] Richiesta di reso — ordine ${orderRef(order)} — ${input.customerEmail}`,
+    subject: `[Idea di Luce] Richiesta di reso - ordine ${orderRef(order)} - ${input.customerEmail}`,
     text,
   }
 }
@@ -93,7 +93,7 @@ export function buildCustomerReturnRequestEmail(input: ReturnRequestMailInput): 
 
   if (input.locale === 'EN') {
     return {
-      subject: `Return request received — Idea di Luce (${ref})`,
+      subject: `Return request received - Idea di Luce (${ref})`,
       text: `${hello}
 
 We have received your return request for order ${ref}.
@@ -113,7 +113,7 @@ Idea di Luce`,
 
   if (input.locale === 'ES') {
     return {
-      subject: `Solicitud de devolución recibida — Idea di Luce (${ref})`,
+      subject: `Solicitud de devolución recibida - Idea di Luce (${ref})`,
       text: `${hello}
 
 Hemos recibido tu solicitud de devolución del pedido ${ref}.
@@ -133,7 +133,7 @@ Idea di Luce`,
 
   if (input.locale === 'FR') {
     return {
-      subject: `Demande de retour reçue — Idea di Luce (${ref})`,
+      subject: `Demande de retour reçue - Idea di Luce (${ref})`,
       text: `${hello}
 
 Nous avons bien reçu votre demande de retour pour la commande ${ref}.
@@ -153,7 +153,7 @@ Idea di Luce`,
 
   if (input.locale === 'DE') {
     return {
-      subject: `Rücksendeanfrage erhalten — Idea di Luce (${ref})`,
+      subject: `Rücksendeanfrage erhalten - Idea di Luce (${ref})`,
       text: `${hello}
 
 Wir haben Ihre Rücksendeanfrage für die Bestellung ${ref} erhalten.
@@ -173,7 +173,7 @@ Idea di Luce`,
 
   if (input.locale === 'RO') {
     return {
-      subject: `Cerere de retur primită — Idea di Luce (${ref})`,
+      subject: `Cerere de retur primită - Idea di Luce (${ref})`,
       text: `${hello}
 
 Am primit cererea ta de retur pentru comanda ${ref}.
@@ -192,7 +192,7 @@ Idea di Luce`,
   }
 
   return {
-    subject: `Richiesta di reso ricevuta — Idea di Luce (${ref})`,
+    subject: `Richiesta di reso ricevuta - Idea di Luce (${ref})`,
     text: `${hello}
 
 Abbiamo ricevuto la tua richiesta di reso per l'ordine ${ref}.

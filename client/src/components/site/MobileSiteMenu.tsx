@@ -208,8 +208,8 @@ function MobileMegaColumnContent({
         {column.links.map((link, index) => {
           const visual = resolveMenuLinkVisual(link, column.title, index)
           const subtitle =
-            link.label.includes(' — ') ? link.label.split(' — ').slice(1).join(' — ') : undefined
-          const title = link.label.split(' — ')[0] ?? link.label
+            link.label.includes(' - ') ? link.label.split(' - ').slice(1).join(' - ') : undefined
+          const title = link.label.split(' - ')[0] ?? link.label
 
           return (
             <MobileVisualLink

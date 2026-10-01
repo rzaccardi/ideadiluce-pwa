@@ -25,8 +25,18 @@ const CATALOG_KIND_CATEGORY: Record<
   },
 }
 
+/** Allineato a `catalogWorldOfCategorySlug` — senza import circolare da catalog-filters. */
 const DESIGN_CATEGORY_RE = /arredo|design|decorativ/i
-const TECHNICAL_CATEGORY_RE = /tecnica|tecnici|ricambi|lampadine|componenti|driver|alimentator/i
+const TECHNICAL_CATEGORY_RE =
+  /tecnica|tecnici|tecnico|ricambi|lampadine|componenti|driver|alimentator/i
+
+/**
+ * Segnali forti di prodotto tecnico/ricambio.
+ * NON usare attacchi (E27/GU10) o specTags da soli: le lampade d'arredo li hanno spesso
+ * e finirebbero con la card tecnica + tasto Aggiungi.
+ */
+const TECHNICAL_PRODUCT_NAME_RE =
+  /\b(lampadin[ae]|driver|alimentator[ei]?|starter|ricambi?|fluorescent[ei]|neon|ballast|trasformatore|led[\s-]?strip|nastro[\s-]?led|tubo[\s-]?led)\b/i
 
 function categoryHaystack(product: ProductDetailDTO): string {
   const parts = [
@@ -36,20 +46,33 @@ function categoryHaystack(product: ProductDetailDTO): string {
   return parts.filter(Boolean).join(' ').toLowerCase()
 }
 
+function worldFromCategoryText(text: string | null | undefined): ProductCatalogKind | null {
+  if (!text?.trim()) return null
+  // Preferisci design se presente (prodotto in entrambi i mondi → card arredo senza Add).
+  if (DESIGN_CATEGORY_RE.test(text)) return 'design'
+  if (TECHNICAL_CATEGORY_RE.test(text)) return 'technical'
+  return null
+}
+
+function kindFromTechnicalNameSignal(text: string): ProductCatalogKind | null {
+  if (TECHNICAL_PRODUCT_NAME_RE.test(text)) return 'technical'
+  return null
+}
+
+/**
+ * Sceglie il layout card (arredo senza Aggiungi vs tecnica con Aggiungi).
+ * Default: design — meglio omettere Aggiungi su un dubbio arredo che mostrarlo per errore.
+ */
 export function resolveProductCardCatalogKind(product: ProductCardDTO): ProductCatalogKind {
   const slugOverride = PRODUCT_CATALOG_KIND_BY_SLUG[product.slug]
   if (slugOverride) return slugOverride
 
-  const categories = [product.categorySlug].filter(Boolean).join(' ').toLowerCase()
-  if (DESIGN_CATEGORY_RE.test(categories)) return 'design'
-  if (TECHNICAL_CATEGORY_RE.test(categories)) return 'technical'
-
-  if (product.specTags?.length) return 'technical'
+  const fromCategory = worldFromCategoryText(product.categorySlug)
+  if (fromCategory) return fromCategory
 
   const text = [product.name, product.shortDescription].filter(Boolean).join(' · ')
-  if (/\b(E27|E14|GU10|GU5|R7s|GX53|G9|G4|driver|alimentator|starter|dimmer|T5|T8|G5)\b/i.test(text)) {
-    return 'technical'
-  }
+  const fromName = kindFromTechnicalNameSignal(text)
+  if (fromName) return fromName
 
   return 'design'
 }
@@ -67,16 +90,10 @@ export function resolveProductCatalogKindFromSlug(slug: string): ProductCatalogK
   if (slugOverride) return slugOverride
 
   const normalized = slug.toLowerCase()
-  if (DESIGN_CATEGORY_RE.test(normalized)) return 'design'
-  if (TECHNICAL_CATEGORY_RE.test(normalized)) return 'technical'
+  const fromCategory = worldFromCategoryText(normalized)
+  if (fromCategory) return fromCategory
 
-  if (
-    /\b(e27|e14|gu10|gu5|r7s|gx53|g9|g4|driver|alimentator|starter|dimmer|t5|t8|g5|lampadina|fluorescent|ricambio|component)\b/i.test(
-      normalized,
-    )
-  ) {
-    return 'technical'
-  }
+  if (kindFromTechnicalNameSignal(normalized)) return 'technical'
 
   return 'design'
 }
@@ -85,17 +102,12 @@ export function resolveProductCatalogKind(product: ProductDetailDTO): ProductCat
   const slugOverride = PRODUCT_CATALOG_KIND_BY_SLUG[product.slug]
   if (slugOverride) return slugOverride
 
-  const categories = categoryHaystack(product)
-  if (DESIGN_CATEGORY_RE.test(categories)) return 'design'
-  if (TECHNICAL_CATEGORY_RE.test(categories)) return 'technical'
-
-  if (product.brand?.name && !product.specTags?.length) return 'design'
-  if (product.specTags?.length) return 'technical'
+  const fromHaystack = worldFromCategoryText(categoryHaystack(product))
+  if (fromHaystack) return fromHaystack
 
   const text = [product.name, product.shortDescription].filter(Boolean).join(' · ')
-  if (/\b(E27|E14|GU10|GU5|R7s|GX53|G9|G4|driver|alimentator|starter|dimmer|T5|T8|G5)\b/i.test(text)) {
-    return 'technical'
-  }
+  const fromName = kindFromTechnicalNameSignal(text)
+  if (fromName) return fromName
 
   return 'design'
 }

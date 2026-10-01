@@ -25,8 +25,13 @@ describe('resolveDcActiveNavId', () => {
   it('risolve le altre voci nav note', () => {
     expect(resolveDcActiveNavId('/attacco/gu10')).toBe('attacco')
     expect(resolveDcActiveNavId('/ambienti/soggiorno')).toBe('ambienti')
+    expect(resolveDcActiveNavId('/acquista-ambiente')).toBe('ambienti')
     expect(resolveDcActiveNavId('/brand/osram')).toBe('brand')
     expect(resolveDcActiveNavId('/guide')).toBe('guide')
+    expect(resolveDcActiveNavId('/guide/dimmerabilita')).toBe('guide')
+    expect(resolveDcActiveNavId('/guide/grado-ip')).toBe('guide')
+    expect(resolveDcActiveNavId('/guide/retrofit-led')).toBe('guide')
+    expect(resolveDcActiveNavId('/blog')).toBe('guide')
     expect(resolveDcActiveNavId('/negozio')).toBeNull()
   })
 })

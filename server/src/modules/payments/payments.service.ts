@@ -177,7 +177,7 @@ async function stripeLineItemsForOrder(
   const ship = cart.shippingSelection
   if (ship && ship.amountCents > 0) {
     lines.push({
-      name: `Spedizione — ${ship.label}`,
+      name: `Spedizione - ${ship.label}`,
       amountCents: ship.amountCents,
       quantity: 1,
       currencyCode: ship.currencyCode,
@@ -515,7 +515,7 @@ export const paymentsService = {
     const total = subtotal + taxOrder.taxCents + (cartPriced.shippingSelection?.amountCents ?? 0)
     const vatWarning =
       body.vatForceAccepted && body.business?.vatNumber
-        ? `[VAT forzato] P.IVA ${body.business.vatNumber} non validata VIES — proseguimento manuale.`
+        ? `[VAT forzato] P.IVA ${body.business.vatNumber} non validata VIES - proseguimento manuale.`
         : null
     const priceSnapshot = buildCheckoutPriceSnapshot(cartPriced, {
       estimatedTax: taxOrder.taxCents,
@@ -1135,6 +1135,7 @@ export const paymentsService = {
     }
     const latestPayment = order.payments[0] ?? null
     const base = mapOrderStatus(order, latestPayment)
+    const billingAddress = parseShippingAddressJson(order.billingAddressJson)
     const shippingAddress = parseShippingAddressJson(order.shippingAddressJson)
     const lines = await loadPwaOrderLines(order.id)
     const cart = await prisma.cart.findUnique({
@@ -1163,9 +1164,11 @@ export const paymentsService = {
       ...base,
       displayOrderNumber: formatDisplayOrderNumber(order),
       email: order.email,
-      customerFirstName: shippingAddress?.firstName?.trim() || null,
+      customerFirstName:
+        shippingAddress?.firstName?.trim() || billingAddress?.firstName?.trim() || null,
       createdAt: order.createdAt.toISOString(),
       paidAt: order.paidAt?.toISOString() ?? null,
+      billingAddress,
       shippingAddress,
       lines,
       subtotalCents: subtotalCents > 0 ? subtotalCents : null,

@@ -32,11 +32,15 @@ import {
 import { catalogPendingLoadCount } from '@/lib/catalog-pagination'
 import {
   attaccoPathSlugFromCode,
-  taxonomyPageTitle,
   taxonomyPath,
   type CatalogTaxonomyContext,
   type CatalogTaxonomyKind,
 } from '@/lib/catalog-taxonomy'
+import {
+  translateTaxonomyHubLabel,
+  translateTaxonomyPageSubtitle,
+  translateTaxonomyPageTitle,
+} from '@/lib/catalog-taxonomy-i18n'
 import { useRouter } from '@/lib/navigation'
 
 export function CatalogPage({
@@ -63,7 +67,7 @@ export function CatalogPage({
   const { locale } = useLocale()
   const lp = useLocalePath()
   const router = useRouter()
-  const { t } = useI18n()
+  const { t, tParams } = useI18n()
   const authSnap = useSnapshot(authStore)
   const [params, setParams] = useQueryParams()
   const taxonomy = forcedTaxonomy
@@ -131,12 +135,10 @@ export function CatalogPage({
   const selectedPriceBucket =
     priceBucketParam ?? centsToPriceBucket(minPriceFromUrl, maxPriceFromUrl)
 
-  const pageTitle = taxonomy ? taxonomyPageTitle(taxonomy) : undefined
-  const pageSubtitle = taxonomy
-    ? `Prodotti filtrati per ${taxonomy.hubLabel.toLowerCase()}.`
-    : undefined
+  const pageTitle = taxonomy ? translateTaxonomyPageTitle(taxonomy, t, tParams) : undefined
+  const pageSubtitle = taxonomy ? translateTaxonomyPageSubtitle(taxonomy, tParams, t) : undefined
   const breadcrumbParent = taxonomy
-    ? { label: taxonomy.hubLabel, href: taxonomy.hubPath }
+    ? { label: translateTaxonomyHubLabel(taxonomy.kind, t), href: taxonomy.hubPath }
     : undefined
 
   const products = useSnapshot(catalogStore).products
@@ -242,8 +244,8 @@ export function CatalogPage({
     ],
   )
 
-  const designLabel = catalogContent?.worlds.design.title ?? 'Arredo'
-  const technicalLabel = catalogContent?.worlds.technical.title ?? 'Tecnica'
+  const designLabel = catalogContent?.worlds.design.title ?? t('catalog.worldDesign')
+  const technicalLabel = catalogContent?.worlds.technical.title ?? t('catalog.worldTechnical')
 
   const loadMore = useCallback(() => {
     void fetchNextProductsPage()
@@ -370,18 +372,6 @@ export function CatalogPage({
       world: clientWorld,
       sort: sortParam,
     })
-    void fetchCatalogFilters({
-      categorySlug: effectiveCategory,
-      brandSlug: brandParam,
-      q: effectiveQuery,
-      attacco: attaccoParam || undefined,
-      colorTemp: colorTempParam || undefined,
-      wattaggio: wattaggioParam || undefined,
-      wattaggioMin: wattaggioMinNum != null ? String(wattaggioMinNum) : undefined,
-      wattaggioMax: wattaggioMaxNum != null ? String(wattaggioMaxNum) : undefined,
-      world: clientWorld,
-      locale,
-    })
   }, [
     ambienteParam,
     attaccoParam,
@@ -402,6 +392,15 @@ export function CatalogPage({
     authSnap.me?.customerSegment,
     authSnap.impersonation,
   ])
+
+  // Facet UI: solo world + q + locale (category/brand/attacco non vanno a Odoo filters).
+  useEffect(() => {
+    void fetchCatalogFilters({
+      q: effectiveQuery,
+      world: clientWorld,
+      locale,
+    })
+  }, [clientWorld, effectiveQuery, locale])
 
   useEffect(() => {
     catalogStore.filters.inStockOnly = inStockOnly
@@ -640,6 +639,7 @@ export function CatalogPage({
         selectedAmbiente={ambienteParam || undefined}
         selectedStile={stileParam || undefined}
         selectedAttacco={attaccoParam || undefined}
+        forcedTaxonomy={Boolean(taxonomy)}
         selectedColorTemp={colorTempParam || undefined}
         selectedWattaggioMin={wattaggioMinNum}
         selectedWattaggioMax={wattaggioMaxNum}

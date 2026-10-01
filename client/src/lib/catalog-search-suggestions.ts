@@ -38,14 +38,14 @@ export type CatalogSearchSuggestionGroup = {
 }
 
 const NATURAL_LANGUAGE_ATTACCO: ReadonlyArray<{ phrases: string[]; code: string; label: string }> = [
-  { phrases: ['vite grande', 'attacco grande', 'grande a vite'], code: 'E27', label: 'E27 — attacco grande a vite' },
-  { phrases: ['vite piccola', 'attacco piccolo', 'piccolo a vite'], code: 'E14', label: 'E14 — attacco piccolo a vite' },
-  { phrases: ['faretto baionetta', 'baionetta', 'due pin larghi'], code: 'GU10', label: 'GU10 — faretto a baionetta' },
-  { phrases: ['faretto due pin', 'mr16', '12v faretto'], code: 'GU5.3', label: 'GU5.3 — faretto 12V MR16' },
-  { phrases: ['lampadina lunga', 'lineare', 'r7s'], code: 'R7s', label: 'R7s — lampadina lineare' },
-  { phrases: ['neon led', 'tubo led', 't8', 'g13'], code: 'G13', label: 'G13 · T8 — tubo LED' },
-  { phrases: ['capsula', 'g9'], code: 'G9', label: 'G9 — capsula a vite ad asola' },
-  { phrases: ['disco piatto', 'gx53', 'sottopensile'], code: 'GX53', label: 'GX53 — attacco piatto a disco' },
+  { phrases: ['vite grande', 'attacco grande', 'grande a vite'], code: 'E27', label: 'E27 - attacco grande a vite' },
+  { phrases: ['vite piccola', 'attacco piccolo', 'piccolo a vite'], code: 'E14', label: 'E14 - attacco piccolo a vite' },
+  { phrases: ['faretto baionetta', 'baionetta', 'due pin larghi'], code: 'GU10', label: 'GU10 - faretto a baionetta' },
+  { phrases: ['faretto due pin', 'mr16', '12v faretto'], code: 'GU5.3', label: 'GU5.3 - faretto 12V MR16' },
+  { phrases: ['lampadina lunga', 'lineare', 'r7s'], code: 'R7s', label: 'R7s - lampadina lineare' },
+  { phrases: ['neon led', 'tubo led', 't8', 'g13'], code: 'G13', label: 'G13 · T8 - tubo LED' },
+  { phrases: ['capsula', 'g9'], code: 'G9', label: 'G9 - capsula a vite ad asola' },
+  { phrases: ['disco piatto', 'gx53', 'sottopensile'], code: 'GX53', label: 'GX53 - attacco piatto a disco' },
 ]
 
 function normalizeQuery(value: string): string {

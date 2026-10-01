@@ -4,7 +4,7 @@ import {
   resolveMaxOrderableQty,
 } from './product-availability'
 
-describe('getProductAvailabilityStatus — matrice requisiti', () => {
+describe('getProductAvailabilityStatus - matrice requisiti', () => {
   it('Caso 1: Q ≤ S → Disponibile + BASE', () => {
     const r = getProductAvailabilityStatus({
       availability: { qtyAvailable: 7, isOrderable: false },
@@ -82,7 +82,7 @@ describe('getProductAvailabilityStatus — matrice requisiti', () => {
   })
 })
 
-describe('resolveMaxOrderableQty — edge case', () => {
+describe('resolveMaxOrderableQty - edge case', () => {
   it('cap a S quando non ci sono fornitori', () => {
     expect(
       resolveMaxOrderableQty({ qtyAvailable: 4, isOrderable: false }),

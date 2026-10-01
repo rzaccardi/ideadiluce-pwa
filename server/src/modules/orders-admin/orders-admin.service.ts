@@ -32,7 +32,7 @@ const FUNNEL_LABELS: Record<string, string> = {
   PAYMENT_STARTED: 'Pagamento avviato',
   PAYMENT_PENDING: 'Pagamento in attesa',
   PAID: 'Pagato',
-  PAID_SYNC_PENDING: 'Pagato — sync Odoo in attesa',
+  PAID_SYNC_PENDING: 'Pagato - sync Odoo in attesa',
   SYNCED: 'Sincronizzato Odoo',
   PAYMENT_FAILED: 'Pagamento fallito',
   ABANDONED: 'Abbandonato',
@@ -485,7 +485,7 @@ function buildUxInsights(input: {
       code: 'slow_checkout',
       severity: 'warning',
       title: 'Checkout lento',
-      description: `Oltre ${toCheckout} minuti tra carrello e avvio checkout senza conversione — possibile frizione UX o confronto prezzi.`,
+      description: `Oltre ${toCheckout} minuti tra carrello e avvio checkout senza conversione - possibile frizione UX o confronto prezzi.`,
     })
   }
 
@@ -503,7 +503,7 @@ function buildUxInsights(input: {
       code: 'repeat_buyer',
       severity: 'success',
       title: 'Cliente ricorrente',
-      description: `${input.relatedPaidCount} altro/i ordine/i pagato/i con la stessa email — priorità retention e upsell.`,
+      description: `${input.relatedPaidCount} altro/i ordine/i pagato/i con la stessa email - priorità retention e upsell.`,
     })
   }
 

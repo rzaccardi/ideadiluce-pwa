@@ -292,7 +292,7 @@ export function getBreadcrumbs(pathname: string, _search = ''): BreadcrumbItem[]
   if (pathname.startsWith('/uptime')) {
     return [
       { label: 'Monitoraggio', href: '/uptime' },
-      { label: 'UptimeRobot — sito, API, catalogo e Odoo' },
+      { label: 'UptimeRobot - sito, API, catalogo e Odoo' },
     ]
   }
   if (pathname.startsWith('/social-proof')) {
@@ -639,7 +639,7 @@ export function getPageMeta(pathname: string, _search = ''): {
   if (pathname === '/site') {
     return {
       title: 'Pagine sito',
-      description: 'Header, footer, trust bar e homepage — testi gestiti dal backoffice',
+      description: 'Header, footer, trust bar e homepage - testi gestiti dal backoffice',
       icon: LayoutTemplateIcon,
       iconClassName: 'text-sky-600',
       iconBgClassName: 'bg-sky-50',

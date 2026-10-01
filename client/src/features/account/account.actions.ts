@@ -23,6 +23,7 @@ function applyPatchResult(result: { user: UserDTO; odooSyncFailed: boolean }, su
 }
 
 export async function saveProfile(patch: {
+  email?: string
   firstName?: string
   lastName?: string
   phone?: string | null

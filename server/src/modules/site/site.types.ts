@@ -380,6 +380,9 @@ export type SitePageKey =
   | 'guide-lampadina-r7s'
   | 'guide-illuminare-soggiorno'
   | 'guide-glossario'
+  | 'guide-dimmerabilita'
+  | 'guide-grado-ip'
+  | 'guide-retrofit-led'
   | 'guide-scegliere-lampadina-led'
   | 'guide-alimentatore-striscia-led'
 
@@ -409,6 +412,9 @@ export type SitePageContentMap = {
   'guide-lampadina-r7s': ContentPageContent
   'guide-illuminare-soggiorno': ContentPageContent
   'guide-glossario': ContentPageContent
+  'guide-dimmerabilita': ContentPageContent
+  'guide-grado-ip': ContentPageContent
+  'guide-retrofit-led': ContentPageContent
   'guide-scegliere-lampadina-led': ContentPageContent
   'guide-alimentatore-striscia-led': ContentPageContent
 }

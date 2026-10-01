@@ -91,7 +91,7 @@ export const odooAdminService = {
     const mode = 'odoo18-xmlrpc' as const
 
     if (!env.ODOO_ENABLED) {
-      notes.push('ODOO_ENABLED è false — nessuna chiamata remota.')
+      notes.push('ODOO_ENABLED è false - nessuna chiamata remota.')
       return withResilience({ enabled: false, configured: false, mode, notes, pingOk: false })
     }
 

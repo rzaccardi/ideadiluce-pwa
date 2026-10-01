@@ -197,7 +197,7 @@ export const DEFAULT_HOME2_IT: Home2PageContent = {
   bestSellers: {
     eyebrow: 'In evidenza',
     title: 'I pezzi più richiesti',
-    subtitle: 'Selezione curata dal catalogo arredo — pronta consegna e su ordinazione.',
+    subtitle: 'Selezione curata dal catalogo arredo - pronta consegna e su ordinazione.',
     linkLabel: 'Vedi tutto',
     linkHref: '/illuminazione-arredo',
   },

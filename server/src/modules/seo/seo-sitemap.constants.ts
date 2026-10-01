@@ -5,6 +5,9 @@ export const GUIDE_ARTICLE_SLUGS = [
   'lampadina-r7s',
   'illuminare-soggiorno',
   'glossario',
+  'dimmerabilita',
+  'grado-ip',
+  'retrofit-led',
   'scegliere-lampadina-led',
   'alimentatore-striscia-led',
 ] as const

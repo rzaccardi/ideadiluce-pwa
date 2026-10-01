@@ -233,7 +233,7 @@ export function OdooResiliencePage() {
                           {row.orderEmail ?? row.pwaOrderId}
                         </Link>
                       ) : (
-                        <span className="truncate text-muted-foreground">{row.orderEmail ?? row.userId ?? '—'}</span>
+                        <span className="truncate text-muted-foreground">{row.orderEmail ?? row.userId ?? '-'}</span>
                       )}
                       {row.lastError ? (
                         <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{row.lastError}</p>

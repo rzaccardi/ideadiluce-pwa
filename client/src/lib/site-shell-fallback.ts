@@ -15,7 +15,7 @@ const SOCKET_ITEMS = [
 
 function attaccoMegaMenuColumns() {
   const toLink = (s: (typeof SOCKET_ITEMS)[number]) => ({
-    label: `${s.code} — ${s.hint}`,
+    label: `${s.code} - ${s.hint}`,
     href: s.href,
   })
   return [
@@ -90,12 +90,12 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
             {
               title: 'BRAND',
               links: [
-                { label: 'OSRAM', href: '/brand/osram' },
+                { label: 'Artemide', href: '/brand/artemide' },
+                { label: 'Flos', href: '/brand/flos' },
+                { label: 'FontanaArte', href: '/brand/fontanaarte' },
+                { label: 'Eglo', href: '/brand/eglo' },
+                { label: 'Ideal Lux', href: '/brand/ideal-lux' },
                 { label: 'TLB', href: '/brand/tlb' },
-                { label: 'PHILIPS', href: '/brand/philips' },
-                { label: 'GENERAL ELECTRIC', href: '/brand/general-electric' },
-                { label: 'SYLVANIA', href: '/brand/sylvania' },
-                { label: 'LEDVANCE', href: '/brand/ledvance' },
               ],
             },
             {
@@ -169,9 +169,9 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
               links: [
                 { label: 'Kelvin & CRI', href: '/guide/luce-calda-naturale-fredda' },
                 { label: 'Lumen vs watt', href: '/guide/scegliere-lampadina-led' },
-                { label: 'Dimmerabilità', href: '/guide/glossario' },
-                { label: 'Grado IP', href: '/guide/glossario' },
-                { label: 'Retrofit LED', href: '/guide/lampadina-r7s' },
+                { label: 'Dimmerabilità', href: '/guide/dimmerabilita' },
+                { label: 'Grado IP', href: '/guide/grado-ip' },
+                { label: 'Retrofit LED', href: '/guide/retrofit-led' },
               ],
             },
           ]),
@@ -202,9 +202,9 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
           },
         },
       },
-      { kind: 'link', id: 'ambienti', label: 'Ambienti', href: '/ambienti' },
+      { kind: 'link', id: 'ambienti', label: 'Ambienti', href: '/acquista-ambiente' },
       { kind: 'link', id: 'brand', label: 'Brand', href: '/brand' },
-      { kind: 'link', id: 'guide', label: 'Guide', href: '/guide' },
+      { kind: 'link', id: 'guide', label: 'Guide', href: '/blog' },
     ],
   },
   trustBar: [

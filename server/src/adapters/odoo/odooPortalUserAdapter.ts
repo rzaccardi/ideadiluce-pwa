@@ -161,3 +161,45 @@ export async function ensureOdooPortalUser(
   )
   return { odooUserId: normalizeOdooCreateId(created), created: true }
 }
+
+/** Aggiorna login/email del portal user Odoo legato al partner (dopo cambio email PWA). */
+export async function updateOdooPortalUserLogin(
+  ctx: OdooCallContext,
+  input: { partnerId: number; oldEmail: string; newEmail: string },
+): Promise<void> {
+  if (!env.ODOO_ENABLED || !isOdooConfigured()) return
+
+  const newLogin = input.newEmail.toLowerCase().trim()
+  const oldLogin = input.oldEmail.toLowerCase().trim()
+  if (!newLogin || newLogin === oldLogin) return
+
+  const byOld = await findOdooPortalUserByEmail(ctx, oldLogin)
+  let odooUserId = byOld && byOld.odooPartnerId === input.partnerId ? byOld.odooUserId : null
+
+  if (odooUserId == null) {
+    const rows = await odooExecuteKw<PortalUserRow[]>(
+      ctx,
+      'res.users',
+      'search_read',
+      [[['partner_id', '=', input.partnerId]]],
+      { fields: ['id', 'partner_id'], limit: 1 },
+    )
+    const row = rows[0]
+    if (row) odooUserId = row.id
+  }
+
+  if (odooUserId == null) return
+
+  const conflict = await findOdooPortalUserByEmail(ctx, newLogin)
+  if (conflict && conflict.odooUserId !== odooUserId) {
+    throw new Error(`Odoo portal login già in uso: ${newLogin}`)
+  }
+
+  await odooExecuteKw(
+    ctx,
+    'res.users',
+    'write',
+    [[odooUserId], { login: newLogin, email: newLogin }],
+    {},
+  )
+}

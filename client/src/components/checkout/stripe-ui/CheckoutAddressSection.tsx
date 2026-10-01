@@ -213,7 +213,7 @@ export function CheckoutAddressSection({
             <StripeFieldGroup
               className={
                 phoneInvalid
-                  ? 'border-red-400 shadow-[0_0_0_1px_rgba(248,113,113,0.45)]'
+                  ? 'border-red-500 shadow-none ring-2 ring-red-200'
                   : undefined
               }
             >
@@ -230,7 +230,10 @@ export function CheckoutAddressSection({
               />
             </StripeFieldGroup>
             {showPhoneError ? (
-              <p className="mt-1.5 text-sm font-medium text-red-600">
+              <p
+                className="mt-2 rounded-[10px] border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700"
+                role="alert"
+              >
                 {t('checkout.shipping.phoneRequired')}
               </p>
             ) : null}

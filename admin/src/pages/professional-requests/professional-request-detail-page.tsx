@@ -149,7 +149,7 @@ export function ProfessionalRequestDetailPage() {
           <DetailField label="Settore">
             <DetailValue>
               {request.sector}
-              {request.sectorOther ? ` — ${request.sectorOther}` : ''}
+              {request.sectorOther ? ` - ${request.sectorOther}` : ''}
             </DetailValue>
           </DetailField>
           <DetailField label="Referente">

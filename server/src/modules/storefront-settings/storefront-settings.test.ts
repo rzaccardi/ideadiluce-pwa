@@ -17,17 +17,17 @@ describe('storefrontSettingsPatchSchema', () => {
     expect(
       storefrontSettingsPatchSchema.parse({
         legacySiteNoticeEnabled: true,
-        legacySiteUrl: 'https://old.ideadiluce.it/',
+        legacySiteUrl: 'https://old.ideadiluce.com/',
       }),
     ).toEqual({
       legacySiteNoticeEnabled: true,
-      legacySiteUrl: 'https://old.ideadiluce.it/',
+      legacySiteUrl: 'https://old.ideadiluce.com/',
     })
   })
 
   it('rifiuta URL non HTTPS', () => {
     expect(() =>
-      storefrontSettingsPatchSchema.parse({ legacySiteUrl: 'http://old.ideadiluce.it' }),
+      storefrontSettingsPatchSchema.parse({ legacySiteUrl: 'http://old.ideadiluce.com' }),
     ).toThrow()
   })
 
@@ -44,7 +44,7 @@ describe('normalizeLegacySiteUrl', () => {
   })
 
   it('accetta solo HTTPS', () => {
-    expect(normalizeLegacySiteUrl('https://old.ideadiluce.it')).toBe('https://old.ideadiluce.it/')
+    expect(normalizeLegacySiteUrl('https://old.ideadiluce.com')).toBe('https://old.ideadiluce.com/')
   })
 })
 
@@ -55,14 +55,14 @@ describe('mapStorefrontSettings', () => {
         id: 'default',
         soundsEnabled: true,
         legacySiteNoticeEnabled: false,
-        legacySiteUrl: 'https://old.ideadiluce.it',
+        legacySiteUrl: 'https://old.ideadiluce.com',
         createdAt: new Date('2026-09-02T00:00:00.000Z'),
         updatedAt: new Date('2026-09-02T00:00:00.000Z'),
       }),
     ).toEqual({
       soundsEnabled: true,
       legacySiteNoticeEnabled: false,
-      legacySiteUrl: 'https://old.ideadiluce.it/',
+      legacySiteUrl: 'https://old.ideadiluce.com/',
     })
   })
 

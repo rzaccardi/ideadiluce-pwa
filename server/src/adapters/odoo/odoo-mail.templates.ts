@@ -7,6 +7,7 @@ export const PWA_MAIL_TEMPLATE_KEYS = [
   'account_welcome',
   'business_registration_admin',
   'professional_account_customer',
+  'professional_request_customer',
   'quote_received_customer',
   'quote_request_admin',
   'site_inquiry_admin',
@@ -70,22 +71,31 @@ export const PWA_MAIL_TEMPLATES: Record<PwaMailTemplateKey, PwaMailTemplateDef> 
   },
   business_registration_admin: {
     key: 'business_registration_admin',
-    name: '[PWA] Registrazione azienda — interno',
-    subject: '[Idea di Luce] Nuova registrazione azienda — {{customer_email}}',
+    name: '[PWA] Registrazione azienda - interno',
+    subject: '[Idea di Luce] Nuova registrazione azienda - {{customer_email}}',
     bodyHtml: wrap('<pre style="white-space:pre-wrap;font-family:inherit">{{body_text}}</pre>'),
   },
   professional_account_customer: {
     key: 'professional_account_customer',
-    name: '[PWA] Richiesta account professionisti — cliente',
-    subject: 'Richiesta account professionisti — Idea di Luce',
+    name: '[PWA] Richiesta account professionisti - cliente',
+    subject: 'Richiesta account professionisti - Idea di Luce',
     bodyHtml: wrap(`<p>Ciao{{first_name_suffix}},</p>
 <p>Abbiamo ricevuto la tua richiesta di attivazione account business.<br/>Verificheremo i dati e ti contatteremo entro 24 ore lavorative.</p>
 <p>Nel frattempo abbiamo creato un accesso al portale:<br/>Email: {{email}}<br/>Password temporanea: {{password}}</p>
 <p>Accedi da: <a href="{{login_url}}">{{login_url}}</a></p>`),
   },
+  /** Conferma sempre inviata al richiedente (anche se account già esistente). */
+  professional_request_customer: {
+    key: 'professional_request_customer',
+    name: '[PWA] Conferma richiesta professionisti',
+    subject: 'Richiesta account professionisti ricevuta - Idea di Luce',
+    bodyHtml: wrap(`<p>Ciao{{first_name_suffix}},</p>
+<p>Abbiamo ricevuto la tua richiesta di attivazione account business / listino professionisti.<br/>Verificheremo i dati e ti contatteremo entro 24 ore lavorative.</p>
+<p>Se hai bisogno di assistenza, scrivici a ${PWA_ADMIN_MAIL_TO}.</p>`),
+  },
   quote_received_customer: {
     key: 'quote_received_customer',
-    name: '[PWA] Richiesta preventivo — cliente',
+    name: '[PWA] Richiesta preventivo - cliente',
     subject: '[Idea di Luce] Richiesta preventivo ricevuta',
     bodyHtml: wrap(`<p>Abbiamo ricevuto la tua richiesta di preventivo.</p>
 <p>{{odoo_ref_line}}</p>
@@ -93,44 +103,44 @@ export const PWA_MAIL_TEMPLATES: Record<PwaMailTemplateKey, PwaMailTemplateDef> 
   },
   quote_request_admin: {
     key: 'quote_request_admin',
-    name: '[PWA] Richiesta preventivo — interno',
-    subject: '[Idea di Luce] Richiesta preventivo — {{customer_email}}',
+    name: '[PWA] Richiesta preventivo - interno',
+    subject: '[Idea di Luce] Richiesta preventivo - {{customer_email}}',
     bodyHtml: wrap('<pre style="white-space:pre-wrap;font-family:inherit">{{body_text}}</pre>'),
   },
   site_inquiry_admin: {
     key: 'site_inquiry_admin',
-    name: '[PWA] Contatto sito — interno',
-    subject: '[Idea di Luce] {{kind_label}} — {{customer_name}}',
+    name: '[PWA] Contatto sito - interno',
+    subject: '[Idea di Luce] {{kind_label}} - {{customer_name}}',
     bodyHtml: wrap('<pre style="white-space:pre-wrap;font-family:inherit">{{body_text}}</pre>'),
   },
   professional_request_admin: {
     key: 'professional_request_admin',
-    name: '[PWA] Account business — interno',
-    subject: '[Idea di Luce] Attivazione account business — {{company_name}}',
+    name: '[PWA] Account business - interno',
+    subject: '[Idea di Luce] Attivazione account business - {{company_name}}',
     bodyHtml: wrap('<pre style="white-space:pre-wrap;font-family:inherit">{{body_text}}</pre>'),
   },
   restock_notify_admin: {
     key: 'restock_notify_admin',
-    name: '[PWA] Avviso restock / prodotto — interno',
-    subject: '[Idea di Luce] {{type_label}} — {{product_name}}',
+    name: '[PWA] Avviso restock / prodotto - interno',
+    subject: '[Idea di Luce] {{type_label}} - {{product_name}}',
     bodyHtml: wrap('<pre style="white-space:pre-wrap;font-family:inherit">{{body_text}}</pre>'),
   },
   paid_sync_alert_admin: {
     key: 'paid_sync_alert_admin',
-    name: '[PWA] Ordine pagato — sync Odoo in attesa',
-    subject: '[Idea di Luce] Ordine pagato — sync Odoo in attesa ({{order_short}})',
+    name: '[PWA] Ordine pagato - sync Odoo in attesa',
+    subject: '[Idea di Luce] Ordine pagato - sync Odoo in attesa ({{order_short}})',
     bodyHtml: wrap('<pre style="white-space:pre-wrap;font-family:inherit">{{body_text}}</pre>'),
   },
   sync_exhausted_admin: {
     key: 'sync_exhausted_admin',
     name: '[PWA] Coda sync Odoo esaurita',
-    subject: '[Idea di Luce] Sync Odoo esaurita — ordine {{pwa_order_id}}',
+    subject: '[Idea di Luce] Sync Odoo esaurita - ordine {{pwa_order_id}}',
     bodyHtml: wrap('<pre style="white-space:pre-wrap;font-family:inherit">{{body_text}}</pre>'),
   },
   password_reset: {
     key: 'password_reset',
     name: '[PWA] Reimposta password',
-    subject: 'Reimposta la password — Idea di Luce',
+    subject: 'Reimposta la password - Idea di Luce',
     bodyHtml: wrap(`<p>Ciao,</p>
 <p>Per reimpostare la password apri questo link (valido {{hours}} ore):</p>
 <p><a href="{{reset_url}}">{{reset_url}}</a></p>
@@ -138,20 +148,20 @@ export const PWA_MAIL_TEMPLATES: Record<PwaMailTemplateKey, PwaMailTemplateDef> 
   },
   return_request_admin: {
     key: 'return_request_admin',
-    name: '[PWA] Richiesta di reso — interno',
-    subject: '[Idea di Luce] Richiesta di reso — ordine {{order_ref}} — {{customer_email}}',
+    name: '[PWA] Richiesta di reso - interno',
+    subject: '[Idea di Luce] Richiesta di reso - ordine {{order_ref}} - {{customer_email}}',
     bodyHtml: wrap('<pre style="white-space:pre-wrap;font-family:inherit">{{body_text}}</pre>'),
   },
   return_request_customer: {
     key: 'return_request_customer',
-    name: '[PWA] Richiesta di reso — cliente',
+    name: '[PWA] Richiesta di reso - cliente',
     subject: '{{subject}}',
     bodyHtml: wrap('<pre style="white-space:pre-wrap;font-family:inherit">{{body_text}}</pre>'),
   },
   order_confirmation: {
     key: 'order_confirmation',
     name: '[PWA] Conferma ordine',
-    subject: 'Conferma ordine {{order_number}} — Idea di Luce',
+    subject: 'Conferma ordine {{order_number}} - Idea di Luce',
     bodyHtml: wrap(`<p>Ciao{{first_name_suffix}},</p>
 <p>Abbiamo ricevuto il tuo ordine <strong>{{order_number}}</strong> e il pagamento è confermato.</p>
 <p>Totale: {{amount}}</p>
@@ -161,7 +171,7 @@ export const PWA_MAIL_TEMPLATES: Record<PwaMailTemplateKey, PwaMailTemplateDef> 
   bank_transfer_pending: {
     key: 'bank_transfer_pending',
     name: '[PWA] Istruzioni bonifico',
-    subject: 'Istruzioni per il bonifico — ordine {{order_number}}',
+    subject: 'Istruzioni per il bonifico - ordine {{order_number}}',
     bodyHtml: wrap(`<p>Ciao{{first_name_suffix}},</p>
 <p>Abbiamo registrato l'ordine <strong>{{order_number}}</strong>. Per confermarlo effettua il bonifico con questi dati:</p>
 <p>Intestatario: {{holder}}<br/>IBAN: {{iban}}{{bank_name_html}}<br/>Causale: {{reference}}<br/>Importo: {{amount}}</p>
@@ -180,7 +190,7 @@ export const PWA_MAIL_TEMPLATES: Record<PwaMailTemplateKey, PwaMailTemplateDef> 
   abandoned_cart: {
     key: 'abandoned_cart',
     name: '[PWA] Carrello abbandonato',
-    subject: 'Hai lasciato articoli nel carrello — Idea di Luce',
+    subject: 'Hai lasciato articoli nel carrello - Idea di Luce',
     bodyHtml: wrap(`<p>Ciao{{first_name_suffix}},</p>
 <p>Hai iniziato un acquisto su Idea di Luce ma non l'hai completato. I prodotti sono ancora nel carrello.</p>
 <p>Riprendi da qui: <a href="{{cart_url}}">{{cart_url}}</a></p>`),

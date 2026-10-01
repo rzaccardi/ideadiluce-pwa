@@ -63,7 +63,7 @@ export function AccountInvoicesPage() {
                   <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
                     <span className="font-mono text-[12.5px] font-semibold text-idl-graphite">{inv.name}</span>
                     <span className="text-[12.5px] text-idl-muted">
-                      {inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleDateString('it-IT') : '—'}
+                      {inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleDateString('it-IT') : '-'}
                     </span>
                     <AccountDcStatusPill
                       label={invoiceStateLabel(inv.state, locale)}

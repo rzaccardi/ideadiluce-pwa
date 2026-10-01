@@ -30,6 +30,9 @@ export const SITE_PAGE_LABELS: Record<SitePageKey, string> = {
   'guide-lampadina-r7s': 'Guida: lampadina R7s',
   'guide-illuminare-soggiorno': 'Guida: illuminare soggiorno',
   'guide-glossario': 'Guida: glossario',
+  'guide-dimmerabilita': 'Guida: dimmerabilità',
+  'guide-grado-ip': 'Guida: grado IP',
+  'guide-retrofit-led': 'Guida: retrofit LED',
   'guide-scegliere-lampadina-led': 'Guida: scegliere LED',
   'guide-alimentatore-striscia-led': 'Guida: alimentatore striscia LED',
 }

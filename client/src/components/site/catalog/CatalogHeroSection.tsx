@@ -65,7 +65,8 @@ export function CatalogHeroSection({
   showWorldTabs = true,
 }: Props) {
   const { t } = useI18n()
-  const crumb = breadcrumbCurrent ?? title
+  const resolvedTitle = title === 'Negozio' ? t('catalog.title') : title
+  const crumb = breadcrumbCurrent ?? resolvedTitle
 
   return (
     <section className="border-b border-idl-tech-border bg-idl-tech-panel">
@@ -89,7 +90,7 @@ export function CatalogHeroSection({
         <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-6">
           <div className="min-w-0">
             <h1 className="text-[clamp(1.75rem,3vw,2rem)] font-extrabold tracking-tight text-idl-ink">
-              {title}
+              {resolvedTitle}
             </h1>
             <p className="mt-1.5 text-[14.5px] text-idl-muted">
               {subtitle ?? t('catalog.heroSubtitle')}{' '}

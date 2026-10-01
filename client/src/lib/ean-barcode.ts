@@ -268,7 +268,7 @@ export function barcodeToPdf(
 
   const title = toPdfAscii(meta?.productName ?? '')
   const brand = toPdfAscii(meta?.brand ?? '')
-  const heading = [brand, title].filter(Boolean).join(' — ') || encoded.format
+  const heading = [brand, title].filter(Boolean).join(' - ') || encoded.format
   const lines = [
     '0 0 0 rg',
     `${rects.join(' ')} f`,

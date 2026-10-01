@@ -43,11 +43,21 @@ export function resolveCartEstimateTotals(
   estimatedTotal: number | null
 } {
   if (usePersistedCartTotals(cart, computedSubtotal)) {
+    const shipping = cart.estimatedShipping
+    const subtotal = cart.estimatedSubtotal
+    const tax = cart.estimatedTax
+    // Senza metodo spedizione: non riusare estimatedTotal che includeva flat residua (€5,90).
+    const total =
+      shipping != null && cart.estimatedTotal != null
+        ? cart.estimatedTotal
+        : subtotal != null
+          ? subtotal + (tax ?? 0)
+          : null
     return {
-      estimatedSubtotal: cart.estimatedSubtotal,
-      estimatedTax: cart.estimatedTax,
-      estimatedShipping: cart.estimatedShipping,
-      estimatedTotal: cart.estimatedTotal,
+      estimatedSubtotal: subtotal,
+      estimatedTax: tax,
+      estimatedShipping: shipping,
+      estimatedTotal: total,
     }
   }
 
@@ -57,16 +67,12 @@ export function resolveCartEstimateTotals(
       ? computedTax
       : cart.estimatedTax != null
         ? cart.estimatedTax
-        : subtotal != null
-          ? null
-          : null
+        : null
   const shipping = cart.estimatedShipping
   const total =
-    subtotal != null && tax != null
-      ? subtotal + tax + (shipping ?? 0)
-      : subtotal != null && cart.estimatedTotal != null
-        ? cart.estimatedTotal
-        : null
+    subtotal != null
+      ? subtotal + (tax ?? 0) + (shipping ?? 0)
+      : null
 
   return {
     estimatedSubtotal: subtotal,

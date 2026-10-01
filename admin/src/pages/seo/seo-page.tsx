@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/table'
 
 function formatWhen(iso: string | undefined | null) {
-  if (!iso) return '—'
+  if (!iso) return '-'
   return new Date(iso).toLocaleString('it-IT')
 }
 
@@ -152,7 +152,7 @@ export function SeoPage() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <p>Ultima generazione: {formatWhen(store.status?.sitemap?.builtAt)}</p>
-            <p>URL in sitemap: {store.status?.sitemap?.urlCount ?? '—'}</p>
+            <p>URL in sitemap: {store.status?.sitemap?.urlCount ?? '-'}</p>
             {urls ? (
               <a href={urls.sitemap} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sky-600 hover:underline">
                 Apri sitemap <ExternalLinkIcon className="h-3.5 w-3.5" />
@@ -168,7 +168,7 @@ export function SeoPage() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <p>Ultima generazione: {formatWhen(store.status?.merchantFeed?.builtAt)}</p>
-            <p>Prodotti nel feed: {store.status?.merchantFeed?.itemCount ?? '—'}</p>
+            <p>Prodotti nel feed: {store.status?.merchantFeed?.itemCount ?? '-'}</p>
             {store.merchant ? (
               <p>{store.merchant.enabled ? 'Generato dal proxy / BO' : 'Feed disattivato dal BO'}</p>
             ) : null}
@@ -260,7 +260,7 @@ export function SeoPage() {
                       <TableCell className="font-mono text-xs">{r.fromPath}</TableCell>
                       <TableCell className="font-mono text-xs">{r.toPath}</TableCell>
                       <TableCell>{r.statusCode}</TableCell>
-                      <TableCell className="text-muted-foreground">{r.reason ?? '—'}</TableCell>
+                      <TableCell className="text-muted-foreground">{r.reason ?? '-'}</TableCell>
                       <TableCell>
                         <Button type="button" variant="destructive" size="sm" onClick={() => void onDeleteRedirect(r.fromPath)}>
                           Elimina

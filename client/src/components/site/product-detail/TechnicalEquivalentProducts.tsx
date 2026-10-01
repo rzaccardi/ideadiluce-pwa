@@ -43,7 +43,7 @@ export function TechnicalEquivalentProducts({ products, currentSlug, lp }: Props
         Stesso prodotto, altre marche
       </h2>
       <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-idl-muted">
-        Stesse caratteristiche e attacco, brand diverso. È la versione identica e compatibile — non
+        Stesse caratteristiche e attacco, brand diverso. È la versione identica e compatibile, non
         un accessorio e non un suggerimento generico.
       </p>
 
@@ -72,7 +72,7 @@ export function TechnicalEquivalentProducts({ products, currentSlug, lp }: Props
                     />
                   ) : (
                     <span className="flex h-full items-center justify-center text-[11px] text-idl-muted">
-                      —
+                      -
                     </span>
                   )}
                 </Link>

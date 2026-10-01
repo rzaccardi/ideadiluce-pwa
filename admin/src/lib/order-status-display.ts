@@ -8,7 +8,7 @@ export const ORDER_STATUS_LABEL: Record<string, string> = {
   PAYMENT_STARTED: 'Pagamento',
   PAYMENT_PENDING: 'In attesa',
   PAID: 'Pagato',
-  PAID_SYNC_PENDING: 'Pagato — sync Odoo',
+  PAID_SYNC_PENDING: 'Pagato - sync Odoo',
   SYNCED: 'Sincronizzato Odoo',
   PAYMENT_FAILED: 'Fallito',
   ABANDONED: 'Abbandonato',

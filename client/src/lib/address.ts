@@ -57,7 +57,7 @@ export function formatAddressLocality(
 }
 
 export function formatAddressSummary(address: UserAddressDTO | AddressInput | null | undefined): string {
-  if (!address?.line1?.trim()) return '—'
+  if (!address?.line1?.trim()) return '-'
   return [formatStreetLine(address), formatAddressLocality(address)].filter(Boolean).join(', ')
 }
 

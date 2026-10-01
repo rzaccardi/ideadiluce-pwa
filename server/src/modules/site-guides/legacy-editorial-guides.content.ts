@@ -78,7 +78,7 @@ const IT_CONTENT: Record<LegacyEditorialGuideSlug, ContentPageContent> = {
           'Camera da letto: privilegia la luce calda, soprattutto per le lampade da comodino, per favorire relax e sonno.',
           'Ufficio: la luce fredda migliora concentrazione e produttività.',
           'Cucina: molti preferiscono luce fredda o neutra per un aspetto pulito e una migliore visibilità durante la preparazione dei cibi.',
-          'Bagno: puoi giocare con entrambe — fredda per trucco e rasatura, calda per un bagno serale rilassante.',
+          'Bagno: puoi giocare con entrambe - fredda per trucco e rasatura, calda per un bagno serale rilassante.',
           'Sala da pranzo: la luce calda è perfetta per un\'atmosfera accogliente durante i pasti.',
         ],
       },

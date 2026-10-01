@@ -1,5 +1,6 @@
 import type { ProductBrandDTO } from '@/types/dto'
-import { resolveBrandLogoSrc } from '@/lib/brand-logo'
+import { BrandCatalogLogo } from '@/components/site/brand/BrandCatalogLogo'
+import { resolveBrandLogo } from '@/lib/brand-logo'
 import { cn } from '@/utils/cn'
 
 type Size = 'xs' | 'sm' | 'md' | 'lg'
@@ -45,25 +46,22 @@ export function ProductBrandMark({
   className,
   showNameFallback = true,
 }: Props) {
-  const logoSrc =
-    resolveBrandLogoSrc(brand?.slug) ??
-    resolveBrandLogoSrc(brand?.name) ??
-    resolveBrandLogoSrc(fallbackLabel)
+  const logo =
+    resolveBrandLogo(brand?.slug) ??
+    resolveBrandLogo(brand?.name) ??
+    resolveBrandLogo(fallbackLabel)
   const label = brand?.name?.trim() || fallbackLabel?.trim() || null
 
-  if (logoSrc) {
+  if (logo) {
     const h = HEIGHT[size]
     return (
       <span className={cn('inline-flex max-w-full items-center justify-start', className)}>
-        <img
-          src={logoSrc}
+        <BrandCatalogLogo
+          src={logo.src}
           alt={label ?? ''}
           height={h}
-          decoding="async"
-          loading="lazy"
-          draggable={false}
-          className="block max-h-full max-w-[8.5rem] object-contain object-left dark:hidden"
-          style={{ height: h, width: 'auto', marginInline: 0 }}
+          content={logo.content}
+          className="dark:hidden"
         />
         {label ? (
           <span

@@ -8,10 +8,55 @@ import {
   buildDesignTypeTilesFromFacets,
   buildTechnicalSubtypeChipsFromFacets,
 } from '@/lib/catalog-facets-ui'
+import { isCatalogWorldHubCategory } from '@/lib/catalog-filters'
 
+export type CatalogDesignTypeNavContext = {
+  selectedTipologia?: string
+  selectedAmbiente?: string
+  selectedStile?: string
+  selectedCategorySlug?: string
+  /** Route tassonomia path-based (/tipologia/…, /stile/…, …): mai hub base. */
+  forcedTaxonomy?: boolean
+}
+
+export type CatalogTechnicalTypeNavContext = {
+  selectedCategorySlug?: string
+  selectedAttacco?: string
+  /** Route tassonomia path-based (/attacco/…, /categoria-tecnica/…, …): mai hub base. */
+  forcedTaxonomy?: boolean
+}
+
+/**
+ * Hub catalogo arredo: niente tipologia/ambiente/stile né categoria foglia,
+ * e non su landing tassonomia path-based.
+ */
+export function isDesignCatalogHub(ctx: CatalogDesignTypeNavContext = {}): boolean {
+  if (ctx.forcedTaxonomy) return false
+  if (ctx.selectedTipologia?.trim()) return false
+  if (ctx.selectedAmbiente?.trim()) return false
+  if (ctx.selectedStile?.trim()) return false
+  return isCatalogWorldHubCategory(ctx.selectedCategorySlug, 'design')
+}
+
+/**
+ * Hub catalogo tecnico: niente attacco né categoria foglia,
+ * e non su landing tassonomia path-based.
+ */
+export function isTechnicalCatalogHub(ctx: CatalogTechnicalTypeNavContext = {}): boolean {
+  if (ctx.forcedTaxonomy) return false
+  if (ctx.selectedAttacco?.trim()) return false
+  return isCatalogWorldHubCategory(ctx.selectedCategorySlug, 'technical')
+}
+
+/**
+ * Tile tipologiche (Sospensione, Tavolo, …) solo sull’hub catalogo design.
+ * Su `/tipologia/{slug}`, categorie foglia o altri filtri tassonomia: nascoste.
+ */
 export function getCatalogTypeTiles(
   facets?: CatalogFiltersDTO | null,
+  options?: CatalogDesignTypeNavContext,
 ): CategoryTypeTile[] {
+  if (!isDesignCatalogHub(options)) return []
   return buildDesignTypeTilesFromFacets(facets, DEFAULT_DESIGN_CATEGORY_IT.typeTiles ?? [])
 }
 
@@ -25,11 +70,18 @@ function chipCategoryFromHref(href: string): string | undefined {
   return new URLSearchParams(query).get('category')?.trim().toLowerCase() || undefined
 }
 
+/**
+ * Chip sottotipi tecnici solo sull’hub catalogo tecnico.
+ * Su categoria foglia / attacco / taxonomy path: nascoste.
+ */
 export function getCatalogSubtypeChips(
   searchQuery?: string,
   facets?: CatalogFiltersDTO | null,
   selectedCategorySlug?: string,
+  options?: Omit<CatalogTechnicalTypeNavContext, 'selectedCategorySlug'>,
 ): CategorySubtypeChip[] {
+  if (!isTechnicalCatalogHub({ selectedCategorySlug, ...options })) return []
+
   const fromFacets = buildTechnicalSubtypeChipsFromFacets(facets, {
     fallback: [],
     catalogMode: true,

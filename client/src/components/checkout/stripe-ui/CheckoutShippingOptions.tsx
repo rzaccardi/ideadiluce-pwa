@@ -59,7 +59,12 @@ export function CheckoutShippingOptions({
   return (
     <section className={cn((blocked || selectionBusy) && 'pointer-events-none')}>
       {blocked ? (
-        <p className="mb-3 text-sm font-medium text-red-600">{blockedMessage}</p>
+        <p
+          className="mb-3 rounded-[10px] border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-700"
+          role="alert"
+        >
+          {blockedMessage}
+        </p>
       ) : null}
 
       {showLoading ? (

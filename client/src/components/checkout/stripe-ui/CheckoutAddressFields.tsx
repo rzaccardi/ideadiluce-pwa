@@ -74,7 +74,7 @@ export function CheckoutAddressFields({
           <option value="">{t('checkout.address.province')}</option>
           {ITALIAN_PROVINCES.map((row) => (
             <option key={row.code} value={row.code}>
-              {row.code} — {row.name}
+              {row.code} - {row.name}
             </option>
           ))}
         </StripeSelect>

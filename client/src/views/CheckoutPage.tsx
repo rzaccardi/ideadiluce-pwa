@@ -507,6 +507,7 @@ export function CheckoutPage() {
             freeShippingHint={checkout.freeShippingHint}
             taxBreakdown={checkout.taxBreakdown}
             mobileOnly
+            revealGrandTotal={step === 'payment' || step === 'review'}
             recommendations={cart.recommendations}
             recommendationsLoading={cart.isRecommendationsLoading}
             onCrossSellAdded={handleCrossSellAdded}
@@ -518,6 +519,7 @@ export function CheckoutPage() {
             selectedShipping={shippingQuote}
             freeShippingHint={checkout.freeShippingHint}
             taxBreakdown={checkout.taxBreakdown}
+            revealGrandTotal={step === 'payment' || step === 'review'}
             recommendations={cart.recommendations}
             recommendationsLoading={cart.isRecommendationsLoading}
             onCrossSellAdded={handleCrossSellAdded}

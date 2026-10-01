@@ -79,6 +79,10 @@ export function CheckoutAddressesStep() {
     isCheckoutAddressValid(checkout.draft.billing) &&
     (!business || isBusinessAnagraficaComplete())
   const shippingSectionReady = billingComplete && canFetchShippingQuotes()
+  // Accesso esplicito per reattività valtio (isShippingBlockedByMissingPhone legge lo store raw).
+  void checkout.draft.billing.phone
+  void checkout.draft.shipping.phone
+  void checkout.deliveryRecipient.phone
   const phoneBlockingShipping = isShippingBlockedByMissingPhone()
   const hideContact = hasCheckoutContactFromProfile() && !phoneBlockingShipping
   const continueBusy =
@@ -225,6 +229,7 @@ export function CheckoutAddressesStep() {
             address={checkout.draft.shipping}
             showCourierNotes
             hideContactFields={hideContact}
+            highlightPhoneError={phoneBlockingShipping}
             onChange={(key, value) => updateCheckoutAddress('shipping', key, value)}
             onAddressResolved={(resolved) =>
               void applyResolvedAddress('shipping', resolved).catch(() => {})
@@ -260,16 +265,30 @@ export function CheckoutAddressesStep() {
                 onValueChange={(value) => updateDeliveryRecipientField('company', value)}
               />
             </StripeFieldGroup>
-            <StripeFieldGroup>
-              <StripeControlledInput
-                type="tel"
-                name="recipient-phone"
-                placeholder={t('common.phone')}
-                value={recipient.phone}
-                required
-                onValueChange={(value) => updateDeliveryRecipientField('phone', value)}
-              />
-            </StripeFieldGroup>
+            <div>
+              <StripeFieldGroup
+                className={
+                  phoneBlockingShipping
+                    ? 'border-red-500 ring-2 ring-red-200'
+                    : undefined
+                }
+              >
+                <StripeControlledInput
+                  type="tel"
+                  name="recipient-phone"
+                  placeholder={t('common.phone')}
+                  value={recipient.phone}
+                  required
+                  aria-invalid={phoneBlockingShipping || undefined}
+                  onValueChange={(value) => updateDeliveryRecipientField('phone', value)}
+                />
+              </StripeFieldGroup>
+              {phoneBlockingShipping ? (
+                <p className="mt-1.5 text-sm font-medium text-red-600">
+                  {t('checkout.shipping.phoneRequired')}
+                </p>
+              ) : null}
+            </div>
             <CheckoutAddressSection
               title={t('checkout.deliveryRecipient.addressTitle')}
               prefix="dropship"

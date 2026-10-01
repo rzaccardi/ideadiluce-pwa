@@ -1,5 +1,11 @@
+import {
+  findMergableCartLine,
+  normalizeCartProductRef,
+  normalizeCartVariantRef,
+} from '../cart/cart-line-identity.js'
+
 export function cartLineKey(productRef: string, variantRef: string | null) {
-  return `${productRef}\0${variantRef ?? ''}`
+  return `${normalizeCartProductRef(productRef)}\0${normalizeCartVariantRef(variantRef) ?? ''}`
 }
 
 export type MergedCartLine = {
@@ -20,10 +26,21 @@ export function absorbCartLines(
     metadataJson: unknown
   }>,
 ) {
+  const current = [...merged.values()]
   for (const line of lines) {
-    const key = cartLineKey(line.productRef, line.variantRef)
-    const existing = merged.get(key)
+    const existing = findMergableCartLine(current, {
+      productRef: line.productRef,
+      variantRef: line.variantRef,
+      metadataJson: line.metadataJson,
+    })
     if (existing) {
+      // Rimuovi la vecchia chiave (potrebbe essere slug/VAR- diversa dalla canonica).
+      for (const [key, value] of merged) {
+        if (value === existing) {
+          merged.delete(key)
+          break
+        }
+      }
       existing.quantity += line.quantity
       if (line.clientUnitPriceEstimate != null) {
         existing.clientUnitPriceEstimate = line.clientUnitPriceEstimate
@@ -31,16 +48,38 @@ export function absorbCartLines(
       if (line.metadataJson != null) {
         existing.metadataJson = line.metadataJson
       }
+      const productRef = normalizeCartProductRef(
+        parseTemplatePreferred(existing.productRef, line.productRef),
+      )
+      const variantRef =
+        normalizeCartVariantRef(existing.variantRef) ??
+        normalizeCartVariantRef(line.variantRef) ??
+        existing.variantRef
+      existing.productRef = productRef
+      existing.variantRef = variantRef
+      merged.set(cartLineKey(productRef, variantRef), existing)
       continue
     }
-    merged.set(key, {
-      productRef: line.productRef,
-      variantRef: line.variantRef,
+
+    const productRef = normalizeCartProductRef(line.productRef)
+    const variantRef = normalizeCartVariantRef(line.variantRef)
+    const created: MergedCartLine = {
+      productRef,
+      variantRef,
       quantity: line.quantity,
       clientUnitPriceEstimate: line.clientUnitPriceEstimate,
       metadataJson: line.metadataJson,
-    })
+    }
+    merged.set(cartLineKey(productRef, variantRef), created)
+    current.push(created)
   }
+}
+
+function parseTemplatePreferred(a: string, b: string): string {
+  // Preferisci ref numerico template se presente.
+  if (/^\d+$/.test(a.trim())) return a
+  if (/^\d+$/.test(b.trim())) return b
+  return a
 }
 
 export function mergeCartItemLists(

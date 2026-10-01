@@ -48,7 +48,7 @@ export const ATTACCO_HERO = {
   eyebrow: 'SCEGLI PER ATTACCO',
   title: 'Trova la lampadina giusta per il tuo attacco',
   subtitle:
-    "Non serve conoscere il nome tecnico. Riconosci l'attacco dalla forma e arriva al prodotto compatibile in pochi click — riducendo errori e resi.",
+    "Non serve conoscere il nome tecnico. Riconosci l'attacco dalla forma e arriva al prodotto compatibile in pochi click - riducendo errori e resi.",
   wizardTitle: 'Non sai quale attacco hai?',
   wizardDescription:
     "Rispondi a 3 domande sulla forma e le dimensioni: ti diciamo noi l'attacco e i prodotti compatibili.",

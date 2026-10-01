@@ -53,6 +53,8 @@ type Props = {
   selectedAmbiente?: string
   selectedStile?: string
   selectedAttacco?: string
+  /** Route tassonomia path-based (/tipologia/…, /attacco/…, …). */
+  forcedTaxonomy?: boolean
   selectedColorTemp?: string
   selectedWattaggioMin?: number
   selectedWattaggioMax?: number
@@ -191,6 +193,7 @@ export function CatalogPageView({
   selectedAmbiente,
   selectedStile,
   selectedAttacco,
+  forcedTaxonomy,
   selectedColorTemp,
   selectedWattaggioMin,
   selectedWattaggioMax,
@@ -294,6 +297,11 @@ export function CatalogPageView({
         worldTab={worldTab}
         searchQuery={searchQuery}
         selectedCategorySlug={selectedCategorySlug}
+        selectedTipologia={selectedTipologia}
+        selectedAmbiente={selectedAmbiente}
+        selectedStile={selectedStile}
+        selectedAttacco={selectedAttacco}
+        forcedTaxonomy={forcedTaxonomy}
         facets={facets}
       />
 

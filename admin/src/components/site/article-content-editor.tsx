@@ -25,15 +25,15 @@ const LOCALE_LABELS: Record<SiteLocale, string> = {
 }
 
 const BLOCK_KIND_LABELS: Record<string, string> = {
-  prose: 'Testo — paragrafi nel corpo articolo',
-  image: 'Immagine — foto a tutta larghezza nel corpo',
-  split: 'Immagine + testo — layout a due colonne',
-  gallery: 'Galleria — griglia di immagini (2 colonne su mobile)',
-  bullets: 'Elenco puntato — lista stanza per stanza',
-  cards: 'Ispirazioni — sezione scura con prodotti consigliati',
-  features: 'Box informativi — griglia di highlight',
-  stats: 'Statistiche — fascia numeri in evidenza',
-  cta: 'Conversione — fascia finale con pulsante',
+  prose: 'Testo - paragrafi nel corpo articolo',
+  image: 'Immagine - foto a tutta larghezza nel corpo',
+  split: 'Immagine + testo - layout a due colonne',
+  gallery: 'Galleria - griglia di immagini (2 colonne su mobile)',
+  bullets: 'Elenco puntato - lista stanza per stanza',
+  cards: 'Ispirazioni - sezione scura con prodotti consigliati',
+  features: 'Box informativi - griglia di highlight',
+  stats: 'Statistiche - fascia numeri in evidenza',
+  cta: 'Conversione - fascia finale con pulsante',
 }
 
 const BLOCK_TEMPLATES: Record<string, Record<string, unknown>> = {

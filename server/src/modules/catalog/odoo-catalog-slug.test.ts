@@ -18,9 +18,11 @@ describe('odoo-catalog-slug', () => {
     expect(slugifyCatalogToken('Illuminazione tecnica')).toBe('illuminazione-tecnica')
   })
 
-  it('canonicalizza alias TLB', () => {
+  it('canonicalizza alias TLB e design', () => {
     expect(canonicalizeBrandSlug('tlb-italy')).toBe('tlb')
     expect(canonicalizeBrandSlug('TLB')).toBe('tlb')
+    expect(canonicalizeBrandSlug('fontana-arte')).toBe('fontanaarte')
+    expect(canonicalizeBrandSlug('ideallux')).toBe('ideal-lux')
     expect(brandSlugLookupKeys('tlb-italy')).toEqual(expect.arrayContaining(['tlb', 'tlb-italy']))
   })
 

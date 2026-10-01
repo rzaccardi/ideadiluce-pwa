@@ -164,13 +164,13 @@ export function RestockDetailPage() {
               <DetailValue>{request.productName ?? request.productRef}</DetailValue>
             </DetailField>
             <DetailField label="Slug">
-              <DetailValue>{request.productSlug ?? '—'}</DetailValue>
+              <DetailValue>{request.productSlug ?? '-'}</DetailValue>
             </DetailField>
             <DetailField label="Ref prodotto">
               <DetailValue>{request.productRef}</DetailValue>
             </DetailField>
             <DetailField label="Variante">
-              <DetailValue>{request.variantRef ?? '—'}</DetailValue>
+              <DetailValue>{request.variantRef ?? '-'}</DetailValue>
             </DetailField>
             <DetailField label="Quantità">
               <DetailValue>{request.quantity}</DetailValue>
@@ -180,7 +180,7 @@ export function RestockDetailPage() {
                 {request.odooTemplateId != null ? (
                   <Badge variant="outline">#{request.odooTemplateId}</Badge>
                 ) : (
-                  '—'
+                  '-'
                 )}
               </DetailValue>
             </DetailField>
@@ -241,7 +241,7 @@ export function RestockDetailPage() {
             <DetailValue>
               {request.notifiedAt
                 ? new Date(request.notifiedAt).toLocaleString('it-IT')
-                : '—'}
+                : '-'}
             </DetailValue>
           </DetailField>
         </CardContent>

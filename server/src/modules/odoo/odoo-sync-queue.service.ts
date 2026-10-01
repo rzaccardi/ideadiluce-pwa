@@ -41,9 +41,9 @@ async function notifySyncExhausted(
       vars: {
         pwa_order_id: input.pwaOrderId ?? '',
         body_text: [
-          'Tipo: Coda sync Odoo — tentativi esauriti',
+          'Tipo: Coda sync Odoo - tentativi esauriti',
           `ID coda: ${input.queueId}`,
-          `Ordine PWA: ${input.pwaOrderId ?? '—'}`,
+          `Ordine PWA: ${input.pwaOrderId ?? '-'}`,
           `Operazione: ${input.operation}`,
           `Tentativi: ${input.attempts}`,
           '',

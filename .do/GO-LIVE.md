@@ -145,14 +145,31 @@ Verifica locale: `npm run stripe:setup`, `npm run stripe:webhook`.
 
 ### 3.4 Email (Odoo)
 
-Le email transazionali (clienti e notifiche interne a `info@ideadiluce.com`) partono da Odoo: la PWA crea i `mail.template` mancanti via API e spedisce con `mail.mail`. Serve un server di posta in uscita configurato in Odoo, non SMTP sulla PWA.
+Le email transazionali (clienti e notifiche interne a `info@ideadiluce.com`) partono da Odoo: la PWA crea i `mail.template` mancanti via API (nome `[PWA] …`) e spedisce con `mail.mail`. Seed e placeholder in `server/src/adapters/odoo/odoo-mail.templates.ts`; dopo la prima creazione il contenuto è modificabile da Odoo (Impostazioni → Tecnico → Email → Template). Serve un server di posta in uscita configurato in Odoo, non SMTP sulla PWA.
 
-| Uso | Env |
-|-----|-----|
-| Reset password (nativo Odoo se portal user) | Odoo `auth_signup` |
-| Alert sync / preventivi / contatti / credenziali | template `[PWA] …` in Odoo |
-| Destinatario alert sync (override) | `PAID_SYNC_ALERT_EMAIL` |
-| Fallback solo se Odoo è spento (dev) | `SMTP_*` |
+| Uso | Template Odoo (`mail.template.name`) |
+|-----|--------------------------------------|
+| Benvenuto registrazione (privato/business) | `[PWA] Benvenuto account cliente` |
+| Notifica interna nuova azienda | `[PWA] Registrazione azienda - interno` |
+| Conferma richiesta professionisti (cliente) | `[PWA] Conferma richiesta professionisti` (`professional_request_customer`) |
+| Credenziali / reset password PWA | `[PWA] Credenziali account cliente`, `[PWA] Reimposta password` |
+| Conferma ordine / bonifico / spedito / carrello | `[PWA] Conferma ordine`, `[PWA] Istruzioni bonifico`, `[PWA] Ordine spedito`, `[PWA] Carrello abbandonato` |
+| Alert sync / preventivi / contatti / reso | altri `[PWA] …` (stesso adapter) |
+| Reset password portal user (nativo Odoo) | Odoo `auth_signup` (non PWA) |
+
+I template mancanti si creano al primo `sendPwaMail`. Per forzarne la creazione (e opzionalmente riscrivere subject/body dal seed):
+
+```bash
+cd server && npx tsx scripts/sync-pwa-mail-templates.ts
+cd server && npx tsx scripts/sync-pwa-mail-templates.ts --update
+```
+
+| Env | Ruolo |
+|-----|-------|
+| `PAID_SYNC_ALERT_EMAIL` | Destinatario alert sync (override di `info@ideadiluce.com`) |
+| `SMTP_*` | Fallback solo se Odoo è spento (dev) |
+
+**Nota API v2:** con Odoo API v2 attiva la PWA non invia le mail ordine (`order_confirmation` ecc.): le gestisce Odoo. Le mail di registrazione restano sempre via `sendPwaMail` / template `[PWA] …` (non esiste un evento nativo Odoo per la signup PWA).
 
 ### 3.5 DeepL (opzionale)
 

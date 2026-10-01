@@ -54,8 +54,8 @@ export function resolveDcActiveNavId(pathname: string): DcActiveNavId | null {
     return 'tecnico'
   }
   if (path.startsWith('/attacco')) return 'attacco'
-  if (path.startsWith('/ambienti')) return 'ambienti'
+  if (path.startsWith('/ambienti') || path === '/acquista-ambiente') return 'ambienti'
   if (path.startsWith('/brand')) return 'brand'
-  if (path.startsWith('/guide')) return 'guide'
+  if (path.startsWith('/guide') || path === '/blog') return 'guide'
   return null
 }

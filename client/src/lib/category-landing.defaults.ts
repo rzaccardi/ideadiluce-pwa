@@ -153,7 +153,7 @@ export const DEFAULT_DESIGN_CATEGORY_IT: CategoryLandingContent = {
 const TECHNICAL_BASE: Omit<CategoryLandingContent, 'breadcrumb' | 'title' | 'subtypeChips'> = {
   eyebrow: 'LA TECNICA',
   description:
-    'Alimentatori, driver LED, trasformatori, portalampade e accessori. Filtra per tecnologia, potenza, corrente e attacco — o cerca direttamente il codice.',
+    'Alimentatori, driver LED, trasformatori, portalampade e accessori. Filtra per tecnologia, potenza, corrente e attacco - o cerca direttamente il codice.',
   supportCard: {
     title: 'Non sai quale scegliere?',
     description: 'Inviaci una foto o il codice del vecchio prodotto: troviamo il ricambio compatibile.',
@@ -294,7 +294,7 @@ const TECHNICAL_BASE: Omit<CategoryLandingContent, 'breadcrumb' | 'title' | 'sub
   cta: {
     title: "Non trovi l'alimentatore compatibile?",
     description:
-      'Inviaci una foto del vecchio alimentatore, dei dati di targa o del codice: troviamo il ricambio corretto o un\'alternativa equivalente — anche per prodotti fuori produzione.',
+      'Inviaci una foto del vecchio alimentatore, dei dati di targa o del codice: troviamo il ricambio corretto o un\'alternativa equivalente - anche per prodotti fuori produzione.',
     primaryCta: { label: 'Invia una foto', href: '/prodotto-non-trovato' },
     secondaryCta: { label: 'Cerca per EAN', href: '/negozio?world=technical' },
   },

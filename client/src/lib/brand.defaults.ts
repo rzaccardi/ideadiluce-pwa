@@ -60,6 +60,65 @@ export const BRAND_HERO_FILTERS: { id: BrandCategory | 'all'; label: string }[] 
 /** Brand a catalogo Odoo (facet live). `defaultProductCount` = snapshot di riferimento. */
 export const BRAND_META: BrandMeta[] = [
   {
+    slug: 'artemide',
+    name: 'Artemide',
+    displayStyle: 'serif',
+    categories: ['design', 'made-in-italy'],
+    description: 'Icone del design italiano: sospensioni, applique e lampade da tavolo.',
+    tags: ['Design', 'Icone', 'Made in Italy'],
+    productLines: 'Sospensioni · Applique · Tavolo',
+    featured: true,
+  },
+  {
+    slug: 'flos',
+    name: 'Flos',
+    displayStyle: 'serif',
+    categories: ['design'],
+    description: 'Lampade d’autore e collezioni contemporanee per ambienti residenziali.',
+    tags: ['Design', 'Contemporaneo'],
+    productLines: 'Sospensioni · Terra · Tavolo',
+    featured: true,
+  },
+  {
+    slug: 'fontanaarte',
+    name: 'FontanaArte',
+    displayStyle: 'serif',
+    categories: ['design', 'made-in-italy'],
+    description: 'Vetro, luce e design italiano: pezzi storici e nuove collezioni.',
+    tags: ['Design', 'Vetro', 'Made in Italy'],
+    productLines: 'Sospensioni · Terra · Tavolo',
+    featured: true,
+  },
+  {
+    slug: 'eglo',
+    name: 'Eglo',
+    displayStyle: 'bold',
+    categories: ['design', 'decorativo'],
+    description: 'Illuminazione residenziale accessibile: interni, outdoor e soluzioni LED.',
+    tags: ['Arredo', 'Outdoor', 'LED'],
+    productLines: 'Interni · Outdoor · LED',
+    featured: true,
+  },
+  {
+    slug: 'ideal-lux',
+    name: 'Ideal Lux',
+    displayStyle: 'bold',
+    categories: ['design', 'decorativo'],
+    description: 'Lampade decorative e soluzioni per casa, contract e outdoor.',
+    tags: ['Decorativo', 'Outdoor'],
+    productLines: 'Interni · Outdoor · Decorativo',
+    featured: true,
+  },
+  {
+    slug: 'pallucco',
+    name: 'Pallucco',
+    displayStyle: 'serif',
+    categories: ['design', 'made-in-italy'],
+    description: 'Design italiano contemporaneo per ambienti di prestigio.',
+    tags: ['Design', 'Made in Italy'],
+    productLines: 'Sospensioni · Terra · Parete',
+  },
+  {
     slug: 'osram',
     name: 'OSRAM',
     displayStyle: 'bold',
@@ -229,7 +288,7 @@ export const BRAND_THEMATIC = {
     eyebrow: 'DESIGN',
     title: "Per lampade d'autore",
     subtitle: 'Marchi selezionati per arredare con la luce.',
-    slugs: ['osram', 'philips', 'ledvance', 'general-electric', 'sylvania'],
+    slugs: ['artemide', 'flos', 'fontanaarte', 'eglo', 'ideal-lux'],
     allHref: '/negozio?world=design',
   },
   technical: {
@@ -260,6 +319,24 @@ function normalizeBrandKey(value: string): string {
 
 export function brandHref(slug: string): string {
   return `/brand/${slug}`
+}
+
+/** Meta editoriale per slug path (`/brand/[slug]`), inclusi alias noti. */
+export function findBrandMetaBySlug(slug: string): BrandMeta | undefined {
+  const normalized = slug.trim().toLowerCase()
+  if (!normalized) return undefined
+  const aliases =
+    normalized === 'tlb-italy' || normalized === 'tlbitaly'
+      ? ['tlb', 'tlb-italy']
+      : normalized === 'fontana-arte'
+        ? ['fontanaarte', 'fontana-arte']
+        : normalized === 'ideallux'
+          ? ['ideal-lux', 'ideallux']
+          : [normalized]
+  return (
+    BRAND_META.find((brand) => aliases.includes(brand.slug)) ??
+    BRAND_META.find((brand) => normalizeBrandKey(brand.name) === normalized)
+  )
 }
 
 export function brandSlugFromDisplayName(name: string): string | null {

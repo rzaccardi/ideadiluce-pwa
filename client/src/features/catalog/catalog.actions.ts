@@ -526,6 +526,15 @@ export async function fetchProductsByQuery(
   return fallback.items
 }
 
+/** Chiave fetch facet: solo parametri effettivamente inviati a `/catalog/filters`. */
+export function catalogFacetsFetchKey(filters: {
+  q?: string
+  world?: 'design' | 'technical'
+  locale: string
+}) {
+  return [filters.q ?? '', filters.world ?? '', filters.locale].join('|')
+}
+
 /**
  * Carica i facet per la sidebar.
  *
@@ -533,42 +542,35 @@ export async function fetchProductsByQuery(
  * attacco / tassonomie, Odoo restringerebbe i facet al sottoinsieme filtrato
  * (es. `category=scarica` nasconde altri attacchi e le categorie sibling).
  * La selezione resta in URL / store; qui servono tutte le opzioni navigabili.
+ *
+ * Dedup in-flight + `skipIfFresh` evitano round-trip quando cambiano solo
+ * filtri strutturati (category/brand/attacco/…) che non influenzano questo payload.
  */
-export async function fetchCatalogFilters(partial?: {
+export function fetchCatalogFilters(partial?: {
   q?: string
-  /** Ignorato per i facet UI — vedi commento sopra. */
-  categorySlug?: string
-  /** Ignorato per i facet UI. */
-  brandSlug?: string
-  /** Ignorato per i facet UI. */
-  attacco?: string
-  /** Ignorato per i facet UI. */
-  colorTemp?: string
-  /** Ignorato per i facet UI. */
-  wattaggio?: string
-  /** Ignorato per i facet UI. */
-  wattaggioMin?: string
-  /** Ignorato per i facet UI. */
-  wattaggioMax?: string
-  /** Ignorato per i facet UI. */
-  tipologia?: string
-  /** Ignorato per i facet UI. */
-  ambiente?: string
-  /** Ignorato per i facet UI. */
-  stile?: string
   world?: 'design' | 'technical'
   locale?: string
+  skipIfFresh?: boolean
 }) {
-  try {
-    const data = await api.catalog.filters({
-      q: partial?.q ?? catalogStore.filters.q,
-      world: partial?.world ?? catalogStore.filters.world,
-      locale: partial?.locale ?? catalogStore.filters.locale,
-    })
-    catalogStore.facets = data
-    return data
-  } catch {
-    catalogStore.facets = null
-    return null
+  const q = partial?.q ?? catalogStore.filters.q
+  const world = partial?.world ?? catalogStore.filters.world
+  const locale = partial?.locale ?? catalogStore.filters.locale
+  const key = catalogFacetsFetchKey({ q, world, locale })
+
+  if (partial?.skipIfFresh !== false && key === catalogStore.facetsFetchKey && catalogStore.facets) {
+    return Promise.resolve(catalogStore.facets)
   }
+
+  return dedupeAsync(`catalog:filters:${key}`, async () => {
+    try {
+      const data = await api.catalog.filters({ q, world, locale })
+      catalogStore.facets = data
+      catalogStore.facetsFetchKey = key
+      return data
+    } catch {
+      catalogStore.facets = null
+      catalogStore.facetsFetchKey = null
+      return null
+    }
+  })
 }

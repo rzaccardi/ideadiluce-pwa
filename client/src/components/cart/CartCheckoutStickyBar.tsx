@@ -10,7 +10,8 @@ import { Button } from '@/components/Button'
 import { cn } from '@/utils/cn'
 
 type Props = {
-  totalCents: number
+  /** Subtotale prodotti (niente totale stimato con spedizione/IVA in carrello). */
+  subtotalCents: number
   currencyCode: string
   checkoutDisabled?: boolean
   noPurchasableLines?: boolean
@@ -18,7 +19,7 @@ type Props = {
 }
 
 export function CartCheckoutStickyBar({
-  totalCents,
+  subtotalCents,
   currencyCode,
   checkoutDisabled,
   noPurchasableLines,
@@ -34,9 +35,9 @@ export function CartCheckoutStickyBar({
     >
       <SectionContainer className="flex items-center gap-3 py-3">
         <div className="min-w-0 shrink-0">
-          <div className="text-[11px] font-medium text-idl-muted">{t('cart.summary.total')}</div>
+          <div className="text-[11px] font-medium text-idl-muted">{t('cart.summary.subtotal')}</div>
           <div className="text-lg font-extrabold leading-tight text-idl-graphite">
-            {formatMoney(totalCents, currencyCode)}
+            {formatMoney(subtotalCents, currencyCode)}
           </div>
         </div>
 

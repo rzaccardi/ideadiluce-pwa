@@ -9,6 +9,8 @@ import { ATTACCO_SOCKETS } from '@/lib/attacco.defaults'
 import { siteStore } from '@/features/site'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import type { SiteMegaMenuPanel, SiteShellContent } from '@/types/site-content'
+import { layers } from '@/lib/layering'
+import { cn } from '@/utils/cn'
 import { SectionContainer } from './primitives'
 import { slideDownVariants, transitionBase } from '@/lib/motion/presets'
 
@@ -43,8 +45,8 @@ function hintFromPanel(panel: SiteMegaMenuPanel, socket: (typeof MEGA_SOCKETS)[n
   for (const column of panel.columns) {
     for (const link of column.links) {
       if (link.href !== socket.href) continue
-      const parts = link.label.split(' — ')
-      if (parts.length > 1) return parts.slice(1).join(' — ')
+      const parts = link.label.split(' - ')
+      if (parts.length > 1) return parts.slice(1).join(' - ')
     }
   }
   return socket.hint
@@ -104,8 +106,10 @@ export function AttaccoMegaPanel({ onNavigate }: { onNavigate?: () => void }) {
     </SectionContainer>
   )
 
-  const panelClass =
-    'absolute inset-x-0 top-full z-50 border-t border-idl-tech-border bg-idl-tech-panel shadow-2xl'
+  const panelClass = cn(
+    'absolute inset-x-0 top-full border-t border-idl-tech-border bg-idl-tech-panel shadow-2xl',
+    layers.megaPanel,
+  )
 
   if (reduceMotion) {
     return <div className={panelClass}>{inner}</div>

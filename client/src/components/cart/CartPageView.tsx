@@ -22,7 +22,7 @@ import { ToastOnError } from '@/components/ToastFeedback'
 import {
   cartHasBlockedLines,
   cartPurchasableItemCount,
-  cartTotalCents,
+  cartSubtotalCents,
 } from '@/lib/cartTotals'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { useI18n } from '@/hooks/use-i18n'
@@ -162,7 +162,7 @@ export function CartPageView({ state }: Props) {
       </CartPageBody>
 
       <CartCheckoutStickyBar
-        totalCents={cartTotalCents(cart)}
+        subtotalCents={cartSubtotalCents(cart)}
         currencyCode={cart.currencyCode}
         checkoutDisabled={checkoutDisabled}
         noPurchasableLines={purchasableCount === 0}

@@ -107,7 +107,7 @@ export function OdooQuotationsPage() {
         description={
           store.quotationsList != null
             ? `${store.quotationsList.total} preventivi Odoo (bozza/inviato)`
-            : 'Preventivi da sale.order Odoo — stati draft e sent'
+            : 'Preventivi da sale.order Odoo - stati draft e sent'
         }
       />
 
@@ -192,7 +192,7 @@ export function OdooQuotationsPage() {
                     <ClickableTableRow key={row.id} to={`/odoo/quotations/${row.id}`}>
                       <TableCell className="font-medium">{row.name}</TableCell>
                       <TableCell className="min-w-0">
-                        <p className="truncate">{row.partnerName ?? '—'}</p>
+                        <p className="truncate">{row.partnerName ?? '-'}</p>
                         {row.partnerEmail ? (
                           <p className="truncate text-sm text-muted-foreground">{row.partnerEmail}</p>
                         ) : null}
@@ -206,7 +206,7 @@ export function OdooQuotationsPage() {
                       <TableCell className="text-right whitespace-nowrap">
                         {row.amountTotalCents != null
                           ? formatMoney(row.amountTotalCents, row.currencyCode ?? 'EUR')
-                          : '—'}
+                          : '-'}
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <OdooSaleOrderLink saleOrderId={row.id} />

@@ -335,6 +335,7 @@ async function updateCustomerProfile(
   ctx: OdooCallContext,
   partnerId: number,
   input: {
+    email?: string
     firstName?: string
     lastName?: string
     phone?: string | null
@@ -342,6 +343,10 @@ async function updateCustomerProfile(
   },
 ): Promise<void> {
   const vals: Record<string, unknown> = {}
+  if (input.email !== undefined) {
+    const email = input.email.toLowerCase().trim()
+    if (email) vals.email = email
+  }
   if (input.firstName !== undefined || input.lastName !== undefined) {
     const rows = await odooExecuteKw<Array<{ is_company?: boolean }>>(
       ctx,

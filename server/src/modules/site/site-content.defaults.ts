@@ -29,7 +29,7 @@ const SOCKET_ITEMS = [
 
 function attaccoMegaMenuColumns() {
   const toLink = (s: (typeof SOCKET_ITEMS)[number]) => ({
-    label: `${s.code} — ${s.hint}`,
+    label: `${s.code} - ${s.hint}`,
     href: s.href,
   })
   return [
@@ -106,7 +106,7 @@ export const DEFAULT_SHELL_IT: SiteShellContent = {
                 { label: 'Artemide', href: '/brand/artemide' },
                 { label: 'Flos', href: '/brand/flos' },
                 { label: 'FontanaArte', href: '/brand/fontanaarte' },
-                { label: 'Davide Groppi', href: '/brand/davide-groppi' },
+                { label: 'Eglo', href: '/brand/eglo' },
                 { label: 'Ideal Lux', href: '/brand/ideal-lux' },
                 { label: 'TLB', href: '/brand/tlb' },
               ],
@@ -182,9 +182,9 @@ export const DEFAULT_SHELL_IT: SiteShellContent = {
               links: [
                 { label: 'Kelvin & CRI', href: '/guide/luce-calda-naturale-fredda' },
                 { label: 'Lumen vs watt', href: '/guide/scegliere-lampadina-led' },
-                { label: 'Dimmerabilità', href: '/guide/glossario' },
-                { label: 'Grado IP', href: '/guide/glossario' },
-                { label: 'Retrofit LED', href: '/guide/lampadina-r7s' },
+                { label: 'Dimmerabilità', href: '/guide/dimmerabilita' },
+                { label: 'Grado IP', href: '/guide/grado-ip' },
+                { label: 'Retrofit LED', href: '/guide/retrofit-led' },
               ],
             },
           ]),
@@ -270,7 +270,7 @@ export const DEFAULT_HOME_IT: HomePageContent = {
       eyebrow: 'IL DESIGN',
       title: 'Illumina con stile',
       description:
-        "Idea di Luce — illuminazione d'arredo: lampade, sospensioni e applique d'autore. Brand, designer e ambienti per dare carattere e stile ai tuoi spazi.",
+        "Idea di Luce - illuminazione d'arredo: lampade, sospensioni e applique d'autore. Brand, designer e ambienti per dare carattere e stile ai tuoi spazi.",
       ctaLabel: "Esplora l'arredo →",
       ctaHref: '/illuminazione-arredo',
       footerLine: 'ARTEMIDE · FLOS · TLB ITALY · VOSSLOH',
@@ -383,10 +383,10 @@ export const DEFAULT_HOME_IT: HomePageContent = {
       'Artemide',
       'Flos',
       'FontanaArte',
-      'Davide Groppi',
+      'Eglo',
       'TLB Italy',
       'Ideal Lux',
-      'Eglo',
+      'Pallucco',
       'Philips',
       'Osram',
       'Ledvance',
@@ -492,18 +492,18 @@ export const DEFAULT_BRAND_IT: EditorialPageContent = {
   subtitle: 'Scopri i marchi selezionati da IdeaDiLuce: design, lampadine, LED e prodotti tecnici.',
   intro: 'Scegli il brand che conosci, o trovalo in base a cosa cerchi.',
   items: [
-    'Artemide', 'Flos', 'FontanaArte', 'Davide Groppi', 'TLB Italy', 'Ideal Lux',
-    'Eglo', 'Philips', 'Osram', 'Ledvance', 'Vossloh', 'Mean Well',
+    'Artemide', 'Flos', 'FontanaArte', 'Eglo', 'TLB Italy', 'Ideal Lux',
+    'Pallucco', 'Philips', 'Osram', 'Ledvance', 'Vossloh', 'Mean Well',
   ].map((name) => ({
     title: name,
     href: `/brand/${({
       Artemide: 'artemide',
       Flos: 'flos',
       FontanaArte: 'fontanaarte',
-      'Davide Groppi': 'davide-groppi',
-      'TLB Italy': 'tlb-italy',
-      'Ideal Lux': 'ideal-lux',
       Eglo: 'eglo',
+      'TLB Italy': 'tlb',
+      'Ideal Lux': 'ideal-lux',
+      Pallucco: 'pallucco',
       Philips: 'philips',
       Osram: 'osram',
       Ledvance: 'ledvance',
@@ -548,11 +548,32 @@ export const DEFAULT_GUIDE_IT: EditorialPageContent = {
       imageUrl: '/site/images/prod-driver.webp',
     },
     {
+      category: 'TECNICO',
+      title: 'Dimmerabilità',
+      meta: '5 min',
+      href: '/guide/dimmerabilita',
+      imageUrl: '/site/images/prod-driver.webp',
+    },
+    {
+      category: 'TECNICO',
+      title: 'Grado IP',
+      meta: '4 min',
+      href: '/guide/grado-ip',
+      imageUrl: '/site/images/prod-spot.webp',
+    },
+    {
       category: 'ACQUISTO',
       title: 'Come scegliere una lampadina R7s',
       meta: '6 min',
       href: '/guide/lampadina-r7s',
       imageUrl: '/site/images/prod-r7s.webp',
+    },
+    {
+      category: 'ACQUISTO',
+      title: 'Retrofit LED',
+      meta: '6 min',
+      href: '/guide/retrofit-led',
+      imageUrl: '/site/images/prod-bulb.webp',
     },
     {
       category: 'AMBIENTE',

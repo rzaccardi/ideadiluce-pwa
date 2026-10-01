@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   brandAreaBadges,
+  findBrandMetaBySlug,
   mergeBrandCards,
   resolveBrandCategories,
 } from './brand.defaults'
@@ -35,13 +36,24 @@ describe('brandAreaBadges', () => {
   })
 })
 
+describe('findBrandMetaBySlug', () => {
+  it('risolve brand design del mega-menu e alias', () => {
+    expect(findBrandMetaBySlug('eglo')?.name).toBe('Eglo')
+    expect(findBrandMetaBySlug('fontanaarte')?.name).toBe('FontanaArte')
+    expect(findBrandMetaBySlug('fontana-arte')?.name).toBe('FontanaArte')
+    expect(findBrandMetaBySlug('ideal-lux')?.name).toBe('Ideal Lux')
+    expect(findBrandMetaBySlug('tlb-italy')?.slug).toBe('tlb')
+    expect(findBrandMetaBySlug('davide-groppi')).toBeUndefined()
+  })
+})
+
 describe('mergeBrandCards', () => {
   it('classifica i brand hub fuori da BRAND_META in base ai mondi Odoo', () => {
     const cards = mergeBrandCards([
       { slug: 'artemide', name: 'Artemide', productCount: 10, worlds: ['design'] },
       { slug: 'osram', name: 'OSRAM', productCount: 8, worlds: ['technical'] },
     ])
-    expect(cards.find((c) => c.slug === 'artemide')?.categories).toEqual(['design'])
+    expect(cards.find((c) => c.slug === 'artemide')?.categories).toEqual(['design', 'made-in-italy'])
     expect(cards.find((c) => c.slug === 'osram')?.categories).toContain('tecnico')
     expect(cards.find((c) => c.slug === 'osram')?.categories).not.toContain('design')
   })

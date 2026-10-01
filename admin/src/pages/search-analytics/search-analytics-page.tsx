@@ -489,10 +489,10 @@ export function SearchAnalyticsPage() {
                     </TableCell>
                     <TableCell>{sourceLabel(row.source)}</TableCell>
                     <TableCell className="tabular-nums">
-                      {row.productTotal ?? row.resultCount ?? '—'}
+                      {row.productTotal ?? row.resultCount ?? '-'}
                     </TableCell>
                     <TableCell className="max-w-[180px] truncate text-sm text-muted-foreground">
-                      {row.clickedLabel ?? '—'}
+                      {row.clickedLabel ?? '-'}
                     </TableCell>
                   </TableRow>
                 ))}

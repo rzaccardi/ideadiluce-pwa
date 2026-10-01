@@ -359,6 +359,9 @@ export type SitePageKey =
   | 'guide-lampadina-r7s'
   | 'guide-illuminare-soggiorno'
   | 'guide-glossario'
+  | 'guide-dimmerabilita'
+  | 'guide-grado-ip'
+  | 'guide-retrofit-led'
   | 'guide-scegliere-lampadina-led'
   | 'guide-alimentatore-striscia-led'
 
@@ -386,6 +389,9 @@ export type ContentPageKey = Extract<
   | 'guide-lampadina-r7s'
   | 'guide-illuminare-soggiorno'
   | 'guide-glossario'
+  | 'guide-dimmerabilita'
+  | 'guide-grado-ip'
+  | 'guide-retrofit-led'
   | 'guide-scegliere-lampadina-led'
   | 'guide-alimentatore-striscia-led'
 >

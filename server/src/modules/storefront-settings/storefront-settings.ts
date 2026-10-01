@@ -1,7 +1,7 @@
 import type { StorefrontSettings } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 
-export const DEFAULT_LEGACY_SITE_URL = 'https://old.ideadiluce.it'
+export const DEFAULT_LEGACY_SITE_URL = 'https://old.ideadiluce.com/'
 
 export type StorefrontSettingsDTO = {
   soundsEnabled: boolean

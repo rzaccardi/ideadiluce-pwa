@@ -780,7 +780,7 @@ model StorefrontSettings {
   soundsEnabled            Boolean  @default(true)
   /** Barra go-live: rimanda al sito precedente se il nuovo ha problemi. */
   legacySiteNoticeEnabled  Boolean  @default(true)
-  legacySiteUrl            String   @default("https://old.ideadiluce.it")
+  legacySiteUrl            String   @default("https://old.ideadiluce.com/")
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 }

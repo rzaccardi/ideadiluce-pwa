@@ -304,7 +304,7 @@ export function GuidesListPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{guide.category || '—'}</Badge>
+                        <Badge variant="outline">{guide.category || '-'}</Badge>
                       </TableCell>
                       <TableCell className="text-center tabular-nums">{guide.sortOrder}</TableCell>
                       <TableCell className="text-center">
@@ -340,7 +340,7 @@ export function GuidesListPage() {
                         return (
                           <TableCell key={locale} className="text-center">
                             {localeInfo?.status === 'missing' ? (
-                              <span className="text-xs text-amber-700">—</span>
+                              <span className="text-xs text-amber-700">-</span>
                             ) : localeInfo?.published ? (
                               <span className="text-xs text-emerald-700" title="Pubblicata">
                                 ✓

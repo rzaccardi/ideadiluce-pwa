@@ -89,7 +89,7 @@ export function ProductVariantPicker({
 
   function formatSelectLabel(variant: VariantItem): string {
     const base = variantChoiceLabel(variant, null, currency, formatCatalogMoney, basePriceCents)
-    return isVariantOutOfStock(variant, locale) ? `${base} — ${soldOutLabel}` : base
+    return isVariantOutOfStock(variant, locale) ? `${base} - ${soldOutLabel}` : base
   }
 
   if (useButtons) {

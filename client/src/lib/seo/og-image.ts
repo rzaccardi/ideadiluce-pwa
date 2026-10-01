@@ -7,7 +7,7 @@ export const DEFAULT_OG_IMAGE_WIDTH = 1200
 export const DEFAULT_OG_IMAGE_HEIGHT = 630
 
 export const DEFAULT_OG_IMAGE_ALT =
-  "Idea di Luce — Illuminazione d'arredo e prodotti tecnici"
+  "Idea di Luce - Illuminazione d'arredo e prodotti tecnici"
 
 export function getDefaultOgImageUrl(siteUrl?: string): string {
   const origin = (siteUrl ?? getSiteUrl()).replace(/\/$/, '')

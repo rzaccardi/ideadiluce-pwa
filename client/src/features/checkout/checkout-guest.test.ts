@@ -5,6 +5,7 @@ import {
   canAdvanceFromStep,
   isAnagraficaCompartmentComplete,
   isCheckoutAccountReady,
+  isShippingBlockedByMissingPhone,
   resetCheckout,
   shouldSkipCheckoutStep,
 } from './checkout.actions'
@@ -64,6 +65,24 @@ describe('guest checkout account readiness', () => {
     expect(acceptGuestCheckout()).toBe(true)
     completeGuestBilling()
     expect(isAnagraficaCompartmentComplete()).toBe(true)
+  })
+
+  it('dopo guest + indirizzo IT con telefono non blocca la spedizione', () => {
+    checkoutStore.draft.email = 'ospite@example.com'
+    expect(acceptGuestCheckout()).toBe(true)
+    completeGuestBilling()
+    checkoutStore.draft.shipping = { ...checkoutStore.draft.billing }
+    checkoutStore.draft.billingSameAsShipping = true
+    expect(isShippingBlockedByMissingPhone()).toBe(false)
+  })
+
+  it('dopo guest senza telefono blocca i metodi di spedizione', () => {
+    checkoutStore.draft.email = 'ospite@example.com'
+    expect(acceptGuestCheckout()).toBe(true)
+    completeGuestBilling()
+    checkoutStore.draft.billing.phone = ''
+    checkoutStore.draft.shipping = { ...checkoutStore.draft.billing }
+    expect(isShippingBlockedByMissingPhone()).toBe(true)
   })
 
   it('rifiuta guest checkout con email invalida', () => {

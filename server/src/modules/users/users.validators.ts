@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { addressSchema } from '../shipping/shipping.validators.js'
 
 export const patchMeSchema = z.object({
+  email: z.string().trim().email().optional(),
   firstName: z.string().min(1).optional(),
   lastName: z.string().min(1).optional(),
   phone: z.string().optional().nullable(),

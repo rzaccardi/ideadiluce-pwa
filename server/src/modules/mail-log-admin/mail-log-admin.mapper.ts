@@ -225,7 +225,7 @@ export function mapMailLogListItem(
   return {
     id: Number(row.id),
     subject: text(row.subject) || '(senza oggetto)',
-    emailTo: text(row.email_to) || '—',
+    emailTo: text(row.email_to) || '-',
     emailFrom: text(row.email_from),
     state: text(row.state) || 'outgoing',
     deliveryState: delivery.deliveryState,

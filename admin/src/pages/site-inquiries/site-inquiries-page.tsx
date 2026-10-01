@@ -214,7 +214,7 @@ export function SiteInquiriesPage() {
                       <TableCell>{siteInquiryKindLabel(row.kind)}</TableCell>
                       <TableCell className="font-medium">{row.name}</TableCell>
                       <TableCell>{row.email}</TableCell>
-                      <TableCell>{row.phone ?? '—'}</TableCell>
+                      <TableCell>{row.phone ?? '-'}</TableCell>
                       <TableCell>
                         <Badge variant={statusBadgeVariant(row.status)}>
                           {siteInquiryStatusLabel(row.status)}

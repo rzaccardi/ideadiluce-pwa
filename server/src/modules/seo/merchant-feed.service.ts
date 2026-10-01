@@ -50,155 +50,155 @@ function escapeXml(s: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;')
+ .replace(/'/g, '&apos;')
 }
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+ return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
 }
 
 export function merchantAvailability(product: ProductDetailDTO, variant?: ProductVariantDTO | null): MerchantAvailability {
-  const inStock = variant?.inStock ?? product.inStock
-  if (inStock) return 'in_stock'
-  const orderable = variant?.availability?.isOrderable ?? product.availability?.isOrderable
-  if (orderable) return 'backorder'
-  return 'out_of_stock'
+ const inStock = variant?.inStock ?? product.inStock
+ if (inStock) return 'in_stock'
+ const orderable = variant?.availability?.isOrderable ?? product.availability?.isOrderable
+ if (orderable) return 'backorder'
+ return 'out_of_stock'
 }
 
 export function collectMerchantFeedIssues(
-  product: ProductDetailDTO,
-  offer: MerchantFeedOffer,
+ product: ProductDetailDTO,
+ offer: MerchantFeedOffer,
 ): MerchantFeedIssue[] {
-  const issues: MerchantFeedIssue[] = []
-  if (product.seo.noindex) issues.push('noindex')
-  if (!offer.title.trim()) issues.push('missing_title')
-  if (!offer.image) issues.push('missing_image')
-  if (offer.priceCents <= 0) issues.push('zero_price')
-  if (!offer.gtin) issues.push('missing_gtin')
-  return issues
+ const issues: MerchantFeedIssue[] = []
+ if (product.seo.noindex) issues.push('noindex')
+ if (!offer.title.trim()) issues.push('missing_title')
+ if (!offer.image) issues.push('missing_image')
+ if (offer.priceCents <= 0) issues.push('zero_price')
+ if (!offer.gtin) issues.push('missing_gtin')
+ return issues
 }
 
 function productDescription(product: ProductDetailDTO): string {
-  return stripHtml(
-    product.shortDescription ?? product.longDescription ?? product.seo.metaDescription ?? product.name,
-  ).slice(0, 5000)
+ return stripHtml(
+ product.shortDescription ?? product.longDescription ?? product.seo.metaDescription ?? product.name,
+ ).slice(0, 5000)
 }
 
 function productTypeOf(product: ProductDetailDTO): string {
-  return product.categories?.map((c) => c.name).filter(Boolean).join(' > ') ?? ''
+ return product.categories?.map((c) => c.name).filter(Boolean).join(' > ') ?? ''
 }
 
 function shouldIncludeOffer(offer: MerchantFeedOffer, product: ProductDetailDTO, settings: MerchantCenterSettingsDTO): boolean {
-  if (product.seo.noindex) return false
-  if (!settings.includeOutOfStock && offer.availability === 'out_of_stock') return false
-  return true
+ if (product.seo.noindex) return false
+ if (!settings.includeOutOfStock && offer.availability === 'out_of_stock') return false
+ return true
 }
 
 function templateOffer(
-  product: ProductDetailDTO,
-  siteBase: string,
-  settings: MerchantCenterSettingsDTO,
-  locale: HubLocale,
+ product: ProductDetailDTO,
+ siteBase: string,
+ settings: MerchantCenterSettingsDTO,
+ locale: HubLocale,
 ): MerchantFeedOffer {
-  const link = absoluteUrl(siteBase, productPath(product.slug, locale))
-  const image = product.images[0] ?? product.imageUrl
-  const mpn = product.manufacturerCode ?? product.sku
-  return {
-    id: product.sku ?? product.slug,
-    title: product.name,
-    description: productDescription(product),
-    link,
-    image,
-    additionalImages: product.images.slice(1, 5),
-    availability: merchantAvailability(product),
-    priceCents: product.priceCents,
-    brand: product.brand?.name?.trim() || settings.brandFallback,
-    gtin: product.ean ?? null,
-    mpn: mpn ?? null,
-    productType: productTypeOf(product),
-    itemGroupId: null,
-  }
+ const link = absoluteUrl(siteBase, productPath(product.slug, locale))
+ const image = product.images[0] ?? product.imageUrl
+ const mpn = product.manufacturerCode ?? product.sku
+ return {
+ id: product.sku ?? product.slug,
+ title: product.name,
+ description: productDescription(product),
+ link,
+ image,
+ additionalImages: product.images.slice(1, 5),
+ availability: merchantAvailability(product),
+ priceCents: product.priceCents,
+ brand: product.brand?.name?.trim() || settings.brandFallback,
+ gtin: product.ean ?? null,
+ mpn: mpn ?? null,
+ productType: productTypeOf(product),
+ itemGroupId: null,
+ }
 }
 
 function variantOffer(
-  product: ProductDetailDTO,
-  variant: ProductVariantDTO,
-  siteBase: string,
-  settings: MerchantCenterSettingsDTO,
-  locale: HubLocale,
+ product: ProductDetailDTO,
+ variant: ProductVariantDTO,
+ siteBase: string,
+ settings: MerchantCenterSettingsDTO,
+ locale: HubLocale,
 ): MerchantFeedOffer {
-  const base = templateOffer(product, siteBase, settings, locale)
-  const title = variant.label.trim() && variant.label.trim() !== product.name
-    ? `${product.name} — ${variant.label.trim()}`
-    : product.name
-  const image = variant.imageUrl ?? base.image
-  const additionalImages = image && image !== base.image
-    ? [base.image, ...base.additionalImages].filter((img): img is string => Boolean(img)).slice(0, 5)
-    : base.additionalImages
-  return {
-    ...base,
-    id: variant.ced ?? variant.ref,
-    title,
-    image,
-    additionalImages: additionalImages.filter((img) => img !== image).slice(0, 4),
-    availability: merchantAvailability(product, variant),
-    priceCents: variant.priceCents ?? product.priceCents,
-    gtin: variant.ean ?? product.ean ?? null,
-    mpn: variant.manufacturerCode ?? product.manufacturerCode ?? product.sku ?? null,
-    itemGroupId: product.sku ?? product.slug,
-  }
+ const base = templateOffer(product, siteBase, settings, locale)
+ const title = variant.label.trim() && variant.label.trim() !== product.name
+ ? `${product.name} - ${variant.label.trim()}`
+ : product.name
+ const image = variant.imageUrl ?? base.image
+ const additionalImages = image && image !== base.image
+ ? [base.image, ...base.additionalImages].filter((img): img is string => Boolean(img)).slice(0, 5)
+ : base.additionalImages
+ return {
+ ...base,
+ id: variant.ced ?? variant.ref,
+ title,
+ image,
+ additionalImages: additionalImages.filter((img) => img !== image).slice(0, 4),
+ availability: merchantAvailability(product, variant),
+ priceCents: variant.priceCents ?? product.priceCents,
+ gtin: variant.ean ?? product.ean ?? null,
+ mpn: variant.manufacturerCode ?? product.manufacturerCode ?? product.sku ?? null,
+ itemGroupId: product.sku ?? product.slug,
+ }
 }
 
 export function offersForProduct(
-  product: ProductDetailDTO,
-  siteBase: string,
-  settings: MerchantCenterSettingsDTO,
-  locale: HubLocale = 'IT',
+ product: ProductDetailDTO,
+ siteBase: string,
+ settings: MerchantCenterSettingsDTO,
+ locale: HubLocale = 'IT',
 ): MerchantFeedOffer[] {
-  if (settings.expandVariants && product.variants.length > 1) {
-    return product.variants.map((variant) => variantOffer(product, variant, siteBase, settings, locale))
-  }
-  return [templateOffer(product, siteBase, settings, locale)]
+ if (settings.expandVariants && product.variants.length > 1) {
+ return product.variants.map((variant) => variantOffer(product, variant, siteBase, settings, locale))
+ }
+ return [templateOffer(product, siteBase, settings, locale)]
 }
 
 export function feedItemXml(offer: MerchantFeedOffer, settings: MerchantCenterSettingsDTO): string {
-  const price = (offer.priceCents / 100).toFixed(2)
-  const shippingPrice =
-    settings.shippingPriceCents == null ? null : (settings.shippingPriceCents / 100).toFixed(2)
+ const price = (offer.priceCents / 100).toFixed(2)
+ const shippingPrice =
+ settings.shippingPriceCents == null ? null : (settings.shippingPriceCents / 100).toFixed(2)
 
-  const lines = [
-    '    <item>',
-    `      <g:id>${escapeXml(offer.id)}</g:id>`,
-    `      <g:title>${escapeXml(offer.title)}</g:title>`,
-    `      <g:description>${escapeXml(offer.description)}</g:description>`,
-    `      <g:link>${escapeXml(offer.link)}</g:link>`,
-    offer.image ? `      <g:image_link>${escapeXml(offer.image)}</g:image_link>` : null,
-    ...offer.additionalImages.map((img) => `      <g:additional_image_link>${escapeXml(img)}</g:additional_image_link>`),
-    `      <g:availability>${offer.availability}</g:availability>`,
-    `      <g:price>${price} EUR</g:price>`,
-    `      <g:brand>${escapeXml(offer.brand)}</g:brand>`,
-    `      <g:condition>new</g:condition>`,
-    offer.gtin ? `      <g:gtin>${escapeXml(offer.gtin)}</g:gtin>` : '      <g:identifier_exists>false</g:identifier_exists>',
-    offer.mpn ? `      <g:mpn>${escapeXml(offer.mpn)}</g:mpn>` : null,
-    offer.productType ? `      <g:product_type>${escapeXml(offer.productType)}</g:product_type>` : null,
-    settings.googleProductCategory
-      ? `      <g:google_product_category>${escapeXml(settings.googleProductCategory)}</g:google_product_category>`
-      : null,
-    offer.itemGroupId ? `      <g:item_group_id>${escapeXml(offer.itemGroupId)}</g:item_group_id>` : null,
-    shippingPrice != null
-      ? `      <g:shipping>
-        <g:country>${escapeXml(settings.shippingCountry)}</g:country>
-        <g:price>${shippingPrice} EUR</g:price>
-      </g:shipping>`
-      : null,
-    '    </item>',
-  ].filter(Boolean)
+ const lines = [
+ ' <item>',
+ ` <g:id>${escapeXml(offer.id)}</g:id>`,
+ ` <g:title>${escapeXml(offer.title)}</g:title>`,
+ ` <g:description>${escapeXml(offer.description)}</g:description>`,
+ ` <g:link>${escapeXml(offer.link)}</g:link>`,
+ offer.image ? ` <g:image_link>${escapeXml(offer.image)}</g:image_link>` : null,
+ ...offer.additionalImages.map((img) => ` <g:additional_image_link>${escapeXml(img)}</g:additional_image_link>`),
+ ` <g:availability>${offer.availability}</g:availability>`,
+ ` <g:price>${price} EUR</g:price>`,
+ ` <g:brand>${escapeXml(offer.brand)}</g:brand>`,
+ ` <g:condition>new</g:condition>`,
+ offer.gtin ? ` <g:gtin>${escapeXml(offer.gtin)}</g:gtin>` : ' <g:identifier_exists>false</g:identifier_exists>',
+ offer.mpn ? ` <g:mpn>${escapeXml(offer.mpn)}</g:mpn>` : null,
+ offer.productType ? ` <g:product_type>${escapeXml(offer.productType)}</g:product_type>` : null,
+ settings.googleProductCategory
+ ? ` <g:google_product_category>${escapeXml(settings.googleProductCategory)}</g:google_product_category>`
+ : null,
+ offer.itemGroupId ? ` <g:item_group_id>${escapeXml(offer.itemGroupId)}</g:item_group_id>` : null,
+ shippingPrice != null
+ ? ` <g:shipping>
+ <g:country>${escapeXml(settings.shippingCountry)}</g:country>
+ <g:price>${shippingPrice} EUR</g:price>
+ </g:shipping>`
+ : null,
+ ' </item>',
+ ].filter(Boolean)
 
-  return lines.join('\n')
+ return lines.join('\n')
 }
 
 export function wrapMerchantFeedXml(siteBase: string, itemXml: string[]): string {
-  return `<?xml version="1.0" encoding="UTF-8"?>
+ return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
   <channel>
     <title>Idea di Luce</title>

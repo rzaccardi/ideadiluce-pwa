@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { odooExecuteKw, sendMail, envState, odooConfigured, resilience } = vi.hoisted(() => ({
+const { odooExecuteKw, sendMail, isSmtpConfigured, envState, odooConfigured, resilience } = vi.hoisted(() => ({
   odooExecuteKw: vi.fn(),
   sendMail: vi.fn(),
+  isSmtpConfigured: vi.fn(() => false),
   envState: { ODOO_ENABLED: true },
   odooConfigured: { value: true },
   resilience: { emergency: false, smtpFallback: false },
@@ -14,6 +15,7 @@ vi.mock('../../config/env.js', () => ({
 
 vi.mock('../../lib/mail.js', () => ({
   sendMail,
+  isSmtpConfigured: () => isSmtpConfigured(),
 }))
 
 vi.mock('../../lib/logger.js', () => ({
@@ -62,6 +64,8 @@ describe('sendPwaMail', () => {
   beforeEach(() => {
     odooExecuteKw.mockReset()
     sendMail.mockReset()
+    isSmtpConfigured.mockReset()
+    isSmtpConfigured.mockReturnValue(false)
     resetOdooMailTemplateCache()
     envState.ODOO_ENABLED = true
     odooConfigured.value = true
@@ -122,7 +126,7 @@ describe('sendPwaMail', () => {
   it('riusa un template già presente in Odoo', async () => {
     odooExecuteKw
       .mockResolvedValueOnce([{ id: 21 }])
-      .mockResolvedValueOnce([{ subject: 'Reimposta la password — Idea di Luce', body_html: '{{reset_url}}' }])
+      .mockResolvedValueOnce([{ subject: 'Reimposta la password - Idea di Luce', body_html: '{{reset_url}}' }])
       .mockResolvedValueOnce(5)
       .mockResolvedValueOnce(true)
       .mockResolvedValueOnce(odooAccepted())
@@ -141,7 +145,7 @@ describe('sendPwaMail', () => {
       'mail.mail/send',
       'mail.mail/read',
     ])
-    expect(odooExecuteKw.mock.calls[2]?.[3]?.[0]?.subject).toBe('Reimposta la password — Idea di Luce')
+    expect(odooExecuteKw.mock.calls[2]?.[3]?.[0]?.subject).toBe('Reimposta la password - Idea di Luce')
   })
 
   it('allego i file come ir.attachment', async () => {
@@ -178,7 +182,7 @@ describe('sendPwaMail', () => {
     expect(sendMail).toHaveBeenCalledTimes(1)
     expect(sendMail.mock.calls[0]?.[0]).toMatchObject({
       to: 'x@y.it',
-      subject: 'Reimposta la password — Idea di Luce',
+      subject: 'Reimposta la password - Idea di Luce',
     })
   })
 
@@ -225,6 +229,7 @@ describe('sendPwaMail', () => {
 
   it('se Odoo mail fallisce e SMTP fallback è attivo usa SMTP', async () => {
     resilience.smtpFallback = true
+    isSmtpConfigured.mockReturnValue(true)
     odooExecuteKw.mockRejectedValue(new Error('odoo down'))
 
     await sendPwaMail({ correlationId: 't-smtp' }, {
@@ -239,12 +244,57 @@ describe('sendPwaMail', () => {
       subject: 'Ciao',
     })
   })
+
+  it('tratta cannot marshal None su mail.mail/send come successo e verifica lo state', async () => {
+    odooExecuteKw
+      .mockResolvedValueOnce([{ id: 1 }])
+      .mockResolvedValueOnce([{ subject: '{{subject}}', body_html: '{{body_html}}' }])
+      .mockResolvedValueOnce(88)
+      .mockRejectedValueOnce(new Error('cannot marshal None unless allow_none is enabled'))
+      .mockResolvedValueOnce(odooAccepted())
+
+    await sendPwaMail({ correlationId: 't-none' }, {
+      templateKey: 'generic',
+      emailTo: 'x@y.it',
+      vars: { subject: 'Ciao', body_text: 'testo', body_html: '<p>testo</p>' },
+    })
+
+    expect(odooExecuteKw.mock.calls.map((c: unknown[]) => `${c[1]}/${c[2]}`)).toEqual([
+      'mail.template/search_read',
+      'mail.template/search_read',
+      'mail.mail/create',
+      'mail.mail/send',
+      'mail.mail/read',
+    ])
+    expect(sendMail).not.toHaveBeenCalled()
+  })
+
+  it('non finge successo se Odoo fallisce e SMTP non è configurato', async () => {
+    resilience.smtpFallback = true
+    isSmtpConfigured.mockReturnValue(false)
+    odooExecuteKw.mockRejectedValue(new Error('odoo down'))
+
+    await expect(
+      sendPwaMail({ correlationId: 't-no-smtp' }, {
+        templateKey: 'account_welcome',
+        emailTo: 'x@y.it',
+        vars: {
+          first_name_suffix: ' Mario',
+          email: 'x@y.it',
+          login_url: 'https://shop.example/login',
+        },
+      }),
+    ).rejects.toThrow('odoo down')
+    expect(sendMail).not.toHaveBeenCalled()
+  })
 })
 
 describe('sendOdooTransactionalMail', () => {
   beforeEach(() => {
     odooExecuteKw.mockReset()
     sendMail.mockReset()
+    isSmtpConfigured.mockReset()
+    isSmtpConfigured.mockReturnValue(false)
     resetOdooMailTemplateCache()
     envState.ODOO_ENABLED = true
     odooConfigured.value = true

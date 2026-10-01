@@ -67,7 +67,8 @@ export const MAIL_LOG_STATE_FILTER_OPTIONS: {
 export const MAIL_LOG_TEMPLATE_FILTER_OPTIONS: { value: string; label: string }[] = [
   { value: 'all', label: 'Tutti i tipi' },
   { value: 'account_credentials', label: 'Credenziali account' },
-  { value: 'professional_account_customer', label: 'Account professionisti' },
+  { value: 'professional_account_customer', label: 'Account professionisti (legacy)' },
+  { value: 'professional_request_customer', label: 'Conferma richiesta professionisti' },
   { value: 'quote_received_customer', label: 'Preventivo (cliente)' },
   { value: 'quote_request_admin', label: 'Preventivo (interno)' },
   { value: 'site_inquiry_admin', label: 'Contatto sito' },

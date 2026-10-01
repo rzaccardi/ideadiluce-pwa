@@ -59,6 +59,8 @@ const OBSOLETE_LEGACY_FORWARD_REDIRECTS = [
   '/blog',
   '/tos',
   '/on-demand',
+  // Brand assente: no redirect forzato (può tornare da Odoo)
+  '/brand/davide-groppi',
 ] as const
 
 export async function seedLegacyWordpressSeoRedirects() {

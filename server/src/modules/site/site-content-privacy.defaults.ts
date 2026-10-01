@@ -150,7 +150,7 @@ export const DEFAULT_PRIVACY_IT: ContentPageContent = {
       title: 'Newsletter',
       paragraphs: [
         'Il servizio di newsletter permette al Titolare del Trattamento di inviare via email agli utenti promozioni e comunicazioni commerciali.',
-        'Mailchimp (Intuit Inc.) — Mailchimp è un servizio di gestione indirizzi e invio di messaggi email fornito da Intuit Inc. Luogo del trattamento: STATI UNITI. Se l\'Utente non vuole che i propri dati personali vengano gestiti da Mailchimp, sarà necessario che annulli la sua iscrizione alla newsletter. A tal fine, il Titolare mette a disposizione un tasto di disiscrizione (link di unsubscribe) in ogni comunicazione commerciale.',
+        'Mailchimp (Intuit Inc.) - Mailchimp è un servizio di gestione indirizzi e invio di messaggi email fornito da Intuit Inc. Luogo del trattamento: STATI UNITI. Se l\'Utente non vuole che i propri dati personali vengano gestiti da Mailchimp, sarà necessario che annulli la sua iscrizione alla newsletter. A tal fine, il Titolare mette a disposizione un tasto di disiscrizione (link di unsubscribe) in ogni comunicazione commerciale.',
       ],
     },
     {
@@ -158,18 +158,18 @@ export const DEFAULT_PRIVACY_IT: ContentPageContent = {
       title: 'Tasti social network',
       paragraphs: [
         'L\'Utente può utilizzare i tasti social per visitare le pagine social del Sito. I seguenti strumenti raccolgono dati personali come dati di traffico sulle pagine visitate:',
-        'Facebook (Meta Platforms Ireland Limited) — Dati Personali raccolti: Cookie, Dati di utilizzo e altri dati come da relativa privacy policy. Luogo del trattamento: IRLANDA – STATI UNITI.',
-        'Instagram (Meta Platforms Ireland Limited) — Dati Personali raccolti: Cookie, Dati di utilizzo e altri dati come da relativa privacy policy. Luogo del trattamento: IRLANDA – STATI UNITI.',
+        'Facebook (Meta Platforms Ireland Limited) - Dati Personali raccolti: Cookie, Dati di utilizzo e altri dati come da relativa privacy policy. Luogo del trattamento: IRLANDA – STATI UNITI.',
+        'Instagram (Meta Platforms Ireland Limited) - Dati Personali raccolti: Cookie, Dati di utilizzo e altri dati come da relativa privacy policy. Luogo del trattamento: IRLANDA – STATI UNITI.',
       ],
     },
     {
       kind: 'prose',
       title: 'Gestione dei pagamenti',
       paragraphs: [
-        'NEXI (Nexi S.p.A.) — Servizio di pagamento che consente all\'Utente di effettuare pagamenti online tramite carta di credito. Luogo del trattamento: consulta la privacy policy di Nexi.',
-        'PAYPAL (Paypal Europe S.a.r.l.) — Servizio di pagamento che consente all\'Utente di effettuare pagamenti online utilizzando le proprie credenziali PayPal. Luogo del trattamento: LUSSEMBURGO.',
-        'APPLE PAY (Apple Payments Inc.) — Servizio di pagamento fornito da Apple Payments Inc.',
-        'GOOGLE PAY (Google Ireland Limited) — Servizio di pagamento fornito da Google Ireland Limited.',
+        'NEXI (Nexi S.p.A.) - Servizio di pagamento che consente all\'Utente di effettuare pagamenti online tramite carta di credito. Luogo del trattamento: consulta la privacy policy di Nexi.',
+        'PAYPAL (Paypal Europe S.a.r.l.) - Servizio di pagamento che consente all\'Utente di effettuare pagamenti online utilizzando le proprie credenziali PayPal. Luogo del trattamento: LUSSEMBURGO.',
+        'APPLE PAY (Apple Payments Inc.) - Servizio di pagamento fornito da Apple Payments Inc.',
+        'GOOGLE PAY (Google Ireland Limited) - Servizio di pagamento fornito da Google Ireland Limited.',
       ],
     },
     {
@@ -177,8 +177,8 @@ export const DEFAULT_PRIVACY_IT: ContentPageContent = {
       title: 'Statistica',
       paragraphs: [
         'I servizi di statistica permettono al Titolare del Trattamento di monitorare e analizzare i dati di traffico e servono a tener traccia del comportamento dell\'Utente.',
-        'Google Analytics (Google Ireland Limited) — Google Analytics è un servizio di analisi fornito da Google Ireland Limited. In questo sito è attiva la funzione di anonimizzazione dell\'indirizzo IP. L\'utilizzo di Google Analytics può prevedere in alcuni casi il trasferimento dei dati verso Paesi terzi quali gli Stati Uniti. Al link https://tools.google.com/dlpage/gaoptout?hl=it è disponibile il componente aggiuntivo del browser per la disattivazione di Google Analytics. Luogo del trattamento: IRLANDA e in taluni casi STATI UNITI.',
-        'Pixel di Facebook (Meta Platforms Ireland Limited) — Strumento di monitoraggio delle conversioni di Facebook. Dati Personali raccolti: Cookie; Dati di utilizzo. Luogo del trattamento: Irlanda e in taluni casi STATI UNITI.',
+        'Google Analytics (Google Ireland Limited) - Google Analytics è un servizio di analisi fornito da Google Ireland Limited. In questo sito è attiva la funzione di anonimizzazione dell\'indirizzo IP. L\'utilizzo di Google Analytics può prevedere in alcuni casi il trasferimento dei dati verso Paesi terzi quali gli Stati Uniti. Al link https://tools.google.com/dlpage/gaoptout?hl=it è disponibile il componente aggiuntivo del browser per la disattivazione di Google Analytics. Luogo del trattamento: IRLANDA e in taluni casi STATI UNITI.',
+        'Pixel di Facebook (Meta Platforms Ireland Limited) - Strumento di monitoraggio delle conversioni di Facebook. Dati Personali raccolti: Cookie; Dati di utilizzo. Luogo del trattamento: Irlanda e in taluni casi STATI UNITI.',
       ],
     },
     {

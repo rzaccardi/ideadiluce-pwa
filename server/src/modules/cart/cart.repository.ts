@@ -50,6 +50,9 @@ export const cartRepository = {
   },
 
   getWithItems(id: string) {
-    return prisma.cart.findUnique({ where: { id }, include: { items: true } })
+    return prisma.cart.findUnique({
+      where: { id },
+      include: { items: true, shippingSelection: true },
+    })
   },
 }

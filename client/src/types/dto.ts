@@ -729,6 +729,7 @@ export type ThankYouOrderDTO = PwaOrderStatusResponseDTO & {
   customerFirstName: string | null
   createdAt: string
   paidAt: string | null
+  billingAddress: UserAddressDTO | null
   shippingAddress: UserAddressDTO | null
   lines: readonly OrderLineDTO[]
   subtotalCents: number | null

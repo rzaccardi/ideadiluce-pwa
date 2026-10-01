@@ -32,6 +32,7 @@ export function createMockOdooCustomerAdapter(): OdooCustomerAdapter {
       _ctx: OdooCallContext,
       _partnerId: number,
       _input: {
+        email?: string
         firstName?: string
         lastName?: string
         phone?: string | null

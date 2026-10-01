@@ -91,7 +91,7 @@ export const paidSyncAlertService = {
         `Importo: ${amount}`,
         `Pagato il: ${order.paidAt?.toISOString() ?? 'n/d'}`,
         `Odoo sale.order: ${order.odooSaleOrderId ?? 'non collegato'}`,
-        `Ultimo errore: ${order.lastPaymentError ?? '—'}`,
+        `Ultimo errore: ${order.lastPaymentError ?? '-'}`,
         `Stato sync: ${order.odooLastSyncStatus}`,
         '',
         `Apri in backoffice: ${adminUrl}`,

@@ -124,9 +124,9 @@ export function TaxRulesPage() {
                 <TableRow key={rule.id}>
                   <TableCell>{rule.priority}</TableCell>
                   <TableCell className="font-mono text-xs">{rule.shippingCountry}</TableCell>
-                  <TableCell>{rule.customerSegment ?? '—'}</TableCell>
+                  <TableCell>{rule.customerSegment ?? '-'}</TableCell>
                   <TableCell>
-                    {rule.vatValid == null ? '—' : rule.vatValid ? 'valido' : 'non valido'}
+                    {rule.vatValid == null ? '-' : rule.vatValid ? 'valido' : 'non valido'}
                   </TableCell>
                   <TableCell>{rule.taxRatePct}%</TableCell>
                   <TableCell>{rule.taxLabel}</TableCell>

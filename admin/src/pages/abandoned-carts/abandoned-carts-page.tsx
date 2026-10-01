@@ -168,7 +168,7 @@ export function AbandonedCartsPage() {
                         {ABANDONED_EVENT_LABELS[row.eventType] ?? row.eventType}
                       </TableCell>
                       <TableCell className="max-w-[200px] truncate">
-                        {row.contactEmail ?? '—'}
+                        {row.contactEmail ?? '-'}
                       </TableCell>
                       <TableCell>
                         {row.userId ? (

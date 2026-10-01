@@ -61,7 +61,7 @@ export function AmbienteRoomView({ room, products }: Props) {
           {products.length > 0 ? (
             <>
               <h2 className="mb-6 font-serif text-2xl font-medium text-idl-ink">Prodotti consigliati</h2>
-              <ProductGrid products={products} />
+              <ProductGrid products={products} forceKind="design" />
             </>
           ) : null}
 

@@ -3,7 +3,7 @@ export function formatMoney(cents: number, currency: string = 'EUR') {
 }
 
 export function formatDate(iso: string | null | undefined): string {
-  if (!iso) return '—'
+  if (!iso) return '-'
   return new Date(iso).toLocaleDateString('it-IT', {
     day: '2-digit',
     month: 'short',
@@ -12,7 +12,7 @@ export function formatDate(iso: string | null | undefined): string {
 }
 
 export function formatDateTime(iso: string | null | undefined): string {
-  if (!iso) return '—'
+  if (!iso) return '-'
   return new Date(iso).toLocaleString('it-IT', {
     day: '2-digit',
     month: 'short',
@@ -23,7 +23,7 @@ export function formatDateTime(iso: string | null | undefined): string {
 }
 
 export function formatMinutes(mins: number | null): string {
-  if (mins == null) return '—'
+  if (mins == null) return '-'
   if (mins < 60) return `${mins} min`
   const h = Math.floor(mins / 60)
   const m = mins % 60

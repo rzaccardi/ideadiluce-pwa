@@ -147,7 +147,7 @@ export const DEFAULT_TERMINI_IT: ContentPageContent = {
     },
     {
       kind: 'prose',
-      title: '9. POLICY DI RESO E DIRITTO DI RECESSO — CLIENTI B2C',
+      title: '9. POLICY DI RESO E DIRITTO DI RECESSO - CLIENTI B2C',
       paragraphs: [
         '9.1. Hai la possibilità di avvalerti del diritto di recesso entro un termine di 14 (quattordici) giorni dal ricevimento del Prodotto, per annullare l\'acquisto di tutto o parte dell\'ordine e per restituire la merce. Questo diritto di recesso non si applica a Prodotti confezionati su misura, realizzati o personalizzati secondo le tue specifiche, a ordini speciali, o a Prodotti che, per loro natura, non possono essere rispediti.',
         '9.2. Qualora il termine finale per esercitare il diritto di recesso cada di sabato, domenica o festivo, tale termine sarà esteso al successivo giorno lavorativo.',

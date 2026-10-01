@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from '@/lib/motion-client'
 import { Link, usePathname } from '@/lib/navigation'
 import { useLocalePath } from '@/hooks/use-locale-path'
@@ -14,6 +14,9 @@ import dynamic from 'next/dynamic'
 import { AttaccoMegaPanel } from './AttaccoMegaPanel'
 import { SiteHeaderActions, SiteHeaderSearch } from './SiteHeaderActions'
 import { HeaderLightsToggle } from './HeaderLightsToggle'
+
+/** Evita che onMouseEnter riapra il mega menu subito dopo una chiusura/navigazione. */
+const HOVER_RESUME_MS = 600
 
 const MobileSiteMenu = dynamic(() => import('./MobileSiteMenu').then((m) => ({ default: m.MobileSiteMenu })), {
   ssr: false,
@@ -161,16 +164,58 @@ export function SiteHeader({
   const reduceMotion = useReducedMotion()
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const hoverOpenAllowedRef = useRef(true)
+  const hoverResumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isFirstPathEffectRef = useRef(true)
+
+  const resumeHoverOpen = () => {
+    hoverOpenAllowedRef.current = true
+    if (hoverResumeTimerRef.current) {
+      clearTimeout(hoverResumeTimerRef.current)
+      hoverResumeTimerRef.current = null
+    }
+  }
+
+  /** Dopo chiusura/navigazione ignora hover finché il pointer non lascia l'header (o timeout). */
+  const pauseHoverOpen = () => {
+    hoverOpenAllowedRef.current = false
+    if (hoverResumeTimerRef.current) clearTimeout(hoverResumeTimerRef.current)
+    hoverResumeTimerRef.current = setTimeout(() => {
+      hoverOpenAllowedRef.current = true
+      hoverResumeTimerRef.current = null
+    }, HOVER_RESUME_MS)
+  }
+
+  const closeMenu = () => {
+    setOpenMenu(null)
+    pauseHoverOpen()
+  }
+
+  const openMenuByHover = (id: string) => {
+    if (!hoverOpenAllowedRef.current) return
+    setOpenMenu(id)
+  }
 
   useEffect(() => {
     setOpenMenu(null)
     setMobileOpen(false)
+    if (isFirstPathEffectRef.current) {
+      isFirstPathEffectRef.current = false
+      return
+    }
+    pauseHoverOpen()
   }, [pathname])
+
+  useEffect(() => {
+    return () => {
+      if (hoverResumeTimerRef.current) clearTimeout(hoverResumeTimerRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     if (!openMenu) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpenMenu(null)
+      if (e.key === 'Escape') closeMenu()
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
@@ -207,7 +252,6 @@ export function SiteHeader({
       item.kind === 'dropdown' && item.id === openMenu,
   )
 
-  const closeMenu = () => setOpenMenu(null)
   const closeMobileMenu = () => setMobileOpen(false)
 
   return (
@@ -228,21 +272,22 @@ export function SiteHeader({
         ) : null}
       </AnimatePresence>
       <motion.header
-        className={cn('relative', ui.headerBar)}
+        className={cn('relative', ui.headerBar, layers.headerNav)}
         initial={reduceMotion ? false : 'hidden'}
         animate="visible"
         variants={slideDownVariants}
         transition={transitionBase}
+        onPointerLeave={resumeHoverOpen}
       >
-        <SectionContainer className="relative flex items-center justify-between gap-2 py-3 md:gap-3 md:py-4 lg:gap-2 lg:py-4">
-          <div className="flex min-w-0 items-center gap-3 md:gap-6 lg:gap-10">
+        <SectionContainer className="relative flex flex-nowrap items-center justify-between gap-2 py-3 md:gap-3 md:py-4 lg:gap-3 lg:py-4 xl:gap-4">
+          <div className="flex min-w-0 flex-1 items-center gap-3 md:gap-6 lg:gap-5 xl:gap-8">
             <button
               type="button"
-              className="flex flex-col gap-1 lg:hidden"
+              className="flex shrink-0 flex-col gap-1 lg:hidden"
               aria-label="Menu"
               aria-expanded={mobileOpen}
               onClick={() => {
-                setOpenMenu(null)
+                closeMenu()
                 setMobileOpen((v) => !v)
               }}
             >
@@ -250,17 +295,28 @@ export function SiteHeader({
               <span className={cn('w-5', ui.hamburgerBar)} />
               <span className={cn('w-3', ui.hamburgerBar)} />
             </button>
-            <Link to={lp('/')} className="rounded-sm transition-opacity hover:opacity-80">
+            <Link
+              to={lp('/')}
+              className="shrink-0 rounded-sm transition-opacity hover:opacity-80"
+              onClick={closeMenu}
+            >
               <BrandWordmark className="text-[22px] md:text-[24px] lg:text-[28px] dark:brightness-0 dark:invert" />
             </Link>
-            <nav className="hidden min-w-0 shrink items-center gap-5 overflow-visible text-[14.5px] font-medium lg:flex">
+            <nav
+              className={cn(
+                'hidden min-w-0 flex-1 flex-nowrap items-center gap-3 overflow-x-auto overflow-y-visible',
+                'text-[14.5px] font-medium lg:flex xl:gap-5',
+                '[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+              )}
+            >
               {nav.items.map((item) =>
                 item.kind === 'link' ? (
                   <Link
                     key={item.id}
                     to={lp(item.href)}
+                    onClick={closeMenu}
                     className={cn(
-                      'group relative whitespace-nowrap py-1.5',
+                      'group relative shrink-0 whitespace-nowrap py-1.5',
                       activeNavId === item.id
                         ? ui.headerNavLinkActive
                         : ui.headerNavLink,
@@ -280,19 +336,19 @@ export function SiteHeader({
                   <div
                     key={item.id}
                     className={cn(
-                      'relative flex items-center gap-0.5 whitespace-nowrap py-1.5 transition-colors',
+                      'relative inline-flex shrink-0 flex-nowrap items-center gap-0.5 whitespace-nowrap py-1.5 transition-colors',
                       isDropdownActive(item.id)
                         ? item.id === 'arredo'
                           ? ui.headerNavLinkActive
                           : 'text-idl-amber hover:text-idl-cta-amber-hover'
                         : ui.headerNavLink,
                     )}
-                    onMouseEnter={() => setOpenMenu(item.id)}
+                    onMouseEnter={() => openMenuByHover(item.id)}
                   >
                     <Link
                       to={lp(resolveNavDropdownHref(item.id, item.href))}
-                      className="whitespace-nowrap"
-                      onClick={() => setOpenMenu(null)}
+                      className="inline-flex items-center whitespace-nowrap"
+                      onClick={closeMenu}
                     >
                       {item.label}
                     </Link>
@@ -300,13 +356,16 @@ export function SiteHeader({
                       type="button"
                       aria-label={`${item.label} menu`}
                       aria-expanded={openMenu === item.id}
-                      className="inline-flex items-center px-0.5"
+                      className="inline-flex shrink-0 items-center self-center px-0.5 leading-none"
                       onClick={(e) => {
                         e.preventDefault()
+                        resumeHoverOpen()
                         setOpenMenu((cur) => (cur === item.id ? null : item.id))
                       }}
                     >
-                      <span aria-hidden>▾</span>
+                      <span aria-hidden className="inline-block">
+                        ▾
+                      </span>
                     </button>
                     {isDropdownActive(item.id) ? (
                       <NavActiveBar tone={item.id === 'arredo' ? 'design' : 'technical'} />
@@ -316,7 +375,7 @@ export function SiteHeader({
               )}
             </nav>
           </div>
-          <div className="flex shrink-0 items-center lg:gap-4">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-1.5 lg:gap-3 xl:gap-4">
             <SiteHeaderSearch />
             <HeaderLightsToggle />
             <SiteHeaderActions />

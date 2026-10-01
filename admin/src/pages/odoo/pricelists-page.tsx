@@ -185,9 +185,9 @@ export function OdooPricelistsPage() {
                   store.pricelistsListItems.map((row) => (
                     <TableRow key={row.id}>
                       <TableCell className="font-medium">{row.name}</TableCell>
-                      <TableCell>{row.currencyCode ?? '—'}</TableCell>
+                      <TableCell>{row.currencyCode ?? '-'}</TableCell>
                       <TableCell className="max-w-[200px] truncate">
-                        {row.companyName ?? '—'}
+                        {row.companyName ?? '-'}
                       </TableCell>
                       <TableCell className="text-right">{row.itemCount}</TableCell>
                       <TableCell>

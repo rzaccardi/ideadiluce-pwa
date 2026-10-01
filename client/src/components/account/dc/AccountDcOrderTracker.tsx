@@ -23,10 +23,10 @@ function trackerSteps(
 
   if (failed) {
     return [
-      { id: '1', label: t('thankYou.tracker.confirmed'), hint: '—', state: 'upcoming' },
-      { id: '2', label: t('thankYou.tracker.preparing'), hint: '—', state: 'upcoming' },
-      { id: '3', label: t('thankYou.tracker.shipped'), hint: '—', state: 'upcoming' },
-      { id: '4', label: t('thankYou.tracker.delivered'), hint: '—', state: 'upcoming' },
+      { id: '1', label: t('thankYou.tracker.confirmed'), hint: '-', state: 'upcoming' },
+      { id: '2', label: t('thankYou.tracker.preparing'), hint: '-', state: 'upcoming' },
+      { id: '3', label: t('thankYou.tracker.shipped'), hint: '-', state: 'upcoming' },
+      { id: '4', label: t('thankYou.tracker.delivered'), hint: '-', state: 'upcoming' },
     ]
   }
 
@@ -35,7 +35,7 @@ function trackerSteps(
       { id: '1', label: t('thankYou.tracker.confirmed'), hint: t('thankYou.tracker.now'), state: 'active' },
       { id: '2', label: t('thankYou.tracker.preparing'), hint: t('thankYou.tracker.afterPayment'), state: 'upcoming' },
       { id: '3', label: t('thankYou.tracker.shipped'), hint: '24/48h', state: 'upcoming' },
-      { id: '4', label: t('thankYou.tracker.delivered'), hint: '—', state: 'upcoming' },
+      { id: '4', label: t('thankYou.tracker.delivered'), hint: '-', state: 'upcoming' },
     ]
   }
 
@@ -48,19 +48,19 @@ function trackerSteps(
     {
       id: '1',
       label: t('thankYou.tracker.confirmed'),
-      hint: '—',
+      hint: '-',
       state: 'done',
     },
     {
       id: '2',
       label: t('thankYou.tracker.preparing'),
-      hint: preparing ? t('thankYou.tracker.now') : '—',
+      hint: preparing ? t('thankYou.tracker.now') : '-',
       state: preparing ? 'active' : 'done',
     },
     {
       id: '3',
       label: t('thankYou.tracker.shipped'),
-      hint: inTransit && !delivered && !outForDelivery ? t('thankYou.tracker.now') : '—',
+      hint: inTransit && !delivered && !outForDelivery ? t('thankYou.tracker.now') : '-',
       state: delivered || outForDelivery ? 'done' : inTransit ? 'active' : 'upcoming',
     },
     {
@@ -70,7 +70,7 @@ function trackerSteps(
         ? t('thankYou.tracker.now')
         : outForDelivery
           ? t('orderStatus.out_for_delivery')
-          : '—',
+          : '-',
       state: delivered ? 'done' : outForDelivery ? 'active' : 'upcoming',
     },
   ]

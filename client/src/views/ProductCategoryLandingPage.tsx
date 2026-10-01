@@ -22,6 +22,7 @@ import type { CatalogBootstrapServerData } from '@/lib/server-catalog'
 import type { ProductCardDTO } from '@/types/dto'
 import { getCategoryLandingContent } from '@/lib/category-landing.defaults'
 import { translateCategoryFilterGroups } from '@/lib/translate-category-filter-groups'
+import { translateCatalogTaxonomyLabel } from '@/lib/catalog-taxonomy-i18n'
 import { useI18n } from '@/hooks/use-i18n'
 import {
   buildCategoryLandingActiveFilters,
@@ -45,6 +46,7 @@ import {
   buildTechnicalSubtypeChipsFromFacets,
   facetWattaggioNumericValues,
 } from '@/lib/catalog-facets-ui'
+import { isDesignCatalogHub, isTechnicalCatalogHub } from '@/lib/catalog-category-nav'
 import { scopeCatalogFacetsToWorld, type CatalogPriceBucket } from '@/lib/catalog-filters'
 import { catalogPendingLoadCount } from '@/lib/catalog-pagination'
 import { DesignCategoryView, TechnicalCategoryView } from '@/components/site/category'
@@ -150,25 +152,67 @@ export function ProductCategoryLandingPage({
       loadMoreLabel: t('catalog.loadMore'),
     }
     if (isDesign) {
+      const hasSelectedTipologia = Boolean(specFilters.tipologia?.trim())
+      const showTypeTiles = isDesignCatalogHub({
+        selectedTipologia: specFilters.tipologia,
+        selectedAmbiente: specFilters.ambiente,
+        selectedStile: specFilters.stile,
+        selectedCategorySlug: specFilters.categorySlugFromFacet,
+      })
+      const designFilterGroups = hasSelectedTipologia
+        ? filterGroups.filter(
+            (group) => !group.options.some((opt) => opt.value.startsWith('tipologia-')),
+          )
+        : filterGroups
       return {
         ...content,
         ...chrome,
-        typeTiles: buildDesignTypeTilesFromFacets(facets, content.typeTiles),
-        stats: buildLandingStatsFromFacets(facets, content.stats),
-        filterGroups,
+        // Tile tipologiche solo sull’hub arredo (non con tipologia/categoria foglia attiva).
+        typeTiles: showTypeTiles
+          ? buildDesignTypeTilesFromFacets(facets, content.typeTiles).map((tile) => ({
+              ...tile,
+              label: translateCatalogTaxonomyLabel(tile.key, t, tile.label),
+            }))
+          : [],
+        stats: buildLandingStatsFromFacets(facets, content.stats).map((stat) => ({
+          ...stat,
+          label:
+            stat.label === 'prodotti'
+              ? t('category.products')
+              : stat.label === 'brand'
+                ? t('catalog.brand')
+                : stat.label === 'categorie' || stat.label === 'ambienti'
+                  ? t('home.categories')
+                  : translateCatalogTaxonomyLabel(stat.label, t, stat.label),
+        })),
+        filterGroups: designFilterGroups,
       }
     }
+    const showSubtypeChips =
+      pageKey === 'technical' &&
+      isTechnicalCatalogHub({
+        selectedCategorySlug: specFilters.categorySlugFromFacet,
+        selectedAttacco: specFilters.attacco,
+      })
     return {
       ...content,
       ...chrome,
-      subtypeChips: buildTechnicalSubtypeChipsFromFacets(facets, {
-        fallback: content.subtypeChips,
-        baseHref:
-          pageKey === 'technical-products'
-            ? '/categoria-prodotto/illuminazione-tecnica/prodotti-tecnici'
-            : '/categoria-prodotto/illuminazione-tecnica',
-        selectedCategorySlug: specFilters.categorySlugFromFacet,
-      }),
+      subtypeChips: showSubtypeChips
+        ? buildTechnicalSubtypeChipsFromFacets(facets, {
+            fallback: content.subtypeChips,
+            baseHref: '/categoria-prodotto/illuminazione-tecnica',
+            selectedCategorySlug: specFilters.categorySlugFromFacet,
+          }).map((chip) => {
+            const slugFromHref =
+              chip.href && chip.href.includes('category=')
+                ? new URLSearchParams(chip.href.split('?')[1] ?? '').get('category') ?? undefined
+                : undefined
+            return {
+              ...chip,
+              label: translateCatalogTaxonomyLabel(slugFromHref ?? chip.label, t, chip.label),
+            }
+          })
+        : [],
       filterGroups,
     }
   }, [
@@ -177,17 +221,32 @@ export function ProductCategoryLandingPage({
     isDesign,
     pageKey,
     scopedFacets,
+    specFilters.ambiente,
+    specFilters.attacco,
     specFilters.categorySlugFromFacet,
+    specFilters.stile,
+    specFilters.tipologia,
     t,
   ])
 
-  const effectiveQuery = buildCategoryLandingSearchQuery({
-    pageKey,
-    baseQuery: content.searchQuery ?? catalogConfig.baseQuery,
-    selected: selectedFilterValues,
-    groups: filterGroups,
-    brandSlug,
-  })
+  const effectiveQuery = useMemo(
+    () =>
+      buildCategoryLandingSearchQuery({
+        pageKey,
+        baseQuery: content.searchQuery ?? catalogConfig.baseQuery,
+        selected: selectedFilterValues,
+        groups: filterGroups,
+        brandSlug,
+      }),
+    [
+      pageKey,
+      content.searchQuery,
+      catalogConfig.baseQuery,
+      selectedFilterValues,
+      filterGroups,
+      brandSlug,
+    ],
+  )
 
   const activeFilters = useMemo(
     () =>
@@ -311,21 +370,6 @@ export function ProductCategoryLandingPage({
       world,
       sort: sortParam,
     })
-    void fetchCatalogFilters({
-      categorySlug,
-      brandSlug,
-      q: effectiveQuery,
-      attacco: specFilters.attacco,
-      colorTemp: specFilters.colorTemp,
-      wattaggio: specFilters.wattaggio,
-      wattaggioMin: specFilters.wattaggioMin,
-      wattaggioMax: specFilters.wattaggioMax,
-      tipologia: specFilters.tipologia,
-      ambiente: specFilters.ambiente,
-      stile: specFilters.stile,
-      world,
-      locale,
-    })
   }, [
     brandSlug,
     categorySlug,
@@ -346,6 +390,15 @@ export function ProductCategoryLandingPage({
     authSnap.me?.customerSegment,
     authSnap.impersonation,
   ])
+
+  // Facet UI: solo world + q + locale (filtri strutturati landing non restringono le opzioni).
+  useEffect(() => {
+    void fetchCatalogFilters({
+      q: effectiveQuery,
+      world,
+      locale,
+    })
+  }, [effectiveQuery, locale, world])
 
   useEffect(() => {
     catalogStore.filters.inStockOnly = inStockOnly

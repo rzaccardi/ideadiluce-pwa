@@ -101,6 +101,7 @@ export interface OdooCustomerAdapter {
     ctx: OdooCallContext,
     partnerId: number,
     input: {
+      email?: string
       firstName?: string
       lastName?: string
       phone?: string | null

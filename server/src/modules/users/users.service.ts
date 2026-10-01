@@ -6,10 +6,12 @@ import { createOdooCustomerAdapter } from '../../adapters/odoo/odooCustomerAdapt
 import { isOdooConfigured } from '../../adapters/odoo/odooClient.js'
 import { env } from '../../config/env.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { updateOdooPortalUserLogin } from '../../adapters/odoo/odooPortalUserAdapter.js'
 import type { CheckoutBusinessFields } from '../checkout/checkout.validators.js'
 import { paymentMethodToPrisma } from '../payments/payment.types.js'
 import { taxValidationService } from '../tax/tax-validation.service.js'
 import { AppError } from '../../types/errors.js'
+import { invalidateSessionCacheForSession } from '../../middlewares/session.js'
 import { toUserDTO } from './user.mapper.js'
 import type { changePasswordSchema, patchMeSchema } from './users.validators.js'
 import type { z } from 'zod'
@@ -65,6 +67,7 @@ async function syncUserProfileToOdoo(
   ctx: OdooCallContext,
   partnerId: number,
   input: PatchMeInput,
+  emailChange?: { oldEmail: string; newEmail: string },
 ) {
   const shipping = input.shippingAddress
   const shippingPartnerId =
@@ -72,6 +75,7 @@ async function syncUserProfileToOdoo(
   const writeShippingOnParent = shipping === undefined || shipping === null || !shippingPartnerId || shippingPartnerId === partnerId
 
   await customerAdapter.updateCustomerProfile(ctx, partnerId, {
+    ...(emailChange ? { email: emailChange.newEmail } : {}),
     ...(input.firstName !== undefined ? { firstName: input.firstName } : {}),
     ...(input.lastName !== undefined ? { lastName: input.lastName } : {}),
     ...(input.phone !== undefined ? { phone: input.phone } : {}),
@@ -96,6 +100,14 @@ async function syncUserProfileToOdoo(
         }
       : {}),
   })
+
+  if (emailChange) {
+    await updateOdooPortalUserLogin(ctx, {
+      partnerId,
+      oldEmail: emailChange.oldEmail,
+      newEmail: emailChange.newEmail,
+    })
+  }
 
   if (shipping && shippingPartnerId && shippingPartnerId !== partnerId) {
     await customerAdapter.updateDeliveryPartner(ctx, shippingPartnerId, {
@@ -152,9 +164,33 @@ export const usersService = {
   },
 
   async patchMe(userId: string, input: PatchMeInput, ctx?: OdooCallContext): Promise<UserPatchResult> {
+    const current = await prisma.user.findUnique({ where: { id: userId } })
+    if (!current) {
+      throw new AppError('USER_NOT_FOUND', 'User not found', 'Utente non trovato.', 404, false)
+    }
+
+    let emailChange: { oldEmail: string; newEmail: string } | undefined
+    if (input.email !== undefined) {
+      const normalized = input.email.toLowerCase().trim()
+      if (normalized !== current.email) {
+        const taken = await prisma.user.findUnique({ where: { email: normalized } })
+        if (taken) {
+          throw new AppError(
+            'EMAIL_TAKEN',
+            'Email already registered',
+            'Questa email è già in uso.',
+            409,
+            false,
+          )
+        }
+        emailChange = { oldEmail: current.email, newEmail: normalized }
+      }
+    }
+
     const user = await prisma.user.update({
       where: { id: userId },
       data: {
+        ...(emailChange ? { email: emailChange.newEmail } : {}),
         ...(input.firstName !== undefined ? { firstName: input.firstName } : {}),
         ...(input.lastName !== undefined ? { lastName: input.lastName } : {}),
         ...(input.phone !== undefined ? { phone: input.phone } : {}),
@@ -176,6 +212,10 @@ export const usersService = {
       },
     })
 
+    if (emailChange && ctx?.req?.sessionRecord?.id) {
+      invalidateSessionCacheForSession(ctx.req.sessionRecord.id)
+    }
+
     let odooSyncFailed = false
 
     if (ctx && env.ODOO_ENABLED && isOdooConfigured()) {
@@ -184,7 +224,7 @@ export const usersService = {
         odooSyncFailed = await runOdooUserProfileSync(
           ctx,
           { userId, partnerId: map.odooPartnerId, operation: 'patch_me_profile_sync' },
-          () => syncUserProfileToOdoo(ctx, map.odooPartnerId, input),
+          () => syncUserProfileToOdoo(ctx, map.odooPartnerId, input, emailChange),
         )
       }
     }

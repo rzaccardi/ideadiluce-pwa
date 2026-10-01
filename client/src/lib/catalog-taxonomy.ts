@@ -149,6 +149,8 @@ export function buildAmbienteTaxonomy(slug: string, label?: string): CatalogTaxo
 const BRAND_SLUG_ALIASES: Record<string, string> = {
   'tlb-italy': 'tlb',
   tlbitaly: 'tlb',
+  'fontana-arte': 'fontanaarte',
+  ideallux: 'ideal-lux',
 }
 
 export function canonicalizeBrandSlug(slug: string): string {

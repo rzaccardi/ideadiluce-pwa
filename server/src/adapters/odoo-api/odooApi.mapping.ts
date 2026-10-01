@@ -126,7 +126,7 @@ export function odooApiAddressToProfile(addr: OdooApiAddress, fallbackEmail?: st
   return {
     firstName,
     lastName,
-    line1: split?.[1]?.trim() || street || '—',
+    line1: split?.[1]?.trim() || street || '-',
     streetNumber: split?.[2]?.replace(/\s+/g, '') || '',
     isSnc: !split?.[2],
     line2: addr.street2?.trim() || undefined,
@@ -147,7 +147,7 @@ export function odooApiCustomerToAccount(customer: OdooApiCustomer): OdooCustome
     : {
         firstName,
         lastName,
-        line1: customer.street?.trim() || '—',
+        line1: customer.street?.trim() || '-',
         streetNumber: '',
         isSnc: true,
         line2: customer.street2?.trim() || undefined,

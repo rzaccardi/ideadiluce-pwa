@@ -4,8 +4,13 @@ import { logger } from './logger.js'
 
 let transporter: nodemailer.Transporter | null = null
 
+/** True se SMTP di fallback è configurato per consegna reale (non solo log `mail.dev`). */
+export function isSmtpConfigured(): boolean {
+  return Boolean(env.SMTP_ENABLED && env.SMTP_HOST)
+}
+
 function getTransporter(): nodemailer.Transporter | null {
-  if (!env.SMTP_ENABLED || !env.SMTP_HOST) return null
+  if (!isSmtpConfigured()) return null
   if (!transporter) {
     transporter = nodemailer.createTransport({
       host: env.SMTP_HOST,
@@ -32,10 +37,11 @@ export async function sendMail(options: {
   const transport = getTransporter()
 
   if (!transport) {
-    logger.info('mail.dev', {
+    logger.warn('mail.dev', {
       to: options.to,
       subject: options.subject,
       text: options.text,
+      hint: 'SMTP_ENABLED/SMTP_HOST assenti: messaggio non consegnato, solo log locale',
     })
     return
   }

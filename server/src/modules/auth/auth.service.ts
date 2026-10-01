@@ -213,10 +213,10 @@ export const authService = {
             body_text: [
               `Nuova registrazione azienda da /register`,
               `Email: ${fresh.email}`,
-              `Nome: ${[fresh.firstName, fresh.lastName].filter(Boolean).join(' ') || '—'}`,
-              `Telefono: ${fresh.phone ?? '—'}`,
-              `Ragione sociale: ${fresh.companyName ?? '—'}`,
-              `P.IVA: ${fresh.vatNumber ?? '—'}`,
+              `Nome: ${[fresh.firstName, fresh.lastName].filter(Boolean).join(' ') || '-'}`,
+              `Telefono: ${fresh.phone ?? '-'}`,
+              `Ragione sociale: ${fresh.companyName ?? '-'}`,
+              `P.IVA: ${fresh.vatNumber ?? '-'}`,
             ].join('\n'),
           },
         })

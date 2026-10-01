@@ -45,6 +45,8 @@ describe('catalog-taxonomy', () => {
   it('canonica brand slug tlb-italy → tlb', () => {
     expect(canonicalizeBrandSlug('tlb-italy')).toBe('tlb')
     expect(canonicalizeBrandSlug('TLB')).toBe('tlb')
+    expect(canonicalizeBrandSlug('fontana-arte')).toBe('fontanaarte')
+    expect(canonicalizeBrandSlug('ideallux')).toBe('ideal-lux')
     const t = buildBrandTaxonomy('tlb-italy', 'TLB')
     expect(t.value).toBe('tlb')
     expect(taxonomyPageTitle(t)).toBe('TLB')

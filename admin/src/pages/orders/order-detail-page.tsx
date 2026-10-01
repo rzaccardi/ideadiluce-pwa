@@ -168,13 +168,13 @@ export function OrderDetailPage() {
               <DetailValue>{order.paymentStatus}</DetailValue>
             </DetailField>
             <DetailField label="Metodo">
-              <DetailValue>{order.paymentMethod ?? '—'}</DetailValue>
+              <DetailValue>{order.paymentMethod ?? '-'}</DetailValue>
             </DetailField>
             <DetailField label="Totale">
               <DetailValue>
                 {order.amountTotal != null
                   ? formatMoney(order.amountTotal, order.currencyCode)
-                  : '—'}
+                  : '-'}
               </DetailValue>
             </DetailField>
             <DetailField label="Fonte">
@@ -185,7 +185,7 @@ export function OrderDetailPage() {
                 {order.odooSaleOrderId != null ? (
                   <OdooSaleOrderLink saleOrderId={order.odooSaleOrderId} />
                 ) : (
-                  '—'
+                  '-'
                 )}
               </DetailValue>
             </DetailField>
@@ -195,7 +195,7 @@ export function OrderDetailPage() {
               </DetailField>
             ) : null}
             <DetailField label="Sync Odoo">
-              <DetailValue>{order.odooLastSyncStatus ?? (order.isOdooOnly ? 'Solo Odoo' : '—')}</DetailValue>
+              <DetailValue>{order.odooLastSyncStatus ?? (order.isOdooOnly ? 'Solo Odoo' : '-')}</DetailValue>
             </DetailField>
           </CardContent>
         </Card>
@@ -215,7 +215,7 @@ export function OrderDetailPage() {
               <span>
                 {order.checkoutStartedAt
                   ? new Date(order.checkoutStartedAt).toLocaleString('it-IT')
-                  : '—'}
+                  : '-'}
               </span>
             </div>
             <div className="flex flex-col gap-0.5 border-b py-2 sm:flex-row sm:justify-between sm:gap-4">
@@ -223,13 +223,13 @@ export function OrderDetailPage() {
               <span className="font-medium sm:font-normal">
                 {order.paymentStartedAt
                   ? new Date(order.paymentStartedAt).toLocaleString('it-IT')
-                  : '—'}
+                  : '-'}
               </span>
             </div>
             <div className="flex flex-col gap-0.5 py-2 sm:flex-row sm:justify-between sm:gap-4">
               <span className="text-muted-foreground">Pagato</span>
               <span className="font-medium sm:font-normal">
-                {order.paidAt ? new Date(order.paidAt).toLocaleString('it-IT') : '—'}
+                {order.paidAt ? new Date(order.paidAt).toLocaleString('it-IT') : '-'}
               </span>
             </div>
           </CardContent>
@@ -267,13 +267,13 @@ export function OrderDetailPage() {
                     />
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {line.variantRef ?? '—'}
+                    {line.variantRef ?? '-'}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{line.quantity}</TableCell>
                   <TableCell className="text-right tabular-nums">
                     {line.unitEstimateCents != null
                       ? formatMoney(line.unitEstimateCents, order.currencyCode)
-                      : '—'}
+                      : '-'}
                   </TableCell>
                 </TableRow>
               ))}

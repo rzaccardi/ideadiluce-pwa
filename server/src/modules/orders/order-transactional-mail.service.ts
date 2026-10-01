@@ -73,7 +73,7 @@ function orderUrl(order: Pick<PwaOrder, 'id' | 'odooSaleOrderName'>): string {
 }
 
 function formatAmount(cents: number | null | undefined, currency = 'EUR'): string {
-  if (cents == null) return '—'
+  if (cents == null) return '-'
   const value = (cents / 100).toFixed(2)
   return currency.toUpperCase() === 'EUR' ? `€ ${value}` : `${value} ${currency}`
 }

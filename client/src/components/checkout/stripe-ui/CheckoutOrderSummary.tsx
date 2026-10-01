@@ -44,6 +44,8 @@ type Props = {
   freeShippingHint?: FreeShippingHintDTO | null
   taxBreakdown?: TaxBreakdownDTO | null
   mobileOnly?: boolean
+  /** Totale completo (IVA + spedizione) solo nelle fasi finali checkout. */
+  revealGrandTotal?: boolean
   onRemoveItem?: (itemId: string) => void
   removeDisabled?: boolean
   recommendations?: ReadonlyArray<ProductCardDTO>
@@ -85,7 +87,8 @@ function SummaryContent({
   recommendations = [],
   recommendationsLoading = false,
   onCrossSellAdded,
-}: Omit<Props, 'mobileOnly'> & { theme?: SummaryTheme }) {
+  revealGrandTotal = false,
+}: Omit<Props, 'mobileOnly'> & { theme?: SummaryTheme; revealGrandTotal?: boolean }) {
   const { t } = useI18n()
   const tTheme = summaryThemeClasses[theme]
   const subtotal = taxBreakdown?.netCents ?? cartSubtotalCents(cart)
@@ -169,10 +172,12 @@ function SummaryContent({
           <dt>{t('checkout.summary.subtotal')}</dt>
           <dd className="tabular-nums">{formatMoney(subtotal, cart.currencyCode)}</dd>
         </div>
-        <div className={cn('flex justify-between', tTheme.row)}>
-          <dt>{taxBreakdown?.taxLabel ?? t('checkout.summary.tax')}</dt>
-          <dd className="tabular-nums">{formatMoney(tax, cart.currencyCode)}</dd>
-        </div>
+        {revealGrandTotal ? (
+          <div className={cn('flex justify-between', tTheme.row)}>
+            <dt>{taxBreakdown?.taxLabel ?? t('checkout.summary.tax')}</dt>
+            <dd className="tabular-nums">{formatMoney(tax, cart.currencyCode)}</dd>
+          </div>
+        ) : null}
         <div className={cn('flex justify-between gap-4', tTheme.row)}>
           <dt className="min-w-0">
             <span>{t('checkout.summary.shipping')}</span>
@@ -190,16 +195,18 @@ function SummaryContent({
         </div>
       </dl>
 
-      <div
-        className={cn(
-          'mt-4 flex justify-between border-t pt-4 text-base font-extrabold tracking-tight',
-          tTheme.border,
-          tTheme.row,
-        )}
-      >
-        <span>{t('checkout.summary.total')}</span>
-        <span className="tabular-nums">{formatMoney(total, cart.currencyCode)}</span>
-      </div>
+      {revealGrandTotal ? (
+        <div
+          className={cn(
+            'mt-4 flex justify-between border-t pt-4 text-base font-extrabold tracking-tight',
+            tTheme.border,
+            tTheme.row,
+          )}
+        >
+          <span>{t('checkout.summary.total')}</span>
+          <span className="tabular-nums">{formatMoney(total, cart.currencyCode)}</span>
+        </div>
+      ) : null}
     </>
   )
 }
@@ -210,6 +217,7 @@ export function CheckoutOrderSummary({
   freeShippingHint,
   taxBreakdown,
   mobileOnly,
+  revealGrandTotal = false,
   onRemoveItem,
   removeDisabled,
   recommendations = [],
@@ -218,7 +226,9 @@ export function CheckoutOrderSummary({
 }: Props) {
   const { t, tParams } = useI18n()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const total = cartTotalCents(cart, selectedShipping?.amountCents, taxBreakdown)
+  const headlineCents = revealGrandTotal
+    ? cartTotalCents(cart, selectedShipping?.amountCents, taxBreakdown)
+    : (taxBreakdown?.netCents ?? cartSubtotalCents(cart))
 
   if (mobileOnly) {
     const mobileToggle = (
@@ -235,7 +245,7 @@ export function CheckoutOrderSummary({
           </span>
         </span>
         <span className="shrink-0 text-base font-bold tabular-nums text-idl-graphite">
-          {formatMoney(total, cart.currencyCode)}
+          {formatMoney(headlineCents, cart.currencyCode)}
         </span>
       </button>
     )
@@ -266,6 +276,7 @@ export function CheckoutOrderSummary({
                     selectedShipping={selectedShipping}
                     freeShippingHint={freeShippingHint}
                     taxBreakdown={taxBreakdown}
+                    revealGrandTotal={revealGrandTotal}
                     onRemoveItem={onRemoveItem}
                     removeDisabled={removeDisabled}
                     recommendations={recommendations}
@@ -289,7 +300,7 @@ export function CheckoutOrderSummary({
           {tParams('checkout.payStore', { store: CHECKOUT_STORE_NAME })}
         </p>
         <p className={cn(checkoutTitleTypographyClass, 'mt-1 font-serif text-2xl font-semibold text-[#f5f5f5] sm:text-[28px]')}>
-          {formatMoney(total, cart.currencyCode)}
+          {formatMoney(headlineCents, cart.currencyCode)}
         </p>
         <div className="mt-8 flex-1">
           <SummaryContent
@@ -298,6 +309,7 @@ export function CheckoutOrderSummary({
             freeShippingHint={freeShippingHint}
             taxBreakdown={taxBreakdown}
             theme="dark"
+            revealGrandTotal={revealGrandTotal}
             onRemoveItem={onRemoveItem}
             removeDisabled={removeDisabled}
             recommendations={recommendations}

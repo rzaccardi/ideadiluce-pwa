@@ -5,7 +5,7 @@ import { fetchHomeBrandsServer, fetchHomeProductSlidersServer, fetchFeaturedGuid
 import { HomePage2 } from '@/views/HomePage2'
 
 export const metadata: Metadata = {
-  title: 'Homepage design — anteprima',
+  title: 'Homepage design - anteprima',
   description: 'Anteprima homepage visual dedicata all\'illuminazione d\'arredo.',
   robots: { index: false, follow: false },
 }

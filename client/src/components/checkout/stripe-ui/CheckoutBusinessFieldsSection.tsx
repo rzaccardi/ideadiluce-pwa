@@ -139,7 +139,7 @@ export function CheckoutBusinessFieldsSection({
           {b.viesStatus === 'valid' || b.vatValidated ? (
             <p className="text-xs text-emerald-700">
               {t('checkout.billing.vatViesValid')}
-              {b.vatCompanyName ? ` — ${b.vatCompanyName}` : ''}
+              {b.vatCompanyName ? ` - ${b.vatCompanyName}` : ''}
             </p>
           ) : b.vatForceAccepted ? (
             <p className="text-xs text-amber-800">{t('checkout.billing.vatForceAccepted')}</p>

@@ -139,7 +139,7 @@ export const odooIntegrationService = {
     const baseNotes: string[] = []
 
     if (!env.ODOO_ENABLED) {
-      baseNotes.push('ODOO_ENABLED è false — nessuna chiamata remota.')
+      baseNotes.push('ODOO_ENABLED è false - nessuna chiamata remota.')
       return {
         success: true,
         ok: true,

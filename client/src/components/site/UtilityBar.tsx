@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { HeaderAccountMenu } from '@/components/site/HeaderAccountMenu'
 import { motion, useReducedMotion } from '@/lib/motion-client'
@@ -15,6 +16,8 @@ import { SectionContainer } from './primitives'
 export function UtilityBar({ bar }: { bar: SiteShellContent['utilityBar'] }) {
   const lp = useLocalePath()
   const reduceMotion = useReducedMotion()
+  /** Alza tutta la strip sopra headerNav mentre il dropdown lingua è aperto. */
+  const [langMenuOpen, setLangMenuOpen] = useState(false)
 
   const inner = (
     <SectionContainer className="flex flex-col gap-2 py-2 sm:flex-row sm:items-center sm:justify-between">
@@ -31,14 +34,20 @@ export function UtilityBar({ bar }: { bar: SiteShellContent['utilityBar'] }) {
         ))}
         <HeaderAccountMenu variant="utilityBar" />
         <div className={ui.utilityBarControls}>
-          <LanguageSwitcher variant="utilityBar" />
+          <LanguageSwitcher variant="utilityBar" onOpenChange={setLangMenuOpen} />
         </div>
       </div>
     </SectionContainer>
   )
 
   return (
-    <div className={cn(ui.utilityBar, 'relative', layers.utilityBar)}>
+    <div
+      className={cn(
+        ui.utilityBar,
+        'relative',
+        langMenuOpen ? layers.headerDropdown : layers.utilityBar,
+      )}
+    >
       {reduceMotion ? (
         inner
       ) : (

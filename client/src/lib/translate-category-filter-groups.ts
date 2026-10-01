@@ -1,5 +1,6 @@
 import type { MessageKey } from '@/i18n/messages/keys'
 import type { CategoryFilterGroup } from '@/types/category-landing'
+import { translateCatalogFilterOptionLabel } from '@/lib/catalog-taxonomy-i18n'
 
 /** Mappa label IT (defaults / facet builder) → chiavi i18n UI. */
 const FILTER_GROUP_LABEL_KEYS: Record<string, MessageKey> = {
@@ -19,6 +20,7 @@ const FILTER_GROUP_LABEL_KEYS: Record<string, MessageKey> = {
   Prezzo: 'catalog.price',
   Disponibilità: 'catalog.availability',
   'Temperatura colore': 'catalog.colorTemp',
+  Finitura: 'catalog.finitura',
 }
 
 const FILTER_OPTION_LABEL_KEYS: Record<string, MessageKey> = {
@@ -37,8 +39,12 @@ export function translateCategoryFilterGroups(
       kind: group.kind,
       label,
       options: group.options.map((opt) => {
-        const optKey = FILTER_OPTION_LABEL_KEYS[opt.label]
-        return optKey ? { ...opt, label: t(optKey) } : opt
+        const stockKey = FILTER_OPTION_LABEL_KEYS[opt.label]
+        if (stockKey) return { ...opt, label: t(stockKey) }
+        return {
+          ...opt,
+          label: translateCatalogFilterOptionLabel(opt, t),
+        }
       }),
     } as CategoryFilterGroup
   })

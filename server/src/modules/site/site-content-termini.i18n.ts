@@ -130,7 +130,7 @@ export const DEFAULT_TERMINI_EN: ContentPageContent = {
   },
   {
     kind: 'prose',
-    title: '9. RETURN POLICY AND RIGHT OF WITHDRAWAL — B2C CUSTOMERS',
+    title: '9. RETURN POLICY AND RIGHT OF WITHDRAWAL - B2C CUSTOMERS',
     paragraphs: [
       '9.1. Right of withdrawal within 14 days of receipt. Not applicable to made-to-measure or personalised products.',
       '9.2. Extension to the next working day if the deadline falls on a weekend or public holiday.',
@@ -271,7 +271,7 @@ export const DEFAULT_TERMINI_ES: ContentPageContent = {
     },
     {
       kind: 'prose',
-      title: '9. DEVOLUCIÓN Y DESISTIMIENTO — B2C',
+      title: '9. DEVOLUCIÓN Y DESISTIMIENTO - B2C',
       paragraphs: [
         '9.1. Desistimiento en 14 días; no aplica a productos a medida o personalizados.',
         '9.2. Plazo extendido al siguiente día laborable si cae en festivo.',
@@ -654,7 +654,7 @@ export const DEFAULT_TERMINI_RO: ContentPageContent = {
   },
   {
     kind: 'prose',
-    title: '9. POLITICA DE RETUR ȘI DREPTUL DE RETRAGERE — CLIENȚI B2C',
+    title: '9. POLITICA DE RETUR ȘI DREPTUL DE RETRAGERE - CLIENȚI B2C',
     paragraphs: [
       '9.1. Drept de retragere în termen de 14 zile de la primire. Nu se aplică produselor la comandă sau personalizate.',
       '9.2. Prelungire până în următoarea zi lucrătoare dacă termenul cade într-un weekend sau într-o zi de sărbătoare legală.',

@@ -60,7 +60,10 @@ function resolveLineVariantDisplay(
 }
 
 export function mapCartToDTO(
-  cart: Cart & { items: CartItem[] },
+  cart: Cart & {
+    items: CartItem[]
+    shippingSelection?: { amountCents: number } | null
+  },
   priceLookup: Map<string, number>,
   displayLookup: Map<string, { slug: string; name: string; imageUrl: string | null }> = new Map(),
   reservationExpired = false,
@@ -88,7 +91,7 @@ export function mapCartToDTO(
     if (missingAvailability) {
       const name = display?.name ?? line.productRef
       warnings.push(
-        `${name}: disponibilità non verificata — riga non acquistabile fino a verifica stock.`,
+        `${name}: disponibilità non verificata - riga non acquistabile fino a verifica stock.`,
       )
     }
     const { availabilityStatus, blockReason } = resolveCartLineAvailabilityStatus({
@@ -150,7 +153,11 @@ export function mapCartToDTO(
         : null
 
   const totals = resolveCartEstimateTotals(
-    cart,
+    {
+      ...cart,
+      // Solo metodo selezionato: non esporre flat residuo senza indirizzo.
+      estimatedShipping: cart.shippingSelection?.amountCents ?? null,
+    },
     subtotalFromLines,
     taxBreakdown?.taxCents ?? null,
   )
@@ -177,7 +184,7 @@ export function mapCartToDTO(
     freeShippingHint,
     taxBreakdown,
     taxEstimateNote: taxBreakdown?.isEstimate
-      ? 'Tasse e spedizione ricalcolate al checkout'
+      ? 'Spedizione calcolata al checkout'
       : null,
   }
 }

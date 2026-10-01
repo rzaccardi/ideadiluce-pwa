@@ -64,7 +64,7 @@ export function AccountOrdersTable({ orders }: { orders: readonly OrderDTO[] }) 
             const total =
               order.totalAmount != null && order.currencyCode
                 ? formatMoney(order.totalAmount, order.currencyCode)
-                : '—'
+                : '-'
 
             return (
               <tr key={order.id} className="transition hover:bg-zinc-50/80">
@@ -85,7 +85,7 @@ export function AccountOrdersTable({ orders }: { orders: readonly OrderDTO[] }) 
                       tone={paymentStatusTone(order.paymentStatus)}
                     />
                   ) : (
-                    <span className="text-zinc-400">—</span>
+                    <span className="text-zinc-400">-</span>
                   )}
                 </td>
                 <td className="px-4 py-3.5 text-right font-medium tabular-nums text-zinc-900">

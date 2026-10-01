@@ -277,7 +277,10 @@ function xmlRpcMethodCall(
   params: unknown[],
   timeoutMs: number,
 ): Promise<unknown> {
-  const xml = Serializer.serializeMethodCall(method, params, 'utf8')
+  // Expat su Odoo richiede un encoding XML IANA valido (`utf-8`, non `utf8`).
+  // Con `encoding="utf8"` i payload non-ASCII (accenti, em dash, ·) falliscono con
+  // "not well-formed (invalid token)" e le mail PWA non partono mai.
+  const xml = Serializer.serializeMethodCall(method, params, 'utf-8')
   const bodyBuffer = Buffer.from(xml, 'utf8')
   const deadline = Date.now() + timeoutMs
   let didTryXmlRpcRootPathFallback = false
@@ -395,7 +398,7 @@ function xmlRpcMethodCall(
               }
 
               const stream = Readable.from(buf)
-              const deserializer = new Deserializer('utf8')
+              const deserializer = new Deserializer('utf-8')
               deserializer.deserializeMethodResponse(stream, (err, result) => {
                 if (err) {
                   if (err.message === 'Invalid XML-RPC message') {
