@@ -24,6 +24,7 @@ export function mapPwaOrderRow(po: PwaOrder): OrderDTO | null {
     sourceLabel: 'E-commerce',
     returnRequest: null,
     shipment: null,
+    delivery: null,
     returnWindow: OPEN_RETURN_WINDOW,
   }
 }

@@ -74,6 +74,7 @@ export async function toUserDTO(user: User): Promise<UserDTO> {
     customerSegment: segmentToDTO(user.customerSegment),
     pricelistLabel: isProfessional ? '' : pricingContextLabel(user.customerSegment),
     isProfessional,
+    b2bActive: Boolean(user.b2bActive),
     personalizedPricing,
     companyName: user.companyName,
     vatNumber: user.vatNumber,

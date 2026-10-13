@@ -63,7 +63,10 @@ const fixtureDetail: OdooCatalogProductDetail = {
       ced: '102261',
       manufacturer_code: '4050300517872',
       attributes: [{ attribute_id: 5, label: 'Colore luce', value: 'Bianco freddo' }],
-      lst_price: 4.9,
+      list_price: 5.5,
+      price: 4.9,
+      discount_pct: 10.9,
+      lst_price: 5.5,
       image: { url: '/web/image/product.product/9124/image_512', alt: '' },
       specs: [
         {
@@ -78,6 +81,8 @@ const fixtureDetail: OdooCatalogProductDetail = {
       ],
     },
   ],
+  list_price_from: 5.5,
+  discount_pct_max: 10.9,
   documents: [
     {
       type: 'datasheet',
@@ -104,6 +109,16 @@ describe('odooCatalogMedia', () => {
 })
 
 describe('mapOdooCatalogProductDetail contratto v2', () => {
+  it('mappa prezzo effettivo, listino barrato e sconto variante', () => {
+    const dto = mapOdooCatalogProductDetail(fixtureDetail, 'IT')
+    expect(dto.priceCents).toBe(490)
+    expect(dto.listPriceCents).toBe(550)
+    expect(dto.discountPct).toBe(10.9)
+    expect(dto.variants[0]?.priceCents).toBe(490)
+    expect(dto.variants[0]?.listPriceCents).toBe(550)
+    expect(dto.variants[0]?.discountPct).toBe(10.9)
+  })
+
   it('mappa gallery tipizzata, specs, variante ced e documenti', () => {
     const dto = mapOdooCatalogProductDetail(fixtureDetail, 'IT')
 

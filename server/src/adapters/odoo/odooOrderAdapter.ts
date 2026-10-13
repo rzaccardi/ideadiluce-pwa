@@ -36,6 +36,8 @@ export type SaleOrderInput = {
   chargedCents?: number | null
   snapshotAt?: string
   taxRatePct?: number
+  /** Opzione 1 TLB: Odoo onora price_unit_net dalle righe. */
+  pricedFromCache?: boolean
 }
 
 export type SaleOrderLineInput = {

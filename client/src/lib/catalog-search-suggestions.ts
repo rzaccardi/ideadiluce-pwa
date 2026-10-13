@@ -15,6 +15,9 @@ export type CatalogSearchSuggestionKind =
   | 'query'
 
 export type CatalogSearchProductMeta = {
+  listPriceCents?: number | null
+  discountPct?: number | null
+  priceSource?: 'public' | 'customer' | null
   imageUrl?: string | null
   priceCents?: number
   currency?: string
@@ -208,6 +211,9 @@ export function productToSearchSuggestion(product: {
   shortDescription?: string | null
   imageUrl?: string | null
   priceCents?: number
+  listPriceCents?: number | null
+  discountPct?: number | null
+  priceSource?: 'public' | 'customer' | null
   currency?: string
   priceDisplayMode?: PriceDisplayModeDTO
   specTags?: readonly string[]
@@ -224,6 +230,9 @@ export function productToSearchSuggestion(product: {
     product: {
       imageUrl: product.imageUrl,
       priceCents: product.priceCents,
+      listPriceCents: product.listPriceCents,
+      discountPct: product.discountPct,
+      priceSource: product.priceSource,
       currency: product.currency,
       priceDisplayMode: product.priceDisplayMode,
       specTags: product.specTags,

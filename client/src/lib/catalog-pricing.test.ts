@@ -18,6 +18,7 @@ function user(
     customerSegment: segment,
     pricelistLabel: '',
     isProfessional: extras?.isProfessional ?? segment === 'professional',
+    b2bActive: extras?.b2bActive ?? false,
     personalizedPricing:
       extras?.personalizedPricing ??
       (segment === 'business' || segment === 'professional'),

@@ -16,6 +16,9 @@ import { ProductIdentifierMeta, useProductIdentifierInline } from '@/components/
 type Props = {
   product: ProductDetailDTO
   displayPriceCents: number
+  listPriceCents?: number | null
+  discountPct?: number | null
+  priceSource?: ProductDetailDTO['priceSource']
   imageUrl: string | null
   variantRef: string | null
   quantity: number
@@ -34,6 +37,9 @@ type Props = {
 export function ProductDetailStickyBar({
   product,
   displayPriceCents,
+  listPriceCents,
+  discountPct,
+  priceSource,
   imageUrl,
   availabilityLabel,
   availabilityDetail,
@@ -140,6 +146,9 @@ export function ProductDetailStickyBar({
           ) : null}
           <ProductPrice
             netCents={displayPriceCents}
+            listPriceCents={listPriceCents}
+            discountPct={discountPct}
+            priceSource={priceSource}
             currency={product.currency}
             className="shrink-0 items-end text-right"
             amountClassName={cn(

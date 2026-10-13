@@ -100,6 +100,9 @@ export const DesignCatalogProductCard = memo(function DesignCatalogProductCard({
             <>
               <ProductPrice
                 netCents={product.priceCents}
+                listPriceCents={product.listPriceCents}
+                discountPct={product.discountPct}
+                priceSource={product.priceSource}
                 currency={product.currency}
                 amountClassName="text-base font-bold text-idl-ink"
                 captionClassName="text-[10.5px] font-medium text-idl-ink-muted"

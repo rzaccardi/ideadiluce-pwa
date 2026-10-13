@@ -86,8 +86,6 @@ type Props = {
   pageSubtitle?: string
   breadcrumbParent?: { label: string; href: string }
   showWorldTabs?: boolean
-  degraded?: boolean
-  degradedMessage?: string
 }
 
 function CatalogGridSkeleton({
@@ -225,8 +223,6 @@ export function CatalogPageView({
   pageSubtitle,
   breadcrumbParent,
   showWorldTabs = true,
-  degraded = false,
-  degradedMessage,
 }: Props) {
   const [filtersModalOpen, setFiltersModalOpen] = useState(false)
 
@@ -330,12 +326,6 @@ export function CatalogPageView({
               onRemoveFilter={onRemoveFilter}
               onResetFilters={onResetFilters}
             />
-
-            {degraded && degradedMessage ? (
-              <p className="mb-4 rounded-[14px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-                {degradedMessage}
-              </p>
-            ) : null}
 
             <ToastOnError message={error} />
 

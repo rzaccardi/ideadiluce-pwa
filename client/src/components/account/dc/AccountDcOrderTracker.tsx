@@ -16,10 +16,12 @@ type TrackerStep = {
 function trackerSteps(
   order: OrderDetailDTO,
   t: (key: MessageKey) => string,
+  tParams: (key: MessageKey, params: Record<string, string>) => string,
+  locale: PwaLocale,
 ): TrackerStep[] {
   const failed = order.paymentStatus === 'failed' || order.status === 'payment_failed'
   const pending = order.paymentStatus === 'pending' || order.paymentStatus === 'not_started'
-  const ship = order.shipment?.status
+  const ship = order.shipment?.status ?? (order.delivery?.status === 'delivered' ? 'delivered' : order.delivery?.status === 'exception' ? 'exception' : order.delivery?.status === 'in_transit' ? 'in_transit' : null)
 
   if (failed) {
     return [
@@ -40,9 +42,14 @@ function trackerSteps(
   }
 
   const delivered = ship === 'delivered'
+  const exception = ship === 'exception'
   const outForDelivery = ship === 'out_for_delivery'
-  const inTransit = ship === 'in_transit' || ship === 'shipped' || ship === 'exception'
-  const preparing = !inTransit && !outForDelivery && !delivered
+  const inTransit = ship === 'in_transit' || ship === 'shipped'
+  const preparing = !inTransit && !outForDelivery && !delivered && !exception
+  const deliveredAt = order.shipment?.deliveredAt ?? order.delivery?.deliveredAt ?? null
+  const deliveredHint = deliveredAt
+    ? tParams('orders.shipment.deliveredOn', { date: formatStamp(deliveredAt, locale) })
+    : t('orders.shipment.deliveredAt')
 
   return [
     {
@@ -60,14 +67,18 @@ function trackerSteps(
     {
       id: '3',
       label: t('thankYou.tracker.shipped'),
-      hint: inTransit && !delivered && !outForDelivery ? t('thankYou.tracker.now') : '-',
-      state: delivered || outForDelivery ? 'done' : inTransit ? 'active' : 'upcoming',
+      hint: exception
+        ? t('orders.shipment.exception')
+        : inTransit && !delivered && !outForDelivery
+          ? t('thankYou.tracker.now')
+          : '-',
+      state: delivered || outForDelivery ? 'done' : exception || inTransit ? 'active' : 'upcoming',
     },
     {
       id: '4',
       label: t('thankYou.tracker.delivered'),
       hint: delivered
-        ? t('thankYou.tracker.now')
+        ? deliveredHint
         : outForDelivery
           ? t('orderStatus.out_for_delivery')
           : '-',
@@ -127,18 +138,21 @@ function Tracker({ steps }: { steps: TrackerStep[] }) {
 type Props = {
   order: OrderDetailDTO
   t: (key: MessageKey) => string
+  tParams?: (key: MessageKey, params: Record<string, string>) => string
+  locale?: PwaLocale
 }
 
-export function AccountDcOrderTracker({ order, t }: Props) {
+export function AccountDcOrderTracker({ order, t, tParams, locale = 'IT' }: Props) {
   const failed = order.paymentStatus === 'failed' || order.status === 'payment_failed'
   if (failed) return null
+  const params = tParams ?? ((key) => t(key))
 
   return (
     <div>
       <h3 className="mb-6 text-[17px] font-extrabold tracking-[-0.01em] text-idl-graphite">
         {t('thankYou.tracker.title')}
       </h3>
-      <Tracker steps={trackerSteps(order, t)} />
+      <Tracker steps={trackerSteps(order, t, params, locale)} />
     </div>
   )
 }
@@ -173,6 +187,24 @@ export function AccountDcShipmentPanel({
 
   return (
     <div className="flex flex-col gap-3">
+      {shipment.status === 'exception' ? (
+        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-800">
+          {t('orders.shipment.exception')}
+          {shipment.trackingUrl ? (
+            <>
+              {' · '}
+              <ExternalLink
+                href={shipment.trackingUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="underline"
+              >
+                {t('orders.shipment.tracking')}
+              </ExternalLink>
+            </>
+          ) : null}
+        </p>
+      ) : null}
       <dl className="grid gap-2 text-sm sm:grid-cols-2">
         <div>
           <dt className="text-[11.5px] text-[#8b919b]">{t('orders.shipment.carrier')}</dt>

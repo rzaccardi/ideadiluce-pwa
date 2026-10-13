@@ -12,6 +12,7 @@ import { resolveCartEstimateTotals } from './cartTotals.js'
 import { resolveCartDeliveryLeadDays } from '../catalog/availability.service.js'
 import { resolveCartLineAvailabilityStatus } from './cart-line-availability.js'
 import { parseCartLineVariantMeta } from './cart-line-variant-meta.js'
+import { getCartPricingMeta } from '../pricing/cart-pricing-meta.js'
 
 function unitForLine(line: CartItem, catalogUnitCents: number | null): number | null {
   if (line.clientUnitPriceEstimate != null) return line.clientUnitPriceEstimate
@@ -168,6 +169,13 @@ export function mapCartToDTO(
     })),
   )
 
+  const pricingMeta = getCartPricingMeta(cart.id)
+  if (pricingMeta?.warnings.length) {
+    for (const warning of pricingMeta.warnings) {
+      if (!warnings.includes(warning)) warnings.push(warning)
+    }
+  }
+
   return {
     id: cart.id,
     currencyCode: cart.currencyCode,
@@ -180,6 +188,9 @@ export function mapCartToDTO(
     deliveryLeadDays,
     deliveryEstimateDays: deliveryLeadDays,
     repricedAt: cart.lastPricedAt?.toISOString() ?? null,
+    pricedFromCache: pricingMeta?.fromCache ?? false,
+    pricingSnapshotAt: pricingMeta?.snapshotAt ?? cart.lastPricedAt?.toISOString() ?? null,
+    needsPricingConfirmation: pricingMeta?.needsConfirmation ?? false,
     reservation: buildCartReservationMeta(cart, reservationExpired),
     freeShippingHint,
     taxBreakdown,

@@ -3,9 +3,9 @@
  * Stem = slug file; alias coprono slug Odoo/CMS diversi dal filename.
  *
  * Gli asset sono JPG 150×32 con canvas bianco e padding irregolare.
- * Il crop (bbox contenuto) evita alone bianco / ritaglio incoerente in UI;
- * `mix-blend-multiply` (classe `.idl-brand-logo-img`) nasconde il bianco residuo
- * su sfondi cream/off-white. In dark mode i componenti mostrano il nome testuale.
+ * Il crop (bbox contenuto) evita alone bianco / ritaglio incoerente in UI.
+ * Evitare mix-blend-mode sui JPG: con parent opacity/transform i wordmark
+ * spariscono. In dark mode i componenti mostrano il nome testuale.
  *
  * Asset con padding orizzontale elevato (da ritagliare in export futuro):
  * century, erc, flos, mean-well, tci, tlb-1 — preferire PNG trasparente o JPG

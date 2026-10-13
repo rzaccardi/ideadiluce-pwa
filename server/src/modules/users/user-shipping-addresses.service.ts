@@ -77,10 +77,30 @@ export const userShippingAddressesService = {
     }
   },
 
-  async create(userId: string, input: UserAddressDTO, ctx?: OdooCallContext) {
+  async create(
+    userId: string,
+    input: UserAddressDTO & { recipient?: 'own' | 'third_party'; email?: string },
+    ctx?: OdooCallContext,
+  ) {
+    const recipient = input.recipient ?? 'own'
+    const isDropship = recipient === 'third_party'
+    const userRow = await loadUser(userId)
+
+    if (isDropship && !userRow.b2bActive) {
+      throw new AppError(
+        'B2B_REQUIRED',
+        'B2B conditions required for third-party recipients',
+        'La consegna a terzi è disponibile solo con condizioni B2B attive.',
+        403,
+        false,
+      )
+    }
+
     const map = await prisma.odooCustomerMap.findUnique({ where: { userId } })
     let address: UserAddressDTO = { ...input }
     let odooSyncFailed = false
+    const label =
+      [input.firstName, input.lastName].filter(Boolean).join(' ').trim() || input.label || input.city
 
     if (ctx && env.ODOO_ENABLED && isOdooLiveConfigured() && map) {
       const parentId = await commercialPartnerId(ctx, map.odooPartnerId)
@@ -92,22 +112,26 @@ export const userShippingAddressesService = {
             ctx,
             parentId,
             addressDtoToProfile(input),
+            { recipient, email: input.email || null },
           )
           address = {
             ...profileToAddressDto(addressDtoToProfile(input), {
               id: odooShippingAddressId(created.odooPartnerId),
-              label: [input.firstName, input.lastName].filter(Boolean).join(' ').trim(),
+              label,
             }),
             id: odooShippingAddressId(created.odooPartnerId),
-            label: [input.firstName, input.lastName].filter(Boolean).join(' ').trim(),
+            label,
           }
         },
       )
     } else {
-      address = { ...input, id: input.id || LOCAL_SHIPPING_ADDRESS_ID }
+      address = { ...input, id: input.id || LOCAL_SHIPPING_ADDRESS_ID, label }
     }
 
-    await persistDefaultAddress(userId, address)
+    // I destinatari dropship non diventano indirizzo di spedizione predefinito del rivenditore.
+    if (!isDropship) {
+      await persistDefaultAddress(userId, address)
+    }
     const user = await loadUser(userId)
     return {
       list: await this.list(userId, ctx),

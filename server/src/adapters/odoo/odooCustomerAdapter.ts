@@ -47,17 +47,23 @@ export type OdooCustomerResult = {
   odooPartnerId: number
 }
 
+export type OdooAddressRecipient = 'own' | 'third_party'
+
 export type OdooShippingDestination = {
   odooPartnerId: number
   kind: 'parent' | 'delivery' | 'contact'
   label: string
   profile: OdooCustomerProfile
+  /** Destinatario dropship (terzi). */
+  dropship?: boolean
 }
 
 export type OdooCustomerAccount = {
   contactPartnerId: number
   commercialPartnerId: number
   contactIsCompany: boolean
+  /** Condizioni B2B attive su Odoo (`b2b_active`). */
+  b2bActive?: boolean
   profile: OdooCustomerProfile
   business: OdooBusinessProfile
 }
@@ -78,6 +84,7 @@ export interface OdooCustomerAdapter {
     ctx: OdooCallContext,
     parentPartnerId: number,
     profile: OdooCustomerProfile,
+    options?: { recipient?: OdooAddressRecipient; email?: string | null },
   ): Promise<OdooCustomerResult>
   listShippingDestinations(
     ctx: OdooCallContext,

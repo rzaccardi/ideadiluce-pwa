@@ -284,6 +284,19 @@ export async function reprice() {
   }
 }
 
+/** Conferma i prezzi Odoo aggiornati (consuma needsPricingConfirmation). */
+export async function acknowledgePricing() {
+  cartStore.error = null
+  try {
+    cartStore.cart = await api.cart.acknowledgePricing()
+    mirrorCartToLocalStorage()
+    return cartStore.cart
+  } catch (e) {
+    cartStore.error = errMessage(e)
+    throw e
+  }
+}
+
 export async function checkCartAvailability() {
   if (!cartStore.cart?.items.length) {
     cartStore.stockInsufficient = []

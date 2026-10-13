@@ -29,6 +29,7 @@ function snap(partial: Partial<VariantStockSnapshot>): VariantStockSnapshot {
     saleOk: true,
     orderable: false,
     hasSuppliers: false,
+    isStorable: true,
     ...partial,
   }
 }
@@ -99,6 +100,39 @@ describe('resolveVariantAvailability - matrice requisiti', () => {
     expect(r.state).toBe('out_of_stock')
     expect(r.purchasable).toBe(false)
   })
+
+  it('is_storable false → always available BASE', () => {
+    const r = resolveVariantAvailability(
+      { stockQty: 0, orderable: false, isStorable: false },
+      10,
+    )
+    expect(r.state).toBe('available')
+    expect(r.purchasable).toBe(true)
+    expect(r.effectiveLeadDays).toBe(0)
+  })
+
+  it('7871: Q ≤ free_qty → available; Q > free_qty → orderable LT=2', () => {
+    const inStock = resolveVariantAvailability(
+      { stockQty: 16, orderable: true, leadTimeDays: 2 },
+      10,
+    )
+    expect(inStock.state).toBe('available')
+    expect(inStock.effectiveLeadDays).toBe(0)
+
+    const backorder = resolveVariantAvailability(
+      { stockQty: 16, orderable: true, leadTimeDays: 2 },
+      20,
+    )
+    expect(backorder.state).toBe('orderable')
+    expect(backorder.effectiveLeadDays).toBe(2)
+  })
+
+  it('1055010A: free_qty 0 senza backorder → Caso 3', () => {
+    const r = resolveVariantAvailability({ stockQty: 0, orderable: false }, 1)
+    expect(r.state).toBe('out_of_stock')
+    expect(r.purchasable).toBe(false)
+    expect(r.showRequestProduct).toBe(false)
+  })
 })
 
 describe('snapshotToAvailabilityData - semantica DTO', () => {
@@ -122,6 +156,11 @@ describe('snapshotToAvailabilityData - semantica DTO', () => {
     const dto = snapshotToAvailabilityData(snap({ stockQty: 0, orderable: false }), 1)
     expect(dto.isUnrecoverable).toBe(false)
     expect(dto.isOrderable).toBe(false)
+  })
+
+  it('propaga isStorable nel DTO', () => {
+    const dto = snapshotToAvailabilityData(snap({ isStorable: false }), 1)
+    expect(dto.isStorable).toBe(false)
   })
 })
 

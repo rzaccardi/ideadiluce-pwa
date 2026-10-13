@@ -38,6 +38,8 @@ export type UserShippingAddressDTO = UserAddressDTO & {
   isDefault: boolean
   canEdit: boolean
   canDelete: boolean
+  /** Destinatario dropship (terzi) creato con `recipient: third_party`. */
+  dropship: boolean
 }
 
 export type UserShippingAddressListDTO = {
@@ -63,6 +65,8 @@ export type UserDTO = {
   pricelistLabel: string
   /** Account con condizioni listino professional (segmento PROFESSIONAL). */
   isProfessional: boolean
+  /** Condizioni B2B attive Odoo: abilita dropship / consegna a terzi. */
+  b2bActive: boolean
   /** True se catalogo/carrello devono usare il listino sessione (B2B/pro/partner). */
   personalizedPricing: boolean
   companyName: string | null
@@ -138,6 +142,8 @@ export type ProductAvailabilityDataDTO = {
   restockDate?: string | null
   customerLeadTimeDays?: number | null
   isUnrecoverable?: boolean
+  /** false = servizio/non gestito a magazzino: sempre disponibile, tempo BASE. */
+  isStorable?: boolean
 }
 
 export type ProductDocumentTypeDTO =
@@ -200,6 +206,8 @@ export type ProductRelatedDTO = ProductCardDTO & {
   reason?: string | null
 }
 
+export type ProductPriceSourceDTO = 'public' | 'customer'
+
 export type ProductCardDTO = {
   slug: string
   /** Lingua contenuto (IT, EN, ES, FR, DE, RO). */
@@ -210,6 +218,12 @@ export type ProductCardDTO = {
   specTags?: string[]
   /** Prezzo unitario netto IVA esclusa (centesimi EUR). */
   priceCents: number
+  /** Prezzo pieno netto (barrato se > priceCents). */
+  listPriceCents?: number | null
+  /** Sconto % da mostrare come badge (−X%). */
+  discountPct?: number | null
+  /** `customer` = prezzo riservato listino cliente. */
+  priceSource?: ProductPriceSourceDTO | null
   priceDisplayMode: PriceDisplayModeDTO
   currency: string
   imageUrl: string | null
@@ -261,6 +275,12 @@ export type ProductVariantDTO = {
   /** Prezzo Odoo per variante (centesimi). */
   /** Prezzo unitario netto IVA esclusa (centesimi EUR). */
   priceCents?: number
+  /** Prezzo pieno netto (barrato se > priceCents). */
+  listPriceCents?: number | null
+  /** Sconto % da mostrare come badge (−X%). */
+  discountPct?: number | null
+  /** `customer` = prezzo riservato listino cliente. */
+  priceSource?: ProductPriceSourceDTO | null
   priceDisplayMode?: PriceDisplayModeDTO
   inStock?: boolean
   /** Quantità disponibile Odoo, se nota. */
@@ -288,8 +308,6 @@ export type PaginatedDTO<T> = {
 export type ProductListDTO = PaginatedDTO<ProductCardDTO> & {
   /** Offset per la pagina successiva quando `inStock=1`. */
   nextInStockSkip?: number
-  /** Listing da cache locale perché Odoo catalogo non risponde. */
-  degraded?: boolean
   source?: 'live' | 'cache'
 }
 
@@ -364,8 +382,6 @@ export type ProductDetailDTO = ProductCardDTO & {
   /** Lunghezza prodotto in metri (Odoo/OdooCatalog). */
   lengthMeters?: number | null
   dimensions?: { lengthCm?: number; widthCm?: number; heightCm?: number }
-  /** PDP da cache locale perché Odoo catalogo non risponde. */
-  degraded?: boolean
   priceLabel?: 'excl_vat'
 }
 
@@ -469,6 +485,12 @@ export type CartDTO = {
   deliveryEstimateDays: number | null
   /** Timestamp ISO dell'ultimo ricalcolo prezzi Odoo. */
   repricedAt: string | null
+  /** True se i totali/prezzi vengono da snapshot cache (Odoo totals down). */
+  pricedFromCache?: boolean
+  /** Snapshot ISO UTC usato per priced_from_cache / conferma prezzi. */
+  pricingSnapshotAt?: string | null
+  /** Richiede conferma utente prima del pagamento (warning Odoo su price_unit_net). */
+  needsPricingConfirmation?: boolean
   reservation: CartReservationDTO
   freeShippingHint?: FreeShippingHintDTO | null
   taxBreakdown?: TaxBreakdownDTO | null
@@ -676,6 +698,18 @@ export type OrderShipmentDTO = {
   updatedAt: string
 }
 
+export type OrderDeliveryStatusDTO =
+  | 'pending'
+  | 'in_transit'
+  | 'delivered'
+  | 'exception'
+  | null
+
+export type OrderDeliveryDTO = {
+  status: OrderDeliveryStatusDTO
+  deliveredAt: string | null
+}
+
 export type OrderReturnWindowDTO = {
   eligible: boolean
   reason: 'open' | 'not_delivered' | 'expired'
@@ -700,6 +734,8 @@ export type OrderDTO = {
   sourceLabel: string
   returnRequest: OrderReturnRequestDTO | null
   shipment: OrderShipmentDTO | null
+  /** Riepilogo consegna reale da Odoo (`delivery.status` / `delivered_at`). */
+  delivery: OrderDeliveryDTO | null
   returnWindow: OrderReturnWindowDTO
 }
 

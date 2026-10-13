@@ -38,6 +38,35 @@ function eurosToCents(value: number): number {
   return Math.round(value * 100)
 }
 
+function optionalEurosToCents(value: number | null | undefined): number | undefined {
+  if (value == null || !Number.isFinite(value)) return undefined
+  return Math.round(value * 100)
+}
+
+function optionalDiscountPct(value: number | null | undefined): number | undefined {
+  if (value == null || !Number.isFinite(value) || value <= 0) return undefined
+  return value
+}
+
+/** Prezzo effettivo variante: `price` → fallback `lst_price`. */
+function variantEffectiveEuros(variant: {
+  price?: number
+  lst_price?: number
+}): number {
+  if (variant.price != null && Number.isFinite(variant.price)) return variant.price
+  return Number(variant.lst_price ?? 0)
+}
+
+/** Listino pieno variante: `list_price` → fallback `lst_price`. */
+function variantListEuros(variant: {
+  list_price?: number
+  lst_price?: number
+}): number | undefined {
+  if (variant.list_price != null && Number.isFinite(variant.list_price)) return variant.list_price
+  if (variant.lst_price != null && Number.isFinite(variant.lst_price)) return variant.lst_price
+  return undefined
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -350,6 +379,9 @@ export function mapOdooCatalogListItem(product: OdooCatalogProductListItem, loca
   const codes = resolveListCodes(product)
   const { imageUrl, hoverImageUrl, accesaImageUrl } = resolveOdooCatalogCardImageUrls(product)
 
+  const listPriceCents = optionalEurosToCents(product.list_price_from)
+  const discountPct = optionalDiscountPct(product.discount_pct_max)
+
   return {
     slug: product.slug,
     locale,
@@ -357,6 +389,8 @@ export function mapOdooCatalogListItem(product: OdooCatalogProductListItem, loca
     shortDescription: product.short_description || null,
     specTags: specTags.length ? specTags : undefined,
     priceCents: eurosToCents(product.price_from),
+    ...(listPriceCents != null ? { listPriceCents } : {}),
+    ...(discountPct != null ? { discountPct } : {}),
     priceDisplayMode: 'ex_vat',
     currency: product.currency || 'EUR',
     imageUrl,
@@ -409,13 +443,17 @@ export function mapOdooCatalogProductDetail(
     const availability =
       parseOdooCatalogAvailability(v.availability, availabilityFlat(v)) ?? templateAvailability
     const ced = trimOrNull(v.ced)
+    const listPriceCents = optionalEurosToCents(variantListEuros(v))
+    const discountPct = optionalDiscountPct(v.discount_pct)
     return {
       ref: String(v.id),
       label: variantLabel(attributes, v.ced ?? ''),
       imageUrl: resolveOdooCatalogMediaUrlWithSize(v.image?.url, 'image_512'),
       attributes,
       odooVariantId: v.id,
-      priceCents: eurosToCents(v.lst_price),
+      priceCents: eurosToCents(variantEffectiveEuros(v)),
+      ...(listPriceCents != null ? { listPriceCents } : {}),
+      ...(discountPct != null ? { discountPct } : {}),
       priceDisplayMode: 'ex_vat',
       stockQty: availability?.qtyAvailable ?? null,
       availability,
@@ -489,7 +527,6 @@ export function mapOdooCatalogProductDetail(
       noindex: false,
     },
     alternates: mapAlternates(product.seo?.alternates),
-    degraded: Boolean((product as { pwa_degraded?: boolean }).pwa_degraded),
   }
 }
 

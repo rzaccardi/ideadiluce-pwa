@@ -54,6 +54,9 @@ function RecommendationCard({ product }: { product: ProductCardDTO }) {
         </Link>
         <ProductPrice
           netCents={product.priceCents}
+          listPriceCents={product.listPriceCents}
+          discountPct={product.discountPct}
+          priceSource={product.priceSource}
           currency={product.currency}
           className="mt-1"
           amountClassName="text-[13px] font-extrabold text-idl-graphite"

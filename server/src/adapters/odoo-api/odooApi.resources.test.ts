@@ -13,7 +13,12 @@ vi.mock('./odooApiClient.js', async (importOriginal) => {
   }
 })
 
-import { odooApiGetInvoicePdf, odooApiGetStock } from './odooApi.resources.js'
+import {
+  odooApiComputeOrderTotals,
+  odooApiGetInvoicePdf,
+  odooApiGetPrices,
+  odooApiGetStock,
+} from './odooApi.resources.js'
 
 describe('odooApi v2 resources', () => {
   beforeEach(() => {
@@ -27,6 +32,50 @@ describe('odooApi v2 resources', () => {
       query: { website: '2', ids: '11,22' },
       correlationId: 'corr-stock',
     })
+  })
+
+  it('GET /prices con website, ids, customer_id e qty', async () => {
+    requestMock.mockResolvedValue({
+      status: 200,
+      data: {
+        snapshot_at: '2026-10-12T10:00:00Z',
+        items: [{ id: 99, list_price: 172.13, price: 154, discount_pct: 10.5, source: 'public' }],
+      },
+    })
+    const res = await odooApiGetPrices({
+      ids: [99],
+      customerId: 14245,
+      qty: 1,
+      correlationId: 'corr-prices',
+    })
+    expect(requestMock).toHaveBeenCalledWith('/api/v2/prices', {
+      query: { website: '2', ids: '99', qty: 1, customer_id: 14245 },
+      correlationId: 'corr-prices',
+    })
+    expect(res.items[0]?.price).toBe(154)
+  })
+
+  it('POST /orders/totals con sole righe product_id/qty', async () => {
+    requestMock.mockResolvedValue({
+      status: 200,
+      data: {
+        subtotal_net_cents: 30800,
+        amount_tax_cents: 6776,
+        amount_total_cents: 37576,
+        lines: [{ product_id: 99, qty: 2, price_unit_net: 154 }],
+        warnings: [],
+      },
+    })
+    const res = await odooApiComputeOrderTotals(
+      { lines: [{ product_id: 99, qty: 2 }], currency: 'EUR' },
+      'corr-totals',
+    )
+    expect(requestMock).toHaveBeenCalledWith('/api/v2/orders/totals', {
+      method: 'POST',
+      body: { lines: [{ product_id: 99, qty: 2 }], currency: 'EUR' },
+      correlationId: 'corr-totals',
+    })
+    expect(res.amount_total_cents).toBe(37576)
   })
 
   it('GET /invoices/<id>/pdf con website e customer_id', async () => {

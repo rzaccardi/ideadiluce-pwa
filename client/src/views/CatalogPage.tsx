@@ -148,7 +148,6 @@ export function CatalogPage({
   const catalogLoading = useSnapshot(catalogStore).isLoading
   const catalogLoadingMore = useSnapshot(catalogStore).isLoadingMore
   const catalogError = useSnapshot(catalogStore).error
-  const catalogDegraded = useSnapshot(catalogStore).degraded
   const catalogPagination = useSnapshot(catalogStore).pagination
   const rawProductsLength = useSnapshot(catalogStore).rawProducts.length
   const catalogCms = useSnapshot(siteStore).pages.catalog
@@ -671,8 +670,6 @@ export function CatalogPage({
         pageSubtitle={pageSubtitle}
         breadcrumbParent={breadcrumbParent}
         showWorldTabs={!taxonomy}
-        degraded={catalogDegraded}
-        degradedMessage={t('catalog.degradedBanner')}
       />
   )
 }

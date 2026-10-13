@@ -80,6 +80,72 @@ describe('getProductAvailabilityStatus - matrice requisiti', () => {
     expect(r.showProductRequest).toBe(true)
     expect(r.showRestockNotify).toBe(false)
   })
+
+  it('is_storable false → sempre Disponibile + BASE', () => {
+    const r = getProductAvailabilityStatus({
+      availability: { qtyAvailable: 0, isOrderable: false, isStorable: false },
+      requestedQty: 5,
+      locale: 'IT',
+    })
+    expect(r.status).toBe('available')
+    expect(r.detail).toContain('24/48h')
+    expect(r.canAddToCart).toBe(true)
+    expect(r.showRestockNotify).toBe(false)
+  })
+
+  it('7871: Q=10 BASE; Q=20 BASE+2 giorni', () => {
+    const q10 = getProductAvailabilityStatus({
+      availability: {
+        qtyAvailable: 16,
+        isOrderable: true,
+        customerLeadTimeDays: 2,
+      },
+      requestedQty: 10,
+      locale: 'IT',
+    })
+    expect(q10.status).toBe('available')
+    expect(q10.detail).toContain('24/48h')
+    expect(q10.detail).not.toMatch(/\+\s*2/)
+
+    const q20 = getProductAvailabilityStatus({
+      availability: {
+        qtyAvailable: 16,
+        isOrderable: true,
+        customerLeadTimeDays: 2,
+      },
+      requestedQty: 20,
+      locale: 'IT',
+    })
+    expect(q20.status).toBe('orderable')
+    expect(q20.detail).toContain('24/48h')
+    expect(q20.detail).toMatch(/\+\s*2/)
+  })
+
+  it('Caso 2: LT 0 → solo BASE', () => {
+    const r = getProductAvailabilityStatus({
+      availability: {
+        qtyAvailable: 0,
+        isOrderable: true,
+        customerLeadTimeDays: 0,
+      },
+      requestedQty: 1,
+      locale: 'IT',
+    })
+    expect(r.status).toBe('orderable')
+    expect(r.detail).toContain('24/48h')
+    expect(r.detail).not.toMatch(/\+\s*\d/)
+  })
+
+  it('Edge: Q > S senza fornitori → non acquistabile (UI cap a S)', () => {
+    const r = getProductAvailabilityStatus({
+      availability: { qtyAvailable: 4, isOrderable: false },
+      requestedQty: 5,
+      locale: 'IT',
+    })
+    expect(r.status).toBe('out_of_stock')
+    expect(r.canAddToCart).toBe(false)
+    expect(r.showRestockNotify).toBe(false)
+  })
 })
 
 describe('resolveMaxOrderableQty - edge case', () => {
@@ -98,6 +164,12 @@ describe('resolveMaxOrderableQty - edge case', () => {
   it('nessun cap quando S = 0', () => {
     expect(
       resolveMaxOrderableQty({ qtyAvailable: 0, isOrderable: false }),
+    ).toBeUndefined()
+  })
+
+  it('nessun cap per non storable', () => {
+    expect(
+      resolveMaxOrderableQty({ qtyAvailable: 0, isOrderable: false, isStorable: false }),
     ).toBeUndefined()
   })
 })

@@ -540,6 +540,9 @@ export const api = {
     reprice() {
       return apiClient.post<CartDTO>('/api/v1/cart/reprice')
     },
+    acknowledgePricing() {
+      return apiClient.post<CartDTO>('/api/v1/cart/acknowledge-pricing')
+    },
     stock() {
       return apiClient.get<CartStockCheckDTO>('/api/v1/cart/stock')
     },
@@ -769,7 +772,9 @@ export const api = {
     listShippingAddresses() {
       return apiClient.get<UserShippingAddressListDTO>('/api/v1/users/me/shipping-addresses')
     },
-    createShippingAddress(body: UserAddressDTO) {
+    createShippingAddress(
+      body: UserAddressDTO & { recipient?: 'own' | 'third_party'; email?: string },
+    ) {
       return apiClient.post<{
         list: UserShippingAddressListDTO
         user: UserDTO

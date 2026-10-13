@@ -76,6 +76,29 @@ describe('mergeShippingAddressList', () => {
     expect(addresses.find((row) => row.isDefault)?.label).toBe('Salvatore Giacalone')
     expect(addresses.find((row) => row.source === 'odoo_parent')?.canDelete).toBe(false)
     expect(addresses.find((row) => row.source === 'odoo_delivery')?.canDelete).toBe(true)
+    expect(addresses.every((row) => row.dropship === false)).toBe(true)
+  })
+
+  it('non usa i destinatari dropship come default', () => {
+    const withDropship: OdooShippingDestination[] = [
+      {
+        odooPartnerId: 100,
+        kind: 'parent',
+        label: 'Nbi SPA',
+        profile: profile({}),
+        dropship: false,
+      },
+      {
+        odooPartnerId: 340,
+        kind: 'delivery',
+        label: 'Studio Rossi',
+        profile: profile({ firstName: 'Studio', lastName: 'Rossi', city: 'Milano', postalCode: '20121' }),
+        dropship: true,
+      },
+    ]
+    const addresses = mergeShippingAddressList({ odoo: withDropship, local: null })
+    expect(addresses.find((row) => row.isDefault)?.dropship).toBe(false)
+    expect(addresses.find((row) => row.dropship)?.label).toBe('Studio Rossi')
   })
 
   it('aggiunge l’indirizzo locale se non corrisponde a un child Odoo', () => {

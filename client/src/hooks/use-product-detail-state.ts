@@ -170,6 +170,10 @@ export function useProductDetailState({
   }, [product?.images, product?.imageUrl, selectedVariant?.imageUrl])
 
   const displayPriceCents = selectedVariant?.priceCents ?? product?.priceCents ?? 0
+  const displayListPriceCents =
+    selectedVariant?.listPriceCents ?? product?.listPriceCents ?? null
+  const displayDiscountPct = selectedVariant?.discountPct ?? product?.discountPct ?? null
+  const displayPriceSource = selectedVariant?.priceSource ?? product?.priceSource ?? null
   const availabilityData = product
     ? resolveAvailabilityData(product, selectedVariant)
     : null
@@ -200,6 +204,9 @@ export function useProductDetailState({
     variantRef,
     galleryImages,
     displayPriceCents,
+    displayListPriceCents,
+    displayDiscountPct,
+    displayPriceSource,
     availability,
     availabilityData,
     maxQuantity,

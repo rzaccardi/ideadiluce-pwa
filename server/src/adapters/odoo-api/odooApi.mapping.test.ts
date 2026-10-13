@@ -7,6 +7,8 @@ import {
   netEurosFromCents,
   netEurosFromNetCents,
   odooApiAddressToProfile,
+  odooApiCustomerToAccount,
+  odooUtcDateTimeToIso,
 } from './odooApi.mapping.js'
 
 describe('mapOdooApiCarrier', () => {
@@ -85,5 +87,57 @@ describe('odoo address state_code', () => {
         country_code: 'IT',
       }).province,
     ).toBe('MI')
+  })
+})
+
+describe('buildOdooApiAddressWrite recipient', () => {
+  const profile = {
+    firstName: 'Studio Rossi',
+    lastName: '-',
+    line1: 'Via Roma',
+    streetNumber: '10',
+    isSnc: false,
+    city: 'Milano',
+    postalCode: '20121',
+    province: 'MI',
+    country: 'IT',
+    phone: '+39 02 1234567',
+  }
+
+  it('invia recipient third_party senza type delivery', () => {
+    const write = buildOdooApiAddressWrite(profile, 'studio@rossi.it', { recipient: 'third_party' })
+    expect(write.recipient).toBe('third_party')
+    expect(write.type).toBeUndefined()
+    expect(write.name).toBe('Studio Rossi')
+    expect(write.phone).toBe('+39 02 1234567')
+  })
+
+  it('mantiene type delivery per indirizzi propri', () => {
+    const write = buildOdooApiAddressWrite(profile, null, { recipient: 'own' })
+    expect(write.recipient).toBe('own')
+    expect(write.type).toBe('delivery')
+  })
+})
+
+describe('odooUtcDateTimeToIso', () => {
+  it('converte timestamp UTC Odoo in ISO', () => {
+    expect(odooUtcDateTimeToIso('2026-10-03 14:22:00')).toBe('2026-10-03T14:22:00.000Z')
+  })
+
+  it('restituisce null per valori vuoti', () => {
+    expect(odooUtcDateTimeToIso(null)).toBeNull()
+    expect(odooUtcDateTimeToIso('')).toBeNull()
+  })
+})
+
+describe('odooApiCustomerToAccount b2b_active', () => {
+  it('propaga b2b_active', () => {
+    const account = odooApiCustomerToAccount({
+      id: 14245,
+      email: 'b2b@example.com',
+      name: 'Utente Business',
+      b2b_active: true,
+    })
+    expect(account.b2bActive).toBe(true)
   })
 })

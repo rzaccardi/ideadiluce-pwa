@@ -84,13 +84,18 @@ export async function loadShippingAddresses(): Promise<UserShippingAddressListDT
   return api.users.listShippingAddresses()
 }
 
-export async function createShippingAddress(address: UserAddressDTO): Promise<UserShippingAddressListDTO> {
+export async function createShippingAddress(
+  address: UserAddressDTO & { recipient?: 'own' | 'third_party'; email?: string },
+): Promise<UserShippingAddressListDTO> {
   accountStore.isSaving = true
   accountStore.error = null
   accountStore.message = null
   try {
     const result = await api.users.createShippingAddress(address)
-    return applyShippingMutation(result, 'Indirizzo aggiunto.')
+    return applyShippingMutation(
+      result,
+      address.recipient === 'third_party' ? 'Destinatario aggiunto.' : 'Indirizzo aggiunto.',
+    )
   } catch (e) {
     accountStore.error = errMessage(e)
     throw e

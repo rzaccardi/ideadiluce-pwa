@@ -15,6 +15,8 @@ export type VariantAvailabilityInput = {
    * Default false (conservativo) se non noto.
    */
   orderable?: boolean
+  /** false = servizio/non gestito a magazzino. Default true se non noto. */
+  isStorable?: boolean
 }
 
 export type VariantAvailability = {
@@ -68,6 +70,21 @@ export function resolveVariantAvailability(
       showRequestProduct: true,
       purchasable: false,
       warning: 'Prodotto non più disponibile.',
+    }
+  }
+
+  // Servizio / non gestito a magazzino: sempre disponibile, tempo BASE
+  if (input.isStorable === false) {
+    return {
+      state: 'available',
+      stockQty,
+      restockDate: input.restockDate ?? null,
+      leadTimeDays: input.leadTimeDays ?? null,
+      effectiveLeadDays: 0,
+      canAddToCart: true,
+      showRequestProduct: false,
+      purchasable: true,
+      warning: null,
     }
   }
 
@@ -146,6 +163,7 @@ export function isRestockNotifyEligible(
   availability: ProductAvailabilityDataDTO | null | undefined,
 ): boolean {
   if (!availability || availability.isUnrecoverable) return false
+  if (availability.isStorable === false) return false
   if (availability.qtyAvailable > 0) return false
   return availability.isOrderable !== true
 }
@@ -170,6 +188,7 @@ export function snapshotToAvailabilityData(
       leadTimeDays: snapshot.leadTimeDays,
       saleOk: snapshot.saleOk,
       orderable: snapshot.orderable,
+      isStorable: snapshot.isStorable,
     },
     requestedQty,
   )
@@ -190,6 +209,7 @@ export function snapshotToAvailabilityData(
           : null,
     /** Fuori produzione / sale_ok false — distinto da semplice esaurito non ordinabile. */
     isUnrecoverable: !snapshot.saleOk,
+    isStorable: snapshot.isStorable,
   }
 }
 
@@ -206,6 +226,7 @@ export function mergeAvailabilityData(
     restockDate: odoo.restockDate ?? existing.restockDate ?? null,
     customerLeadTimeDays: odoo.customerLeadTimeDays ?? existing.customerLeadTimeDays ?? null,
     isUnrecoverable,
+    isStorable: odoo.isStorable ?? existing.isStorable,
   }
 }
 

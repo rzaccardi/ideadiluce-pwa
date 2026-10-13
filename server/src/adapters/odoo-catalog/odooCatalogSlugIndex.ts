@@ -1,6 +1,6 @@
 import { fetchOdooCatalogProductList, fetchOdooCatalogProductSearch } from './odooCatalogClient.js'
 import type { HubLocale } from '../../lib/hub-locale.js'
-import { parseOdooTemplateId } from '../../modules/catalog/odooRef.js'
+import { parseExplicitOdooTemplateId } from '../../modules/catalog/odooRef.js'
 
 type SlugCacheEntry = { id: number; expiresAt: number }
 
@@ -29,8 +29,20 @@ function readCachedId(locale: HubLocale, slug: string): number | null {
   return entry.id
 }
 
+/** True se lo slug della scheda Odoo coincide con quello richiesto in URL/query. */
+export function catalogProductSlugMatches(
+  requestedSlug: string,
+  productSlug: string | null | undefined,
+): boolean {
+  const requested = requestedSlug.trim()
+  const actual = productSlug?.trim() ?? ''
+  if (!requested || !actual) return false
+  return requested === actual
+}
+
 /**
  * Risolve slug → id prodotto via Odoo live (search, poi scan lista).
+ * Match solo su `item.slug` della scheda API — mai su suffissi numerici dell’URL.
  * Non usa l’indice cache catalogo (riservato al typeahead).
  */
 export async function findOdooCatalogProductIdBySlug(
@@ -41,7 +53,8 @@ export async function findOdooCatalogProductIdBySlug(
   const trimmed = slug.trim()
   if (!trimmed) return null
 
-  const direct = parseOdooTemplateId(trimmed)
+  // Solo id espliciti: uno slug tipo `…-18w-840` non è il template 840.
+  const direct = parseExplicitOdooTemplateId(trimmed)
   if (direct != null) return direct
 
   const cached = readCachedId(locale, trimmed)

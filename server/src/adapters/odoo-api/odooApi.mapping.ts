@@ -11,6 +11,7 @@ import type { SaleOrderShippingLine } from '../odoo/odooOrderAdapter.js'
 import type { PwaPaymentMethodDTO } from '../../types/dto.js'
 import type {
   OdooApiAddress,
+  OdooApiAddressRecipient,
   OdooApiAddressWrite,
   OdooApiCustomer,
   OdooApiCustomerWrite,
@@ -102,11 +103,15 @@ function applyBusiness(payload: OdooApiCustomerWrite, business?: OdooBusinessPro
 export function buildOdooApiAddressWrite(
   profile: OdooCustomerProfile,
   email?: string | null,
+  options?: { recipient?: OdooApiAddressRecipient },
 ): OdooApiAddressWrite {
   const country = profile.country?.trim().toUpperCase() || undefined
   const province = normalizeAddressProvince(country ?? 'IT', profile.province)
-  return {
-    name: [profile.firstName, profile.lastName].filter(Boolean).join(' ').trim() || profile.firstName,
+  const lastName = profile.lastName?.trim() === '-' ? '' : profile.lastName
+  const displayName =
+    [profile.firstName, lastName].filter(Boolean).join(' ').trim() || profile.firstName
+  const write: OdooApiAddressWrite = {
+    name: displayName,
     street: formatStreetLine(profile),
     street2: profile.line2?.trim() || undefined,
     zip: profile.postalCode,
@@ -115,8 +120,14 @@ export function buildOdooApiAddressWrite(
     state_code: province || undefined,
     phone: profile.phone,
     email: email?.trim() || undefined,
-    type: 'delivery',
   }
+  if (options?.recipient === 'third_party') {
+    write.recipient = 'third_party'
+  } else {
+    write.type = 'delivery'
+    if (options?.recipient === 'own') write.recipient = 'own'
+  }
+  return write
 }
 
 export function odooApiAddressToProfile(addr: OdooApiAddress, fallbackEmail?: string): OdooCustomerProfile {
@@ -161,6 +172,7 @@ export function odooApiCustomerToAccount(customer: OdooApiCustomer): OdooCustome
     contactPartnerId: customer.id,
     commercialPartnerId: customer.commercial_partner_id ?? customer.id,
     contactIsCompany: Boolean(customer.is_company),
+    b2bActive: Boolean(customer.b2b_active),
     profile: {
       ...profile,
       firstName: profile.firstName || firstName,
@@ -176,6 +188,23 @@ export function odooApiCustomerToAccount(customer: OdooApiCustomer): OdooCustome
       isCompany: Boolean(customer.is_company),
     },
   }
+}
+
+/** Converte timestamp Odoo UTC `YYYY-MM-DD HH:MM:SS` in ISO 8601. */
+export function odooUtcDateTimeToIso(value: string | null | undefined): string | null {
+  if (!value?.trim()) return null
+  const trimmed = value.trim()
+  if (/^\d{4}-\d{2}-\d{2}T/.test(trimmed)) {
+    const parsed = Date.parse(trimmed)
+    return Number.isFinite(parsed) ? new Date(parsed).toISOString() : null
+  }
+  const match = trimmed.match(
+    /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/,
+  )
+  if (!match) return null
+  const iso = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6] ?? '00'}Z`
+  const parsed = Date.parse(iso)
+  return Number.isFinite(parsed) ? new Date(parsed).toISOString() : null
 }
 
 export function firstBlockingIssue(issues: Array<{ blocking?: boolean; message?: string }> | undefined): string | null {

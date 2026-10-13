@@ -23,6 +23,7 @@ function needsBusinessHydrate(user: User): boolean {
 
 /**
  * Compila i dati aziendali PWA vuoti dal partner commerciale Odoo.
+ * Allinea anche `b2bActive` da `b2b_active`.
  * Risolve sempre `commercial_partner_id` (via adapter) e aggiorna la mappa
  * se puntava a un child. Fail-open: se Odoo non risponde resta l'anagrafica locale.
  */
@@ -32,7 +33,6 @@ export async function hydrateUserBusinessFromOdoo(
   options?: { account?: OdooCustomerAccount | null; force?: boolean },
 ): Promise<User> {
   if (!ctx || !env.ODOO_ENABLED || !isOdooConfigured()) return user
-  if (!options?.force && !needsBusinessHydrate(user)) return user
 
   if (!options?.force && !options?.account) {
     const prev = lastHydrateAt.get(user.id)
@@ -80,16 +80,27 @@ export async function hydrateUserBusinessFromOdoo(
       }
     }
 
-    const patch = buildUserBusinessPatch(user, {
-      contactIsCompany: account.contactIsCompany,
-      firstName: account.profile.firstName,
-      lastName: account.profile.lastName,
-      phone: account.profile.phone ?? '',
-      business: account.business,
-    })
-    if (!patch) return user
+    const b2bActive = Boolean(account.b2bActive)
+    const businessPatch =
+      options?.force || needsBusinessHydrate(user)
+        ? buildUserBusinessPatch(user, {
+            contactIsCompany: account.contactIsCompany,
+            firstName: account.profile.firstName,
+            lastName: account.profile.lastName,
+            phone: account.profile.phone ?? '',
+            business: account.business,
+          })
+        : null
 
-    return prisma.user.update({ where: { id: user.id }, data: patch })
+    if (!businessPatch && user.b2bActive === b2bActive) return user
+
+    return prisma.user.update({
+      where: { id: user.id },
+      data: {
+        ...(businessPatch ?? {}),
+        b2bActive,
+      },
+    })
   } catch (err) {
     logger.warn('odoo_business_hydrate_failed', {
       userId: user.id,

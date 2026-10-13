@@ -178,6 +178,9 @@ export function CatalogSearchSuggestionRow({
         {product?.priceCents != null ? (
           <ProductPrice
             netCents={product.priceCents}
+            listPriceCents={product.listPriceCents}
+            discountPct={product.discountPct}
+            priceSource={product.priceSource}
             currency={product.currency ?? 'EUR'}
             className="shrink-0 items-end text-right"
             amountClassName="text-[13px] font-semibold tabular-nums text-idl-ink"

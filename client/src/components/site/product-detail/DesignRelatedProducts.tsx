@@ -43,6 +43,9 @@ export function DesignRelatedProducts({ products, lp, brandName }: Props) {
           </div>
           <ProductPrice
             netCents={product.priceCents}
+            listPriceCents={product.listPriceCents}
+            discountPct={product.discountPct}
+            priceSource={product.priceSource}
             currency={product.currency}
             className="mt-2"
             amountClassName="text-[15px] font-bold text-idl-ink"

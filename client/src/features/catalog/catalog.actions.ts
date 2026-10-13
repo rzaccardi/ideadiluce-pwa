@@ -370,7 +370,6 @@ async function loadProducts(filters: {
       hasNextPage: result.hasNextPage,
       hasPreviousPage: result.hasPreviousPage,
     }
-    catalogStore.degraded = Boolean(result.degraded)
   } catch (e) {
     catalogStore.error = errMessage(e)
   } finally {
@@ -495,7 +494,6 @@ export async function fetchNextProductsPage() {
       hasNextPage: result.hasNextPage,
       hasPreviousPage: result.hasPreviousPage,
     }
-    catalogStore.degraded = Boolean(result.degraded)
   } catch (e) {
     catalogStore.error = errMessage(e)
   } finally {

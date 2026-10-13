@@ -168,6 +168,8 @@ model User {
   customerSegment        CustomerSegment   @default(RETAIL)
   /** Listino professional Odoo (flag sincronizzato da partner/listino). */
   isProfessional         Boolean           @default(false)
+  /** Condizioni B2B attive su Odoo (`b2b_active`: P.IVA + listino dedicato). Abilita dropship. */
+  b2bActive              Boolean           @default(false)
   vatNumber              String?
   fiscalCode             String?
   pec                    String?

@@ -125,7 +125,7 @@ export function OrderDetailPage() {
           ) : null}
         </div>
 
-        <AccountDcOrderTracker order={order} t={t} />
+        <AccountDcOrderTracker order={order} t={t} tParams={tParams} locale={locale} />
       </AccountDcPanel>
 
       <AccountDcPanel title={t('orders.shipment.title')}>

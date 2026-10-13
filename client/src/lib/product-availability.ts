@@ -194,12 +194,18 @@ export function getProductAvailabilityStatus(input: {
     restockDate: rawRestockDate,
     customerLeadTimeDays,
     isUnrecoverable,
+    isStorable,
   } = avail
   const restockDate = firstFutureRestockDate(rawRestockDate)
   const leadTimeDays = resolveLeadTimeDays(customerLeadTimeDays, rawRestockDate)
 
   if (isUnrecoverable === true) {
     return buildOutOfStock(locale, { showProductRequest: true, showRestockNotify: false })
+  }
+
+  // Servizio / non gestito a magazzino: sempre disponibile, tempo BASE
+  if (isStorable === false) {
+    return buildAvailable(locale)
   }
 
   // Caso 1: Q ≤ S
@@ -242,6 +248,7 @@ export function resolveMaxOrderableQty(
 ): number | undefined {
   if (!availability) return undefined
   if (availability.isUnrecoverable) return undefined
+  if (availability.isStorable === false) return undefined
   if (availability.isOrderable) return undefined
   if (availability.qtyAvailable > 0) return availability.qtyAvailable
   return undefined

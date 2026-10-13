@@ -474,33 +474,59 @@ export const paymentsService = {
       throw new AppError('CART_NOT_FOUND', 'Cart not found', 'Carrello non trovato.', 404, false)
     }
 
-    const subtotal = subtotalCentsFromCartItems(cartForSnapshot.items) ?? 0
     const user = req.sessionRecord?.user
     const segment = user
       ? pricing.segment
       : (segmentFromDto(body.customerSegment) === 'PROFESSIONAL'
           ? 'RETAIL'
           : (segmentFromDto(body.customerSegment) ?? pricing.segment))
-    const taxOrder = await taxService.calculateForOrder({
-      netCents: subtotal,
-      billingCountry: body.billingAddress.country,
-      shippingCountry: body.shippingAddress.country,
-      customerSegment: segment,
-      isProfessional: Boolean(user?.isProfessional || user?.customerSegment === 'PROFESSIONAL'),
-      vatValid: user?.viesValid ?? null,
-    })
+
+    // Source of truth: totali Odoo già scritti da repriceCartFromOdoo (`/orders/totals`).
+    // tax.service resta solo fallback stima UI se Odoo non ha popolato estimatedTax.
+    const { getCartPricingMeta } = await import('../pricing/cart-pricing-meta.js')
+    const pricingMeta = getCartPricingMeta(cartForSnapshot.id)
+    const shippingCents =
+      cartForSnapshot.shippingSelection?.amountCents ?? cartForSnapshot.estimatedShipping ?? 0
+    const subtotal =
+      cartForSnapshot.estimatedSubtotal ?? subtotalCentsFromCartItems(cartForSnapshot.items) ?? 0
+    let taxOrder = {
+      taxCents: cartForSnapshot.estimatedTax ?? 0,
+      taxRatePct: pricingMeta?.taxRatePct ?? 22,
+      taxLabel: 'IVA',
+      disclaimerKey: undefined as string | undefined,
+      odooFiscalPositionId: null as number | null,
+    }
+    if (cartForSnapshot.estimatedTax == null || cartForSnapshot.estimatedSubtotal == null) {
+      const fallbackTax = await taxService.calculateForOrder({
+        netCents: subtotal,
+        billingCountry: body.billingAddress.country,
+        shippingCountry: body.shippingAddress.country,
+        customerSegment: segment,
+        isProfessional: Boolean(user?.isProfessional || user?.customerSegment === 'PROFESSIONAL'),
+        vatValid: user?.viesValid ?? null,
+      })
+      taxOrder = {
+        taxCents: fallbackTax.taxCents,
+        taxRatePct: fallbackTax.taxRatePct,
+        taxLabel: fallbackTax.taxLabel,
+        disclaimerKey: fallbackTax.disclaimerKey,
+        odooFiscalPositionId: fallbackTax.odooFiscalPositionId ?? null,
+      }
+    }
+
+    const total =
+      cartForSnapshot.estimatedTotal != null
+        ? cartForSnapshot.estimatedTotal
+        : subtotal + taxOrder.taxCents + shippingCents
 
     await prisma.cart.update({
       where: { id: cartForSnapshot.id },
       data: {
         estimatedSubtotal: subtotal,
         estimatedTax: taxOrder.taxCents,
-        estimatedShipping: cartForSnapshot.shippingSelection?.amountCents ?? cartForSnapshot.estimatedShipping,
-        estimatedTotal:
-          subtotal +
-          taxOrder.taxCents +
-          (cartForSnapshot.shippingSelection?.amountCents ?? cartForSnapshot.estimatedShipping ?? 0),
-        lastPricedAt: new Date(),
+        estimatedShipping: shippingCents,
+        estimatedTotal: total,
+        lastPricedAt: cartForSnapshot.lastPricedAt ?? new Date(),
       },
     })
 
@@ -511,8 +537,6 @@ export const paymentsService = {
     if (!cartPriced) {
       throw new AppError('CART_NOT_FOUND', 'Cart not found', 'Carrello non trovato.', 404, false)
     }
-
-    const total = subtotal + taxOrder.taxCents + (cartPriced.shippingSelection?.amountCents ?? 0)
     const vatWarning =
       body.vatForceAccepted && body.business?.vatNumber
         ? `[VAT forzato] P.IVA ${body.business.vatNumber} non validata VIES - proseguimento manuale.`
@@ -563,9 +587,17 @@ export const paymentsService = {
 
       if (s.userId && odooPartnerId) {
         const isProFromOdoo = await customerAdapter.syncProfessionalFlagFromPartner(ctx, odooPartnerId)
+        let b2bActive: boolean | undefined
+        try {
+          const account = await customerAdapter.getCustomerAccountByPartnerId(ctx, odooPartnerId)
+          if (account?.b2bActive != null) b2bActive = Boolean(account.b2bActive)
+        } catch {
+          /* best-effort */
+        }
         const userUpdate: {
           customerSegment?: 'RETAIL' | 'BUSINESS' | 'PROFESSIONAL'
           isProfessional?: boolean
+          b2bActive?: boolean
           companyName?: string | null
           vatNumber?: string | null
           fiscalCode?: string | null
@@ -575,6 +607,7 @@ export const paymentsService = {
         if (body.customerSegment === 'business') userUpdate.customerSegment = 'BUSINESS'
         if (body.customerSegment === 'retail') userUpdate.customerSegment = 'RETAIL'
         if (isProFromOdoo || body.isProfessional) userUpdate.isProfessional = true
+        if (b2bActive != null) userUpdate.b2bActive = b2bActive
         if (businessProfile?.companyName) userUpdate.companyName = businessProfile.companyName
         if (businessProfile?.vatNumber) userUpdate.vatNumber = businessProfile.vatNumber
         if (businessProfile?.fiscalCode) userUpdate.fiscalCode = businessProfile.fiscalCode
@@ -659,7 +692,9 @@ export const paymentsService = {
             productRef: i.productRef,
             variantRef: i.variantRef,
             quantity: i.quantity,
-            unitPriceCents: i.clientUnitPriceEstimate ?? undefined,
+            ...(pricingMeta?.fromCache
+              ? { unitPriceCents: i.clientUnitPriceEstimate ?? undefined }
+              : {}),
           })),
           shippingLine: {
             label: shippingSel.label,
@@ -671,7 +706,8 @@ export const paymentsService = {
           paymentMethod: existing?.paymentMethod ? paymentMethodToDTO(existing.paymentMethod) : null,
           chargedCents: priceSnapshot.estimatedTotal,
           taxRatePct: taxOrder.taxRatePct,
-          snapshotAt: priceSnapshot.pricedAt,
+          snapshotAt: pricingMeta?.snapshotAt ?? priceSnapshot.pricedAt,
+          pricedFromCache: pricingMeta?.fromCache === true,
         })
         odooSaleOrderId = orderResult.odooSaleOrderId
       } catch {

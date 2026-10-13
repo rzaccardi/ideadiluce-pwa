@@ -119,6 +119,9 @@ export function TechnicalCatalogCompareSheet({ products, lp, onClose, className 
                   <td key={product.slug} className="py-3 pr-4 font-extrabold">
                     <ProductPrice
                       netCents={product.priceCents}
+                      listPriceCents={product.listPriceCents}
+                      discountPct={product.discountPct}
+                      priceSource={product.priceSource}
                       currency={product.currency}
                       amountClassName="font-extrabold"
                       captionClassName="text-[11px] font-medium text-idl-muted"

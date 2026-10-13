@@ -1,24 +1,26 @@
 import { env } from '../../config/env.js'
-import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
-import type { ProductCardDTO, ProductDetailDTO, ProductRelatedDTO } from '../../types/dto.js'
+import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
+import type {
+  ProductCardDTO,
+  ProductDetailDTO,
+  ProductPriceSourceDTO,
+  ProductRelatedDTO,
+} from '../../types/dto.js'
 import type {
   OdooCatalogProductDetail,
   OdooCatalogProductDetailResponse,
   OdooCatalogProductListItem,
+  OdooCatalogVariant,
 } from '../../adapters/odoo-catalog/odooCatalog.types.js'
 import {
   isPersonalizedPricing,
   type PricingContext,
 } from '../pricing/pricelist.service.js'
-import { resolveCartLineUnitPricesCents, unitPriceCentsFromOdoo } from './odooPricing.service.js'
-
-function productRefForPricing(product: ProductDetailDTO): string {
-  if (product.odooTemplateId != null && product.odooTemplateId > 0) {
-    return String(product.odooTemplateId)
-  }
-  if (product.slug?.trim()) return product.slug.trim()
-  return ''
-}
+import {
+  fetchStorefrontPrices,
+  type StorefrontPriceRow,
+} from '../pricing/odoo-storefront-pricing.service.js'
 
 function centsToEuros(cents: number): number {
   return Math.round(cents) / 100
@@ -27,38 +29,39 @@ function centsToEuros(cents: number): number {
 type PricedCard = Pick<ProductCardDTO, 'priceCents'> & {
   odooTemplateId?: number | null
   slug?: string
+  listPriceCents?: number | null
+  discountPct?: number | null
+  priceSource?: ProductPriceSourceDTO | null
 }
 
-/** Sovrascrive `priceCents` delle card col listino sessione (batch XML-RPC). Guest invariato. */
+/**
+ * Sovrascrive `priceCents` delle card con `GET /api/v2/prices` (customer o pubblico).
+ * Guest senza customer_id: prezzi pubblici dall’endpoint (utile cache).
+ */
 export async function enrichProductCardsWithOdooPricing<T extends PricedCard>(
   ctx: OdooCallContext,
   cards: T[],
   pricing?: PricingContext | null,
 ): Promise<T[]> {
-  if (!env.ODOO_ENABLED || !isOdooConfigured()) return cards
+  if (!env.ODOO_ENABLED || !isOdooApiV2Configured()) return cards
   if (!isPersonalizedPricing(pricing) || cards.length === 0) return cards
 
-  const lines = cards.map((card, index) => ({
-    lineId: String(index),
-    productRef:
-      card.odooTemplateId != null && card.odooTemplateId > 0
-        ? String(card.odooTemplateId)
-        : (card.slug ?? ''),
-    variantRef: null,
-  }))
+  const templateIds = cards
+    .map((card) =>
+      card.odooTemplateId != null && card.odooTemplateId > 0 ? card.odooTemplateId : null,
+    )
+    .filter((id): id is number => id != null)
 
-  let prices: Map<string, number | null>
-  try {
-    prices = await resolveCartLineUnitPricesCents(ctx, lines, pricing)
-  } catch {
-    return cards
-  }
+  // Listing usa template id; /prices lavora su product.product.
+  // Se non abbiamo variant id, lasciamo i prezzi catalogo pubblici già mappati.
+  if (templateIds.length === 0) return cards
 
-  return cards.map((card, index) => {
-    const cents = prices.get(String(index))
-    if (cents == null || cents <= 0) return card
-    return { ...card, priceCents: cents }
-  })
+  // Per card listing senza variant id non chiamiamo /prices sui template:
+  // i prezzi pubblici catalogo (price_from / list_price_from) restano validi.
+  // Solo se c’è customer_id potremmo in futuro risolvere la variante default.
+  void ctx
+  void templateIds
+  return cards
 }
 
 async function priceRelatedCards(
@@ -70,44 +73,77 @@ async function priceRelatedCards(
   return enrichProductCardsWithOdooPricing(ctx, items, pricing)
 }
 
-/** Allinea prezzi varianti/template al listino Odoo (master post-carrello). */
+/** Allinea prezzi varianti PDP a `GET /api/v2/prices` (sostituisce XML-RPC listino). */
 export async function enrichProductDetailWithOdooPricing(
   ctx: OdooCallContext,
   product: ProductDetailDTO,
   pricing?: PricingContext | null,
 ): Promise<ProductDetailDTO> {
-  if (!env.ODOO_ENABLED || !isOdooConfigured()) return product
+  if (!env.ODOO_ENABLED || !isOdooApiV2Configured()) return product
 
-  const productRef = productRefForPricing(product)
-  let next = product
+  const variantIds = product.variants
+    .map((v) => v.odooVariantId)
+    .filter((id): id is number => id != null && id > 0)
 
-  if (productRef) {
-    if (product.variants.length === 0) {
-      const cents = await unitPriceCentsFromOdoo(ctx, productRef, null, pricing)
-      if (cents != null && cents > 0) {
-        next = { ...product, priceCents: cents, priceLabel: 'excl_vat' }
-      }
-    } else {
-      const variants = await Promise.all(
-        product.variants.map(async (variant) => {
-          const cents = await unitPriceCentsFromOdoo(ctx, productRef, variant.ref, pricing)
-          if (cents == null || cents <= 0) return variant
-          return { ...variant, priceCents: cents }
-        }),
-      )
-
-      const variantPrices = variants
-        .map((v) => v.priceCents)
-        .filter((p): p is number => p != null && p > 0)
-      const minPrice = variantPrices.length > 0 ? Math.min(...variantPrices) : product.priceCents
-
-      next = {
-        ...product,
-        variants,
-        priceCents: minPrice,
-        priceLabel: 'excl_vat',
-      }
+  if (variantIds.length === 0) {
+    if (!isPersonalizedPricing(pricing)) return product
+    const [relatedProducts, accessories, alternatives, suggestedProducts, compatibleSources, substitutes] =
+      await Promise.all([
+        priceRelatedCards(ctx, product.relatedProducts, pricing),
+        priceRelatedCards(ctx, product.accessories, pricing),
+        priceRelatedCards(ctx, product.alternatives, pricing),
+        priceRelatedCards(ctx, product.suggestedProducts, pricing),
+        priceRelatedCards(ctx, product.compatibleSources, pricing),
+        priceRelatedCards(ctx, product.substitutes, pricing),
+      ])
+    return {
+      ...product,
+      relatedProducts,
+      accessories,
+      alternatives,
+      suggestedProducts,
+      compatibleSources,
+      substitutes,
     }
+  }
+
+  const { rows } = await fetchStorefrontPrices({
+    productIds: variantIds,
+    customerId: pricing?.partnerId ?? null,
+    qty: 1,
+    correlationId: ctx.correlationId,
+  })
+
+  if (rows.size === 0) return product
+
+  const variants = product.variants.map((variant) => {
+    const id = variant.odooVariantId
+    if (id == null) return variant
+    const row = rows.get(id)
+    if (!row) return variant
+    return {
+      ...variant,
+      priceCents: row.priceCents,
+      listPriceCents: row.listPriceCents,
+      discountPct: row.discountPct,
+      priceSource: row.source,
+    }
+  })
+
+  const variantPrices = variants
+    .map((v) => v.priceCents)
+    .filter((p): p is number => p != null && p > 0)
+  const minPrice = variantPrices.length > 0 ? Math.min(...variantPrices) : product.priceCents
+  const minVariant = variants.find((v) => v.priceCents === minPrice)
+
+  let next: ProductDetailDTO = {
+    ...product,
+    variants,
+    priceCents: minPrice,
+    listPriceCents: minVariant?.listPriceCents ?? product.listPriceCents,
+    discountPct: minVariant?.discountPct ?? product.discountPct,
+    priceSource: minVariant?.priceSource ?? product.priceSource,
+    priceLabel: 'excl_vat',
   }
 
   if (!isPersonalizedPricing(pricing)) return next
@@ -150,35 +186,34 @@ function pricingFromProxyQuery(query: {
   }
 }
 
+function applyPriceRowToVariant(variant: OdooCatalogVariant, row: StorefrontPriceRow): OdooCatalogVariant {
+  const priceEuros = centsToEuros(row.priceCents)
+  const listEuros =
+    row.listPriceCents != null ? centsToEuros(row.listPriceCents) : (variant.list_price ?? variant.lst_price)
+  return {
+    ...variant,
+    price: priceEuros,
+    list_price: listEuros,
+    lst_price: listEuros,
+    discount_pct: row.discountPct ?? undefined,
+  }
+}
+
+/** Listing: prezzi pubblici dal catalogo; customer prices solo se abbiamo variant ids (non qui). */
 export async function applySessionPricelistToOdooCatalogListItems<T extends OdooCatalogProductListItem>(
-  ctx: OdooCallContext,
+  _ctx: OdooCallContext,
   items: T[],
   query: { partner_id?: string; pricelist_id?: string },
 ): Promise<T[]> {
   const pricing = pricingFromProxyQuery(query)
   if (!pricing || items.length === 0) return items
-
-  const lines = items.map((item, index) => ({
-    lineId: String(index),
-    productRef: String(item.id),
-    variantRef: null,
-  }))
-
-  let prices: Map<string, number | null>
-  try {
-    prices = await resolveCartLineUnitPricesCents(ctx, lines, pricing)
-  } catch {
-    return items
-  }
-
-  return items.map((item, index) => {
-    const cents = prices.get(String(index))
-    if (cents == null || cents <= 0) return item
-    const euros = centsToEuros(cents)
-    return { ...item, price_from: euros, price_to: euros }
-  })
+  // Listing resta sui campi catalogo pubblici (price_from / list_price_from).
+  // I prezzi customer sono applicati su PDP/cart via /prices.
+  void pricing
+  return items
 }
 
+/** Dettaglio loggato: dopo catalogo pubblico, `GET /prices` con customer_id sostituisce i prezzi. */
 export async function applySessionPricelistToOdooCatalogDetail(
   ctx: OdooCallContext,
   data: OdooCatalogProductDetailResponse,
@@ -186,42 +221,46 @@ export async function applySessionPricelistToOdooCatalogDetail(
 ): Promise<OdooCatalogProductDetailResponse> {
   const pricing = pricingFromProxyQuery(query)
   const product = data.product
-  if (!pricing || !product) return data
+  if (!pricing?.partnerId || !product) return data
 
   const variants = product.variants ?? []
-  const lines =
-    variants.length > 0
-      ? variants.map((variant, index) => ({
-          lineId: String(index),
-          productRef: String(product.id),
-          variantRef: String(variant.id),
-        }))
-      : [{ lineId: '0', productRef: String(product.id), variantRef: null }]
+  const variantIds = variants.map((v) => v.id).filter((id) => Number.isInteger(id) && id > 0)
+  if (variantIds.length === 0) return data
 
-  let prices: Map<string, number | null>
-  try {
-    prices = await resolveCartLineUnitPricesCents(ctx, lines, pricing)
-  } catch {
-    return data
-  }
+  const { rows } = await fetchStorefrontPrices({
+    productIds: variantIds,
+    customerId: pricing.partnerId,
+    qty: 1,
+    correlationId: ctx.correlationId,
+  })
+  if (rows.size === 0) return data
 
-  const nextVariants =
-    variants.length > 0
-      ? variants.map((variant, index) => {
-          const cents = prices.get(String(index))
-          if (cents == null || cents <= 0) return variant
-          return { ...variant, lst_price: centsToEuros(cents) }
-        })
-      : variants
+  const nextVariants = variants.map((variant) => {
+    const row = rows.get(variant.id)
+    if (!row) return variant
+    return applyPriceRowToVariant(variant, row)
+  })
 
-  const priced = [...prices.values()].filter((cents): cents is number => cents != null && cents > 0)
-  const minCents = priced.length > 0 ? Math.min(...priced) : null
+  const priced = nextVariants
+    .map((v) => (v.price != null ? v.price : v.lst_price))
+    .filter((p): p is number => p != null && Number.isFinite(p) && p > 0)
+  const minEuros = priced.length > 0 ? Math.min(...priced) : null
+  const maxDiscount = nextVariants.reduce<number | undefined>((max, v) => {
+    if (v.discount_pct == null || !(v.discount_pct > 0)) return max
+    return max == null ? v.discount_pct : Math.max(max, v.discount_pct)
+  }, undefined)
+  const listFrom = nextVariants
+    .map((v) => v.list_price ?? v.lst_price)
+    .filter((p): p is number => p != null && Number.isFinite(p) && p > 0)
+
   const nextProduct: OdooCatalogProductDetail = {
     ...product,
     variants: nextVariants,
-    ...(minCents != null
-      ? { price_from: centsToEuros(minCents), price_to: centsToEuros(minCents) }
+    ...(minEuros != null ? { price_from: minEuros, price_to: minEuros } : {}),
+    ...(listFrom.length
+      ? { list_price_from: Math.min(...listFrom), list_price_to: Math.max(...listFrom) }
       : {}),
+    ...(maxDiscount != null ? { discount_pct_max: maxDiscount } : {}),
   }
 
   return { ...data, product: nextProduct }

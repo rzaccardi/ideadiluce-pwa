@@ -420,6 +420,9 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
                     </div>
                     <ProductPrice
                       netCents={product.priceCents}
+                      listPriceCents={product.listPriceCents}
+                      discountPct={product.discountPct}
+                      priceSource={product.priceSource}
                       currency={product.currency}
                       className="mt-2.5"
                       amountClassName="text-[15px] font-extrabold"

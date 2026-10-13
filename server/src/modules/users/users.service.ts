@@ -58,8 +58,21 @@ async function syncUserBusinessToOdoo(
     isCompany: true,
   })
   const isPro = await customerAdapter.syncProfessionalFlagFromPartner(ctx, partnerId)
-  if (isPro) {
-    await prisma.user.update({ where: { id: userId }, data: { isProfessional: true } })
+  let b2bActive: boolean | undefined
+  try {
+    const account = await customerAdapter.getCustomerAccountByPartnerId(ctx, partnerId)
+    if (account?.b2bActive != null) b2bActive = Boolean(account.b2bActive)
+  } catch {
+    /* best-effort */
+  }
+  if (isPro || b2bActive != null) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(isPro ? { isProfessional: true } : {}),
+        ...(b2bActive != null ? { b2bActive } : {}),
+      },
+    })
   }
 }
 

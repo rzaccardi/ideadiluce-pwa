@@ -44,17 +44,28 @@ function buildOrderPayload(
     chargedCents?: number | null
     snapshotAt?: string
     taxRatePct?: number
+    pricedFromCache?: boolean
   },
 ): OdooApiOrderWrite {
+  const pricedFromCache = Boolean(input.pricedFromCache)
   const lines = input.lines
     .map((line) => {
       const productId = resolveVariantProductId(line)
       if (productId == null) return null
-      return {
+      const row: {
+        product_id: number
+        qty: number
+        price_unit_net?: number
+      } = {
         product_id: productId,
         qty: line.quantity,
-        price_unit_net: netEurosFromNetCents(line.unitPriceCents),
       }
+      // price_unit_net solo obbligatorio con priced_from_cache; Odoo calcola altrimenti.
+      if (pricedFromCache) {
+        if (line.unitPriceCents == null) return null
+        row.price_unit_net = netEurosFromNetCents(line.unitPriceCents)
+      }
+      return row
     })
     .filter((line): line is NonNullable<typeof line> => line != null)
 
@@ -99,10 +110,11 @@ function buildOrderPayload(
     }
   }
 
-  if (input.chargedCents != null || input.snapshotAt) {
+  if (input.chargedCents != null || input.snapshotAt || pricedFromCache) {
     payload.pricing = {
       ...(input.snapshotAt ? { snapshot_at: input.snapshotAt } : {}),
       ...(input.chargedCents != null ? { charged_cents: input.chargedCents } : {}),
+      ...(pricedFromCache ? { priced_from_cache: true } : {}),
     }
   }
 
@@ -153,6 +165,7 @@ async function postOrder(
     chargedCents?: number | null
     snapshotAt?: string
     taxRatePct?: number
+    pricedFromCache?: boolean
   },
 ): Promise<ApiV2SaleOrderResult> {
   const created = await odooApiCreateOrder(buildOrderPayload(input), ctx.correlationId)
@@ -194,6 +207,7 @@ export function createApiV2OdooOrderAdapter(): OdooOrderAdapter {
           chargedCents: input.chargedCents,
           taxRatePct: input.taxRatePct,
           snapshotAt: new Date().toISOString(),
+          pricedFromCache: input.pricedFromCache,
         })
       } catch (e) {
         wrap(e, ctx)

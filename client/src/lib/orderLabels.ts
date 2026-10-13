@@ -36,13 +36,15 @@ const PAYMENT_STATUS_KEYS: Record<string, MessageKey> = {
 export function orderDisplayStatus(order: {
   status: string
   shipment?: { status: string } | null
+  delivery?: { status: string | null } | null
 }): string {
   const ship = order.shipment?.status
-  if (ship === 'delivered') return 'delivered'
+  if (ship === 'delivered' || order.delivery?.status === 'delivered') return 'delivered'
   if (ship === 'out_for_delivery') return 'out_for_delivery'
-  if (ship === 'in_transit') return 'in_transit'
+  if (ship === 'in_transit' || order.delivery?.status === 'in_transit') return 'in_transit'
   if (ship === 'shipped') return 'shipped'
-  if (ship === 'exception') return 'shipment_exception'
+  if (ship === 'exception' || order.delivery?.status === 'exception') return 'shipment_exception'
+  if (order.delivery?.status === 'pending') return 'shipped'
   return order.status
 }
 

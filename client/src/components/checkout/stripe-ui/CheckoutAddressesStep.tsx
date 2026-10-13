@@ -12,9 +12,11 @@ import {
   hasCheckoutContactFromProfile,
   isShippingBlockedByMissingPhone,
   initShippingFromBilling,
+  canUseDropship,
   isBusinessCheckout,
   isBusinessAnagraficaComplete,
   isRomePickupEligible,
+  selectCheckoutDropshipAddress,
   selectCheckoutShippingAddress,
   selectShippingMethod,
   setBillingSameAsShipping,
@@ -57,6 +59,7 @@ export function CheckoutAddressesStep() {
   const checkout = useSnapshot(checkoutStore)
   const auth = useSnapshot(authStore)
   const business = isBusinessCheckout()
+  const dropshipEnabled = canUseDropship()
   const hideBusinessFields = business && checkout.anagraficaCollectedAtAccount
   const hideRetailFiscalCode = !business && auth.isAuthenticated
   const stepBusy =
@@ -65,7 +68,8 @@ export function CheckoutAddressesStep() {
     checkout.addressPrefillLoading
   const recipient = checkout.deliveryRecipient
   const deliveryMode = recipient.mode ?? 'self'
-  const savedAddresses = checkout.savedShippingAddresses
+  const savedAddresses = checkout.savedShippingAddresses.filter((address) => !address.dropship)
+  const dropshipRecipients = checkout.savedShippingAddresses.filter((address) => address.dropship)
   const hasSavedShippingAddresses = savedAddresses.length > 0
   const hasMultipleSavedShippingAddresses = savedAddresses.length > 1
   const selectedSavedId = checkout.selectedShippingAddressId
@@ -75,6 +79,8 @@ export function CheckoutAddressesStep() {
   const showOtherShippingForm =
     deliveryMode === 'self' &&
     (selectedSavedId === OTHER_SHIPPING_SELECTION || (!hasSavedShippingAddresses && shipToDifferentAddress))
+  const showNewDropshipForm =
+    deliveryMode === 'other' && selectedSavedId === OTHER_SHIPPING_SELECTION
   const billingComplete =
     isCheckoutAddressValid(checkout.draft.billing) &&
     (!business || isBusinessAnagraficaComplete())
@@ -142,7 +148,7 @@ export function CheckoutAddressesStep() {
       <div className="space-y-4 border-t border-idl-tech-border pt-5">
         <StripeSectionTitle>{t('checkout.shippingAddress')}</StripeSectionTitle>
 
-        {business ? (
+        {dropshipEnabled ? (
           <CheckoutSegmentControl<'self' | 'other'>
             value={deliveryMode}
             options={(['self', 'other'] as const).map((m) => ({
@@ -237,78 +243,83 @@ export function CheckoutAddressesStep() {
           />
         ) : null}
 
-        {business && deliveryMode === 'other' ? (
+        {dropshipEnabled && deliveryMode === 'other' ? (
           <CheckoutPanel className="space-y-4 bg-idl-tech-panel">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <StripeFieldGroup>
-                <StripeControlledInput
-                  name="recipient-firstName"
-                  placeholder={t('checkout.register.firstName')}
-                  value={recipient.firstName}
-                  onValueChange={(value) => updateDeliveryRecipientField('firstName', value)}
-                />
-              </StripeFieldGroup>
-              <StripeFieldGroup>
-                <StripeControlledInput
-                  name="recipient-lastName"
-                  placeholder={t('checkout.register.lastName')}
-                  value={recipient.lastName}
-                  onValueChange={(value) => updateDeliveryRecipientField('lastName', value)}
-                />
-              </StripeFieldGroup>
-            </div>
-            <StripeFieldGroup>
-              <StripeControlledInput
-                name="recipient-company"
-                placeholder={t('checkout.deliveryRecipient.company')}
-                value={recipient.company}
-                onValueChange={(value) => updateDeliveryRecipientField('company', value)}
+            <p className="text-sm text-idl-muted">{t('checkout.deliveryRecipient.savedHint')}</p>
+            {dropshipRecipients.length > 0 ? (
+              <ShippingAddressPicker
+                addresses={dropshipRecipients}
+                selectedId={selectedSavedId}
+                disabled={stepBusy}
+                onSelect={(id) => selectCheckoutDropshipAddress(id)}
+                extraOption={{
+                  id: OTHER_SHIPPING_SELECTION,
+                  title: t('checkout.deliveryRecipient.newRecipient'),
+                }}
               />
-            </StripeFieldGroup>
-            <div>
-              <StripeFieldGroup
-                className={
-                  phoneBlockingShipping
-                    ? 'border-red-500 ring-2 ring-red-200'
-                    : undefined
-                }
-              >
-                <StripeControlledInput
-                  type="tel"
-                  name="recipient-phone"
-                  placeholder={t('common.phone')}
-                  value={recipient.phone}
-                  required
-                  aria-invalid={phoneBlockingShipping || undefined}
-                  onValueChange={(value) => updateDeliveryRecipientField('phone', value)}
+            ) : (
+              <p className="text-sm text-idl-muted">{t('checkout.deliveryRecipient.emptyRecipients')}</p>
+            )}
+            {showNewDropshipForm || dropshipRecipients.length === 0 ? (
+              <>
+                <StripeFieldGroup>
+                  <StripeControlledInput
+                    name="recipient-company"
+                    placeholder={t('checkout.deliveryRecipient.name')}
+                    value={recipient.company || [recipient.firstName, recipient.lastName].filter(Boolean).join(' ')}
+                    onValueChange={(value) => {
+                      updateDeliveryRecipientField('company', value)
+                      updateDeliveryRecipientField('firstName', value)
+                      updateDeliveryRecipientField('lastName', '')
+                    }}
+                  />
+                </StripeFieldGroup>
+                <div>
+                  <StripeFieldGroup
+                    className={
+                      phoneBlockingShipping
+                        ? 'border-red-500 ring-2 ring-red-200'
+                        : undefined
+                    }
+                  >
+                    <StripeControlledInput
+                      type="tel"
+                      name="recipient-phone"
+                      placeholder={t('common.phone')}
+                      value={recipient.phone}
+                      required
+                      aria-invalid={phoneBlockingShipping || undefined}
+                      onValueChange={(value) => updateDeliveryRecipientField('phone', value)}
+                    />
+                  </StripeFieldGroup>
+                  {phoneBlockingShipping ? (
+                    <p className="mt-1.5 text-sm font-medium text-red-600">
+                      {t('checkout.shipping.phoneRequired')}
+                    </p>
+                  ) : null}
+                </div>
+                <CheckoutAddressSection
+                  title={t('checkout.deliveryRecipient.addressTitle')}
+                  prefix="dropship"
+                  showTitle={false}
+                  hideContactFields
+                  address={checkout.dropshipAddress}
+                  onChange={(key, value) => updateDropshipAddress(key, value)}
+                  onAddressResolved={(resolved) => {
+                    const merged = mergeResolvedStreetNumber(checkoutStore.dropshipAddress, resolved)
+                    updateDropshipAddress('line1', merged.line1)
+                    updateDropshipAddress('streetNumber', merged.streetNumber)
+                    updateDropshipAddress('isSnc', merged.isSnc)
+                    updateDropshipAddress('line2', resolved.line2 ?? '')
+                    updateDropshipAddress('city', resolved.city)
+                    updateDropshipAddress('postalCode', resolved.postalCode)
+                    updateDropshipAddress('province', resolved.province ?? '')
+                    updateDropshipAddress('country', resolved.country)
+                  }}
                 />
-              </StripeFieldGroup>
-              {phoneBlockingShipping ? (
-                <p className="mt-1.5 text-sm font-medium text-red-600">
-                  {t('checkout.shipping.phoneRequired')}
-                </p>
-              ) : null}
-            </div>
-            <CheckoutAddressSection
-              title={t('checkout.deliveryRecipient.addressTitle')}
-              prefix="dropship"
-              showTitle={false}
-              hideContactFields
-              address={checkout.dropshipAddress}
-              onChange={(key, value) => updateDropshipAddress(key, value)}
-              onAddressResolved={(resolved) => {
-                const merged = mergeResolvedStreetNumber(checkoutStore.dropshipAddress, resolved)
-                updateDropshipAddress('line1', merged.line1)
-                updateDropshipAddress('streetNumber', merged.streetNumber)
-                updateDropshipAddress('isSnc', merged.isSnc)
-                updateDropshipAddress('line2', resolved.line2 ?? '')
-                updateDropshipAddress('city', resolved.city)
-                updateDropshipAddress('postalCode', resolved.postalCode)
-                updateDropshipAddress('province', resolved.province ?? '')
-                updateDropshipAddress('country', resolved.country)
-              }}
-            />
-            <p className="text-xs text-idl-muted">{t('checkout.deliveryRecipient.notSavedHint')}</p>
+                <p className="text-xs text-idl-muted">{t('checkout.deliveryRecipient.notSavedHint')}</p>
+              </>
+            ) : null}
           </CheckoutPanel>
         ) : null}
       </div>

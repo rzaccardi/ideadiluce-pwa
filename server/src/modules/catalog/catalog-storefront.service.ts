@@ -159,7 +159,7 @@ export const catalogStorefrontService = {
         pricing: options.pricing,
         enrichStock: true,
       })
-      return { ...live, source: 'live' as const, degraded: false }
+      return { ...live, source: 'live' as const }
     } catch (e) {
       const { markCatalogDegraded } = await import('../odoo/odoo-degraded-state.js')
       const { isCatalogCacheFallbackEnabled } = await import('../odoo/odoo-resilience.settings.js')
@@ -179,7 +179,7 @@ export const catalogStorefrontService = {
         ambiente: options.ambiente,
         stile: options.stile,
       })
-      return { ...cached, source: 'cache' as const, degraded: true }
+      return { ...cached, source: 'cache' as const }
     }
   },
 }

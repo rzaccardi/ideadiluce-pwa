@@ -15,6 +15,7 @@ function user(overrides: Partial<UserDTO> = {}): UserDTO {
     customerSegment: 'retail',
     pricelistLabel: '',
     isProfessional: false,
+    b2bActive: false,
     personalizedPricing: false,
     companyName: null,
     vatNumber: null,

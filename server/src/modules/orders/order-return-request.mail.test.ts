@@ -21,6 +21,7 @@ const order: OrderDetailDTO = {
     sourceLabel: 'E-commerce',
     returnRequest: null,
     shipment: null,
+    delivery: null,
     returnWindow: {
       eligible: true,
       reason: 'not_delivered',

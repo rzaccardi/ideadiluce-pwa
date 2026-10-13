@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useSnapshot } from 'valtio/react'
 import type { ReactNode } from 'react'
 import type { CartDTO, ShippingQuoteDTO } from '@/types/dto'
@@ -12,6 +13,7 @@ import {
   setTermsAccepted,
   updateCheckoutOrderNotes,
 } from '@/features/checkout'
+import { acknowledgePricing } from '@/features/cart'
 import { formatMoney } from '@/lib/format'
 import { Link } from '@/lib/navigation'
 import { useLocalePath } from '@/hooks/use-locale-path'
@@ -26,6 +28,7 @@ import {
   StripePayButton,
 } from './StripeFields'
 import { CheckoutStepBackButton } from './CheckoutStepBackButton'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 
 type Props = {
   cart: Readonly<CartDTO>
@@ -85,9 +88,74 @@ export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Pro
   const shippingQuote: ShippingQuoteDTO | null = selectedShippingQuote()
   const totalCents = checkoutTotalCents(cart, shippingQuote, checkout.taxBreakdown)
   const tax = checkout.taxBreakdown
+  const needsPricingConfirmation = Boolean(cart.needsPricingConfirmation)
+  const [pricingConfirmOpen, setPricingConfirmOpen] = useState(false)
+  const [pricingConfirmPending, setPricingConfirmPending] = useState(false)
+
+  const pricingWarnings = (cart.warnings ?? []).filter((w) =>
+    /price|prezzo|listino|odoo|cache/i.test(w),
+  )
+
+  async function proceedToPay() {
+    setTermsAccepted(true)
+    await prepareCheckoutPayment()
+    onConfirmPay()
+  }
+
+  async function handlePayClick() {
+    if (needsPricingConfirmation) {
+      setPricingConfirmOpen(true)
+      return
+    }
+    try {
+      await proceedToPay()
+    } catch {
+      /* errore in store */
+    }
+  }
+
+  async function handlePricingConfirm() {
+    setPricingConfirmPending(true)
+    try {
+      await acknowledgePricing()
+      setPricingConfirmOpen(false)
+      await proceedToPay()
+    } catch {
+      /* errore in store */
+    } finally {
+      setPricingConfirmPending(false)
+    }
+  }
+
+  const confirmDescription = [
+    t('checkout.pricingConfirm.description'),
+    `${t('checkout.summary.total')}: ${formatMoney(totalCents, cart.currencyCode)}`,
+    ...pricingWarnings.slice(0, 2),
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   return (
     <section className="space-y-5">
+      {needsPricingConfirmation ? (
+        <div
+          role="status"
+          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950"
+        >
+          <p className="font-semibold">{t('checkout.pricingConfirm.banner')}</p>
+          {pricingWarnings.length > 0 ? (
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-amber-900/90">
+              {pricingWarnings.slice(0, 4).map((warning) => (
+                <li key={warning}>{warning}</li>
+              ))}
+            </ul>
+          ) : null}
+          <p className="mt-2 font-medium tabular-nums">
+            {t('checkout.summary.total')}: {formatMoney(totalCents, cart.currencyCode)}
+          </p>
+        </div>
+      ) : null}
+
       <CheckoutReviewCard title={t('checkout.review.summaryTitle')}>
         {shippingQuote ? (
           <CheckoutReviewRow label={t('checkout.summary.shipping')} value={shippingQuote.label} />
@@ -179,24 +247,33 @@ export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Pro
         <CheckoutStepBackButton />
         <StripePayButton
           className="min-w-0 flex-1"
-          disabled={!canPay || !canStartCheckout()}
-          loading={checkout.isLoading || checkout.isPaying || checkout.cartRefreshing}
+          disabled={!canPay || !canStartCheckout() || pricingConfirmPending}
+          loading={
+            checkout.isLoading || checkout.isPaying || checkout.cartRefreshing || pricingConfirmPending
+          }
           variant="pay"
           onClick={() => {
-            void (async () => {
-              try {
-                setTermsAccepted(true)
-                await prepareCheckoutPayment()
-                onConfirmPay()
-              } catch {
-                /* errore in store */
-              }
-            })()
+            void handlePayClick()
           }}
         >
           {payLabel}
         </StripePayButton>
       </CheckoutActionRow>
+
+      <ConfirmDialog
+        open={pricingConfirmOpen}
+        title={t('checkout.pricingConfirm.title')}
+        description={confirmDescription}
+        confirmLabel={t('checkout.pricingConfirm.accept')}
+        cancelLabel={t('common.cancel')}
+        confirmPending={pricingConfirmPending}
+        onCancel={() => {
+          if (!pricingConfirmPending) setPricingConfirmOpen(false)
+        }}
+        onConfirm={() => {
+          void handlePricingConfirm()
+        }}
+      />
     </section>
   )
 }

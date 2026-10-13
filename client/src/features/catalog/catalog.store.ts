@@ -57,5 +57,4 @@ export const catalogStore = proxy({
   isLoading: false,
   isLoadingMore: false,
   error: null as string | null,
-  degraded: false,
 })

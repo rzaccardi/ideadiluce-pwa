@@ -55,6 +55,7 @@ export type SyncSaleOrderDraftInput = {
   } | null
   chargedCents?: number | null
   taxRatePct?: number
+  pricedFromCache?: boolean
 }
 
 export const ACTIVE_DRAFT_ORDER_STATUSES = [

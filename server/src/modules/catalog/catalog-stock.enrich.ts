@@ -34,6 +34,7 @@ function defaultStockSnapshot(): VariantStockSnapshot {
     saleOk: true,
     orderable: false,
     hasSuppliers: false,
+    isStorable: true,
   }
 }
 
@@ -164,7 +165,9 @@ export async function enrichProductDetailWithStock(
     }
   }
 
-  if (product.variants.length === 0) {
+  const variants = Array.isArray(product.variants) ? product.variants : []
+
+  if (variants.length === 0) {
     const templateIds = product.odooTemplateId != null ? [product.odooTemplateId] : []
     const variantByTemplate = await fetchFirstVariantIdsForTemplates(ctx, templateIds)
     const variantId = product.odooTemplateId != null ? variantByTemplate.get(product.odooTemplateId) : null
@@ -182,25 +185,25 @@ export async function enrichProductDetailWithStock(
     }
   }
 
-  const variantIds = product.variants
+  const variantIds = variants
     .map(resolveVariantId)
     .filter((id): id is number => id != null)
   const stockMap = await fetchVariantStockByIds(ctx, variantIds)
 
-  const variants = product.variants.map((variant) => {
+  const enrichedVariants = variants.map((variant) => {
     const variantId = resolveVariantId(variant)
     const snapshot =
       variantId != null ? (stockMap.get(variantId) ?? defaultStockSnapshot()) : defaultStockSnapshot()
     return applyAvailabilityToVariant(variant, snapshot, requestedQty)
   })
 
-  const availability = primaryAvailability(variants, product.availability)
+  const availability = primaryAvailability(enrichedVariants, product.availability)
 
   return {
     ...product,
-    variants,
+    variants: enrichedVariants,
     availability,
-    inStock: productInStockFromVariants(variants),
+    inStock: productInStockFromVariants(enrichedVariants),
   }
 }
 

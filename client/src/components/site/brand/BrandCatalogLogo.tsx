@@ -17,8 +17,9 @@ type Props = {
 }
 
 /**
- * Logo catalogo JPG: ritaglia il padding bianco del canvas e applica
- * mix-blend-multiply (via `.idl-brand-logo-img`) per non far “sbordare” l’alone.
+ * Logo catalogo JPG: ritaglia il padding bianco del canvas via bbox contenuto.
+ * Niente mix-blend: con parent animati (opacity/transform) il multiply
+ * isolerebbe i wordmark e li renderebbe invisibili su fondi chiari.
  */
 export function BrandCatalogLogo({
   src,
@@ -59,7 +60,7 @@ export function BrandCatalogLogo({
         decoding="async"
         loading="lazy"
         draggable={false}
-        className="idl-brand-logo-img absolute max-w-none"
+        className="absolute max-w-none"
         style={{
           height: `${(1 / ch) * 100}%`,
           width: 'auto',

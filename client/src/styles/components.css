@@ -529,10 +529,9 @@ html[data-theme='dark'] .text-zinc-600 {
 }
 
 /*
- * Loghi brand catalogo (`/brands/*.jpg`): canvas bianco → multiply
- * nasconde l’alone su cream / off-white. Usato da BrandCatalogLogo.
+ * Loghi brand catalogo (`/brands/*.jpg`): il crop CSS in BrandCatalogLogo
+ * elimina il padding bianco del canvas. Non usare mix-blend-mode qui:
+ * dentro parent con opacity/transform (es. StaggerItem) il blending si
+ * isola su backdrop trasparente e i wordmark spariscono (bianco su bianco).
  * In dark mode i componenti nascondono l’img (fallback testuale).
  */
-.idl-brand-logo-img {
-  mix-blend-mode: multiply;
-}

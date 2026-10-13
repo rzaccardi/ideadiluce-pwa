@@ -20,6 +20,7 @@ function cacheOrder(partial: Partial<OrderDTO> = {}): OrderDTO {
     sourceLabel: 'E-commerce',
     returnRequest: null,
     shipment: null,
+    delivery: null,
     returnWindow: OPEN_RETURN_WINDOW,
     ...partial,
   }

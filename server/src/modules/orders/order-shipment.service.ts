@@ -1,4 +1,5 @@
 import type {
+  OrderDeliveryDTO,
   OrderDTO,
   OrderDetailDTO,
   OrderShipmentDTO,
@@ -8,7 +9,8 @@ import { prisma } from '../../lib/prisma.js'
 import { isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
 import { odooApiListOrderShipments } from '../../adapters/odoo-api/odooApi.resources.js'
-import type { OdooApiShipment } from '../../adapters/odoo-api/odooApi.types.js'
+import { odooUtcDateTimeToIso } from '../../adapters/odoo-api/odooApi.mapping.js'
+import type { OdooApiDeliveryStatus, OdooApiShipment } from '../../adapters/odoo-api/odooApi.types.js'
 import { odooSalesService } from '../odoo/odoo-sales.service.js'
 import { logger } from '../../lib/logger.js'
 import { trackFedexNumber } from '../../adapters/shipping/fedexClient.js'
@@ -36,10 +38,28 @@ function isShipmentDto(value: unknown): value is OrderShipmentDTO {
   return 'status' in value && 'updatedAt' in value
 }
 
+function deliveryFromShipment(shipment: OrderShipmentDTO | null): OrderDeliveryDTO | null {
+  if (!shipment) return null
+  if (shipment.status === 'delivered') {
+    return { status: 'delivered', deliveredAt: shipment.deliveredAt }
+  }
+  if (shipment.status === 'exception') {
+    return { status: 'exception', deliveredAt: null }
+  }
+  if (shipment.status === 'in_transit' || shipment.status === 'out_for_delivery') {
+    return { status: 'in_transit', deliveredAt: null }
+  }
+  if (shipment.status === 'shipped' || shipment.status === 'preparing') {
+    return { status: 'pending', deliveredAt: null }
+  }
+  return null
+}
+
 function withReturnWindow<T extends OrderDTO>(order: T, shipment: OrderShipmentDTO | null): T {
   return {
     ...order,
     shipment,
+    delivery: deliveryFromShipment(shipment) ?? order.delivery ?? null,
     returnWindow: computeReturnWindow(shipment?.deliveredAt ?? null),
   }
 }
@@ -51,6 +71,7 @@ function pickingToShipment(input: {
   trackingUrl: string | null
   shippedAt: string | null
   status: OrderShipmentStatusDTO
+  deliveredAt?: string | null
 }): OrderShipmentDTO {
   return {
     carrier: input.carrier,
@@ -60,11 +81,33 @@ function pickingToShipment(input: {
     status: input.status,
     shippedAt: input.shippedAt,
     estimatedDeliveryAt: null,
-    deliveredAt: null,
+    deliveredAt: input.deliveredAt ?? null,
     lastLocation: null,
     events: [],
     updatedAt: new Date().toISOString(),
   }
+}
+
+function mapOdooDeliveryStatus(
+  deliveryStatus: OdooApiDeliveryStatus | undefined,
+  warehouseState: string,
+  hasTracking: boolean,
+): { status: OrderShipmentStatusDTO; fromOdoo: boolean } {
+  const key = (deliveryStatus ?? '').toLowerCase()
+  if (key === 'delivered') return { status: 'delivered', fromOdoo: true }
+  if (key === 'exception') return { status: 'exception', fromOdoo: true }
+  if (key === 'in_transit') return { status: 'in_transit', fromOdoo: true }
+  if (key === 'pending') {
+    return { status: hasTracking ? 'shipped' : 'preparing', fromOdoo: true }
+  }
+  const state = warehouseState.toLowerCase()
+  if (state === 'done' || state === 'delivered') {
+    return { status: 'shipped', fromOdoo: false }
+  }
+  if (state === 'cancel' || state === 'exception') {
+    return { status: 'exception', fromOdoo: false }
+  }
+  return { status: 'preparing', fromOdoo: false }
 }
 
 async function pwaCarrierHint(pwaOrderId: string | null): Promise<string | null> {
@@ -103,31 +146,35 @@ async function fetchCarrierTrack(
 function apiShipmentToDto(
   shipment: OdooApiShipment,
   pwaHint: string | null,
-): OrderShipmentDTO {
+): OrderShipmentDTO & { deliveryStatusFromOdoo: boolean } {
   const trackingNumber = shipment.tracking_number?.trim() || shipment.tracking_ref?.trim() || null
   const carrier = detectCarrier({
     carrierName: shipment.carrier_name ?? shipment.carrier,
     carrierCode: pwaHint,
     trackingNumber,
   })
-  const state = (shipment.state ?? '').toLowerCase()
-  const status: OrderShipmentStatusDTO =
-    state === 'done' || state === 'delivered'
-      ? 'shipped'
-      : state === 'cancel' || state === 'exception'
-        ? 'exception'
-        : 'preparing'
-  return pickingToShipment({
-    carrier,
-    carrierLabel:
-      shipment.carrier_name ??
-      shipment.carrier ??
-      (carrier === 'fedex' ? 'FedEx' : carrier === 'dhl' ? 'DHL' : null),
-    trackingNumber,
-    trackingUrl: shipment.tracking_url ?? null,
-    shippedAt: shipment.date_done ?? shipment.scheduled_date ?? null,
-    status,
-  })
+  const mapped = mapOdooDeliveryStatus(
+    shipment.delivery_status,
+    shipment.state ?? '',
+    Boolean(trackingNumber),
+  )
+  const deliveredAt =
+    mapped.status === 'delivered' ? odooUtcDateTimeToIso(shipment.delivered_at) : null
+  return {
+    ...pickingToShipment({
+      carrier,
+      carrierLabel:
+        shipment.carrier_name ??
+        shipment.carrier ??
+        (carrier === 'fedex' ? 'FedEx' : carrier === 'dhl' ? 'DHL' : null),
+      trackingNumber,
+      trackingUrl: shipment.tracking_url ?? null,
+      shippedAt: shipment.date_done ?? shipment.scheduled_date ?? null,
+      status: mapped.status,
+      deliveredAt,
+    }),
+    deliveryStatusFromOdoo: mapped.fromOdoo,
+  }
 }
 
 async function refreshSnapshot(
@@ -138,12 +185,18 @@ async function refreshSnapshot(
   const pwaHint = await pwaCarrierHint(order.pwaOrderId)
 
   let shipment: OrderShipmentDTO | null = null
+  let deliveryStatusFromOdoo = false
 
   if (isOdooApiV2Configured() && order.odooSaleOrderId) {
     try {
       const shipments = await odooApiListOrderShipments(order.odooSaleOrderId, ctx.correlationId)
       const primary = shipments[0]
-      if (primary) shipment = apiShipmentToDto(primary, pwaHint)
+      if (primary) {
+        const mapped = apiShipmentToDto(primary, pwaHint)
+        deliveryStatusFromOdoo = mapped.deliveryStatusFromOdoo
+        const { deliveryStatusFromOdoo: _flag, ...dto } = mapped
+        shipment = dto
+      }
     } catch (err) {
       logger.warn('orders.shipment.odoo_api_failed', {
         odooSaleOrderId: order.odooSaleOrderId,
@@ -212,10 +265,13 @@ async function refreshSnapshot(
           carrier: live.carrier,
           trackingNumber: live.trackingNumber,
           trackingUrl: shipment.trackingUrl ?? carrierTrackingUrl(live.carrier, live.trackingNumber),
-          status: live.status,
+          // Odoo delivery_status / delivered_at hanno priorità sul parser corriere.
+          status: deliveryStatusFromOdoo ? shipment.status : live.status,
           shippedAt: live.shippedAt ?? shipment.shippedAt,
           estimatedDeliveryAt: live.estimatedDeliveryAt,
-          deliveredAt: live.deliveredAt,
+          deliveredAt: deliveryStatusFromOdoo
+            ? shipment.deliveredAt
+            : (live.deliveredAt ?? shipment.deliveredAt),
           lastLocation: live.lastLocation,
           events: live.events,
           updatedAt: new Date().toISOString(),

@@ -290,6 +290,9 @@ export function TechnicalProductDetailView({ product, state }: Props) {
             <div className="mb-1.5">
               <ProductPrice
                 netCents={displayPriceCents}
+                listPriceCents={state.displayListPriceCents}
+                discountPct={state.displayDiscountPct}
+                priceSource={state.displayPriceSource}
                 currency={product.currency}
                 layout="inline"
                 amountClassName="text-[26px] font-extrabold tracking-[-0.02em] sm:text-[30px]"
@@ -698,6 +701,9 @@ export function TechnicalProductDetailView({ product, state }: Props) {
                     )}
                     <ProductPrice
                       netCents={item.priceCents}
+                      listPriceCents={item.listPriceCents}
+                      discountPct={item.discountPct}
+                      priceSource={item.priceSource}
                       currency={item.currency}
                       className="mt-0.5"
                       amountClassName="font-mono text-[13px] text-idl-graphite"
@@ -806,6 +812,9 @@ export function TechnicalProductDetailView({ product, state }: Props) {
       <ProductDetailStickyBar
         product={product}
         displayPriceCents={displayPriceCents}
+        listPriceCents={state.displayListPriceCents}
+        discountPct={state.displayDiscountPct}
+        priceSource={state.displayPriceSource}
         imageUrl={selectedVariant?.imageUrl ?? galleryImages[0] ?? product.imageUrl}
         variantRef={variantRef}
         quantity={quantity}

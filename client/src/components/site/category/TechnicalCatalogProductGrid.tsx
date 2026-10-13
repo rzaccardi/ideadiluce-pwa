@@ -154,6 +154,9 @@ export const TechnicalCatalogProductCard = memo(function TechnicalCatalogProduct
         <div className="mt-auto flex items-end justify-between gap-2">
           <ProductPrice
             netCents={product.priceCents}
+            listPriceCents={product.listPriceCents}
+            discountPct={product.discountPct}
+            priceSource={product.priceSource}
             currency={product.currency}
             amountClassName="text-base font-extrabold"
             captionClassName="text-[10.5px] font-medium text-idl-muted"

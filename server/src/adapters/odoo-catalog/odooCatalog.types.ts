@@ -132,6 +132,8 @@ export type OdooCatalogRelatedProduct = {
   title?: string
   short_description?: string
   price_from?: number
+  list_price_from?: number
+  discount_pct_max?: number
   currency?: string
   image?: OdooCatalogImage
   brand?: OdooCatalogBrand | null
@@ -177,6 +179,15 @@ export type OdooCatalogVariant = {
   ced: string
   manufacturer_code: string | null
   attributes: OdooCatalogVariantAttribute[]
+  /**
+   * Prezzo pieno (barrato se `price` < `list_price`).
+   * `lst_price` resta alias di compatibilità (= list_price).
+   */
+  list_price?: number
+  /** Prezzo effettivo pubblico (prima di customer prices). */
+  price?: number
+  discount_pct?: number
+  /** @deprecated Preferire `list_price`; resta = list_price per compat. */
   lst_price: number
   image: OdooCatalogImage
   specs: OdooCatalogSpec[]
@@ -199,8 +210,14 @@ export type OdooCatalogProductListItem = {
   title: string
   slug: string
   short_description: string
+  /** Prezzi effettivi da mostrare (range listing/search). */
   price_from: number
   price_to: number
+  /** Prezzi pieni barrati (range listing/search). */
+  list_price_from?: number
+  list_price_to?: number
+  /** Badge sconto massimo −X%. */
+  discount_pct_max?: number
   currency: string
   image: OdooCatalogImage
   /** Sul dettaglio è sempre presente; in lista solo se Odoo la espone. */

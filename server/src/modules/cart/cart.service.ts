@@ -412,13 +412,6 @@ async function dtoFromCartId(
     full.items.length > 0
       ? shippingService.resolveHintForCart(purchasableSubtotal)
       : Promise.resolve(null)
-  const taxBreakdownPromise =
-    full.items.length === 0
-      ? Promise.resolve(null)
-      : taxService.estimateForCart(purchasableSubtotal, shipCountry, {
-          customerSegment: pricing.segment,
-          isProfessional: pricing.segment === 'PROFESSIONAL',
-        })
 
   if (options?.fastMutation) {
     await persistCartTotalsEstimate(
@@ -431,6 +424,30 @@ async function dtoFromCartId(
     const refreshed = await cartRepository.getWithItems(cartId)
     if (refreshed) full = refreshed
   }
+
+  const { getCartPricingMeta } = await import('../pricing/cart-pricing-meta.js')
+  const pricingMeta = getCartPricingMeta(full.id)
+  const odooNet = full.estimatedSubtotal
+  const odooTax = full.estimatedTax
+  const taxBreakdownPromise =
+    full.items.length === 0
+      ? Promise.resolve(null)
+      : odooNet != null && odooTax != null && full.lastPricedAt != null
+        ? Promise.resolve({
+            netCents: odooNet,
+            taxCents: odooTax,
+            taxRatePct: pricingMeta?.taxRatePct ?? 22,
+            taxLabel: 'IVA',
+            grossCents: odooNet + odooTax,
+            isEstimate: pricingMeta?.fromCache === true,
+            disclaimerKey: pricingMeta?.fromCache
+              ? 'cart.tax.fromCache'
+              : 'cart.tax.fromOdoo',
+          })
+        : taxService.estimateForCart(purchasableSubtotal, shipCountry, {
+            customerSegment: pricing.segment,
+            isProfessional: pricing.segment === 'PROFESSIONAL',
+          })
 
   const [freeShippingHint, taxBreakdown] = await Promise.all([
     freeShippingHintPromise,
@@ -1039,6 +1056,15 @@ export const cartService = {
         priceChangedIds.has(item.id) ? { ...item, priceChanged: true } : item,
       ),
     }
+  },
+
+  /** Consuma `needsPricingConfirmation` per lo snapshot prezzi corrente. */
+  async acknowledgePricing(req: Request) {
+    const cart = await resolveOrCreateCart(req)
+    const { acknowledgeCartPricingConfirmation } = await import('../pricing/cart-pricing-meta.js')
+    acknowledgeCartPricingConfirmation(cart.id)
+    const { dto } = await dtoFromCartId(req, cart.id, { reprice: false })
+    return dto
   },
 
   async syncFromClient(

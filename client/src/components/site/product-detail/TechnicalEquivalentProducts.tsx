@@ -109,6 +109,9 @@ export function TechnicalEquivalentProducts({ products, currentSlug, lp }: Props
                   {item.priceCents > 0 ? (
                     <ProductPrice
                       netCents={item.priceCents}
+                      listPriceCents={item.listPriceCents}
+                      discountPct={item.discountPct}
+                      priceSource={item.priceSource}
                       currency={item.currency}
                       className="items-end text-right"
                       amountClassName="text-[15px] font-extrabold tracking-tight text-idl-graphite"

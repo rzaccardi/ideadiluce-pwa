@@ -64,6 +64,7 @@ export function destinationToAddressDto(
     isDefault,
     canEdit: destination.kind !== 'parent',
     canDelete: destination.kind === 'delivery' || destination.kind === 'contact',
+    dropship: Boolean(destination.dropship),
   }
 }
 
@@ -98,12 +99,15 @@ export function mergeShippingAddressList(input: {
       isDefault: addresses.every((address) => !address.isDefault),
       canEdit: true,
       canDelete: false,
+      dropship: false,
     })
   }
 
   if (addresses.length > 0 && addresses.every((address) => !address.isDefault)) {
     const preferred =
-      addresses.find((address) => address.source === 'odoo_delivery') ?? addresses[0]
+      addresses.find((address) => address.source === 'odoo_delivery' && !address.dropship) ??
+      addresses.find((address) => !address.dropship) ??
+      addresses[0]
     if (preferred) preferred.isDefault = true
   }
 

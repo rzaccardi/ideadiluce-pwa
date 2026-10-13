@@ -158,13 +158,29 @@ export async function resolveCartLineUnitPricesCents(
   return result
 }
 
-/** Prezzo netto IVA esclusa da Odoo `list_price` con context listino/partner. */
+/**
+ * Prezzo unitario storefront: `GET /api/v2/prices` (Odoo calcola).
+ * Fallback cache; XML-RPC solo se API v2 non configurata (smoke/admin legacy).
+ */
 export async function unitPriceCentsFromOdoo(
   ctx: OdooCallContext,
   productRef: string,
   variantRef?: string | null,
   pricing?: PricingContext | null,
 ): Promise<number | null> {
+  const { isOdooApiV2Configured } = await import('../../adapters/odoo-api/odooApiClient.js')
+  const variantId = parseOdooVariantId(variantRef)
+  if (isOdooApiV2Configured() && variantId != null) {
+    const { fetchStorefrontPrices } = await import('../pricing/odoo-storefront-pricing.service.js')
+    const { rows } = await fetchStorefrontPrices({
+      productIds: [variantId],
+      customerId: pricing?.partnerId ?? null,
+      qty: 1,
+      correlationId: ctx.correlationId,
+    })
+    return rows.get(variantId)?.priceCents ?? null
+  }
+
   const prices = await resolveCartLineUnitPricesCents(
     ctx,
     [{ lineId: '__single__', productRef, variantRef: variantRef ?? null }],
@@ -173,12 +189,13 @@ export async function unitPriceCentsFromOdoo(
   return prices.get('__single__') ?? null
 }
 
+/** Reprice carrello: `POST /orders/totals` (source of truth); cache se Odoo down. */
 export async function repriceCartFromOdoo(
   ctx: OdooCallContext,
   cartId: string,
   pricing?: PricingContext | null,
 ): Promise<void> {
-  if (!env.ODOO_ENABLED || !isOdooConfigured()) return
+  if (!env.ODOO_ENABLED) return
 
   const cart = await prisma.cart.findUnique({
     where: { id: cartId },
@@ -187,6 +204,136 @@ export async function repriceCartFromOdoo(
   if (!cart) return
 
   if (await isCartCheckoutPriceLocked(cartId)) return
+
+  const { isOdooApiV2Configured } = await import('../../adapters/odoo-api/odooApiClient.js')
+  const { setCartPricingMeta } = await import('../pricing/cart-pricing-meta.js')
+  const {
+    fetchStorefrontOrderTotals,
+    fetchStorefrontPrices,
+    resolveVariantProductIds,
+  } = await import('../pricing/odoo-storefront-pricing.service.js')
+
+  if (isOdooApiV2Configured()) {
+    const totalsLines = resolveVariantProductIds(
+      cart.items.map((line) => ({
+        lineId: line.id,
+        variantRef: line.variantRef,
+        quantity: line.quantity,
+      })),
+    )
+
+    const totals = await fetchStorefrontOrderTotals({
+      lines: totalsLines,
+      customerId: pricing?.partnerId ?? null,
+      currency: cart.currencyCode || 'EUR',
+      correlationId: ctx.correlationId,
+      allowCacheFallback: true,
+    })
+
+    if (totals) {
+      const itemUpdates = totals.lines
+        .filter((line) => line.priceUnitNetCents > 0)
+        .map((line) => ({
+          id: line.lineId,
+          clientUnitPriceEstimate: line.priceUnitNetCents,
+        }))
+
+      if (itemUpdates.length > 0) {
+        await prisma.$transaction(
+          itemUpdates.map((item) =>
+            prisma.cartItem.update({
+              where: { id: item.id },
+              data: { clientUnitPriceEstimate: item.clientUnitPriceEstimate },
+            }),
+          ),
+        )
+      }
+
+      const shipping = cart.shippingSelection?.amountCents ?? null
+      const amountTotal =
+        totals.amountTotalCents + (shipping ?? 0)
+      await prisma.cart.update({
+        where: { id: cart.id },
+        data: {
+          estimatedSubtotal: totals.subtotalNetCents,
+          estimatedTax: totals.amountTaxCents,
+          estimatedShipping: shipping,
+          estimatedTotal: amountTotal,
+          lastPricedAt: new Date(totals.snapshotAt),
+        },
+      })
+
+      const needsConfirmation = totals.warnings.some((w) =>
+        /price_unit_net|prezzo|price/i.test(w),
+      )
+      setCartPricingMeta(cartId, {
+        snapshotAt: totals.snapshotAt,
+        fromCache: totals.fromCache,
+        warnings: totals.warnings,
+        needsConfirmation,
+        taxRatePct: totals.taxRatePct,
+      })
+      return
+    }
+
+    // Totals assenti: prova solo /prices per unitari + IVA da cache/tax service stima UI
+    const priceIds = totalsLines.map((l) => l.productId)
+    const { rows, snapshotAt, fromCache } = await fetchStorefrontPrices({
+      productIds: priceIds,
+      customerId: pricing?.partnerId ?? null,
+      qty: 1,
+      correlationId: ctx.correlationId,
+    })
+    const itemUpdates: Array<{ id: string; clientUnitPriceEstimate: number }> = []
+    let subtotal = 0
+    for (const line of cart.items) {
+      const productId = parseOdooVariantId(line.variantRef)
+      const unit = productId != null ? rows.get(productId)?.priceCents : null
+      if (unit != null) {
+        itemUpdates.push({ id: line.id, clientUnitPriceEstimate: unit })
+        subtotal += unit * line.quantity
+      } else if (line.clientUnitPriceEstimate != null) {
+        subtotal += line.clientUnitPriceEstimate * line.quantity
+      }
+    }
+    if (itemUpdates.length > 0) {
+      await prisma.$transaction(
+        itemUpdates.map((item) =>
+          prisma.cartItem.update({
+            where: { id: item.id },
+            data: { clientUnitPriceEstimate: item.clientUnitPriceEstimate },
+          }),
+        ),
+      )
+    }
+    const taxResult = await computeCartTaxCents(subtotal, 'IT', {
+      customerSegment: pricing?.segment ?? 'RETAIL',
+      isProfessional: pricing?.segment === 'PROFESSIONAL',
+      isEstimate: true,
+    })
+    const shipping = cart.shippingSelection?.amountCents ?? null
+    await prisma.cart.update({
+      where: { id: cart.id },
+      data: {
+        estimatedSubtotal: subtotal,
+        estimatedTax: taxResult.taxCents,
+        estimatedShipping: shipping,
+        estimatedTotal: subtotal + taxResult.taxCents + (shipping ?? 0),
+        lastPricedAt: new Date(snapshotAt),
+      },
+    })
+    setCartPricingMeta(cartId, {
+      snapshotAt,
+      fromCache,
+      warnings: fromCache ? ['Prezzi da cache: totals Odoo non disponibili.'] : [],
+      needsConfirmation: fromCache,
+      taxRatePct: taxResult.taxRatePct,
+    })
+    return
+  }
+
+  // Legacy XML-RPC solo se API v2 non configurata
+  if (!isOdooConfigured()) return
 
   let unitPrices: Map<string, number | null>
   try {
@@ -200,7 +347,6 @@ export async function repriceCartFromOdoo(
       pricing,
     )
   } catch {
-    /* Odoo giù: tieni gli ultimi prezzi locali nel carrello */
     return
   }
 
@@ -232,15 +378,14 @@ export async function repriceCartFromOdoo(
     isProfessional: pricing?.segment === 'PROFESSIONAL',
     isEstimate: true,
   })
-  const tax = taxResult.taxCents
   const shipping = cart.shippingSelection?.amountCents ?? null
   await prisma.cart.update({
     where: { id: cart.id },
     data: {
       estimatedSubtotal: subtotal,
-      estimatedTax: tax,
+      estimatedTax: taxResult.taxCents,
       estimatedShipping: shipping,
-      estimatedTotal: subtotal + tax + (shipping ?? 0),
+      estimatedTotal: subtotal + taxResult.taxCents + (shipping ?? 0),
       lastPricedAt: new Date(),
     },
   })

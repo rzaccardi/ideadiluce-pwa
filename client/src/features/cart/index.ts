@@ -19,6 +19,7 @@ export {
   removeItem,
   clearCart,
   reprice,
+  acknowledgePricing,
   checkCartAvailability,
   dismissReservationExpiredNotice,
   bootstrapCartSync,

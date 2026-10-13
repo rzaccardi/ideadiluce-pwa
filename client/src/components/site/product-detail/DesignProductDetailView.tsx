@@ -336,6 +336,11 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
             <div className="flex flex-col gap-1">
               <ProductPrice
                 netCents={selectedAccessories.length > 0 ? combinedPriceCents : displayPriceCents}
+                listPriceCents={
+                  selectedAccessories.length > 0 ? null : state.displayListPriceCents
+                }
+                discountPct={selectedAccessories.length > 0 ? null : state.displayDiscountPct}
+                priceSource={state.displayPriceSource}
                 currency={product.currency}
                 layout="inline"
                 amountClassName="font-serif text-[26px] font-medium text-idl-ink sm:text-[34px]"
@@ -362,7 +367,16 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
             ) : availability ? (
               <div className="mt-2 mb-[30px] flex flex-col gap-1 text-[13.5px]">
                 <div className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-[#5fb98a]" aria-hidden />
+                  <span
+                    className={
+                      availability.status === 'available'
+                        ? 'size-2 rounded-full bg-[#1f9d57]'
+                        : availability.status === 'orderable'
+                          ? 'size-2 rounded-full bg-[#3a3a3d]'
+                          : 'size-2 rounded-full bg-idl-muted'
+                    }
+                    aria-hidden
+                  />
                   <span className="text-idl-ink-muted not-italic">
                     {formatAvailabilityPrimaryLabel(availability)}
                   </span>
@@ -682,6 +696,9 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
       <ProductDetailStickyBar
         product={product}
         displayPriceCents={combinedPriceCents}
+        listPriceCents={selectedAccessories.length > 0 ? null : state.displayListPriceCents}
+        discountPct={selectedAccessories.length > 0 ? null : state.displayDiscountPct}
+        priceSource={state.displayPriceSource}
         imageUrl={selectedVariant?.imageUrl ?? galleryImages[0] ?? product.imageUrl}
         variantRef={variantRef}
         quantity={quantity}

@@ -86,6 +86,9 @@ export function AccountDcPartCard({
       <div className="flex items-center justify-between gap-2">
         <ProductPrice
           netCents={product.priceCents}
+          listPriceCents={product.listPriceCents}
+          discountPct={product.discountPct}
+          priceSource={product.priceSource}
           currency={product.currency}
           amountClassName="text-[15px] font-extrabold text-idl-graphite"
           captionClassName="text-[10px] font-medium text-idl-muted"

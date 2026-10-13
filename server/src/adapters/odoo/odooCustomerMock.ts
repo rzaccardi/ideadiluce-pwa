@@ -43,6 +43,7 @@ export function createMockOdooCustomerAdapter(): OdooCustomerAdapter {
       _ctx: OdooCallContext,
       _parentPartnerId: number,
       _profile: OdooCustomerProfile,
+      _options?: { recipient?: 'own' | 'third_party'; email?: string | null },
     ): Promise<OdooCustomerResult> {
       return { odooPartnerId: 0 }
     },

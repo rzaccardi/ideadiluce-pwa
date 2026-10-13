@@ -68,6 +68,7 @@ function destinationsFromCustomer(customer: OdooApiCustomer): OdooShippingDestin
       kind: 'parent',
       label: main.name || customer.name || customer.email,
       profile: odooApiAddressToProfile(main, customer.email),
+      dropship: Boolean(main.dropship),
     })
   } else {
     out.push({
@@ -75,6 +76,7 @@ function destinationsFromCustomer(customer: OdooApiCustomer): OdooShippingDestin
       kind: 'parent',
       label: customer.name || customer.email,
       profile: odooApiCustomerToAccount(customer).profile,
+      dropship: false,
     })
   }
   for (const addr of customer.addresses ?? []) {
@@ -83,6 +85,7 @@ function destinationsFromCustomer(customer: OdooApiCustomer): OdooShippingDestin
       kind: addr.type === 'delivery' ? 'delivery' : 'contact',
       label: addr.name || customer.name || customer.email,
       profile: odooApiAddressToProfile(addr, customer.email),
+      dropship: Boolean(addr.dropship),
     })
   }
   return out
@@ -151,11 +154,13 @@ export function createApiV2OdooCustomerAdapter(): OdooCustomerAdapter {
       }
     },
 
-    async createDeliveryPartner(ctx, parentPartnerId, profile) {
+    async createDeliveryPartner(ctx, parentPartnerId, profile, options) {
       try {
         const created = await odooApiCreateCustomerAddress(
           parentPartnerId,
-          buildOdooApiAddressWrite(profile),
+          buildOdooApiAddressWrite(profile, options?.email, {
+            recipient: options?.recipient,
+          }),
           ctx.correlationId,
         )
         return { odooPartnerId: created.id }
@@ -192,16 +197,24 @@ export function createApiV2OdooCustomerAdapter(): OdooCustomerAdapter {
 
     async resolveOrderShippingPartner(ctx, parentPartnerId, input) {
       try {
+        const fromId = parseOdooShippingAddressId(input.shippingAddress?.id)
+        if (fromId) return { odooPartnerId: fromId }
+
         if (input.dropshipAddress && input.dropshipAddress.line1 && input.dropshipAddress.city) {
-          const created = await this.createDeliveryPartner(
+          const dest = await this.listShippingDestinations(ctx, parentPartnerId)
+          const dropshipMatch = dest.find(
+            (d) =>
+              d.dropship &&
+              shippingAddressesMatch(d.profile, input.dropshipAddress as Partial<OdooCustomerProfile>),
+          )
+          if (dropshipMatch) return { odooPartnerId: dropshipMatch.odooPartnerId }
+          return this.createDeliveryPartner(
             ctx,
             parentPartnerId,
             input.dropshipAddress as OdooCustomerProfile,
+            { recipient: 'third_party' },
           )
-          return created
         }
-        const fromId = parseOdooShippingAddressId(input.shippingAddress?.id)
-        if (fromId) return { odooPartnerId: fromId }
 
         const dest = await this.listShippingDestinations(ctx, parentPartnerId)
         const wanted = input.shippingAddress
@@ -210,7 +223,9 @@ export function createApiV2OdooCustomerAdapter(): OdooCustomerAdapter {
             shippingAddressesMatch(d.profile, wanted as Partial<OdooCustomerProfile>),
           )
           if (match) return { odooPartnerId: match.odooPartnerId }
-          return this.createDeliveryPartner(ctx, parentPartnerId, wanted as OdooCustomerProfile)
+          return this.createDeliveryPartner(ctx, parentPartnerId, wanted as OdooCustomerProfile, {
+            recipient: 'own',
+          })
         }
         return { odooPartnerId: parentPartnerId }
       } catch (e) {
@@ -252,6 +267,7 @@ export function createApiV2OdooCustomerAdapter(): OdooCustomerAdapter {
     async syncProfessionalFlagFromPartner(ctx, partnerId) {
       try {
         const customer = await odooApiGetCustomer(partnerId, ctx.correlationId)
+        if (customer.b2b_active != null) return Boolean(customer.b2b_active)
         return Boolean(customer.is_company || customer.vat)
       } catch (e) {
         if (e instanceof OdooApiV2Error && e.httpStatus === 404) return false

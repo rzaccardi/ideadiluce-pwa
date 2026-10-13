@@ -3,7 +3,10 @@ import {
   fetchOdooCatalogProductList,
   isOdooCatalogConfigured,
 } from '../../adapters/odoo-catalog/odooCatalogClient.js'
-import { findOdooCatalogProductIdBySlug } from '../../adapters/odoo-catalog/odooCatalogSlugIndex.js'
+import {
+  catalogProductSlugMatches,
+  findOdooCatalogProductIdBySlug,
+} from '../../adapters/odoo-catalog/odooCatalogSlugIndex.js'
 import { mapOdooCatalogProductDetail } from '../../adapters/odoo-catalog/odooCatalogMapper.js'
 import type { HubLocale } from '../../lib/hub-locale.js'
 import type { ProductDetailDTO } from '../../types/dto.js'
@@ -12,7 +15,7 @@ import { enrichProductDetailRelatedHoverImages } from './catalog-hover-image.enr
 import { enrichProductDetailWithStock } from './catalog-stock.enrich.js'
 import { enrichProductDetailWithOdooPricing } from './catalog-pricing.enrich.js'
 import { resolvePricingContext } from '../pricing/pricelist.service.js'
-import { parseOdooTemplateId } from './odooRef.js'
+import { parseExplicitOdooTemplateId } from './odooRef.js'
 import {
   getCachedProductDetailById,
   getCachedProductDetailBySlug,
@@ -28,7 +31,7 @@ export async function resolveCatalogProduct(
 ): Promise<ProductDetailDTO | null> {
   if (!isOdooCatalogConfigured()) return null
 
-  const asId = parseOdooTemplateId(productRef)
+  const asId = parseExplicitOdooTemplateId(productRef)
   if (asId != null) {
     try {
       const res = await fetchOdooCatalogProductDetail(asId, locale)
@@ -50,12 +53,15 @@ export async function resolveCatalogProduct(
   if (id != null) {
     try {
       const res = await fetchOdooCatalogProductDetail(id, locale)
+      if (!catalogProductSlugMatches(productRef, res.product.slug)) {
+        return getCachedDetail(locale, null, productRef)
+      }
       return enrichProductDetailRelatedHoverImages(
         locale,
         mapOdooCatalogProductDetail(res.product, locale),
       )
     } catch {
-      return getCachedDetail(locale, id, productRef)
+      return getCachedDetail(locale, null, productRef)
     }
   }
 
@@ -73,13 +79,10 @@ async function getCachedDetail(
     (id != null ? await getCachedProductDetailById(locale, id) : null) ??
     (slug ? await getCachedProductDetailBySlug(locale, slug) : null)
   if (!raw?.product) return null
-  return {
-    ...(await enrichProductDetailRelatedHoverImages(
-      locale,
-      mapOdooCatalogProductDetail(raw.product, locale),
-    )),
-    degraded: true,
-  }
+  return enrichProductDetailRelatedHoverImages(
+    locale,
+    mapOdooCatalogProductDetail(raw.product, locale),
+  )
 }
 
 /** Prodotto catalogo con stock/availability e prezzi Odoo arricchiti (carrello, checkout, restock). */

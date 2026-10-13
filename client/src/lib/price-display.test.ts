@@ -4,8 +4,10 @@ import {
   catalogGrossCents,
   catalogVatCentsFromNet,
   displaysCatalogPriceIncVat,
+  formatDiscountPctLabel,
   formatPriceDisplayModeLabel,
   resolveCatalogPriceDisplay,
+  shouldShowListPriceStrike,
 } from './price-display'
 
 function user(
@@ -24,6 +26,7 @@ function user(
     customerSegment: segment,
     pricelistLabel: '',
     isProfessional: extras?.isProfessional ?? segment === 'professional',
+    b2bActive: extras?.b2bActive ?? false,
     personalizedPricing:
       extras?.personalizedPricing ??
       (segment === 'business' || segment === 'professional'),
@@ -76,5 +79,16 @@ describe('catalog VAT display', () => {
   it('etichetta DTO ex_vat resta IVA esclusa (listino netto)', () => {
     expect(formatPriceDisplayModeLabel('ex_vat')).toBe('IVA esclusa')
     expect(formatPriceDisplayModeLabel(undefined)).toBeNull()
+  })
+
+  it('barrato solo se listino pieno > prezzo effettivo', () => {
+    expect(shouldShowListPriceStrike(15400, 17213)).toBe(true)
+    expect(shouldShowListPriceStrike(113115, 113115)).toBe(false)
+    expect(shouldShowListPriceStrike(100, null)).toBe(false)
+  })
+
+  it('formatta badge sconto −10.5%', () => {
+    expect(formatDiscountPctLabel(10.5)).toBe('10.5')
+    expect(formatDiscountPctLabel(10)).toBe('10')
   })
 })

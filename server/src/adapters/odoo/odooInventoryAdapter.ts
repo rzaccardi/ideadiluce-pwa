@@ -21,13 +21,15 @@ export type StockCheckResult = {
 export type VariantStockSnapshot = {
   variantId: number
   stockQty: number | null
-  /** Lead time max (giorni) dai fornitori `product.supplierinfo`. */
+  /** Lead time max (giorni) da `/api/v2/stock` (o fallback supplierinfo). */
   leadTimeDays: number | null
   restockDate: string | null
   saleOk: boolean
   /** True se esiste almeno un fornitore (backorder oltre stock). */
   orderable: boolean
   hasSuppliers: boolean
+  /** false = servizio/non gestito a magazzino: sempre disponibile, tempo BASE. */
+  isStorable: boolean
   defaultCode?: string | null
 }
 
@@ -228,30 +230,35 @@ export async function fetchVariantStockByIds(
   const uniqueIds = [...new Set(variantIds.filter((id) => Number.isInteger(id) && id > 0))]
   if (uniqueIds.length === 0) return result
 
-  // Path API v2: qty da v2, fornitori da RPC se disponibile
+  // Path API v2: free_qty, lead_time_max, can_backorder, sale_ok, is_storable da /stock
   if (isOdooApiV2Configured()) {
     try {
       const rows = await odooApiGetStock(uniqueIds, ctx.correlationId)
-      const variantToTemplate = isOdooConfigured()
-        ? await resolveVariantTemplateMap(ctx, uniqueIds)
-        : new Map<number, number>()
-      const suppliers = isOdooConfigured()
-        ? await fetchSupplierLeadByVariantIds(ctx, uniqueIds, variantToTemplate)
-        : new Map<number, SupplierLeadInfo>()
 
       for (const row of rows) {
-        const qty = Number(row.free_qty ?? row.qty_available ?? 0)
-        const supplier = suppliers.get(row.id) ?? { hasSuppliers: false, leadTimeMax: null }
-        const saleOk = true
-        const hasSuppliers = supplier.hasSuppliers
+        const freeQtyRaw = row.free_qty
+        const stockQty =
+          freeQtyRaw != null && Number.isFinite(Number(freeQtyRaw)) ? Number(freeQtyRaw) : null
+        const leadRaw: unknown = row.lead_time_max
+        const leadTimeDays =
+          leadRaw == null || typeof leadRaw === 'boolean'
+            ? null
+            : Number.isFinite(Number(leadRaw))
+              ? Number(leadRaw)
+              : null
+        const canBackorder =
+          typeof row.can_backorder === 'boolean' ? row.can_backorder : leadTimeDays !== null
+        const saleOk = row.sale_ok !== false
+        const isStorable = row.is_storable !== false
         result.set(row.id, {
           variantId: row.id,
-          stockQty: Number.isFinite(qty) ? qty : null,
-          leadTimeDays: supplier.leadTimeMax,
+          stockQty,
+          leadTimeDays,
           restockDate: null,
           saleOk,
-          hasSuppliers,
-          orderable: saleOk && hasSuppliers,
+          hasSuppliers: canBackorder,
+          orderable: saleOk && canBackorder,
+          isStorable,
         })
       }
       return result
@@ -310,6 +317,7 @@ export async function fetchVariantStockByIds(
       saleOk,
       hasSuppliers,
       orderable: saleOk && hasSuppliers,
+      isStorable: true,
       defaultCode,
     })
   }

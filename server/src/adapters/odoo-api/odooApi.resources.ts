@@ -7,9 +7,13 @@ import type {
   OdooApiCustomerWrite,
   OdooApiInvoice,
   OdooApiOrder,
+  OdooApiOrderTotalsResponse,
+  OdooApiOrderTotalsWrite,
   OdooApiOrderWrite,
   OdooApiPaymentResult,
   OdooApiPaymentWrite,
+  OdooApiPriceItem,
+  OdooApiPricesResponse,
   OdooApiShipment,
   OdooApiStockItem,
 } from './odooApi.types.js'
@@ -54,6 +58,50 @@ export async function odooApiCreateCustomerAddress(
   correlationId?: string,
 ): Promise<OdooApiAddress> {
   const { data } = await odooApiV2Request<OdooApiAddress>(`/api/v2/customers/${customerId}/addresses`, {
+    method: 'POST',
+    body,
+    correlationId,
+  })
+  return data
+}
+
+export async function odooApiGetPrices(input: {
+  ids: number[]
+  customerId?: number | null
+  qty?: number
+  correlationId?: string
+}): Promise<OdooApiPricesResponse> {
+  const ids = [...new Set(input.ids.filter((id) => Number.isInteger(id) && id > 0))]
+  if (ids.length === 0) {
+    return { items: [], snapshot_at: new Date().toISOString() }
+  }
+  const { data } = await odooApiV2Request<OdooApiPricesResponse | OdooApiPriceItem[]>('/api/v2/prices', {
+    query: {
+      ...odooApiWebsiteQuery(),
+      ids: ids.join(','),
+      qty: input.qty ?? 1,
+      ...(input.customerId != null && input.customerId > 0
+        ? { customer_id: input.customerId }
+        : {}),
+    },
+    correlationId: input.correlationId,
+  })
+  if (Array.isArray(data)) {
+    return { items: data, snapshot_at: new Date().toISOString() }
+  }
+  const items = Array.isArray(data?.items) ? data.items : []
+  return {
+    ...data,
+    items,
+    snapshot_at: data?.snapshot_at ?? new Date().toISOString(),
+  }
+}
+
+export async function odooApiComputeOrderTotals(
+  body: OdooApiOrderTotalsWrite,
+  correlationId?: string,
+): Promise<OdooApiOrderTotalsResponse> {
+  const { data } = await odooApiV2Request<OdooApiOrderTotalsResponse>('/api/v2/orders/totals', {
     method: 'POST',
     body,
     correlationId,

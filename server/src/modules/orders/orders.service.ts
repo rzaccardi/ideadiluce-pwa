@@ -73,6 +73,7 @@ function mapRow(r: {
     sourceLabel: 'E-commerce',
     returnRequest: null,
     shipment: null,
+    delivery: null,
     returnWindow: OPEN_RETURN_WINDOW,
   }
 }
@@ -100,6 +101,7 @@ function mapApiOrder(order: OdooApiOrder): OrderDTO {
     sourceLabel: 'Odoo',
     returnRequest: null,
     shipment: null,
+    delivery: null,
     returnWindow: OPEN_RETURN_WINDOW,
   }
 }
@@ -126,6 +128,7 @@ function mapOdooOrder(r: OdooSaleDocumentDTO): OrderDTO {
     sourceLabel: r.sourceLabel,
     returnRequest: null,
     shipment: null,
+    delivery: null,
     returnWindow: OPEN_RETURN_WINDOW,
   }
 }

@@ -11,7 +11,11 @@ import {
   fetchOdooCatalogProductList,
   fetchOdooCatalogProductSearch,
 } from '../../adapters/odoo-catalog/odooCatalogClient.js'
-import { findOdooCatalogProductIdBySlug } from '../../adapters/odoo-catalog/odooCatalogSlugIndex.js'
+import {
+  catalogProductSlugMatches,
+  findOdooCatalogProductIdBySlug,
+} from '../../adapters/odoo-catalog/odooCatalogSlugIndex.js'
+import { parseExplicitOdooTemplateId } from '../catalog/odooRef.js'
 import { parseHubLocale, type HubLocale } from '../../lib/hub-locale.js'
 import { buildTechnicalCardSpecTagsFromSpecs } from '../../lib/technical-card-spec-tags.js'
 
@@ -252,7 +256,7 @@ export async function proxyOdooCatalogProductDetail(
     markCatalogDegraded()
     const cached = await getCachedProductDetailById(locale, productId)
     if (cached?.product) {
-      return { ...cached, product: { ...cached.product, pwa_degraded: true } }
+      return cached
     }
     throw e
   }
@@ -260,6 +264,7 @@ export async function proxyOdooCatalogProductDetail(
 
 /**
  * BFF-only: resolve slug → id via search live Odoo, poi GET /api/v2/product/<id>.
+ * Lo slug della scheda prodotto API deve coincidere con quello richiesto (fonte di verità).
  * Se Odoo è giù, usa l'indice cache locale.
  */
 export async function proxyOdooCatalogProductBySlug(
@@ -273,20 +278,38 @@ export async function proxyOdooCatalogProductBySlug(
   },
 ) {
   const locale = langFromQuery(query.locale, query.lang)
+  const requested = slug.trim()
+  const requestedIsExplicitId = parseExplicitOdooTemplateId(requested) != null
   try {
-    const id = await findOdooCatalogProductIdBySlug(slug, locale)
+    const id = await findOdooCatalogProductIdBySlug(requested, locale)
     if (id == null) {
-      throw new OdooCatalogClientError(`Prodotto non trovato per slug ${slug}`, 404)
+      throw new OdooCatalogClientError(`Prodotto non trovato per slug ${requested}`, 404)
     }
-    return await proxyOdooCatalogProductDetail(id, query)
+    const detail = await proxyOdooCatalogProductDetail(id, query)
+    if (
+      requestedIsExplicitId ||
+      catalogProductSlugMatches(requested, detail.product?.slug)
+    ) {
+      return detail
+    }
+    // Id risolto puntava a un’altra scheda: prova cache per slug esatto, poi 404.
+    const { getCachedProductDetailBySlug } = await import('../catalog/odoo-catalog-index.service.js')
+    const cached = await getCachedProductDetailBySlug(locale, requested)
+    if (cached?.product && catalogProductSlugMatches(requested, cached.product.slug)) {
+      return cached
+    }
+    throw new OdooCatalogClientError(
+      `Slug scheda prodotto non corrisponde: richiesto ${requested}, ottenuto ${detail.product?.slug ?? ''}`,
+      404,
+    )
   } catch (e) {
     if (e instanceof OdooCatalogClientError && e.httpStatus === 404) throw e
     const { getCachedProductDetailBySlug } = await import('../catalog/odoo-catalog-index.service.js')
     const { markCatalogDegraded } = await import('../odoo/odoo-degraded-state.js')
     markCatalogDegraded()
-    const cached = await getCachedProductDetailBySlug(locale, slug)
-    if (cached?.product) {
-      return { ...cached, product: { ...cached.product, pwa_degraded: true } }
+    const cached = await getCachedProductDetailBySlug(locale, requested)
+    if (cached?.product && catalogProductSlugMatches(requested, cached.product.slug)) {
+      return cached
     }
     throw e
   }

@@ -19,6 +19,8 @@ export type OdooApiAddress = {
   phone?: string | null
   mobile?: string | null
   email?: string | null
+  /** true = destinatario dropship (terzi), non indirizzo proprio del cliente. */
+  dropship?: boolean | null
 }
 
 export type OdooApiCustomerWrite = {
@@ -53,6 +55,8 @@ export type OdooApiCustomer = OdooApiCustomerWrite & {
   addresses?: OdooApiAddress[]
   payment_method?: string | null
   created?: boolean
+  /** Condizioni B2B attive (P.IVA + listino dedicato): abilita dropship. */
+  b2b_active?: boolean | null
 }
 
 export type OdooApiCustomerValidate = {
@@ -61,6 +65,8 @@ export type OdooApiCustomerValidate = {
   issues?: OdooApiIssue[]
   valid?: boolean
 }
+
+export type OdooApiAddressRecipient = 'own' | 'third_party'
 
 export type OdooApiAddressWrite = {
   name?: string
@@ -73,12 +79,15 @@ export type OdooApiAddressWrite = {
   phone?: string
   email?: string
   type?: string
+  /** `own` = indirizzo del cliente; `third_party` = destinatario dropship. */
+  recipient?: OdooApiAddressRecipient
 }
 
 export type OdooApiOrderLineWrite = {
   product_id: number
   qty: number
-  price_unit_net: number
+  /** Obbligatorio solo con `pricing.priced_from_cache`; altrimenti Odoo calcola. */
+  price_unit_net?: number
 }
 
 export type OdooApiPaymentMethod = 'card' | 'paypal' | 'bank_transfer'
@@ -99,7 +108,69 @@ export type OdooApiOrderWrite = {
   pricing?: {
     snapshot_at?: string
     charged_cents?: number
+    /** Opzione 1 TLB: Odoo onora i price_unit_net inviati dalla cache PWA. */
+    priced_from_cache?: boolean
   }
+}
+
+export type OdooApiPriceSource = 'public' | 'customer'
+
+export type OdooApiPriceItem = {
+  id: number
+  list_price: number
+  public_price?: number
+  price: number
+  discount_pct?: number
+  source?: OdooApiPriceSource
+}
+
+export type OdooApiPricesResponse = {
+  website?: { id: number; name?: string }
+  qty?: number
+  customer_id?: number | null
+  snapshot_at?: string
+  items: OdooApiPriceItem[]
+}
+
+export type OdooApiOrderTotalsLineWrite = {
+  product_id: number
+  qty: number
+  /** Solo per probe/warning: Odoo avvisa se diverso dal prezzo calcolato. */
+  price_unit_net?: number
+}
+
+export type OdooApiOrderTotalsWrite = {
+  customer_id?: number | null
+  currency?: string
+  lines: OdooApiOrderTotalsLineWrite[]
+  shipping?: {
+    carrier?: string
+    amount_net?: number
+    label?: string
+  }
+}
+
+export type OdooApiOrderTotalsLine = {
+  product_id: number
+  qty: number
+  price_unit_net: number
+  list_price?: number
+  discount_pct?: number
+  price_source?: OdooApiPriceSource | string
+  tax_rate?: number
+  subtotal_net?: number
+  subtotal_net_cents?: number
+}
+
+export type OdooApiOrderTotalsResponse = {
+  currency?: string
+  snapshot_at?: string
+  lines?: OdooApiOrderTotalsLine[]
+  subtotal_net_cents?: number
+  amount_tax_cents?: number
+  amount_total_cents?: number
+  tax_rates?: number | number[] | Record<string, number>
+  warnings?: string[]
 }
 
 export type OdooApiOrderLine = {
@@ -152,6 +223,7 @@ export type OdooApiOrder = {
     carrier_id?: number | null
     carrier_name?: string | null
     amount_net?: number | null
+    dropship?: boolean | null
   }
   payment?: {
     method_ade?: string | null
@@ -162,8 +234,23 @@ export type OdooApiOrder = {
   }
   invoices?: unknown[]
   shipments?: OdooApiShipment[]
+  /** Riepilogo consegna reale (tracking corriere). */
+  delivery?: OdooApiOrderDelivery | null
   reconciliation?: OdooApiReconciliation
   warnings?: string[]
+}
+
+export type OdooApiDeliveryStatus =
+  | 'pending'
+  | 'in_transit'
+  | 'delivered'
+  | 'exception'
+  | null
+
+export type OdooApiOrderDelivery = {
+  status?: OdooApiDeliveryStatus
+  /** UTC `YYYY-MM-DD HH:MM:SS`; null finché non consegnato. */
+  delivered_at?: string | null
 }
 
 export type OdooApiOrderList = {
@@ -199,9 +286,15 @@ export type OdooApiPaymentResult = {
 export type OdooApiStockItem = {
   id: number
   free_qty?: number
+  /** Compatibilità: non usare per la logica disponibilità. */
   qty_available?: number
+  /** Compatibilità: non usare per la logica disponibilità. */
   in_stock?: boolean
   is_storable?: boolean
+  lead_time_max?: number | null
+  can_backorder?: boolean
+  max_qty?: number | null
+  sale_ok?: boolean
 }
 
 export type OdooApiInvoice = {
@@ -220,6 +313,7 @@ export type OdooApiInvoice = {
 export type OdooApiShipment = {
   id?: number
   name?: string
+  picking?: string | null
   state?: string
   carrier?: string | null
   carrier_name?: string | null
@@ -228,4 +322,8 @@ export type OdooApiShipment = {
   tracking_url?: string | null
   date_done?: string | null
   scheduled_date?: string | null
+  /** Stato tracking corriere (non confondere con `state` magazzino). */
+  delivery_status?: OdooApiDeliveryStatus
+  /** UTC `YYYY-MM-DD HH:MM:SS`; null finché non consegnato. */
+  delivered_at?: string | null
 }

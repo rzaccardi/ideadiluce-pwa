@@ -63,3 +63,17 @@ export function formatPriceDisplayModeLabel(mode?: PriceDisplayModeDTO | null): 
   if (mode === 'ex_vat') return 'IVA esclusa'
   return null
 }
+
+/** True se il listino pieno va mostrato barrato. */
+export function shouldShowListPriceStrike(
+  netCents: number,
+  listPriceCents?: number | null,
+): boolean {
+  return listPriceCents != null && Number.isFinite(listPriceCents) && listPriceCents > netCents
+}
+
+/** Format badge −X% (es. 10.5 → "10.5"). */
+export function formatDiscountPctLabel(value: number): string {
+  const rounded = Math.round(value * 10) / 10
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1).replace(/\.0$/, '')
+}

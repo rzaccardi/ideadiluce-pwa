@@ -422,6 +422,7 @@ async function createDeliveryPartner(
   ctx: OdooCallContext,
   parentPartnerId: number,
   profile: OdooCustomerProfile,
+  _options?: { recipient?: 'own' | 'third_party'; email?: string | null },
 ): Promise<OdooCustomerResult> {
   const companyId = await companyPartnerId(ctx, parentPartnerId)
   const countryId = profile.country ? await countryIdForCode(ctx, profile.country) : null
@@ -447,6 +448,7 @@ async function toShippingDestination(
     kind,
     label: typeof row.name === 'string' && row.name.trim() ? row.name.trim() : `${profile.firstName} ${profile.lastName}`.trim(),
     profile,
+    dropship: false,
   }
 }
 

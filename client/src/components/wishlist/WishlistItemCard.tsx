@@ -125,6 +125,9 @@ export function WishlistItemCard({
         </Link>
         <ProductPrice
           netCents={product.priceCents}
+          listPriceCents={product.listPriceCents}
+          discountPct={product.discountPct}
+          priceSource={product.priceSource}
           currency={product.currency}
           className="mt-1"
           amountClassName="text-base font-semibold text-idl-graphite"

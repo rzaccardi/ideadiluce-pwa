@@ -48,6 +48,11 @@ export const cartController = {
     res.json(ok(data))
   }),
 
+  acknowledgePricing: asyncHandler(async (req: Request, res: Response) => {
+    const data = await cartService.acknowledgePricing(req)
+    res.json(ok(data))
+  }),
+
   syncFromClient: asyncHandler(async (req: Request, res: Response) => {
     const body = req.body as {
       items: Array<{ productRef: string; variantRef?: string | null; quantity: number }>

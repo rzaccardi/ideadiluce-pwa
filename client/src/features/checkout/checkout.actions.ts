@@ -61,8 +61,14 @@ function errMessage(e: unknown) {
 }
 
 function shippingAddressPayload() {
-  const dropship = dropshipPayload()
-  if (dropship) return { ...dropship }
+  if ((checkoutStore.deliveryRecipient.mode ?? 'self') === 'other') {
+    // Destinatario dropship già salvato: usa l'id Odoo in draft.shipping.
+    if (checkoutStore.draft.shipping.id?.startsWith('odoo:')) {
+      return { ...checkoutStore.draft.shipping }
+    }
+    const dropship = dropshipPayload()
+    if (dropship) return { ...dropship }
+  }
   return { ...checkoutStore.draft.shipping }
 }
 
@@ -690,6 +696,14 @@ function isDeliveryRecipientComplete(): boolean {
   const mode = checkoutStore.deliveryRecipient.mode ?? 'self'
   if (mode === 'self') return addressComplete(checkoutStore.draft.shipping)
   if (mode === 'other') {
+    if (!canUseDropship()) return false
+    if (checkoutStore.draft.shipping.id?.startsWith('odoo:')) {
+      return addressComplete(checkoutStore.draft.shipping)
+    }
+    const selected = checkoutStore.savedShippingAddresses.find(
+      (address) => address.id === checkoutStore.selectedShippingAddressId && address.dropship,
+    )
+    if (selected) return true
     const addr = dropshipPayload()
     return Boolean(addr && addressComplete(addr))
   }
@@ -719,6 +733,11 @@ export function isBusinessCheckout(): boolean {
   }
   const seg = effectiveCustomerSegment()
   return seg === 'business'
+}
+
+/** Dropship / consegna a terzi: solo con `b2b_active` Odoo. */
+export function canUseDropship(): boolean {
+  return Boolean(authStore.me?.b2bActive)
 }
 
 /** Validazione dati fiscali/azienda (registrazione checkout o step fatturazione). */
@@ -761,13 +780,93 @@ function businessBillingComplete(): boolean {
 function dropshipPayload() {
   const mode = checkoutStore.deliveryRecipient.mode ?? 'self'
   if (mode !== 'other') return undefined
+  // Se il destinatario è già in rubrica Odoo, non ricrearlo al sync ordine.
+  if (checkoutStore.draft.shipping.id?.startsWith('odoo:')) return undefined
+  const selected = checkoutStore.savedShippingAddresses.find(
+    (address) => address.id === checkoutStore.selectedShippingAddressId && address.dropship,
+  )
+  if (selected) return undefined
   const addr = checkoutStore.dropshipAddress
   const meta = checkoutStore.deliveryRecipient
+  const name = meta.company.trim() || [meta.firstName, meta.lastName].filter(Boolean).join(' ').trim()
   return {
     ...addr,
-    firstName: meta.firstName.trim() || addr.firstName,
-    lastName: meta.lastName.trim() || addr.lastName,
+    firstName: name || meta.firstName.trim() || addr.firstName,
+    lastName: meta.lastName.trim() || addr.lastName || '-',
     phone: meta.phone.trim() || addr.phone,
+  }
+}
+
+/** Persiste un nuovo destinatario dropship via API rubrica e lo seleziona come destinazione. */
+export async function ensureDropshipRecipientPersisted(): Promise<boolean> {
+  if (!canUseDropship()) return false
+  if ((checkoutStore.deliveryRecipient.mode ?? 'self') !== 'other') return true
+  if (checkoutStore.draft.shipping.id?.startsWith('odoo:')) return true
+
+  const selected = checkoutStore.savedShippingAddresses.find(
+    (address) => address.id === checkoutStore.selectedShippingAddressId && address.dropship,
+  )
+  if (selected) {
+    checkoutStore.draft.shipping = savedAddressToInput(selected)
+    return true
+  }
+
+  if (checkoutStore.selectedShippingAddressId !== OTHER_SHIPPING_SELECTION) {
+    return false
+  }
+
+  const payload = dropshipPayload()
+  if (!payload || !addressComplete(payload)) return false
+
+  const { createShippingAddress } = await import('@/features/account')
+  const list = await createShippingAddress({
+    ...payload,
+    label: [payload.firstName, payload.lastName === '-' ? '' : payload.lastName]
+      .filter(Boolean)
+      .join(' ')
+      .trim(),
+    recipient: 'third_party',
+  })
+  checkoutStore.savedShippingAddresses = list.addresses
+  const created =
+    list.addresses.find((address) => address.dropship && address.isDefault) ??
+    list.addresses
+      .filter((address) => address.dropship)
+      .find((address) =>
+        address.line1 === payload.line1 &&
+        address.city === payload.city &&
+        address.postalCode === payload.postalCode,
+      ) ??
+    list.addresses.filter((address) => address.dropship).at(-1)
+  if (!created) return false
+  selectCheckoutDropshipAddress(created.id)
+  return true
+}
+
+export function selectCheckoutDropshipAddress(selection: string) {
+  checkoutStore.selectedShippingAddressId = selection
+  checkoutStore.draft.billingSameAsShipping = false
+  if (selection === OTHER_SHIPPING_SELECTION) {
+    invalidateShippingIfDestinationChanged()
+    return
+  }
+  const address = checkoutStore.savedShippingAddresses.find((item) => item.id === selection)
+  if (!address?.dropship) return
+  checkoutStore.draft.shipping = savedAddressToInput(address)
+  checkoutStore.deliveryRecipient = {
+    mode: 'other',
+    firstName: address.firstName,
+    lastName: address.lastName === '-' ? '' : address.lastName,
+    company: address.label || address.firstName,
+    phone: address.phone || '',
+  }
+  checkoutStore.dropshipAddress = {
+    ...checkoutStore.dropshipAddress,
+    ...savedAddressToInput(address),
+  }
+  invalidateShippingIfDestinationChanged()
+  if (destinationComplete(shippingAddressPayload())) {
+    scheduleShippingQuotesFetch(0)
   }
 }
 
@@ -972,10 +1071,11 @@ function applyCheckoutShippingAddressSelection() {
     if (parent.phone) billing.phone = parent.phone
   }
 
+  const ownAddresses = addresses.filter((address) => !address.dropship)
   const matched =
-    matchSavedShippingAddress(addresses, checkoutStore.draft.shipping) ??
-    addresses.find((address) => address.isDefault) ??
-    addresses[0]
+    matchSavedShippingAddress(ownAddresses, checkoutStore.draft.shipping) ??
+    ownAddresses.find((address) => address.isDefault) ??
+    ownAddresses[0]
   if (!matched) return
 
   const billingFp = [
@@ -1431,9 +1531,18 @@ export function markAnagraficaCollectedAtAccount() {
 export function setDeliveryRecipientMode(mode: DeliveryRecipientMode) {
   checkoutStore.deliveryRecipient.mode = mode
   if (mode === 'other') {
+    if (!canUseDropship()) {
+      checkoutStore.deliveryRecipient.mode = 'self'
+      return
+    }
     checkoutStore.draft.billingSameAsShipping = false
-    invalidateShippingIfDestinationChanged()
-    scheduleShippingQuotesFetch(0)
+    const recipients = checkoutStore.savedShippingAddresses.filter((address) => address.dropship)
+    if (recipients.length > 0) {
+      selectCheckoutDropshipAddress(recipients[0]!.id)
+    } else {
+      checkoutStore.selectedShippingAddressId = OTHER_SHIPPING_SELECTION
+      invalidateShippingIfDestinationChanged()
+    }
     return
   }
   initShippingFromBilling()
@@ -1664,17 +1773,8 @@ export function canAdvanceFromStep(step: CheckoutStep): boolean {
         checkoutStore.shippingSelectionPersisted
       )
     }
-    case 'delivery_recipient': {
-      const mode = checkoutStore.deliveryRecipient.mode ?? 'self'
-      if (mode === 'self') {
-        return addressComplete(checkoutStore.draft.shipping)
-      }
-      if (mode === 'other') {
-        const addr = dropshipPayload()
-        return Boolean(addr && addressComplete(addr))
-      }
-      return false
-    }
+    case 'delivery_recipient':
+      return isDeliveryRecipientComplete()
     case 'shipping_method':
       return Boolean(checkoutStore.selectedShippingMethodRef) && checkoutStore.shippingSelectionPersisted
     case 'payment':
@@ -1754,6 +1854,13 @@ export async function advanceCheckoutStep() {
   try {
     if (step === 'addresses' || step === 'billing') {
       ensureCheckoutEmailInDraft()
+      if ((checkoutStore.deliveryRecipient.mode ?? 'self') === 'other') {
+        const saved = await ensureDropshipRecipientPersisted()
+        if (!saved) {
+          checkoutStore.error = localeMessage('checkout.error.incompleteStep')
+          return
+        }
+      }
       if (!canAdvanceFromStep('addresses')) {
         checkoutStore.error = localeMessage('checkout.error.incompleteStep')
         return

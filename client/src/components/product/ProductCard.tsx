@@ -142,6 +142,9 @@ export function ProductCard({ product, className }: Props) {
           <div>
             <ProductPrice
               netCents={product.priceCents}
+              listPriceCents={product.listPriceCents}
+              discountPct={product.discountPct}
+              priceSource={product.priceSource}
               currency={product.currency}
               amountClassName="text-base font-semibold text-idl-graphite"
               captionClassName="text-xs text-idl-muted"

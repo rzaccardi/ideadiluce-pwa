@@ -75,6 +75,9 @@ function CrossSellRow({
         </Link>
         <ProductPrice
           netCents={product.priceCents}
+          listPriceCents={product.listPriceCents}
+          discountPct={product.discountPct}
+          priceSource={product.priceSource}
           currency={product.currency}
           className="mt-0.5"
           amountClassName={cn('text-xs tabular-nums', dark ? 'text-[#b0b0b4]' : 'text-idl-muted')}

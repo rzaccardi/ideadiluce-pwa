@@ -132,6 +132,9 @@ export function DesignAccessoryPicker({
                   ) : null}
                   <ProductPrice
                     netCents={(item.priceCents ?? 0) * (checked ? qty ?? 1 : 1)}
+                    listPriceCents={item.listPriceCents != null ? item.listPriceCents * (checked ? qty ?? 1 : 1) : null}
+                    discountPct={item.discountPct}
+                    priceSource={item.priceSource}
                     currency={item.currency}
                     className="shrink-0 items-end text-right"
                     amountClassName="text-[13.5px] font-semibold text-idl-ink"
@@ -197,6 +200,9 @@ export function DesignAccessoryPicker({
                   </span>
                   <ProductPrice
                     netCents={(item.priceCents ?? 0) * (checked ? qty ?? 1 : 1)}
+                    listPriceCents={item.listPriceCents != null ? item.listPriceCents * (checked ? qty ?? 1 : 1) : null}
+                    discountPct={item.discountPct}
+                    priceSource={item.priceSource}
                     currency={item.currency}
                     className="mt-1"
                     amountClassName="text-[15px] font-bold text-idl-ink"
