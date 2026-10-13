@@ -189,34 +189,6 @@ export async function fetchSupplierLeadByVariantIds(
   }
 }
 
-async function resolveVariantTemplateMap(
-  ctx: OdooCallContext,
-  variantIds: number[],
-): Promise<Map<number, number>> {
-  const map = new Map<number, number>()
-  if (!isOdooConfigured() || variantIds.length === 0) return map
-
-  try {
-    const rows = await odooExecuteKw<Array<Record<string, unknown>>>(
-      ctx,
-      'product.product',
-      'read',
-      [variantIds],
-      { fields: ['product_tmpl_id'] },
-    )
-    for (const row of rows) {
-      const variantId = readNumberField(row, 'id')
-      const tmplId = m2oTemplateId(row.product_tmpl_id)
-      if (variantId != null && tmplId != null) {
-        map.set(variantId, tmplId)
-      }
-    }
-  } catch {
-    // ignore — supplierinfo userà solo match per product_id
-  }
-  return map
-}
-
 /** Batch read stock/lead/orderable da Odoo per varianti `product.product`. */
 export async function fetchVariantStockByIds(
   ctx: OdooCallContext,
