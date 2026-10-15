@@ -9,8 +9,8 @@ import { ui } from '@/lib/ui-classes'
 function SearchIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden className={className} fill="none">
-      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-      <path d="M20 20l-4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M20 20l-4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   )
 }
@@ -46,11 +46,11 @@ export function HeaderCatalogSearch({ variant = 'icon', className }: Props) {
     <button
       type="button"
       onClick={() => openSearch()}
-      className={cn(ui.interactive, ui.headerAction, ui.headerActionBtn)}
+      className={cn(ui.interactive, ui.headerIconBtn, ui.headerActionBtn)}
       aria-label={t('header.openSearch')}
       aria-keyshortcuts="Control+K Meta+K"
     >
-      <SearchIcon className="size-[18px]" />
+      <SearchIcon className={ui.headerIcon} />
     </button>
   )
 }

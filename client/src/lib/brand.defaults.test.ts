@@ -48,13 +48,18 @@ describe('findBrandMetaBySlug', () => {
 })
 
 describe('mergeBrandCards', () => {
-  it('classifica i brand hub fuori da BRAND_META in base ai mondi Odoo', () => {
+  it('mostra solo brand Odoo e classifica in base ai mondi', () => {
     const cards = mergeBrandCards([
       { slug: 'artemide', name: 'Artemide', productCount: 10, worlds: ['design'] },
       { slug: 'osram', name: 'OSRAM', productCount: 8, worlds: ['technical'] },
     ])
+    expect(cards).toHaveLength(2)
     expect(cards.find((c) => c.slug === 'artemide')?.categories).toEqual(['design', 'made-in-italy'])
     expect(cards.find((c) => c.slug === 'osram')?.categories).toContain('tecnico')
     expect(cards.find((c) => c.slug === 'osram')?.categories).not.toContain('design')
+  })
+
+  it('non inventa brand assenti da Odoo', () => {
+    expect(mergeBrandCards([])).toEqual([])
   })
 })

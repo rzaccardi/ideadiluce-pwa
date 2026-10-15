@@ -20,6 +20,7 @@ import {
   RefreshCwIcon,
   UnlinkIcon,
   Volume2Icon,
+  LandmarkIcon,
 } from 'lucide-react'
 import { getSitePageLabel } from '@/features/site'
 
@@ -116,6 +117,14 @@ export const navSections: NavSection[] = [
         accentClass: 'text-blue-600',
         accentBgClass: 'bg-blue-50',
         match: (p) => p.startsWith('/catalog-cache'),
+      },
+      {
+        to: '/brands',
+        label: 'Marchi',
+        icon: LandmarkIcon,
+        accentClass: 'text-fuchsia-600',
+        accentBgClass: 'bg-fuchsia-50',
+        match: (p) => p.startsWith('/brands'),
       },
       {
         to: '/search-analytics',
@@ -417,6 +426,12 @@ export function getBreadcrumbs(pathname: string, _search = ''): BreadcrumbItem[]
       { label: 'Indice OdooCatalog e sync notturno' },
     ]
   }
+  if (pathname.startsWith('/brands')) {
+    return [
+      { label: 'Marchi', href: '/brands' },
+      { label: 'Loghi light/dark sui marchi Odoo' },
+    ]
+  }
   return []
 }
 
@@ -697,6 +712,15 @@ export function getPageMeta(pathname: string, _search = ''): {
       icon: RefreshCwIcon,
       iconClassName: 'text-blue-600',
       iconBgClassName: 'bg-blue-50',
+    }
+  }
+  if (pathname.startsWith('/brands')) {
+    return {
+      title: 'Marchi',
+      description: 'Loghi light/dark sui marchi del catalogo Odoo (senza crearli o rinominarli)',
+      icon: LandmarkIcon,
+      iconClassName: 'text-fuchsia-600',
+      iconBgClassName: 'bg-fuchsia-50',
     }
   }
   return { title: 'Backoffice' }

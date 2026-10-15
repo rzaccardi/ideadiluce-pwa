@@ -11,6 +11,7 @@ import { isEmergencyMode } from '../modules/odoo/odoo-resilience.settings.js'
 
 export type OdooCheckoutHealthMeta = {
   userId?: string | null
+  odooPartnerId?: number | null
   cartId?: string | null
   orderId?: string | null
   step: string

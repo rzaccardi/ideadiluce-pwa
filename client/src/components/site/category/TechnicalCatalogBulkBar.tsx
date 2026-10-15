@@ -85,7 +85,7 @@ export function TechnicalCatalogBulkBar({ products: _products }: Props) {
   async function copySelectedProductLinks() {
     const links = selectedProducts
       .map((product) => buildProductPageUrl(product.slug, locale))
-      .join('\n')
+      .join(', ')
 
     try {
       await navigator.clipboard.writeText(links)

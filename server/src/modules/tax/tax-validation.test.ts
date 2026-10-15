@@ -9,7 +9,7 @@ vi.mock('../../lib/prisma.js', () => ({
     taxValidationLog: {
       create: vi.fn(),
     },
-    user: {
+    customerSatellite: {
       update: vi.fn(),
     },
     integrationLog: {
@@ -30,7 +30,7 @@ describe('taxValidationService', () => {
     vi.mocked(prisma.vatValidationCache.findUnique).mockResolvedValue(null)
     vi.mocked(prisma.vatValidationCache.upsert).mockResolvedValue({} as never)
     vi.mocked(prisma.taxValidationLog.create).mockResolvedValue({} as never)
-    vi.mocked(prisma.user.update).mockResolvedValue({} as never)
+    vi.mocked(prisma.customerSatellite.update).mockResolvedValue({} as never)
   })
 
   it('validates a valid fiscal code', async () => {

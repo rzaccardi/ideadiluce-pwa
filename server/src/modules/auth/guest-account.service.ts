@@ -35,7 +35,7 @@ function parseShippingAddress(json: unknown): TestCheckoutAddressInput | null {
 /** Crea account PWA + utente portal Odoo; credenziali inviate via email Odoo. */
 export async function finalizeGuestAccountForOrder(orderId: string): Promise<void> {
   const order = await prisma.pwaOrder.findUnique({ where: { id: orderId } })
-  if (!order || order.userId) return
+  if (!order || order.odooPartnerId != null) return
 
   const meta = (order.metadataJson ?? {}) as OrderMetadata
   if (!meta.createAccount || meta.guestAccountCreated) return
@@ -56,16 +56,21 @@ export async function finalizeGuestAccountForOrder(orderId: string): Promise<voi
     sessionId: order.sessionId,
   })
 
-  const user = await prisma.user.findUnique({ where: { email: order.email.toLowerCase().trim() } })
+  // Collega ordine alla proiezione satellite (per partner Odoo), non per email come autorità.
+  const satellite = order.odooPartnerId
+    ? await prisma.customerSatellite.findUnique({ where: { odooPartnerId: order.odooPartnerId } })
+    : await prisma.customerSatellite.findUnique({ where: { email: order.email.toLowerCase().trim() } })
+
+  const partnerId = satellite?.odooPartnerId ?? order.odooPartnerId
   const updated = await prisma.pwaOrder.update({
     where: { id: order.id },
     data: {
-      userId: user?.id ?? order.userId,
+      ...(partnerId != null ? { odooPartnerId: partnerId } : {}),
       metadataJson: { ...meta, guestAccountCreated: true },
     },
   })
 
-  if (updated.userId) {
-    await ensureOrderCacheForPwaOrder(updated.userId, updated)
+  if (updated.odooPartnerId != null) {
+    await ensureOrderCacheForPwaOrder(updated.odooPartnerId, updated)
   }
 }

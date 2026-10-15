@@ -201,8 +201,8 @@ export const taxValidationService = {
     const provider = vatResult?.vies.checked ? 'vies' : 'local'
     await taxValidationRepository.writeLog(ctx, partial, provider, partial.taxValidationStatus)
 
-    if (ctx.userId) {
-      await taxValidationRepository.persistUserVerification(ctx.userId, partial)
+    if (ctx.odooPartnerId != null) {
+      await taxValidationRepository.persistUserVerification(ctx.odooPartnerId, partial)
     }
 
     return partial

@@ -1,14 +1,14 @@
 import { prisma } from '../../lib/prisma.js'
 
 export const ordersRepository = {
-  listByUser(userId: string) {
+  listByUser(odooPartnerId: number) {
     return prisma.orderCache.findMany({
-      where: { userId },
+      where: { odooPartnerId },
       orderBy: { createdAt: 'desc' },
     })
   },
 
-  findForUser(userId: string, id: string) {
-    return prisma.orderCache.findFirst({ where: { id, userId } })
+  findForUser(odooPartnerId: number, id: string) {
+    return prisma.orderCache.findFirst({ where: { id, odooPartnerId } })
   },
 }

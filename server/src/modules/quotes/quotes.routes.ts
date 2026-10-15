@@ -19,14 +19,14 @@ quotesRouter.post(
   validateRequest({ body: quoteRequestBodySchema }),
   asyncHandler(async (req, res) => {
     const body = quoteRequestBodySchema.parse(req.body)
-    res.status(201).json(ok(await quotesService.request(req, req.sessionRecord!.userId!, body)))
+    res.status(201).json(ok(await quotesService.request(req, req.sessionRecord!.user!.id, body)))
   }),
 )
 
 quotesRouter.get(
   '/',
   asyncHandler(async (req, res) => {
-    res.json(ok(await quotesService.list(req.sessionRecord!.userId!, req.correlationId)))
+    res.json(ok(await quotesService.list(req.sessionRecord!.user!.id, req.correlationId)))
   }),
 )
 
@@ -36,7 +36,7 @@ quotesRouter.post(
   asyncHandler(async (req, res) => {
     const { odooSaleOrderId } = odooQuoteParamsSchema.parse(req.params)
     res.json(
-      ok(await quotesService.startOdooCheckout(req, req.sessionRecord!.userId!, odooSaleOrderId)),
+      ok(await quotesService.startOdooCheckout(req, req.sessionRecord!.user!.id, odooSaleOrderId)),
     )
   }),
 )
@@ -48,7 +48,7 @@ quotesRouter.get(
     const { id } = quoteIdParamsSchema.parse(req.params)
     res.json(
       ok(
-        await quotesService.getById(req.sessionRecord!.userId!, id, req.correlationId),
+        await quotesService.getById(req.sessionRecord!.user!.id, id, req.correlationId),
       ),
     )
   }),
@@ -59,6 +59,6 @@ quotesRouter.post(
   validateRequest({ params: quoteIdParamsSchema }),
   asyncHandler(async (req, res) => {
     const { id } = quoteIdParamsSchema.parse(req.params)
-    res.json(ok(await quotesService.startCheckout(req, req.sessionRecord!.userId!, id)))
+    res.json(ok(await quotesService.startCheckout(req, req.sessionRecord!.user!.id, id)))
   }),
 )

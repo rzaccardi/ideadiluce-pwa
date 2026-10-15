@@ -47,7 +47,7 @@ export type TaxValidationResult = {
 }
 
 export type TaxValidationContext = {
-  userId?: string | null
+  odooPartnerId?: number | null
   sessionId?: string | null
   correlationId?: string
 }

@@ -102,7 +102,7 @@ async function fetchTopProductsByReadGroup(
     ['order_id.date_order', '>=', sinceOdoo],
   ]
 
-  const rows = await odooExecuteKw<ReadGroupRow[]>(
+  const rows = await odooExecuteKw<ReadGroupRow[] | false>(
     ctx,
     'sale.order.line',
     'read_group',
@@ -113,7 +113,9 @@ async function fetchTopProductsByReadGroup(
     },
   )
 
-  return rows
+  const list = Array.isArray(rows) ? rows : []
+
+  return list
     .map((row) => {
       const productId = relationId(row.product_id)
       const totalQuantity = Math.round(Number(row.product_uom_qty) || 0)
@@ -136,13 +138,13 @@ async function fetchCategoryDescendantIds(
   const roots = [...new Set(rootIds.filter((id) => Number.isInteger(id) && id > 0))]
   if (roots.length === 0) return new Set()
 
-  const rows = await odooExecuteKw<CategoryRow[]>(ctx, 'product.category', 'search_read', [[]], {
+  const rows = await odooExecuteKw<CategoryRow[] | false>(ctx, 'product.category', 'search_read', [[]], {
     fields: ['id', 'parent_id'],
     limit: 500,
   })
 
   const childrenByParent = new Map<number, number[]>()
-  for (const row of rows) {
+  for (const row of Array.isArray(rows) ? rows : []) {
     const parentId = categoryParentId(row.parent_id)
     if (parentId == null) continue
     const list = childrenByParent.get(parentId) ?? []
@@ -199,9 +201,10 @@ async function aggregateTopPurchasedByTemplate(
   if (rankedProducts.length === 0) return []
 
   const productIds = rankedProducts.map((row) => row.productId)
-  const products = await odooExecuteKw<ProductRow[]>(ctx, 'product.product', 'read', [productIds], {
+  const productsRaw = await odooExecuteKw<ProductRow[] | false>(ctx, 'product.product', 'read', [productIds], {
     fields: ['display_name', 'default_code', 'sale_ok', 'type', 'product_tmpl_id'],
   })
+  const products = Array.isArray(productsRaw) ? productsRaw : []
 
   const templateIds = [
     ...new Set(
@@ -211,11 +214,12 @@ async function aggregateTopPurchasedByTemplate(
     ),
   ]
 
-  const templates = templateIds.length
-    ? await odooExecuteKw<TemplateRow[]>(ctx, 'product.template', 'read', [templateIds], {
+  const templatesRaw = templateIds.length
+    ? await odooExecuteKw<TemplateRow[] | false>(ctx, 'product.template', 'read', [templateIds], {
         fields: ['name', 'sale_ok', 'categ_id'],
       })
     : []
+  const templates = Array.isArray(templatesRaw) ? templatesRaw : []
 
   const productById = new Map(products.map((product) => [product.id, product]))
   const templateById = new Map(templates.map((template) => [template.id, template]))

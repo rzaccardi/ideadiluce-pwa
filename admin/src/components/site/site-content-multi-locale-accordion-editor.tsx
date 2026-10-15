@@ -19,7 +19,9 @@ import {
 } from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
 import { ArticleContentEditor } from '@/components/site/article-content-editor'
+import { MegaMenuFilterEditor } from '@/components/site/mega-menu-filter-editor'
 import { SiteContentMultiLocaleFieldEditor } from '@/components/site/site-content-multi-locale-field-editor'
+import type { MegaMenuPanel } from '@/features/site/nav-filter-link'
 
 type SiteContentMultiLocaleAccordionEditorProps = {
   pageKey: string
@@ -113,6 +115,15 @@ export function SiteContentMultiLocaleAccordionEditor({
             <AccordionContent className="pb-4 pt-1">
               {'articleEditor' in section ? (
                 <ArticleContentEditor draftsByLocale={draftsByLocale} onLocaleChange={onLocaleChange} />
+              ) : 'navMegaMenu' in section ? (
+                <MegaMenuFilterEditor
+                  menuId={section.navMegaMenu}
+                  panel={sectionRoot as unknown as MegaMenuPanel}
+                  draftsByLocale={sectionDrafts}
+                  onLocaleChange={(locale, nextRoot) => {
+                    handleLocaleSectionChange(locale, section, nextRoot)
+                  }}
+                />
               ) : (
                 <SiteContentMultiLocaleFieldEditor
                   value={sectionRoot}

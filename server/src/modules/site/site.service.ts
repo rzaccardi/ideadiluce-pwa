@@ -57,6 +57,23 @@ function prepareContent(pageKey: SitePageKey, content: unknown) {
   return mergeSiteContentWithDefaults(pageKey, decodeDeepLHtmlEntitiesInTree(content))
 }
 
+async function preparePublicContent(pageKey: SitePageKey, content: unknown, locale: SiteLocale) {
+  const prepared = prepareContent(pageKey, content)
+  if (pageKey !== 'shell') return prepared
+
+  try {
+    const { getCatalogFiltersLive } = await import('../catalog/catalog-odoo-search.service.js')
+    const { resolveShellFilterLinks } = await import('./nav-filter-link.js')
+    const filters = await getCatalogFiltersLive(
+      { correlationId: `shell-nav-filters-${locale}` },
+      { locale },
+    )
+    return resolveShellFilterLinks(prepared as SiteShellContent, filters)
+  } catch {
+    return prepared
+  }
+}
+
 function toAdminPageDto(
   pageKey: SitePageKey,
   locale: SiteLocale,
@@ -151,7 +168,7 @@ export const siteService = {
       return {
         pageKey: key,
         locale: loc,
-        content: prepareContent(key, row.content),
+        content: await preparePublicContent(key, row.content, loc),
         updatedAt: row.updatedAt.toISOString(),
       }
     }
@@ -160,7 +177,7 @@ export const siteService = {
       return {
         pageKey: key,
         locale: loc,
-        content: prepareContent(key, defaultSiteContentForLocale(key, loc)),
+        content: await preparePublicContent(key, defaultSiteContentForLocale(key, loc), loc),
         updatedAt: null,
       }
     }
@@ -170,7 +187,7 @@ export const siteService = {
       return {
         pageKey: key,
         locale: 'IT',
-        content: prepareContent(key, fallback.content),
+        content: await preparePublicContent(key, fallback.content, 'IT'),
         updatedAt: fallback.updatedAt.toISOString(),
       }
     }
@@ -182,7 +199,7 @@ export const siteService = {
     return {
       pageKey: key,
       locale: loc,
-      content: defaultSiteContent(key),
+      content: await preparePublicContent(key, defaultSiteContent(key), loc),
       updatedAt: null,
     }
   },
@@ -397,13 +414,8 @@ export const siteService = {
   },
 }
 
-export async function seedSitePages() {
-  for (const pageKey of SITE_PAGE_KEYS) {
-    const existing = await siteRepository.findByKeyLocale(pageKey, 'IT')
-    if (existing) continue
-    await siteRepository.upsert(pageKey, 'IT', defaultSiteContent(pageKey), true)
-  }
-
+/** Patch leggeri della shell (mega-menu senza query testuali, footer, …). */
+export async function ensureShellNavPatches() {
   await patchShellAttaccoMenu()
   await patchShellNavCategoryLinks()
   await patchShellMegaMenuColumns()
@@ -412,6 +424,16 @@ export async function seedSitePages() {
   await patchShellFooterCompany()
   await patchShellRemoveShowroomCopy()
   await patchShellItSource()
+}
+
+export async function seedSitePages() {
+  for (const pageKey of SITE_PAGE_KEYS) {
+    const existing = await siteRepository.findByKeyLocale(pageKey, 'IT')
+    if (existing) continue
+    await siteRepository.upsert(pageKey, 'IT', defaultSiteContent(pageKey), true)
+  }
+
+  await ensureShellNavPatches()
   await patchHomeHeroCategoryLinks()
   await patchHomeSeoHeroCopy()
   await patchHomeVisualSections()
@@ -625,14 +647,19 @@ async function patchShellNavCategoryLinks() {
       const panelJson = JSON.stringify(item.panel)
       const needsPanelRefresh =
         (id === 'arredo' && !panelJson.includes('/categoria-prodotto/illuminazione-arredo')) ||
-        (id === 'tecnico' && !panelJson.includes('/categoria-prodotto/illuminazione-tecnica')) ||
+        (id === 'tecnico' &&
+          (!panelJson.includes('/categoria-prodotto/illuminazione-tecnica') ||
+            /world=technical&q=/i.test(panelJson) ||
+            !panelJson.includes('/categoria-tecnica/led') ||
+            !panelJson.includes('tag=automoto') ||
+            !panelJson.includes('tag=portalampade'))) ||
         (id === 'attacco' &&
           panelJson.includes('Catalogo tecnico') &&
           panelJson.includes('/catalog?world=technical'))
 
       if (needsPanelRefresh) {
         if (locale === 'IT') {
-          item.panel = fresh.panel
+          item.panel = structuredClone(fresh.panel)
           changed = true
         } else {
           for (const freshColumn of fresh.panel.columns) {
@@ -685,11 +712,14 @@ async function patchShellMegaMenuColumns() {
         const needsPanelRefresh =
           currentJson !== freshJson &&
           (id === 'arredo'
-            ? !currentJson.includes('tipologia=sospensione') ||
+            ? !currentJson.includes('/tipologia/sospensione') ||
               !currentJson.includes('IN EVIDENZA') ||
               currentJson.includes('/brand/davide-groppi')
             : !currentJson.includes('GUIDE TECNICHE') ||
-              !currentJson.includes('category=strip') ||
+              /world=technical&q=/i.test(currentJson) ||
+              !currentJson.includes('/categoria-tecnica/led') ||
+              !currentJson.includes('tag=automoto') ||
+              !currentJson.includes('tag=portalampade') ||
               !currentJson.includes('/guide/dimmerabilita') ||
               !currentJson.includes('/guide/grado-ip') ||
               !currentJson.includes('/guide/retrofit-led'))
@@ -820,13 +850,15 @@ async function patchShellNavEditorialLinks() {
       }
     }
 
-    const servizioCol = content.footer.columns.find((col) => col.title === 'Servizio clienti')
-    const servizioFresh = DEFAULT_SHELL_IT.footer.columns.find((col) => col.title === 'Servizio clienti')
-    if (servizioCol && servizioFresh) {
-      const freshJson = JSON.stringify(servizioFresh.links)
-      const currentJson = JSON.stringify(servizioCol.links)
-      if (freshJson !== currentJson) {
-        servizioCol.links = servizioFresh.links.map((link) => ({ ...link }))
+    const helpTitles = new Set(['Aiuto acquisti', 'Servizio clienti'])
+    const helpCol = content.footer.columns.find((col) => helpTitles.has(col.title))
+    const helpFresh = DEFAULT_SHELL_IT.footer.columns.find((col) => col.title === 'Aiuto acquisti')
+    if (helpCol && helpFresh) {
+      const freshJson = JSON.stringify(helpFresh.links)
+      const currentJson = JSON.stringify(helpCol.links)
+      if (freshJson !== currentJson || helpCol.title !== helpFresh.title) {
+        helpCol.title = helpFresh.title
+        helpCol.links = helpFresh.links.map((link) => ({ ...link }))
         changed = true
       }
     }

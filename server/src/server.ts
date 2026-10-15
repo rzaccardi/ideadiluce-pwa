@@ -33,6 +33,12 @@ void import('./modules/site-guides/site-guides.service.js')
     logger.warn('site_guides.seed_failed', { err: String(e) })
   })
 
+void import('./modules/site/site.service.js')
+  .then(({ ensureShellNavPatches }) => ensureShellNavPatches())
+  .catch((e) => {
+    logger.warn('site_shell.patches_failed', { err: String(e) })
+  })
+
 startOdooSyncRetryScheduler()
 startPaidSyncAlertScheduler()
 startAbandonedCartScheduler()

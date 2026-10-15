@@ -57,19 +57,17 @@ function displayName(email: string, address: AddressJson | null): string {
   return name || email
 }
 
-async function persistOdooCustomerMap(userId: string, email: string, odooPartnerId: number) {
+async function persistOdooCustomerMap(email: string, odooPartnerId: number) {
   const emailLower = email.toLowerCase().trim()
   await prisma.odooCustomerMap.upsert({
-    where: { userId },
+    where: { odooPartnerId },
     create: {
-      userId,
       odooPartnerId,
       syncStatus: 'SYNCED',
       lastSyncAt: new Date(),
       guestEmail: emailLower,
     },
     update: {
-      odooPartnerId,
       syncStatus: 'SYNCED',
       lastSyncAt: new Date(),
       guestEmail: emailLower,
@@ -92,7 +90,7 @@ async function loadOrder(pwaOrderId: string): Promise<PwaOrder> {
 
 export async function executeEnsurePartner(
   ctx: OdooCallContext,
-  input: { pwaOrderId?: string | null; userId?: string | null; payload: unknown },
+  input: { pwaOrderId?: string | null; odooPartnerId?: number | null; payload: unknown },
 ): Promise<void> {
   const payload = (input.payload ?? {}) as {
     email?: string
@@ -131,29 +129,28 @@ export async function executeEnsurePartner(
       where: { id: order.id },
       data: { odooPartnerId: partner.odooPartnerId },
     })
-    if (order.userId) {
-      await persistOdooCustomerMap(order.userId, order.email, partner.odooPartnerId)
-    }
+    await persistOdooCustomerMap(order.email, partner.odooPartnerId)
     return
   }
 
-  if (!input.userId) {
-    throw new AppError('SYNC_TARGET_MISSING', 'Missing user', 'Manca utente per sync partner.', 409, false)
+  if (input.odooPartnerId == null) {
+    throw new AppError('SYNC_TARGET_MISSING', 'Missing partner', 'Manca partner per sync.', 409, false)
   }
-  const user = await prisma.user.findUnique({ where: { id: input.userId } })
-  if (!user) {
+  const customer = await prisma.customerSatellite.findUnique({
+    where: { odooPartnerId: input.odooPartnerId },
+  })
+  if (!customer) {
     throw new AppError('USER_NOT_FOUND', 'User not found', 'Utente non trovato.', 404, false)
   }
-  const existingMap = await prisma.odooCustomerMap.findUnique({ where: { userId: user.id } })
-  if (await isWebsitePartnerUsable(ctx, customerAdapter, existingMap?.odooPartnerId)) return
+  if (await isWebsitePartnerUsable(ctx, customerAdapter, customer.odooPartnerId)) return
 
   const partner = await customerAdapter.findOrCreateCustomer(ctx, {
-    email: payload.email ?? user.email,
-    firstName: payload.firstName ?? user.firstName,
-    lastName: payload.lastName ?? user.lastName,
-    phone: payload.phone ?? user.phone,
+    email: payload.email ?? customer.email,
+    firstName: payload.firstName ?? customer.firstName,
+    lastName: payload.lastName ?? customer.lastName,
+    phone: payload.phone ?? customer.phone,
   })
-  await persistOdooCustomerMap(user.id, user.email, partner.odooPartnerId)
+  await persistOdooCustomerMap(customer.email, partner.odooPartnerId)
 }
 
 export async function executeEnsureSaleOrder(ctx: OdooCallContext, pwaOrderId: string): Promise<void> {
@@ -369,23 +366,21 @@ export async function executeFunnelSync(
 
 export async function executeEnsurePortalUser(
   ctx: OdooCallContext,
-  input: { pwaOrderId?: string | null; userId?: string | null; payload: unknown },
+  input: { pwaOrderId?: string | null; odooPartnerId?: number | null; payload: unknown },
 ): Promise<void> {
   if (isOdooApiV2Configured()) return
   const payload = (input.payload ?? {}) as { email?: string; firstName?: string; lastName?: string }
   let email = payload.email?.toLowerCase().trim() ?? ''
-  let partnerId: number | null = null
+  let partnerId: number | null = input.odooPartnerId ?? null
   let name = displayName(email, {
     firstName: payload.firstName,
     lastName: payload.lastName,
   })
-  let userId = input.userId ?? null
 
   if (input.pwaOrderId) {
     const order = await loadOrder(input.pwaOrderId)
     email = email || order.email.toLowerCase().trim()
-    partnerId = order.odooPartnerId
-    userId = userId ?? order.userId
+    partnerId = partnerId ?? order.odooPartnerId
     name = displayName(email, asAddress(order.billingAddressJson) ?? asAddress(order.shippingAddressJson))
   }
 
@@ -393,8 +388,10 @@ export async function executeEnsurePortalUser(
     throw new AppError('EMAIL_REQUIRED', 'Email required', 'Email obbligatoria per il portale Odoo.', 400, false)
   }
 
-  if (!partnerId && userId) {
-    const map = await prisma.odooCustomerMap.findUnique({ where: { userId } })
+  if (partnerId == null) {
+    const map = input.odooPartnerId != null
+      ? await prisma.odooCustomerMap.findUnique({ where: { odooPartnerId: input.odooPartnerId } })
+      : null
     partnerId = map?.odooPartnerId ?? null
   }
 
@@ -402,7 +399,7 @@ export async function executeEnsurePortalUser(
     const existing = await findOdooPortalUserByEmail(ctx, email)
     if (existing) {
       partnerId = existing.odooPartnerId
-      if (userId) await persistOdooCustomerMap(userId, email, partnerId)
+      await persistOdooCustomerMap(email, partnerId)
       return
     }
     throw new AppError(
@@ -416,7 +413,7 @@ export async function executeEnsurePortalUser(
 
   const existing = await findOdooPortalUserByEmail(ctx, email)
   if (existing) {
-    if (userId) await persistOdooCustomerMap(userId, email, partnerId)
+    await persistOdooCustomerMap(email, partnerId)
     return
   }
 
@@ -426,7 +423,7 @@ export async function executeEnsurePortalUser(
     name,
     password: generateAccountPassword(),
   })
-  if (userId) await persistOdooCustomerMap(userId, email, partnerId)
+  await persistOdooCustomerMap(email, partnerId)
 }
 
 export async function executeSendMail(ctx: OdooCallContext, pwaOrderId: string): Promise<void> {
@@ -466,13 +463,13 @@ export async function executeQueueOperation(
   ctx: OdooCallContext,
   operation: string,
   pwaOrderId: string | null,
-  userId: string | null,
+  odooPartnerId: number | null,
   payload: unknown,
 ): Promise<void> {
   switch (operation) {
     case 'ENSURE_PARTNER':
     case 'ensure_partner':
-      await executeEnsurePartner(ctx, { pwaOrderId, userId, payload })
+      await executeEnsurePartner(ctx, { pwaOrderId, odooPartnerId, payload })
       return
     case 'ENSURE_SALE_ORDER':
     case 'ensure_sale_order':
@@ -490,7 +487,7 @@ export async function executeQueueOperation(
       return
     case 'ENSURE_PORTAL_USER':
     case 'ensure_portal_user':
-      await executeEnsurePortalUser(ctx, { pwaOrderId, userId, payload })
+      await executeEnsurePortalUser(ctx, { pwaOrderId, odooPartnerId, payload })
       return
     case 'SEND_MAIL':
     case 'send_mail':
@@ -530,7 +527,7 @@ export async function enqueueOrderOdooSaga(
   if (!order.odooSaleOrderId) ops.push('ensure_sale_order')
   if (!apiV2 && (paid || order.odooSaleOrderId)) ops.push('reconcile_lines')
   if (paid) ops.push('funnel_sync')
-  const includePortal = !apiV2 && (opts?.includePortal ?? Boolean(order.userId || meta.createAccount))
+  const includePortal = !apiV2 && (opts?.includePortal ?? Boolean(order.odooPartnerId || meta.createAccount))
   if (includePortal) ops.push('ensure_portal_user')
   const includeMail = !apiV2 && (opts?.includeMail ?? (paid && !meta.orderConfirmationMailAt))
   if (includeMail) ops.push('send_mail')
@@ -538,7 +535,7 @@ export async function enqueueOrderOdooSaga(
   for (const operation of ops) {
     const input: EnqueueOdooSyncInput = {
       pwaOrderId,
-      userId: order.userId,
+      odooPartnerId: order.odooPartnerId,
       operation,
       lastError: opts?.lastError,
       immediate: true,
@@ -554,13 +551,13 @@ export async function enqueueOrderOdooSaga(
 }
 
 export async function enqueueUserOdooSaga(
-  userId: string,
+  odooPartnerId: number,
   payload: { email: string; firstName?: string | null; lastName?: string | null; phone?: string | null },
   lastError?: string,
 ): Promise<void> {
   if (!env.ODOO_ENABLED || !isOdooLiveConfigured()) return
   await enqueueOdooSyncOperation({
-    userId,
+    odooPartnerId,
     operation: 'ensure_partner',
     payload: {
       email: payload.email,
@@ -572,7 +569,7 @@ export async function enqueueUserOdooSaga(
     immediate: true,
   })
   await enqueueOdooSyncOperation({
-    userId,
+    odooPartnerId,
     operation: 'ensure_portal_user',
     payload: {
       email: payload.email,

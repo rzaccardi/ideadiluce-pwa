@@ -33,6 +33,7 @@ import { quotesRouter } from '../../modules/quotes/quotes.routes.js'
 import { invoicesRouter } from '../../modules/invoices/invoices.routes.js'
 import { documentDownloadsAdminRouter } from '../../modules/document-downloads-admin/document-downloads-admin.routes.js'
 import { catalogCacheAdminRouter } from '../../modules/catalog/catalog-cache-admin.routes.js'
+import { brandsAdminRouter } from '../../modules/brands-admin/brands-admin.routes.js'
 import { restockAdminRouter } from '../../modules/restock-admin/restock-admin.routes.js'
 import { wpSeoMigrationAdminRouter } from '../../modules/wp-seo-migration/wp-seo-migration.admin.routes.js'
 import { wpSeoMigrationIngestRouter } from '../../modules/wp-seo-migration/wp-seo-migration.ingest.routes.js'
@@ -84,6 +85,7 @@ v1Router.use('/admin/uptime', uptimeAdminRouter)
 v1Router.use('/admin/odoo', odooAdminRouter)
 v1Router.use('/admin/document-downloads', documentDownloadsAdminRouter)
 v1Router.use('/admin/catalog-cache', catalogCacheAdminRouter)
+v1Router.use('/admin/brands', brandsAdminRouter)
 v1Router.use('/admin/customers/restock-requests', restockAdminRouter)
 v1Router.use('/checkout', checkoutRouter)
 v1Router.use('/quotes', quotesRouter)

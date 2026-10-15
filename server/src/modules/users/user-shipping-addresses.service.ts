@@ -22,7 +22,7 @@ function jsonAddress(address: UserAddressDTO): Prisma.InputJsonValue {
 }
 
 async function loadUser(userId: string) {
-  const user = await prisma.user.findUnique({ where: { id: userId } })
+  const user = await prisma.customerSatellite.findUnique({ where: { id: userId } })
   if (!user) {
     throw new AppError('USER_NOT_FOUND', 'User not found', 'Utente non trovato.', 404, false)
   }
@@ -43,7 +43,7 @@ async function commercialPartnerId(
 
 async function persistDefaultAddress(userId: string, address: UserAddressDTO) {
   const phone = address.phone?.trim()
-  await prisma.user.update({
+  await prisma.customerSatellite.update({
     where: { id: userId },
     data: {
       shippingAddressJson: jsonAddress(address),
@@ -56,7 +56,7 @@ export const userShippingAddressesService = {
   async list(userId: string, ctx?: OdooCallContext): Promise<UserShippingAddressListDTO> {
     const user = await loadUser(userId)
     const local = parseShippingAddressJson(user.shippingAddressJson)
-    const map = await prisma.odooCustomerMap.findUnique({ where: { userId } })
+    const map = await prisma.odooCustomerMap.findUnique({ where: { odooPartnerId: (await prisma.customerSatellite.findUniqueOrThrow({ where: { id: userId }, select: { odooPartnerId: true } })).odooPartnerId } })
     const odooReady = Boolean(ctx && env.ODOO_ENABLED && isOdooLiveConfigured() && map)
     let odooSyncFailed = false
     let odoo = [] as Awaited<ReturnType<typeof customerAdapter.listShippingDestinations>>
@@ -96,7 +96,7 @@ export const userShippingAddressesService = {
       )
     }
 
-    const map = await prisma.odooCustomerMap.findUnique({ where: { userId } })
+    const map = await prisma.odooCustomerMap.findUnique({ where: { odooPartnerId: (await prisma.customerSatellite.findUniqueOrThrow({ where: { id: userId }, select: { odooPartnerId: true } })).odooPartnerId } })
     let address: UserAddressDTO = { ...input }
     let odooSyncFailed = false
     const label =
@@ -141,7 +141,7 @@ export const userShippingAddressesService = {
   },
 
   async update(userId: string, addressId: string, input: UserAddressDTO, ctx?: OdooCallContext) {
-    const map = await prisma.odooCustomerMap.findUnique({ where: { userId } })
+    const map = await prisma.odooCustomerMap.findUnique({ where: { odooPartnerId: (await prisma.customerSatellite.findUniqueOrThrow({ where: { id: userId }, select: { odooPartnerId: true } })).odooPartnerId } })
     const odooId = parseOdooShippingAddressId(addressId)
     let address: UserAddressDTO = { ...input, id: addressId, label: input.label }
     let odooSyncFailed = false
@@ -178,7 +178,7 @@ export const userShippingAddressesService = {
   },
 
   async remove(userId: string, addressId: string, ctx?: OdooCallContext) {
-    const map = await prisma.odooCustomerMap.findUnique({ where: { userId } })
+    const map = await prisma.odooCustomerMap.findUnique({ where: { odooPartnerId: (await prisma.customerSatellite.findUniqueOrThrow({ where: { id: userId }, select: { odooPartnerId: true } })).odooPartnerId } })
     const odooId = parseOdooShippingAddressId(addressId)
     if (!odooId) {
       throw new AppError(
@@ -227,7 +227,7 @@ export const userShippingAddressesService = {
 
     const current = parseShippingAddressJson((await loadUser(userId)).shippingAddressJson)
     if (current?.id === addressId) {
-      await prisma.user.update({
+      await prisma.customerSatellite.update({
         where: { id: userId },
         data: { shippingAddressJson: Prisma.DbNull },
       })

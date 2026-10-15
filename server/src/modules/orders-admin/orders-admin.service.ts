@@ -237,7 +237,7 @@ function mapPwaListItem(o: {
   amountTotal: number | null
   odooSaleOrderId: number | null
   odooLastSyncStatus: string
-  userId: string | null
+  odooPartnerId: number | null
   createdAt: Date
   paidAt: Date | null
   checkoutStartedAt: Date | null
@@ -253,8 +253,8 @@ function mapPwaListItem(o: {
     amountTotal: o.amountTotal,
     lineItemCount: o.cart._count.items,
     odooSaleOrderId: o.odooSaleOrderId,
-    userId: o.userId,
-    isGuest: !o.userId,
+    userId: o.odooPartnerId != null ? String(o.odooPartnerId) : null,
+    isGuest: o.odooPartnerId == null,
     createdAt: o.createdAt.toISOString(),
     paidAt: o.paidAt?.toISOString() ?? null,
     checkoutStartedAt: o.checkoutStartedAt?.toISOString() ?? null,
@@ -539,7 +539,7 @@ export const ordersAdminService = {
         paymentStatus: true,
         paymentMethod: true,
         amountTotal: true,
-        userId: true,
+        odooPartnerId: true,
         email: true,
         odooSaleOrderId: true,
         createdAt: true,
@@ -590,7 +590,7 @@ export const ordersAdminService = {
     const repeatCustomerPct =
       paidEmails.size > 0 ? Math.round((repeatEmails / paidEmails.size) * 100) : 0
 
-    const guestPaid = paid.filter((o) => !o.userId).length
+    const guestPaid = paid.filter((o) => o.odooPartnerId == null).length
     const guestCheckoutPct = paidCount > 0 ? Math.round((guestPaid / paidCount) * 100) : 0
 
     const singleItem = paid.filter((o) => o.cart.items.length === 1).length
@@ -954,7 +954,7 @@ export const ordersAdminService = {
       failedPayments,
       relatedPaidCount,
       amountTotal: order.amountTotal,
-      isGuest: !order.userId,
+      isGuest: !order.odooPartnerId,
       orderStatus: order.orderStatus,
     })
 
@@ -968,9 +968,9 @@ export const ordersAdminService = {
       paymentMethod: order.paymentMethod,
       currencyCode: order.currencyCode,
       amountTotal: order.amountTotal,
-      userId: order.userId,
+      userId: order.odooPartnerId != null ? String(order.odooPartnerId) : null,
       sessionId: order.sessionId,
-      isGuest: !order.userId,
+      isGuest: order.odooPartnerId == null,
       cartId: order.cartId,
       checkoutSessionId: order.checkoutSessionId,
       odooPartnerId: order.odooPartnerId,

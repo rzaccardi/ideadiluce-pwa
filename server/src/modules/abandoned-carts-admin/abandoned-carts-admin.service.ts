@@ -73,9 +73,9 @@ export const abandonedCartsAdminService = {
     }
     if (query.q?.trim()) {
       const q = query.q.trim()
-      const matchingUsers = await prisma.user.findMany({
+      const matchingUsers = await prisma.customerSatellite.findMany({
         where: { email: { contains: q, mode: 'insensitive' } },
-        select: { id: true },
+        select: { odooPartnerId: true },
         take: 50,
       })
       const or: Prisma.AbandonedCartEventWhereInput[] = [
@@ -83,7 +83,7 @@ export const abandonedCartsAdminService = {
         { cartId: { contains: q, mode: 'insensitive' } },
       ]
       if (matchingUsers.length > 0) {
-        or.push({ userId: { in: matchingUsers.map((u) => u.id) } })
+        or.push({ odooPartnerId: { in: matchingUsers.map((u) => u.odooPartnerId) } })
       }
       where.OR = or
     }
@@ -98,14 +98,16 @@ export const abandonedCartsAdminService = {
       }),
     ])
 
-    const userIds = [...new Set(rows.map((r) => r.userId).filter((id): id is string => !!id))]
+    const odooPartnerIds = [
+      ...new Set(rows.map((r) => r.odooPartnerId).filter((id): id is number => id != null)),
+    ]
     const usersById = new Map(
       (
-        await prisma.user.findMany({
-          where: { id: { in: userIds } },
-          select: { id: true, email: true },
+        await prisma.customerSatellite.findMany({
+          where: { odooPartnerId: { in: odooPartnerIds } },
+          select: { odooPartnerId: true, email: true },
         })
-      ).map((u) => [u.id, u.email]),
+      ).map((u) => [u.odooPartnerId, u.email]),
     )
 
     return {
@@ -116,8 +118,8 @@ export const abandonedCartsAdminService = {
           cartId: r.cartId,
           eventType: r.eventType,
           contactEmail: r.contactEmail,
-          userId: r.userId,
-          userEmail: r.userId ? (usersById.get(r.userId) ?? null) : null,
+          odooPartnerId: r.odooPartnerId,
+          userEmail: r.odooPartnerId ? (usersById.get(r.odooPartnerId) ?? null) : null,
           itemCount: snapshots.length,
           createdAt: r.createdAt.toISOString(),
         }
@@ -151,9 +153,9 @@ export const abandonedCartsAdminService = {
     const labels = await resolveProductLabels(snapshots.map((l) => l.productRef))
 
     let userEmail: string | null = null
-    if (row.userId) {
-      const user = await prisma.user.findUnique({
-        where: { id: row.userId },
+    if (row.odooPartnerId != null) {
+      const user = await prisma.customerSatellite.findUnique({
+        where: { odooPartnerId: row.odooPartnerId },
         select: { email: true },
       })
       userEmail = user?.email ?? null
@@ -164,7 +166,7 @@ export const abandonedCartsAdminService = {
       cartId: row.cartId,
       eventType: row.eventType,
       contactEmail: row.contactEmail,
-      userId: row.userId,
+      odooPartnerId: row.odooPartnerId,
       userEmail,
       itemCount: snapshots.length,
       lines: mapLines(snapshots, labels),

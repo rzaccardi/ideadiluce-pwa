@@ -6,10 +6,8 @@ import { logger } from '../../lib/logger.js'
 import { sendPwaMail, PWA_ADMIN_MAIL_TO } from '../../adapters/odoo/odooMailAdapter.js'
 import { parseHubLocale } from '../../lib/hub-locale.js'
 import { isSpacesConfigured, spacesPublicUrl, uploadProductImage } from '../../adapters/spaces/spaces.storage.js'
-import { createOdooCustomerAdapter } from '../../adapters/odoo/odooCustomerAdapter.js'
-import { ensureOdooPortalUser } from '../../adapters/odoo/odooPortalUserAdapter.js'
-import { isOdooLiveConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
-import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
+import { createOdooCustomerAdapter, type OdooBusinessProfile } from '../../adapters/odoo/odooCustomerAdapter.js'
+import { type OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { env } from '../../config/env.js'
 import { prisma } from '../../lib/prisma.js'
 import { generateAccountPassword } from '../../lib/generate-password.js'
@@ -17,6 +15,14 @@ import { publicAppUrl } from '../../lib/mail.js'
 import { AppError } from '../../types/errors.js'
 import { taxValidationService } from '../tax/tax-validation.service.js'
 import { authRepository } from '../auth/auth.repository.js'
+import {
+  assertOdooAuthReadyForIdentity,
+  isOdooAuthIdentityRequired,
+  persistOdooCustomerMap,
+  provisionOdooAuthIdentity,
+} from '../auth/odoo-account-sync.service.js'
+import { ensureSatelliteProjection } from '../auth/satellite-projection.service.js'
+import { findOdooPortalUserByEmail } from '../../adapters/odoo/odooPortalUserAdapter.js'
 import { professionalAccountRepository } from './professional-account.repository.js'
 import type { ProfessionalAccountRequestInput } from './professional-account.validators.js'
 import { normalizeCountryCode } from '../tax/tax.constants.js'
@@ -66,6 +72,47 @@ async function storeVisura(
   }
 }
 
+/** Sync profilo business su partner esistente (senza creare/resettare portal). Soft-fail. */
+async function syncBusinessPartnerToOdoo(
+  ctx: OdooCallContext,
+  params: {
+    email: string
+    firstName: string
+    lastName: string
+    phone?: string | null
+    business: OdooBusinessProfile
+    userId: string
+  },
+): Promise<{ odooPartnerId: number | null; syncError: string | null }> {
+  if (!isOdooAuthIdentityRequired()) {
+    return { odooPartnerId: null, syncError: null }
+  }
+
+  try {
+    const partner = await customerAdapter.findOrCreateCustomer(ctx, {
+      email: params.email,
+      firstName: params.firstName,
+      lastName: params.lastName,
+      phone: params.phone ?? undefined,
+      business: params.business,
+    })
+    await customerAdapter.updateCustomerBusiness(ctx, partner.odooPartnerId, params.business)
+    await prisma.customerSatellite.update({
+      where: { id: params.userId },
+      data: { odooPartnerId: partner.odooPartnerId },
+    })
+    await persistOdooCustomerMap({
+      email: params.email,
+      odooPartnerId: partner.odooPartnerId,
+    })
+    return { odooPartnerId: partner.odooPartnerId, syncError: null }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e)
+    logger.warn('professional-account.odoo_business_sync_failed', { error: message })
+    return { odooPartnerId: null, syncError: message }
+  }
+}
+
 async function ensureProfessionalUser(params: {
   email: string
   firstName: string
@@ -76,66 +123,156 @@ async function ensureProfessionalUser(params: {
   pec?: string | null
   sdiCode?: string | null
   fiscalCode?: string | null
+  viesName?: string | null
+  viesAddress?: string | null
+  viesRequestDate?: string | null
   sessionUserId?: string | null
   correlationId: string
-}): Promise<{ userId: string; accountCreated: boolean; plainPassword?: string }> {
+}): Promise<{
+  userId: string
+  accountCreated: boolean
+  plainPassword?: string
+  odooPartnerId: number | null
+  odooSyncError: string | null
+}> {
+  const ctx: OdooCallContext = { correlationId: params.correlationId }
+  const business: OdooBusinessProfile = {
+    companyName: params.companyName,
+    vatNumber: params.vatNumber,
+    pec: params.pec,
+    sdiCode: params.sdiCode,
+    fiscalCode: params.fiscalCode,
+    viesName: params.viesName,
+    viesAddress: params.viesAddress,
+    viesRequestDate: params.viesRequestDate,
+    isCompany: true,
+  }
+
+  const businessLocal = {
+    customerSegment: 'BUSINESS' as const,
+    companyName: params.companyName,
+    vatNumber: params.vatNumber,
+    pec: params.pec ?? undefined,
+    sdiCode: params.sdiCode ?? undefined,
+    fiscalCode: params.fiscalCode ?? undefined,
+  }
+
   if (params.sessionUserId) {
-    await prisma.user.update({
+    await prisma.customerSatellite.update({
       where: { id: params.sessionUserId },
       data: {
-        customerSegment: 'BUSINESS',
-        companyName: params.companyName,
-        vatNumber: params.vatNumber,
-        pec: params.pec ?? undefined,
-        sdiCode: params.sdiCode ?? undefined,
-        fiscalCode: params.fiscalCode ?? undefined,
+        ...businessLocal,
         firstName: params.firstName || undefined,
         lastName: params.lastName || undefined,
         phone: params.phone ?? undefined,
       },
     })
-    return { userId: params.sessionUserId, accountCreated: false }
+    const sync = await syncBusinessPartnerToOdoo(ctx, {
+      email: params.email,
+      firstName: params.firstName,
+      lastName: params.lastName,
+      phone: params.phone,
+      business,
+      userId: params.sessionUserId,
+    })
+    return {
+      userId: params.sessionUserId,
+      accountCreated: false,
+      odooPartnerId: sync.odooPartnerId,
+      odooSyncError: sync.syncError,
+    }
   }
 
   const email = params.email.toLowerCase().trim()
-  const existing = await authRepository.findUserByEmail(email)
-  if (existing?.passwordHash) {
-    await prisma.user.update({
+  assertOdooAuthReadyForIdentity()
+
+  // Identity = Odoo only: se portal esiste aggiorna business + satellite, non “trovare” User locale.
+  if (isOdooAuthIdentityRequired()) {
+    const existingPortal = await findOdooPortalUserByEmail(ctx, email)
+    if (existingPortal) {
+      try {
+        await customerAdapter.updateCustomerBusiness(ctx, existingPortal.odooPartnerId, business)
+      } catch (e) {
+        logger.warn('professional-account.odoo_business_update_failed', {
+          odooPartnerId: existingPortal.odooPartnerId,
+          error: e instanceof Error ? e.message : String(e),
+        })
+      }
+      const satellite = await ensureSatelliteProjection({
+        odooPartnerId: existingPortal.odooPartnerId,
+        email,
+        firstName: params.firstName,
+        lastName: params.lastName,
+        phone: params.phone,
+        ...businessLocal,
+        clearLocalPassword: true,
+      })
+      return {
+        userId: satellite.id,
+        accountCreated: false,
+        odooPartnerId: existingPortal.odooPartnerId,
+        odooSyncError: null,
+      }
+    }
+
+    const plainPassword = generateAccountPassword()
+    const odoo = await provisionOdooAuthIdentity(ctx, {
+      email,
+      password: plainPassword,
+      firstName: params.firstName,
+      lastName: params.lastName,
+      phone: params.phone,
+      business,
+      rejectExistingPortal: true,
+    })
+    try {
+      await customerAdapter.updateCustomerBusiness(ctx, odoo.odooPartnerId, business)
+    } catch (e) {
+      logger.warn('professional-account.odoo_business_update_failed', {
+        odooPartnerId: odoo.odooPartnerId,
+        error: e instanceof Error ? e.message : String(e),
+      })
+    }
+    const satellite = await ensureSatelliteProjection({
+      odooPartnerId: odoo.odooPartnerId,
+      email,
+      firstName: params.firstName,
+      lastName: params.lastName,
+      phone: params.phone,
+      ...businessLocal,
+      clearLocalPassword: true,
+    })
+    return {
+      userId: satellite.id,
+      accountCreated: true,
+      plainPassword,
+      odooPartnerId: odoo.odooPartnerId,
+      odooSyncError: null,
+    }
+  }
+
+  // Path locale (ODOO_ENABLED=false): satellite + password solo per dev.
+  const existing = await authRepository.findSatelliteByEmail(email)
+  if (existing) {
+    await prisma.customerSatellite.update({
       where: { id: existing.id },
       data: {
-        customerSegment: 'BUSINESS',
-        companyName: params.companyName,
-        vatNumber: params.vatNumber,
-        pec: params.pec ?? undefined,
-        sdiCode: params.sdiCode ?? undefined,
-        fiscalCode: params.fiscalCode ?? undefined,
+        ...businessLocal,
+        firstName: params.firstName || existing.firstName,
+        lastName: params.lastName || existing.lastName,
+        phone: params.phone?.trim() || existing.phone,
       },
     })
-    return { userId: existing.id, accountCreated: false }
+    return {
+      userId: existing.id,
+      accountCreated: false,
+      odooPartnerId: existing.odooPartnerId,
+      odooSyncError: null,
+    }
   }
 
   const plainPassword = generateAccountPassword()
   const passwordHash = bcrypt.hashSync(plainPassword, 10)
-
-  if (existing) {
-    await prisma.user.update({
-      where: { id: existing.id },
-      data: {
-        passwordHash,
-        firstName: params.firstName || existing.firstName,
-        lastName: params.lastName || existing.lastName,
-        phone: params.phone?.trim() || existing.phone,
-        customerSegment: 'BUSINESS',
-        companyName: params.companyName,
-        vatNumber: params.vatNumber,
-        pec: params.pec ?? undefined,
-        sdiCode: params.sdiCode ?? undefined,
-        fiscalCode: params.fiscalCode ?? undefined,
-      },
-    })
-    return { userId: existing.id, accountCreated: true, plainPassword }
-  }
-
   const user = await authRepository.createUser({
     email,
     passwordHash,
@@ -143,99 +280,23 @@ async function ensureProfessionalUser(params: {
     lastName: params.lastName,
     phone: params.phone?.trim(),
     customerSegment: 'BUSINESS',
+    companyName: params.companyName,
+    vatNumber: params.vatNumber,
   })
-  await prisma.user.update({
+  await prisma.customerSatellite.update({
     where: { id: user.id },
     data: {
-      companyName: params.companyName,
-      vatNumber: params.vatNumber,
       pec: params.pec ?? undefined,
       sdiCode: params.sdiCode ?? undefined,
       fiscalCode: params.fiscalCode ?? undefined,
     },
   })
-  return { userId: user.id, accountCreated: true, plainPassword }
-}
-
-async function syncOdooPartner(
-  ctx: OdooCallContext,
-  params: {
-    email: string
-    firstName: string
-    lastName: string
-    phone?: string | null
-    companyName: string
-    vatNumber: string
-    pec?: string | null
-    sdiCode?: string | null
-    viesName?: string | null
-    viesAddress?: string | null
-    viesRequestDate?: string | null
-    userId: string
-  },
-): Promise<{ odooPartnerId: number | null; syncError: string | null }> {
-  if (!env.ODOO_ENABLED || !isOdooLiveConfigured()) {
-    return { odooPartnerId: null, syncError: null }
-  }
-
-  try {
-    const business = {
-      companyName: params.companyName,
-      vatNumber: params.vatNumber,
-      pec: params.pec,
-      sdiCode: params.sdiCode,
-      viesName: params.viesName,
-      viesAddress: params.viesAddress,
-      viesRequestDate: params.viesRequestDate,
-      isCompany: true,
-    }
-
-    const partner = await customerAdapter.findOrCreateCustomer(ctx, {
-      email: params.email,
-      firstName: params.firstName,
-      lastName: params.lastName,
-      phone: params.phone ?? undefined,
-      business,
-    })
-
-    await customerAdapter.updateCustomerBusiness(ctx, partner.odooPartnerId, business)
-
-    await prisma.odooCustomerMap.upsert({
-      where: { userId: params.userId },
-      create: {
-        userId: params.userId,
-        odooPartnerId: partner.odooPartnerId,
-        syncStatus: 'SYNCED',
-        lastSyncAt: new Date(),
-      },
-      update: {
-        odooPartnerId: partner.odooPartnerId,
-        syncStatus: 'SYNCED',
-        lastSyncAt: new Date(),
-        guestEmail: params.email.toLowerCase(),
-      },
-    })
-
-    const displayName =
-      [params.firstName, params.lastName].filter(Boolean).join(' ').trim() || params.companyName
-    if (!isOdooApiV2Configured()) {
-      try {
-        await ensureOdooPortalUser(ctx, {
-          email: params.email,
-          partnerId: partner.odooPartnerId,
-          name: displayName,
-          password: generateAccountPassword(),
-        })
-      } catch {
-        /* portal opzionale */
-      }
-    }
-
-    return { odooPartnerId: partner.odooPartnerId, syncError: null }
-  } catch (e) {
-    const message = e instanceof Error ? e.message : String(e)
-    logger.warn('professional-account.odoo_sync_failed', { error: message })
-    return { odooPartnerId: null, syncError: message }
+  return {
+    userId: user.id,
+    accountCreated: true,
+    plainPassword,
+    odooPartnerId: null,
+    odooSyncError: null,
   }
 }
 
@@ -259,7 +320,8 @@ export const professionalAccountService = {
         personType: 'company',
       },
       {
-        userId: req.sessionRecord?.userId,
+        odooPartnerId:
+          req.sessionRecord?.odooPartnerId ?? req.sessionRecord?.user?.odooPartnerId ?? null,
         sessionId: req.sessionRecord?.id,
         correlationId: req.correlationId,
       },
@@ -293,7 +355,7 @@ export const professionalAccountService = {
     }
 
     const openRequest = await professionalAccountRepository.hasOpenRequest({
-      userId: req.sessionRecord?.userId ?? null,
+      odooPartnerId: req.sessionRecord?.odooPartnerId ?? null,
       email,
     })
     if (openRequest) {
@@ -305,6 +367,9 @@ export const professionalAccountService = {
         false,
       )
     }
+
+    // Fail-closed: con ODOO_ENABLED senza XML-RPC non creare account solo-PWA.
+    assertOdooAuthReadyForIdentity()
 
     const vatValidated = taxCheck.vat?.vies.status === 'valid'
     const normalizedVat = taxCheck.vat
@@ -325,6 +390,24 @@ export const professionalAccountService = {
       .filter(Boolean)
       .join('\n')
 
+    // Identità (Odoo-first se richiesta) prima della riga richiesta, per non lasciare pending orfani.
+    const userResult = await ensureProfessionalUser({
+      email,
+      firstName,
+      lastName,
+      phone: input.phone,
+      companyName,
+      vatNumber: normalizedVat,
+      pec: input.pec?.trim() || null,
+      sdiCode: input.sdiCode?.trim().toUpperCase() || null,
+      fiscalCode: input.fiscalCode?.trim().toUpperCase() || null,
+      viesName: taxCheck.vat?.vies.name ?? null,
+      viesAddress: taxCheck.vat?.vies.address ?? null,
+      viesRequestDate: taxCheck.vat?.vies.requestDate ?? null,
+      sessionUserId: req.sessionRecord?.user?.id ?? null,
+      correlationId: req.correlationId,
+    })
+
     const row = await professionalAccountRepository.create({
       companyName,
       vatNumber: normalizedVat,
@@ -339,56 +422,19 @@ export const professionalAccountService = {
       message: structuredNotes || null,
       locale,
       country,
-      userId: req.sessionRecord?.userId ?? null,
       vatValidated,
       vatForceAccepted: viesUnavailable,
-      odooPartnerId: null,
-      odooSyncError: null,
+      odooPartnerId: userResult.odooPartnerId,
+      odooSyncError: userResult.odooSyncError,
     })
 
     let visuraUrl: string | null = null
     if (visuraFile) {
       visuraUrl = await storeVisura(row.id, visuraFile)
+      if (visuraUrl) {
+        await professionalAccountRepository.update(row.id, { visuraUrl })
+      }
     }
-
-    const userResult = await ensureProfessionalUser({
-      email,
-      firstName,
-      lastName,
-      phone: input.phone,
-      companyName: row.companyName,
-      vatNumber: row.vatNumber,
-      pec: row.pec,
-      sdiCode: row.sdiCode,
-      fiscalCode: input.fiscalCode?.trim().toUpperCase() || null,
-      sessionUserId: req.sessionRecord?.userId ?? null,
-      correlationId: req.correlationId,
-    })
-
-    const odoo = await syncOdooPartner(
-      { correlationId: req.correlationId },
-      {
-        email,
-        firstName,
-        lastName,
-        phone: row.phone,
-        companyName: row.companyName,
-        vatNumber: row.vatNumber,
-        pec: row.pec,
-        sdiCode: row.sdiCode,
-        viesName: taxCheck.vat?.vies.name ?? null,
-        viesAddress: taxCheck.vat?.vies.address ?? null,
-        viesRequestDate: taxCheck.vat?.vies.requestDate ?? null,
-        userId: userResult.userId,
-      },
-    )
-
-    await professionalAccountRepository.update(row.id, {
-      userId: userResult.userId,
-      visuraUrl,
-      odooPartnerId: odoo.odooPartnerId,
-      odooSyncError: odoo.syncError,
-    })
 
     const viesLabel = vatValidated
       ? 'VIES: valida'
@@ -409,9 +455,11 @@ export const professionalAccountService = {
       row.pec ? `PEC: ${row.pec}` : null,
       row.sdiCode ? `Codice SDI: ${row.sdiCode}` : null,
       visuraUrl ? `Visura: ${visuraUrl}` : visuraFile ? 'Visura: allegata a questa email' : null,
-      odoo.odooPartnerId ? `Partner Odoo: #${odoo.odooPartnerId}` : null,
-      odoo.syncError ? `Sync Odoo: fallita - ${odoo.syncError}` : null,
-      userResult.accountCreated ? `Account PWA creato (userId: ${userResult.userId})` : `Utente collegato: ${userResult.userId}`,
+      userResult.odooPartnerId ? `Partner Odoo: #${userResult.odooPartnerId}` : null,
+      userResult.odooSyncError ? `Sync Odoo: fallita - ${userResult.odooSyncError}` : null,
+      userResult.accountCreated
+        ? `Account PWA creato (userId: ${userResult.userId})`
+        : `Utente collegato: ${userResult.userId}`,
       `Lingua: ${row.locale}`,
       `ID richiesta: ${row.id}`,
       '',
@@ -422,7 +470,7 @@ export const professionalAccountService = {
       id: row.id,
       email: row.email,
       vatValidated,
-      odooPartnerId: odoo.odooPartnerId,
+      odooPartnerId: userResult.odooPartnerId,
       userId: userResult.userId,
     })
 
@@ -464,6 +512,7 @@ export const professionalAccountService = {
       })
     }
 
+    // Credenziali solo dopo identità Odoo (se richiesta): provision è già avvenuto sopra.
     if (userResult.accountCreated && userResult.plainPassword) {
       try {
         await sendPwaMail(ctx, {

@@ -1,5 +1,10 @@
 import type { Request } from 'express'
-import { odooExecuteKw, isOdooConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import {
+  odooExecuteKw,
+  isOdooConfigured,
+  toAppError,
+  type OdooCallContext,
+} from '../../adapters/odoo/odooClient.js'
 import { env } from '../../config/env.js'
 import { prisma } from '../../lib/prisma.js'
 import { AppError } from '../../types/errors.js'
@@ -126,28 +131,35 @@ export const odooAdminService = {
     })
   },
 
-  listQuotations(
+  async listQuotations(
     query: z.infer<typeof odooAdminListQuerySchema>,
     req?: Request,
   ): Promise<OdooPaginatedDTO<OdooSaleDocumentDTO>> {
     if (!isOdooConfigured()) {
-      return Promise.resolve(emptyPage<OdooSaleDocumentDTO>(query))
+      return emptyPage<OdooSaleDocumentDTO>(query)
     }
-    return odooSalesService.listQuotations(adminCtx(req), query) as Promise<
-      OdooPaginatedDTO<OdooSaleDocumentDTO>
-    >
+    try {
+      return (await odooSalesService.listQuotations(adminCtx(req), query)) as OdooPaginatedDTO<OdooSaleDocumentDTO>
+    } catch (e) {
+      throw toAppError(e, req?.correlationId ?? 'admin-odoo-quotations')
+    }
   },
 
-  listOrders(
+  async listOrders(
     query: z.infer<typeof odooAdminListQuerySchema>,
     req?: Request,
   ): Promise<OdooPaginatedDTO<OdooSaleDocumentDTO>> {
     if (!isOdooConfigured()) {
-      return Promise.resolve(emptyPage<OdooSaleDocumentDTO>(query))
+      return emptyPage<OdooSaleDocumentDTO>(query)
     }
-    return odooSalesService.listConfirmedOrders(adminCtx(req), query) as Promise<
-      OdooPaginatedDTO<OdooSaleDocumentDTO>
-    >
+    try {
+      return (await odooSalesService.listConfirmedOrders(
+        adminCtx(req),
+        query,
+      )) as OdooPaginatedDTO<OdooSaleDocumentDTO>
+    } catch (e) {
+      throw toAppError(e, req?.correlationId ?? 'admin-odoo-orders')
+    }
   },
 
   async getQuotationDetail(
@@ -155,19 +167,25 @@ export const odooAdminService = {
     req?: Request,
   ): Promise<OdooQuotationDetailDTO | null> {
     if (!isOdooConfigured()) return null
-    return odooSalesService.getQuotationDetail(adminCtx(req), quotationId)
+    try {
+      return await odooSalesService.getQuotationDetail(adminCtx(req), quotationId)
+    } catch (e) {
+      throw toAppError(e, req?.correlationId ?? 'admin-odoo-quotation-detail')
+    }
   },
 
-  listPricelists(
+  async listPricelists(
     query: z.infer<typeof odooAdminPricelistQuerySchema>,
     req?: Request,
   ): Promise<OdooPaginatedDTO<OdooPricelistDTO>> {
     if (!isOdooConfigured()) {
-      return Promise.resolve(emptyPage<OdooPricelistDTO>(query))
+      return emptyPage<OdooPricelistDTO>(query)
     }
-    return odooSalesService.listPricelists(adminCtx(req), query) as Promise<
-      OdooPaginatedDTO<OdooPricelistDTO>
-    >
+    try {
+      return (await odooSalesService.listPricelists(adminCtx(req), query)) as OdooPaginatedDTO<OdooPricelistDTO>
+    } catch (e) {
+      throw toAppError(e, req?.correlationId ?? 'admin-odoo-pricelists')
+    }
   },
 
   async assignPricelist(
@@ -185,38 +203,43 @@ export const odooAdminService = {
     }
 
     const ctx = adminCtx(req)
-    const resolved = await odooSalesService.resolvePartnerIdForUserOrEmail(ctx, {
-      partnerId: body.partnerId,
-      email: body.email,
-      userId: body.userId,
-    })
-
-    const assignment = await odooSalesService.assignPricelistToPartner(
-      ctx,
-      resolved.partnerId,
-      body.pricelistId,
-    )
-
-    let localUserUpdated = false
-    if (body.userId) {
-      await prisma.user.update({
-        where: { id: body.userId },
-        data: { odooPricelistId: body.pricelistId },
+    try {
+      const resolved = await odooSalesService.resolvePartnerIdForUserOrEmail(ctx, {
+        partnerId: body.partnerId,
+        email: body.email,
+        userId: body.userId,
       })
-      localUserUpdated = true
-    } else if (resolved.userId) {
-      await prisma.user.update({
-        where: { id: resolved.userId },
-        data: { odooPricelistId: body.pricelistId },
-      })
-      localUserUpdated = true
-    }
 
-    return {
-      ...assignment,
-      userId: body.userId ?? resolved.userId ?? null,
-      email: resolved.email ?? body.email ?? null,
-      localUserUpdated,
+      const assignment = await odooSalesService.assignPricelistToPartner(
+        ctx,
+        resolved.partnerId,
+        body.pricelistId,
+      )
+
+      let localUserUpdated = false
+      if (body.userId) {
+        await prisma.customerSatellite.update({
+          where: { id: body.userId },
+          data: { odooPricelistId: body.pricelistId },
+        })
+        localUserUpdated = true
+      } else if (resolved.userId) {
+        await prisma.customerSatellite.update({
+          where: { id: resolved.userId },
+          data: { odooPricelistId: body.pricelistId },
+        })
+        localUserUpdated = true
+      }
+
+      return {
+        ...assignment,
+        userId: body.userId ?? resolved.userId ?? null,
+        email: resolved.email ?? body.email ?? null,
+        localUserUpdated,
+      }
+    } catch (e) {
+      if (e instanceof AppError) throw e
+      throw toAppError(e, req?.correlationId ?? 'admin-odoo-pricelist-assign')
     }
   },
 

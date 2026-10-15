@@ -126,6 +126,8 @@ export type OdooSyncOperationDTO =
 export type OdooSyncQueueItemDTO = {
   id: string
   pwaOrderId: string | null
+  odooPartnerId: number | null
+  /** @deprecated Preferire odooPartnerId; stringificato per display BO legacy. */
   userId: string | null
   operation: OdooSyncOperationDTO
   status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'EXHAUSTED'

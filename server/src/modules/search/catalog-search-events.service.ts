@@ -21,7 +21,7 @@ export type CatalogSearchEventDTO = {
   clickedPath: string | null
   clickedKind: string | null
   clickedLabel: string | null
-  userId: string | null
+  odooPartnerId: number | null
   sessionId: string | null
   createdAt: string
 }
@@ -38,7 +38,7 @@ function mapRow(row: {
   clickedPath: string | null
   clickedKind: string | null
   clickedLabel: string | null
-  userId: string | null
+  odooPartnerId: number | null
   sessionId: string | null
   createdAt: Date
 }): CatalogSearchEventDTO {
@@ -54,7 +54,7 @@ function mapRow(row: {
     clickedPath: row.clickedPath,
     clickedKind: row.clickedKind,
     clickedLabel: row.clickedLabel,
-    userId: row.userId,
+    odooPartnerId: row.odooPartnerId,
     sessionId: row.sessionId,
     createdAt: row.createdAt.toISOString(),
   }
@@ -78,7 +78,7 @@ export const catalogSearchEventsService = {
         clickedPath: body.clickedPath?.trim() || null,
         clickedKind: body.clickedKind ?? null,
         clickedLabel: body.clickedLabel?.trim() || null,
-        userId: req.sessionRecord?.userId ?? null,
+        odooPartnerId: req.sessionRecord?.odooPartnerId ?? null,
         sessionId: req.sessionRecord?.id ?? null,
         userAgent: req.headers['user-agent']?.slice(0, 500) ?? null,
       },

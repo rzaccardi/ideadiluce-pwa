@@ -310,21 +310,20 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
         aria-label={isCartPageDesktop ? t('nav.cart') : t('cart.floating.openMiniCart')}
         className={cn(
           ui.interactive,
-          cn(
-            ui.headerAction,
-            ui.headerActionBtn,
-            'relative lg:gap-1.5 lg:px-3 lg:py-1.5 lg:text-[13px]',
-            isCartPageDesktop && 'cursor-default border-idl-brass text-idl-brass',
-            isBouncing && !isCartPageDesktop && 'cart-bounce',
-          ),
+          ui.headerIconBtn,
+          ui.headerActionBtn,
+          'relative text-sm font-bold',
+          '2xl:size-auto 2xl:gap-1.5 2xl:px-3 2xl:py-1.5 2xl:text-[13px]',
+          isCartPageDesktop && 'cursor-default border-idl-brass text-idl-brass',
+          isBouncing && !isCartPageDesktop && 'cart-bounce',
         )}
       >
-        <CartIcon className="size-[17px] shrink-0 lg:size-4" />
-        <span className={ui.headerActionText}>{t('nav.cart')}</span>
+        <CartIcon className={ui.headerIcon} />
+        <span className="hidden 2xl:inline">{t('nav.cart')}</span>
         {itemCount > 0 ? (
           <span
             className={cn(
-              'absolute bottom-0 right-0 inline-flex min-h-[18px] min-w-[18px] translate-x-1/4 translate-y-1/4 items-center justify-center rounded-full bg-idl-amber px-1.5 text-[11px] font-bold text-white dark:text-idl-design lg:static lg:translate-x-0 lg:translate-y-0',
+              'absolute bottom-0 right-0 inline-flex min-h-[18px] min-w-[18px] translate-x-1/4 translate-y-1/4 items-center justify-center rounded-full bg-idl-amber px-1.5 text-[11px] font-bold text-white dark:text-idl-design 2xl:static 2xl:translate-x-0 2xl:translate-y-0',
               badgePop && 'cart-badge-pop',
             )}
           >

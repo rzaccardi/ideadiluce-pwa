@@ -139,7 +139,10 @@ async function listOdooOrdersForUser(
 ): Promise<OrderDTO[]> {
   if (!isOdooLiveConfigured()) return []
 
-  const map = await prisma.odooCustomerMap.findUnique({ where: { userId } })
+  const satellite = await prisma.customerSatellite.findUnique({ where: { id: userId }, select: { odooPartnerId: true, email: true } })
+  const map = satellite
+    ? await prisma.odooCustomerMap.findUnique({ where: { odooPartnerId: satellite.odooPartnerId } })
+    : null
 
   if (isOdooApiV2Configured()) {
     if (!map) return []
@@ -154,7 +157,7 @@ async function listOdooOrdersForUser(
 
   if (!isOdooConfigured()) return []
 
-  const user = await prisma.user.findUnique({
+  const user = await prisma.customerSatellite.findUnique({
     where: { id: userId },
     select: { email: true },
   })
@@ -237,11 +240,22 @@ async function resolveOrderLines(order: OrderDTO, correlationId: string): Promis
   return []
 }
 
+
+async function partnerIdFromUserId(userId: string): Promise<number | null> {
+  const row = await prisma.customerSatellite.findUnique({
+    where: { id: userId },
+    select: { odooPartnerId: true },
+  })
+  return row?.odooPartnerId ?? null
+}
+
 async function findOwnedPwaOrder(userId: string, id: string) {
+  const odooPartnerId = await partnerIdFromUserId(userId)
+  if (odooPartnerId == null) return null
   if (isOdooOrderPublicName(id)) {
     const byName = await prisma.pwaOrder.findFirst({
       where: {
-        userId,
+        odooPartnerId,
         odooSaleOrderName: { equals: id.trim(), mode: 'insensitive' },
         orderStatus: { in: ACCOUNT_VISIBLE_PWA_ORDER_STATUSES },
       },
@@ -252,7 +266,7 @@ async function findOwnedPwaOrder(userId: string, id: string) {
   return prisma.pwaOrder.findFirst({
     where: {
       id: pwaId,
-      userId,
+      odooPartnerId,
       orderStatus: { in: ACCOUNT_VISIBLE_PWA_ORDER_STATUSES },
     },
   })
@@ -264,8 +278,12 @@ function normalizePwaOrderId(id: string) {
 
 async function findAccessiblePwaOrder(req: Request, userId: string, id: string) {
   const sessionId = req.sessionRecord?.id
+  const odooPartnerId = await partnerIdFromUserId(userId)
   const access = {
-    OR: [{ userId }, ...(sessionId ? [{ sessionId }] : [])],
+    OR: [
+      ...(odooPartnerId != null ? [{ odooPartnerId }] : []),
+      ...(sessionId ? [{ sessionId }] : []),
+    ],
   }
   if (isOdooOrderPublicName(id)) {
     const byName = await prisma.pwaOrder.findFirst({
@@ -287,24 +305,29 @@ async function findAccessiblePwaOrder(req: Request, userId: string, id: string) 
 
 export const ordersService = {
   async list(userId: string, correlationId = 'orders-list', sessionId?: string | null): Promise<OrderDTO[]> {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.customerSatellite.findUnique({
       where: { id: userId },
       select: { email: true },
     })
     const emailLower = user?.email.toLowerCase().trim()
 
-    if (emailLower) {
-      await linkOrdersToUser({ userId, email: emailLower, sessionId })
+    const partnerId = await partnerIdFromUserId(userId)
+    if (emailLower && partnerId != null) {
+      await linkOrdersToUser({ odooPartnerId: partnerId, email: emailLower, sessionId })
     }
 
-    const rows = await ordersRepository.listByUser(userId)
+    const rows =
+      partnerId != null ? await ordersRepository.listByUser(partnerId) : []
     const fromCache = rows.map(mapRow)
 
-    const pwaOrders = await prisma.pwaOrder.findMany({
-      where: buildAccountPwaOrderWhere(userId, emailLower),
-      orderBy: { paidAt: 'desc' },
-      take: 50,
-    })
+    const pwaOrders =
+      partnerId != null
+        ? await prisma.pwaOrder.findMany({
+            where: buildAccountPwaOrderWhere(partnerId, emailLower),
+            orderBy: { paidAt: 'desc' },
+            take: 50,
+          })
+        : []
 
     mergePwaOrdersIntoList(fromCache, pwaOrders)
 
@@ -344,7 +367,9 @@ export const ordersService = {
       }
     }
 
-    const row = await ordersRepository.findForUser(userId, id)
+    const partnerForCache = await partnerIdFromUserId(userId)
+    const row =
+      partnerForCache != null ? await ordersRepository.findForUser(partnerForCache, id) : null
     if (row) {
       const base = mapRow(row)
       if (base.pwaOrderId) {
@@ -419,7 +444,12 @@ export const ordersService = {
         po = await prisma.pwaOrder.findFirst({
           where: {
             odooSaleOrderId,
-            OR: [{ userId }, ...(req.sessionRecord?.id ? [{ sessionId: req.sessionRecord.id }] : [])],
+            OR: [
+              ...((await partnerIdFromUserId(userId)) != null
+                ? [{ odooPartnerId: (await partnerIdFromUserId(userId))! }]
+                : []),
+              ...(req.sessionRecord?.id ? [{ sessionId: req.sessionRecord.id }] : []),
+            ],
           },
         })
       }

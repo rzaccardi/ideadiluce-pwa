@@ -4,11 +4,17 @@ import { bumpCartReservation } from '../cart/cart.reservation.js'
 import { env } from '../../config/env.js'
 import { AppError } from '../../types/errors.js'
 import type { UserDTO } from '../../types/dto.js'
-import type { CustomerSegment, User } from '@prisma/client'
+import type { CustomerSatellite, CustomerSegment } from '@prisma/client'
 import { authRepository } from './auth.repository.js'
 import { generateSessionToken, hashSessionToken } from '../../lib/token-hash.js'
 import { toUserDTO } from '../users/user.mapper.js'
-import { loginWithOdooCredentials } from './odoo-account-sync.service.js'
+import {
+  assertOdooAuthReadyForIdentity,
+  isOdooAuthIdentityRequired,
+  loginWithOdooCredentials,
+  provisionOdooAuthIdentity,
+} from './odoo-account-sync.service.js'
+import { ensureSatelliteProjection } from './satellite-projection.service.js'
 import { hydrateUserBusinessFromOdoo } from '../users/users-odoo-business-hydrate.js'
 import { linkOrdersToUser } from '../orders/orders-user-link.service.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
@@ -25,15 +31,15 @@ export { sessionExpiry }
 
 const AUTH_MERGE_TRANSACTION = { timeout: 15_000 } as const
 
-/** Unisce il carrello guest della sessione corrente con eventuali carrelli ACTIVE già salvati sull'utente. */
-export async function mergeCartsForUser(sessionId: string, userId: string) {
+/** Unisce il carrello guest della sessione corrente con eventuali carrelli ACTIVE del partner. */
+export async function mergeCartsForUser(sessionId: string, odooPartnerId: number) {
   await prisma.cart.updateMany({
-    where: { sessionId, userId: null, status: 'ACTIVE' },
-    data: { userId },
+    where: { sessionId, odooPartnerId: null, status: 'ACTIVE' },
+    data: { odooPartnerId },
   })
 
   const carts = await prisma.cart.findMany({
-    where: { status: 'ACTIVE', userId },
+    where: { status: 'ACTIVE', odooPartnerId },
     include: { items: true },
     orderBy: { createdAt: 'asc' },
   })
@@ -86,10 +92,10 @@ export async function mergeCartsForUser(sessionId: string, userId: string) {
   await bumpCartReservation(primary.id, merged.size > 0)
 }
 
-/** Al logout: il carrello dell'utente resta sulla nuova sessione guest (stesso id, senza userId). */
-async function detachUserCartToGuestSession(userId: string, guestSessionId: string) {
+/** Al logout: il carrello resta sulla nuova sessione guest (stesso id, senza odooPartnerId). */
+async function detachPartnerCartToGuestSession(odooPartnerId: number, guestSessionId: string) {
   const cart = await prisma.cart.findFirst({
-    where: { userId, status: 'ACTIVE' },
+    where: { odooPartnerId, status: 'ACTIVE' },
     select: { id: true },
   })
   if (!cart) return
@@ -98,26 +104,28 @@ async function detachUserCartToGuestSession(userId: string, guestSessionId: stri
     where: { id: cart.id },
     data: {
       sessionId: guestSessionId,
-      userId: null,
+      odooPartnerId: null,
     },
   })
 }
 
-async function mergeOrdersForUser(sessionId: string, userId: string, email: string) {
-  await linkOrdersToUser({ userId, email, sessionId })
+async function mergeOrdersForPartner(sessionId: string, odooPartnerId: number, email: string) {
+  await linkOrdersToUser({ odooPartnerId, email, sessionId })
 }
 
-async function mergeWishlistForUser(sessionId: string, userId: string) {
+async function mergeWishlistForPartner(sessionId: string, odooPartnerId: number) {
   const sessionItems = await prisma.wishlistItem.findMany({ where: { sessionId } })
   if (sessionItems.length === 0) return
 
-  const userItems = await prisma.wishlistItem.findMany({
-    where: { userId },
+  const partnerItems = await prisma.wishlistItem.findMany({
+    where: { odooPartnerId },
     select: { productRef: true, variantRef: true },
   })
-  const userKeys = new Set(userItems.map((item) => cartLineKey(item.productRef, item.variantRef)))
+  const partnerKeys = new Set(
+    partnerItems.map((item) => cartLineKey(item.productRef, item.variantRef)),
+  )
   const toCreate = sessionItems.filter(
-    (item) => !userKeys.has(cartLineKey(item.productRef, item.variantRef)),
+    (item) => !partnerKeys.has(cartLineKey(item.productRef, item.variantRef)),
   )
 
   await prisma.$transaction(
@@ -125,7 +133,7 @@ async function mergeWishlistForUser(sessionId: string, userId: string) {
       if (toCreate.length > 0) {
         await tx.wishlistItem.createMany({
           data: toCreate.map((item) => ({
-            userId,
+            odooPartnerId,
             productRef: item.productRef,
             variantRef: item.variantRef,
           })),
@@ -138,6 +146,38 @@ async function mergeWishlistForUser(sessionId: string, userId: string) {
 }
 
 export const authService = {
+  /**
+   * Dopo auth/provision Odoo: collega sessione all'identità Odoo + hub satellite FK.
+   * Non risolve mai identità per email.
+   */
+  async establishLoggedInSession(params: {
+    user: CustomerSatellite
+    sessionId: string
+    odooPartnerId?: number | null
+    odooUid?: number | null
+  }): Promise<UserDTO> {
+    const { user, sessionId, odooUid } = params
+    const partnerId = params.odooPartnerId ?? user.odooPartnerId
+    if (partnerId == null) {
+      throw new AppError(
+        'INVALID_CREDENTIALS',
+        'Missing odooPartnerId on satellite',
+        'Account non collegato a Odoo.',
+        401,
+        false,
+      )
+    }
+    await authRepository.linkSessionToIdentity(sessionId, {
+      odooPartnerId: partnerId,
+      odooUid: odooUid ?? null,
+      expiresAt: sessionExpiry(),
+    })
+    await mergeCartsForUser(sessionId, partnerId)
+    await mergeWishlistForPartner(sessionId, partnerId)
+    await mergeOrdersForPartner(sessionId, partnerId, user.email)
+    return toUserDTO(user)
+  },
+
   async register(
     input: {
       email: string
@@ -152,17 +192,6 @@ export const authService = {
     sessionId: string,
     correlationId?: string,
   ): Promise<UserDTO> {
-    const existing = await authRepository.findUserByEmail(input.email)
-    if (existing) {
-      throw new AppError(
-        'EMAIL_TAKEN',
-        'Email already registered',
-        'Questa email è già in uso.',
-        409,
-        false,
-      )
-    }
-    const passwordHash = bcrypt.hashSync(input.password, 10)
     const segment: CustomerSegment =
       input.customerSegment === 'business' ? 'BUSINESS' : 'RETAIL'
     if (segment === 'BUSINESS') {
@@ -176,31 +205,90 @@ export const authService = {
         )
       }
     }
-    const user = await authRepository.createUser({
-      email: input.email,
-      passwordHash,
-      firstName: input.firstName,
-      lastName: input.lastName,
-      phone: input.phone,
-      customerSegment: segment,
-      companyName: segment === 'BUSINESS' ? input.companyName : undefined,
-      vatNumber: segment === 'BUSINESS' ? input.vatNumber : undefined,
-    })
-    await authRepository.linkSessionToUser(sessionId, user.id, sessionExpiry())
-    await mergeCartsForUser(sessionId, user.id)
-    await mergeWishlistForUser(sessionId, user.id)
-    await mergeOrdersForUser(sessionId, user.id, user.email)
-    const fresh = await prisma.user.findUniqueOrThrow({ where: { id: user.id } })
 
-    const mailCtx = { correlationId: correlationId ?? `register:${user.id}` }
-    const firstNameSuffix = fresh.firstName?.trim() ? ` ${fresh.firstName.trim()}` : ''
+    assertOdooAuthReadyForIdentity()
+    const mailCtx = { correlationId: correlationId ?? `register:${input.email}` }
+    const odooRequired = isOdooAuthIdentityRequired()
+
+    // Con Odoo: EMAIL_TAKEN solo da portal (provision). Mai findUserByEmail come autorità.
+    if (!odooRequired) {
+      const existing = await authRepository.findSatelliteByEmail(input.email)
+      if (existing) {
+        throw new AppError(
+          'EMAIL_TAKEN',
+          'Email already registered',
+          'Questa email è già in uso.',
+          409,
+          false,
+        )
+      }
+    }
+
+    let odooPartnerId: number | null = null
+    let odooUid: number | null = null
+    if (odooRequired) {
+      const odoo = await provisionOdooAuthIdentity(mailCtx, {
+        email: input.email,
+        password: input.password,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        phone: input.phone,
+        business:
+          segment === 'BUSINESS'
+            ? {
+                companyName: input.companyName,
+                vatNumber: input.vatNumber,
+                isCompany: true,
+              }
+            : undefined,
+      })
+      odooPartnerId = odoo.odooPartnerId
+      odooUid = odoo.odooUserId
+    }
+
+    let user: CustomerSatellite
+    if (odooPartnerId) {
+      user = await ensureSatelliteProjection({
+        odooPartnerId,
+        email: input.email,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        phone: input.phone,
+        customerSegment: segment,
+        companyName: segment === 'BUSINESS' ? input.companyName : undefined,
+        vatNumber: segment === 'BUSINESS' ? input.vatNumber : undefined,
+        clearLocalPassword: true,
+      })
+    } else {
+      // Path locale (ODOO_ENABLED=false / XML-RPC assente): satellite con password solo per dev.
+      const passwordHash = bcrypt.hashSync(input.password, 10)
+      user = await authRepository.createUser({
+        email: input.email,
+        passwordHash,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        phone: input.phone,
+        customerSegment: segment,
+        companyName: segment === 'BUSINESS' ? input.companyName : undefined,
+        vatNumber: segment === 'BUSINESS' ? input.vatNumber : undefined,
+      })
+    }
+
+    const dto = await this.establishLoggedInSession({
+      user,
+      sessionId,
+      odooPartnerId,
+      odooUid,
+    })
+
+    const firstNameSuffix = user.firstName?.trim() ? ` ${user.firstName.trim()}` : ''
     try {
       await sendPwaMail(mailCtx, {
         templateKey: 'account_welcome',
-        emailTo: fresh.email,
+        emailTo: user.email,
         vars: {
           first_name_suffix: firstNameSuffix,
-          email: fresh.email,
+          email: user.email,
           login_url: publicAppUrl('/login'),
         },
       })
@@ -209,15 +297,18 @@ export const authService = {
           templateKey: 'business_registration_admin',
           emailTo: PWA_ADMIN_MAIL_TO,
           vars: {
-            customer_email: fresh.email,
+            customer_email: user.email,
             body_text: [
               `Nuova registrazione azienda da /register`,
-              `Email: ${fresh.email}`,
-              `Nome: ${[fresh.firstName, fresh.lastName].filter(Boolean).join(' ') || '-'}`,
-              `Telefono: ${fresh.phone ?? '-'}`,
-              `Ragione sociale: ${fresh.companyName ?? '-'}`,
-              `P.IVA: ${fresh.vatNumber ?? '-'}`,
-            ].join('\n'),
+              `Email: ${user.email}`,
+              `Nome: ${[user.firstName, user.lastName].filter(Boolean).join(' ') || '-'}`,
+              `Telefono: ${user.phone ?? '-'}`,
+              `Ragione sociale: ${user.companyName ?? '-'}`,
+              `P.IVA: ${user.vatNumber ?? '-'}`,
+              odooPartnerId ? `Partner Odoo: #${odooPartnerId}` : null,
+            ]
+              .filter(Boolean)
+              .join('\n'),
           },
         })
       }
@@ -225,11 +316,12 @@ export const authService = {
       logger.warn('auth.register.welcome_mail_failed', {
         correlationId: mailCtx.correlationId,
         userId: user.id,
+        odooPartnerId,
         error: e instanceof Error ? e.message : String(e),
       })
     }
 
-    return await toUserDTO(fresh)
+    return dto
   },
 
   async login(
@@ -237,32 +329,40 @@ export const authService = {
     sessionId: string,
     correlationId?: string,
   ): Promise<UserDTO> {
-    const user = await authRepository.findUserByEmail(input.email)
-    if (user?.passwordHash) {
-      const ok = bcrypt.compareSync(input.password, user.passwordHash)
-      if (ok) {
-        await authRepository.linkSessionToUser(sessionId, user.id, sessionExpiry())
-        await mergeCartsForUser(sessionId, user.id)
-        await mergeWishlistForUser(sessionId, user.id)
-        await mergeOrdersForUser(sessionId, user.id, user.email)
-        const fresh = await prisma.user.findUniqueOrThrow({ where: { id: user.id } })
-        const hydrated = await hydrateUserBusinessFromOdoo(
-          fresh,
-          correlationId ? { correlationId } : { correlationId: `login:${user.id}` },
-        )
-        return await toUserDTO(hydrated)
-      }
-    }
+    const ctxCorrelationId = correlationId ?? `login:${input.email.toLowerCase().trim()}`
 
-    // Fallback Odoo anche con API v2: utenti legacy (es. QA) possono avere solo credenziali portal.
-    if (correlationId && env.ODOO_ENABLED) {
+    // Odoo-first: se Odoo è richiesto, SOLO portal. Nessun fallback bcrypt / find locale.
+    if (isOdooAuthIdentityRequired()) {
       const odooUser = await loginWithOdooCredentials(
-        { correlationId },
+        { correlationId: ctxCorrelationId },
         input.email,
         input.password,
         sessionId,
       )
       if (odooUser) return odooUser
+      throw new AppError(
+        'INVALID_CREDENTIALS',
+        'Invalid login',
+        'Email o password non corretti.',
+        401,
+        false,
+      )
+    }
+
+    // Path degradato: ODOO_ENABLED=false → bcrypt locale (solo satellite/dev).
+    const user = await authRepository.findSatelliteByEmail(input.email)
+    if (user?.passwordHash) {
+      const ok = bcrypt.compareSync(input.password, user.passwordHash)
+      if (ok) {
+        const hydrated = await hydrateUserBusinessFromOdoo(user, {
+          correlationId: ctxCorrelationId,
+        })
+        return this.establishLoggedInSession({
+          user: hydrated,
+          sessionId,
+          odooPartnerId: hydrated.odooPartnerId,
+        })
+      }
     }
 
     throw new AppError(
@@ -274,9 +374,17 @@ export const authService = {
     )
   },
 
-  async loginByVerifiedEmail(email: string, sessionId: string): Promise<UserDTO> {
-    const user = await authRepository.findUserByEmail(email)
-    if (!user?.passwordHash) {
+  /**
+   * Stabilisce sessione dopo che Odoo ha già verificato l'identità (checkout register, ecc.).
+   * Non autentica: richiede proiezione satellite già presente.
+   */
+  async loginByVerifiedEmail(
+    email: string,
+    sessionId: string,
+    odoo?: { odooPartnerId?: number | null; odooUid?: number | null },
+  ): Promise<UserDTO> {
+    const user = await authRepository.findSatelliteByEmail(email)
+    if (!user) {
       throw new AppError(
         'INVALID_CREDENTIALS',
         'Invalid login',
@@ -285,23 +393,35 @@ export const authService = {
         false,
       )
     }
-    await authRepository.linkSessionToUser(sessionId, user.id, sessionExpiry())
-    await mergeCartsForUser(sessionId, user.id)
-    await mergeWishlistForUser(sessionId, user.id)
-    await mergeOrdersForUser(sessionId, user.id, user.email)
-    const fresh = await prisma.user.findUniqueOrThrow({ where: { id: user.id } })
-    const hydrated = await hydrateUserBusinessFromOdoo(fresh, { correlationId: `login:${user.id}` })
-    return await toUserDTO(hydrated)
+    if (isOdooAuthIdentityRequired() && !user.odooPartnerId && !odoo?.odooPartnerId) {
+      throw new AppError(
+        'INVALID_CREDENTIALS',
+        'No Odoo identity on satellite',
+        'Account non collegato a Odoo. Accedi con le credenziali del portale.',
+        401,
+        false,
+      )
+    }
+    const fresh = await prisma.customerSatellite.findUniqueOrThrow({ where: { id: user.id } })
+    const hydrated = await hydrateUserBusinessFromOdoo(fresh, {
+      correlationId: `login:${user.id}`,
+    })
+    return this.establishLoggedInSession({
+      user: hydrated,
+      sessionId,
+      odooPartnerId: odoo?.odooPartnerId ?? hydrated.odooPartnerId,
+      odooUid: odoo?.odooUid ?? null,
+    })
   },
 
   async logout(sessionId: string | undefined, rawToken: string | null | undefined) {
-    let userId: string | null = null
+    let odooPartnerId: number | null = null
     if (sessionId) {
       const session = await prisma.session.findUnique({
         where: { id: sessionId },
-        select: { userId: true },
+        select: { odooPartnerId: true },
       })
-      userId = session?.userId ?? null
+      odooPartnerId = session?.odooPartnerId ?? null
     }
 
     if (rawToken) {
@@ -311,13 +431,13 @@ export const authService = {
     }
 
     const guest = await this.issueNewGuestSession()
-    if (userId) {
-      await detachUserCartToGuestSession(userId, guest.sessionId)
+    if (odooPartnerId != null) {
+      await detachPartnerCartToGuestSession(odooPartnerId, guest.sessionId)
     }
     return guest
   },
 
-  async me(user: User, ctx?: OdooCallContext): Promise<UserDTO> {
+  async me(user: CustomerSatellite, ctx?: OdooCallContext): Promise<UserDTO> {
     const hydrated = await hydrateUserBusinessFromOdoo(user, ctx)
     return toUserDTO(hydrated)
   },

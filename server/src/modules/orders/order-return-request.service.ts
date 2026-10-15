@@ -6,6 +6,7 @@ import { logger } from '../../lib/logger.js'
 import { parseHubLocale } from '../../lib/hub-locale.js'
 import { AppError } from '../../types/errors.js'
 import { sendPwaMail, PWA_ADMIN_MAIL_TO } from '../../adapters/odoo/odooMailAdapter.js'
+import { resolveOdooPartnerId } from '../../lib/satellite-lookup.js'
 import {
   buildAdminReturnRequestEmail,
   buildCustomerReturnRequestEmail,
@@ -28,8 +29,9 @@ function customerDisplayName(user: { firstName: string | null; lastName: string 
 export const orderReturnRequestService = {
   async attachToOrders(userId: string, orders: OrderDTO[]): Promise<OrderDTO[]> {
     if (orders.length === 0) return orders
+    const odooPartnerId = await resolveOdooPartnerId(userId)
     const rows = await prisma.orderReturnRequest.findMany({
-      where: { userId, orderId: { in: orders.map((order) => order.id) } },
+      where: { odooPartnerId, orderId: { in: orders.map((order) => order.id) } },
       select: { id: true, orderId: true, createdAt: true, status: true },
     })
     const byOrderId = new Map(rows.map((row) => [row.orderId, toDto(row)]))
@@ -45,16 +47,18 @@ export const orderReturnRequestService = {
     notes?: string
     locale?: string
   }): Promise<OrderReturnRequestResultDTO> {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.customerSatellite.findUnique({
       where: { id: input.userId },
-      select: { email: true, firstName: true, lastName: true },
+      select: { email: true, firstName: true, lastName: true, odooPartnerId: true },
     })
     if (!user) {
       throw new AppError('UNAUTHORIZED', 'User not found', 'Sessione non valida.', 401, false)
     }
 
     const existing = await prisma.orderReturnRequest.findUnique({
-      where: { userId_orderId: { userId: input.userId, orderId: input.order.id } },
+      where: {
+        odooPartnerId_orderId: { odooPartnerId: user.odooPartnerId, orderId: input.order.id },
+      },
     })
     if (existing) {
       return { ...toDto(existing), alreadyRequested: true }
@@ -78,7 +82,7 @@ export const orderReturnRequestService = {
     try {
       row = await prisma.orderReturnRequest.create({
         data: {
-          userId: input.userId,
+          odooPartnerId: user.odooPartnerId,
           orderId: input.order.id,
           pwaOrderId: input.order.pwaOrderId,
           odooSaleOrderId: input.order.odooSaleOrderId,
@@ -90,7 +94,12 @@ export const orderReturnRequestService = {
     } catch (err) {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
         const existingAfterConflict = await prisma.orderReturnRequest.findUnique({
-          where: { userId_orderId: { userId: input.userId, orderId: input.order.id } },
+          where: {
+            odooPartnerId_orderId: {
+              odooPartnerId: user.odooPartnerId,
+              orderId: input.order.id,
+            },
+          },
         })
         if (existingAfterConflict) {
           return { ...toDto(existingAfterConflict), alreadyRequested: true }
@@ -114,7 +123,7 @@ export const orderReturnRequestService = {
     logger.info('orders.return_request', {
       id: row.id,
       orderId: input.order.id,
-      userId: input.userId,
+      odooPartnerId: user.odooPartnerId,
       email: user.email,
     })
 
@@ -161,7 +170,7 @@ export const orderReturnRequestService = {
     const notification = customerNotificationCopy(locale)
     await prisma.userNotification.create({
       data: {
-        userId: input.userId,
+        odooPartnerId: user.odooPartnerId,
         type: 'return_requested',
         title: notification.title,
         body: notification.body,

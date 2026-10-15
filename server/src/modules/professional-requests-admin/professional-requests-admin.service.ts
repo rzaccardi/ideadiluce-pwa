@@ -45,12 +45,11 @@ function toDetail(row: NonNullable<Awaited<ReturnType<typeof professionalAccount
     ...toListItem(row),
     message: row.message,
     sectorOther: row.sectorOther,
-    userId: row.userId,
+    odooPartnerId: row.odooPartnerId,
     country: row.country,
     pec: row.pec,
     sdiCode: row.sdiCode,
     visuraUrl: row.visuraUrl,
-    odooPartnerId: row.odooPartnerId,
     vatValidated: row.vatValidated,
     vatForceAccepted: row.vatForceAccepted,
     odooSyncError: row.odooSyncError,
@@ -59,10 +58,10 @@ function toDetail(row: NonNullable<Awaited<ReturnType<typeof professionalAccount
   }
 }
 
-async function applyApprovalEffects(userId: string | null) {
-  if (!userId) return
-  await prisma.user.update({
-    where: { id: userId },
+async function applyApprovalEffects(odooPartnerId: number | null) {
+  if (odooPartnerId == null) return
+  await prisma.customerSatellite.update({
+    where: { odooPartnerId },
     data: {
       customerSegment: 'PROFESSIONAL',
       isProfessional: true,
@@ -152,7 +151,7 @@ export const professionalRequestsAdminService = {
     })
 
     if (input.status === 'APPROVED' && normalizeProfessionalRequestStatus(existing.status) !== 'APPROVED') {
-      await applyApprovalEffects(row.userId)
+      await applyApprovalEffects(row.odooPartnerId)
     }
 
     return toDetail(row)

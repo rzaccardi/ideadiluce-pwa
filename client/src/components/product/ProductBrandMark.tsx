@@ -1,5 +1,5 @@
 import type { ProductBrandDTO } from '@/types/dto'
-import { BrandCatalogLogo } from '@/components/site/brand/BrandCatalogLogo'
+import { BrandLogoImage } from '@/components/site/brand/BrandLogoImage'
 import { resolveBrandLogo } from '@/lib/brand-logo'
 import { cn } from '@/utils/cn'
 
@@ -29,15 +29,21 @@ const NAME_CLASS: Record<Size, string> = {
   lg: 'text-xs tracking-[0.12em]',
 }
 
-const DARK_NAME_CLASS: Record<Size, string> = {
-  xs: 'text-[11px]',
-  sm: 'text-xs',
-  md: 'text-[13px]',
-  lg: 'text-sm',
+function resolveAny(
+  mode: 'light' | 'dark',
+  brand?: ProductBrandDTO | null,
+  fallbackLabel?: string | null,
+) {
+  return (
+    resolveBrandLogo(brand?.slug, mode) ??
+    resolveBrandLogo(brand?.name, mode) ??
+    resolveBrandLogo(fallbackLabel, mode)
+  )
 }
 
 /**
- * Logo brand da `/brands/{slug}.jpg`, con fallback al nome.
+ * Logo brand da overlay BO (light/dark) o fallback `/brands/{slug}.jpg`.
+ * Con logo: stessa immagine (o dark dedicato) anche in dark mode — niente nome testuale.
  */
 export function ProductBrandMark({
   brand,
@@ -46,32 +52,38 @@ export function ProductBrandMark({
   className,
   showNameFallback = true,
 }: Props) {
-  const logo =
-    resolveBrandLogo(brand?.slug) ??
-    resolveBrandLogo(brand?.name) ??
-    resolveBrandLogo(fallbackLabel)
+  const light = resolveAny('light', brand, fallbackLabel)
+  const dark = resolveAny('dark', brand, fallbackLabel)
   const label = brand?.name?.trim() || fallbackLabel?.trim() || null
+  const h = HEIGHT[size]
 
-  if (logo) {
-    const h = HEIGHT[size]
+  // Stesso asset light/dark (es. JPG statico): un solo img, nessuna swap.
+  if (light && dark && light.src === dark.src) {
     return (
       <span className={cn('inline-flex max-w-full items-center justify-start', className)}>
-        <BrandCatalogLogo
-          src={logo.src}
-          alt={label ?? ''}
-          height={h}
-          content={logo.content}
-          className="dark:hidden"
-        />
-        {label ? (
-          <span
-            className={cn(
-              'hidden font-sans font-medium tracking-normal text-idl-ink normal-case dark:inline',
-              DARK_NAME_CLASS[size],
-            )}
-          >
-            {label}
-          </span>
+        <BrandLogoImage logo={light} alt={label ?? ''} height={h} />
+      </span>
+    )
+  }
+
+  if (light || dark) {
+    return (
+      <span className={cn('inline-flex max-w-full items-center justify-start', className)}>
+        {light ? (
+          <BrandLogoImage
+            logo={light}
+            alt={label ?? ''}
+            height={h}
+            className={dark && dark.src !== light.src ? 'dark:hidden' : undefined}
+          />
+        ) : null}
+        {dark && (!light || dark.src !== light.src) ? (
+          <BrandLogoImage
+            logo={dark}
+            alt={label ?? ''}
+            height={h}
+            className={light ? 'hidden dark:inline-flex' : undefined}
+          />
         ) : null}
       </span>
     )

@@ -315,8 +315,14 @@ export const api = {
       return apiClient.get<{
         categories: import('@/types/dto').CategoryDTO[]
         brands: import('@/types/site-content').BrandListItemDTO[]
+        brandLogos?: Record<string, { lightUrl: string | null; darkUrl: string | null }>
         cms: import('@/types/site-content').CatalogPageContent
       }>(`/api/v1/catalog/bootstrap${search}`)
+    },
+    brandLogos() {
+      return apiClient.get<{
+        logos: Record<string, { lightUrl: string | null; darkUrl: string | null }>
+      }>('/api/v1/catalog/brand-logos')
     },
     categories(locale?: string) {
       const search = locale ? `?locale=${encodeURIComponent(locale)}` : ''

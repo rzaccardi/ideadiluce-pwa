@@ -7,6 +7,9 @@ const FIELD_LABELS: Record<string, string> = {
   intro: 'Introduzione',
   label: 'Etichetta',
   href: 'Link (href)',
+  filterKind: 'Tipo filtro Odoo',
+  filterValue: 'Valore filtro Odoo',
+  filterWorld: 'Mondo catalogo',
   ctaLabel: 'Testo CTA',
   ctaHref: 'Link CTA',
   linkLabel: 'Testo link',
@@ -136,6 +139,9 @@ const TECHNICAL_KEYS = new Set([
   'searchQuery',
   'defaultQuery',
   'noindex',
+  'filterKind',
+  'filterValue',
+  'filterWorld',
 ])
 
 export function fieldLabel(key: string, index?: number) {

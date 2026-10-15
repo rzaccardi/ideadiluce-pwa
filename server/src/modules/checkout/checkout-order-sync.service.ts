@@ -217,7 +217,7 @@ export async function syncCheckoutDraftOrder(
     const stub = await prisma.pwaOrder.create({
       data: {
         cartId: cart.id,
-        userId: s.userId ?? null,
+        odooPartnerId: s.odooPartnerId ?? null,
         sessionId: s.id,
         email: input.email,
         orderStatus: options?.orderStatus ?? 'DRAFT',
@@ -246,18 +246,16 @@ export async function syncCheckoutDraftOrder(
         billingAddress: input.billingAddress,
       })
       odooPartnerId = partner.odooPartnerId
-      if (s.userId) {
+      if (odooPartnerId != null) {
         await prisma.odooCustomerMap.upsert({
-          where: { userId: s.userId },
+          where: { odooPartnerId },
           create: {
-            userId: s.userId,
             odooPartnerId,
             syncStatus: 'SYNCED',
             lastSyncAt: new Date(),
             guestEmail: input.email.toLowerCase().trim(),
           },
           update: {
-            odooPartnerId,
             syncStatus: 'SYNCED',
             lastSyncAt: new Date(),
             guestEmail: input.email.toLowerCase().trim(),
@@ -362,8 +360,7 @@ export async function syncCheckoutDraftOrder(
             cartId: cart.id,
             email: input.email,
             state: 'COMMITTED',
-            userId: s.userId ?? undefined,
-            odooPartnerId,
+            odooPartnerId: odooPartnerId ?? s.odooPartnerId ?? undefined,
             odooSaleOrderId,
             shippingMethodRef: shippingSel?.methodRef ?? null,
             billingAddressJson: input.billingAddress as object,
@@ -380,7 +377,7 @@ export async function syncCheckoutDraftOrder(
     options?.orderStatus ??
     (lockPrices ? 'CHECKOUT_LOCKED' : orderRow.orderStatus ?? 'DRAFT')
 
-  const createAccount = Boolean(input.createAccount) && !s.userId
+  const createAccount = Boolean(input.createAccount) && !s.odooPartnerId
   const metadataJson = jsonValue({
     ...((orderRow.metadataJson as Record<string, unknown> | null) ?? {}),
     createAccount,
@@ -396,7 +393,7 @@ export async function syncCheckoutDraftOrder(
     data: {
       cartId: cart.id,
       checkoutSessionId: checkoutSession.id,
-      userId: s.userId ?? null,
+      odooPartnerId: odooPartnerId ?? s.odooPartnerId ?? null,
       sessionId: s.id,
       email: input.email,
       orderStatus,
@@ -411,7 +408,6 @@ export async function syncCheckoutDraftOrder(
       courierNotes: input.courierNotes?.trim() || orderRow.courierNotes || null,
       fiscalJson: jsonValue(fiscalPayload),
       linesSnapshotJson: linesSnapshot ? jsonValue(linesSnapshot) : orderRow.linesSnapshotJson ?? undefined,
-      odooPartnerId,
       odooSaleOrderId,
       checkoutStartedAt: orderRow.checkoutStartedAt ?? new Date(),
       metadataJson,
@@ -460,7 +456,7 @@ export async function loadActiveCart(req: Request) {
   const cart = await prisma.cart.findFirst({
     where: {
       status: 'ACTIVE',
-      OR: [{ sessionId: s.id }, ...(s.userId ? [{ userId: s.userId }] : [])],
+      OR: [{ sessionId: s.id }, ...(s.odooPartnerId ? [{ odooPartnerId: s.odooPartnerId }] : [])],
     },
     include: { items: true, shippingSelection: true },
     orderBy: { updatedAt: 'desc' },
@@ -489,7 +485,7 @@ export async function assertOrderAccess(req: Request, orderId: string) {
   const order = await prisma.pwaOrder.findFirst({
     where: {
       id: orderId,
-      OR: [{ sessionId: s.id }, ...(s.userId ? [{ userId: s.userId }] : [])],
+      OR: [{ sessionId: s.id }, ...(s.odooPartnerId ? [{ odooPartnerId: s.odooPartnerId }] : [])],
     },
     include: { payments: { orderBy: { createdAt: 'desc' }, take: 1 } },
   })

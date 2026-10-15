@@ -173,8 +173,8 @@ export async function finalizeStripeCheckout(
       paidAt: new Date(),
       lastPaymentError: null,
       ...(odooSaleOrderId != null ? { odooSaleOrderId } : {}),
-      ...(req.sessionRecord?.user?.id && !order.userId
-        ? { userId: req.sessionRecord.user.id }
+      ...(req.sessionRecord?.user?.id && !order.odooPartnerId
+        ? { odooPartnerId: req.sessionRecord.odooPartnerId }
         : {}),
     },
   })
@@ -375,7 +375,7 @@ export async function finalizeStripeCheckout(
     }
   }
 
-  if (updated.userId && saleOrderId) {
+  if (updated.odooPartnerId && saleOrderId) {
     let portalUrl: string | null = null
     try {
       const urlResult = await paymentUrlAdapter.createPortalPaymentUrl(ctx, {
@@ -390,7 +390,7 @@ export async function finalizeStripeCheckout(
       where: { id: `pwa-${updated.id}` },
       create: {
         id: `pwa-${updated.id}`,
-        userId: updated.userId,
+        odooPartnerId: updated.odooPartnerId,
         odooSaleOrderId: saleOrderId,
         status: 'sale',
         paymentStatus: 'paid',

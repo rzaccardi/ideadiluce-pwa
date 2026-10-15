@@ -29,6 +29,9 @@ const SKIP_TRANSLATE_KEYS = new Set([
   'hours',
   'productCount',
   'noindex',
+  'filterKind',
+  'filterValue',
+  'filterWorld',
 ])
 
 function shouldTranslateValue(key: string | null, value: string) {
@@ -73,9 +76,13 @@ export function collectTranslatableStringSlots(
   }
 
   if (value && typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).flatMap(([childKey, childValue]) =>
-      collectTranslatableStringSlots(childValue, [...path, childKey], childKey),
-    )
+    const obj = value as Record<string, unknown>
+    // Label dei pin filtro: vengono da Odoo per locale, non da DeepL.
+    const skipLabel = typeof obj.filterKind === 'string' && Boolean(String(obj.filterValue ?? '').trim())
+    return Object.entries(obj).flatMap(([childKey, childValue]) => {
+      if (skipLabel && childKey === 'label') return []
+      return collectTranslatableStringSlots(childValue, [...path, childKey], childKey)
+    })
   }
 
   return []

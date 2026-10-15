@@ -7,12 +7,11 @@ import { PageLoadTransition } from '@/components/motion/PageLoadTransition'
 import { BrandPageSkeleton } from '@/components/site/skeletons'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { mergeBrandCards, type BrandCategory } from '@/lib/brand.defaults'
+import { mergeManagedBrandLogosFromBrands } from '@/lib/brand-logo'
 import type { BrandListItemDTO } from '@/types/site-content'
 import { BrandConsultSection } from './sections/BrandConsultSection'
 import { BrandDirectorySection } from './sections/BrandDirectorySection'
-import { BrandFeaturedSection } from './sections/BrandFeaturedSection'
 import { BrandHeroSection } from './sections/BrandHeroSection'
-import { BrandThematicSection } from './sections/BrandThematicSection'
 
 export function BrandView() {
   const lp = useLocalePath()
@@ -23,17 +22,15 @@ export function BrandView() {
   useEffect(() => {
     void api.catalog
       .brands()
-      .then((data) => setHubBrands(data.items))
+      .then((data) => {
+        setHubBrands(data.items)
+        mergeManagedBrandLogosFromBrands(data.items)
+      })
       .catch(() => setHubBrands([]))
       .finally(() => setLoading(false))
   }, [])
 
   const brands = useMemo(() => mergeBrandCards(hubBrands), [hubBrands])
-
-  const featuredBrands = useMemo(
-    () => brands.filter((brand) => brand.featured),
-    [brands],
-  )
 
   return (
     <div className="bg-[#f4f5f7]">
@@ -48,17 +45,11 @@ export function BrandView() {
       <PageLoadTransition isLoading={loading && brands.length === 0} skeleton={<BrandPageSkeleton />}>
         <>
           <Reveal immediate delay={0.05}>
-            <BrandFeaturedSection brands={featuredBrands} lp={lp} />
-          </Reveal>
-          <Reveal>
             <BrandDirectorySection
               brands={brands}
               activeFilter={activeFilter}
               lp={lp}
             />
-          </Reveal>
-          <Reveal>
-            <BrandThematicSection brands={brands} lp={lp} />
           </Reveal>
           <Reveal>
             <BrandConsultSection lp={lp} />

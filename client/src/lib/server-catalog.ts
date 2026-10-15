@@ -13,6 +13,7 @@ import type { BrandListItemDTO } from '@/types/site-content'
 export type CatalogBootstrapServerData = {
   categories: CategoryDTO[]
   brands: BrandListItemDTO[]
+  brandLogos?: Record<string, { lightUrl: string | null; darkUrl: string | null }>
   cms: CatalogPageContent | null
 }
 

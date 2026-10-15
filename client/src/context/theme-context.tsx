@@ -1,49 +1,43 @@
 'use client'
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-
-export type SiteTheme = 'light' | 'dark'
-
-const DEFAULT_THEME: SiteTheme = 'light'
-
-function getSystemTheme(): SiteTheme {
-  if (typeof window === 'undefined') return DEFAULT_THEME
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-}
+import { useSnapshot } from 'valtio/react'
+import type { SiteTheme } from '@/lib/appearance'
+import { hydrateLightsStore, lightsStore, setLightsOn } from '@/features/lights'
+import { themeFromLights } from '@/lib/appearance'
 
 type ThemeContextValue = {
   theme: SiteTheme
   isDark: boolean
+  setTheme: (theme: SiteTheme) => void
+  toggleTheme: () => void
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
-function applyTheme(theme: SiteTheme) {
-  document.documentElement.dataset.theme = theme
-  document.documentElement.style.colorScheme = theme === 'dark' ? 'dark' : 'light'
-}
-
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<SiteTheme>(DEFAULT_THEME)
+  const { on: lightsOn } = useSnapshot(lightsStore)
+  const [theme, setThemeState] = useState<SiteTheme>('light')
 
   useEffect(() => {
-    const applySystem = () => {
-      const next = getSystemTheme()
-      setThemeState(next)
-      applyTheme(next)
-    }
-
-    applySystem()
-
-    const media = window.matchMedia('(prefers-color-scheme: dark)')
-    media.addEventListener('change', applySystem)
-    return () => media.removeEventListener('change', applySystem)
+    hydrateLightsStore()
+    setThemeState(themeFromLights(lightsStore.on))
   }, [])
 
-  const value = useMemo(
+  useEffect(() => {
+    setThemeState(themeFromLights(lightsOn))
+  }, [lightsOn])
+
+  const value = useMemo<ThemeContextValue>(
     () => ({
       theme,
       isDark: theme === 'dark',
+      setTheme: (next) => {
+        setLightsOn(next === 'dark')
+      },
+      toggleTheme: () => {
+        setLightsOn(!lightsStore.on)
+      },
     }),
     [theme],
   )
@@ -56,3 +50,5 @@ export function useTheme() {
   if (!ctx) throw new Error('useTheme richiede ThemeProvider')
   return ctx
 }
+
+export type { SiteTheme }

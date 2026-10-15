@@ -3,7 +3,7 @@ import { prisma } from '../../lib/prisma.js'
 
 export type CartContactContext = {
   email: string | null
-  userId: string | null
+  odooPartnerId: number | null
 }
 
 export async function resolveCartContactContext(cartId: string): Promise<CartContactContext> {
@@ -11,16 +11,16 @@ export async function resolveCartContactContext(cartId: string): Promise<CartCon
     where: { id: cartId },
     select: {
       contactEmail: true,
-      userId: true,
-      user: { select: { email: true } },
+      odooPartnerId: true,
+      customer: { select: { email: true } },
       checkoutSessions: { orderBy: { updatedAt: 'desc' }, take: 1, select: { email: true } },
       pwaOrders: { orderBy: { updatedAt: 'desc' }, take: 1, select: { email: true } },
     },
   })
-  if (!cart) return { email: null, userId: null }
+  if (!cart) return { email: null, odooPartnerId: null }
 
   const email =
-    cart.user?.email?.trim() ||
+    cart.customer?.email?.trim() ||
     cart.checkoutSessions[0]?.email?.trim() ||
     cart.pwaOrders[0]?.email?.trim() ||
     cart.contactEmail?.trim() ||
@@ -28,7 +28,7 @@ export async function resolveCartContactContext(cartId: string): Promise<CartCon
 
   return {
     email: email ? email.toLowerCase() : null,
-    userId: cart.userId,
+    odooPartnerId: cart.odooPartnerId,
   }
 }
 
@@ -69,7 +69,7 @@ async function cartItemsSnapshot(cartId: string): Promise<CartLineSnapshot[]> {
   }))
 }
 
-/** Registra evento abbandono/scadenza con email, utente e righe carrello (prima di svuotare). */
+/** Registra evento abbandono/scadenza con email, partner e righe carrello (prima di svuotare). */
 export async function recordAbandonedCartEvent(
   cartId: string,
   eventType: string,
@@ -90,7 +90,7 @@ export async function recordAbandonedCartEvent(
       cartId,
       eventType,
       contactEmail: ctx.email,
-      userId: ctx.userId,
+      odooPartnerId: ctx.odooPartnerId,
       itemsSnapshotJson: items.length > 0 ? items : undefined,
       payloadJson: payload,
     },

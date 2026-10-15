@@ -48,7 +48,7 @@ describe('nav-landing-paths', () => {
     )
     expect(listNavStileSlugs()).toEqual(expect.arrayContaining(['moderno', 'outdoor', 'design']))
     expect(listNavCategoriaTecnicaSlugs()).toEqual(
-      expect.arrayContaining(['led', 'alogene', 'driver', 'strip', 'automotive']),
+      expect.arrayContaining(['led', 'alogene', 'fluorescente', 'driver', 'ballast', 'accessori']),
     )
   })
 

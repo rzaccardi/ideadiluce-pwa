@@ -9,7 +9,7 @@ export type RestockAdminListItemDTO = {
   variantRef: string | null
   quantity: number
   locale: string
-  userId: string | null
+  odooPartnerId: number | null
   userEmail: string | null
   requestType: 'RESTOCK_NOTIFY' | 'PRODUCT_REQUEST'
   adminStatus: StockRestockAdminStatus

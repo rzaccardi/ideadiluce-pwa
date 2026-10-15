@@ -6,6 +6,10 @@ import {
   filterProductsByWorld,
   type CatalogSpecFilters,
 } from '@/lib/catalog-filters'
+import {
+  mergeManagedBrandLogosFromBrands,
+  setManagedBrandLogos,
+} from '@/lib/brand-logo'
 import type { PwaLocale } from '@/lib/locale'
 import type { ProductCardDTO } from '@/types/dto'
 import type { CatalogSort } from './catalog.store'
@@ -245,10 +249,26 @@ export function seedCatalogProducts(
   catalogStore.isLoading = false
 }
 
+function applyBrandLogosFromBootstrap(data: {
+  brands?: ReadonlyArray<{
+    slug: string
+    logoLightUrl?: string | null
+    logoDarkUrl?: string | null
+  }>
+  brandLogos?: Record<string, { lightUrl: string | null; darkUrl: string | null }>
+}) {
+  if (data.brandLogos) {
+    setManagedBrandLogos(data.brandLogos)
+  } else if (data.brands?.length) {
+    mergeManagedBrandLogosFromBrands(data.brands)
+  }
+}
+
 export function seedCatalogBootstrap(
   data: {
     categories: import('@/types/dto').CategoryDTO[]
     brands: import('@/types/site-content').BrandListItemDTO[]
+    brandLogos?: Record<string, { lightUrl: string | null; darkUrl: string | null }>
     cms?: import('@/types/site-content').CatalogPageContent | null
   },
   locale: string,
@@ -256,6 +276,7 @@ export function seedCatalogBootstrap(
   catalogStore.filters.locale = locale
   catalogStore.categories = data.categories
   catalogStore.brands = data.brands
+  applyBrandLogosFromBootstrap(data)
   if (data.cms) {
     seedSitePageContent('catalog', locale, data.cms)
   }
@@ -277,6 +298,7 @@ export function fetchCatalogBootstrap(options?: { locale?: string; skipIfFresh?:
       catalogStore.categories = data.categories
       catalogStore.brands = data.brands
       catalogStore.filters.locale = locale
+      applyBrandLogosFromBootstrap(data)
       if (data.cms) {
         setSitePageContent('catalog', locale, data.cms)
       }
@@ -305,6 +327,7 @@ export function fetchBrands(options?: { force?: boolean; locale?: string }) {
     try {
       const data = await api.catalog.brands(locale)
       catalogStore.brands = data.items
+      mergeManagedBrandLogosFromBrands(data.items)
     } catch {
       catalogStore.brands = []
     }

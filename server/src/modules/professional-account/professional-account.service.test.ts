@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Request } from 'express'
+import { AppError } from '../../types/errors.js'
 
 const {
   sendPwaMail,
@@ -7,20 +8,36 @@ const {
   createRequest,
   updateRequest,
   validateTax,
-  findUserByEmail,
+  findSatelliteByEmail,
   createUser,
   prismaUserUpdate,
   prismaOdooMapUpsert,
+  provisionOdooAuthIdentity,
+  persistOdooCustomerMap,
+  assertOdooAuthReadyForIdentity,
+  isOdooAuthIdentityRequired,
+  ensureSatelliteProjection,
+  findOdooPortalUserByEmail,
+  findOrCreateCustomer,
+  updateCustomerBusiness,
 } = vi.hoisted(() => ({
   sendPwaMail: vi.fn(),
   hasOpenRequest: vi.fn(),
   createRequest: vi.fn(),
   updateRequest: vi.fn(),
   validateTax: vi.fn(),
-  findUserByEmail: vi.fn(),
+  findSatelliteByEmail: vi.fn(),
   createUser: vi.fn(),
   prismaUserUpdate: vi.fn(),
   prismaOdooMapUpsert: vi.fn(),
+  provisionOdooAuthIdentity: vi.fn(),
+  persistOdooCustomerMap: vi.fn(),
+  assertOdooAuthReadyForIdentity: vi.fn(),
+  isOdooAuthIdentityRequired: vi.fn(() => false),
+  ensureSatelliteProjection: vi.fn(),
+  findOdooPortalUserByEmail: vi.fn(),
+  findOrCreateCustomer: vi.fn(),
+  updateCustomerBusiness: vi.fn(),
 }))
 
 vi.mock('../../lib/logger.js', () => ({
@@ -36,23 +53,15 @@ vi.mock('../../adapters/odoo/odooMailAdapter.js', () => ({
   PWA_ADMIN_MAIL_TO: 'info@ideadiluce.com',
 }))
 
-vi.mock('../../adapters/odoo/odooClient.js', () => ({
-  isOdooLiveConfigured: () => false,
-}))
-
-vi.mock('../../adapters/odoo-api/odooApiClient.js', () => ({
-  isOdooApiV2Configured: () => false,
-}))
-
 vi.mock('../../adapters/odoo/odooCustomerAdapter.js', () => ({
   createOdooCustomerAdapter: () => ({
-    findOrCreateCustomer: vi.fn(),
-    updateCustomerBusiness: vi.fn(),
+    findOrCreateCustomer,
+    updateCustomerBusiness,
   }),
 }))
 
 vi.mock('../../adapters/odoo/odooPortalUserAdapter.js', () => ({
-  ensureOdooPortalUser: vi.fn(),
+  findOdooPortalUserByEmail,
 }))
 
 vi.mock('../../adapters/spaces/spaces.storage.js', () => ({
@@ -67,7 +76,7 @@ vi.mock('../../config/env.js', () => ({
 
 vi.mock('../../lib/prisma.js', () => ({
   prisma: {
-    user: { update: prismaUserUpdate },
+    customerSatellite: { update: prismaUserUpdate },
     odooCustomerMap: { upsert: prismaOdooMapUpsert },
   },
 }))
@@ -78,9 +87,21 @@ vi.mock('../tax/tax-validation.service.js', () => ({
 
 vi.mock('../auth/auth.repository.js', () => ({
   authRepository: {
-    findUserByEmail,
+    findSatelliteByEmail,
+    findUserByEmail: findSatelliteByEmail,
     createUser,
   },
+}))
+
+vi.mock('../auth/odoo-account-sync.service.js', () => ({
+  provisionOdooAuthIdentity,
+  persistOdooCustomerMap,
+  assertOdooAuthReadyForIdentity,
+  isOdooAuthIdentityRequired,
+}))
+
+vi.mock('../auth/satellite-projection.service.js', () => ({
+  ensureSatelliteProjection,
 }))
 
 vi.mock('./professional-account.repository.js', () => ({
@@ -114,6 +135,7 @@ function mockReq(overrides: Partial<Request> = {}): Request {
 describe('professionalAccountService.submit - mail', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    isOdooAuthIdentityRequired.mockReturnValue(false)
     sendPwaMail.mockResolvedValue(undefined)
     hasOpenRequest.mockResolvedValue(false)
     createRequest.mockResolvedValue({
@@ -141,16 +163,21 @@ describe('professionalAccountService.submit - mail', () => {
         vies: { checked: false, status: 'unknown', name: null, address: null, requestDate: null },
       },
     })
-    findUserByEmail.mockResolvedValue(null)
+    findSatelliteByEmail.mockResolvedValue(null)
     createUser.mockResolvedValue({ id: 'user-new' })
     prismaUserUpdate.mockResolvedValue({})
   })
 
   it('invia sempre conferma al richiedente e notifica admin', async () => {
-    findUserByEmail.mockResolvedValue({ id: 'user-existing', passwordHash: 'hash' })
+    findSatelliteByEmail.mockResolvedValue({
+      id: 'user-existing',
+      passwordHash: 'hash',
+      odooPartnerId: null,
+    })
 
     await professionalAccountService.submit(mockReq(), baseInput)
 
+    expect(assertOdooAuthReadyForIdentity).toHaveBeenCalled()
     expect(sendPwaMail).toHaveBeenCalledWith(
       expect.objectContaining({ correlationId: 'corr-pro-1' }),
       expect.objectContaining({
@@ -170,22 +197,11 @@ describe('professionalAccountService.submit - mail', () => {
       expect.anything(),
       expect.objectContaining({ templateKey: 'account_credentials' }),
     )
-    expect(sendPwaMail).not.toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ templateKey: 'professional_account_customer' }),
-    )
   })
 
   it('con account nuovo invia anche le credenziali', async () => {
     await professionalAccountService.submit(mockReq(), baseInput)
 
-    expect(sendPwaMail).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        templateKey: 'professional_request_customer',
-        emailTo: 'mario@acme.it',
-      }),
-    )
     expect(sendPwaMail).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
@@ -201,7 +217,11 @@ describe('professionalAccountService.submit - mail', () => {
   })
 
   it('non fallisce la submit se la mail di conferma fallisce', async () => {
-    findUserByEmail.mockResolvedValue({ id: 'user-existing', passwordHash: 'hash' })
+    findSatelliteByEmail.mockResolvedValue({
+      id: 'user-existing',
+      passwordHash: 'hash',
+      odooPartnerId: null,
+    })
     sendPwaMail.mockImplementation(async (_ctx, input) => {
       if (input.templateKey === 'professional_request_customer') {
         throw new Error('smtp down')
@@ -210,5 +230,163 @@ describe('professionalAccountService.submit - mail', () => {
 
     const result = await professionalAccountService.submit(mockReq(), baseInput)
     expect(result).toMatchObject({ submitted: true, id: 'req-1' })
+  })
+})
+
+describe('professionalAccountService.submit - Odoo-first', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    isOdooAuthIdentityRequired.mockReturnValue(true)
+    sendPwaMail.mockResolvedValue(undefined)
+    hasOpenRequest.mockResolvedValue(false)
+    createRequest.mockResolvedValue({
+      id: 'req-1',
+      companyName: 'Acme Illuminazione Srl',
+      vatNumber: 'IT12345678901',
+      contactName: 'Mario Rossi',
+      email: 'mario@acme.it',
+      phone: null,
+      pec: null,
+      sdiCode: null,
+      message: null,
+      locale: 'IT',
+    })
+    updateRequest.mockResolvedValue({})
+    validateTax.mockResolvedValue({
+      taxValidationStatus: 'ok',
+      vat: {
+        formatValid: true,
+        checksumValid: true,
+        countryCode: 'IT',
+        normalized: '12345678901',
+        errors: [],
+        autofill: { companyName: null },
+        vies: { checked: false, status: 'unknown', name: null, address: null, requestDate: null },
+      },
+    })
+    findSatelliteByEmail.mockResolvedValue(null)
+    findOdooPortalUserByEmail.mockResolvedValue(null)
+    createUser.mockResolvedValue({ id: 'user-new' })
+    ensureSatelliteProjection.mockResolvedValue({
+      id: 'user-new',
+      email: 'mario@acme.it',
+      odooPartnerId: 42,
+    })
+    prismaUserUpdate.mockResolvedValue({})
+    persistOdooCustomerMap.mockResolvedValue(undefined)
+    updateCustomerBusiness.mockResolvedValue(undefined)
+    provisionOdooAuthIdentity.mockResolvedValue({
+      odooPartnerId: 42,
+      odooUserId: 7,
+      portalCreated: true,
+    })
+  })
+
+  it('provisiona Odoo poi proiezione satellite (niente createUser diretto)', async () => {
+    await professionalAccountService.submit(mockReq(), baseInput)
+
+    expect(assertOdooAuthReadyForIdentity).toHaveBeenCalled()
+    expect(findOdooPortalUserByEmail).toHaveBeenCalled()
+    expect(provisionOdooAuthIdentity).toHaveBeenCalledWith(
+      { correlationId: 'corr-pro-1' },
+      expect.objectContaining({
+        email: 'mario@acme.it',
+        password: expect.any(String),
+        firstName: 'Mario',
+        lastName: 'Rossi',
+        rejectExistingPortal: true,
+        business: expect.objectContaining({
+          companyName: 'Acme Illuminazione Srl',
+          vatNumber: 'IT12345678901',
+          isCompany: true,
+        }),
+      }),
+    )
+    expect(ensureSatelliteProjection).toHaveBeenCalledWith(
+      expect.objectContaining({
+        odooPartnerId: 42,
+        email: 'mario@acme.it',
+        clearLocalPassword: true,
+      }),
+    )
+    expect(createUser).not.toHaveBeenCalled()
+    expect(createRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        odooPartnerId: 42,
+      }),
+    )
+    expect(sendPwaMail).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ templateKey: 'account_credentials' }),
+    )
+  })
+
+  it('non crea satellite né richiesta se Odoo fallisce', async () => {
+    provisionOdooAuthIdentity.mockRejectedValue(
+      new AppError('ODOO_REGISTER_FAILED', 'fail', 'errore', 503, true),
+    )
+
+    await expect(professionalAccountService.submit(mockReq(), baseInput)).rejects.toMatchObject({
+      code: 'ODOO_REGISTER_FAILED',
+    })
+
+    expect(ensureSatelliteProjection).not.toHaveBeenCalled()
+    expect(createUser).not.toHaveBeenCalled()
+    expect(createRequest).not.toHaveBeenCalled()
+    expect(sendPwaMail).not.toHaveBeenCalled()
+  })
+
+  it('se portal già esiste aggiorna business + satellite senza nuove credenziali', async () => {
+    findOdooPortalUserByEmail.mockResolvedValue({
+      odooUserId: 2,
+      odooPartnerId: 11,
+    })
+    ensureSatelliteProjection.mockResolvedValue({
+      id: 'u-existing',
+      email: 'mario@acme.it',
+      odooPartnerId: 11,
+    })
+
+    await professionalAccountService.submit(mockReq(), baseInput)
+
+    expect(provisionOdooAuthIdentity).not.toHaveBeenCalled()
+    expect(updateCustomerBusiness).toHaveBeenCalledWith(
+      expect.anything(),
+      11,
+      expect.objectContaining({ companyName: 'Acme Illuminazione Srl' }),
+    )
+    expect(ensureSatelliteProjection).toHaveBeenCalledWith(
+      expect.objectContaining({ odooPartnerId: 11, clearLocalPassword: true }),
+    )
+    expect(sendPwaMail).not.toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ templateKey: 'account_credentials' }),
+    )
+  })
+
+  it('con utente già autenticato non crea portal ma sync business soft', async () => {
+    findOrCreateCustomer.mockResolvedValue({ odooPartnerId: 55 })
+    const req = mockReq({
+      sessionRecord: { id: 'sess-1', odooPartnerId: 55, user: { id: 'user-session', odooPartnerId: 55 } } as unknown as Request['sessionRecord'],
+    })
+
+    await professionalAccountService.submit(req, baseInput)
+
+    expect(provisionOdooAuthIdentity).not.toHaveBeenCalled()
+    expect(createUser).not.toHaveBeenCalled()
+    expect(findOrCreateCustomer).toHaveBeenCalled()
+    expect(updateCustomerBusiness).toHaveBeenCalledWith(
+      expect.anything(),
+      55,
+      expect.objectContaining({ companyName: 'Acme Illuminazione Srl', isCompany: true }),
+    )
+    expect(persistOdooCustomerMap).toHaveBeenCalledWith({
+      email: 'mario@acme.it',
+      odooPartnerId: 55,
+    })
+    expect(sendPwaMail).not.toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ templateKey: 'account_credentials' }),
+    )
   })
 })

@@ -3,10 +3,10 @@ import { ACCOUNT_VISIBLE_PWA_ORDER_STATUSES } from './orders.constants.js'
 
 /** Ordini PWA visibili in account: pagati/sync, bonifico in attesa, oppure Stripe captured. */
 export function buildAccountPwaOrderWhere(
-  userId: string,
+  odooPartnerId: number,
   emailLower?: string | null,
 ): Prisma.PwaOrderWhereInput {
-  const owner: Prisma.PwaOrderWhereInput[] = [{ userId }]
+  const owner: Prisma.PwaOrderWhereInput[] = [{ odooPartnerId }]
   if (emailLower) owner.push({ email: emailLower })
   return {
     OR: [

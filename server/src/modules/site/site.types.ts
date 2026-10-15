@@ -1,9 +1,23 @@
+/** Entità filtro catalogo Odoo pinnabile nel mega-menu. */
+export type SiteNavFilterKind =
+  | 'category'
+  | 'tag'
+  | 'brand'
+  | 'attacco'
+  | 'tipologia'
+  | 'stile'
+  | 'ambiente'
+
 /** Link testuale con href opzionale (route interna o URL). */
 export type SiteLink = {
   label: string
   href: string
   imageUrl?: string
   videoUrl?: string
+  /** Pin filtro Odoo: label/href risolti a runtime per locale. */
+  filterKind?: SiteNavFilterKind
+  filterValue?: string
+  filterWorld?: 'design' | 'technical'
 }
 
 export type SiteNavColumn = {

@@ -28,7 +28,7 @@ export async function enqueueOdooSyncOperation(input: EnqueueOdooSyncInput) {
       operation,
       status: { in: ['PENDING', 'PROCESSING'] },
       ...(input.pwaOrderId ? { pwaOrderId: input.pwaOrderId } : { pwaOrderId: null }),
-      ...(input.userId ? { userId: input.userId } : {}),
+      ...(input.odooPartnerId != null ? { odooPartnerId: input.odooPartnerId } : {}),
     },
   })
 
@@ -40,7 +40,7 @@ export async function enqueueOdooSyncOperation(input: EnqueueOdooSyncInput) {
         payload,
         nextRetryAt: input.immediate ? new Date() : existing.nextRetryAt,
         pwaOrderId: input.pwaOrderId ?? existing.pwaOrderId,
-        userId: input.userId ?? existing.userId,
+        odooPartnerId: input.odooPartnerId ?? existing.odooPartnerId,
       },
     })
   }
@@ -48,7 +48,7 @@ export async function enqueueOdooSyncOperation(input: EnqueueOdooSyncInput) {
   return prisma.odooSyncQueue.create({
     data: {
       pwaOrderId: input.pwaOrderId ?? null,
-      userId: input.userId ?? null,
+      odooPartnerId: input.odooPartnerId ?? null,
       operation,
       payload: payload as Prisma.InputJsonValue,
       lastError,

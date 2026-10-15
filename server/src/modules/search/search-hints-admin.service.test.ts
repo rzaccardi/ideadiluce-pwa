@@ -17,6 +17,7 @@ vi.mock('../site/site.service.js', () => ({
   },
 }))
 
+import { OdooClientError } from '../../adapters/odoo/odooClient.js'
 import { fetchTopPurchasedSearchHints, odooSearchHintsAvailable } from '../../adapters/odoo/odooTopPurchasedSearchHints.js'
 import { siteRepository } from '../site/site.repository.js'
 import { siteService } from '../site/site.service.js'
@@ -74,6 +75,23 @@ describe('searchHintsAdminService', () => {
     await expect(
       searchHintsAdminService.previewFromOdoo(ctx, { lookbackDays: 90, limit: 8 }),
     ).rejects.toMatchObject({ code: 'ODOO_NOT_CONFIGURED' })
+  })
+
+  it('previewFromOdoo mappa errori Odoo in AppError (non INTERNAL_ERROR)', async () => {
+    vi.mocked(fetchTopPurchasedSearchHints).mockRejectedValue(new OdooClientError('Timeout XML-RPC', 408))
+
+    await expect(
+      searchHintsAdminService.previewFromOdoo(ctx, { lookbackDays: 90, limit: 5 }),
+    ).rejects.toMatchObject({ code: 'ODOO_UPSTREAM_ERROR', statusCode: 408 })
+  })
+
+  it('previewFromOdoo usa defaults se il CMS home non è leggibile', async () => {
+    vi.mocked(siteRepository.findByKeyLocale).mockRejectedValue(new Error('db down'))
+
+    const result = await searchHintsAdminService.previewFromOdoo(ctx, { lookbackDays: 90, limit: 5 })
+
+    expect(result.suggestions).toEqual(suggestions)
+    expect(result.currentHints.length).toBeGreaterThan(0)
   })
 
   it('applyFromOdoo salva le query nella Home per tutte le lingue', async () => {

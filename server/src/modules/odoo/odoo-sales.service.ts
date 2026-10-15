@@ -66,7 +66,9 @@ async function availableModelFields(ctx, model, cache) {
         attributes: ['string'],
         context: saleOrderContext(),
     });
-    cache.current = new Set(Object.keys(fields));
+    const keys =
+        fields && typeof fields === 'object' && !Array.isArray(fields) ? Object.keys(fields) : [];
+    cache.current = new Set(keys);
     return cache.current;
 }
 async function pricelistReadFields(ctx) {
@@ -185,7 +187,7 @@ async function saleDocumentList(ctx, query, defaultStates) {
     }
     const offset = (query.page - 1) * query.pageSize;
     const readFields = await saleOrderReadFields(ctx);
-    const [total, rows] = await Promise.all([
+    const [totalRaw, rowsRaw] = await Promise.all([
         odooExecuteKw(ctx, 'sale.order', 'search_count', [domain], {
             context: saleOrderContext(),
         }),
@@ -197,10 +199,13 @@ async function saleDocumentList(ctx, query, defaultStates) {
             context: saleOrderContext(),
         }),
     ]);
+    const total = typeof totalRaw === 'number' && Number.isFinite(totalRaw) ? totalRaw : 0;
+    const rows = Array.isArray(rowsRaw) ? rowsRaw : [];
     const rowPartnerIds = [...new Set(rows.map((r) => many2OneId(r.partner_id)).filter((id) => id != null))];
     const partnerEmails = new Map();
     if (rowPartnerIds.length > 0) {
-        const partners = await odooExecuteKw(ctx, 'res.partner', 'read', [rowPartnerIds], { fields: ['email'], context: saleOrderContext() });
+        const partnersRaw = await odooExecuteKw(ctx, 'res.partner', 'read', [rowPartnerIds], { fields: ['email'], context: saleOrderContext() });
+        const partners = Array.isArray(partnersRaw) ? partnersRaw : [];
         for (const p of partners) {
             const email = text(p.email);
             if (email)
@@ -279,7 +284,7 @@ export const odooSalesService = {
         }
         let email = input.email?.trim() || null;
         if (input.userId) {
-            const user = await prisma.user.findUnique({
+            const user = await prisma.customerSatellite.findUnique({
                 where: { id: input.userId },
                 select: { id: true, email: true },
             });
@@ -287,7 +292,7 @@ export const odooSalesService = {
                 throw new AppError('USER_NOT_FOUND', 'User not found', 'Utente non trovato.', 404, false);
             }
             email = email ?? user.email;
-            const map = await prisma.odooCustomerMap.findUnique({ where: { userId: user.id } });
+            const map = await prisma.odooCustomerMap.findUnique({ where: { odooPartnerId: user.odooPartnerId } });
             if (map)
                 return { partnerId: map.odooPartnerId, userId: user.id, email };
         }

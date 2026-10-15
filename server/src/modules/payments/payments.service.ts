@@ -112,7 +112,7 @@ async function activeCartForRequest(req: Request) {
   const cart = await prisma.cart.findFirst({
     where: {
       status: 'ACTIVE',
-      OR: [{ sessionId: s.id }, ...(s.userId ? [{ userId: s.userId }] : [])],
+      OR: [{ sessionId: s.id }, ...(s.odooPartnerId ? [{ odooPartnerId: s.odooPartnerId }] : [])],
     },
     include: { items: true, shippingSelection: true },
     orderBy: { updatedAt: 'desc' },
@@ -207,7 +207,7 @@ async function assertOrderAccess(req: Request, orderId: string) {
   const order = await prisma.pwaOrder.findFirst({
     where: {
       id: orderId,
-      OR: [{ sessionId: s.id }, ...(s.userId ? [{ userId: s.userId }] : [])],
+      OR: [{ sessionId: s.id }, ...(s.odooPartnerId ? [{ odooPartnerId: s.odooPartnerId }] : [])],
     },
     include: { payments: { orderBy: { createdAt: 'desc' }, take: 1 } },
   })
@@ -233,13 +233,13 @@ async function assertOrderAccessOrStripeSession(
     const order = await loadOrderWithLatestPayment(orderId)
     if (!order) throw e
 
-    const sessionUserId = req.sessionRecord?.user?.id
-    if (sessionUserId && !order.userId) {
+    const sessionPartnerId = req.sessionRecord?.odooPartnerId
+    if (sessionPartnerId != null && order.odooPartnerId == null) {
       await prisma.pwaOrder.update({
         where: { id: order.id },
-        data: { userId: sessionUserId },
+        data: { odooPartnerId: sessionPartnerId },
       })
-      order.userId = sessionUserId
+      order.odooPartnerId = sessionPartnerId
     }
 
     return order
@@ -585,7 +585,7 @@ export const paymentsService = {
         await customerAdapter.updateCustomerBusiness(ctx, odooPartnerId, businessProfile)
       }
 
-      if (s.userId && odooPartnerId) {
+      if (s.odooPartnerId && odooPartnerId) {
         const isProFromOdoo = await customerAdapter.syncProfessionalFlagFromPartner(ctx, odooPartnerId)
         let b2bActive: boolean | undefined
         try {
@@ -614,7 +614,10 @@ export const paymentsService = {
         if (businessProfile?.pec) userUpdate.pec = businessProfile.pec
         if (businessProfile?.sdiCode) userUpdate.sdiCode = businessProfile.sdiCode
         if (Object.keys(userUpdate).length > 0) {
-          await prisma.user.update({ where: { id: s.userId }, data: userUpdate })
+          await prisma.customerSatellite.update({
+            where: { odooPartnerId: s.odooPartnerId },
+            data: userUpdate,
+          })
         }
       }
     } catch {
@@ -623,8 +626,11 @@ export const paymentsService = {
 
     const checkoutPhone =
       body.billingAddress.phone?.trim() || body.shippingAddress.phone?.trim() || ''
-    if (s.userId && checkoutPhone) {
-      await prisma.user.update({ where: { id: s.userId }, data: { phone: checkoutPhone } })
+    if (s.odooPartnerId != null && checkoutPhone) {
+      await prisma.customerSatellite.update({
+        where: { odooPartnerId: s.odooPartnerId },
+        data: { phone: checkoutPhone },
+      })
     }
 
     const dropshipAddress = body.dropshipAddress ?? body.deliveryRecipient ?? null
@@ -734,8 +740,7 @@ export const paymentsService = {
               cartId: cartFresh.id,
               email: body.email,
               state: 'COMMITTED',
-              userId: s.userId ?? undefined,
-              odooPartnerId: odooPartnerId,
+              odooPartnerId: s.odooPartnerId ?? undefined,
               odooSaleOrderId,
               shippingMethodRef: shippingSel.methodRef,
               billingAddressJson: body.billingAddress as object,
@@ -760,7 +765,7 @@ export const paymentsService = {
     const data = {
       cartId: cartFresh.id,
       checkoutSessionId: checkoutSession.id,
-      userId: s.userId,
+      odooPartnerId: odooPartnerId ?? s.odooPartnerId ?? null,
       sessionId: s.id,
       email: body.email,
       orderStatus,
@@ -783,7 +788,6 @@ export const paymentsService = {
         viesRequestDate: body.business?.viesRequestDate ?? null,
       }),
       linesSnapshotJson: linesSnapshot ? jsonValue(linesSnapshot) : existing?.linesSnapshotJson ?? undefined,
-      odooPartnerId: odooPartnerId,
       odooSaleOrderId,
       checkoutStartedAt: existing?.checkoutStartedAt ?? new Date(),
       metadataJson,
@@ -827,7 +831,7 @@ export const paymentsService = {
     const priceLocked = order.orderStatus === 'CHECKOUT_LOCKED'
     if (priceLocked) {
       await assertOdooReadyForCheckoutFromRequest(req, {
-        userId: s.userId,
+        odooPartnerId: s.odooPartnerId,
         cartId: order.cartId,
         orderId: order.id,
         step: 'create_payment_session',
@@ -1065,7 +1069,7 @@ export const paymentsService = {
     const payment = await prisma.pwaPayment.findFirst({
       where: {
         id: body.paymentId,
-        order: { OR: [{ sessionId: s.id }, ...(s.userId ? [{ userId: s.userId }] : [])] },
+        order: { OR: [{ sessionId: s.id }, ...(s.odooPartnerId ? [{ odooPartnerId: s.odooPartnerId }] : [])] },
       },
       include: { order: true },
     })

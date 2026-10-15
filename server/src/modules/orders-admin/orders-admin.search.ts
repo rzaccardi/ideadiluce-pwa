@@ -51,7 +51,7 @@ export function buildPwaOrderSearchWhere(q: string): Prisma.PwaOrderWhereInput {
     { clientOrderRef: { contains: parsed.term, mode: 'insensitive' } },
     { odooSaleOrderName: { contains: parsed.term, mode: 'insensitive' } },
     {
-      user: {
+      customer: {
         is: {
           OR: [
             { firstName: { contains: parsed.term, mode: 'insensitive' } },

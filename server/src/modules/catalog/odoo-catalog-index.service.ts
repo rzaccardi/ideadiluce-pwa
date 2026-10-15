@@ -76,6 +76,10 @@ export type BrandListItemDTO = {
   productCount?: number
   /** Aree in cui il brand ha prodotti (da categorie Odoo). */
   worlds?: CatalogBrandWorld[]
+  /** Logo light (gestito dal BO / Spaces). */
+  logoLightUrl?: string | null
+  /** Logo dark (gestito dal BO / Spaces). */
+  logoDarkUrl?: string | null
 }
 
 type IndexBucket = {

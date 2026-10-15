@@ -1,4 +1,4 @@
-import type { User } from '@prisma/client'
+import type { CustomerSatellite } from '@prisma/client'
 import type { CustomerSegmentDTO, UserAddressDTO, UserDTO } from '../../types/dto.js'
 import { paymentMethodToDTO } from '../payments/payment.types.js'
 import { pricingContextLabel } from '../pricing/pricelist.service.js'
@@ -6,7 +6,7 @@ import { splitLine1AndStreetNumber } from '../checkout/checkout-address.validato
 import { normalizeAddressProvince } from '../checkout/italian-provinces.js'
 import { prisma } from '../../lib/prisma.js'
 
-function segmentToDTO(segment: User['customerSegment']): CustomerSegmentDTO {
+function segmentToDTO(segment: CustomerSatellite['customerSegment']): CustomerSegmentDTO {
   if (segment === 'BUSINESS') return 'business'
   if (segment === 'PROFESSIONAL') return 'professional'
   return 'retail'
@@ -45,13 +45,15 @@ export function parseShippingAddressJson(json: unknown): UserAddressDTO | null {
   }
 }
 
-export async function toUserDTO(user: User): Promise<UserDTO> {
+export async function toUserDTO(user: CustomerSatellite): Promise<UserDTO> {
   const isProfessional = user.isProfessional || user.customerSegment === 'PROFESSIONAL'
   const map = await prisma.odooCustomerMap.findUnique({
-    where: { userId: user.id },
+    where: { odooPartnerId: user.odooPartnerId },
     select: { odooPartnerId: true },
   })
-  const hasPartner = Boolean(map?.odooPartnerId && map.odooPartnerId > 0)
+  const hasPartner = Boolean(
+    (map?.odooPartnerId && map.odooPartnerId > 0) || user.odooPartnerId > 0,
+  )
   const hasPricelist = Boolean(user.odooPricelistId && user.odooPricelistId > 0)
   const personalizedPricing =
     user.customerSegment === 'BUSINESS' ||

@@ -57,7 +57,6 @@ describe('mailLogAdminService.list', () => {
   it('non chiede mail_template_id se Odoo 18 non lo espone', async () => {
     odooExecuteKw
       .mockResolvedValueOnce(ODOO18_FIELDS)
-      .mockResolvedValueOnce(1)
       .mockResolvedValueOnce([
         {
           id: 44,
@@ -75,17 +74,48 @@ describe('mailLogAdminService.list', () => {
       pageSize: 25,
       state: 'all',
       templateKey: 'all',
+      sinceDays: 0,
     })
 
     const searchRead = odooExecuteKw.mock.calls.find(
       (c) => c[1] === 'mail.mail' && c[2] === 'search_read',
     )
+    const searchCount = odooExecuteKw.mock.calls.find(
+      (c) => c[1] === 'mail.mail' && c[2] === 'search_count',
+    )
+    expect(searchCount).toBeUndefined()
     expect(searchRead?.[3]?.[0]).toEqual([['headers', 'ilike', 'X-PWA-Mail']])
     expect(searchRead?.[4]?.fields).not.toContain('mail_template_id')
     expect(searchRead?.[4]?.fields).toContain('headers')
+    expect(searchRead?.[4]?.limit).toBe(26)
     expect(result.items).toHaveLength(1)
     expect(result.items[0]?.templateKey).toBe('account_credentials')
     expect(result.configured).toBe(true)
+    expect(result.totalPages).toBe(1)
+  })
+
+  it('usa limit+1 per has-more senza search_count', async () => {
+    const rows = Array.from({ length: 26 }, (_, i) => ({
+      id: 100 - i,
+      subject: `Mail ${i}`,
+      email_to: 'mario@test.it',
+      state: 'sent',
+      date: '2026-09-02 13:40:00',
+      headers: 'X-PWA-Mail: 1\nX-PWA-Template: account_credentials',
+    }))
+    odooExecuteKw.mockResolvedValueOnce(ODOO18_FIELDS).mockResolvedValueOnce(rows).mockResolvedValueOnce([])
+
+    const result = await mailLogAdminService.list({
+      page: 1,
+      pageSize: 25,
+      state: 'all',
+      templateKey: 'all',
+      sinceDays: 0,
+    })
+
+    expect(result.items).toHaveLength(25)
+    expect(result.totalPages).toBe(2)
+    expect(result.total).toBe(26)
   })
 
   it('converte errori Odoo in AppError invece di Internal error', async () => {

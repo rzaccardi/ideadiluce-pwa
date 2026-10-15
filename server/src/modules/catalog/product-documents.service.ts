@@ -63,7 +63,7 @@ export const productDocumentsService = {
         variantRef,
         documentId,
         documentName: doc.name,
-        userId: req.sessionRecord?.userId ?? null,
+        odooPartnerId: req.sessionRecord?.odooPartnerId ?? null,
         sessionId: req.sessionRecord?.id ?? null,
         locale,
         sourcePage: options?.sourcePage?.trim() || `pdp:${product.slug}`,
@@ -77,7 +77,7 @@ export const productDocumentsService = {
       operation: 'document_download',
       correlationId: req.correlationId,
       success: true,
-      userId: req.sessionRecord?.userId ?? null,
+      userId: req.sessionRecord?.user?.id ?? null,
       extra: {
         productSlug: product.slug,
         productRef,
@@ -87,6 +87,7 @@ export const productDocumentsService = {
         documentType: doc.type,
         locale,
         sourcePage: options?.sourcePage?.trim() || `pdp:${product.slug}`,
+        odooPartnerId: req.sessionRecord?.odooPartnerId ?? null,
       },
     })
 

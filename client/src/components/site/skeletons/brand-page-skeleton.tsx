@@ -3,7 +3,6 @@
 import { Skeleton } from '@/components/skeleton-primitive'
 import { SectionContainer } from '@/components/site/primitives'
 import { useI18n } from '@/hooks/use-i18n'
-import { BrandDirectoryItemSkeleton } from './editorial-hub-skeleton'
 
 export function BrandPageSkeleton() {
   const { t } = useI18n()
@@ -25,30 +24,26 @@ export function BrandPageSkeleton() {
         </SectionContainer>
       </section>
 
-      <SectionContainer className="py-8 sm:py-10">
-        <Skeleton className="mb-6 h-7 w-48" />
+      <SectionContainer className="pb-12 pt-10 sm:pb-14 sm:pt-12">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="rounded-lg border border-idl-tech-border bg-white p-5 dark:bg-idl-tech-panel">
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="mt-2 h-4 w-full" />
-              <Skeleton className="mt-4 h-4 w-24" />
+          {Array.from({ length: 9 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex flex-col rounded-xl border border-idl-tech-border bg-white p-5 dark:bg-idl-tech-panel sm:p-6"
+            >
+              <div className="mb-3.5 flex h-[46px] items-center justify-center border-b border-idl-tech-panel pb-3.5">
+                <Skeleton className="h-6 w-28" />
+              </div>
+              <Skeleton className="mb-2.5 h-5 w-16 rounded-[5px]" />
+              <Skeleton className="mb-2 h-4 w-full" />
+              <Skeleton className="mb-3.5 h-4 w-3/4" />
+              <div className="mt-auto flex items-center justify-between pt-2">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-3 w-14" />
+              </div>
             </div>
           ))}
         </div>
-      </SectionContainer>
-
-      <SectionContainer className="pb-10">
-        <Skeleton className="mb-5 h-7 w-56" />
-        <div className="grid grid-cols-2 overflow-hidden rounded-[10px] border border-idl-tech-border sm:grid-cols-3 lg:grid-cols-6">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <BrandDirectoryItemSkeleton key={i} />
-          ))}
-        </div>
-      </SectionContainer>
-
-      <SectionContainer className="pb-10">
-        <Skeleton className="h-40 w-full rounded-xl" />
       </SectionContainer>
     </div>
   )

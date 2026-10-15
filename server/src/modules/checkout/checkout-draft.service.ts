@@ -109,7 +109,7 @@ export const checkoutDraftService = {
 
     if (body.step === 'lock' || body.step === 'payment_method') {
       await assertOdooReadyForCheckoutFromRequest(req, {
-        userId: req.sessionRecord?.userId,
+        odooPartnerId: req.sessionRecord?.odooPartnerId,
         cartId: cartFresh.id,
         orderId: existing?.id,
         step: body.step,

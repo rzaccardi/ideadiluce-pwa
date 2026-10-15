@@ -3,6 +3,7 @@ import type { ProductDetailDTO, WishlistItemDTO } from '../../types/dto.js'
 import type { Request } from 'express'
 import { resolveCatalogProduct } from '../catalog/catalogResolver.service.js'
 import { formatOdooTemplateRef } from '../catalog/odooRef.js'
+import { sessionOdooPartnerId } from '../../lib/session-identity.js'
 import { wishlistRepository } from './wishlist.repository.js'
 
 function storedProductRef(product: ProductDetailDTO): string {
@@ -38,9 +39,11 @@ function resolveVariantRef(product: ProductDetailDTO, variantRef: string | null 
 export const wishlistService = {
   async list(req: Request): Promise<WishlistItemDTO[]> {
     const s = assertSession(req)
-    const rows = s.userId
-      ? await wishlistRepository.listForUser(s.userId)
-      : await wishlistRepository.listForSession(s.id)
+    const partnerId = sessionOdooPartnerId(s)
+    const rows =
+      partnerId != null
+        ? await wishlistRepository.listForPartner(partnerId)
+        : await wishlistRepository.listForSession(s.id)
     return rows.map((r) => ({
       id: r.id,
       productRef: r.productRef,
@@ -59,17 +62,21 @@ export const wishlistService = {
     }
     const variantRef = resolveVariantRef(product, input.variantRef)
     const productRef = storedProductRef(product)
-    const row = s.userId
-      ? await wishlistRepository.addForUser(s.userId, productRef, variantRef)
-      : await wishlistRepository.addForSession(s.id, productRef, variantRef)
+    const partnerId = sessionOdooPartnerId(s)
+    const row =
+      partnerId != null
+        ? await wishlistRepository.addForPartner(partnerId, productRef, variantRef)
+        : await wishlistRepository.addForSession(s.id, productRef, variantRef)
     return { id: row.id, productRef: row.productRef, variantRef: row.variantRef }
   },
 
   async remove(req: Request, id: string) {
     const s = assertSession(req)
-    const result = s.userId
-      ? await wishlistRepository.deleteForUser(s.userId, id)
-      : await wishlistRepository.deleteForSession(s.id, id)
+    const partnerId = sessionOdooPartnerId(s)
+    const result =
+      partnerId != null
+        ? await wishlistRepository.deleteForPartner(partnerId, id)
+        : await wishlistRepository.deleteForSession(s.id, id)
     if (result.count === 0) {
       throw new AppError('WISHLIST_ITEM_NOT_FOUND', 'Not found', 'Elemento non trovato.', 404, false)
     }

@@ -5,6 +5,7 @@ import { hashSessionToken, generateSessionToken } from '../lib/token-hash.js'
 import { setSessionCookie } from '../lib/cookies.js'
 import { AppError } from '../types/errors.js'
 import { isPrivateApiPath } from '../lib/private-api-paths.js'
+import { isSessionLoggedIn } from '../lib/session-identity.js'
 
 const SESSION_LOOKUP_TTL_MS = 5_000
 type CachedSession = {
@@ -31,7 +32,7 @@ function writeSessionCache(tokenHash: string, record: NonNullable<Request['sessi
   })
 }
 
-/** Dopo login/registrazione la sessione in DB ha `userId` ma la cache può ancora avere `user: null`. */
+/** Dopo login/registrazione la sessione in DB ha `odooPartnerId` ma la cache può ancora avere `user: null`. */
 export function invalidateSessionCacheForSession(sessionId: string) {
   for (const [key, cached] of sessionLookupCache) {
     if (cached.record.id === sessionId) {
@@ -136,8 +137,7 @@ export function loadV1Session(req: Request, res: Response, next: NextFunction) {
 }
 
 export function requireLogin(req: Request, _res: Response, next: NextFunction) {
-  const user = req.sessionRecord?.user
-  if (!user) {
+  if (!isSessionLoggedIn(req.sessionRecord)) {
     return next(
       new AppError(
         'UNAUTHORIZED',

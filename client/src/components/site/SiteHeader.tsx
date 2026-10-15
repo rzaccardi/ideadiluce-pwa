@@ -154,10 +154,13 @@ export function SiteHeader({
   nav,
   footer,
   activeNavId = null,
+  chromeCollapsed = false,
 }: {
   nav: SiteShellContent['nav']
   footer: SiteShellContent['footer']
   activeNavId?: DcActiveNavId | null
+  /** Scroll down: chrome secondario nascosto (banner/utility); header principale resta. */
+  chromeCollapsed?: boolean
 }) {
   const lp = useLocalePath()
   const pathname = usePathname()
@@ -205,6 +208,12 @@ export function SiteHeader({
     }
     pauseHoverOpen()
   }, [pathname])
+
+  useEffect(() => {
+    if (!chromeCollapsed) return
+    setOpenMenu(null)
+    pauseHoverOpen()
+  }, [chromeCollapsed])
 
   useEffect(() => {
     return () => {
@@ -279,7 +288,12 @@ export function SiteHeader({
         transition={transitionBase}
         onPointerLeave={resumeHoverOpen}
       >
-        <SectionContainer className="relative flex flex-nowrap items-center justify-between gap-2 py-3 md:gap-3 md:py-4 lg:gap-3 lg:py-4 xl:gap-4">
+        <SectionContainer
+          className={cn(
+            'relative flex flex-nowrap items-center justify-between gap-2 transition-[padding] duration-300 ease-out md:gap-3 lg:gap-3 xl:gap-4',
+            chromeCollapsed ? 'py-2.5 md:py-2.5 lg:py-2.5' : 'py-3 md:py-4 lg:py-4',
+          )}
+        >
           <div className="flex min-w-0 flex-1 items-center gap-3 md:gap-6 lg:gap-5 xl:gap-8">
             <button
               type="button"
@@ -375,8 +389,8 @@ export function SiteHeader({
               )}
             </nav>
           </div>
-          <div className="flex shrink-0 items-center gap-1 sm:gap-1.5 lg:gap-3 xl:gap-4">
-            <SiteHeaderSearch />
+          <div className="flex shrink-0 items-center gap-3">
+            <SiteHeaderSearch compact={chromeCollapsed} />
             <HeaderLightsToggle />
             <SiteHeaderActions />
           </div>

@@ -146,10 +146,22 @@ type RpcTarget = {
 let cachedCommonTarget: RpcTarget | null = null
 let cachedObjectTarget: RpcTarget | null = null
 
+/**
+ * Base per XML-RPC: rimuove il segmento web `/odoo` tipico di `ODOO_URL`.
+ * Senza questo, `https://host/odoo` diventa `POST /odoo/xmlrpc/2/*` → HTTP 400 su Odoo.sh.
+ */
+export function normalizeOdooXmlRpcBaseUrl(raw: string): string {
+  let base = raw.trim().replace(/\/+$/, '')
+  while (/\/odoo$/i.test(base)) {
+    base = base.replace(/\/odoo$/i, '')
+  }
+  return base
+}
+
 function baseUrlForXmlRpc(): string {
-  return (
+  const raw =
     env.ODOO_XMLRPC_URL?.trim() || env.ODOO_URL?.trim() || env.ODOO_BASE_URL?.trim() || ''
-  )
+  return raw ? normalizeOdooXmlRpcBaseUrl(raw) : ''
 }
 
 function resolveRpcTarget(suffix: '/xmlrpc/2/common' | '/xmlrpc/2/object'): RpcTarget {
@@ -804,13 +816,30 @@ export function toAppError(e: unknown, correlationId: string): AppError {
         { correlationId, odooName: e.odooName },
       )
     }
+    const dbMismatch =
+      lower.includes('database') ||
+      lower.includes('registry') ||
+      lower.includes('does not exist') ||
+      /odoo\.modules\.registry/i.test(msg)
+    if (dbMismatch || (e.httpStatus === 400 && /bad request|xmlrpc/i.test(lower))) {
+      return new AppError(
+        dbMismatch ? 'ODOO_DB_MISMATCH' : 'ODOO_XMLRPC_PATH',
+        msg,
+        dbMismatch
+          ? 'Database Odoo non trovato su questo host: allinea ODOO_DB con ODOO_XMLRPC_URL (produzione tlbdb.odoo.com vs staging *.dev.odoo.com).'
+          : 'Endpoint XML-RPC non valido. Imposta ODOO_XMLRPC_URL su https://host senza /odoo (ODOO_URL può restare …/odoo per i link web).',
+        502,
+        false,
+        { correlationId, odooName: e.odooName },
+      )
+    }
     const htmlInsteadOfRpc = isLikelyHtmlInsteadOfXmlRpc(msg)
     const retriable = htmlInsteadOfRpc ? false : e.httpStatus >= 500 || e.httpStatus === 408
     return new AppError(
       htmlInsteadOfRpc ? 'ODOO_XMLRPC_NOT_XML' : 'ODOO_UPSTREAM_ERROR',
       msg,
       htmlInsteadOfRpc
-        ? 'La risposta del server non è XML-RPC (spesso pagina HTML). Verifica ODOO_URL: deve essere la base pubblica di Odoo (es. https://dominio/odoo) così che /xmlrpc/2/object sia raggiungibile.'
+        ? 'La risposta del server non è XML-RPC (spesso pagina HTML). Verifica ODOO_XMLRPC_URL (base senza /odoo) e che /xmlrpc/2/object sia raggiungibile.'
         : 'Errore temporaneo dal gestionale. Riprova più tardi.',
       e.httpStatus >= 400 && e.httpStatus < 600 ? e.httpStatus : 502,
       retriable,

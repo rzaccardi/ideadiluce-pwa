@@ -40,7 +40,7 @@ async function activeCart(req: Request) {
   const cart = await prisma.cart.findFirst({
     where: {
       status: 'ACTIVE',
-      OR: [{ sessionId: s.id }, ...(s.userId ? [{ userId: s.userId }] : [])],
+      OR: [{ sessionId: s.id }, ...(s.odooPartnerId ? [{ odooPartnerId: s.odooPartnerId }] : [])],
     },
     include: { items: true, shippingSelection: true },
     orderBy: { updatedAt: 'desc' },

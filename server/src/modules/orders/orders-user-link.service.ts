@@ -20,7 +20,7 @@ function normalizeEmail(email: string) {
   return email.toLowerCase().trim()
 }
 
-export async function ensureOrderCacheForPwaOrder(userId: string, po: PwaOrder) {
+export async function ensureOrderCacheForPwaOrder(odooPartnerId: number, po: PwaOrder) {
   if (po.paymentMethod === 'BANK_TRANSFER') {
     const healed = await healBankTransferFalselyMarkedFailed(po.id)
     if (healed) {
@@ -44,7 +44,7 @@ export async function ensureOrderCacheForPwaOrder(userId: string, po: PwaOrder) 
     where: { id: cacheId },
     create: {
       id: cacheId,
-      userId,
+      odooPartnerId,
       odooSaleOrderId: po.odooSaleOrderId,
       status: fields.status,
       paymentStatus: fields.paymentStatus,
@@ -54,7 +54,7 @@ export async function ensureOrderCacheForPwaOrder(userId: string, po: PwaOrder) 
       syncedAt: new Date(),
     },
     update: {
-      userId,
+      odooPartnerId,
       odooSaleOrderId: po.odooSaleOrderId,
       status: fields.status,
       paymentStatus: fields.paymentStatus,
@@ -66,41 +66,41 @@ export async function ensureOrderCacheForPwaOrder(userId: string, po: PwaOrder) 
   })
 }
 
-/** Collega ordini guest/sessione all'utente autenticato e allinea la cache locale. */
+/** Collega ordini guest/sessione al partner autenticato e allinea la cache locale. */
 export async function linkOrdersToUser(params: {
-  userId: string
+  odooPartnerId: number
   email: string
   sessionId?: string | null
 }) {
   const emailLower = normalizeEmail(params.email)
   const sessionFilters = params.sessionId
-    ? [{ sessionId: params.sessionId, userId: null as string | null }]
+    ? [{ sessionId: params.sessionId, odooPartnerId: null as number | null }]
     : []
 
   await prisma.pwaOrder.updateMany({
     where: {
       orderStatus: { in: LINKABLE_PWA_ORDER_STATUSES },
-      OR: [{ email: emailLower, userId: null }, ...sessionFilters],
+      OR: [{ email: emailLower, odooPartnerId: null }, ...sessionFilters],
     },
-    data: { userId: params.userId },
+    data: { odooPartnerId: params.odooPartnerId },
   })
 
   const owned = await prisma.pwaOrder.findMany({
     where: {
-      userId: params.userId,
+      odooPartnerId: params.odooPartnerId,
       orderStatus: { in: LINKABLE_PWA_ORDER_STATUSES },
     },
   })
 
   for (const po of owned) {
-    await ensureOrderCacheForPwaOrder(params.userId, po)
+    await ensureOrderCacheForPwaOrder(params.odooPartnerId, po)
   }
 
   const cacheIds = owned.map((po) => `pwa-${po.id}`)
   if (cacheIds.length > 0) {
     await prisma.orderCache.updateMany({
-      where: { id: { in: cacheIds }, userId: null },
-      data: { userId: params.userId },
+      where: { id: { in: cacheIds }, odooPartnerId: null },
+      data: { odooPartnerId: params.odooPartnerId },
     })
   }
 }

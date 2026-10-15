@@ -155,9 +155,18 @@ model AdminSession {
   @@index([expiresAt])
 }
 
-model User {
+/**
+ * Proiezione satellite PWA keyed da `odooPartnerId` — NON directory identità/auth.
+ * Prefs e cache locale; lookup auth = solo Odoo. Creato solo dopo successo Odoo (o path locale con id sintetico).
+ */
+model CustomerSatellite {
   id                     String            @id @default(cuid())
   email                  String            @unique
+  /** Partner Odoo (PK logica). Path locale (ODOO_ENABLED=false): id sintetico negativo. */
+  odooPartnerId          Int               @unique
+  /**
+   * Solo path locale quando ODOO_ENABLED=false (dev). Con identity Odoo resta null (password sul portal).
+   */
   passwordHash           String?
   firstName              String?
   lastName               String?
@@ -197,7 +206,6 @@ model User {
   wishlistItems         WishlistItem[]
   checkoutSessions      CheckoutSession[]
   ordersCache           OrderCache[]
-  odooMaps              OdooCustomerMap[]
   pwaOrders             PwaOrder[]
   quoteRequests         QuoteRequest[]
   notifications         UserNotification[]
@@ -211,22 +219,25 @@ model User {
 }
 
 model PasswordResetToken {
-  id        String    @id @default(cuid())
-  userId    String
-  tokenHash String    @unique
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime  @default(now())
+  id            String    @id @default(cuid())
+  odooPartnerId Int
+  tokenHash     String    @unique
+  expiresAt     DateTime
+  usedAt        DateTime?
+  createdAt     DateTime  @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customer CustomerSatellite @relation(fields: [odooPartnerId], references: [odooPartnerId], onDelete: Cascade)
 
-  @@index([userId])
+  @@index([odooPartnerId])
   @@index([expiresAt])
 }
 
 model Session {
   id        String   @id @default(cuid())
-  userId    String?
+  /** Partner Odoo autenticato (identità). Null = guest. */
+  odooPartnerId Int?
+  /** UID portal Odoo (`res.users`) se noto. */
+  odooUid       Int?
   tokenHash String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
@@ -234,53 +245,51 @@ model Session {
   /** Admin che ha avviato impersonazione (audit). */
   impersonatedByAdminId String?
 
-  user                  User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  /** Proiezione satellite (prefs); relation name `user` per compatibilità Express. */
+  user                  CustomerSatellite? @relation(fields: [odooPartnerId], references: [odooPartnerId], onDelete: SetNull)
   impersonatedByAdmin   AdminUser? @relation(fields: [impersonatedByAdminId], references: [id], onDelete: SetNull)
   carts                 Cart[]
   wishlistItems         WishlistItem[]
   pwaOrders             PwaOrder[]
 
-  @@index([userId])
+  @@index([odooPartnerId])
   @@index([expiresAt])
   @@index([impersonatedByAdminId])
 }
 
 model ImpersonationToken {
-  id          String    @id @default(cuid())
-  tokenHash   String    @unique
-  userId      String
-  adminUserId String
-  expiresAt   DateTime
-  usedAt      DateTime?
-  createdAt   DateTime  @default(now())
+  id            String    @id @default(cuid())
+  tokenHash     String    @unique
+  odooPartnerId Int
+  adminUserId   String
+  expiresAt     DateTime
+  usedAt        DateTime?
+  createdAt     DateTime  @default(now())
 
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  customer  CustomerSatellite @relation(fields: [odooPartnerId], references: [odooPartnerId], onDelete: Cascade)
+  adminUser AdminUser         @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
+  @@index([odooPartnerId])
   @@index([adminUserId])
   @@index([expiresAt])
 }
 
+/** Mapping partner Odoo ↔ email guest/account. Nessuna FK a CustomerSatellite (guest senza prefs). */
 model OdooCustomerMap {
   id             String         @id @default(cuid())
-  userId         String?        @unique
   guestEmail     String?
-  odooPartnerId  Int
+  odooPartnerId  Int            @unique
   syncStatus     OdooSyncStatus @default(PENDING)
   lastSyncAt     DateTime?
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
-
   @@index([guestEmail])
-  @@index([odooPartnerId])
 }
 
 model Cart {
   id                 String     @id @default(cuid())
-  userId             String?
+  odooPartnerId      Int?
   sessionId          String?
   status             CartStatus @default(ACTIVE)
   currencyCode       String     @default("EUR")
@@ -300,7 +309,7 @@ model Cart {
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
-  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  customer CustomerSatellite? @relation(fields: [odooPartnerId], references: [odooPartnerId], onDelete: SetNull)
   session  Session?  @relation(fields: [sessionId], references: [id], onDelete: SetNull)
   items    CartItem[]
   checkoutSessions CheckoutSession[]
@@ -309,30 +318,30 @@ model Cart {
   quoteRequests QuoteRequest[]
   shippingSelection CartShippingSelection?
 
-  @@index([userId])
+  @@index([odooPartnerId])
   @@index([sessionId])
   @@index([status])
   @@index([contactEmail])
 }
 
 model UserNotification {
-  id          String    @id @default(cuid())
-  userId      String
-  type        String
-  title       String
-  body        String?
-  payloadJson Json?
-  readAt      DateTime?
-  createdAt   DateTime  @default(now())
+  id            String    @id @default(cuid())
+  odooPartnerId Int
+  type          String
+  title         String
+  body          String?
+  payloadJson   Json?
+  readAt        DateTime?
+  createdAt     DateTime  @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customer CustomerSatellite @relation(fields: [odooPartnerId], references: [odooPartnerId], onDelete: Cascade)
 
-  @@index([userId, createdAt])
+  @@index([odooPartnerId, createdAt])
 }
 
 model QuoteRequest {
   id                   String             @id @default(cuid())
-  userId               String
+  odooPartnerId        Int
   cartId               String
   email                String
   status               QuoteRequestStatus @default(REQUESTED)
@@ -349,10 +358,10 @@ model QuoteRequest {
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customer CustomerSatellite @relation(fields: [odooPartnerId], references: [odooPartnerId], onDelete: Cascade)
   cart Cart @relation(fields: [cartId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
+  @@index([odooPartnerId])
   @@index([cartId])
   @@index([status])
   @@index([odooSaleOrderId])
@@ -361,7 +370,7 @@ model QuoteRequest {
 /// Richiesta di reso / recesso avviata dal cliente dall'area account.
 model OrderReturnRequest {
   id              String   @id @default(cuid())
-  userId          String
+  odooPartnerId   Int
   orderId         String
   pwaOrderId      String?
   odooSaleOrderId Int?
@@ -372,10 +381,10 @@ model OrderReturnRequest {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customer CustomerSatellite @relation(fields: [odooPartnerId], references: [odooPartnerId], onDelete: Cascade)
 
-  @@unique([userId, orderId])
-  @@index([userId])
+  @@unique([odooPartnerId, orderId])
+  @@index([odooPartnerId])
   @@index([status])
   @@index([createdAt])
 }
@@ -437,17 +446,17 @@ model CartItem {
 }
 
 model WishlistItem {
-  id          String   @id @default(cuid())
-  userId      String?
-  sessionId   String?
-  productRef  String
-  variantRef  String?
-  createdAt   DateTime @default(now())
+  id            String   @id @default(cuid())
+  odooPartnerId Int?
+  sessionId     String?
+  productRef    String
+  variantRef    String?
+  createdAt     DateTime @default(now())
 
-  user    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  session Session? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  customer CustomerSatellite? @relation(fields: [odooPartnerId], references: [odooPartnerId], onDelete: Cascade)
+  session  Session?           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
+  @@index([odooPartnerId])
   @@index([sessionId])
   @@index([productRef])
 }
@@ -455,7 +464,6 @@ model WishlistItem {
 model CheckoutSession {
   id                 String                @id @default(cuid())
   cartId             String
-  userId             String?
   state              CheckoutSessionState  @default(DRAFT)
   email              String
   billingAddressJson     Json?
@@ -471,13 +479,13 @@ model CheckoutSession {
   createdAt          DateTime              @default(now())
   updatedAt          DateTime              @updatedAt
 
-  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  customer CustomerSatellite? @relation(fields: [odooPartnerId], references: [odooPartnerId], onDelete: SetNull)
   cart    Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
   attempts CheckoutAttempt[]
   pwaOrder PwaOrder?
 
   @@index([cartId])
-  @@index([userId])
+  @@index([odooPartnerId])
   @@index([state])
 }
 
@@ -502,7 +510,6 @@ model PwaOrder {
   id                         String            @id @default(cuid())
   cartId                     String
   checkoutSessionId          String?           @unique
-  userId                     String?
   sessionId                  String?
   email                      String
   orderStatus                PwaOrderStatus    @default(CART_CREATED)
@@ -547,13 +554,13 @@ model PwaOrder {
 
   cart            Cart             @relation(fields: [cartId], references: [id], onDelete: Cascade)
   checkoutSession CheckoutSession? @relation(fields: [checkoutSessionId], references: [id], onDelete: SetNull)
-  user            User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  customer        CustomerSatellite? @relation(fields: [odooPartnerId], references: [odooPartnerId], onDelete: SetNull)
   session         Session?         @relation(fields: [sessionId], references: [id], onDelete: SetNull)
   payments        PwaPayment[]
   odooSyncQueue   OdooSyncQueue[]
 
   @@index([cartId])
-  @@index([userId])
+  @@index([odooPartnerId])
   @@index([sessionId])
   @@index([orderStatus])
   @@index([paymentStatus])
@@ -562,25 +569,25 @@ model PwaOrder {
 }
 
 model OdooSyncQueue {
-  id          String              @id @default(cuid())
-  pwaOrderId  String?
-  userId      String?
-  operation   String
-  payload     Json                @default("{}")
-  attempts    Int                 @default(0)
-  maxAttempts Int                 @default(8)
-  nextRetryAt DateTime            @default(now())
-  lastError   String?
-  status      OdooSyncQueueStatus @default(PENDING)
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
-  resolvedAt  DateTime?
+  id            String              @id @default(cuid())
+  pwaOrderId    String?
+  odooPartnerId Int?
+  operation     String
+  payload       Json                @default("{}")
+  attempts      Int                 @default(0)
+  maxAttempts   Int                 @default(8)
+  nextRetryAt   DateTime            @default(now())
+  lastError     String?
+  status        OdooSyncQueueStatus @default(PENDING)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  resolvedAt    DateTime?
 
   order PwaOrder? @relation(fields: [pwaOrderId], references: [id], onDelete: Cascade)
 
   @@index([status, nextRetryAt])
   @@index([pwaOrderId])
-  @@index([userId])
+  @@index([odooPartnerId])
   @@index([pwaOrderId, operation, status])
 }
 
@@ -628,7 +635,7 @@ model PwaPayment {
 
 model OrderCache {
   id               String    @id @default(cuid())
-  userId           String?
+  odooPartnerId    Int?
   odooSaleOrderId  Int
   status           String
   paymentStatus    String?
@@ -639,9 +646,9 @@ model OrderCache {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  customer CustomerSatellite? @relation(fields: [odooPartnerId], references: [odooPartnerId], onDelete: SetNull)
 
-  @@index([userId])
+  @@index([odooPartnerId])
   @@index([odooSaleOrderId])
 }
 
@@ -762,7 +769,7 @@ model AbandonedCartEvent {
   eventType   String
   /** Snapshot email/utente al momento dell'evento (per BO e follow-up). */
   contactEmail String?
-  userId       String?
+  odooPartnerId Int?
   itemsSnapshotJson Json?
   payloadJson Json?
   createdAt   DateTime @default(now())
@@ -772,7 +779,7 @@ model AbandonedCartEvent {
   @@index([cartId])
   @@index([eventType])
   @@index([contactEmail])
-  @@index([userId])
+  @@index([odooPartnerId])
   @@index([createdAt])
 }
 
@@ -801,6 +808,30 @@ model MerchantCenterSettings {
   updatedAt             DateTime @updatedAt
 }
 
+/**
+ * Overlay marchi catalogo: loghi light/dark e metadati gestiti dal BO.
+ * La lista primaria arriva da Odoo (cache catalogo); questa tabella arricchisce/nasconde.
+ */
+model CatalogBrand {
+  id           String   @id @default(cuid())
+  /** Slug allineato al brand Odoo / URL `/brand/{slug}`. */
+  slug         String   @unique
+  /** Nome visualizzato (override); se null si usa il nome Odoo. */
+  displayName  String?
+  logoLightUrl String?
+  logoDarkUrl  String?
+  /** Se true non compare nella directory/public brands. */
+  hidden       Boolean  @default(false)
+  /** Brand aggiunto solo dal BO (non ancora presente in cache Odoo). */
+  manual       Boolean  @default(false)
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([hidden])
+  @@index([manual])
+}
+
 /** Impostazioni social proof (singleton `default`). */
 model SocialProofSettings {
   id                  String    @id @default("default")
@@ -819,25 +850,25 @@ model SocialProofSettings {
 /** Eventi social proof importati da Odoo `sale.order.line`. */
 /** Tracciamento download documenti prodotto (scheda tecnica, datasheet, ecc.). */
 model ProductDocumentDownload {
-  id           String   @id @default(cuid())
-  productSlug  String
-  productRef   String?
-  variantRef   String?
-  documentId   String
-  documentName String?
-  userId       String?
-  sessionId    String?
-  locale       String   @default("IT")
-  sourcePage   String?
-  userAgent    String?
-  success      Boolean  @default(true)
-  errorMessage String?
-  createdAt    DateTime @default(now())
+  id            String   @id @default(cuid())
+  productSlug   String
+  productRef    String?
+  variantRef    String?
+  documentId    String
+  documentName  String?
+  odooPartnerId Int?
+  sessionId     String?
+  locale        String   @default("IT")
+  sourcePage    String?
+  userAgent     String?
+  success       Boolean  @default(true)
+  errorMessage  String?
+  createdAt     DateTime @default(now())
 
   @@index([productSlug])
   @@index([documentId])
   @@index([createdAt])
-  @@index([userId])
+  @@index([odooPartnerId])
 }
 
 /** Eventi ricerca catalogo storefront (analisi mercato / BO). */
@@ -855,7 +886,7 @@ model CatalogSearchEvent {
   clickedPath     String?
   clickedKind     String?
   clickedLabel    String?
-  userId          String?
+  odooPartnerId   Int?
   sessionId       String?
   userAgent       String?
   createdAt       DateTime @default(now())
@@ -865,7 +896,7 @@ model CatalogSearchEvent {
   @@index([source])
   @@index([action])
   @@index([createdAt])
-  @@index([userId])
+  @@index([odooPartnerId])
 }
 
 /// Hit pagina 404 storefront (link persi, URL legacy, probe). Aggregati nel BO.
@@ -882,7 +913,7 @@ model NotFoundHit {
   isProbe      Boolean  @default(false)
   /// product | category | brand | guide | room | content | probe | other
   pathKind     String   @default("other")
-  userId       String?
+  odooPartnerId Int?
   sessionId    String?
   userAgent    String?
   createdAt    DateTime @default(now())
@@ -906,7 +937,7 @@ model StockRestockRequest {
   quantity    Int       @default(1)
   locale      String    @default("IT")
   productName String?
-  userId      String?
+  odooPartnerId Int?
   requestType String    @default("RESTOCK_NOTIFY")
   adminStatus String    @default("NEW")
   adminNotes  String?
@@ -964,7 +995,6 @@ model ProfessionalAccountRequest {
   locale      String   @default("IT")
   country     String   @default("IT")
   status      String   @default("NEW")
-  userId      String?
   odooPartnerId Int?
   vatValidated  Boolean @default(false)
   vatForceAccepted Boolean @default(false)
@@ -976,6 +1006,7 @@ model ProfessionalAccountRequest {
   @@index([email])
   @@index([status])
   @@index([createdAt])
+  @@index([odooPartnerId])
 }
 
 model SocialProofOdooEvent {
@@ -1048,7 +1079,7 @@ model VatValidationCache {
 /** Audit validazioni fiscali — hash dei dati sensibili, no CF/P.IVA in chiaro. */
 model TaxValidationLog {
   id               String   @id @default(cuid())
-  userId           String?
+  odooPartnerId    Int?
   sessionId        String?
   fiscalCodeHash   String?
   vatCountryCode   String?
@@ -1058,9 +1089,9 @@ model TaxValidationLog {
   responseSummary  Json?
   checkedAt        DateTime @default(now())
 
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  customer CustomerSatellite? @relation(fields: [odooPartnerId], references: [odooPartnerId], onDelete: SetNull)
 
-  @@index([userId])
+  @@index([odooPartnerId])
   @@index([checkedAt])
 }
 

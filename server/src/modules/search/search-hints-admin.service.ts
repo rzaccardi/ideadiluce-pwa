@@ -3,7 +3,8 @@ import {
   odooSearchHintsAvailable,
   type OdooSearchHintCandidate,
 } from '../../adapters/odoo/odooTopPurchasedSearchHints.js'
-import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { toAppError, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { logger } from '../../lib/logger.js'
 import { AppError } from '../../types/errors.js'
 import { SITE_LOCALES, type SiteLocale } from '../site/site.constants.js'
 import { mergeSiteContentWithDefaults } from '../site/site-content.merge.js'
@@ -41,13 +42,38 @@ export type SearchHintsOdooApplyDTO = {
   updatedAt: string
 }
 
+function asHomeContent(content: unknown): HomePageContent {
+  const merged = mergeSiteContentWithDefaults('home', content ?? defaultSiteContent('home')) as HomePageContent
+  const hints = Array.isArray(merged.search?.hints) ? merged.search.hints : []
+  return {
+    ...merged,
+    search: {
+      ...merged.search,
+      hints,
+    },
+  }
+}
+
 async function getHomeContent(locale: SiteLocale): Promise<HomePageContent> {
-  const row = await siteRepository.findByKeyLocale('home', locale)
-  return mergeSiteContentWithDefaults('home', row?.content ?? defaultSiteContent('home')) as HomePageContent
+  try {
+    const row = await siteRepository.findByKeyLocale('home', locale)
+    return asHomeContent(row?.content)
+  } catch (error) {
+    logger.warn('search_hints_odoo.home_content_fallback', {
+      locale,
+      err: error instanceof Error ? error.message : String(error),
+    })
+    return asHomeContent(null)
+  }
 }
 
 async function getHomeItContent(): Promise<HomePageContent> {
   return getHomeContent('IT')
+}
+
+function wrapOdooError(e: unknown, correlationId: string): never {
+  if (e instanceof AppError) throw e
+  throw toAppError(e, correlationId)
 }
 
 export const searchHintsAdminService = {
@@ -75,7 +101,12 @@ export const searchHintsAdminService = {
     }
 
     const home = await getHomeItContent()
-    const suggestions = await fetchTopPurchasedSearchHints(ctx, input)
+    let suggestions: OdooSearchHintCandidate[]
+    try {
+      suggestions = await fetchTopPurchasedSearchHints(ctx, input)
+    } catch (e) {
+      wrapOdooError(e, ctx.correlationId)
+    }
     const lastSyncedAt = parseSearchHintsOdooSyncedAt(home)
 
     return {

@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from 'express'
 import { ZodError } from 'zod'
+import { OdooClientError, toAppError } from '../adapters/odoo/odooClient.js'
 import { isAppError } from '../types/errors.js'
 import { errorBody } from '../lib/api-response.js'
 import { logger } from '../lib/logger.js'
@@ -27,15 +28,22 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     )
   }
 
-  if (isAppError(err)) {
-    return res.status(err.statusCode).json(
+  const appErr = isAppError(err)
+    ? err
+    : err instanceof OdooClientError ||
+        (err instanceof Error && err.name === 'OdooClientError')
+      ? toAppError(err, correlationId)
+      : null
+
+  if (appErr) {
+    return res.status(appErr.statusCode).json(
       errorBody({
-        code: err.code,
-        message: err.message,
-        userMessage: err.userMessage,
-        retriable: err.retriable,
+        code: appErr.code,
+        message: appErr.message,
+        userMessage: appErr.userMessage,
+        retriable: appErr.retriable,
         correlationId,
-        details: err.details,
+        details: appErr.details,
       }),
     )
   }

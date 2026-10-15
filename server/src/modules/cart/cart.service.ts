@@ -164,9 +164,10 @@ function assertSession(req: Request) {
 
 async function resolveOrCreateCart(req: Request) {
   const session = assertSession(req)
+  const partnerId = session.odooPartnerId
   let cart =
-    (session.userId
-      ? await cartRepository.findActiveByUser(session.userId)
+    (partnerId != null
+      ? await cartRepository.findActiveByPartner(partnerId)
       : null) ?? (await cartRepository.findActiveBySession(session.id))
 
   if (!cart) {
@@ -174,16 +175,18 @@ async function resolveOrCreateCart(req: Request) {
       currencyCode: 'EUR',
       status: 'ACTIVE',
       session: { connect: { id: session.id } },
-      ...(session.userId ? { user: { connect: { id: session.userId } } } : {}),
+      ...(partnerId != null
+        ? { customer: { connect: { odooPartnerId: partnerId } } }
+        : {}),
     })
-  } else if (session.userId && !cart.userId) {
+  } else if (partnerId != null && cart.odooPartnerId == null) {
     cart = await prisma.cart.update({
       where: { id: cart.id },
-      data: { user: { connect: { id: session.userId } } },
+      data: { customer: { connect: { odooPartnerId: partnerId } } },
       include: { items: true },
     })
     await syncCartContactEmail(cart.id)
-  } else if (session.userId) {
+  } else if (partnerId != null) {
     await syncCartContactEmail(cart.id)
   }
   return cart

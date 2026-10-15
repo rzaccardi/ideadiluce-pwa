@@ -1,8 +1,21 @@
+export type SiteNavFilterKind =
+  | 'category'
+  | 'tag'
+  | 'brand'
+  | 'attacco'
+  | 'tipologia'
+  | 'stile'
+  | 'ambiente'
+
 export type SiteLink = {
   label: string
   href: string
   imageUrl?: string
   videoUrl?: string
+  /** Pin filtro Odoo: label/href risolti a runtime per locale. */
+  filterKind?: SiteNavFilterKind
+  filterValue?: string
+  filterWorld?: 'design' | 'technical'
 }
 
 export type SiteNavColumn = {
@@ -424,4 +437,8 @@ export type BrandListItemDTO = {
   productCount?: number
   /** Aree in cui il brand ha prodotti (da categorie Odoo). */
   worlds?: ReadonlyArray<CatalogWorld>
+  /** Logo light gestito dal BO (CDN). */
+  logoLightUrl?: string | null
+  /** Logo dark gestito dal BO (CDN). */
+  logoDarkUrl?: string | null
 }

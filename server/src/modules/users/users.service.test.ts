@@ -22,7 +22,7 @@ const {
 
 vi.mock('../../lib/prisma.js', () => ({
   prisma: {
-    user: { findUnique: prismaUserFindUnique, update: prismaUserUpdate },
+    customerSatellite: { findUnique: prismaUserFindUnique, update: prismaUserUpdate },
     odooCustomerMap: { findUnique: prismaOdooMapFindUnique },
   },
 }))
@@ -42,10 +42,16 @@ vi.mock('../../adapters/odoo/odooPortalUserAdapter.js', () => ({
 
 vi.mock('../../adapters/odoo/odooClient.js', () => ({
   isOdooConfigured: () => false,
+  odooAuthenticatePortalUser: vi.fn(),
 }))
 
 vi.mock('../../config/env.js', () => ({
   env: { ODOO_ENABLED: false },
+}))
+
+vi.mock('../auth/odoo-account-sync.service.js', () => ({
+  isOdooAuthIdentityRequired: () => false,
+  syncPasswordToOdooPortal: vi.fn(),
 }))
 
 vi.mock('../../middlewares/session.js', () => ({

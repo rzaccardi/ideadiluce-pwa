@@ -29,7 +29,7 @@ function toListItem(row: Row, userEmail: string | null): RestockAdminListItemDTO
     variantRef: row.variantRef || null,
     quantity: row.quantity,
     locale: row.locale,
-    userId: row.userId,
+    odooPartnerId: row.odooPartnerId,
     userEmail,
     requestType: row.requestType === 'PRODUCT_REQUEST' ? 'PRODUCT_REQUEST' : 'RESTOCK_NOTIFY',
     adminStatus: normalizeAdminStatus(row.adminStatus),
@@ -62,13 +62,13 @@ function buildWhere(query: z.infer<typeof restockAdminListQuerySchema>): Prisma.
   return where
 }
 
-async function userEmailsById(userIds: string[]): Promise<Map<string, string>> {
-  if (userIds.length === 0) return new Map()
-  const users = await prisma.user.findMany({
-    where: { id: { in: userIds } },
-    select: { id: true, email: true },
+async function userEmailsByPartnerId(odooPartnerIds: number[]): Promise<Map<number, string>> {
+  if (odooPartnerIds.length === 0) return new Map()
+  const users = await prisma.customerSatellite.findMany({
+    where: { odooPartnerId: { in: odooPartnerIds } },
+    select: { odooPartnerId: true, email: true },
   })
-  return new Map(users.map((u) => [u.id, u.email]))
+  return new Map(users.map((u) => [u.odooPartnerId, u.email]))
 }
 
 export const restockAdminService = {
@@ -86,12 +86,14 @@ export const restockAdminService = {
       }),
     ])
 
-    const emailMap = await userEmailsById(
-      [...new Set(rows.map((r) => r.userId).filter((id): id is string => id != null))],
+    const emailMap = await userEmailsByPartnerId(
+      [...new Set(rows.map((r) => r.odooPartnerId).filter((id): id is number => id != null))],
     )
 
     return {
-      items: rows.map((row) => toListItem(row, row.userId ? (emailMap.get(row.userId) ?? null) : null)),
+      items: rows.map((row) =>
+        toListItem(row, row.odooPartnerId != null ? (emailMap.get(row.odooPartnerId) ?? null) : null),
+      ),
       page: query.page,
       pageSize: query.pageSize,
       total,
@@ -112,10 +114,15 @@ export const restockAdminService = {
         false,
       )
     }
-    const userEmail = row.userId
-      ? ((await prisma.user.findUnique({ where: { id: row.userId }, select: { email: true } }))?.email ??
-        null)
-      : null
+    const userEmail =
+      row.odooPartnerId != null
+        ? ((
+            await prisma.customerSatellite.findUnique({
+              where: { odooPartnerId: row.odooPartnerId },
+              select: { email: true },
+            })
+          )?.email ?? null)
+        : null
     return {
       ...toListItem(row, userEmail),
       odooTemplateId: parseOdooTemplateId(row.productRef),
@@ -145,10 +152,15 @@ export const restockAdminService = {
       },
     })
 
-    const userEmail = row.userId
-      ? ((await prisma.user.findUnique({ where: { id: row.userId }, select: { email: true } }))?.email ??
-        null)
-      : null
+    const userEmail =
+      row.odooPartnerId != null
+        ? ((
+            await prisma.customerSatellite.findUnique({
+              where: { odooPartnerId: row.odooPartnerId },
+              select: { email: true },
+            })
+          )?.email ?? null)
+        : null
 
     return {
       ...toListItem(row, userEmail),

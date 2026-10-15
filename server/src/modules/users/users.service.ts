@@ -3,7 +3,7 @@ import type { CustomerSegment } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { prisma } from '../../lib/prisma.js'
 import { createOdooCustomerAdapter } from '../../adapters/odoo/odooCustomerAdapter.js'
-import { isOdooConfigured } from '../../adapters/odoo/odooClient.js'
+import { isOdooConfigured, odooAuthenticatePortalUser } from '../../adapters/odoo/odooClient.js'
 import { env } from '../../config/env.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { updateOdooPortalUserLogin } from '../../adapters/odoo/odooPortalUserAdapter.js'
@@ -19,6 +19,10 @@ import { professionalAccountRepository } from '../professional-account/professio
 import { normalizeProfessionalRequestStatus } from '../professional-account/professional-account.constants.js'
 import { runOdooUserProfileSync } from './users-odoo-sync.helper.js'
 import { parseOdooShippingAddressId } from '../../adapters/odoo/odoo-partner-shipping.js'
+import {
+  isOdooAuthIdentityRequired,
+  syncPasswordToOdooPortal,
+} from '../auth/odoo-account-sync.service.js'
 
 type PatchMeInput = z.infer<typeof patchMeSchema>
 type ChangePasswordInput = z.infer<typeof changePasswordSchema>
@@ -66,7 +70,7 @@ async function syncUserBusinessToOdoo(
     /* best-effort */
   }
   if (isPro || b2bActive != null) {
-    await prisma.user.update({
+    await prisma.customerSatellite.update({
       where: { id: userId },
       data: {
         ...(isPro ? { isProfessional: true } : {}),
@@ -140,27 +144,16 @@ async function syncUserProfileToOdoo(
 }
 
 export const usersService = {
-  async changePassword(userId: string, input: ChangePasswordInput): Promise<void> {
-    const user = await prisma.user.findUnique({ where: { id: userId } })
-    if (!user?.passwordHash) {
-      throw new AppError(
-        'PASSWORD_NOT_SET',
-        'Password not set',
-        'Questo account non ha una password locale da modificare.',
-        400,
-        false,
-      )
+  async changePassword(
+    userId: string,
+    input: ChangePasswordInput,
+    ctx?: OdooCallContext,
+  ): Promise<void> {
+    const user = await prisma.customerSatellite.findUnique({ where: { id: userId } })
+    if (!user) {
+      throw new AppError('USER_NOT_FOUND', 'User not found', 'Utente non trovato.', 404, false)
     }
-    const ok = bcrypt.compareSync(input.currentPassword, user.passwordHash)
-    if (!ok) {
-      throw new AppError(
-        'INVALID_CREDENTIALS',
-        'Current password invalid',
-        'La password attuale non è corretta.',
-        400,
-        false,
-      )
-    }
+
     if (input.currentPassword === input.newPassword) {
       throw new AppError(
         'VALIDATION_ERROR',
@@ -170,14 +163,67 @@ export const usersService = {
         false,
       )
     }
-    await prisma.user.update({
+
+    const callCtx: OdooCallContext = ctx ?? { correlationId: `change-password:${userId}` }
+    let currentOk = false
+
+    if (isOdooAuthIdentityRequired()) {
+      const odooUid = await odooAuthenticatePortalUser(callCtx, user.email, input.currentPassword)
+      currentOk = odooUid != null
+    } else if (user.passwordHash) {
+      currentOk = bcrypt.compareSync(input.currentPassword, user.passwordHash)
+    } else {
+      throw new AppError(
+        'PASSWORD_NOT_SET',
+        'Password not set',
+        'Questo account non ha una password da modificare.',
+        400,
+        false,
+      )
+    }
+
+    if (!currentOk) {
+      throw new AppError(
+        'INVALID_CREDENTIALS',
+        'Current password invalid',
+        'La password attuale non è corretta.',
+        400,
+        false,
+      )
+    }
+
+    if (isOdooAuthIdentityRequired()) {
+      try {
+        const synced = await syncPasswordToOdooPortal(callCtx, user.email, input.newPassword)
+        if (!synced) {
+          throw new AppError(
+            'ODOO_PASSWORD_SYNC_FAILED',
+            'Odoo portal missing',
+            'Non siamo riusciti ad aggiornare la password su Odoo. Riprova tra poco.',
+            503,
+            true,
+          )
+        }
+      } catch (e) {
+        if (e instanceof AppError) throw e
+        throw new AppError(
+          'ODOO_PASSWORD_SYNC_FAILED',
+          'Odoo password sync failed',
+          'Non siamo riusciti ad aggiornare la password su Odoo. Riprova tra poco.',
+          503,
+          true,
+        )
+      }
+    }
+
+    await prisma.customerSatellite.update({
       where: { id: userId },
       data: { passwordHash: bcrypt.hashSync(input.newPassword, 10) },
     })
   },
 
   async patchMe(userId: string, input: PatchMeInput, ctx?: OdooCallContext): Promise<UserPatchResult> {
-    const current = await prisma.user.findUnique({ where: { id: userId } })
+    const current = await prisma.customerSatellite.findUnique({ where: { id: userId } })
     if (!current) {
       throw new AppError('USER_NOT_FOUND', 'User not found', 'Utente non trovato.', 404, false)
     }
@@ -186,7 +232,7 @@ export const usersService = {
     if (input.email !== undefined) {
       const normalized = input.email.toLowerCase().trim()
       if (normalized !== current.email) {
-        const taken = await prisma.user.findUnique({ where: { email: normalized } })
+        const taken = await prisma.customerSatellite.findUnique({ where: { email: normalized } })
         if (taken) {
           throw new AppError(
             'EMAIL_TAKEN',
@@ -200,7 +246,7 @@ export const usersService = {
       }
     }
 
-    const user = await prisma.user.update({
+    const user = await prisma.customerSatellite.update({
       where: { id: userId },
       data: {
         ...(emailChange ? { email: emailChange.newEmail } : {}),
@@ -232,7 +278,7 @@ export const usersService = {
     let odooSyncFailed = false
 
     if (ctx && env.ODOO_ENABLED && isOdooConfigured()) {
-      const map = await prisma.odooCustomerMap.findUnique({ where: { userId } })
+      const map = await prisma.odooCustomerMap.findUnique({ where: { odooPartnerId: (await prisma.customerSatellite.findUniqueOrThrow({ where: { id: userId }, select: { odooPartnerId: true } })).odooPartnerId } })
       if (map) {
         odooSyncFailed = await runOdooUserProfileSync(
           ctx,
@@ -272,6 +318,10 @@ export const usersService = {
 
     let validationResult = null
     if (input.fiscalCode?.trim() || input.vatNumber?.trim()) {
+      const satellite = await prisma.customerSatellite.findUniqueOrThrow({
+        where: { id: userId },
+        select: { odooPartnerId: true },
+      })
       validationResult = await taxValidationService.validate(
         {
           countryCode: input.billingCountry ?? 'IT',
@@ -279,7 +329,7 @@ export const usersService = {
           vatNumber: input.vatNumber,
           personType,
         },
-        { userId, correlationId: ctx?.correlationId },
+        { odooPartnerId: satellite.odooPartnerId, correlationId: ctx?.correlationId },
       )
 
       if (validationResult.fiscalCode && !validationResult.fiscalCode.valid) {
@@ -306,12 +356,12 @@ export const usersService = {
       }
     }
 
-    const user = await prisma.user.findUnique({ where: { id: userId } })
+    const user = await prisma.customerSatellite.findUnique({ where: { id: userId } })
     if (!user) {
       throw new AppError('USER_NOT_FOUND', 'User not found', 'Utente non trovato.', 404, false)
     }
 
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await prisma.customerSatellite.update({
       where: { id: userId },
       data: {
         ...(segment ? { customerSegment: segment } : {}),
@@ -326,7 +376,7 @@ export const usersService = {
     let odooSyncFailed = false
 
     if (ctx && env.ODOO_ENABLED && isOdooConfigured()) {
-      const map = await prisma.odooCustomerMap.findUnique({ where: { userId } })
+      const map = await prisma.odooCustomerMap.findUnique({ where: { odooPartnerId: (await prisma.customerSatellite.findUniqueOrThrow({ where: { id: userId }, select: { odooPartnerId: true } })).odooPartnerId } })
       if (map) {
         odooSyncFailed = await runOdooUserProfileSync(
           ctx,
@@ -353,7 +403,14 @@ export const usersService = {
   },
 
   async getMyProfessionalRequest(userId: string, email: string) {
-    const row = await professionalAccountRepository.findLatestForAccount({ userId, email })
+    const satellite = await prisma.customerSatellite.findUnique({
+      where: { id: userId },
+      select: { odooPartnerId: true },
+    })
+    const row = await professionalAccountRepository.findLatestForAccount({
+      odooPartnerId: satellite?.odooPartnerId ?? null,
+      email,
+    })
     if (!row) return null
     return {
       id: row.id,

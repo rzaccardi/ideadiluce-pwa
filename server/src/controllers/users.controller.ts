@@ -23,7 +23,10 @@ export const usersController = {
 
   changePassword: asyncHandler(async (req: Request, res: Response) => {
     const userId = req.sessionRecord!.user!.id
-    await usersService.changePassword(userId, req.body as ChangePasswordBody)
+    await usersService.changePassword(userId, req.body as ChangePasswordBody, {
+      correlationId: req.correlationId,
+      req,
+    })
     res.json(ok({ ok: true }))
   }),
 

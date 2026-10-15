@@ -42,10 +42,10 @@ function assertCheckoutAccess(
   row: NonNullable<Awaited<ReturnType<typeof checkoutRepository.findById>>>,
 ) {
   const s = assertSession(req)
-  if (row.userId && row.userId !== s.userId) {
+  if (row.odooPartnerId != null && row.odooPartnerId !== s.odooPartnerId) {
     throw new AppError('FORBIDDEN', 'Forbidden', 'Non hai accesso a questa sessione.', 403, false)
   }
-  if (!row.userId && row.cart.sessionId !== s.id) {
+  if (row.odooPartnerId == null && row.cart.sessionId !== s.id) {
     throw new AppError('FORBIDDEN', 'Forbidden', 'Non hai accesso a questa sessione.', 403, false)
   }
 }
@@ -92,7 +92,7 @@ export const checkoutService = {
       expiresAt,
       cart: { connect: { id: cart.id } },
       ...(priceSnapshot ? { priceSnapshotJson: priceSnapshot } : {}),
-      ...(s.userId ? { user: { connect: { id: s.userId } } } : {}),
+      ...(s.odooPartnerId ? { user: { connect: { id: s.odooPartnerId } } } : {}),
     })
     await syncCartContactEmail(cart.id)
     return toDTO(row)

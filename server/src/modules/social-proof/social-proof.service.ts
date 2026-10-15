@@ -45,7 +45,7 @@ async function fetchPwaEvents(
       email: true,
       billingAddressJson: true,
       odooSaleOrderId: true,
-      user: { select: { firstName: true, lastName: true } },
+      customer: { select: { firstName: true, lastName: true } },
       cart: {
         select: {
           items: {
@@ -60,7 +60,7 @@ async function fetchPwaEvents(
   const events: InternalEvent[] = []
 
   for (const order of orders) {
-    const quantity = order.cart.items.reduce((sum, line) => sum + line.quantity, 0)
+    const quantity = order.cart.items.reduce((sum: number, line: { quantity: number }) => sum + line.quantity, 0)
     if (quantity < 1 || !order.paidAt) continue
     if (!passesMinQuantity(quantity, minQuantity)) continue
     if (events.length >= maxEvents * 4) break
@@ -68,8 +68,8 @@ async function fetchPwaEvents(
       buyerLabel: anonymizeBuyerLabel({
         email: order.email,
         billingAddressJson: order.billingAddressJson,
-        userFirstName: order.user?.firstName,
-        userLastName: order.user?.lastName,
+        userFirstName: order.customer?.firstName,
+        userLastName: order.customer?.lastName,
       }),
       quantity,
       purchasedAt: order.paidAt.toISOString(),

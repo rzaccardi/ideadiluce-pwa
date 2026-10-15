@@ -80,6 +80,8 @@ export type MailLogOdooCapabilities = {
   hasMailTemplateId: boolean
   hasFailureType: boolean
   hasFailureReason: boolean
+  hasCreateDate: boolean
+  hasDate: boolean
 }
 
 export function isPwaMailRecord(row: {
@@ -96,21 +98,41 @@ function orDomain(left: unknown, right: unknown): unknown[] {
   return ['|', left, right]
 }
 
+/** Giorni di storico di default: `headers ilike` su tutta `mail.mail` fa timeout (504). */
+export const MAIL_LOG_DEFAULT_SINCE_DAYS = 180
+
+export function mailLogSinceCutoff(sinceDays: number, now = new Date()): string {
+  const cutoff = new Date(now.getTime())
+  cutoff.setUTCDate(cutoff.getUTCDate() - sinceDays)
+  return cutoff.toISOString().slice(0, 19).replace('T', ' ')
+}
+
 /** Domain PWA: in Odoo 18 `mail.mail` non ha `mail_template_id` — usare solo gli header. */
 export function buildPwaMailLogDomain(
   query: {
     q?: string
     state?: string
     templateKey?: string
+    /** Finestra su `create_date`/`date` (giorni). `0` = senza limite. */
+    sinceDays?: number
   },
   caps: MailLogOdooCapabilities,
+  now = new Date(),
 ): unknown[] {
-  const identity: unknown[] = []
-  if (caps.hasHeaders) identity.push(['headers', 'ilike', 'X-PWA-Mail'])
-  if (caps.hasMailTemplateId) identity.push(['mail_template_id.name', '=like', '[PWA]%'])
+  // Un solo predicato di identità: l'OR headers|template costringe Odoo a due scan.
+  const domain: unknown[] = []
+  if (caps.hasHeaders) domain.push(['headers', 'ilike', 'X-PWA-Mail'])
+  else if (caps.hasMailTemplateId) domain.push(['mail_template_id.name', '=like', '[PWA]%'])
 
-  const domain: unknown[] =
-    identity.length === 0 ? [] : identity.length === 1 ? [identity[0]] : orDomain(identity[0], identity[1])
+  const sinceDays =
+    typeof query.sinceDays === 'number' && Number.isFinite(query.sinceDays)
+      ? Math.max(0, Math.floor(query.sinceDays))
+      : MAIL_LOG_DEFAULT_SINCE_DAYS
+  if (sinceDays > 0) {
+    const odooDt = mailLogSinceCutoff(sinceDays, now)
+    if (caps.hasCreateDate) domain.push(['create_date', '>=', odooDt])
+    else if (caps.hasDate) domain.push(['date', '>=', odooDt])
+  }
 
   if (query.state === 'bounce') {
     const bounce: unknown[] = []

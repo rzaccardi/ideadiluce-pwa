@@ -1,9 +1,14 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeEach } from 'vitest'
 import {
   brandLogoContentAspect,
   resolveBrandLogo,
   resolveBrandLogoSrc,
+  setManagedBrandLogos,
 } from './brand-logo'
+
+beforeEach(() => {
+  setManagedBrandLogos(null)
+})
 
 describe('resolveBrandLogoSrc', () => {
   it('risolve slug file presenti in /brands', () => {
@@ -48,5 +53,32 @@ describe('brandLogoContentAspect', () => {
     const canvasAspect = 150 / 32
     expect(brandLogoContentAspect(flos.content)).toBeLessThan(canvasAspect)
     expect(brandLogoContentAspect(flos.content)).toBeGreaterThan(2)
+  })
+})
+
+describe('managed brand logos', () => {
+  it('preferisce overlay BO light/dark rispetto agli asset statici', () => {
+    setManagedBrandLogos({
+      flos: {
+        lightUrl: 'https://cdn.example/flos-light.png',
+        darkUrl: 'https://cdn.example/flos-dark.png',
+      },
+    })
+    expect(resolveBrandLogo('flos', 'light')?.src).toBe('https://cdn.example/flos-light.png')
+    expect(resolveBrandLogo('flos', 'dark')?.src).toBe('https://cdn.example/flos-dark.png')
+    expect(resolveBrandLogo('flos', 'light')?.source).toBe('managed')
+  })
+
+  it('in dark riusa il logo light se manca il dark dedicato', () => {
+    setManagedBrandLogos({
+      artemide: { lightUrl: 'https://cdn.example/artemide-light.png', darkUrl: null },
+    })
+    expect(resolveBrandLogo('artemide', 'light')?.src).toBe('https://cdn.example/artemide-light.png')
+    expect(resolveBrandLogo('artemide', 'dark')?.src).toBe('https://cdn.example/artemide-light.png')
+  })
+
+  it('in dark mostra anche i JPG statici /brands', () => {
+    expect(resolveBrandLogo('flos', 'dark')?.src).toBe('/brands/flos.jpg')
+    expect(resolveBrandLogo('flos', 'dark')?.source).toBe('static')
   })
 })

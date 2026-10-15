@@ -109,4 +109,12 @@ describe('fetchTopPurchasedSearchHints', () => {
     expect(result).toEqual([])
     expect(odooExecuteKw).toHaveBeenCalledTimes(1)
   })
+
+  it('tolera read_group che restituisce false invece di array', async () => {
+    vi.mocked(odooExecuteKw).mockResolvedValueOnce(false)
+
+    const result = await fetchTopPurchasedSearchHints(ctx, { lookbackDays: 90, limit: 5 })
+
+    expect(result).toEqual([])
+  })
 })

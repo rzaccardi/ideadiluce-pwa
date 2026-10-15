@@ -20,28 +20,25 @@ export type CartOdooPrepInput = {
 }
 
 async function pricingForCart(
-  cart: { userId: string | null },
+  cart: { odooPartnerId: number | null },
   correlationId: string,
 ): Promise<PricingContext> {
-  if (!cart.userId) {
+  if (cart.odooPartnerId == null) {
     return resolveAccountPricing({
       segment: 'RETAIL',
       correlationId,
     })
   }
 
-  const [user, map] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: cart.userId },
-      select: { customerSegment: true, odooPricelistId: true },
-    }),
-    prisma.odooCustomerMap.findUnique({ where: { userId: cart.userId } }),
-  ])
+  const user = await prisma.customerSatellite.findUnique({
+    where: { odooPartnerId: cart.odooPartnerId },
+    select: { customerSegment: true, odooPricelistId: true },
+  })
 
   return resolveAccountPricing({
     segment: user?.customerSegment ?? 'RETAIL',
     odooPricelistId: user?.odooPricelistId,
-    partnerId: map?.odooPartnerId ?? null,
+    partnerId: cart.odooPartnerId,
     correlationId,
   })
 }
@@ -96,7 +93,7 @@ async function syncDraftSaleOrderIfPresent(input: CartOdooPrepInput): Promise<vo
 export async function prepareCartAgainstOdoo(input: CartOdooPrepInput): Promise<void> {
   const cart = await prisma.cart.findUnique({
     where: { id: input.cartId },
-    select: { id: true, userId: true, status: true },
+    select: { id: true, odooPartnerId: true, status: true },
   })
   if (!cart || cart.status !== 'ACTIVE') return
 

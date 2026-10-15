@@ -59,6 +59,8 @@ export function earlierSagaOperations(operation: string): OdooSyncQueueOperation
 
 export type EnqueueOdooSyncInput = {
   pwaOrderId?: string | null
+  odooPartnerId?: number | null
+  /** @deprecated Preferire odooPartnerId. */
   userId?: string | null
   operation: OdooSyncQueueOperation | OdooSyncOperationDTO | 'register_payment' | 'REGISTER_PAYMENT'
   payload?: Prisma.InputJsonValue

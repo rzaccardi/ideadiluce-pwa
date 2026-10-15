@@ -1,4 +1,4 @@
-import type { User } from '@prisma/client'
+import type { CustomerSatellite } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { env } from '../../config/env.js'
 import { createOdooCustomerAdapter } from '../../adapters/odoo/odooCustomerAdapter.js'
@@ -11,7 +11,7 @@ const customerAdapter = createOdooCustomerAdapter()
 const lastHydrateAt = new Map<string, number>()
 const HYDRATE_COOLDOWN_MS = 5 * 60 * 1000
 
-function needsBusinessHydrate(user: User): boolean {
+function needsBusinessHydrate(user: CustomerSatellite): boolean {
   return !(
     user.companyName?.trim() &&
     user.vatNumber?.trim() &&
@@ -28,10 +28,10 @@ function needsBusinessHydrate(user: User): boolean {
  * se puntava a un child. Fail-open: se Odoo non risponde resta l'anagrafica locale.
  */
 export async function hydrateUserBusinessFromOdoo(
-  user: User,
+  user: CustomerSatellite,
   ctx?: OdooCallContext,
   options?: { account?: OdooCustomerAccount | null; force?: boolean },
-): Promise<User> {
+): Promise<CustomerSatellite> {
   if (!ctx || !env.ODOO_ENABLED || !isOdooConfigured()) return user
 
   if (!options?.force && !options?.account) {
@@ -41,7 +41,7 @@ export async function hydrateUserBusinessFromOdoo(
 
   try {
     let account = options?.account ?? null
-    const map = await prisma.odooCustomerMap.findUnique({ where: { userId: user.id } })
+    const map = await prisma.odooCustomerMap.findUnique({ where: { odooPartnerId: user.odooPartnerId } })
 
     if (!account) {
       if (map) {
@@ -72,7 +72,7 @@ export async function hydrateUserBusinessFromOdoo(
     ) {
       try {
         await prisma.odooCustomerMap.update({
-          where: { userId: user.id },
+          where: { odooPartnerId: user.odooPartnerId },
           data: { odooPartnerId: account.commercialPartnerId },
         })
       } catch {
@@ -94,7 +94,7 @@ export async function hydrateUserBusinessFromOdoo(
 
     if (!businessPatch && user.b2bActive === b2bActive) return user
 
-    return prisma.user.update({
+    return prisma.customerSatellite.update({
       where: { id: user.id },
       data: {
         ...(businessPatch ?? {}),

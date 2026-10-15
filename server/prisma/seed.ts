@@ -115,6 +115,16 @@ async function main() {
   const { seedSitePages } = await import('../src/modules/site/site.service.js')
   await seedSitePages()
   console.info('Site pages seeded')
+
+  try {
+    const { brandsAdminService } = await import(
+      '../src/modules/brands-admin/brands-admin.service.js'
+    )
+    const logos = await brandsAdminService.seedStaticLogos()
+    console.info('Static brand logos seeded:', logos)
+  } catch (e) {
+    console.warn('Static brand logos seed skipped:', e instanceof Error ? e.message : e)
+  }
 }
 
 main()

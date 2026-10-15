@@ -10,12 +10,17 @@ export const cartRepository = {
     })
   },
 
-  findActiveByUser(userId: string) {
+  findActiveByPartner(odooPartnerId: number) {
     return prisma.cart.findFirst({
-      where: { userId, status: 'ACTIVE' },
+      where: { odooPartnerId, status: 'ACTIVE' },
       include: { items: true },
       orderBy: { updatedAt: 'desc' },
     })
+  },
+
+  /** @deprecated Preferire findActiveByPartner. */
+  findActiveByUser(odooPartnerId: number) {
+    return this.findActiveByPartner(odooPartnerId)
   },
 
   create(data: Prisma.CartCreateInput) {

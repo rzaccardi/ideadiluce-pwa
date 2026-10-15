@@ -1,46 +1,43 @@
 import { prisma } from '../../lib/prisma.js'
-import type { ProfessionalRequestStatus } from './professional-account.constants.js'
-import { PROFESSIONAL_REQUEST_OPEN_STATUSES } from './professional-account.constants.js'
+import {
+  PROFESSIONAL_REQUEST_OPEN_STATUSES,
+  type ProfessionalRequestStatus,
+} from './professional-account.constants.js'
 
 export const professionalAccountRepository = {
   create(data: {
     companyName: string
     vatNumber: string
     sector: string
-    sectorOther: string | null
+    sectorOther?: string | null
     contactName: string
     email: string
-    phone: string | null
-    pec: string | null
-    sdiCode: string | null
-    visuraUrl: string | null
-    message: string | null
-    locale: string
-    country: string
-    userId: string | null
-    vatValidated: boolean
-    vatForceAccepted: boolean
-    odooPartnerId: number | null
-    odooSyncError: string | null
-    status?: ProfessionalRequestStatus
+    phone?: string | null
+    pec?: string | null
+    sdiCode?: string | null
+    visuraUrl?: string | null
+    message?: string | null
+    locale?: string
+    country?: string
+    status?: string
+    odooPartnerId?: number | null
+    vatValidated?: boolean
+    vatForceAccepted?: boolean
+    odooSyncError?: string | null
   }) {
-    return prisma.professionalAccountRequest.create({
-      data: {
-        ...data,
-        status: data.status ?? 'NEW',
-      },
-    })
+    return prisma.professionalAccountRequest.create({ data })
   },
 
   update(
     id: string,
     data: {
-      userId?: string
-      visuraUrl?: string | null
+      status?: string
       odooPartnerId?: number | null
+      vatValidated?: boolean
+      vatForceAccepted?: boolean
       odooSyncError?: string | null
-      status?: ProfessionalRequestStatus
       adminNotes?: string | null
+      visuraUrl?: string | null
     },
   ) {
     return prisma.professionalAccountRequest.update({ where: { id }, data })
@@ -50,11 +47,14 @@ export const professionalAccountRepository = {
     return prisma.professionalAccountRequest.findUnique({ where: { id } })
   },
 
-  findLatestForAccount(params: { userId: string; email: string }) {
+  findLatestForAccount(params: { odooPartnerId?: number | null; email: string }) {
     const email = params.email.toLowerCase().trim()
     return prisma.professionalAccountRequest.findFirst({
       where: {
-        OR: [{ userId: params.userId }, { email }],
+        OR: [
+          ...(params.odooPartnerId != null ? [{ odooPartnerId: params.odooPartnerId }] : []),
+          { email },
+        ],
       },
       orderBy: { createdAt: 'desc' },
     })
@@ -80,13 +80,13 @@ export const professionalAccountRepository = {
     })
   },
 
-  hasOpenRequest(params: { userId?: string | null; email: string }) {
+  hasOpenRequest(params: { odooPartnerId?: number | null; email: string }) {
     const email = params.email.toLowerCase().trim()
     return prisma.professionalAccountRequest.findFirst({
       where: {
         status: { in: [...PROFESSIONAL_REQUEST_OPEN_STATUSES, 'pending'] },
         OR: [
-          ...(params.userId ? [{ userId: params.userId }] : []),
+          ...(params.odooPartnerId != null ? [{ odooPartnerId: params.odooPartnerId }] : []),
           { email },
         ],
       },

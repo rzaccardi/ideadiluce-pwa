@@ -8,52 +8,59 @@ import { hashSessionToken } from '../../lib/token-hash.js'
 import { AppError } from '../../types/errors.js'
 import { requestOdooPasswordReset } from '../../adapters/odoo/odooPortalUserAdapter.js'
 import { sendPwaMail } from '../../adapters/odoo/odooMailAdapter.js'
-import { ensurePwaUserStubFromOdoo } from './odoo-account-sync.service.js'
+import {
+  ensureSatelliteFromOdooPortal,
+  isOdooAuthIdentityRequired,
+  syncPasswordToOdooPortal,
+} from './odoo-account-sync.service.js'
 import { isEmergencyMode } from '../odoo/odoo-resilience.settings.js'
 
 function resetExpiry(): Date {
   return new Date(Date.now() + env.PASSWORD_RESET_TOKEN_HOURS * 60 * 60 * 1000)
 }
 
-function odooPasswordResetEnabled(_correlationId?: string): boolean {
-  return false
+/** Preferisci reset nativo Odoo (auth_signup) quando l'identità portal è la fonte di verità. */
+function odooPasswordResetEnabled(): boolean {
+  return isOdooAuthIdentityRequired()
 }
 
 export const passwordResetService = {
   async requestReset(email: string, correlationId?: string): Promise<void> {
     const normalized = email.toLowerCase().trim()
     const emergency = await isEmergencyMode()
+    const ctx = { correlationId: correlationId ?? 'password-reset' }
 
-    if (odooPasswordResetEnabled(correlationId) && !emergency) {
+    if (odooPasswordResetEnabled() && !emergency) {
       try {
-        const result = await requestOdooPasswordReset(
-          { correlationId: correlationId ?? 'password-reset' },
-          normalized,
-        )
+        const result = await requestOdooPasswordReset(ctx, normalized)
         if (result === 'sent') return
-        logger.warn('password_reset.odoo_fallback_to_pwa', {
+        // Odoo non trova / non invia: fail-closed — non inventare reset su User locale.
+        logger.warn('password_reset.odoo_no_local_fallback', {
           correlationId,
           email: normalized,
           result,
         })
+        return
       } catch (e) {
-        logger.warn('password_reset.odoo_failed', {
+        logger.warn('password_reset.odoo_failed_no_local_fallback', {
           correlationId,
           email: normalized,
           error: e instanceof Error ? e.message : String(e),
         })
+        return
       }
     }
 
-    let user = await prisma.user.findUnique({ where: { email: normalized } })
+    // Path locale / emergency: solo satellite già presente (niente stub inventato da email).
+    let user = await prisma.customerSatellite.findUnique({ where: { email: normalized } })
 
-    if (!user && correlationId) {
+    if (!user && emergency && correlationId) {
       try {
-        await ensurePwaUserStubFromOdoo({ correlationId }, normalized)
+        await ensureSatelliteFromOdooPortal({ correlationId }, normalized)
       } catch {
-        /* Odoo giù: solo utenti PWA già presenti */
+        /* Odoo giù */
       }
-      user = await prisma.user.findUnique({ where: { email: normalized } })
+      user = await prisma.customerSatellite.findUnique({ where: { email: normalized } })
     }
 
     if (!user) return
@@ -63,14 +70,14 @@ export const passwordResetService = {
 
     await prisma.passwordResetToken.create({
       data: {
-        userId: user.id,
+        odooPartnerId: user.odooPartnerId,
         tokenHash,
         expiresAt: resetExpiry(),
       },
     })
 
     const link = publicAppUrl(`/reset-password?token=${encodeURIComponent(rawToken)}`)
-    await sendPwaMail(correlationId ? { correlationId } : { correlationId: 'password-reset' }, {
+    await sendPwaMail(ctx, {
       templateKey: 'password_reset',
       emailTo: user.email,
       vars: {
@@ -81,20 +88,11 @@ export const passwordResetService = {
   },
 
   async resetPassword(token: string, password: string, correlationId?: string): Promise<void> {
-    if (odooPasswordResetEnabled(correlationId) && !(await isEmergencyMode())) {
-      throw new AppError(
-        'PASSWORD_RESET_DELEGATED_ODOO',
-        'Reset delegated to Odoo',
-        'Il reset password avviene dal link ricevuto via email. Richiedi un nuovo link dalla pagina recupero password.',
-        400,
-        false,
-      )
-    }
-
+    // Path PWA: emergency / ODOO_ENABLED=false. Con Odoo attivo la password va solo sul portal.
     const tokenHash = hashSessionToken(token)
     const row = await prisma.passwordResetToken.findUnique({
       where: { tokenHash },
-      include: { user: true },
+      include: { customer: true },
     })
 
     if (!row || row.usedAt || row.expiresAt < new Date()) {
@@ -107,10 +105,62 @@ export const passwordResetService = {
       )
     }
 
+    const customer = row.customer
+
+    if (isOdooAuthIdentityRequired() && !(await isEmergencyMode())) {
+      try {
+        const synced = await syncPasswordToOdooPortal(
+          { correlationId: correlationId ?? 'password-reset' },
+          customer.email,
+          password,
+        )
+        if (!synced) {
+          logger.warn('password_reset.odoo_portal_missing', {
+            correlationId,
+            odooPartnerId: row.odooPartnerId,
+            email: customer.email,
+          })
+          throw new AppError(
+            'ODOO_PASSWORD_SYNC_FAILED',
+            'Odoo portal missing',
+            'Non siamo riusciti ad aggiornare la password su Odoo. Riprova tra poco.',
+            503,
+            true,
+          )
+        }
+      } catch (e) {
+        if (e instanceof AppError) throw e
+        logger.error('password_reset.odoo_sync_failed', {
+          correlationId,
+          odooPartnerId: row.odooPartnerId,
+          error: e instanceof Error ? e.message : String(e),
+        })
+        throw new AppError(
+          'ODOO_PASSWORD_SYNC_FAILED',
+          'Odoo password sync failed',
+          'Non siamo riusciti ad aggiornare la password su Odoo. Riprova tra poco.',
+          503,
+          true,
+        )
+      }
+
+      await prisma.$transaction([
+        prisma.customerSatellite.update({
+          where: { odooPartnerId: row.odooPartnerId },
+          data: { passwordHash: null },
+        }),
+        prisma.passwordResetToken.update({
+          where: { id: row.id },
+          data: { usedAt: new Date() },
+        }),
+      ])
+      return
+    }
+
     const passwordHash = bcrypt.hashSync(password, 10)
     await prisma.$transaction([
-      prisma.user.update({
-        where: { id: row.userId },
+      prisma.customerSatellite.update({
+        where: { odooPartnerId: row.odooPartnerId },
         data: { passwordHash },
       }),
       prisma.passwordResetToken.update({

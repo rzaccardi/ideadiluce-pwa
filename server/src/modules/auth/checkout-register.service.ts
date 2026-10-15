@@ -1,10 +1,11 @@
 import bcrypt from 'bcryptjs'
 import { prisma } from '../../lib/prisma.js'
-import { env } from '../../config/env.js'
-import { createOdooCustomerAdapter } from '../../adapters/odoo/odooCustomerAdapter.js'
-import { ensureOdooPortalUser } from '../../adapters/odoo/odooPortalUserAdapter.js'
-import { isOdooConfigured, isOdooLiveConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
-import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
+import {
+  assertOdooAuthReadyForIdentity,
+  isOdooAuthIdentityRequired,
+  provisionOdooAuthIdentity,
+} from './odoo-account-sync.service.js'
+import { ensureSatelliteProjection } from './satellite-projection.service.js'
 import { authRepository } from './auth.repository.js'
 import { authService } from './auth.service.js'
 import { AppError } from '../../types/errors.js'
@@ -12,37 +13,17 @@ import type { UserDTO } from '../../types/dto.js'
 import { sendPwaMail } from '../../adapters/odoo/odooMailAdapter.js'
 import { publicAppUrl } from '../../lib/mail.js'
 import { logger } from '../../lib/logger.js'
-
-const customerAdapter = createOdooCustomerAdapter()
+import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { findOdooPortalUserByEmail } from '../../adapters/odoo/odooPortalUserAdapter.js'
 
 function normalizeEmail(email: string) {
   return email.toLowerCase().trim()
 }
 
-async function persistOdooCustomerMap(params: {
-  userId: string
-  email: string
-  odooPartnerId: number
-}) {
-  const emailLower = normalizeEmail(params.email)
-  await prisma.odooCustomerMap.upsert({
-    where: { userId: params.userId },
-    create: {
-      userId: params.userId,
-      odooPartnerId: params.odooPartnerId,
-      syncStatus: 'SYNCED',
-      lastSyncAt: new Date(),
-    },
-    update: {
-      odooPartnerId: params.odooPartnerId,
-      syncStatus: 'SYNCED',
-      lastSyncAt: new Date(),
-      guestEmail: emailLower,
-    },
-  })
-}
-
-/** Crea account PWA + partner/portal Odoo al checkout; password scelta dall'utente. */
+/**
+ * Checkout register: identità Odoo (partner+portal), poi solo proiezione satellite.
+ * Non usa findUserByEmail / passwordHash come autorità.
+ */
 export const checkoutRegisterService = {
   async register(
     input: {
@@ -57,83 +38,92 @@ export const checkoutRegisterService = {
     correlationId: string,
   ): Promise<UserDTO> {
     const normalized = normalizeEmail(input.email)
-    const existing = await authRepository.findUserByEmail(normalized)
-    if (existing?.passwordHash) {
-      throw new AppError(
-        'EMAIL_TAKEN',
-        'Email already registered',
-        'Questa email è già registrata. Accedi con email e password.',
-        409,
-        false,
-      )
-    }
-
     const ctx: OdooCallContext = { correlationId }
-    const passwordHash = bcrypt.hashSync(input.password, 10)
     const segment =
       input.customerSegment === 'business' ? ('BUSINESS' as const) : ('RETAIL' as const)
-    const displayName =
-      [input.firstName, input.lastName].filter(Boolean).join(' ').trim() || normalized
+
+    assertOdooAuthReadyForIdentity()
+    const odooRequired = isOdooAuthIdentityRequired()
 
     let odooPartnerId: number | null = null
+    let odooUid: number | null = null
+    let portalExisted = false
 
-    if (env.ODOO_ENABLED && isOdooLiveConfigured()) {
-      try {
-        const partner = await customerAdapter.findOrCreateCustomer(ctx, {
-          email: normalized,
-          firstName: input.firstName,
-          lastName: input.lastName,
-          phone: input.phone,
-        })
-        odooPartnerId = partner.odooPartnerId
+    if (odooRequired) {
+      const existingPortal = await findOdooPortalUserByEmail(ctx, normalized)
+      portalExisted = Boolean(existingPortal)
+      if (existingPortal) {
+        // Portal già presente: non inventare account PWA — l'utente deve fare login.
+        throw new AppError(
+          'EMAIL_TAKEN',
+          'Email already registered on Odoo portal',
+          'Questa email è già registrata. Accedi con email e password.',
+          409,
+          false,
+        )
+      }
 
-        if (odooPartnerId && !isOdooApiV2Configured()) {
-          try {
-            await ensureOdooPortalUser(ctx, {
-              email: normalized,
-              partnerId: odooPartnerId,
-              name: displayName,
-              password: input.password,
-            })
-          } catch {
-            /* account PWA comunque */
-          }
-        }
-      } catch {
-        /* partner Odoo in coda dopo create user */
+      const odoo = await provisionOdooAuthIdentity(ctx, {
+        email: normalized,
+        password: input.password,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        phone: input.phone,
+        rejectExistingPortal: true,
+      })
+      odooPartnerId = odoo.odooPartnerId
+      odooUid = odoo.odooUserId
+    } else {
+      const existing = await authRepository.findSatelliteByEmail(normalized)
+      if (existing?.passwordHash) {
+        throw new AppError(
+          'EMAIL_TAKEN',
+          'Email already registered',
+          'Questa email è già registrata. Accedi con email e password.',
+          409,
+          false,
+        )
       }
     }
 
-    if (existing) {
-      await prisma.user.update({
-        where: { id: existing.id },
-        data: {
-          passwordHash,
-          firstName: input.firstName.trim() || existing.firstName,
-          lastName: input.lastName.trim() || existing.lastName,
-          phone: input.phone.trim() || existing.phone,
-          ...(input.customerSegment
-            ? { customerSegment: input.customerSegment === 'business' ? 'BUSINESS' : 'RETAIL' }
-            : {}),
-        },
-      })
-    } else {
-      await authRepository.createUser({
+    let user
+    if (odooPartnerId) {
+      user = await ensureSatelliteProjection({
+        odooPartnerId,
         email: normalized,
-        passwordHash,
         firstName: input.firstName.trim(),
         lastName: input.lastName.trim(),
         phone: input.phone.trim(),
         customerSegment: segment,
+        clearLocalPassword: true,
       })
+    } else {
+      const passwordHash = bcrypt.hashSync(input.password, 10)
+      const existing = await authRepository.findSatelliteByEmail(normalized)
+      if (existing) {
+        user = await prisma.customerSatellite.update({
+          where: { id: existing.id },
+          data: {
+            passwordHash,
+            firstName: input.firstName.trim() || existing.firstName,
+            lastName: input.lastName.trim() || existing.lastName,
+            phone: input.phone.trim() || existing.phone,
+            customerSegment: segment,
+          },
+        })
+      } else {
+        user = await authRepository.createUser({
+          email: normalized,
+          passwordHash,
+          firstName: input.firstName.trim(),
+          lastName: input.lastName.trim(),
+          phone: input.phone.trim(),
+          customerSegment: segment,
+        })
+      }
     }
 
-    const user = await authRepository.findUserByEmail(normalized)
-    if (!user) {
-      throw new AppError('REGISTER_FAILED', 'Register failed', 'Registrazione non riuscita.', 500, false)
-    }
-
-    if (!existing) {
+    if (!portalExisted) {
       const firstNameSuffix = user.firstName?.trim() ? ` ${user.firstName.trim()}` : ''
       try {
         await sendPwaMail(ctx, {
@@ -149,27 +139,17 @@ export const checkoutRegisterService = {
         logger.warn('checkout_register.welcome_mail_failed', {
           correlationId,
           userId: user.id,
+          odooPartnerId,
           error: e instanceof Error ? e.message : String(e),
         })
       }
     }
 
-    if (odooPartnerId) {
-      await persistOdooCustomerMap({ userId: user.id, email: normalized, odooPartnerId })
-    } else if (env.ODOO_ENABLED && isOdooConfigured()) {
-      const { enqueueUserOdooSaga } = await import('../odoo/odoo-sync-queue.service.js')
-      void enqueueUserOdooSaga(
-        user.id,
-        {
-          email: normalized,
-          firstName: input.firstName,
-          lastName: input.lastName,
-          phone: input.phone,
-        },
-        'Registrazione PWA: partner Odoo differito.',
-      ).catch(() => undefined)
-    }
-
-    return authService.loginByVerifiedEmail(normalized, sessionId)
+    return authService.establishLoggedInSession({
+      user,
+      sessionId,
+      odooPartnerId,
+      odooUid,
+    })
   },
 }

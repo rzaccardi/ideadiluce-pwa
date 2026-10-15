@@ -21,6 +21,7 @@ import { TaxRulesPage } from '@/pages/tax-rules/tax-rules-page'
 import { ExperiencePage } from '@/pages/experience/experience-page'
 import { SearchAnalyticsPage } from '@/pages/search-analytics/search-analytics-page'
 import { CatalogCachePage } from '@/pages/catalog-cache/catalog-cache-page'
+import { BrandsPage } from '@/pages/brands/brands-page'
 import { UptimePage } from '@/pages/uptime/uptime-page'
 import { NotFoundAnalyticsPage } from '@/pages/not-found/not-found-analytics-page'
 import { NotFoundAnalyticsDetailPage } from '@/pages/not-found/not-found-analytics-detail-page'
@@ -139,6 +140,7 @@ export function App() {
                 }
               />
               <Route path="catalog-cache" element={<CatalogCachePage />} />
+              <Route path="brands" element={<BrandsPage />} />
               <Route path="sync-queue" element={<Navigate to="/odoo/sync-queue" replace />} />
               <Route path="social-proof" element={<SocialProofPage />} />
               <Route

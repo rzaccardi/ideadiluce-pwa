@@ -3,7 +3,7 @@ export type AbandonedCartsAdminListItemDTO = {
   cartId: string
   eventType: string
   contactEmail: string | null
-  userId: string | null
+  odooPartnerId: number | null
   userEmail: string | null
   itemCount: number
   createdAt: string
@@ -31,7 +31,7 @@ export type AbandonedCartsAdminDetailDTO = {
   cartId: string
   eventType: string
   contactEmail: string | null
-  userId: string | null
+  odooPartnerId: number | null
   userEmail: string | null
   itemCount: number
   lines: AbandonedCartsAdminLineDTO[]

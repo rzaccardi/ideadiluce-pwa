@@ -13,9 +13,7 @@ import { CategoryCtaBanner } from '@/components/site/category/CategoryCtaBanner'
 import { SectionContainer, Eyebrow } from '@/components/site/primitives'
 import { SiteImage } from '@/components/site/SiteImage'
 import { extractProductDisplayTitle } from '@/lib/product-display-title'
-import { buildDesignerProjectsHref } from '@/lib/catalog-filters'
 import {
-  findSpecValue,
   isDimensionSpecLabel,
   mergeDesignSpecRows,
   mergeProductAndVariantSpecs,
@@ -203,11 +201,6 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
     parsedSpecRows,
     selectedVariant?.attributes,
   )
-  const designerName =
-    findSpecValue(parsedSpecRows, /designer/i) ??
-    specRows.find((r) => /designer/i.test(r.label))?.value ??
-    null
-  const designerProjectsHref = buildDesignerProjectsHref(designerName)
   const heroMeta = pickDesignHeroMeta(specRows)
   const categoryChips = (product.categories ?? []).filter((c) => c.slug && c.name)
   const specTags = (product.specTags ?? []).filter((t) => t.trim())
@@ -669,27 +662,6 @@ export function DesignProductDetailView({ product, relatedProducts, state }: Pro
       ) : null}
 
       <CategoryCtaBanner banner={DESIGN_CTA} lp={lp} variant="design" />
-
-      {designerName ? (
-      <section className="border-t border-idl-border bg-idl-paper">
-        <SectionContainer className="grid items-center gap-10 py-16 sm:gap-14 lg:grid-cols-[0.8fr_1.2fr] lg:py-20">
-          <div>
-            <ProductDetailSectionLabel variant="design" className="mb-4">
-              IL DESIGNER
-            </ProductDetailSectionLabel>
-            <h2 className="mb-4 font-serif text-3xl font-medium text-idl-ink sm:text-[38px]">{designerName}</h2>
-            {designerProjectsHref ? (
-            <Link
-              to={lp(designerProjectsHref)}
-              className="mt-6 inline-flex items-center gap-2 rounded-lg border border-idl-path-design-border px-5 py-3 text-sm font-semibold text-idl-ink transition hover:border-idl-brass hover:text-idl-brass"
-            >
-              Tutti i progetti del designer →
-            </Link>
-            ) : null}
-          </div>
-        </SectionContainer>
-      </section>
-      ) : null}
 
       <ProductProfessionalBanner variant="design" />
 

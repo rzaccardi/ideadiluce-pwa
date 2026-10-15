@@ -170,45 +170,6 @@ export function UptimePage() {
         </Alert>
       ) : null}
 
-      {!overview.configured ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <ActivityIcon className="h-4 w-4 text-rose-600" />
-              Configura UptimeRobot
-            </CardTitle>
-            <CardDescription>
-              Il piano free copre 50 monitor ogni 5 minuti, abbastanza per shop, API, catalogo, Odoo
-              e back office. Gli alert arrivano su email, Slack o l’app.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm text-gray-600">
-            <ol className="list-decimal space-y-2 pl-5">
-              <li>
-                Crea un account su{' '}
-                <a
-                  href="https://uptimerobot.com/"
-                  className="text-sky-600 hover:underline"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  uptimerobot.com
-                </a>
-              </li>
-              <li>
-                In Integrations &amp; API crea la <span className="font-medium text-gray-900">Main API Key</span>
-                {' '}(read-write se vuoi creare i monitor da qui; sola lettura se li crei a mano)
-              </li>
-              <li>
-                Imposta <code className="rounded bg-gray-100 px-1 py-0.5 text-xs">UPTIMEROBOT_API_KEY</code> sul
-                componente <span className="font-medium text-gray-900">api</span> in DigitalOcean
-              </li>
-              <li>Ricarica questa pagina e premi «Crea i monitor consigliati»</li>
-            </ol>
-          </CardContent>
-        </Card>
-      ) : null}
-
       {overview.configured && downCount > 0 ? (
         <Alert variant="destructive">
           <AlertTriangleIcon />

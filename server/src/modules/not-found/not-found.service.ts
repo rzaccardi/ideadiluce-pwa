@@ -154,7 +154,7 @@ export const notFoundEventsService = {
         isBot,
         isProbe,
         pathKind,
-        userId: req.sessionRecord?.userId ?? null,
+        odooPartnerId: req.sessionRecord?.odooPartnerId ?? null,
         sessionId: req.sessionRecord?.id ?? null,
         userAgent,
       },

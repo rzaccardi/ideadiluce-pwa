@@ -1,5 +1,10 @@
 import { proxy } from 'valtio'
-import { IDEADILUCE_LIGHTS_KEY } from '@/lib/storage-keys'
+import {
+  applyDocumentTheme,
+  persistAppearance,
+  resolveInitialAppearance,
+  themeFromLights,
+} from '@/lib/appearance'
 
 export const lightsStore = proxy({
   on: false,
@@ -8,22 +13,17 @@ export const lightsStore = proxy({
 
 export function hydrateLightsStore() {
   if (typeof window === 'undefined' || lightsStore.ready) return
-  try {
-    lightsStore.on = window.localStorage.getItem(IDEADILUCE_LIGHTS_KEY) === '1'
-  } catch {
-    lightsStore.on = false
-  }
+  const { lightsOn, theme } = resolveInitialAppearance()
+  lightsStore.on = lightsOn
+  applyDocumentTheme(theme)
   lightsStore.ready = true
 }
 
 export function setLightsOn(on: boolean) {
   lightsStore.on = on
-  if (typeof window === 'undefined') return
-  try {
-    window.localStorage.setItem(IDEADILUCE_LIGHTS_KEY, on ? '1' : '0')
-  } catch {
-    /* private mode / quota */
-  }
+  const theme = themeFromLights(on)
+  applyDocumentTheme(theme)
+  persistAppearance(on)
 }
 
 export function toggleLights() {

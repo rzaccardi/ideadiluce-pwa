@@ -111,7 +111,7 @@ export const restockNotifyService = {
       quantity: input.quantity,
       locale: parseHubLocale(localeInput ?? product.locale),
       productName: product.name,
-      userId: req.sessionRecord?.userId ?? null,
+      odooPartnerId: req.sessionRecord?.odooPartnerId ?? null,
       requestType,
     })
 

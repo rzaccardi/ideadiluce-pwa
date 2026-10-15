@@ -237,7 +237,8 @@ export function HeaderAccountMenu({ variant = 'header', onOpenChange, onNavigate
           title={t('nav.account')}
           className={cn(
             ui.interactive,
-            'inline-flex size-[38px] shrink-0 items-center justify-center rounded-full border-2 border-idl-border-strong bg-idl-design p-0 font-serif text-[17px] font-semibold text-idl-glow hover:border-idl-brass',
+            ui.headerIconBtn,
+            'border-idl-border-strong bg-idl-design font-serif text-[17px] font-semibold text-idl-glow hover:border-idl-brass',
           )}
         >
           {userInitial(user)}

@@ -5,12 +5,13 @@ import { authStore } from '@/features/auth'
 import { HeaderAccountMenu } from '@/components/site/HeaderAccountMenu'
 import { HeaderMiniCart } from '@/components/site/HeaderMiniCart'
 import { HeaderCatalogSearch } from '@/components/site/catalog/CatalogSearchModal'
+import { cn } from '@/utils/cn'
 
 export function SiteHeaderActions() {
   const auth = useSnapshot(authStore)
 
   return (
-    <div className="flex min-w-0 shrink-0 items-center gap-1 sm:gap-1.5 lg:min-w-[72px] lg:justify-end lg:gap-1.5">
+    <div className="flex min-w-0 shrink-0 items-center gap-3 lg:justify-end">
       <div className="lg:hidden">
         <HeaderCatalogSearch variant="icon" />
       </div>
@@ -26,15 +27,17 @@ export function SiteHeaderActions() {
   )
 }
 
-export function SiteHeaderSearch() {
+export function SiteHeaderSearch({ compact = false }: { compact?: boolean }) {
   return (
     <>
-      <div className="hidden shrink-0 lg:block xl:hidden">
+      <div className={cn('hidden shrink-0 lg:block', !compact && '2xl:hidden')}>
         <HeaderCatalogSearch variant="icon" />
       </div>
-      <div className="hidden min-w-0 shrink-0 xl:block xl:w-[220px] 2xl:w-[280px]">
-        <HeaderCatalogSearch variant="bar" className="w-full" />
-      </div>
+      {!compact ? (
+        <div className="hidden min-w-0 shrink-0 2xl:block 2xl:w-[280px]">
+          <HeaderCatalogSearch variant="bar" className="w-full" />
+        </div>
+      ) : null}
     </>
   )
 }

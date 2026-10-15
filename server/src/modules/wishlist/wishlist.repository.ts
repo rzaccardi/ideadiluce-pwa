@@ -1,9 +1,9 @@
 import { prisma } from '../../lib/prisma.js'
 
 export const wishlistRepository = {
-  listForUser(userId: string) {
+  listForPartner(odooPartnerId: number) {
     return prisma.wishlistItem.findMany({
-      where: { userId },
+      where: { odooPartnerId },
       orderBy: { createdAt: 'desc' },
     })
   },
@@ -15,13 +15,13 @@ export const wishlistRepository = {
     })
   },
 
-  async addForUser(userId: string, productRef: string, variantRef: string | null) {
+  async addForPartner(odooPartnerId: number, productRef: string, variantRef: string | null) {
     const existing = await prisma.wishlistItem.findFirst({
-      where: { userId, productRef, variantRef },
+      where: { odooPartnerId, productRef, variantRef },
     })
     if (existing) return existing
     return prisma.wishlistItem.create({
-      data: { userId, productRef, variantRef },
+      data: { odooPartnerId, productRef, variantRef },
     })
   },
 
@@ -35,8 +35,8 @@ export const wishlistRepository = {
     })
   },
 
-  deleteForUser(userId: string, id: string) {
-    return prisma.wishlistItem.deleteMany({ where: { id, userId } })
+  deleteForPartner(odooPartnerId: number, id: string) {
+    return prisma.wishlistItem.deleteMany({ where: { id, odooPartnerId } })
   },
 
   deleteForSession(sessionId: string, id: string) {

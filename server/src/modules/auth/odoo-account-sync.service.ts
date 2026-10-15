@@ -1,9 +1,13 @@
-import bcrypt from 'bcryptjs'
 import { prisma } from '../../lib/prisma.js'
 import { env } from '../../config/env.js'
 import { generateAccountPassword } from '../../lib/generate-password.js'
 import { publicAppUrl } from '../../lib/mail.js'
-import { createOdooCustomerAdapter } from '../../adapters/odoo/odooCustomerAdapter.js'
+import { logger } from '../../lib/logger.js'
+import {
+  createOdooCustomerAdapter,
+  type FindOrCreateCustomerInput,
+  type OdooBusinessProfile,
+} from '../../adapters/odoo/odooCustomerAdapter.js'
 import { sendPwaMail } from '../../adapters/odoo/odooMailAdapter.js'
 import {
   ensureOdooPortalUser,
@@ -14,11 +18,13 @@ import {
   odooAuthenticatePortalUser,
   type OdooCallContext,
 } from '../../adapters/odoo/odooClient.js'
+import { AppError } from '../../types/errors.js'
 import { authRepository } from './auth.repository.js'
 import { authService, mergeCartsForUser, sessionExpiry } from './auth.service.js'
 import type { UserDTO } from '../../types/dto.js'
 import type { OdooCustomerAccount, OdooCustomerProfile } from '../../adapters/odoo/odooCustomerAdapter.js'
 import { hydrateUserBusinessFromOdoo } from '../users/users-odoo-business-hydrate.js'
+import { ensureSatelliteProjection } from './satellite-projection.service.js'
 
 const customerAdapter = createOdooCustomerAdapter()
 
@@ -26,22 +32,41 @@ function normalizeEmail(email: string) {
   return email.toLowerCase().trim()
 }
 
-async function persistOdooCustomerMap(params: {
-  userId: string
+/** Identità auth Odoo (partner + portal) obbligatoria quando ODOO_ENABLED e XML-RPC sono pronti. */
+export function isOdooAuthIdentityRequired(): boolean {
+  return Boolean(env.ODOO_ENABLED && isOdooConfigured())
+}
+
+/** Con ODOO_ENABLED=true ma env XML-RPC incompleta: fail-closed (niente account solo-PWA). */
+export function assertOdooAuthReadyForIdentity(): void {
+  if (!env.ODOO_ENABLED) return
+  if (!isOdooConfigured()) {
+    throw new AppError(
+      'ODOO_MISCONFIGURED',
+      'Odoo auth identity requires XML-RPC',
+      'Registrazione non disponibile: configurazione Odoo incompleta. Riprova più tardi.',
+      503,
+      true,
+    )
+  }
+}
+
+export async function persistOdooCustomerMap(params: {
   email: string
   odooPartnerId: number
+  /** @deprecated Ignorato — la mappa è keyed da odooPartnerId. */
+  userId?: string
 }) {
   const emailLower = normalizeEmail(params.email)
   await prisma.odooCustomerMap.upsert({
-    where: { userId: params.userId },
+    where: { odooPartnerId: params.odooPartnerId },
     create: {
-      userId: params.userId,
       odooPartnerId: params.odooPartnerId,
       syncStatus: 'SYNCED',
       lastSyncAt: new Date(),
+      guestEmail: emailLower,
     },
     update: {
-      odooPartnerId: params.odooPartnerId,
       syncStatus: 'SYNCED',
       lastSyncAt: new Date(),
       guestEmail: emailLower,
@@ -49,6 +74,136 @@ async function persistOdooCustomerMap(params: {
   })
 }
 
+export type ProvisionOdooAuthIdentityInput = {
+  email: string
+  password: string
+  firstName?: string | null
+  lastName?: string | null
+  phone?: string | null
+  business?: OdooBusinessProfile | null
+  /** Se false, un portal già esistente aggiorna la password (default true → EMAIL_TAKEN). */
+  rejectExistingPortal?: boolean
+}
+
+/**
+ * Crea/assicura partner + utente portal Odoo con la password scelta.
+ * Fallisce se Odoo non può materializzare l'identità (fonte di verità).
+ *
+ * Nota email: `ensureOdooPortalUser` con password non invia la mail nativa
+ * auth_signup di Odoo; la PWA invia `account_welcome` solo dopo questo step.
+ */
+export async function provisionOdooAuthIdentity(
+  ctx: OdooCallContext,
+  input: ProvisionOdooAuthIdentityInput,
+): Promise<{ odooPartnerId: number; odooUserId: number; portalCreated: boolean }> {
+  assertOdooAuthReadyForIdentity()
+  if (!isOdooAuthIdentityRequired()) {
+    throw new AppError(
+      'ODOO_DISABLED',
+      'Odoo auth disabled',
+      'Integrazione Odoo disattivata.',
+      503,
+      false,
+    )
+  }
+
+  const normalized = normalizeEmail(input.email)
+  const rejectExisting = input.rejectExistingPortal !== false
+
+  if (rejectExisting) {
+    const existingPortal = await findOdooPortalUserByEmail(ctx, normalized)
+    if (existingPortal) {
+      throw new AppError(
+        'EMAIL_TAKEN',
+        'Email already registered on Odoo portal',
+        'Questa email è già registrata. Accedi con email e password.',
+        409,
+        false,
+      )
+    }
+  }
+
+  const partnerInput: FindOrCreateCustomerInput = {
+    email: normalized,
+    firstName: input.firstName,
+    lastName: input.lastName,
+    phone: input.phone,
+    business: input.business ?? undefined,
+  }
+
+  let partner
+  try {
+    partner = await customerAdapter.findOrCreateCustomer(ctx, partnerInput)
+  } catch (e) {
+    logger.error('odoo.auth_identity.partner_failed', {
+      correlationId: ctx.correlationId,
+      email: normalized,
+      error: e instanceof Error ? e.message : String(e),
+    })
+    throw new AppError(
+      'ODOO_REGISTER_FAILED',
+      'Odoo partner create failed',
+      'Non siamo riusciti a creare l’account su Odoo. Riprova tra poco.',
+      503,
+      true,
+    )
+  }
+
+  const displayName =
+    [input.firstName, input.lastName].filter(Boolean).join(' ').trim() || normalized
+
+  try {
+    const portal = await ensureOdooPortalUser(ctx, {
+      email: normalized,
+      partnerId: partner.odooPartnerId,
+      name: displayName,
+      password: input.password,
+    })
+    return {
+      odooPartnerId: partner.odooPartnerId,
+      odooUserId: portal.odooUserId,
+      portalCreated: portal.created,
+    }
+  } catch (e) {
+    logger.error('odoo.auth_identity.portal_failed', {
+      correlationId: ctx.correlationId,
+      email: normalized,
+      odooPartnerId: partner.odooPartnerId,
+      error: e instanceof Error ? e.message : String(e),
+    })
+    throw new AppError(
+      'ODOO_REGISTER_FAILED',
+      'Odoo portal user create failed',
+      'Non siamo riusciti ad attivare l’accesso su Odoo. Riprova tra poco.',
+      503,
+      true,
+    )
+  }
+}
+
+/** Aggiorna la password del portal Odoo (se presente). Nessuna cache password locale. */
+export async function syncPasswordToOdooPortal(
+  ctx: OdooCallContext,
+  email: string,
+  password: string,
+): Promise<boolean> {
+  if (!isOdooAuthIdentityRequired()) return false
+  const normalized = normalizeEmail(email)
+  const portal = await findOdooPortalUserByEmail(ctx, normalized)
+  if (!portal) return false
+  await ensureOdooPortalUser(ctx, {
+    email: normalized,
+    partnerId: portal.odooPartnerId,
+    name: normalized,
+    password,
+  })
+  return true
+}
+
+/**
+ * Login Odoo-only: autentica portal; se fallisce o manca partner → null (PWA non “trova” locale).
+ * Scrive solo proiezione satellite keyed da odooPartnerId (niente passwordHash).
+ */
 export async function loginWithOdooCredentials(
   ctx: OdooCallContext,
   email: string,
@@ -61,8 +216,8 @@ export async function loginWithOdooCredentials(
   const odooUid = await odooAuthenticatePortalUser(ctx, normalized, password)
   if (!odooUid) return null
 
-  let profile: OdooCustomerProfile | null = null
   let account: OdooCustomerAccount | null = null
+  let profile: OdooCustomerProfile | null = null
   let odooPartnerId: number | null = null
 
   account = await customerAdapter.getCustomerAccountByEmail(ctx, normalized)
@@ -77,83 +232,57 @@ export async function loginWithOdooCredentials(
     odooPartnerId = portal?.odooPartnerId ?? null
   }
 
-  const passwordHash = bcrypt.hashSync(password, 10)
-  const existing = await authRepository.findUserByEmail(normalized)
-
-  if (existing) {
-    await prisma.user.update({
-      where: { id: existing.id },
-      data: {
-        passwordHash,
-        phone: profile?.phone?.trim() || existing.phone,
-      },
-    })
-  } else {
-    const user = await authRepository.createUser({
+  if (!odooPartnerId) {
+    logger.warn('odoo.login.partner_missing_after_auth', {
+      correlationId: ctx.correlationId,
       email: normalized,
-      passwordHash,
-      firstName: profile?.firstName?.trim() || undefined,
-      lastName: profile?.lastName?.trim() || undefined,
-      phone: profile?.phone?.trim() || undefined,
-      customerSegment: 'RETAIL',
+      odooUid,
     })
-
-    if (profile?.line1?.trim()) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          shippingAddressJson: {
-            firstName: profile.firstName,
-            lastName: profile.lastName,
-            line1: profile.line1,
-            line2: profile.line2 ?? '',
-            city: profile.city,
-            postalCode: profile.postalCode,
-            province: profile.province,
-            country: profile.country,
-            phone: profile.phone ?? '',
-          },
-        },
-      })
-    }
-
-    if (odooPartnerId) {
-      await persistOdooCustomerMap({
-        userId: user.id,
-        email: normalized,
-        odooPartnerId,
-      })
-    }
+    return null
   }
 
-  if (existing && odooPartnerId) {
-    await persistOdooCustomerMap({
-      userId: existing.id,
-      email: normalized,
-      odooPartnerId,
-    })
-  }
+  const shippingAddressJson = profile?.line1?.trim()
+    ? {
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        line1: profile.line1,
+        line2: profile.line2 ?? '',
+        city: profile.city,
+        postalCode: profile.postalCode,
+        province: profile.province,
+        country: profile.country,
+        phone: profile.phone ?? '',
+      }
+    : undefined
 
-  const userId = existing?.id ?? (await authRepository.findUserByEmail(normalized))?.id
-  if (userId) {
-    const fresh = await prisma.user.findUnique({ where: { id: userId } })
-    if (fresh) {
-      await hydrateUserBusinessFromOdoo(fresh, ctx, { account, force: true })
-    }
-  }
+  const satellite = await ensureSatelliteProjection({
+    odooPartnerId,
+    email: normalized,
+    firstName: profile?.firstName?.trim() || undefined,
+    lastName: profile?.lastName?.trim() || undefined,
+    phone: profile?.phone?.trim() || undefined,
+    shippingAddressJson,
+    clearLocalPassword: true,
+  })
 
-  return authService.loginByVerifiedEmail(normalized, sessionId)
+  const hydrated = await hydrateUserBusinessFromOdoo(satellite, ctx, { account, force: true })
+  return authService.establishLoggedInSession({
+    user: hydrated,
+    sessionId,
+    odooPartnerId,
+    odooUid,
+  })
 }
 
-/** Crea utente PWA da profilo Odoo senza password (es. reset password per account solo portal). */
-export async function ensurePwaUserStubFromOdoo(
+/**
+ * Proiezione satellite da portal Odoo (es. reset password). Solo se Odoo trova il portal.
+ * Non inventa identità PWA se Odoo non ha l'account.
+ */
+export async function ensureSatelliteFromOdooPortal(
   ctx: OdooCallContext,
   email: string,
 ): Promise<boolean> {
   const normalized = normalizeEmail(email)
-  const existing = await authRepository.findUserByEmail(normalized)
-  if (existing) return true
-
   if (!env.ODOO_ENABLED || !isOdooConfigured()) return false
 
   const portal = await findOdooPortalUserByEmail(ctx, normalized)
@@ -161,50 +290,47 @@ export async function ensurePwaUserStubFromOdoo(
 
   const account = await customerAdapter.getCustomerAccountByPartnerId(ctx, portal.odooPartnerId)
   const profile = account?.profile ?? null
-  const user = await prisma.user.create({
-    data: {
-      email: normalized,
-      passwordHash: null,
-      firstName: profile?.firstName?.trim() || null,
-      lastName: profile?.lastName?.trim() || null,
-      phone: profile?.phone?.trim() || null,
-      customerSegment: 'RETAIL',
-    },
-  })
 
-  if (profile?.line1?.trim()) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        shippingAddressJson: {
-          firstName: profile.firstName,
-          lastName: profile.lastName,
-          line1: profile.line1,
-          line2: profile.line2 ?? '',
-          city: profile.city,
-          postalCode: profile.postalCode,
-          province: profile.province,
-          country: profile.country,
-          phone: profile.phone ?? '',
-        },
-      },
-    })
-  }
+  const shippingAddressJson = profile?.line1?.trim()
+    ? {
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        line1: profile.line1,
+        line2: profile.line2 ?? '',
+        city: profile.city,
+        postalCode: profile.postalCode,
+        province: profile.province,
+        country: profile.country,
+        phone: profile.phone ?? '',
+      }
+    : undefined
 
-  await persistOdooCustomerMap({
-    userId: user.id,
-    email: normalized,
+  const satellite = await ensureSatelliteProjection({
     odooPartnerId: portal.odooPartnerId,
+    email: normalized,
+    firstName: profile?.firstName?.trim() || undefined,
+    lastName: profile?.lastName?.trim() || undefined,
+    phone: profile?.phone?.trim() || undefined,
+    shippingAddressJson,
+    clearLocalPassword: true,
   })
 
-  const fresh = await prisma.user.findUnique({ where: { id: user.id } })
-  if (fresh) {
-    await hydrateUserBusinessFromOdoo(fresh, ctx, { account, force: true })
-  }
-
+  await hydrateUserBusinessFromOdoo(satellite, ctx, { account, force: true })
   return true
 }
 
+/** @deprecated Alias di ensureSatelliteFromOdooPortal. */
+export async function ensurePwaUserStubFromOdoo(
+  ctx: OdooCallContext,
+  email: string,
+): Promise<boolean> {
+  return ensureSatelliteFromOdooPortal(ctx, email)
+}
+
+/**
+ * Dopo ordine guest: provision portal Odoo, poi satellite (senza password locale come auth).
+ * Credenziali inviate solo se il portal è stato creato ora.
+ */
 export async function provisionOdooAccountAfterOrder(
   ctx: OdooCallContext,
   input: {
@@ -216,7 +342,6 @@ export async function provisionOdooAccountAfterOrder(
   },
 ): Promise<void> {
   const normalized = normalizeEmail(input.email)
-  const existing = await authRepository.findUserByEmail(normalized)
 
   const name =
     [input.shippingProfile?.firstName, input.shippingProfile?.lastName]
@@ -230,67 +355,65 @@ export async function provisionOdooAccountAfterOrder(
     odooPartnerId = partner?.odooPartnerId ?? null
   }
 
+  if (!odooPartnerId || !isOdooAuthIdentityRequired()) {
+    // Senza partner Odoo non materializziamo identità PWA standalone.
+    logger.warn('odoo.provision_after_order.skipped_no_partner', {
+      correlationId: ctx.correlationId,
+      orderId: input.orderId,
+      email: normalized,
+    })
+    return
+  }
+
   const plainPassword = generateAccountPassword()
   let odooUserCreated = false
+  let odooUid: number | null = null
 
-  if (odooPartnerId && env.ODOO_ENABLED && isOdooConfigured()) {
-    try {
-      const portal = await ensureOdooPortalUser(ctx, {
-        email: normalized,
-        partnerId: odooPartnerId,
-        name,
-        password: plainPassword,
-      })
-      odooUserCreated = portal.created
-    } catch {
-      /* account PWA comunque */
-    }
-  }
-
-  let userId = existing?.id ?? null
-  let shouldSendCredentials = false
-  if (!existing) {
-    const user = await authRepository.createUser({
+  try {
+    const portal = await ensureOdooPortalUser(ctx, {
       email: normalized,
-      passwordHash: bcrypt.hashSync(plainPassword, 10),
-      firstName: input.shippingProfile?.firstName?.trim() || undefined,
-      lastName: input.shippingProfile?.lastName?.trim() || undefined,
-      phone: input.shippingProfile?.phone?.trim() || undefined,
-      customerSegment: 'RETAIL',
+      partnerId: odooPartnerId,
+      name,
+      password: plainPassword,
     })
-    userId = user.id
-    shouldSendCredentials = true
-  } else if (!existing.passwordHash) {
-    await prisma.user.update({
-      where: { id: existing.id },
-      data: { passwordHash: bcrypt.hashSync(plainPassword, 10) },
+    odooUserCreated = portal.created
+    odooUid = portal.odooUserId
+  } catch (e) {
+    logger.error('odoo.provision_after_order.portal_failed', {
+      correlationId: ctx.correlationId,
+      orderId: input.orderId,
+      error: e instanceof Error ? e.message : String(e),
     })
-    userId = existing.id
-    shouldSendCredentials = true
-  } else {
-    userId = existing.id
+    return
   }
 
-  if (userId && odooPartnerId) {
-    await persistOdooCustomerMap({ userId, email: normalized, odooPartnerId })
+  await ensureSatelliteProjection({
+    odooPartnerId,
+    email: normalized,
+    firstName: input.shippingProfile?.firstName?.trim() || undefined,
+    lastName: input.shippingProfile?.lastName?.trim() || undefined,
+    phone: input.shippingProfile?.phone?.trim() || undefined,
+    clearLocalPassword: true,
+  })
+
+  if (input.sessionId) {
+    await authRepository.linkSessionToIdentity(input.sessionId, {
+      odooPartnerId,
+      odooUid,
+      expiresAt: sessionExpiry(),
+    })
+    await mergeCartsForUser(input.sessionId, odooPartnerId)
   }
 
-  if (input.sessionId && userId) {
-    await authRepository.linkSessionToUser(input.sessionId, userId, sessionExpiry())
-    await mergeCartsForUser(input.sessionId, userId)
-  }
-
-  const loginUrl = publicAppUrl('/login')
-  const firstName = input.shippingProfile?.firstName?.trim()
-  if (shouldSendCredentials) {
+  if (odooUserCreated) {
+    const loginUrl = publicAppUrl('/login')
+    const firstName = input.shippingProfile?.firstName?.trim()
     await sendPwaMail(ctx, {
       templateKey: 'account_credentials',
       emailTo: normalized,
       vars: {
         first_name_suffix: firstName ? ` ${firstName}` : '',
-        intro: odooUserCreated
-          ? 'Abbiamo creato il tuo account sul portale Idea di Luce (sincronizzato con Odoo).'
-          : 'Il tuo account Idea di Luce è stato attivato.',
+        intro: 'Abbiamo creato il tuo account sul portale Idea di Luce (sincronizzato con Odoo).',
         email: normalized,
         password: plainPassword,
         login_url: loginUrl,

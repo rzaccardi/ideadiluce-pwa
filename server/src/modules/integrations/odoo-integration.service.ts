@@ -41,7 +41,7 @@ async function assertCartForRequest(req: Request, cartId: string) {
     where: {
       id: cartId,
       status: 'ACTIVE',
-      OR: [{ sessionId: s.id }, ...(s.userId ? [{ userId: s.userId }] : [])],
+      OR: [{ sessionId: s.id }, ...(s.odooPartnerId ? [{ odooPartnerId: s.odooPartnerId }] : [])],
     },
     include: { items: true },
   })
@@ -86,51 +86,25 @@ async function writePartnerAddress(
 }
 
 async function persistOdooCustomerMap(params: {
-  userId: string | null
   email: string
   odooPartnerId: number
+  userId?: string | null
 }) {
   const emailLower = params.email.toLowerCase()
-  if (params.userId) {
-    await prisma.odooCustomerMap.upsert({
-      where: { userId: params.userId },
-      create: {
-        userId: params.userId,
-        odooPartnerId: params.odooPartnerId,
-        syncStatus: 'SYNCED',
-        lastSyncAt: new Date(),
-      },
-      update: {
-        odooPartnerId: params.odooPartnerId,
-        syncStatus: 'SYNCED',
-        lastSyncAt: new Date(),
-      },
-    })
-  } else {
-    const existing = await prisma.odooCustomerMap.findFirst({
-      where: { guestEmail: emailLower, userId: null },
-    })
-    if (existing) {
-      await prisma.odooCustomerMap.update({
-        where: { id: existing.id },
-        data: {
-          odooPartnerId: params.odooPartnerId,
-          syncStatus: 'SYNCED',
-          lastSyncAt: new Date(),
-          guestEmail: emailLower,
-        },
-      })
-    } else {
-      await prisma.odooCustomerMap.create({
-        data: {
-          guestEmail: emailLower,
-          odooPartnerId: params.odooPartnerId,
-          syncStatus: 'SYNCED',
-          lastSyncAt: new Date(),
-        },
-      })
-    }
-  }
+  await prisma.odooCustomerMap.upsert({
+    where: { odooPartnerId: params.odooPartnerId },
+    create: {
+      odooPartnerId: params.odooPartnerId,
+      syncStatus: 'SYNCED',
+      lastSyncAt: new Date(),
+      guestEmail: emailLower,
+    },
+    update: {
+      syncStatus: 'SYNCED',
+      lastSyncAt: new Date(),
+      guestEmail: emailLower,
+    },
+  })
 }
 
 export const odooIntegrationService = {
@@ -277,8 +251,8 @@ export const odooIntegrationService = {
     const session = assertSession(req)
     const cart = await assertCartForRequest(req, body.cartId)
 
-    const u = session.userId
-      ? await prisma.user.findUnique({ where: { id: session.userId } })
+    const u = session.odooPartnerId
+      ? await prisma.customerSatellite.findUnique({ where: { odooPartnerId: session.odooPartnerId } })
       : null
 
     let partner
@@ -301,9 +275,8 @@ export const odooIntegrationService = {
 
     try {
       await persistOdooCustomerMap({
-        userId: session.userId ?? null,
-        email: body.email,
         odooPartnerId: partner.odooPartnerId,
+        email: body.email,
       })
     } catch (e) {
       logger.warn('odoo.persistCustomerMap_failed', { err: String(e) }, req)
@@ -339,8 +312,7 @@ export const odooIntegrationService = {
           cartId: body.cartId,
           email: body.email,
           state: 'DRAFT',
-          userId: session.userId ?? undefined,
-          odooPartnerId: partner.odooPartnerId,
+          odooPartnerId: session.odooPartnerId ?? undefined,
           odooSaleOrderId: order.odooSaleOrderId,
           billingAddressJson: body.billingAddress as object,
           shippingAddressJson: body.shippingAddress as object,

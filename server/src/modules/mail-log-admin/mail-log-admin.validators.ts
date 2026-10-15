@@ -11,6 +11,8 @@ export const mailLogAdminListQuerySchema = z.object({
   q: z.string().trim().max(120).optional(),
   state: z.enum(stateFilterValues).default('all'),
   templateKey: z.enum(templateFilterValues).default('all'),
+  /** Finestra temporale (giorni). Default lato service/mapper: 180. `0` = senza limite. */
+  sinceDays: z.coerce.number().int().min(0).max(3650).optional(),
 })
 
 export const mailLogAdminIdParamsSchema = z.object({

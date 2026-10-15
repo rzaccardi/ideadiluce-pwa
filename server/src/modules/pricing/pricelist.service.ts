@@ -98,7 +98,7 @@ export async function resolvePricingContext(
     }
   }
 
-  const map = await prisma.odooCustomerMap.findUnique({ where: { userId: user.id } })
+  const map = await prisma.odooCustomerMap.findUnique({ where: { odooPartnerId: user.odooPartnerId } })
   return resolveAccountPricing({
     segment: user.customerSegment,
     odooPricelistId: user.odooPricelistId,

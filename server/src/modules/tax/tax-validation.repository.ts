@@ -12,7 +12,7 @@ export const taxValidationRepository = {
   ): Promise<void> {
     await prisma.taxValidationLog.create({
       data: {
-        userId: ctx.userId ?? null,
+        odooPartnerId: ctx.odooPartnerId ?? null,
         sessionId: ctx.sessionId ?? null,
         fiscalCodeHash: result.fiscalCode?.normalized
           ? hashTaxIdentifier(result.fiscalCode.normalized)
@@ -34,9 +34,9 @@ export const taxValidationRepository = {
     })
   },
 
-  async persistUserVerification(userId: string, result: TaxValidationResult): Promise<void> {
-    await prisma.user.update({
-      where: { id: userId },
+  async persistUserVerification(odooPartnerId: number, result: TaxValidationResult): Promise<void> {
+    await prisma.customerSatellite.update({
+      where: { odooPartnerId },
       data: {
         ...(result.fiscalCode?.normalized
           ? { fiscalCode: result.fiscalCode.normalized, fiscalCodeValid: result.fiscalCode.valid }

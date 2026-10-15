@@ -1,8 +1,10 @@
+import { api } from '@/api/endpoints'
 import { appStore, fetchStorefrontSettings } from '@/features/app'
 import { fetchMe } from '@/features/auth'
 import { fetchCart } from '@/features/cart'
 import { isCartFlowPath } from '@/features/cart/cart.utils'
 import { fetchWishlist } from '@/features/wishlist'
+import { setManagedBrandLogos } from '@/lib/brand-logo'
 
 let bootstrapPromise: Promise<void> | null = null
 
@@ -27,6 +29,12 @@ export function bootstrapSession(options?: BootstrapSessionOptions): Promise<voi
       options?.pathname != null && isCartFlowPath(options.pathname)
     appStore.isBootstrapped = true
     void fetchStorefrontSettings()
+    void api.catalog
+      .brandLogos()
+      .then((data) => setManagedBrandLogos(data.logos))
+      .catch(() => {
+        /* fallback statico /brands */
+      })
     bootstrapPromise = fetchMe()
       .then(() => (skipInitialCart ? undefined : fetchCart({ force: false })))
       .then(() => {

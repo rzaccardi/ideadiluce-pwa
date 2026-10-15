@@ -10,7 +10,7 @@ export const restockNotifyRepository = {
     quantity: number
     locale: string
     productName: string | null
-    userId: string | null
+    odooPartnerId: number | null
     requestType: StockRequestType
   }) {
     const variantRef = input.variantRef ?? ''
@@ -40,14 +40,14 @@ export const restockNotifyRepository = {
         quantity: input.quantity,
         locale: input.locale,
         productName: input.productName,
-        userId: input.userId,
+        odooPartnerId: input.odooPartnerId,
         requestType: input.requestType,
       },
       update: {
         quantity: input.quantity,
         locale: input.locale,
         productName: input.productName,
-        userId: input.userId,
+        odooPartnerId: input.odooPartnerId,
         notifiedAt: null,
       },
     })

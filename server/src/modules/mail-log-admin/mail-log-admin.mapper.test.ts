@@ -15,13 +15,22 @@ describe('mail-log-admin mapper', () => {
     hasMailTemplateId: false,
     hasFailureType: true,
     hasFailureReason: true,
+    hasCreateDate: true,
+    hasDate: true,
   }
+  const fixedNow = new Date('2026-10-15T12:00:00.000Z')
 
   it('costruisce il domain PWA senza mail_template_id (Odoo 18)', () => {
-    expect(buildPwaMailLogDomain({}, odoo18)).toEqual([['headers', 'ilike', 'X-PWA-Mail']])
+    expect(buildPwaMailLogDomain({ sinceDays: 0 }, odoo18, fixedNow)).toEqual([
+      ['headers', 'ilike', 'X-PWA-Mail'],
+    ])
 
     expect(
-      buildPwaMailLogDomain({ q: 'mario@', state: 'sent', templateKey: 'site_inquiry_admin' }, odoo18),
+      buildPwaMailLogDomain(
+        { q: 'mario@', state: 'sent', templateKey: 'site_inquiry_admin', sinceDays: 0 },
+        odoo18,
+        fixedNow,
+      ),
     ).toEqual([
       ['headers', 'ilike', 'X-PWA-Mail'],
       ['state', '=', 'sent'],
@@ -31,7 +40,7 @@ describe('mail-log-admin mapper', () => {
       ['subject', 'ilike', 'mario@'],
     ])
 
-    expect(buildPwaMailLogDomain({ state: 'bounce' }, odoo18)).toEqual([
+    expect(buildPwaMailLogDomain({ state: 'bounce', sinceDays: 0 }, odoo18, fixedNow)).toEqual([
       ['headers', 'ilike', 'X-PWA-Mail'],
       '|',
       ['failure_type', 'ilike', 'bounce'],
@@ -39,17 +48,45 @@ describe('mail-log-admin mapper', () => {
     ])
   })
 
-  it('aggiunge OR sul template se Odoo espone mail_template_id', () => {
+  it('limita lo storico con create_date (default 180 giorni)', () => {
+    expect(buildPwaMailLogDomain({}, odoo18, fixedNow)).toEqual([
+      ['headers', 'ilike', 'X-PWA-Mail'],
+      ['create_date', '>=', '2026-04-18 12:00:00'],
+    ])
+  })
+
+  it('usa solo headers anche se mail_template_id è disponibile (niente OR)', () => {
     expect(
       buildPwaMailLogDomain(
-        {},
-        { hasHeaders: true, hasMailTemplateId: true, hasFailureType: true, hasFailureReason: true },
+        { sinceDays: 0 },
+        {
+          hasHeaders: true,
+          hasMailTemplateId: true,
+          hasFailureType: true,
+          hasFailureReason: true,
+          hasCreateDate: true,
+          hasDate: true,
+        },
+        fixedNow,
       ),
-    ).toEqual([
-      '|',
-      ['headers', 'ilike', 'X-PWA-Mail'],
-      ['mail_template_id.name', '=like', '[PWA]%'],
-    ])
+    ).toEqual([['headers', 'ilike', 'X-PWA-Mail']])
+  })
+
+  it('fallback a mail_template_id se headers non disponibili', () => {
+    expect(
+      buildPwaMailLogDomain(
+        { sinceDays: 0 },
+        {
+          hasHeaders: false,
+          hasMailTemplateId: true,
+          hasFailureType: true,
+          hasFailureReason: true,
+          hasCreateDate: false,
+          hasDate: false,
+        },
+        fixedNow,
+      ),
+    ).toEqual([['mail_template_id.name', '=like', '[PWA]%']])
   })
 
   it('riconosce i record PWA da header o template', () => {

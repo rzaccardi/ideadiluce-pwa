@@ -44,7 +44,7 @@ taxRouter.get(
         ? await prisma.cart.findFirst({
             where: {
               status: 'ACTIVE',
-              OR: [{ sessionId: session.id }, ...(session.userId ? [{ userId: session.userId }] : [])],
+              OR: [{ sessionId: session.id }, ...(session.odooPartnerId ? [{ odooPartnerId: session.odooPartnerId }] : [])],
             },
             include: { items: true },
             orderBy: { updatedAt: 'desc' },
@@ -101,7 +101,7 @@ taxRouter.post(
         personType: body.personType,
       },
       {
-        userId: req.sessionRecord?.userId,
+        odooPartnerId: req.sessionRecord?.odooPartnerId,
         sessionId: req.sessionRecord?.id,
         correlationId: req.correlationId,
       },

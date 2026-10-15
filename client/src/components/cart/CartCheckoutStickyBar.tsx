@@ -58,7 +58,7 @@ export function CartCheckoutStickyBar({
             onFocus={() => preloadStripe()}
           >
             <Button
-              variant="technical"
+              variant="accent"
               className="h-auto w-full rounded-[10px] px-4 py-3.5 text-sm font-extrabold"
             >
               {t('cart.checkoutCta')}

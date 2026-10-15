@@ -2,7 +2,7 @@ import type { HomePageContent } from '../site/site.types.js'
 import { searchHintsOdooStaleMs } from './search-hints-odoo.config.js'
 
 export function parseSearchHintsOdooSyncedAt(content: HomePageContent): Date | null {
-  const raw = content.search.hintsOdooSyncedAt
+  const raw = content.search?.hintsOdooSyncedAt
   if (!raw || typeof raw !== 'string') return null
   const parsed = new Date(raw)
   return Number.isNaN(parsed.getTime()) ? null : parsed

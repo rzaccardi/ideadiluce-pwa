@@ -522,41 +522,11 @@ export function resolveHomeBrandCards(
 }
 
 /**
- * Directory `/brand`: tutti i brand catalogo in `BRAND_META`,
- * arricchiti con conteggi/slug API quando disponibili.
+ * Directory `/brand`: tutti i brand da Odoo (hub), arricchiti con meta editoriale
+ * se presente. Nessun brand inventato dal CMS: senza Odoo non compare.
  */
 export function mergeBrandCards(hubBrands: BrandListItemDTO[]): BrandCard[] {
-  const hubByKey = new Map(hubBrands.map((b) => [normalizeBrandKey(b.name), b]))
-  const hubBySlug = new Map(hubBrands.map((b) => [b.slug, b]))
-  const seen = new Set<string>()
-  const cards: BrandCard[] = []
-
-  for (const meta of BRAND_META) {
-    const hub = hubMatchForMeta(meta, hubByKey, hubBySlug)
-    const card = cardFromMeta(meta, hub)
-    seen.add(normalizeBrandKey(card.name))
-    seen.add(normalizeBrandKey(meta.name))
-    seen.add(meta.slug)
-    if (hub) seen.add(hub.slug)
-    cards.push(card)
-  }
-
-  for (const hub of hubBrands) {
-    const key = normalizeBrandKey(hub.name)
-    if (seen.has(key) || seen.has(hub.slug)) continue
-    cards.push({
-      slug: hub.slug,
-      name: hub.name,
-      displayStyle: 'bold',
-      categories: resolveBrandCategories(hub),
-      description: 'Marchio disponibile nel catalogo Idea di Luce.',
-      tags: [],
-      productLines: 'Catalogo completo',
-      productCount: hub.productCount ?? 0,
-      href: brandHref(hub.slug),
-      featured: false,
-    })
-  }
-
-  return cards.sort((a, b) => a.name.localeCompare(b.name, 'it'))
+  return hubBrands
+    .map((hub) => cardFromHub(hub, findBrandMeta(hub)))
+    .sort((a, b) => a.name.localeCompare(b.name, 'it'))
 }

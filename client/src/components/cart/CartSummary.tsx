@@ -136,7 +136,7 @@ export function CartSummary({
                   onFocus={() => preloadStripe()}
                 >
                   <Button
-                    variant="technical"
+                    variant="accent"
                     className="h-auto w-full rounded-[10px] py-4 text-base font-extrabold"
                   >
                     {t('cart.checkoutCta')}

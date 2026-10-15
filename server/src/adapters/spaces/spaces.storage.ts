@@ -53,15 +53,15 @@ export function spacesKeyFromPublicUrl(url: string): string | null {
   return url.slice(base.length + 1)
 }
 
-export async function uploadProductImage(
-  productId: string,
+async function uploadImage(
+  keyPrefix: string,
   file: { buffer: Buffer; originalname: string; mimetype: string },
 ): Promise<{ key: string; url: string }> {
   const ext = path.extname(file.originalname).toLowerCase() || '.jpg'
   if (!IMAGE_MIME[ext]) {
     throw new Error('UNSUPPORTED_IMAGE_TYPE')
   }
-  const key = `products/${productId}/${randomUUID()}${ext}`
+  const key = `${keyPrefix}/${randomUUID()}${ext}`
   const contentType = file.mimetype || IMAGE_MIME[ext]
 
   await getClient().send(
@@ -76,6 +76,23 @@ export async function uploadProductImage(
   )
 
   return { key, url: spacesPublicUrl(key) }
+}
+
+export async function uploadProductImage(
+  productId: string,
+  file: { buffer: Buffer; originalname: string; mimetype: string },
+): Promise<{ key: string; url: string }> {
+  return uploadImage(`products/${productId}`, file)
+}
+
+/** Logo marchio catalogo (light/dark) su Spaces. */
+export async function uploadBrandLogo(
+  slug: string,
+  variant: 'light' | 'dark',
+  file: { buffer: Buffer; originalname: string; mimetype: string },
+): Promise<{ key: string; url: string }> {
+  const safe = slug.replace(/[^a-z0-9-]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'brand'
+  return uploadImage(`brands/${safe}/${variant}`, file)
 }
 
 export async function deleteSpacesObjectByUrl(url: string): Promise<void> {

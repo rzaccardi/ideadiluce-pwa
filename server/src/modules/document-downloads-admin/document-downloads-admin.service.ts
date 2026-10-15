@@ -9,7 +9,7 @@ export type DocumentDownloadAdminItem = {
   variantRef: string | null
   documentId: string
   documentName: string | null
-  userId: string | null
+  odooPartnerId: number | null
   locale: string
   sourcePage: string | null
   success: boolean
@@ -23,7 +23,7 @@ function mapRow(row: {
   variantRef: string | null
   documentId: string
   documentName: string | null
-  userId: string | null
+  odooPartnerId: number | null
   locale: string
   sourcePage: string | null
   success: boolean
@@ -36,7 +36,7 @@ function mapRow(row: {
     variantRef: row.variantRef,
     documentId: row.documentId,
     documentName: row.documentName,
-    userId: row.userId,
+    odooPartnerId: row.odooPartnerId,
     locale: row.locale,
     sourcePage: row.sourcePage,
     success: row.success,

@@ -22,7 +22,6 @@ export type ProfessionalRequestsAdminListDTO = {
 export type ProfessionalRequestsAdminDetailDTO = ProfessionalRequestsAdminListItemDTO & {
   message: string | null
   sectorOther: string | null
-  userId: string | null
   country: string
   pec: string | null
   sdiCode: string | null

@@ -1,6 +1,5 @@
-import type { ReactNode } from 'react'
 import type { BrandDisplayStyle } from '@/lib/brand.defaults'
-import { BrandCatalogLogo } from '@/components/site/brand/BrandCatalogLogo'
+import { BrandLogoImage } from '@/components/site/brand/BrandLogoImage'
 import { resolveBrandLogo } from '@/lib/brand-logo'
 import { cn } from '@/utils/cn'
 
@@ -9,60 +8,17 @@ type Props = {
   style: BrandDisplayStyle
   size?: 'sm' | 'md' | 'lg'
   className?: string
-  /** Slug catalogo: se c’è asset in `/brands`, mostra il logo ufficiale. */
+  /** Slug catalogo: se c’è asset in `/brands` o overlay BO, mostra il logo ufficiale. */
   slug?: string | null
 }
 
 const LOGO_HEIGHT = { sm: 28, md: 36, lg: 48 } as const
 
-const DARK_NAME_SIZE = {
-  sm: 'text-sm',
-  md: 'text-base',
-  lg: 'text-lg',
-} as const
-
-/** In dark mode i JPG hanno sfondo bianco: mostriamo il nome in font normale. */
-function DarkModeBrandName({
-  name,
-  size,
-  className,
-}: {
-  name: string
-  size: 'sm' | 'md' | 'lg'
-  className?: string
-}) {
-  return (
-    <span
-      className={cn(
-        'hidden font-sans font-medium tracking-normal text-idl-ink normal-case dark:inline',
-        DARK_NAME_SIZE[size],
-        className,
-      )}
-    >
-      {name}
-    </span>
-  )
-}
-
-function withDarkModeName(
-  light: ReactNode,
-  name: string,
-  size: 'sm' | 'md' | 'lg',
-  className?: string,
-) {
-  return (
-    <>
-      <span className="dark:hidden">{light}</span>
-      <DarkModeBrandName name={name} size={size} className={className} />
-    </>
-  )
-}
-
 export function BrandNameDisplay({ name, style, size = 'md', className, slug }: Props) {
-  // TLB: wordmark vettoriale dedicato (meglio del JPG catalogo).
+  // TLB: wordmark vettoriale dedicato (meglio del JPG catalogo) — anche in dark.
   if (style === 'bold-accent' && name.toLowerCase().includes('tlb')) {
     const h = LOGO_HEIGHT[size]
-    return withDarkModeName(
+    return (
       <img
         src="/brand/tlb.svg"
         alt="TLB Italy"
@@ -72,34 +28,61 @@ export function BrandNameDisplay({ name, style, size = 'md', className, slug }: 
         className={cn('w-auto object-contain', className)}
         style={{ height: h }}
         draggable={false}
-      />,
-      name,
-      size,
-      className,
+      />
     )
   }
 
-  const logo = resolveBrandLogo(slug) ?? resolveBrandLogo(name)
-  if (logo) {
+  const light = resolveBrandLogo(slug, 'light') ?? resolveBrandLogo(name, 'light')
+  const dark = resolveBrandLogo(slug, 'dark') ?? resolveBrandLogo(name, 'dark')
+  if (light || dark) {
     const h = LOGO_HEIGHT[size]
-    return withDarkModeName(
-      <BrandCatalogLogo
-        src={logo.src}
-        alt={name}
-        height={h}
-        content={logo.content}
-        align="center"
-        maxWidthRem={10}
-        className={className}
-      />,
-      name,
-      size,
-      className,
+
+    if (light && dark && light.src === dark.src) {
+      return (
+        <BrandLogoImage
+          logo={light}
+          alt={name}
+          height={h}
+          align="center"
+          maxWidthRem={10}
+          className={className}
+        />
+      )
+    }
+
+    return (
+      <>
+        {light ? (
+          <span className={dark && dark.src !== light.src ? 'dark:hidden' : undefined}>
+            <BrandLogoImage
+              logo={light}
+              alt={name}
+              height={h}
+              align="center"
+              maxWidthRem={10}
+              className={className}
+            />
+          </span>
+        ) : null}
+        {dark && (!light || dark.src !== light.src) ? (
+          <span className={light ? 'hidden dark:inline-flex' : undefined}>
+            <BrandLogoImage
+              logo={dark}
+              alt={name}
+              height={h}
+              align="center"
+              maxWidthRem={10}
+              className={className}
+            />
+          </span>
+        ) : null}
+      </>
     )
   }
 
+  // Senza logo: nome testuale in light e dark.
   if (style === 'serif') {
-    return withDarkModeName(
+    return (
       <span
         className={cn(
           'font-serif font-medium tracking-wide text-idl-graphite',
@@ -110,14 +93,11 @@ export function BrandNameDisplay({ name, style, size = 'md', className, slug }: 
         )}
       >
         {name}
-      </span>,
-      name,
-      size,
-      className,
+      </span>
     )
   }
 
-  return withDarkModeName(
+  return (
     <span
       className={cn(
         'font-extrabold tracking-wide text-idl-graphite uppercase',
@@ -128,9 +108,6 @@ export function BrandNameDisplay({ name, style, size = 'md', className, slug }: 
       )}
     >
       {name}
-    </span>,
-    name,
-    size,
-    className,
+    </span>
   )
 }

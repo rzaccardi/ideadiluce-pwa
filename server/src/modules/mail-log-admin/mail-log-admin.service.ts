@@ -66,6 +66,8 @@ function capabilitiesFromFields(available: Set<string>): MailLogOdooCapabilities
     hasMailTemplateId: available.has('mail_template_id'),
     hasFailureType: available.has('failure_type'),
     hasFailureReason: available.has('failure_reason'),
+    hasCreateDate: available.has('create_date'),
+    hasDate: available.has('date'),
   }
 }
 
@@ -175,29 +177,33 @@ export const mailLogAdminService = {
 
       const domain = buildPwaMailLogDomain(query, caps)
       const offset = (query.page - 1) * query.pageSize
-      const [totalRaw, rowsRaw] = await Promise.all([
-        odooExecuteKw<number>(ctx, 'mail.mail', 'search_count', [domain], {}),
-        odooExecuteKw<unknown>(ctx, 'mail.mail', 'search_read', [domain], {
-          fields: pickFields(LIST_FIELDS, available),
-          limit: query.pageSize,
-          offset,
-          order: 'id desc',
-        }),
-      ])
+      // Niente search_count: su mail.mail con `headers ilike` scansiona tutta la tabella e
+      // Cloudflare risponde 504. Paginazione has-more con limit+1 (infinite scroll admin).
+      const rowsRaw = await odooExecuteKw<unknown>(ctx, 'mail.mail', 'search_read', [domain], {
+        fields: pickFields(LIST_FIELDS, available),
+        limit: query.pageSize + 1,
+        offset,
+        order: 'id desc',
+      })
 
-      const total = typeof totalRaw === 'number' && Number.isFinite(totalRaw) ? totalRaw : 0
-      const pwaRows = asRows(rowsRaw).filter(isPwaMailRecord)
+      const fetched = asRows(rowsRaw).filter(isPwaMailRecord)
+      const hasMore = fetched.length > query.pageSize
+      const pwaRows = hasMore ? fetched.slice(0, query.pageSize) : fetched
       const notifications = await loadNotificationsByMailIds(
         ctx,
         pwaRows.map((row) => Number(row.id)).filter((id) => Number.isFinite(id) && id > 0),
       )
+
+      const total = hasMore
+        ? query.page * query.pageSize + 1
+        : (query.page - 1) * query.pageSize + pwaRows.length
 
       return {
         items: pwaRows.map((row) => mapMailLogListItem(row, notifications.get(Number(row.id)))),
         page: query.page,
         pageSize: query.pageSize,
         total,
-        totalPages: totalPages(total, query.pageSize),
+        totalPages: hasMore ? query.page + 1 : totalPages(total, query.pageSize),
         configured: true,
       }
     } catch (e) {

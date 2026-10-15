@@ -12,7 +12,7 @@ invoicesRouter.use(requireLogin)
 invoicesRouter.get(
   '/',
   asyncHandler(async (req, res) => {
-    res.json(ok(await invoicesService.list(req.sessionRecord!.userId!, req.correlationId)))
+    res.json(ok(await invoicesService.list(req.sessionRecord!.user!.id, req.correlationId)))
   }),
 )
 
@@ -21,7 +21,7 @@ invoicesRouter.get(
   asyncHandler(async (req, res) => {
     const invoiceId = z.string().min(1).parse(req.params.invoiceId)
     const { buffer, filename } = await invoicesService.downloadPdf(
-      req.sessionRecord!.userId!,
+      req.sessionRecord!.user!.id,
       invoiceId,
       req.correlationId,
     )

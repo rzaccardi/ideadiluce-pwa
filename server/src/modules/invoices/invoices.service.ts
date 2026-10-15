@@ -133,10 +133,10 @@ function mapInvoice(row: Record<string, unknown>): InvoiceDTO {
 }
 
 async function partnerIdsForUser(userId: string): Promise<number[]> {
-  const map = await prisma.odooCustomerMap.findUnique({ where: { userId } })
+  const map = await prisma.odooCustomerMap.findUnique({ where: { odooPartnerId: (await prisma.customerSatellite.findUniqueOrThrow({ where: { id: userId }, select: { odooPartnerId: true } })).odooPartnerId } })
   if (map) return [map.odooPartnerId]
   if (isOdooApiV2Configured() || !isOdooConfigured()) return []
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } })
+  const user = await prisma.customerSatellite.findUnique({ where: { id: userId }, select: { email: true } })
   if (!user?.email) return []
   const partners = await odooExecuteKw<Array<{ id: number }>>(
     { correlationId: `invoices-${userId}` },

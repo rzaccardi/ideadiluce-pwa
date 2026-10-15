@@ -40,6 +40,10 @@ function LampIcon({ on, className }: { on: boolean; className?: string }) {
   )
 }
 
+/**
+ * Unico toggle: luci prodotto (foto accesa/spenta) + light/dark mode del sito.
+ * Accese → tema scuro; spente → tema chiaro.
+ */
 export function HeaderLightsToggle() {
   const { t } = useI18n()
   const { on } = useSnapshot(lightsStore)
@@ -62,16 +66,13 @@ export function HeaderLightsToggle() {
       aria-pressed={on}
       aria-label={on ? t('nav.lightsOff') : t('nav.lightsOn')}
       title={on ? t('nav.lightsOff') : t('nav.lightsOn')}
-      className={cn(
-        ui.interactive,
-        ui.headerActionBtn,
-        'inline-flex size-[38px] shrink-0 items-center justify-center rounded-full border p-0',
-      )}
+      className={cn(ui.interactive, ui.headerIconBtn, ui.headerActionBtn)}
     >
       <LampIcon
         on={on}
         className={cn(
-          'relative z-[1] size-[18px] shrink-0 transition duration-300',
+          ui.headerIcon,
+          'relative z-[1] transition duration-300',
           on
             ? 'text-idl-glow drop-shadow-[0_0_8px_rgba(201,162,75,1)]'
             : 'text-idl-ink-soft',

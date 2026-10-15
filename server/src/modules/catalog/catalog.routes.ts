@@ -25,6 +25,7 @@ catalogRouter.post(
 catalogRouter.get('/categories', catalogPublicController.categories)
 catalogRouter.get('/categories/:slug', catalogPublicController.categoryBySlug)
 catalogRouter.get('/brands', catalogPublicController.brands)
+catalogRouter.get('/brand-logos', catalogPublicController.brandLogos)
 catalogRouter.get('/brands/:slug', catalogPublicController.brandBySlug)
 catalogRouter.get('/products', catalogSearchRateLimit, catalogPublicController.products)
 catalogRouter.get('/search', catalogSearchRateLimit, catalogPublicController.search)

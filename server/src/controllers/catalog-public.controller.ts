@@ -21,6 +21,10 @@ import {
   sanitizeCatalogSearchQuery,
 } from '../modules/catalog/catalog-search-guard.js'
 import { parseHubLocale } from '../lib/hub-locale.js'
+import {
+  enrichPublicBrands,
+  getPublicBrandLogosMap,
+} from '../modules/catalog/catalog-brand-assets.service.js'
 
 function catalogFilterQueryFromRequest(req: Request) {
   const worldRaw = typeof req.query.world === 'string' ? req.query.world.trim() : undefined
@@ -59,16 +63,19 @@ function catalogFilterQueryFromRequest(req: Request) {
 export const catalogPublicController = {
   bootstrap: asyncHandler(async (req: Request, res: Response) => {
     const locale = typeof req.query.locale === 'string' ? req.query.locale : undefined
-    const [categories, brands, cmsPage] = await Promise.all([
+    const [categories, brandsRaw, cmsPage, brandLogos] = await Promise.all([
       catalogStorefrontService.listCategories(locale),
       catalogStorefrontService.listBrands(locale),
       siteService.getPublicPage('catalog', locale ?? 'IT'),
+      getPublicBrandLogosMap(),
     ])
+    const brands = await enrichPublicBrands(brandsRaw)
     res.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
     res.json(
       ok({
         categories,
         brands,
+        brandLogos,
         cms: cmsPage.content,
       }),
     )
@@ -90,16 +97,29 @@ export const catalogPublicController = {
 
   brands: asyncHandler(async (req: Request, res: Response) => {
     const locale = typeof req.query.locale === 'string' ? req.query.locale : undefined
-    const items = await catalogStorefrontService.listBrands(locale)
+    const raw = await catalogStorefrontService.listBrands(locale)
+    const items = await enrichPublicBrands(raw)
     res.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
     res.json(ok({ items }))
   }),
 
   brandBySlug: asyncHandler(async (req: Request, res: Response) => {
     const locale = typeof req.query.locale === 'string' ? req.query.locale : undefined
-    const item = await catalogStorefrontService.getBrandBySlug(req.params.slug, locale)
+    const raw = await catalogStorefrontService.getBrandBySlug(req.params.slug, locale)
+    if (!raw) {
+      res.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
+      res.json(ok({ item: null }))
+      return
+    }
+    const [item] = await enrichPublicBrands([raw])
     res.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
-    res.json(ok({ item }))
+    res.json(ok({ item: item ?? null }))
+  }),
+
+  brandLogos: asyncHandler(async (_req: Request, res: Response) => {
+    const logos = await getPublicBrandLogosMap()
+    res.set('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=600')
+    res.json(ok({ logos }))
   }),
 
   products: asyncHandler(async (req: Request, res: Response) => {

@@ -51,7 +51,7 @@ export const impersonationService = {
     customerId: string,
     correlationId: string,
   ): Promise<{ url: string; expiresAt: string }> {
-    const user = await prisma.user.findUnique({ where: { id: customerId } })
+    const user = await prisma.customerSatellite.findUnique({ where: { id: customerId } })
     if (!user) {
       throw new AppError(
         'CUSTOMER_NOT_FOUND',
@@ -90,7 +90,7 @@ export const impersonationService = {
     await prisma.impersonationToken.create({
       data: {
         tokenHash: hashSessionToken(rawToken),
-        userId: user.id,
+        odooPartnerId: user.odooPartnerId,
         adminUserId,
         expiresAt,
       },
@@ -99,6 +99,7 @@ export const impersonationService = {
     await logImpersonation('impersonation.token_created', correlationId, {
       adminUserId,
       customerId: user.id,
+      odooPartnerId: user.odooPartnerId,
       customerEmail: user.email,
     })
 
@@ -115,7 +116,7 @@ export const impersonationService = {
     const tokenHash = hashSessionToken(token)
     const row = await prisma.impersonationToken.findUnique({
       where: { tokenHash },
-      include: { user: true, adminUser: true },
+      include: { customer: true, adminUser: true },
     })
 
     if (!row || row.usedAt || row.expiresAt < new Date()) {
@@ -128,7 +129,7 @@ export const impersonationService = {
       )
     }
 
-    if (row.user.status !== 'ACTIVE') {
+    if (row.customer.status !== 'ACTIVE') {
       throw new AppError(
         'CUSTOMER_NOT_IMPERSONATABLE',
         'Customer not active',
@@ -140,9 +141,10 @@ export const impersonationService = {
 
     const sessionToken = generateSessionToken()
     const expiresAt = sessionExpiry()
+    const partnerId = row.odooPartnerId
 
     if (currentSessionId) {
-      await mergeCartsForUser(currentSessionId, row.userId)
+      await mergeCartsForUser(currentSessionId, partnerId)
     }
 
     const newSession = await prisma.$transaction(async (tx) => {
@@ -162,7 +164,7 @@ export const impersonationService = {
       return tx.session.create({
         data: {
           tokenHash: hashSessionToken(sessionToken),
-          userId: row.userId,
+          odooPartnerId: partnerId,
           impersonatedByAdminId: row.adminUserId,
           expiresAt,
         },
@@ -170,19 +172,20 @@ export const impersonationService = {
     })
 
     await prisma.cart.updateMany({
-      where: { userId: row.userId, status: 'ACTIVE' },
+      where: { odooPartnerId: partnerId, status: 'ACTIVE' },
       data: { sessionId: newSession.id },
     })
 
     await logImpersonation('impersonation.session_started', correlationId, {
       adminUserId: row.adminUserId,
-      customerId: row.userId,
-      customerEmail: row.user.email,
+      customerId: row.customer.id,
+      odooPartnerId: partnerId,
+      customerEmail: row.customer.email,
     })
 
     return {
       token: sessionToken,
-      user: await toUserDTO(row.user),
+      user: await toUserDTO(row.customer),
       impersonation: toImpersonationInfo(row.adminUser),
     }
   },
@@ -223,7 +226,7 @@ export const impersonationService = {
 
     await logImpersonation('impersonation.session_ended', correlationId, {
       adminUserId: session.impersonatedByAdminId,
-      customerId: session.userId,
+      odooPartnerId: session.odooPartnerId,
       customerEmail: session.user?.email,
     })
 

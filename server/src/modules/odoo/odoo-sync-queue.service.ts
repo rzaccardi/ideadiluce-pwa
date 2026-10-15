@@ -67,7 +67,8 @@ function mapQueueItem(row: QueueRow): OdooSyncQueueItemDTO {
   return {
     id: row.id,
     pwaOrderId: row.pwaOrderId,
-    userId: row.userId,
+    odooPartnerId: row.odooPartnerId,
+    userId: row.odooPartnerId != null ? String(row.odooPartnerId) : null,
     operation: toOperationDto(row.operation),
     status: row.status as OdooSyncQueueItemDTO['status'],
     attempts: row.attempts,
@@ -86,15 +87,15 @@ const queueInclude = { order: { select: { email: true, odooSaleOrderId: true } }
 
 async function shouldDeferForSaga(row: {
   pwaOrderId: string | null
-  userId: string | null
+  odooPartnerId: number | null
   operation: string
 }): Promise<boolean> {
   const earlier = earlierSagaOperations(row.operation)
   if (earlier.length === 0) return false
   const scope = row.pwaOrderId
     ? { pwaOrderId: row.pwaOrderId }
-    : row.userId
-      ? { userId: row.userId, pwaOrderId: null }
+    : row.odooPartnerId
+      ? { odooPartnerId: row.odooPartnerId, pwaOrderId: null }
       : null
   if (!scope) return false
   const blocking = await prisma.odooSyncQueue.findFirst({
@@ -228,7 +229,7 @@ export const odooSyncQueueService = {
     })
 
     try {
-      await executeQueueOperation(ctx, row.operation, row.pwaOrderId, row.userId, row.payload)
+      await executeQueueOperation(ctx, row.operation, row.pwaOrderId, row.odooPartnerId, row.payload)
       const completed = await prisma.odooSyncQueue.update({
         where: { id },
         data: {
@@ -305,7 +306,7 @@ export const odooSyncQueueService = {
         data: { status: 'PROCESSING' },
       })
       try {
-        await executeQueueOperation(ctx, row.operation, row.pwaOrderId, row.userId, row.payload)
+        await executeQueueOperation(ctx, row.operation, row.pwaOrderId, row.odooPartnerId, row.payload)
         await prisma.odooSyncQueue.update({
           where: { id: row.id },
           data: {

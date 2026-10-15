@@ -204,22 +204,29 @@ function parseSnapshot(row: QuoteRequest): CheckoutOrderLinesSnapshot {
 }
 
 async function assertQuoteOwner(userId: string, id: string): Promise<QuoteRequest> {
-  const row = await prisma.quoteRequest.findFirst({ where: { id, userId } })
+  const partnerId = await assertUserPartnerId(userId, 'quotes')
+  const row = await prisma.quoteRequest.findFirst({ where: { id, odooPartnerId: partnerId } })
   if (!row) {
     throw new AppError('QUOTE_NOT_FOUND', 'Quote not found', 'Preventivo non trovato.', 404, false)
   }
   return row
 }
 
-async function assertUserPartnerId(userId: string, correlationId: string): Promise<number> {
-  const map = await prisma.odooCustomerMap.findUnique({ where: { userId } })
-  if (map) return map.odooPartnerId
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } })
-  if (!user?.email) {
+async function assertUserPartnerId(userId: string, _correlationId: string): Promise<number> {
+  const user = await prisma.customerSatellite.findUnique({
+    where: { id: userId },
+    select: { odooPartnerId: true, email: true },
+  })
+  if (!user) {
     throw new AppError('USER_NOT_FOUND', 'User not found', 'Utente non trovato.', 404, false)
   }
+  if (user.odooPartnerId > 0) return user.odooPartnerId
+  const map = await prisma.odooCustomerMap.findUnique({
+    where: { odooPartnerId: user.odooPartnerId },
+  })
+  if (map) return map.odooPartnerId
   const resolved = await odooSalesService.resolvePartnerIdForUserOrEmail(
-    { correlationId },
+    { correlationId: _correlationId },
     { userId, email: user.email },
   )
   return resolved.partnerId
@@ -245,9 +252,11 @@ async function createFrozenQuoteOrder(input: {
     throw new AppError('NO_SESSION', 'Session missing', 'Sessione non disponibile.', 500, false)
   }
 
+  const partnerId = await assertUserPartnerId(input.userId, input.req.correlationId)
+
   const existing = await prisma.pwaOrder.findFirst({
     where: {
-      userId: input.userId,
+      odooPartnerId: partnerId,
       odooSaleOrderId: input.odooSaleOrderId ?? undefined,
       orderStatus: {
         in: ['CHECKOUT_LOCKED', 'PAYMENT_STARTED', 'PAYMENT_PENDING', 'PAYMENT_FAILED'],
@@ -267,7 +276,7 @@ async function createFrozenQuoteOrder(input: {
   const checkoutSession = await prisma.checkoutSession.create({
     data: {
       cartId: input.cartId,
-      userId: input.userId,
+      odooPartnerId: partnerId,
       email: input.email,
       state: 'COMMITTED',
       odooSaleOrderId: input.odooSaleOrderId,
@@ -284,7 +293,7 @@ async function createFrozenQuoteOrder(input: {
     data: {
       cartId: input.cartId,
       checkoutSessionId: checkoutSession.id,
-      userId: input.userId,
+      odooPartnerId: partnerId,
       sessionId: s.id,
       email: input.email,
       orderStatus: 'CHECKOUT_LOCKED',
@@ -343,7 +352,7 @@ async function createFrozenQuoteOrder(input: {
 
 export const quotesService = {
   async request(req: Request, userId: string, input: QuoteRequestBody): Promise<QuoteRequestDTO> {
-    const user = await prisma.user.findUnique({ where: { id: userId } })
+    const user = await prisma.customerSatellite.findUnique({ where: { id: userId } })
     if (!user) {
       throw new AppError('USER_NOT_FOUND', 'User not found', 'Utente non trovato.', 404, false)
     }
@@ -356,9 +365,10 @@ export const quotesService = {
       undefined
     const shippingAddress = input.shippingAddress ?? billingAddress
 
+    const partnerId = user.odooPartnerId
     let row = await prisma.quoteRequest.create({
       data: {
-        userId,
+        odooPartnerId: partnerId,
         cartId: cart.id,
         email: user.email,
         notes: input.notes?.trim() || null,
@@ -453,7 +463,7 @@ export const quotesService = {
 
     await prisma.userNotification.create({
       data: {
-        userId,
+        odooPartnerId: partnerId,
         type: 'quote_requested',
         title: 'Richiesta preventivo inviata',
         body: 'Abbiamo registrato la tua richiesta. Riceverai il preventivo via email.',
@@ -465,8 +475,9 @@ export const quotesService = {
   },
 
   async list(userId: string, correlationId: string): Promise<QuoteRequestDTO[]> {
+    const partnerId = await assertUserPartnerId(userId, correlationId)
     const rows = await prisma.quoteRequest.findMany({
-      where: { userId },
+      where: { odooPartnerId: partnerId },
       orderBy: { createdAt: 'desc' },
       take: 50,
     })
@@ -475,11 +486,11 @@ export const quotesService = {
     if (!isOdooConfigured()) return local
 
     try {
-      const user = await prisma.user.findUnique({
+      const user = await prisma.customerSatellite.findUnique({
         where: { id: userId },
         select: { email: true },
       })
-      const map = await prisma.odooCustomerMap.findUnique({ where: { userId } })
+      const map = await prisma.odooCustomerMap.findUnique({ where: { odooPartnerId: partnerId } })
       const odoo = await odooSalesService.listQuotations(
         { correlationId },
         map
@@ -547,7 +558,7 @@ export const quotesService = {
       state: detail.state,
       validityDate: detail.validityDate,
     })
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } })
+    const user = await prisma.customerSatellite.findUnique({ where: { id: userId }, select: { email: true } })
     let billingAddress: QuoteDetailDTO['billingAddress'] = null
     let shippingAddress: QuoteDetailDTO['shippingAddress'] = null
     if (user?.email) {
@@ -669,7 +680,7 @@ export const quotesService = {
       throw new AppError('ODOO_UNAVAILABLE', 'Odoo not configured', 'Odoo non configurato.', 503, true)
     }
 
-    const user = await prisma.user.findUnique({ where: { id: userId } })
+    const user = await prisma.customerSatellite.findUnique({ where: { id: userId } })
     if (!user) {
       throw new AppError('USER_NOT_FOUND', 'User not found', 'Utente non trovato.', 404, false)
     }
@@ -687,6 +698,7 @@ export const quotesService = {
     const quoteId = `odoo-${detail.id}`
     assertOdooQuotePayable(req, {
       userId,
+
       odooSaleOrderId: detail.id,
       quoteId,
       state: detail.state,
@@ -713,7 +725,7 @@ export const quotesService = {
 
     const cart = await cartRepository.create({
       session: { connect: { id: s.id } },
-      user: { connect: { id: userId } },
+      customer: { connect: { odooPartnerId: partnerId } },
       status: 'ACTIVE',
       currencyCode: snapshot.currencyCode,
       estimatedSubtotal: snapshot.estimatedSubtotal,
