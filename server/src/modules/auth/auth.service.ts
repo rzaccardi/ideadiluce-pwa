@@ -282,44 +282,47 @@ export const authService = {
     })
 
     const firstNameSuffix = user.firstName?.trim() ? ` ${user.firstName.trim()}` : ''
-    try {
-      await sendPwaMail(mailCtx, {
-        templateKey: 'account_welcome',
-        emailTo: user.email,
-        vars: {
-          first_name_suffix: firstNameSuffix,
-          email: user.email,
-          login_url: publicAppUrl('/login'),
-        },
-      })
-      if (segment === 'BUSINESS') {
+    // Non bloccare la risposta HTTP sulla mail Odoo (SMTP/XML-RPC può superare i timeout edge).
+    void (async () => {
+      try {
         await sendPwaMail(mailCtx, {
-          templateKey: 'business_registration_admin',
-          emailTo: PWA_ADMIN_MAIL_TO,
+          templateKey: 'account_welcome',
+          emailTo: user.email,
           vars: {
-            customer_email: user.email,
-            body_text: [
-              `Nuova registrazione azienda da /register`,
-              `Email: ${user.email}`,
-              `Nome: ${[user.firstName, user.lastName].filter(Boolean).join(' ') || '-'}`,
-              `Telefono: ${user.phone ?? '-'}`,
-              `Ragione sociale: ${user.companyName ?? '-'}`,
-              `P.IVA: ${user.vatNumber ?? '-'}`,
-              odooPartnerId ? `Partner Odoo: #${odooPartnerId}` : null,
-            ]
-              .filter(Boolean)
-              .join('\n'),
+            first_name_suffix: firstNameSuffix,
+            email: user.email,
+            login_url: publicAppUrl('/login'),
           },
         })
+        if (segment === 'BUSINESS') {
+          await sendPwaMail(mailCtx, {
+            templateKey: 'business_registration_admin',
+            emailTo: PWA_ADMIN_MAIL_TO,
+            vars: {
+              customer_email: user.email,
+              body_text: [
+                `Nuova registrazione azienda da /register`,
+                `Email: ${user.email}`,
+                `Nome: ${[user.firstName, user.lastName].filter(Boolean).join(' ') || '-'}`,
+                `Telefono: ${user.phone ?? '-'}`,
+                `Ragione sociale: ${user.companyName ?? '-'}`,
+                `P.IVA: ${user.vatNumber ?? '-'}`,
+                odooPartnerId ? `Partner Odoo: #${odooPartnerId}` : null,
+              ]
+                .filter(Boolean)
+                .join('\n'),
+            },
+          })
+        }
+      } catch (e) {
+        logger.warn('auth.register.welcome_mail_failed', {
+          correlationId: mailCtx.correlationId,
+          userId: user.id,
+          odooPartnerId,
+          error: e instanceof Error ? e.message : String(e),
+        })
       }
-    } catch (e) {
-      logger.warn('auth.register.welcome_mail_failed', {
-        correlationId: mailCtx.correlationId,
-        userId: user.id,
-        odooPartnerId,
-        error: e instanceof Error ? e.message : String(e),
-      })
-    }
+    })()
 
     return dto
   },

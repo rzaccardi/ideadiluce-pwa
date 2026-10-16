@@ -41,6 +41,18 @@ describe('netEurosFromNetCents', () => {
   })
 })
 
+describe('buildOdooApiCustomerWrite', () => {
+  it('default country_code IT senza billing (registrazione shop)', () => {
+    const write = buildOdooApiCustomerWrite({
+      email: 'mario@example.com',
+      firstName: 'Mario',
+      lastName: 'Rossi',
+    })
+    expect(write.country_code).toBe('IT')
+    expect(write.lang).toBe('it_IT')
+  })
+})
+
 describe('odoo address state_code', () => {
   it('scrive state_code dal campo provincia', () => {
     const write = buildOdooApiCustomerWrite({
@@ -60,6 +72,7 @@ describe('odoo address state_code', () => {
       },
     })
     expect(write.state_code).toBe('MI')
+    expect(write.country_code).toBe('IT')
     expect(
       buildOdooApiAddressWrite({
         firstName: 'Mario',

@@ -318,13 +318,19 @@ async function addressPartnerVals(
 }
 
 async function createPartner(ctx: OdooCallContext, input: FindOrCreateCustomerInput): Promise<OdooCustomerResult> {
+  const addressVals = await addressPartnerVals(ctx, input.billingAddress)
+  const countryId =
+    typeof addressVals.country_id === 'number'
+      ? addressVals.country_id
+      : await countryIdForCode(ctx, input.billingAddress?.country?.trim().toUpperCase() || 'IT')
   const vals = {
     name: partnerDisplayName(input),
     email: input.email.toLowerCase().trim(),
     phone: input.phone ?? '',
     customer_rank: 1,
+    ...(countryId ? { country_id: countryId } : {}),
     ...businessPartnerVals(input.business),
-    ...(await addressPartnerVals(ctx, input.billingAddress)),
+    ...addressVals,
   }
   const created = await odooExecuteKw<unknown>(ctx, 'res.partner', 'create', [vals], {})
   const id = normalizeOdooCreateId(created)

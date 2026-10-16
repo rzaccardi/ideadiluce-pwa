@@ -70,6 +70,9 @@ export function buildOdooApiCustomerWrite(input: FindOrCreateCustomerInput): Odo
     email: input.email.toLowerCase().trim(),
     name: displayNameFromProfile(input),
     lang: 'it_IT',
+    // Registrazione /register non ha ancora billing: senza country_code
+    // `/customers/validate` risponde `country_missing` (blocking) e blocca l’upsert.
+    country_code: 'IT',
   }
   const phone = input.phone?.trim() || addr?.phone?.trim()
   if (phone) payload.phone = phone
