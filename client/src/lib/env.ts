@@ -25,8 +25,9 @@ export function getServerApiUrl(): string {
   )
 }
 
+/** Base URL per fetch browser: sempre same-origin così Next rewrite `/api` → BFF (dev e prod). */
 export function getBrowserApiBase(): string {
-  return isDev() ? '' : getPublicApiUrl()
+  return ''
 }
 
 export function getStripePublishableKey(): string | undefined {

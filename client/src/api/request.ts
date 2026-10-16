@@ -16,8 +16,11 @@ export type ApiTransport = {
 }
 
 function networkErrorMessage(): string {
-  const apiOrigin = getPublicApiUrl()
-  return `Impossibile raggiungere il backend (${apiOrigin}). Verifica che il server API sia avviato (npm run dev:server) e che NEXT_PUBLIC_API_URL sia corretto.`
+  if (isDev()) {
+    const apiOrigin = getPublicApiUrl()
+    return `Impossibile raggiungere il backend (${apiOrigin}). Verifica che il server API sia avviato (npm run dev:server) e che NEXT_PUBLIC_API_URL sia corretto.`
+  }
+  return 'Impossibile contattare il server. Riprova tra poco; se il problema persiste, ricarica la pagina.'
 }
 
 function buildHeaders(init?: RequestInit, body?: JsonBody | FormData): Headers {
