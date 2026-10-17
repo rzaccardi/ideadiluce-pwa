@@ -43,7 +43,7 @@ export function BrandNameDisplay({ name, style, size = 'md', className, slug }: 
           logo={light}
           alt={name}
           height={h}
-          align="center"
+          align="left"
           maxWidthRem={10}
           className={className}
         />
@@ -58,7 +58,7 @@ export function BrandNameDisplay({ name, style, size = 'md', className, slug }: 
               logo={light}
               alt={name}
               height={h}
-              align="center"
+              align="left"
               maxWidthRem={10}
               className={className}
             />
@@ -70,7 +70,7 @@ export function BrandNameDisplay({ name, style, size = 'md', className, slug }: 
               logo={dark}
               alt={name}
               height={h}
-              align="center"
+              align="left"
               maxWidthRem={10}
               className={className}
             />

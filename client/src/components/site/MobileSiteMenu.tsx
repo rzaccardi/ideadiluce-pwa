@@ -422,10 +422,10 @@ function MobileBrandPanel() {
             <Link
               key={brand.slug}
               to={lp(brand.href)}
-              className="flex min-h-[118px] flex-col items-center border-b border-r border-idl-tech-border bg-idl-tech-panel px-3 py-4 text-center transition hover:bg-white hover:text-idl-brass dark:hover:bg-idl-cream"
+              className="flex min-h-[118px] flex-col items-stretch border-b border-r border-idl-tech-border bg-idl-tech-panel px-3 py-4 text-left transition hover:bg-white hover:text-idl-brass dark:hover:bg-idl-cream"
               aria-label={`Scopri ${brand.name}`}
             >
-              <div className="mb-2.5 flex h-10 w-full items-center justify-center">
+              <div className="mb-2.5 flex h-10 w-full items-center justify-start">
                 <BrandNameDisplay
                   name={brand.name}
                   slug={brand.slug}
@@ -434,7 +434,7 @@ function MobileBrandPanel() {
                 />
               </div>
               {badges.length ? (
-                <div className="flex flex-wrap justify-center gap-1">
+                <div className="flex flex-wrap justify-start gap-1">
                   {badges.map((badge) => (
                     <span
                       key={badge.area}

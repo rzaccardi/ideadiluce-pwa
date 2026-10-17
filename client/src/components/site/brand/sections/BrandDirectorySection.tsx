@@ -26,7 +26,7 @@ type Props = {
 function BrandCardSkeleton() {
   return (
     <div className="flex flex-col rounded-xl border border-idl-tech-border bg-idl-tech-panel p-5 sm:p-6">
-      <div className="mb-3.5 flex h-[46px] items-center justify-center border-b border-idl-tech-panel pb-3.5">
+      <div className="mb-3.5 flex h-[46px] items-center justify-start border-b border-idl-tech-panel pb-3.5">
         <Skeleton className="h-6 w-28" />
       </div>
       <Skeleton className="mb-2.5 h-5 w-16 rounded-[5px]" />
@@ -92,7 +92,7 @@ export function BrandDirectorySection({ brands, activeFilter, lp }: Props) {
                   to={lp(brand.href)}
                   className="flex flex-col rounded-xl border border-idl-tech-border bg-idl-tech-panel p-5 transition hover:border-[#cfd4db] hover:shadow-[0_8px_22px_rgba(0,0,0,0.05)] sm:p-6"
                 >
-                  <div className="mb-3.5 flex h-[46px] items-center justify-center border-b border-idl-tech-panel pb-3.5">
+                  <div className="mb-3.5 flex h-[46px] items-center justify-start border-b border-idl-tech-panel pb-3.5">
                     <BrandNameDisplay
                       name={brand.name}
                       slug={brand.slug}

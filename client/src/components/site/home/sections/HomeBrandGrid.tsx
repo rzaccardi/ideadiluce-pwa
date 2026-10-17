@@ -43,11 +43,11 @@ export function HomeBrandGrid({ brands, lp, stagger = 0.04 }: Props) {
             >
               <Link
                 to={lp(brand.href)}
-                className="flex flex-1 flex-col items-center px-3 py-5 text-center"
+                className="flex flex-1 flex-col items-stretch px-3 py-5 text-left"
                 aria-label={`Scopri ${brandLabel}`}
                 title={brandLabel}
               >
-                <div className="mb-3 flex h-11 w-full items-center justify-center">
+                <div className="mb-3 flex h-11 w-full items-center justify-start">
                   <BrandNameDisplay
                     name={brand.name}
                     slug={brand.slug}
@@ -56,7 +56,7 @@ export function HomeBrandGrid({ brands, lp, stagger = 0.04 }: Props) {
                   />
                 </div>
                 {badges.length ? (
-                  <div className="flex flex-wrap justify-center gap-1">
+                  <div className="flex flex-wrap justify-start gap-1">
                     {badges.map((badge) => (
                       <span
                         key={badge.area}
@@ -72,7 +72,7 @@ export function HomeBrandGrid({ brands, lp, stagger = 0.04 }: Props) {
                 ) : null}
                 <span className="mt-2 text-[11px] text-idl-muted">{productMeta}</span>
               </Link>
-              <div className="border-t border-idl-tech-panel px-3 py-2.5 text-center">
+              <div className="border-t border-idl-tech-panel px-3 py-2.5 text-left">
                 <Link
                   to={lp(brandCatalogHref(brand.slug))}
                   className="text-[12px] font-bold text-idl-brass transition hover:text-idl-graphite"

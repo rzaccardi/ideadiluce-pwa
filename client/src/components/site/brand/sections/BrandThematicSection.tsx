@@ -45,7 +45,7 @@ function BrandWall({
             <Link
               key={slug}
               to={lp(brand.href)}
-              className="flex min-h-[4.5rem] items-center justify-center border-b border-r border-idl-tech-border bg-white px-2 py-4 transition hover:bg-idl-cream dark:bg-idl-tech-panel dark:hover:bg-idl-tech-panel"
+              className="flex min-h-[4.5rem] items-center justify-start border-b border-r border-idl-tech-border bg-white px-3 py-4 transition hover:bg-idl-cream dark:bg-idl-tech-panel dark:hover:bg-idl-tech-panel"
             >
               <BrandNameDisplay
                 name={brand.name}
