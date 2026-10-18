@@ -6,7 +6,7 @@ import { odooUtcDateTimeToIso } from '../../adapters/odoo-api/odooApi.mapping.js
 function mapDeliveryStatus(
   deliveryStatus: OdooApiShipment['delivery_status'],
   warehouseState: string,
-  hasTracking: boolean,
+  _hasTracking = false,
 ): { status: string; fromOdoo: boolean; deliveredAt: string | null } {
   const key = (deliveryStatus ?? '').toLowerCase()
   if (key === 'delivered') {
@@ -18,10 +18,14 @@ function mapDeliveryStatus(
   }
   if (key === 'exception') return { status: 'exception', fromOdoo: true, deliveredAt: null }
   if (key === 'in_transit') return { status: 'in_transit', fromOdoo: true, deliveredAt: null }
-  if (key === 'pending') {
-    return { status: hasTracking ? 'shipped' : 'preparing', fromOdoo: true, deliveredAt: null }
-  }
   const state = warehouseState.toLowerCase()
+  if (key === 'pending') {
+    // Tracking in etichetta non implica spedito; serve picking done.
+    if (state === 'done' || state === 'delivered') {
+      return { status: 'shipped', fromOdoo: true, deliveredAt: null }
+    }
+    return { status: 'preparing', fromOdoo: true, deliveredAt: null }
+  }
   if (state === 'done' || state === 'delivered') {
     return { status: 'shipped', fromOdoo: false, deliveredAt: null }
   }
@@ -43,9 +47,15 @@ describe('odoo delivery_status mapping', () => {
     expect(mapDeliveryStatus('exception', 'done', true).status).toBe('exception')
   })
 
-  it('pending con tracking diventa shipped', () => {
-    expect(mapDeliveryStatus('pending', 'assigned', true).status).toBe('shipped')
+  it('pending resta preparing finché il picking non è done (anche con tracking)', () => {
+    expect(mapDeliveryStatus('pending', 'assigned', true).status).toBe('preparing')
     expect(mapDeliveryStatus('pending', 'assigned', false).status).toBe('preparing')
+    expect(mapDeliveryStatus('pending', 'confirmed', true).status).toBe('preparing')
+  })
+
+  it('pending + picking done diventa shipped', () => {
+    expect(mapDeliveryStatus('pending', 'done', true).status).toBe('shipped')
+    expect(mapDeliveryStatus('pending', 'done', false).status).toBe('shipped')
   })
 
   it('senza delivery_status usa state magazzino', () => {

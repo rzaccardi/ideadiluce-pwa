@@ -7,7 +7,7 @@ import { CheckoutElementsProvider } from '@stripe/react-stripe-js/checkout'
 import { loadStripe, type Stripe } from '@stripe/stripe-js'
 import { api } from '@/api/endpoints'
 import { authStore } from '@/features/auth'
-import { addItem } from '@/features/cart'
+import { addItem, discardCartAfterCheckout } from '@/features/cart'
 import { ApiRequestError } from '@/types/api'
 import type { PaymentSessionDTO, UserAddressDTO } from '@/types/dto'
 import { getStripePublishableKey } from '@/lib/env'
@@ -263,6 +263,7 @@ export function WalletQuickPay({ disabled, className, productLine, cartFingerpri
           onError={setError}
           onAvailableChange={setWalletAvailable}
           onPaymentSuccess={(paidOrderId) => {
+            discardCartAfterCheckout()
             navigate(`/checkout/result/${paidOrderId}`, { replace: true })
           }}
         />

@@ -117,4 +117,26 @@ describe('mergeShippingAddressList', () => {
     expect(addresses[0]?.source).toBe('local')
     expect(addresses[0]?.isDefault).toBe(true)
   })
+
+  it('ignora indirizzi Odoo/locali senza via fisica (es. placeholder "-")', () => {
+    const addresses = mergeShippingAddressList({
+      odoo: [
+        {
+          odooPartnerId: 100,
+          kind: 'parent',
+          label: 'Nuovo Utente',
+          profile: profile({ firstName: 'Nuovo', lastName: 'Utente', line1: '-', city: '', postalCode: '' }),
+        },
+      ],
+      local: {
+        firstName: 'Nuovo',
+        lastName: 'Utente',
+        line1: '-',
+        city: '',
+        postalCode: '',
+        country: 'IT',
+      },
+    })
+    expect(addresses).toEqual([])
+  })
 })

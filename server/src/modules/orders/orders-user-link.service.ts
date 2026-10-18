@@ -38,6 +38,7 @@ export async function ensureOrderCacheForPwaOrder(odooPartnerId: number, po: Pwa
     ...((existing?.snapshotJson as Record<string, unknown> | null) ?? {}),
     pwaOrderId: po.id,
     ...(po.odooSaleOrderName ? { odooSaleOrderName: po.odooSaleOrderName } : {}),
+    ...(po.clientOrderRef ? { clientOrderRef: po.clientOrderRef } : {}),
   }
 
   await prisma.orderCache.upsert({

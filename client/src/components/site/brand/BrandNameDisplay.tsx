@@ -8,16 +8,29 @@ type Props = {
   style: BrandDisplayStyle
   size?: 'sm' | 'md' | 'lg'
   className?: string
+  /** Altezza logo in px. Se assente, segue `size`. */
+  logoHeight?: number
+  /** Larghezza massima del wordmark, in rem. */
+  maxWidthRem?: number
   /** Slug catalogo: se c’è asset in `/brands` o overlay BO, mostra il logo ufficiale. */
   slug?: string | null
 }
 
 const LOGO_HEIGHT = { sm: 28, md: 36, lg: 48 } as const
 
-export function BrandNameDisplay({ name, style, size = 'md', className, slug }: Props) {
+export function BrandNameDisplay({
+  name,
+  style,
+  size = 'md',
+  className,
+  logoHeight,
+  maxWidthRem = 10,
+  slug,
+}: Props) {
+  const h = logoHeight ?? LOGO_HEIGHT[size]
+
   // TLB: wordmark vettoriale dedicato (meglio del JPG catalogo) — anche in dark.
   if (style === 'bold-accent' && name.toLowerCase().includes('tlb')) {
-    const h = LOGO_HEIGHT[size]
     return (
       <img
         src="/brand/tlb.svg"
@@ -35,8 +48,6 @@ export function BrandNameDisplay({ name, style, size = 'md', className, slug }: 
   const light = resolveBrandLogo(slug, 'light') ?? resolveBrandLogo(name, 'light')
   const dark = resolveBrandLogo(slug, 'dark') ?? resolveBrandLogo(name, 'dark')
   if (light || dark) {
-    const h = LOGO_HEIGHT[size]
-
     if (light && dark && light.src === dark.src) {
       return (
         <BrandLogoImage
@@ -44,7 +55,7 @@ export function BrandNameDisplay({ name, style, size = 'md', className, slug }: 
           alt={name}
           height={h}
           align="left"
-          maxWidthRem={10}
+          maxWidthRem={maxWidthRem}
           className={className}
         />
       )
@@ -59,7 +70,7 @@ export function BrandNameDisplay({ name, style, size = 'md', className, slug }: 
               alt={name}
               height={h}
               align="left"
-              maxWidthRem={10}
+              maxWidthRem={maxWidthRem}
               className={className}
             />
           </span>
@@ -71,7 +82,7 @@ export function BrandNameDisplay({ name, style, size = 'md', className, slug }: 
               alt={name}
               height={h}
               align="left"
-              maxWidthRem={10}
+              maxWidthRem={maxWidthRem}
               className={className}
             />
           </span>

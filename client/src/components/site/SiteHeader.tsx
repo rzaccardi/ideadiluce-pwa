@@ -17,6 +17,8 @@ import { HeaderLightsToggle } from './HeaderLightsToggle'
 
 /** Evita che onMouseEnter riapra il mega menu subito dopo una chiusura/navigazione. */
 const HOVER_RESUME_MS = 600
+/** Ritardo chiusura hover: consente di passare dal trigger al pannello (e viceversa) senza flicker. */
+const HOVER_CLOSE_MS = 160
 
 const MobileSiteMenu = dynamic(() => import('./MobileSiteMenu').then((m) => ({ default: m.MobileSiteMenu })), {
   ssr: false,
@@ -40,10 +42,14 @@ function MegaPanel({
   panel,
   variant,
   onNavigate,
+  onMouseEnter,
+  onMouseLeave,
 }: {
   panel: SiteMegaMenuPanel
   variant: 'design' | 'technical'
   onNavigate?: () => void
+  onMouseEnter?: () => void
+  onMouseLeave?: () => void
 }) {
   const lp = useLocalePath()
   const reduceMotion = useReducedMotion()
@@ -133,7 +139,11 @@ function MegaPanel({
   )
 
   if (reduceMotion) {
-    return <div className={panelClass}>{inner}</div>
+    return (
+      <div className={panelClass} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+        {inner}
+      </div>
+    )
   }
 
   return (
@@ -144,6 +154,8 @@ function MegaPanel({
       exit="hidden"
       variants={slideDownVariants}
       transition={transitionBase}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       {inner}
     </motion.div>
@@ -169,7 +181,24 @@ export function SiteHeader({
   const [mobileOpen, setMobileOpen] = useState(false)
   const hoverOpenAllowedRef = useRef(true)
   const hoverResumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hoverCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isFirstPathEffectRef = useRef(true)
+
+  const cancelHoverClose = () => {
+    if (hoverCloseTimerRef.current) {
+      clearTimeout(hoverCloseTimerRef.current)
+      hoverCloseTimerRef.current = null
+    }
+  }
+
+  /** Chiude il mega menu dopo un breve delay se il pointer non rientra su trigger/pannello. */
+  const scheduleHoverClose = () => {
+    cancelHoverClose()
+    hoverCloseTimerRef.current = setTimeout(() => {
+      hoverCloseTimerRef.current = null
+      setOpenMenu(null)
+    }, HOVER_CLOSE_MS)
+  }
 
   const resumeHoverOpen = () => {
     hoverOpenAllowedRef.current = true
@@ -190,12 +219,14 @@ export function SiteHeader({
   }
 
   const closeMenu = () => {
+    cancelHoverClose()
     setOpenMenu(null)
     pauseHoverOpen()
   }
 
   const openMenuByHover = (id: string) => {
     if (!hoverOpenAllowedRef.current) return
+    cancelHoverClose()
     setOpenMenu(id)
   }
 
@@ -218,6 +249,7 @@ export function SiteHeader({
   useEffect(() => {
     return () => {
       if (hoverResumeTimerRef.current) clearTimeout(hoverResumeTimerRef.current)
+      if (hoverCloseTimerRef.current) clearTimeout(hoverCloseTimerRef.current)
     }
   }, [])
 
@@ -286,7 +318,11 @@ export function SiteHeader({
         animate="visible"
         variants={slideDownVariants}
         transition={transitionBase}
-        onPointerLeave={resumeHoverOpen}
+        onPointerLeave={() => {
+          cancelHoverClose()
+          setOpenMenu(null)
+          resumeHoverOpen()
+        }}
       >
         <SectionContainer
           className={cn(
@@ -329,6 +365,7 @@ export function SiteHeader({
                     key={item.id}
                     to={lp(item.href)}
                     onClick={closeMenu}
+                    onMouseEnter={scheduleHoverClose}
                     className={cn(
                       'group relative shrink-0 whitespace-nowrap py-1.5',
                       activeNavId === item.id
@@ -396,13 +433,20 @@ export function SiteHeader({
           </div>
           <AnimatePresence>
             {activeDropdown?.id === 'attacco' ? (
-              <AttaccoMegaPanel key="attacco" onNavigate={closeMenu} />
+              <AttaccoMegaPanel
+                key="attacco"
+                onNavigate={closeMenu}
+                onMouseEnter={cancelHoverClose}
+                onMouseLeave={scheduleHoverClose}
+              />
             ) : activeDropdown && activeDropdown.panel.columns.length > 0 ? (
               <MegaPanel
                 key={activeDropdown.id}
                 panel={activeDropdown.panel}
                 variant={activeDropdown.id === 'arredo' ? 'design' : 'technical'}
                 onNavigate={closeMenu}
+                onMouseEnter={cancelHoverClose}
+                onMouseLeave={scheduleHoverClose}
               />
             ) : null}
           </AnimatePresence>

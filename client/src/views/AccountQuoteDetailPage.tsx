@@ -24,7 +24,7 @@ import {
 } from '@/lib/quote-payability'
 import { OrderDetailSkeleton } from '@/components/Skeleton'
 import { PageLoadTransition } from '@/components/motion'
-import { StripeErrorBanner } from '@/components/checkout/stripe-ui/StripeFields'
+import { CheckoutInlineError } from '@/components/checkout/stripe-ui/StripeFields'
 import { useI18n } from '@/hooks/use-i18n'
 
 export function AccountQuoteDetailPage() {
@@ -67,7 +67,7 @@ export function AccountQuoteDetailPage() {
           </Link>
         }
       >
-        {quotes.detailError ? <StripeErrorBanner message={quotes.detailError} /> : null}
+        <CheckoutInlineError message={quotes.detailError} />
 
         <PageLoadTransition isLoading={isLoading} skeleton={<OrderDetailSkeleton />}>
           {detail ? (

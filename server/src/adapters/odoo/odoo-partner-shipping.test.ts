@@ -73,7 +73,7 @@ describe('isOdooChildShippingDestination', () => {
     ).toBe(false)
   })
 
-  it('include type delivery anche senza street (destinazione da completare)', () => {
+  it('esclude type delivery senza street (stub incompleto)', () => {
     expect(
       isOdooChildShippingDestination({
         id: 12,
@@ -81,7 +81,18 @@ describe('isOdooChildShippingDestination', () => {
         type: 'delivery',
         street: false,
       }),
-    ).toBe(true)
+    ).toBe(false)
+  })
+
+  it('esclude stub con via placeholder "-"', () => {
+    expect(
+      isOdooChildShippingDestination({
+        id: 13,
+        name: 'Nuovo utente',
+        type: 'delivery',
+        street: '-',
+      }),
+    ).toBe(false)
   })
 })
 

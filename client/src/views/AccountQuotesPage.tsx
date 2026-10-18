@@ -21,7 +21,7 @@ import {
 } from '@/lib/quote-payability'
 import { AccountTableSkeleton } from '@/components/account/AccountTableSkeleton'
 import { PageLoadTransition } from '@/components/motion'
-import { StripeErrorBanner } from '@/components/checkout/stripe-ui/StripeFields'
+import { CheckoutInlineError } from '@/components/checkout/stripe-ui/StripeFields'
 import { useI18n } from '@/hooks/use-i18n'
 
 export function AccountQuotesPage() {
@@ -36,7 +36,7 @@ export function AccountQuotesPage() {
 
   return (
     <AccountDcPanel title={t('account.quotes.title')} description={t('account.quotes.description')}>
-      {quotes.listError ? <StripeErrorBanner message={quotes.listError} /> : null}
+      <CheckoutInlineError message={quotes.listError} />
 
       <PageLoadTransition isLoading={isLoading} skeleton={<AccountTableSkeleton />}>
         {isLoading ? null : quotes.list && quotes.list.length === 0 ? (

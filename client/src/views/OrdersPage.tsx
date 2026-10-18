@@ -7,7 +7,7 @@ import { fetchOrdersList, ordersStore } from '@/features/orders'
 import { AccountDcOrderCard } from '@/components/account/dc/AccountDcOrderCard'
 import { AccountDcPanel } from '@/components/account/dc/AccountDcPanel'
 import { accountDcPrimaryBtnClass } from '@/components/account/dc/account-dc-styles'
-import { StripeErrorBanner } from '@/components/checkout/stripe-ui/StripeFields'
+import { CheckoutInlineError } from '@/components/checkout/stripe-ui/StripeFields'
 import { AccountTableSkeleton } from '@/components/account/AccountTableSkeleton'
 import { PageLoadTransition } from '@/components/motion'
 import { useI18n } from '@/hooks/use-i18n'
@@ -23,7 +23,7 @@ export function OrdersPage() {
 
   return (
     <AccountDcPanel title={t('account.section.orders.title')}>
-      {orders.listError ? <StripeErrorBanner message={orders.listError} /> : null}
+      <CheckoutInlineError message={orders.listError} />
 
       <PageLoadTransition isLoading={isLoading} skeleton={<AccountTableSkeleton />}>
         {isLoading ? null : orders.list && orders.list.length === 0 ? (

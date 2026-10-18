@@ -73,6 +73,7 @@ async function uploadImage(
       ACL: 'public-read',
       CacheControl: 'public, max-age=31536000, immutable',
     }),
+    { abortSignal: AbortSignal.timeout(20_000) },
   )
 
   return { key, url: spacesPublicUrl(key) }
@@ -103,5 +104,6 @@ export async function deleteSpacesObjectByUrl(url: string): Promise<void> {
       Bucket: env.SPACES_BUCKET!.trim(),
       Key: key,
     }),
+    { abortSignal: AbortSignal.timeout(15_000) },
   )
 }

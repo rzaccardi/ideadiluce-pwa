@@ -3,7 +3,7 @@
 import { useSnapshot } from 'valtio/react'
 import { accountStore } from '@/features/account'
 import { ToastOnError, ToastOnSuccess, ToastOnWarning } from '@/components/ToastFeedback'
-import { StripeErrorBanner } from '@/components/checkout/stripe-ui/StripeFields'
+import { CheckoutInlineError } from '@/components/checkout/stripe-ui/StripeFields'
 import { useI18n } from '@/hooks/use-i18n'
 
 /** Toast + banner inline per salvataggio profilo account. */
@@ -25,7 +25,7 @@ export function AccountSaveFeedback() {
           {t('account.profile.odooSyncWarning')}
         </div>
       ) : null}
-      {account.error ? <StripeErrorBanner message={account.error} /> : null}
+      <CheckoutInlineError message={account.error} />
     </>
   )
 }

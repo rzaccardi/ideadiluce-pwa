@@ -236,33 +236,15 @@ export async function seedDefaultShippingZones() {
         methods: {
           create: [
             {
-              name: 'Spedizione standard',
-              type: ShippingMethodType.FLAT_RATE,
-              flatAmountCents: 590,
-              priority: 1,
-            },
-            {
               name: 'Spedizione gratuita',
               type: ShippingMethodType.FREE_SHIPPING,
               freeAboveCents: 20000,
-              priority: 2,
+              priority: 1,
             },
             {
               name: pickupLabel,
               type: ShippingMethodType.PICKUP,
-              priority: 5,
-            },
-            {
-              name: 'DHL Express (live)',
-              type: ShippingMethodType.LIVE_DHL,
-              surchargePct: 0,
-              priority: 3,
-            },
-            {
-              name: 'FedEx (live)',
-              type: ShippingMethodType.LIVE_FEDEX,
-              surchargePct: 0,
-              priority: 4,
+              priority: 2,
             },
           ],
         },
@@ -272,6 +254,7 @@ export async function seedDefaultShippingZones() {
 
   await syncCarrierCredentialsFromEnv()
   await ensurePickupMethodAndFreeThreshold()
+  await ensureItaliaDomesticMethodsOnly()
   await ensureInternationalShippingZones()
 }
 
@@ -388,8 +371,45 @@ async function ensurePickupMethodAndFreeThreshold() {
         zoneId: itZone.id,
         name: pickupLabel,
         type: ShippingMethodType.PICKUP,
-        priority: 5,
+        priority: 2,
       },
     })
   }
+
+  const hasFree = itZone.methods.some((m) => m.type === ShippingMethodType.FREE_SHIPPING)
+  if (!hasFree) {
+    await prisma.shippingMethod.create({
+      data: {
+        zoneId: itZone.id,
+        name: 'Spedizione gratuita',
+        type: ShippingMethodType.FREE_SHIPPING,
+        freeAboveCents: 20000,
+        priority: 1,
+      },
+    })
+  }
+}
+
+/**
+ * Italia: solo gratuita + ritiro.
+ * Niente flat «Spedizione standard» né live Worldwide/International (UE / Extra-UE).
+ */
+async function ensureItaliaDomesticMethodsOnly() {
+  const itZone = await prisma.shippingZone.findFirst({
+    where: { countries: { has: 'IT' } },
+  })
+  if (!itZone) return
+
+  await prisma.shippingMethod.deleteMany({
+    where: {
+      zoneId: itZone.id,
+      type: {
+        in: [
+          ShippingMethodType.FLAT_RATE,
+          ShippingMethodType.LIVE_DHL,
+          ShippingMethodType.LIVE_FEDEX,
+        ],
+      },
+    },
+  })
 }

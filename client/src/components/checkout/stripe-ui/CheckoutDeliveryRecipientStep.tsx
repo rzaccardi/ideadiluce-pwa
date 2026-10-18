@@ -13,6 +13,7 @@ import {
   updateDeliveryRecipientField,
   updateDropshipAddress,
 } from '@/features/checkout'
+import { PhonePrefixField } from '@/components/PhonePrefixField'
 import { CheckoutAddressSection } from './CheckoutAddressSection'
 import { CheckoutPanel, CheckoutSegmentControl } from './CheckoutStepPrimitives'
 import { useI18n } from '@/hooks/use-i18n'
@@ -97,11 +98,10 @@ export function CheckoutDeliveryRecipientStep() {
             />
           </StripeFieldGroup>
           <StripeFieldGroup>
-            <StripeControlledInput
-              type="tel"
+            <PhonePrefixField
               name="recipient-phone"
-              placeholder={t('common.phone')}
               value={recipient.phone}
+              defaultCountry={checkout.dropshipAddress.country}
               required
               onValueChange={(value) => updateDeliveryRecipientField('phone', value)}
             />

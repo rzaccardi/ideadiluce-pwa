@@ -18,6 +18,8 @@ export {
   updateItem,
   removeItem,
   clearCart,
+  discardCartAfterCheckout,
+  refreshCartAfterCheckout,
   reprice,
   acknowledgePricing,
   checkCartAvailability,

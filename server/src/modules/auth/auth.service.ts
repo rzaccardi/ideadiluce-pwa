@@ -38,6 +38,12 @@ export async function mergeCartsForUser(sessionId: string, odooPartnerId: number
     data: { odooPartnerId },
   })
 
+  // Non mescolare righe di un bonifico già inviato (PAYMENT_PENDING) nel carrello shopping.
+  const { detachActiveCartsBoundToPendingBankTransfer } = await import(
+    '../cart/cart-bank-transfer-guard.js'
+  )
+  await detachActiveCartsBoundToPendingBankTransfer(odooPartnerId)
+
   const carts = await prisma.cart.findMany({
     where: { status: 'ACTIVE', odooPartnerId },
     include: { items: true },

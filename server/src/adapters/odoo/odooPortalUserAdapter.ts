@@ -143,6 +143,8 @@ export async function ensureOdooPortalUser(
   }
 
   const groupId = await portalGroupId(ctx)
+  // Senza no_reset_password Odoo 18 invia l'invito auth_signup a nome dell'utente XML-RPC
+  // (es. "Roberto Zaccardi") oltre alla welcome PWA.
   const created = await odooExecuteKw<unknown>(
     ctx,
     'res.users',
@@ -157,7 +159,7 @@ export async function ensureOdooPortalUser(
         password: input.password,
       },
     ],
-    {},
+    { context: { no_reset_password: true } },
   )
   return { odooUserId: normalizeOdooCreateId(created), created: true }
 }

@@ -145,7 +145,7 @@ Verifica locale: `npm run stripe:setup`, `npm run stripe:webhook`.
 
 ### 3.4 Email (Odoo)
 
-Le email transazionali (clienti e notifiche interne a `info@ideadiluce.com`) partono da Odoo: la PWA crea i `mail.template` mancanti via API (nome `[PWA] …`) e spedisce con `mail.mail`. Seed e placeholder in `server/src/adapters/odoo/odoo-mail.templates.ts`; dopo la prima creazione il contenuto è modificabile da Odoo (Impostazioni → Tecnico → Email → Template). Serve un server di posta in uscita configurato in Odoo, non SMTP sulla PWA.
+Le email transazionali (clienti e notifiche interne a `info@ideadiluce.com`) partono da Odoo: la PWA crea i `mail.template` mancanti via API (nome `[PWA] …`) e spedisce con `mail.mail` con mittente `"Idea di Luce" <info@ideadiluce.com>` (override: `ODOO_MAIL_FROM`, server: `ODOO_MAIL_SERVER_ID`). Seed e placeholder in `server/src/adapters/odoo/odoo-mail.templates.ts`; dopo la prima creazione il contenuto è modificabile da Odoo (Impostazioni → Tecnico → Email → Template). Serve un server di posta in uscita configurato in Odoo, non SMTP sulla PWA. La creazione portal usa `no_reset_password` per non inviare l’invito nativo auth_signup.
 
 | Uso | Template Odoo (`mail.template.name`) |
 |-----|--------------------------------------|

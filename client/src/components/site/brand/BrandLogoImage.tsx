@@ -26,7 +26,7 @@ export function BrandLogoImage({
     return (
       <span
         className={cn(
-          'inline-flex max-w-full items-center',
+          'inline-flex max-w-full shrink-0 items-center',
           align === 'center' && 'mx-auto justify-center',
           className,
         )}

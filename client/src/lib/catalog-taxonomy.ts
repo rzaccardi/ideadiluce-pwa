@@ -109,8 +109,22 @@ export function buildAttaccoTaxonomy(pathSlug: string): CatalogTaxonomyContext {
   }
 }
 
+/** Alias slug menu/WP ↔ slug facet Odoo (tipologie Arredo). */
+const TIPOLOGIA_SLUG_ALIASES: Record<string, string> = {
+  plafoniere: 'soffitto',
+  plafoniera: 'soffitto',
+  faretti: 'incasso',
+  'faretti-e-incassi': 'incasso',
+}
+
+export function canonicalizeTipologiaSlug(slug: string): string {
+  const normalized = slug.trim().toLowerCase()
+  if (!normalized) return normalized
+  return TIPOLOGIA_SLUG_ALIASES[normalized] ?? normalized
+}
+
 export function buildTipologiaTaxonomy(slug: string): CatalogTaxonomyContext {
-  const value = slug.trim().toLowerCase()
+  const value = canonicalizeTipologiaSlug(slug)
   return {
     kind: 'tipologia',
     value,

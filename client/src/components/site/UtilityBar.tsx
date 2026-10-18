@@ -13,11 +13,22 @@ import { layers } from '@/lib/layering'
 import { fadeInVariants, transitionBase } from '@/lib/motion/presets'
 import { SectionContainer } from './primitives'
 
-export function UtilityBar({ bar }: { bar: SiteShellContent['utilityBar'] }) {
+type Props = {
+  bar: SiteShellContent['utilityBar']
+  /** Notifica il parent quando un dropdown esce dallo slot (overflow / z-index). */
+  onDropdownOpenChange?: (open: boolean) => void
+}
+
+export function UtilityBar({ bar, onDropdownOpenChange }: Props) {
   const lp = useLocalePath()
   const reduceMotion = useReducedMotion()
   /** Alza tutta la strip sopra headerNav mentre il dropdown lingua è aperto. */
   const [langMenuOpen, setLangMenuOpen] = useState(false)
+
+  const setLangOpen = (open: boolean) => {
+    setLangMenuOpen(open)
+    onDropdownOpenChange?.(open)
+  }
 
   const inner = (
     <SectionContainer className="flex flex-col gap-2 py-2 sm:flex-row sm:items-center sm:justify-between">
@@ -34,7 +45,7 @@ export function UtilityBar({ bar }: { bar: SiteShellContent['utilityBar'] }) {
         ))}
         <HeaderAccountMenu variant="utilityBar" />
         <div className={ui.utilityBarControls}>
-          <LanguageSwitcher variant="utilityBar" onOpenChange={setLangMenuOpen} />
+          <LanguageSwitcher variant="utilityBar" onOpenChange={setLangOpen} />
         </div>
       </div>
     </SectionContainer>

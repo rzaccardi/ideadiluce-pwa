@@ -8,6 +8,7 @@ import {
   buildTipologiaTaxonomy,
   canonicalizeBrandSlug,
   canonicalizeCategorySlug,
+  canonicalizeTipologiaSlug,
   resolveAttaccoCodeFromPathSlug,
   taxonomyPageTitle,
   taxonomyPath,
@@ -50,6 +51,14 @@ describe('catalog-taxonomy', () => {
     const t = buildBrandTaxonomy('tlb-italy', 'TLB')
     expect(t.value).toBe('tlb')
     expect(taxonomyPageTitle(t)).toBe('TLB')
+  })
+
+  it('canonica alias tipologie menu/WP → slug Odoo', () => {
+    expect(canonicalizeTipologiaSlug('plafoniere')).toBe('soffitto')
+    expect(canonicalizeTipologiaSlug('plafoniera')).toBe('soffitto')
+    expect(canonicalizeTipologiaSlug('faretti')).toBe('incasso')
+    expect(canonicalizeTipologiaSlug('sospensione')).toBe('sospensione')
+    expect(buildTipologiaTaxonomy('plafoniere').value).toBe('soffitto')
   })
 
   it('canonica alias categorie tecniche WP → slug Odoo', () => {

@@ -253,7 +253,7 @@ export const userShippingAddressesService = {
         false,
       )
     }
-    const { source: _source, isDefault: _isDefault, canEdit: _canEdit, canDelete: _canDelete, ...address } =
+    const { source: _source, isDefault: _isDefault, canEdit: _canEdit, canDelete: _canDelete, dropship: _dropship, ...address } =
       selected
     await persistDefaultAddress(userId, address)
     const user = await loadUser(userId)

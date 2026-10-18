@@ -83,7 +83,7 @@ export const AMBIENTI_ROOM_META: AmbientiRoomMeta[] = [
     description: 'Luce funzionale per cucinare, valorizzare isola e tavolo, illuminare il piano lavoro.',
     tags: [
       { label: 'Sospensioni', href: '/tipologia/sospensione' },
-      { label: 'Faretti', href: '/tipologia/incasso' },
+      { label: 'Soffitto', href: '/tipologia/soffitto' },
       { label: 'Strisce LED', href: '/negozio?category=strip' },
       { label: 'LED', href: '/negozio?category=led' },
     ],
@@ -95,8 +95,7 @@ export const AMBIENTI_ROOM_META: AmbientiRoomMeta[] = [
     description: 'Luce sicura e uniforme per specchio, lavabo, doccia e soffitto.',
     tags: [
       { label: 'Applique', href: '/tipologia/parete' },
-      { label: 'Plafoniere', href: '/tipologia/plafoniere' },
-      { label: 'Faretti', href: '/tipologia/incasso' },
+      { label: 'Soffitto', href: '/tipologia/soffitto' },
     ],
     kelvinTip: 'Controlla il grado IP',
     kelvinWarning: true,
@@ -118,7 +117,7 @@ export const AMBIENTI_ROOM_META: AmbientiRoomMeta[] = [
     description: 'Luce neutra e comfort visivo per leggere e lavorare senza affaticare.',
     tags: [
       { label: 'Lampade da tavolo', href: '/tipologia/tavolo' },
-      { label: 'Faretti', href: '/tipologia/incasso' },
+      { label: 'Soffitto', href: '/tipologia/soffitto' },
     ],
     kelvinTip: '4000K · CRI >90',
   },
@@ -127,8 +126,8 @@ export const AMBIENTI_ROOM_META: AmbientiRoomMeta[] = [
     group: 'esterno',
     description: 'Giardino, ingresso, vialetto e terrazzo con prodotti resistenti e scenografici.',
     tags: [
-      { label: 'Applique', href: '/negozio?category=arredo&tipologia=parete&stile=outdoor' },
-      { label: 'Outdoor', href: '/stile/outdoor' },
+      { label: 'Applique', href: '/tipologia/parete' },
+      { label: 'Esterno', href: '/tipologia/esterno' },
       { label: 'Speciali', href: '/negozio?category=speciali' },
       { label: 'LED', href: '/negozio?category=led' },
     ],

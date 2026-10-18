@@ -9,18 +9,35 @@ import {
 export const lightsStore = proxy({
   on: false,
   ready: false,
+  /** Incrementato solo sul toggle manuale: abilita lo stagger a ondate. */
+  waveNonce: 0,
 })
+
+function readDomLightsPreference(): boolean | null {
+  if (typeof document === 'undefined') return null
+  const raw = document.documentElement.dataset.lights
+  if (raw === 'on') return true
+  if (raw === 'off') return false
+  return null
+}
 
 export function hydrateLightsStore() {
   if (typeof window === 'undefined' || lightsStore.ready) return
-  const { lightsOn, theme } = resolveInitialAppearance()
-  lightsStore.on = lightsOn
-  applyDocumentTheme(theme)
+  const fromDom = readDomLightsPreference()
+  if (fromDom != null) {
+    lightsStore.on = fromDom
+    applyDocumentTheme(themeFromLights(fromDom))
+  } else {
+    const { lightsOn, theme } = resolveInitialAppearance()
+    lightsStore.on = lightsOn
+    applyDocumentTheme(theme)
+  }
   lightsStore.ready = true
 }
 
 export function setLightsOn(on: boolean) {
   lightsStore.on = on
+  lightsStore.waveNonce += 1
   const theme = themeFromLights(on)
   applyDocumentTheme(theme)
   persistAppearance(on)

@@ -15,6 +15,7 @@ type Props = {
   /** Logo al posto dell'immagine se il file non carica (default: sì). */
   showPlaceholderOnError?: boolean
   onError?: () => void
+  onLoad?: () => void
 }
 
 const ODOO_IMAGE_PATTERN = /^https:\/\/[^/]+\.odoo\.com\/web\/image\//
@@ -33,6 +34,7 @@ export function SiteImage({
   priority,
   showPlaceholderOnError = true,
   onError,
+  onLoad,
 }: Props) {
   const [failed, setFailed] = useState(false)
   const [loaded, setLoaded] = useState(false)
@@ -46,6 +48,11 @@ export function SiteImage({
   function handleError() {
     setFailed(true)
     onError?.()
+  }
+
+  function handleLoad() {
+    setLoaded(true)
+    onLoad?.()
   }
 
   if (!src) return null
@@ -67,7 +74,7 @@ export function SiteImage({
         priority={priority}
         className={cn(className, visibilityClass)}
         onError={handleError}
-        onLoad={() => setLoaded(true)}
+        onLoad={handleLoad}
       />
     )
   }
@@ -82,7 +89,7 @@ export function SiteImage({
         decoding="async"
         fetchPriority={priority ? 'high' : undefined}
         onError={handleError}
-        onLoad={() => setLoaded(true)}
+        onLoad={handleLoad}
       />
     )
   }
@@ -96,7 +103,7 @@ export function SiteImage({
       decoding="async"
       fetchPriority={priority ? 'high' : undefined}
       onError={handleError}
-      onLoad={() => setLoaded(true)}
+      onLoad={handleLoad}
     />
   )
 }

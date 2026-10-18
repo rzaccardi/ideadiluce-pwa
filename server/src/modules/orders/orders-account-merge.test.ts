@@ -10,6 +10,7 @@ function cacheOrder(partial: Partial<OrderDTO> = {}): OrderDTO {
     pwaOrderId: 'ord-1',
     odooSaleOrderId: 88,
     orderNumber: '#IDL-2026-00088',
+    clientOrderRef: null,
     status: 'sale',
     paymentStatus: 'paid',
     currencyCode: 'EUR',

@@ -28,12 +28,14 @@ export function BrandFeaturedSection({ brands, lp }: Props) {
                 to={lp(brand.href)}
                 className="flex flex-col rounded-[14px] border border-idl-tech-border bg-idl-tech-panel p-6 transition hover:border-[#cfd4db] hover:shadow-[0_10px_30px_rgba(0,0,0,0.05)] sm:p-7"
               >
-                <div className="mb-5 flex h-16 items-center">
+                <div className="mb-5 flex h-[4.75rem] items-center">
                   <BrandNameDisplay
                     name={brand.name}
                     slug={brand.slug}
                     style={brand.displayStyle}
                     size="lg"
+                    logoHeight={58}
+                    maxWidthRem={13}
                   />
                 </div>
                 <p className="text-[14px] leading-relaxed text-idl-graphite-2">{brand.description}</p>

@@ -253,6 +253,39 @@ export async function removeItem(id: string, options?: { silent?: boolean }) {
   }
 }
 
+/** Dopo un ordine concluso: scarta il carrello in memoria (anche fetch già in corso). */
+export function discardCartAfterCheckout() {
+  markCartWrite()
+  invalidateDedupePrefix('cart:')
+  cartStore.recommendations = []
+  cartStore.stockInsufficient = []
+  cartStore.reservationExpiredNotice = false
+  cartStore.error = null
+  if (cartStore.cart) {
+    cartStore.cart = {
+      ...cartStore.cart,
+      items: [],
+      itemCount: 0,
+      purchasableItemCount: 0,
+      estimatedSubtotal: null,
+      estimatedTax: null,
+      estimatedShipping: null,
+      estimatedTotal: null,
+      warnings: [],
+      deliveryLeadDays: null,
+      deliveryEstimateDays: null,
+      freeShippingHint: null,
+    }
+  }
+  clearLocalCartMirror()
+}
+
+/** Rilegge il carrello vuoto creato dal server dopo la conversione dell'ordine. */
+export async function refreshCartAfterCheckout() {
+  discardCartAfterCheckout()
+  await fetchCart({ force: true, skipMirrorCheck: true, silent: true })
+}
+
 export async function clearCart() {
   markCartWrite()
   cartStore.isLoading = true

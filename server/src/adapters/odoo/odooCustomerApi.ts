@@ -9,6 +9,7 @@ import type {
 } from './odooCustomerAdapter.js'
 import { AppError } from '../../types/errors.js'
 import {
+  isUsableShippingStreet,
   odooShippingAddressId,
   parseOdooShippingAddressId,
   shippingAddressesMatch,
@@ -63,28 +64,36 @@ function destinationsFromCustomer(customer: OdooApiCustomer): OdooShippingDestin
   const main = customer.main_address
   const out: OdooShippingDestination[] = []
   if (main) {
-    out.push({
-      odooPartnerId: main.id,
-      kind: 'parent',
-      label: main.name || customer.name || customer.email,
-      profile: odooApiAddressToProfile(main, customer.email),
-      dropship: Boolean(main.dropship),
-    })
+    const profile = odooApiAddressToProfile(main, customer.email)
+    if (isUsableShippingStreet(profile.line1)) {
+      out.push({
+        odooPartnerId: main.id,
+        kind: 'parent',
+        label: main.name || customer.name || customer.email,
+        profile,
+        dropship: Boolean(main.dropship),
+      })
+    }
   } else {
-    out.push({
-      odooPartnerId: customer.id,
-      kind: 'parent',
-      label: customer.name || customer.email,
-      profile: odooApiCustomerToAccount(customer).profile,
-      dropship: false,
-    })
+    const profile = odooApiCustomerToAccount(customer).profile
+    if (isUsableShippingStreet(profile.line1)) {
+      out.push({
+        odooPartnerId: customer.id,
+        kind: 'parent',
+        label: customer.name || customer.email,
+        profile,
+        dropship: false,
+      })
+    }
   }
   for (const addr of customer.addresses ?? []) {
+    const profile = odooApiAddressToProfile(addr, customer.email)
+    if (!isUsableShippingStreet(profile.line1)) continue
     out.push({
       odooPartnerId: addr.id,
       kind: addr.type === 'delivery' ? 'delivery' : 'contact',
       label: addr.name || customer.name || customer.email,
-      profile: odooApiAddressToProfile(addr, customer.email),
+      profile,
       dropship: Boolean(addr.dropship),
     })
   }

@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect } from 'react'
+import { Suspense, useEffect, useLayoutEffect } from 'react'
 import { LocaleProvider } from '@/context/locale-context'
 import { ThemeProvider } from '@/context/theme-context'
 import { bootstrapSession } from '@/app/bootstrap'
@@ -44,7 +44,7 @@ export function Providers({
   }, [])
 
   useEffect(() => initValtioDevtools(), [])
-  useEffect(() => {
+  useLayoutEffect(() => {
     hydrateLightsStore()
   }, [])
 

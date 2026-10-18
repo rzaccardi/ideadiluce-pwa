@@ -28,6 +28,7 @@ const PAYMENT_STATUS_KEYS: Record<string, MessageKey> = {
   created: 'paymentStatus.created',
   pending: 'paymentStatus.pending',
   captured: 'paymentStatus.captured',
+  paid: 'paymentStatus.captured',
   failed: 'paymentStatus.failed',
   cancelled: 'paymentStatus.cancelled',
   refunded: 'paymentStatus.refunded',
@@ -35,16 +36,31 @@ const PAYMENT_STATUS_KEYS: Record<string, MessageKey> = {
 
 export function orderDisplayStatus(order: {
   status: string
+  paymentStatus?: string | null
   shipment?: { status: string } | null
   delivery?: { status: string | null } | null
 }): string {
+  const orderStatus = order.status.toLowerCase()
+  const payment = order.paymentStatus?.toLowerCase()
+  // Bonifico / pagamento non completato: non promuovere a stati di spedizione.
+  if (
+    orderStatus === 'payment_pending' ||
+    orderStatus === 'payment_failed' ||
+    orderStatus === 'payment_started' ||
+    payment === 'pending' ||
+    payment === 'not_started' ||
+    payment === 'failed'
+  ) {
+    return order.status
+  }
+
   const ship = order.shipment?.status
   if (ship === 'delivered' || order.delivery?.status === 'delivered') return 'delivered'
   if (ship === 'out_for_delivery') return 'out_for_delivery'
   if (ship === 'in_transit' || order.delivery?.status === 'in_transit') return 'in_transit'
   if (ship === 'shipped') return 'shipped'
   if (ship === 'exception' || order.delivery?.status === 'exception') return 'shipment_exception'
-  if (order.delivery?.status === 'pending') return 'shipped'
+  // delivery.pending include anche "preparing": non equivale a spedito.
   return order.status
 }
 
@@ -104,7 +120,7 @@ export function orderStatusTone(status: string): OrderStatusTone {
 export function paymentStatusTone(status: string | null | undefined): OrderStatusTone {
   if (!status) return 'neutral'
   const key = status.toLowerCase()
-  if (key === 'captured') return 'success'
+  if (key === 'captured' || key === 'paid') return 'success'
   if (['pending', 'created', 'not_started'].includes(key)) return 'warning'
   if (['failed', 'cancelled'].includes(key)) return 'danger'
   return 'neutral'

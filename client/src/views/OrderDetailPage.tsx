@@ -30,7 +30,7 @@ import {
   accountDcOutlineBtnClass,
   accountDcPrimaryBtnClass,
 } from '@/components/account/dc/account-dc-styles'
-import { StripeErrorBanner } from '@/components/checkout/stripe-ui/StripeFields'
+import { CheckoutInlineError } from '@/components/checkout/stripe-ui/StripeFields'
 import { OrderDetailSkeleton } from '@/components/Skeleton'
 import { PageLoadTransition } from '@/components/motion'
 import { ProductSlider } from '@/components/product/ProductSlider'
@@ -66,7 +66,7 @@ export function OrderDetailPage() {
   if (orders.detailError && orders.detailId === id) {
     return (
       <AccountDcPanel title={t('orders.detail.loading')}>
-        <StripeErrorBanner message={orders.detailError} />
+        <CheckoutInlineError message={orders.detailError} />
         <Link to="/account/orders" className={`mt-5 inline-flex ${accountDcOutlineBtnClass}`}>
           {t('orders.detail.back')}
         </Link>
@@ -198,8 +198,8 @@ export function OrderDetailPage() {
           />
           <AccountDcDetailRow label={t('orders.detail.total')} value={total} />
           <AccountDcDetailRow label={t('orders.detail.date')} value={orderDate} />
-          {order.pwaOrderId ? (
-            <AccountDcDetailRow label={t('orders.detail.pwaRef')} value={order.pwaOrderId} />
+          {order.clientOrderRef ? (
+            <AccountDcDetailRow label={t('orders.detail.clientRef')} value={order.clientOrderRef} />
           ) : null}
         </dl>
       </AccountDcPanel>

@@ -52,7 +52,15 @@ function hintFromPanel(panel: SiteMegaMenuPanel, socket: (typeof MEGA_SOCKETS)[n
   return socket.hint
 }
 
-export function AttaccoMegaPanel({ onNavigate }: { onNavigate?: () => void }) {
+export function AttaccoMegaPanel({
+  onNavigate,
+  onMouseEnter,
+  onMouseLeave,
+}: {
+  onNavigate?: () => void
+  onMouseEnter?: () => void
+  onMouseLeave?: () => void
+}) {
   const lp = useLocalePath()
   const reduceMotion = useReducedMotion()
   const { pages } = useSnapshot(siteStore)
@@ -112,7 +120,11 @@ export function AttaccoMegaPanel({ onNavigate }: { onNavigate?: () => void }) {
   )
 
   if (reduceMotion) {
-    return <div className={panelClass}>{inner}</div>
+    return (
+      <div className={panelClass} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+        {inner}
+      </div>
+    )
   }
 
   return (
@@ -123,6 +135,8 @@ export function AttaccoMegaPanel({ onNavigate }: { onNavigate?: () => void }) {
       exit="hidden"
       variants={slideDownVariants}
       transition={transitionBase}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       {inner}
     </motion.div>

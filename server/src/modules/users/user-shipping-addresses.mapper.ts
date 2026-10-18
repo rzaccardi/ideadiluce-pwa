@@ -1,6 +1,7 @@
 import type { UserAddressDTO, UserShippingAddressDTO } from '../../types/dto.js'
 import type { OdooCustomerProfile, OdooShippingDestination } from '../../adapters/odoo/odooCustomerAdapter.js'
 import {
+  isUsableShippingStreet,
   odooShippingAddressId,
   shippingAddressesMatch,
 } from '../../adapters/odoo/odoo-partner-shipping.js'
@@ -72,16 +73,22 @@ export function mergeShippingAddressList(input: {
   odoo: OdooShippingDestination[]
   local: UserAddressDTO | null
 }): UserShippingAddressDTO[] {
-  const matchedLocal = input.local
-    ? input.odoo.find((destination) => {
-        if (input.local?.id && input.local.id === odooShippingAddressId(destination.odooPartnerId)) {
+  const usableLocal =
+    input.local && isUsableShippingStreet(input.local.line1) ? input.local : null
+  const usableOdoo = input.odoo.filter((destination) =>
+    isUsableShippingStreet(destination.profile.line1),
+  )
+
+  const matchedLocal = usableLocal
+    ? usableOdoo.find((destination) => {
+        if (usableLocal.id && usableLocal.id === odooShippingAddressId(destination.odooPartnerId)) {
           return true
         }
-        return shippingAddressesMatch(destination.profile, input.local!)
+        return shippingAddressesMatch(destination.profile, usableLocal)
       })
     : undefined
 
-  const addresses = input.odoo.map((destination) =>
+  const addresses = usableOdoo.map((destination) =>
     destinationToAddressDto(
       destination,
       Boolean(
@@ -90,11 +97,11 @@ export function mergeShippingAddressList(input: {
     ),
   )
 
-  if (input.local && !matchedLocal) {
+  if (usableLocal && !matchedLocal) {
     addresses.unshift({
-      ...input.local,
-      id: input.local.id || LOCAL_SHIPPING_ADDRESS_ID,
-      label: input.local.label || `${input.local.firstName} ${input.local.lastName}`.trim() || input.local.city,
+      ...usableLocal,
+      id: usableLocal.id || LOCAL_SHIPPING_ADDRESS_ID,
+      label: usableLocal.label || `${usableLocal.firstName} ${usableLocal.lastName}`.trim() || usableLocal.city,
       source: 'local',
       isDefault: addresses.every((address) => !address.isDefault),
       canEdit: true,

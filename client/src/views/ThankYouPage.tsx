@@ -6,6 +6,7 @@ import { useSnapshot } from 'valtio/react'
 import { api } from '@/api/endpoints'
 import type { ProductCardDTO, ThankYouOrderDTO } from '@/types/dto'
 import { authStore } from '@/features/auth'
+import { refreshCartAfterCheckout } from '@/features/cart'
 import { resetOrdersStore } from '@/features/orders'
 import { ApiRequestError } from '@/types/api'
 import { ToastOnError } from '@/components/ToastFeedback'
@@ -85,6 +86,14 @@ export function ThankYouPage() {
           detail.orderStatus === 'completed' ||
           detail.orderStatus === 'paid_sync_pending' ||
           detail.orderStatus === 'synced'
+        const bankTransferPlaced =
+          detail.paymentMethod === 'bank_transfer' &&
+          detail.orderStatus !== 'payment_failed' &&
+          detail.orderStatus !== 'cancelled' &&
+          detail.orderStatus !== 'abandoned'
+        if (bankTransferPlaced || paymentSucceeded) {
+          await refreshCartAfterCheckout()
+        }
 
         if (authStore.isAuthenticated && paymentSucceeded) {
           try {

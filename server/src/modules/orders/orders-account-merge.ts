@@ -1,6 +1,7 @@
 import type { PwaOrder } from '@prisma/client'
 import type { OrderDTO } from '../../types/dto.js'
 import { accountOrderPublicId } from './orders-account-id.js'
+import { customerFacingOrderRef } from './customer-facing-order-ref.js'
 import { formatDisplayOrderNumber } from './order-display-number.js'
 import { OPEN_RETURN_WINDOW } from './order-return-window.js'
 
@@ -14,6 +15,7 @@ export function mapPwaOrderRow(po: PwaOrder): OrderDTO | null {
     pwaOrderId: po.id,
     odooSaleOrderId: po.odooSaleOrderId ?? 0,
     orderNumber: formatDisplayOrderNumber({ ...po, createdAt }),
+    clientOrderRef: customerFacingOrderRef(po.clientOrderRef),
     status: po.orderStatus.toLowerCase(),
     paymentStatus: po.paymentStatus.toLowerCase(),
     currencyCode: po.currencyCode,
@@ -51,6 +53,7 @@ export function mergePwaOrdersIntoList(fromCache: OrderDTO[], pwaOrders: PwaOrde
         existing.paymentStatus = mapped.paymentStatus
       }
       existing.pwaOrderId = mapped.pwaOrderId
+      existing.clientOrderRef = mapped.clientOrderRef
       existing.id = mapped.id
       existing.orderNumber = mapped.orderNumber
       continue

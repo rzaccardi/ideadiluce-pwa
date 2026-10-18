@@ -21,6 +21,7 @@ import {
 } from './odooCustomerAccount.js'
 import {
   isOdooChildShippingDestination,
+  isUsableShippingStreet,
   odooPartnerStreet,
   odooPartnerToShippingProfile,
   odooShippingDestinationKind,
@@ -493,7 +494,7 @@ async function listShippingDestinations(
 
   const destinations: OdooShippingDestination[] = []
   const parent = parentRows[0]
-  if (parent && odooPartnerStreet(parent)) {
+  if (parent && isUsableShippingStreet(odooPartnerStreet(parent))) {
     destinations.push(await toShippingDestination(ctx, parent, 'parent'))
   }
 

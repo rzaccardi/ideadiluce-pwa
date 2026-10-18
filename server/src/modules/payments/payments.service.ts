@@ -37,6 +37,7 @@ import {
   saveCheckoutPriceSnapshot,
 } from '../cart/cart-price-freeze.service.js'
 import { assertCartLinesPurchasable } from '../catalog/catalog-stock.enrich.js'
+import { releaseShoppingCartAfterOrder } from '../cart/cart-release.service.js'
 import { env } from '../../config/env.js'
 import { orderTransactionalMail } from '../orders/order-transactional-mail.service.js'
 import { formatDisplayOrderNumber } from '../orders/order-display-number.js'
@@ -109,7 +110,9 @@ function assertSession(req: Request) {
 
 async function activeCartForRequest(req: Request) {
   const s = assertSession(req)
-  const cart = await prisma.cart.findFirst({
+  const { releaseCartIfBankTransferPending } = await import('../cart/cart-bank-transfer-guard.js')
+
+  let cart = await prisma.cart.findFirst({
     where: {
       status: 'ACTIVE',
       OR: [{ sessionId: s.id }, ...(s.odooPartnerId ? [{ odooPartnerId: s.odooPartnerId }] : [])],
@@ -117,6 +120,18 @@ async function activeCartForRequest(req: Request) {
     include: { items: true, shippingSelection: true },
     orderBy: { updatedAt: 'desc' },
   })
+
+  if (cart && (await releaseCartIfBankTransferPending(cart.id))) {
+    cart = await prisma.cart.findFirst({
+      where: {
+        status: 'ACTIVE',
+        OR: [{ sessionId: s.id }, ...(s.odooPartnerId ? [{ odooPartnerId: s.odooPartnerId }] : [])],
+      },
+      include: { items: true, shippingSelection: true },
+      orderBy: { updatedAt: 'desc' },
+    })
+  }
+
   if (!cart) throw new AppError('CART_NOT_FOUND', 'Cart not found', 'Carrello non trovato.', 404, false)
   if (cart.items.length === 0) throw new AppError('EMPTY_CART', 'Cart empty', 'Il carrello è vuoto.', 400, false)
   return cart
@@ -660,23 +675,8 @@ export const paymentsService = {
       }
     }
 
-    const existing = reusable ?? (await prisma.pwaOrder.findFirst({
-      where: {
-        cartId: cartFresh.id,
-        orderStatus: {
-          in: [
-            'DRAFT',
-            'CART_CREATED',
-            'CHECKOUT_STARTED',
-            'CHECKOUT_LOCKED',
-            'PAYMENT_STARTED',
-            'PAYMENT_PENDING',
-            'PAYMENT_FAILED',
-          ],
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    }))
+    // Stessa policy di findReusableCheckoutOrder: niente riuso di PAYMENT_PENDING (bonifico).
+    const existing = reusable ?? (await findReusableCheckoutOrder(cartFresh.id, idempotencyKey))
 
     let odooSaleOrderId = existing?.odooSaleOrderId ?? null
     const clientOrderRef =
@@ -981,8 +981,15 @@ export const paymentsService = {
       throw err
     }
 
+    // Bonifico: PENDING sul payment, ma ordine resta PAYMENT_STARTED fino a confirmPayment.
+    // Così createSession non “congela” l’ordine come inviato prima della conferma utente.
     const paymentStatus = provider.status === 'pending' ? 'PENDING' : 'CREATED'
-    const orderStatus = provider.status === 'pending' ? 'PAYMENT_PENDING' : 'PAYMENT_STARTED'
+    const orderStatus =
+      provider.status === 'pending' && method === 'BANK_TRANSFER'
+        ? 'PAYMENT_STARTED'
+        : provider.status === 'pending'
+          ? 'PAYMENT_PENDING'
+          : 'PAYMENT_STARTED'
 
     const paymentRecord = await prisma.pwaPayment.update({
       where: { id: payment.id },
@@ -1114,9 +1121,11 @@ export const paymentsService = {
     await syncOrderToOdoo({ correlationId: req.correlationId, req }, updated)
 
     if (orderStatus === 'PAYMENT_PENDING' && payment.method === 'BANK_TRANSFER') {
-      await prisma.cart.update({
-        where: { id: updated.cartId },
-        data: { status: 'CONVERTED', convertedOrderId: updated.id },
+      await releaseShoppingCartAfterOrder({
+        orderId: updated.id,
+        cartId: updated.cartId,
+        sessionId: updated.sessionId,
+        odooPartnerId: updated.odooPartnerId,
       })
       await orderTransactionalMail.sendBankTransferInstructions(
         updated,
@@ -1172,6 +1181,9 @@ export const paymentsService = {
       if (healed) {
         return this.thankYou(req, orderId, options)
       }
+      // Heal: se confirm non ha chiuso il carrello, evita che le righe tornino in un nuovo checkout.
+      const { releaseCartIfBankTransferPending } = await import('../cart/cart-bank-transfer-guard.js')
+      await releaseCartIfBankTransferPending(order.cartId, { clearOtherActive: true })
     }
     const latestPayment = order.payments[0] ?? null
     const base = mapOrderStatus(order, latestPayment)

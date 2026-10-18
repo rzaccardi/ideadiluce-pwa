@@ -51,6 +51,22 @@ function placeholderAddress(firstName: string, lastName: string): TestCheckoutAd
   }
 }
 
+/** Bozze checkout PWA (non richieste preventivo): non vanno in «I miei preventivi». */
+export function isPwaCheckoutQuotationRef(clientOrderRef: string | null | undefined): boolean {
+  const ref = clientOrderRef?.trim() ?? ''
+  if (!ref) return false
+  if (/^PWA-QUOTE-/i.test(ref)) return false
+  return /^PWA\b/i.test(ref) || /^pwa-/i.test(ref)
+}
+
+const PAID_PWA_ORDER_STATUSES = [
+  'PAID',
+  'PAID_SYNC_PENDING',
+  'SYNCED',
+  'CONFIRMED',
+  'COMPLETED',
+] as const
+
 function mapOdooQuoteListItem(doc: {
   id: number
   name: string
@@ -62,6 +78,7 @@ function mapOdooQuoteListItem(doc: {
   currencyCode: string | null
   partnerEmail: string | null
   validityDate: string | null
+  clientOrderRef?: string | null
 }): QuoteRequestDTO {
   const payability = resolveOdooQuotePayability({
     state: doc.state,
@@ -497,8 +514,26 @@ export const quotesService = {
           ? { page: 1, pageSize: 50, partnerId: map.odooPartnerId }
           : { page: 1, pageSize: 50, email: user?.email },
       )
+
+      const odooIds = odoo.items.map((d) => d.id).filter((id) => id > 0)
+      const paidLinked =
+        odooIds.length > 0
+          ? await prisma.pwaOrder.findMany({
+              where: {
+                odooSaleOrderId: { in: odooIds },
+                orderStatus: { in: [...PAID_PWA_ORDER_STATUSES] },
+              },
+              select: { odooSaleOrderId: true },
+            })
+          : []
+      const paidOdooIds = new Set(
+        paidLinked.map((o) => o.odooSaleOrderId).filter((id): id is number => id != null),
+      )
+
       for (const doc of odoo.items) {
         if (local.some((q) => q.odooSaleOrderId === doc.id)) continue
+        if (isPwaCheckoutQuotationRef(doc.clientOrderRef)) continue
+        if (paidOdooIds.has(doc.id)) continue
         local.push(mapOdooQuoteListItem(doc))
       }
     } catch (e) {
@@ -554,10 +589,20 @@ export const quotesService = {
     }
 
     const snapshot = odooQuotationSnapshot(detail)
-    const payability = resolveOdooQuotePayability({
+    let payability = resolveOdooQuotePayability({
       state: detail.state,
       validityDate: detail.validityDate,
     })
+    const linkedPaid = await prisma.pwaOrder.findFirst({
+      where: {
+        odooSaleOrderId,
+        orderStatus: { in: [...PAID_PWA_ORDER_STATUSES] },
+      },
+      select: { id: true },
+    })
+    if (linkedPaid || isPwaCheckoutQuotationRef(detail.clientOrderRef)) {
+      payability = { payable: false, reason: 'converted', expired: false }
+    }
     const user = await prisma.customerSatellite.findUnique({ where: { id: userId }, select: { email: true } })
     let billingAddress: QuoteDetailDTO['billingAddress'] = null
     let shippingAddress: QuoteDetailDTO['shippingAddress'] = null
@@ -583,12 +628,12 @@ export const quotesService = {
     }
 
     const status =
-      detail.state === 'sent'
-        ? 'sent'
-        : detail.state === 'cancel'
-          ? 'cancelled'
-          : detail.state === 'sale' || detail.state === 'done'
-            ? 'converted'
+      linkedPaid || detail.state === 'sale' || detail.state === 'done'
+        ? 'converted'
+        : detail.state === 'sent'
+          ? 'sent'
+          : detail.state === 'cancel'
+            ? 'cancelled'
             : detail.state === 'draft'
               ? 'draft'
               : 'requested'
@@ -602,7 +647,7 @@ export const quotesService = {
       estimatedTax: snapshot.estimatedTax,
       estimatedTotal: snapshot.estimatedTotal,
       odooSaleOrderId: detail.id,
-      pwaOrderId: null,
+      pwaOrderId: linkedPaid?.id ?? null,
       notes: detail.note,
       createdAt: detail.dateOrder ?? new Date(0).toISOString(),
       updatedAt: detail.dateOrder ?? new Date(0).toISOString(),

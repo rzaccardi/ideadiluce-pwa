@@ -18,6 +18,7 @@ import { buildAccountPwaOrderWhere } from './orders-account-query.js'
 import { accountOrderPublicId, applyPwaOrderPublicIds, isOdooOrderPublicName } from './orders-account-id.js'
 import { mapPwaOrderRow, mergePwaOrdersIntoList } from './orders-account-merge.js'
 import { formatDisplayOrderNumber } from './order-display-number.js'
+import { customerFacingOrderRef } from './customer-facing-order-ref.js'
 import { linkOrdersToUser } from './orders-user-link.service.js'
 import { orderReturnRequestService } from './order-return-request.service.js'
 import { OPEN_RETURN_WINDOW, orderShipmentService } from './order-shipment.service.js'
@@ -32,6 +33,12 @@ function nameFromSnapshot(snapshotJson: unknown): string | null {
   if (!snapshotJson || typeof snapshotJson !== 'object') return null
   const name = (snapshotJson as { odooSaleOrderName?: unknown }).odooSaleOrderName
   return typeof name === 'string' && name.trim() ? name.trim() : null
+}
+
+function clientRefFromSnapshot(snapshotJson: unknown): string | null {
+  if (!snapshotJson || typeof snapshotJson !== 'object') return null
+  const ref = (snapshotJson as { clientOrderRef?: unknown }).clientOrderRef
+  return typeof ref === 'string' ? customerFacingOrderRef(ref) : null
 }
 
 function mapRow(r: {
@@ -63,6 +70,7 @@ function mapRow(r: {
       odooSaleOrderName,
       createdAt,
     }),
+    clientOrderRef: clientRefFromSnapshot(snap),
     status: r.status,
     paymentStatus: r.paymentStatus,
     currencyCode: r.currencyCode,
@@ -91,6 +99,7 @@ function mapApiOrder(order: OdooApiOrder): OrderDTO {
       odooSaleOrderName: order.name,
       createdAt,
     }),
+    clientOrderRef: null,
     status: order.state ?? 'sale',
     paymentStatus: order.payment?.reconciliation ?? null,
     currencyCode: order.currency ?? 'EUR',
@@ -118,6 +127,7 @@ function mapOdooOrder(r: OdooSaleDocumentDTO): OrderDTO {
       odooSaleOrderName: r.name,
       createdAt,
     }),
+    clientOrderRef: customerFacingOrderRef(r.clientOrderRef),
     status: r.state,
     paymentStatus: r.invoiceStatus,
     currencyCode: r.currencyCode,
@@ -382,11 +392,13 @@ export const ordersService = {
             createdAt: true,
             orderStatus: true,
             paymentStatus: true,
+            clientOrderRef: true,
           },
         })
         if (linked) {
           base.id = accountOrderPublicId(linked)
           base.orderNumber = formatDisplayOrderNumber(linked)
+          base.clientOrderRef = customerFacingOrderRef(linked.clientOrderRef) ?? base.clientOrderRef
           if (linked.orderStatus === 'PAYMENT_PENDING' || linked.orderStatus === 'PAYMENT_FAILED') {
             base.status = linked.orderStatus.toLowerCase()
             base.paymentStatus = linked.paymentStatus.toLowerCase()

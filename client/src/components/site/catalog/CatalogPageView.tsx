@@ -28,6 +28,7 @@ const CatalogFiltersModal = dynamic(
   { ssr: false },
 )
 import { resolveProductCardCatalogKind } from '@/lib/product-catalog-kind'
+import type { BrandDisplayStyle } from '@/lib/brand.defaults'
 
 type Props = {
   lp: LocalePathFn
@@ -84,6 +85,11 @@ type Props = {
   searchQuery?: string
   pageTitle?: string
   pageSubtitle?: string
+  brandHeader?: {
+    slug: string
+    name: string
+    displayStyle: BrandDisplayStyle
+  }
   breadcrumbParent?: { label: string; href: string }
   showWorldTabs?: boolean
 }
@@ -221,6 +227,7 @@ export function CatalogPageView({
   searchQuery,
   pageTitle,
   pageSubtitle,
+  brandHeader,
   breadcrumbParent,
   showWorldTabs = true,
 }: Props) {
@@ -267,6 +274,7 @@ export function CatalogPageView({
         searchQuery={searchQuery}
         title={pageTitle}
         subtitle={pageSubtitle}
+        brandHeader={brandHeader}
         breadcrumbParent={breadcrumbParent}
         showWorldTabs={showWorldTabs}
         afterSearch={

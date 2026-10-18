@@ -20,6 +20,9 @@ type Props = {
  * Logo catalogo JPG: ritaglia il padding bianco del canvas via bbox contenuto.
  * Niente mix-blend: con parent animati (opacity/transform) il multiply
  * isolerebbe i wordmark e li renderebbe invisibili su fondi chiari.
+ *
+ * Dimensioni in px (niente `width: … 100%`): in flex/inline-flex la % ciclica
+ * collassa il box a 0 e i loghi spariscono sopra il titolo prodotto.
  */
 export function BrandCatalogLogo({
   src,
@@ -34,23 +37,20 @@ export function BrandCatalogLogo({
   const cw = Math.max(0.01, x1 - x0)
   const ch = Math.max(0.01, y1 - y0)
   const aspect = brandLogoContentAspect(content)
+  const widthPx = Math.min(height * aspect, maxWidthRem * 16)
 
   return (
     <span
       className={cn(
-        'relative inline-block overflow-hidden',
+        'relative inline-block max-w-full shrink-0 overflow-hidden',
         align === 'center' && 'mx-auto',
         className,
       )}
       style={
         {
-          '--brand-logo-h': `${height}px`,
-          '--brand-logo-aspect': aspect,
-          '--brand-logo-max-w': `${maxWidthRem}rem`,
-          width:
-            'min(calc(var(--brand-logo-h) * var(--brand-logo-aspect)), var(--brand-logo-max-w), 100%)',
-          height:
-            'calc(min(calc(var(--brand-logo-h) * var(--brand-logo-aspect)), var(--brand-logo-max-w), 100%) / var(--brand-logo-aspect))',
+          width: widthPx,
+          maxWidth: '100%',
+          aspectRatio: aspect,
         } as CSSProperties
       }
     >

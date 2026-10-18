@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import type { OdooCallContext } from './odooClient.js'
 import type {
   OdooOrderAdapter,
@@ -19,6 +20,8 @@ import {
 } from '../odoo-api/odooApi.mapping.js'
 import type { OdooApiOrder, OdooApiOrderWrite } from '../odoo-api/odooApi.types.js'
 import { persistOdooOrderLink } from '../odoo-api/odooApi.sideEffects.js'
+import { logger } from '../../lib/logger.js'
+import { prisma } from '../../lib/prisma.js'
 
 export type ApiV2SaleOrderResult = {
   odooSaleOrderId: number
@@ -35,6 +38,24 @@ function wrap(err: unknown, ctx: OdooCallContext): never {
 
 function resolveVariantProductId(line: SaleOrderLineInput): number | null {
   return parseOdooVariantId(line.variantRef)
+}
+
+/** Fingerprint righe+spedizione: POST /orders è idempotente su client_ref e non aggiorna le righe. */
+export function checkoutLinesFingerprint(
+  lines: Array<{ product_id: number; qty: number; price_unit_net?: number }>,
+  shipping: { carrier: string; amount_net: number } | null | undefined,
+): string {
+  const payload = JSON.stringify({
+    lines: lines.map((l) => ({ p: l.product_id, q: l.qty, u: l.price_unit_net ?? null })),
+    shipping: shipping ? { c: shipping.carrier, a: shipping.amount_net } : null,
+  })
+  return createHash('sha256').update(payload).digest('hex').slice(0, 10)
+}
+
+function withCartFingerprint(baseRef: string, fingerprint: string): string {
+  if (/^PWA-QUOTE-/i.test(baseRef)) return baseRef
+  const stripped = baseRef.replace(/-[a-f0-9]{10}$/i, '')
+  return `${stripped}-${fingerprint}`
 }
 
 function buildOrderPayload(
@@ -79,8 +100,17 @@ function buildOrderPayload(
     )
   }
 
-  const clientRef = input.clientOrderRef?.trim() || (input.pwaOrderId ? `pwa-${input.pwaOrderId}` : '')
-  if (!clientRef) {
+  const shipping =
+    input.shippingLine != null
+      ? {
+          carrier: mapOdooApiCarrier(input.shippingLine),
+          amount_net: netEurosFromCents(input.shippingLine.amountCents, input.taxRatePct ?? 22),
+          label: input.shippingLine.label,
+        }
+      : null
+
+  const baseRef = input.clientOrderRef?.trim() || (input.pwaOrderId ? `pwa-${input.pwaOrderId}` : '')
+  if (!baseRef) {
     throw new AppError(
       'ODOO_CLIENT_REF_MISSING',
       'client_ref missing',
@@ -89,6 +119,7 @@ function buildOrderPayload(
       false,
     )
   }
+  const clientRef = withCartFingerprint(baseRef, checkoutLinesFingerprint(lines, shipping))
 
   const payload: OdooApiOrderWrite = {
     client_ref: clientRef,
@@ -102,11 +133,11 @@ function buildOrderPayload(
   const invoiceId = (input as { odooPartnerInvoiceId?: number | null }).odooPartnerInvoiceId
   if (invoiceId) payload.invoice_address_id = invoiceId
 
-  if (input.shippingLine) {
+  if (shipping) {
     payload.shipping = {
-      carrier: mapOdooApiCarrier(input.shippingLine),
-      amount_net: netEurosFromCents(input.shippingLine.amountCents, input.taxRatePct ?? 22),
-      label: input.shippingLine.label,
+      carrier: shipping.carrier,
+      amount_net: shipping.amount_net,
+      label: shipping.label,
     }
   }
 
@@ -168,8 +199,26 @@ async function postOrder(
     pricedFromCache?: boolean
   },
 ): Promise<ApiV2SaleOrderResult> {
-  const created = await odooApiCreateOrder(buildOrderPayload(input), ctx.correlationId)
+  const payload = buildOrderPayload(input)
+  const created = await odooApiCreateOrder(payload, ctx.correlationId)
   const result = fromApiOrder(created)
+
+  if (input.chargedCents != null && Number.isFinite(input.chargedCents)) {
+    const odooGross =
+      created.totals?.gross_cents ??
+      (typeof created.totals?.gross === 'number' ? Math.round(created.totals.gross * 100) : null)
+    if (odooGross != null && Math.abs(odooGross - input.chargedCents) > 1) {
+      logger.warn('odoo.api_v2.order_total_mismatch', {
+        correlationId: ctx.correlationId,
+        pwaOrderId: input.pwaOrderId ?? null,
+        odooSaleOrderId: result.odooSaleOrderId,
+        clientRef: payload.client_ref,
+        chargedCents: input.chargedCents,
+        odooGrossCents: odooGross,
+      })
+    }
+  }
+
   if (input.pwaOrderId) {
     await persistOdooOrderLink(input.pwaOrderId, {
       ...result,
@@ -214,8 +263,37 @@ export function createApiV2OdooOrderAdapter(): OdooOrderAdapter {
       }
     },
 
-    async reconcileSaleOrderLines() {
-      /* POST /orders è idempotente su client_ref: le righe si inviano alla creazione. */
+    async reconcileSaleOrderLines(ctx, odooSaleOrderId, lines, shippingLine) {
+      // POST idempotente non aggiorna le righe: nuovo client_ref (fingerprint) → nuovo SO.
+      try {
+        const existing = await odooApiGetOrder(odooSaleOrderId, ctx.correlationId)
+        const partnerId = existing.customer?.id
+        if (partnerId == null || partnerId <= 0) {
+          throw new AppError(
+            'ODOO_PARTNER_MISSING',
+            'Missing customer on Odoo order',
+            'Cliente Odoo assente sull’ordine da riconciliare.',
+            409,
+            true,
+          )
+        }
+        const linked = await prisma.pwaOrder.findFirst({
+          where: { odooSaleOrderId },
+          select: { id: true, clientOrderRef: true },
+        })
+        await postOrder(ctx, {
+          odooPartnerId: partnerId,
+          odooSaleOrderId,
+          clientOrderRef:
+            linked?.clientOrderRef ?? existing.client_ref ?? `pwa-reconcile-${odooSaleOrderId}`,
+          lines,
+          shippingLine: shippingLine ?? null,
+          currencyCode: existing.currency ?? 'EUR',
+          pwaOrderId: linked?.id,
+        })
+      } catch (e) {
+        wrap(e, ctx)
+      }
     },
 
     async getOrderStatus(ctx, odooSaleOrderId) {

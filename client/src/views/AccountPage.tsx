@@ -7,6 +7,7 @@ import { authStore } from '@/features/auth'
 import { api } from '@/api/endpoints'
 import type { TaxValidationResultDTO } from '@/types/dto'
 import { ApiRequestError } from '@/types/api'
+import { PhonePrefixField } from '@/components/PhonePrefixField'
 import {
   StripeFieldGroup,
   StripeFieldLabel,
@@ -40,6 +41,10 @@ export function AccountPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null)
   const [passwordSaving, setPasswordSaving] = useState(false)
+
+  useEffect(() => {
+    clearAccountFeedback()
+  }, [])
 
   useEffect(() => {
     if (!auth.me) return
@@ -172,14 +177,12 @@ export function AccountPage() {
             <div>
               <StripeFieldLabel htmlFor="profile-phone">{t('common.phone')}</StripeFieldLabel>
               <StripeFieldGroup className="mt-1.5">
-                <StripeInput
+                <PhonePrefixField
                   id="profile-phone"
-                  type="tel"
                   name="phone"
-                  placeholder="+39 …"
                   autoComplete="tel"
                   value={phone ?? ''}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onValueChange={setPhone}
                 />
               </StripeFieldGroup>
             </div>

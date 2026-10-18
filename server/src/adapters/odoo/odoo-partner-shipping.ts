@@ -29,6 +29,14 @@ export function odooPartnerStreet(row: Pick<OdooPartnerAddressRow, 'street'>): s
   return asTrimmed(row.street)
 }
 
+/** Via fisica utilizzabile: esclude vuoto e placeholder tipo "-" da mapping legacy. */
+export function isUsableShippingStreet(line1: string | null | undefined): boolean {
+  const value = (line1 ?? '').trim()
+  if (!value) return false
+  if (value === '-' || value === '—' || value === '–') return false
+  return true
+}
+
 export function normalizeOdooPartnerType(type: unknown): OdooPartnerType {
   if (type === 'invoice' || type === 'delivery' || type === 'other' || type === 'private') {
     return type
@@ -36,13 +44,12 @@ export function normalizeOdooPartnerType(type: unknown): OdooPartnerType {
   return 'contact'
 }
 
-/** Child usati come destinazione: type delivery, o altri child con via. Esclude contact senza street e invoice. */
+/** Child usati come destinazione: delivery/contact/other con via fisica. Esclude invoice, private e stub senza street. */
 export function isOdooChildShippingDestination(row: OdooPartnerAddressRow): boolean {
   const type = normalizeOdooPartnerType(row.type)
   const street = odooPartnerStreet(row)
   if (type === 'invoice' || type === 'private') return false
-  if (type === 'delivery') return true
-  return street.length > 0
+  return isUsableShippingStreet(street)
 }
 
 export function odooShippingDestinationKind(row: OdooPartnerAddressRow): OdooShippingDestinationKind {

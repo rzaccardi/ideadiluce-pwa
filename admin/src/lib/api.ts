@@ -37,6 +37,12 @@ async function parseError(res: Response): Promise<string> {
   } catch {
     /* testo grezzo */
   }
+  if (/<!DOCTYPE html|<html[\s>]/i.test(msg)) {
+    if (res.status === 504) {
+      return 'Il server non ha risposto in tempo (504). Riprova tra poco.'
+    }
+    return `Errore del server (HTTP ${res.status}). Riprova tra poco.`
+  }
   return msg || `HTTP ${res.status}`
 }
 

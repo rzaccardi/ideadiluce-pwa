@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   formatShippingAddressSelectOption,
+  isUsableShippingAddress,
   matchSavedShippingAddress,
   shippingAddressFingerprint,
 } from './shipping-addresses'
@@ -102,5 +103,13 @@ describe('shippingAddressFingerprint', () => {
         country: 'IT',
       }),
     )
+  })
+})
+
+describe('isUsableShippingAddress', () => {
+  it('rifiuta vuoto e placeholder', () => {
+    expect(isUsableShippingAddress({ line1: '' })).toBe(false)
+    expect(isUsableShippingAddress({ line1: '-' })).toBe(false)
+    expect(isUsableShippingAddress({ line1: 'Via Roma' })).toBe(true)
   })
 })

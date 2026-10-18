@@ -91,16 +91,20 @@ function pickingToShipment(input: {
 function mapOdooDeliveryStatus(
   deliveryStatus: OdooApiDeliveryStatus | undefined,
   warehouseState: string,
-  hasTracking: boolean,
 ): { status: OrderShipmentStatusDTO; fromOdoo: boolean } {
   const key = (deliveryStatus ?? '').toLowerCase()
+  const state = warehouseState.toLowerCase()
   if (key === 'delivered') return { status: 'delivered', fromOdoo: true }
   if (key === 'exception') return { status: 'exception', fromOdoo: true }
   if (key === 'in_transit') return { status: 'in_transit', fromOdoo: true }
   if (key === 'pending') {
-    return { status: hasTracking ? 'shipped' : 'preparing', fromOdoo: true }
+    // Tracking può esistere già in fase etichetta: non equivale a spedito.
+    // Solo picking magazzino validato (`done`) implica uscita merce.
+    if (state === 'done' || state === 'delivered') {
+      return { status: 'shipped', fromOdoo: true }
+    }
+    return { status: 'preparing', fromOdoo: true }
   }
-  const state = warehouseState.toLowerCase()
   if (state === 'done' || state === 'delivered') {
     return { status: 'shipped', fromOdoo: false }
   }
@@ -153,11 +157,7 @@ function apiShipmentToDto(
     carrierCode: pwaHint,
     trackingNumber,
   })
-  const mapped = mapOdooDeliveryStatus(
-    shipment.delivery_status,
-    shipment.state ?? '',
-    Boolean(trackingNumber),
-  )
+  const mapped = mapOdooDeliveryStatus(shipment.delivery_status, shipment.state ?? '')
   const deliveredAt =
     mapped.status === 'delivered' ? odooUtcDateTimeToIso(shipment.delivered_at) : null
   return {

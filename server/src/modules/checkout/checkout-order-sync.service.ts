@@ -91,10 +91,18 @@ export async function isCartCheckoutPriceLocked(cartId: string): Promise<boolean
   return order != null
 }
 
+function isReusableDraftOrderStatus(
+  status: PwaOrder['orderStatus'],
+): status is (typeof ACTIVE_DRAFT_ORDER_STATUSES)[number] {
+  return (ACTIVE_DRAFT_ORDER_STATUSES as readonly string[]).includes(status)
+}
+
 export async function findReusableCheckoutOrder(cartId: string, idempotencyKey?: string | null) {
   if (idempotencyKey) {
     const byKey = await prisma.pwaOrder.findUnique({ where: { idempotencyKey } })
-    if (byKey && byKey.cartId === cartId) return byKey
+    if (byKey && byKey.cartId === cartId && isReusableDraftOrderStatus(byKey.orderStatus)) {
+      return byKey
+    }
   }
   return prisma.pwaOrder.findFirst({
     where: {
@@ -453,7 +461,10 @@ export async function syncCheckoutDraftOrder(
 export async function loadActiveCart(req: Request) {
   const s = req.sessionRecord
   if (!s) throw new AppError('NO_SESSION', 'Session missing', 'Sessione non disponibile.', 500, false)
-  const cart = await prisma.cart.findFirst({
+
+  const { releaseCartIfBankTransferPending } = await import('../cart/cart-bank-transfer-guard.js')
+
+  let cart = await prisma.cart.findFirst({
     where: {
       status: 'ACTIVE',
       OR: [{ sessionId: s.id }, ...(s.odooPartnerId ? [{ odooPartnerId: s.odooPartnerId }] : [])],
@@ -461,6 +472,18 @@ export async function loadActiveCart(req: Request) {
     include: { items: true, shippingSelection: true },
     orderBy: { updatedAt: 'desc' },
   })
+
+  if (cart && (await releaseCartIfBankTransferPending(cart.id))) {
+    cart = await prisma.cart.findFirst({
+      where: {
+        status: 'ACTIVE',
+        OR: [{ sessionId: s.id }, ...(s.odooPartnerId ? [{ odooPartnerId: s.odooPartnerId }] : [])],
+      },
+      include: { items: true, shippingSelection: true },
+      orderBy: { updatedAt: 'desc' },
+    })
+  }
+
   if (!cart) throw new AppError('CART_NOT_FOUND', 'Cart not found', 'Carrello non trovato.', 404, false)
   if (cart.items.length === 0) throw new AppError('EMPTY_CART', 'Cart empty', 'Il carrello è vuoto.', 400, false)
   return cart

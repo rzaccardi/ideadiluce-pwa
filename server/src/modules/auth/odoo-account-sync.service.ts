@@ -25,6 +25,7 @@ import type { UserDTO } from '../../types/dto.js'
 import type { OdooCustomerAccount, OdooCustomerProfile } from '../../adapters/odoo/odooCustomerAdapter.js'
 import { hydrateUserBusinessFromOdoo } from '../users/users-odoo-business-hydrate.js'
 import { ensureSatelliteProjection } from './satellite-projection.service.js'
+import { isUsableShippingStreet } from '../../adapters/odoo/odoo-partner-shipping.js'
 
 const customerAdapter = createOdooCustomerAdapter()
 
@@ -89,8 +90,8 @@ export type ProvisionOdooAuthIdentityInput = {
  * Crea/assicura partner + utente portal Odoo con la password scelta.
  * Fallisce se Odoo non può materializzare l'identità (fonte di verità).
  *
- * Nota email: `ensureOdooPortalUser` con password non invia la mail nativa
- * auth_signup di Odoo; la PWA invia `account_welcome` solo dopo questo step.
+ * Nota email: `ensureOdooPortalUser` crea il portal con `no_reset_password`
+ * (niente invito nativo auth_signup); la PWA invia `account_welcome` dopo.
  */
 export async function provisionOdooAuthIdentity(
   ctx: OdooCallContext,
@@ -241,17 +242,17 @@ export async function loginWithOdooCredentials(
     return null
   }
 
-  const shippingAddressJson = profile?.line1?.trim()
+  const shippingAddressJson = isUsableShippingStreet(profile?.line1)
     ? {
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-        line1: profile.line1,
-        line2: profile.line2 ?? '',
-        city: profile.city,
-        postalCode: profile.postalCode,
-        province: profile.province,
-        country: profile.country,
-        phone: profile.phone ?? '',
+        firstName: profile!.firstName,
+        lastName: profile!.lastName,
+        line1: profile!.line1,
+        line2: profile!.line2 ?? '',
+        city: profile!.city,
+        postalCode: profile!.postalCode,
+        province: profile!.province,
+        country: profile!.country,
+        phone: profile!.phone ?? '',
       }
     : undefined
 
@@ -291,17 +292,17 @@ export async function ensureSatelliteFromOdooPortal(
   const account = await customerAdapter.getCustomerAccountByPartnerId(ctx, portal.odooPartnerId)
   const profile = account?.profile ?? null
 
-  const shippingAddressJson = profile?.line1?.trim()
+  const shippingAddressJson = isUsableShippingStreet(profile?.line1)
     ? {
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-        line1: profile.line1,
-        line2: profile.line2 ?? '',
-        city: profile.city,
-        postalCode: profile.postalCode,
-        province: profile.province,
-        country: profile.country,
-        phone: profile.phone ?? '',
+        firstName: profile!.firstName,
+        lastName: profile!.lastName,
+        line1: profile!.line1,
+        line2: profile!.line2 ?? '',
+        city: profile!.city,
+        postalCode: profile!.postalCode,
+        province: profile!.province,
+        country: profile!.country,
+        phone: profile!.phone ?? '',
       }
     : undefined
 

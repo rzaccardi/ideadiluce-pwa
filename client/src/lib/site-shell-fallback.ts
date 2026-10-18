@@ -61,8 +61,8 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
                 { label: 'Parete', href: '/tipologia/parete' },
                 { label: 'Tavolo', href: '/tipologia/tavolo' },
                 { label: 'Terra', href: '/tipologia/terra' },
-                { label: 'Plafoniere', href: '/tipologia/plafoniere' },
-                { label: 'Faretti e incassi', href: '/tipologia/incasso' },
+                { label: 'Soffitto', href: '/tipologia/soffitto' },
+                { label: 'Esterno', href: '/tipologia/esterno' },
               ],
             },
             {
@@ -79,12 +79,8 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
             {
               title: 'PER STILE',
               links: [
-                { label: 'Moderno', href: '/stile/moderno' },
+                { label: 'Design', href: '/stile/design' },
                 { label: 'Classico', href: '/stile/classico' },
-                { label: 'Minimal', href: '/stile/minimal' },
-                { label: 'Decorativo', href: '/stile/decorativo' },
-                { label: 'Industrial', href: '/stile/industrial' },
-                { label: 'Outdoor', href: '/stile/outdoor' },
               ],
             },
             {
@@ -95,7 +91,6 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
                 { label: 'FontanaArte', href: '/brand/fontanaarte' },
                 { label: 'Eglo', href: '/brand/eglo' },
                 { label: 'Ideal Lux', href: '/brand/ideal-lux' },
-                { label: 'TLB', href: '/brand/tlb' },
               ],
             },
             {
@@ -104,7 +99,6 @@ export const FALLBACK_SITE_SHELL: SiteShellContent = {
                 { label: 'Novità', href: '/negozio?world=design&sort=new' },
                 { label: 'Pronta consegna', href: '/negozio?world=design&inStock=1' },
                 { label: 'Icone di design', href: '/stile/design' },
-                { label: 'Offerte', href: '/negozio?world=design&tag=offerta' },
               ],
             },
           ]),

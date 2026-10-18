@@ -18,7 +18,7 @@ import { resolvePricingContext } from '../pricing/pricelist.service.js'
 import { resolveFreeShippingHint } from './shipping.freeHint.js'
 import { applyOrderSurcharges, loadShippingSurchargeRules } from './shipping.surcharges.js'
 import { getStorePickupLocation } from '../../config/store-location.js'
-import { zoneMatchesCountry, zoneMatchesPostcode } from './shipping-zone-match.js'
+import { findMatchingShippingZone } from './shipping-zone-match.js'
 import type {
   FreeShippingHintDTO,
   ShippingQuoteDTO,
@@ -114,9 +114,12 @@ async function resolveFixedMethodQuote(
   })
   if (!method) return null
 
-  const zone = method.zone
-  if (!zoneMatchesCountry(zone.countries, address.country)) return null
-  if (!zoneMatchesPostcode(zone.postcodes, address.postalCode)) return null
+  const zones = await prisma.shippingZone.findMany({
+    where: { enabled: true },
+    orderBy: { priority: 'desc' },
+  })
+  const matchingZone = findMatchingShippingZone(zones, address.country, address.postalCode)
+  if (!matchingZone || matchingZone.id !== method.zoneId) return null
   if (method.minOrderCents != null && subtotalCents < method.minOrderCents) return null
 
   if (method.type === ShippingMethodType.FREE_SHIPPING) {
@@ -236,11 +239,7 @@ async function quotesFromDb(
     orderBy: { priority: 'desc' },
   })
 
-  const matchingZone = zones.find(
-    (zone) =>
-      zoneMatchesCountry(zone.countries, address.country) &&
-      zoneMatchesPostcode(zone.postcodes, address.postalCode),
-  )
+  const matchingZone = findMatchingShippingZone(zones, address.country, address.postalCode)
   const zoneMethods = matchingZone?.methods ?? []
   const needsLiveRates = zoneHasLiveCarrierMethods(zoneMethods)
 
@@ -252,11 +251,8 @@ async function quotesFromDb(
   ])
 
   const lines: ShippingQuoteLine[] = []
-  for (const zone of zones) {
-    if (!zoneMatchesCountry(zone.countries, address.country)) continue
-    if (!zoneMatchesPostcode(zone.postcodes, address.postalCode)) continue
-
-    for (const m of zone.methods) {
+  if (matchingZone) {
+    for (const m of matchingZone.methods) {
       if (m.minOrderCents != null && subtotalCents < m.minOrderCents) continue
       if (m.type === ShippingMethodType.FREE_SHIPPING) {
         if (m.freeAboveCents != null && subtotalCents >= m.freeAboveCents) {
@@ -334,7 +330,6 @@ async function quotesFromDb(
         }
       }
     }
-    if (lines.length > 0) break
   }
 
   const exclusive = applyFreeShippingExclusive(lines)

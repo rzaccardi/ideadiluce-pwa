@@ -29,6 +29,7 @@ import {
 import { authStore } from '@/features/auth'
 import { isCheckoutAddressValid, mergeResolvedStreetNumber } from '@/lib/checkout-address.validators'
 import { CheckoutAccountSection } from './CheckoutAccountSection'
+import { PhonePrefixField } from '@/components/PhonePrefixField'
 import { CheckoutAddressSection } from './CheckoutAddressSection'
 import { CheckoutBusinessFieldsSection } from './CheckoutBusinessFieldsSection'
 import { CheckoutRetailFiscalCodeField } from './CheckoutRetailFiscalCodeField'
@@ -282,13 +283,12 @@ export function CheckoutAddressesStep() {
                         : undefined
                     }
                   >
-                    <StripeControlledInput
-                      type="tel"
+                    <PhonePrefixField
                       name="recipient-phone"
-                      placeholder={t('common.phone')}
                       value={recipient.phone}
+                      defaultCountry={checkout.dropshipAddress.country}
                       required
-                      aria-invalid={phoneBlockingShipping || undefined}
+                      invalid={phoneBlockingShipping}
                       onValueChange={(value) => updateDeliveryRecipientField('phone', value)}
                     />
                   </StripeFieldGroup>

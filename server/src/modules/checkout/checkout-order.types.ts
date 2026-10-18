@@ -58,14 +58,19 @@ export type SyncSaleOrderDraftInput = {
   pricedFromCache?: boolean
 }
 
+/**
+ * Stati bozza riusabili sullo stesso carrello (nuovo checkout / sync draft).
+ * Esclude PAYMENT_PENDING: un bonifico già confermato non deve essere mutato né
+ * collegato a un carrello nuovo (altrimenti al checkout riappaiono le righe vecchie).
+ */
 export const ACTIVE_DRAFT_ORDER_STATUSES = [
   'DRAFT',
   'CART_CREATED',
   'CHECKOUT_STARTED',
   'CHECKOUT_LOCKED',
   'PAYMENT_STARTED',
-  'PAYMENT_PENDING',
   'PAYMENT_FAILED',
 ] as const
 
+/** Prezzi congelati: include anche bonifico in attesa (ordine già inviato). */
 export const PRICE_LOCKED_ORDER_STATUSES = ['CHECKOUT_LOCKED', 'PAYMENT_STARTED', 'PAYMENT_PENDING'] as const

@@ -52,6 +52,8 @@ function BrandWall({
                 slug={brand.slug}
                 style={brand.displayStyle}
                 size="sm"
+                logoHeight={34}
+                maxWidthRem={11}
               />
             </Link>
           )

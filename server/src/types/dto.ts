@@ -724,6 +724,8 @@ export type OrderDTO = {
   odooSaleOrderId: number
   /** Numero ordine assegnato (es. 4CSVKG), non l’ID interno Odoo. */
   orderNumber: string
+  /** Riferimento ordine del cliente (checkout opzionale); esclusi fallback tecnici PWA. */
+  clientOrderRef: string | null
   status: string
   paymentStatus: string | null
   currencyCode: string | null

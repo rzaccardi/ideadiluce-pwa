@@ -1,6 +1,6 @@
 export const QUOTATION_STATE_LABEL: Record<string, string> = {
   draft: 'Bozza',
-  sent: 'Inviato',
+  sent: 'In Attesa',
 }
 
 export function quotationStateLabel(state: string): string {

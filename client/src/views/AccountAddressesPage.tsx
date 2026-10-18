@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSnapshot } from 'valtio/react'
 import {
   accountStore,
@@ -15,6 +15,7 @@ import { authStore } from '@/features/auth'
 import { AccountSaveFeedback } from '@/components/account/AccountSaveFeedback'
 import { ShippingAddressPicker } from '@/components/account/ShippingAddressPicker'
 import { CheckoutAddressSection } from '@/components/checkout/stripe-ui/CheckoutAddressSection'
+import { PhonePrefixField } from '@/components/PhonePrefixField'
 import {
   StripeControlledInput,
   StripeFieldGroup,
@@ -28,7 +29,7 @@ import {
 } from '@/lib/address'
 import type { AddressInput } from '@/types/integrations'
 import type { UserShippingAddressDTO, UserShippingAddressListDTO } from '@/types/dto'
-import { savedAddressToInput } from '@/lib/shipping-addresses'
+import { isUsableShippingAddress, savedAddressToInput } from '@/lib/shipping-addresses'
 import { useI18n } from '@/hooks/use-i18n'
 import { AccountDcPanel } from '@/components/account/dc/AccountDcPanel'
 import { accountDcOutlineBtnClass, accountDcPrimaryBtnClass } from '@/components/account/dc/account-dc-styles'
@@ -50,6 +51,14 @@ export function AccountAddressesPage() {
 
   const b2bActive = Boolean(auth.me?.b2bActive)
 
+  // Pulisce toast residui prima del mount di AccountSaveFeedback (altrimenti
+  // un messaggio stale tipo "Indirizzo selezionato" scatta al primo paint).
+  const feedbackClearedRef = useRef(false)
+  if (!feedbackClearedRef.current) {
+    feedbackClearedRef.current = true
+    clearAccountFeedback()
+  }
+
   const refresh = useCallback(async () => {
     const next = await loadShippingAddresses()
     setList(next)
@@ -58,8 +67,28 @@ export function AccountAddressesPage() {
 
   useEffect(() => {
     if (!auth.me) return
+    clearAccountFeedback()
     setLoading(true)
     void refresh()
+      .then((next) => {
+        const usableOwn = (next.addresses ?? []).filter(
+          (address) => !address.dropship && isUsableShippingAddress(address),
+        )
+        // Nuovo utente / stub Odoo: niente card selezionata, form “aggiungi” con anagrafica.
+        if (usableOwn.length === 0) {
+          setDraft((current) => {
+            if (current.line1.trim() || current.city.trim() || current.postalCode.trim()) {
+              return current
+            }
+            return {
+              ...emptyAddress(),
+              firstName: auth.me?.firstName || '',
+              lastName: auth.me?.lastName || '',
+              phone: auth.me?.phone || '',
+            }
+          })
+        }
+      })
       .catch(() => {
         accountStore.error = t('account.addresses.loadError')
       })
@@ -161,7 +190,24 @@ export function AccountAddressesPage() {
     }
   }
 
+  const addresses = list?.addresses ?? []
+  const ownAddresses = addresses.filter(
+    (address) => !address.dropship && isUsableShippingAddress(address),
+  )
+  const recipientAddresses = addresses.filter(
+    (address) => address.dropship && isUsableShippingAddress(address),
+  )
+  const selectedId = ownAddresses.find((address) => address.isDefault)?.id ?? null
+  // Prima della risposta l'elenco è vuoto: senza questo gate il form “aggiungi”
+  // lampeggia per tutta la fetch e poi sparisce se gli indirizzi ci sono già.
+  const showOwnForm =
+    editor === 'create' ||
+    editor === 'edit' ||
+    (!loading && ownAddresses.length === 0 && editor === 'closed')
+  const showRecipientForm = editor === 'create_recipient' || editor === 'edit_recipient'
+
   async function onSelect(id: string) {
+    if (id === selectedId) return
     clearAccountFeedback()
     try {
       setList(await selectShippingAddress(id))
@@ -184,14 +230,6 @@ export function AccountAddressesPage() {
       setPendingDelete(null)
     }
   }
-
-  const addresses = list?.addresses ?? []
-  const ownAddresses = addresses.filter((address) => !address.dropship)
-  const recipientAddresses = addresses.filter((address) => address.dropship)
-  const selectedId = ownAddresses.find((address) => address.isDefault)?.id ?? null
-  const showOwnForm =
-    editor === 'create' || editor === 'edit' || (ownAddresses.length === 0 && editor === 'closed')
-  const showRecipientForm = editor === 'create_recipient' || editor === 'edit_recipient'
 
   function renderAddressActions(items: UserShippingAddressDTO[]) {
     return (
@@ -243,7 +281,7 @@ export function AccountAddressesPage() {
           title={b2bActive ? t('account.addresses.ownTitle') : t('account.nav.addresses')}
           description={t('account.addresses.description')}
           action={
-            list?.canCreate || ownAddresses.length === 0 ? (
+            !loading && (list?.canCreate || ownAddresses.length === 0) ? (
               <button type="button" className={accountDcOutlineBtnClass} onClick={openCreate}>
                 {t('account.addresses.add')}
               </button>
@@ -262,7 +300,7 @@ export function AccountAddressesPage() {
               />
               {renderAddressActions(ownAddresses)}
             </div>
-          ) : (
+          ) : showOwnForm ? null : (
             <p className="text-[13.5px] text-idl-muted">{t('account.addresses.empty')}</p>
           )}
         </AccountDcPanel>
@@ -362,11 +400,11 @@ export function AccountAddressesPage() {
                 <div>
                   <StripeFieldLabel htmlFor="recipient-phone">{t('common.phone')}</StripeFieldLabel>
                   <StripeFieldGroup>
-                    <StripeControlledInput
+                    <PhonePrefixField
                       id="recipient-phone"
-                      type="tel"
                       name="recipient-phone"
                       value={draft.phone ?? ''}
+                      defaultCountry={draft.country}
                       required
                       onValueChange={(value) => updateDraft('phone', value)}
                     />

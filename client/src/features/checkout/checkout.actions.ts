@@ -31,6 +31,7 @@ import { shippingAddressFromUser } from '@/lib/address'
 import {
   BILLING_SHIPPING_SELECTION,
   OTHER_SHIPPING_SELECTION,
+  isUsableShippingStreet,
   matchSavedShippingAddress,
   savedAddressToInput,
 } from '@/lib/shipping-addresses'
@@ -1058,7 +1059,7 @@ function applyCheckoutShippingAddressSelection() {
   if (addresses.length === 0) return
 
   const parent = addresses.find((address) => address.source === 'odoo_parent')
-  if (parent?.line1.trim()) {
+  if (parent && isUsableShippingStreet(parent.line1)) {
     const billing = checkoutStore.draft.billing
     billing.line1 = parent.line1
     billing.streetNumber = parent.streetNumber ?? billing.streetNumber
@@ -1071,7 +1072,9 @@ function applyCheckoutShippingAddressSelection() {
     if (parent.phone) billing.phone = parent.phone
   }
 
-  const ownAddresses = addresses.filter((address) => !address.dropship)
+  const ownAddresses = addresses.filter(
+    (address) => !address.dropship && isUsableShippingStreet(address.line1),
+  )
   const matched =
     matchSavedShippingAddress(ownAddresses, checkoutStore.draft.shipping) ??
     ownAddresses.find((address) => address.isDefault) ??

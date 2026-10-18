@@ -8,6 +8,7 @@ import { useLocale } from '@/context/locale-context'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { Button } from '@/components/Button'
+import { PhonePrefixField } from '@/components/PhonePrefixField'
 import { PhotoUploadSlot } from '@/components/site/forms/PhotoUploadSlot'
 import { ui } from '@/lib/ui-classes'
 import { cn } from '@/utils/cn'
@@ -224,12 +225,13 @@ export function ProductNotFoundLeadForm({ title, description, className }: Props
           </label>
           <label className="block text-sm">
             <span className={ui.labelSm}>{t('productNotFound.phoneLabel')}</span>
-            <input
+            <PhonePrefixField
+              variant="plain"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onValueChange={setPhone}
               placeholder={t('productNotFound.phonePlaceholder')}
-              className={cn(ui.input, 'mt-1.5 dark:bg-white/10')}
               autoComplete="tel"
+              className="mt-1.5 dark:bg-white/10"
             />
           </label>
           <label className="block text-sm">

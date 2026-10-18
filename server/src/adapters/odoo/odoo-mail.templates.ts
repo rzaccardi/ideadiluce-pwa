@@ -37,12 +37,31 @@ export type PwaMailTemplateDef = {
   bodyHtml: string
 }
 
+const MAIL_FONT = "Georgia,'Times New Roman',serif"
+
+/** Pulsante transazionale (client email: solo stili inline). */
+function mailButton(hrefPlaceholder: string, label: string): string {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 4px">
+<tr><td style="background:#c9a24b">
+<a href="${hrefPlaceholder}" style="display:inline-block;padding:14px 22px;font-family:${MAIL_FONT};font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:#0c0c0d;text-decoration:none">${label}</a>
+</td></tr></table>`
+}
+
 function wrap(inner: string): string {
-  return `<div style="font-family:Georgia,serif;color:#1a1a1a;line-height:1.55;max-width:560px">
-<p style="letter-spacing:0.14em;text-transform:uppercase;font-size:12px;color:#c9a24b;margin:0 0 16px">Idea di Luce</p>
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1ea;margin:0;padding:0">
+<tr><td align="center" style="padding:28px 12px">
+<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;background:#ffffff">
+<tr><td style="height:4px;background:#c9a24b;font-size:0;line-height:0">&nbsp;</td></tr>
+<tr><td style="padding:32px 32px 8px;font-family:${MAIL_FONT};color:#1a1a1a;line-height:1.55;font-size:16px">
+<p style="margin:0 0 22px;letter-spacing:0.2em;text-transform:uppercase;font-size:13px;color:#c9a24b">Idea di Luce</p>
 ${inner}
-<p style="margin-top:28px;font-size:12px;color:#666">TLB Italy Srl · ${PWA_ADMIN_MAIL_TO}</p>
-</div>`
+</td></tr>
+<tr><td style="padding:18px 32px 26px;border-top:1px solid #eee6d8;font-family:${MAIL_FONT};font-size:12px;line-height:1.5;color:#777">
+TLB Italy Srl<br/>
+<a href="mailto:${PWA_ADMIN_MAIL_TO}" style="color:#777;text-decoration:none">${PWA_ADMIN_MAIL_TO}</a>
+</td></tr>
+</table>
+</td></tr></table>`
 }
 
 export const PWA_MAIL_TEMPLATES: Record<PwaMailTemplateKey, PwaMailTemplateDef> = {
@@ -66,11 +85,12 @@ export const PWA_MAIL_TEMPLATES: Record<PwaMailTemplateKey, PwaMailTemplateDef> 
     key: 'account_welcome',
     name: '[PWA] Benvenuto account cliente',
     subject: 'Benvenuto su Idea di Luce',
-    bodyHtml: wrap(`<p>Ciao{{first_name_suffix}},</p>
-<p>Il tuo account è stato creato correttamente.</p>
-<p>Email: {{email}}</p>
-<p>Accedi da: <a href="{{login_url}}">{{login_url}}</a></p>
-<p>Se non hai richiesto tu la registrazione, contattaci a ${PWA_ADMIN_MAIL_TO}.</p>`),
+    bodyHtml: wrap(`<p style="margin:0 0 12px;font-size:22px;line-height:1.3">Ciao{{first_name_suffix}},</p>
+<p style="margin:0 0 20px">Il tuo account è stato creato correttamente.</p>
+<p style="margin:0 0 22px;padding:14px 16px;background:#faf8f4;border-left:3px solid #c9a24b">Email<br/><strong>{{email}}</strong></p>
+${mailButton('{{login_url}}', 'Accedi al tuo account')}
+<p style="margin:14px 0 0;font-size:13px;color:#666">Se il pulsante non si apre, usa questo link:<br/><a href="{{login_url}}" style="color:#1a1a1a">{{login_url}}</a></p>
+<p style="margin:18px 0 8px;font-size:13px;color:#666">Se non hai richiesto tu la registrazione, contattaci a <a href="mailto:${PWA_ADMIN_MAIL_TO}" style="color:#1a1a1a">${PWA_ADMIN_MAIL_TO}</a>.</p>`),
   },
   business_registration_admin: {
     key: 'business_registration_admin',

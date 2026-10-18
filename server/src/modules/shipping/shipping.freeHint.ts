@@ -1,7 +1,7 @@
 import { prisma } from '../../lib/prisma.js'
 import type { FreeShippingHintDTO } from '../../types/dto.js'
 import { ShippingMethodType } from '@prisma/client'
-import { zoneMatchesCountry, zoneMatchesPostcode } from './shipping-zone-match.js'
+import { findMatchingShippingZone } from './shipping-zone-match.js'
 
 /** Soglia spedizione gratuita per zona/indirizzo (default IT in carrello). */
 export async function resolveFreeShippingHint(input: {
@@ -19,13 +19,11 @@ export async function resolveFreeShippingHint(input: {
     orderBy: { priority: 'desc' },
   })
 
+  const matchingZone = findMatchingShippingZone(zones, country, postalCode)
   let best: { thresholdCents: number; label: string } | null = null
 
-  for (const zone of zones) {
-    if (!zoneMatchesCountry(zone.countries, country)) continue
-    if (!zoneMatchesPostcode(zone.postcodes, postalCode)) continue
-
-    for (const m of zone.methods) {
+  if (matchingZone) {
+    for (const m of matchingZone.methods) {
       if (m.type !== ShippingMethodType.FREE_SHIPPING) continue
       if (m.freeAboveCents == null) continue
       if (m.minOrderCents != null && subtotalCents < m.minOrderCents) continue
@@ -33,7 +31,6 @@ export async function resolveFreeShippingHint(input: {
         best = { thresholdCents: m.freeAboveCents, label: m.name }
       }
     }
-    if (best) break
   }
 
   if (!best) return null

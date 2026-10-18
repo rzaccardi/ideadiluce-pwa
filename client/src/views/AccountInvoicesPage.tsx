@@ -16,7 +16,7 @@ import { AccountDcStatusPill } from '@/components/account/dc/AccountDcStatusPill
 import { formatMoney } from '@/lib/format'
 import { AccountTableSkeleton } from '@/components/account/AccountTableSkeleton'
 import { PageLoadTransition } from '@/components/motion'
-import { StripeErrorBanner } from '@/components/checkout/stripe-ui/StripeFields'
+import { CheckoutInlineError } from '@/components/checkout/stripe-ui/StripeFields'
 import { ExternalLink } from '@/lib/link-title'
 import { useI18n } from '@/hooks/use-i18n'
 
@@ -45,7 +45,7 @@ export function AccountInvoicesPage() {
 
   return (
     <AccountDcPanel title={t('account.invoices.title')} description={t('account.invoices.description')}>
-      {invoices.listError ? <StripeErrorBanner message={invoices.listError} /> : null}
+      <CheckoutInlineError message={invoices.listError} />
 
       <PageLoadTransition
         isLoading={list === null && !invoices.listError}

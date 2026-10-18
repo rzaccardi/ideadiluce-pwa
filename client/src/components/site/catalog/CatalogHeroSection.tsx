@@ -4,10 +4,18 @@ import { Link } from '@/lib/navigation'
 import { useI18n } from '@/hooks/use-i18n'
 import { SectionContainer } from '../primitives'
 import { CatalogSearchTrigger } from './CatalogSearchTrigger'
+import { BrandNameDisplay } from '@/components/site/brand/BrandNameDisplay'
+import type { BrandDisplayStyle } from '@/lib/brand.defaults'
 import { CATALOG_WORLD_TAB_HREFS, type CatalogWorldTab } from '@/lib/catalog-filters'
 import { ui } from '@/lib/ui-classes'
 import { cn } from '@/utils/cn'
 import type { ReactNode } from 'react'
+
+type BrandHeader = {
+  slug: string
+  name: string
+  displayStyle: BrandDisplayStyle
+}
 
 type Props = {
   lp: (path: string) => string
@@ -19,6 +27,8 @@ type Props = {
   afterSearch?: ReactNode
   /** H1 dinamico (default Negozio). */
   title?: string
+  /** Su pagina brand: logo ufficiale se presente, altrimenti tipografia marchio. */
+  brandHeader?: BrandHeader
   breadcrumbCurrent?: string
   breadcrumbParent?: { label: string; href: string }
   subtitle?: string
@@ -59,6 +69,7 @@ export function CatalogHeroSection({
   searchQuery = '',
   afterSearch,
   title = 'Negozio',
+  brandHeader,
   breadcrumbCurrent,
   breadcrumbParent,
   subtitle,
@@ -66,7 +77,7 @@ export function CatalogHeroSection({
 }: Props) {
   const { t } = useI18n()
   const resolvedTitle = title === 'Negozio' ? t('catalog.title') : title
-  const crumb = breadcrumbCurrent ?? resolvedTitle
+  const crumb = breadcrumbCurrent ?? brandHeader?.name ?? resolvedTitle
 
   return (
     <section className="border-b border-idl-tech-border bg-idl-tech-panel">
@@ -89,8 +100,23 @@ export function CatalogHeroSection({
 
         <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-6">
           <div className="min-w-0">
-            <h1 className="text-[clamp(1.75rem,3vw,2rem)] font-extrabold tracking-tight text-idl-ink">
-              {resolvedTitle}
+            <h1
+              className={
+                brandHeader
+                  ? 'flex min-h-[2rem] items-center'
+                  : 'text-[clamp(1.75rem,3vw,2rem)] font-extrabold tracking-tight text-idl-ink'
+              }
+            >
+              {brandHeader ? (
+                <BrandNameDisplay
+                  slug={brandHeader.slug}
+                  name={brandHeader.name}
+                  style={brandHeader.displayStyle}
+                  size="lg"
+                />
+              ) : (
+                resolvedTitle
+              )}
             </h1>
             <p className="mt-1.5 text-[14.5px] text-idl-muted">
               {subtitle ?? t('catalog.heroSubtitle')}{' '}

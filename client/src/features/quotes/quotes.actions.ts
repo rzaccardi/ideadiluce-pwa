@@ -18,7 +18,7 @@ async function loadQuotesList() {
     quotesListFetchedAt = Date.now()
   } catch (e) {
     quotesStore.listError = errMessage(e)
-    throw e
+    quotesStore.list = null
   } finally {
     quotesStore.isListLoading = false
   }

@@ -26,7 +26,7 @@ import { AccountOverviewQuoteRow } from '@/components/account/AccountOverviewQuo
 import { accountDcPrimaryBtnClass, accountDcPromoClass } from '@/components/account/dc/account-dc-styles'
 import { AccountTableSkeleton } from '@/components/account/AccountTableSkeleton'
 import { PageLoadTransition } from '@/components/motion'
-import { StripeErrorBanner } from '@/components/checkout/stripe-ui/StripeFields'
+import { CheckoutInlineError } from '@/components/checkout/stripe-ui/StripeFields'
 import { isQuotePayable } from '@/lib/quote-payability'
 
 const IN_PROGRESS_STATUSES = new Set([
@@ -188,7 +188,7 @@ export function AccountOverviewPage() {
           ) : null
         }
       >
-        {quotes.listError ? <StripeErrorBanner message={quotes.listError} /> : null}
+        <CheckoutInlineError message={quotes.listError} />
         <PageLoadTransition
           isLoading={quotesLoading}
           skeleton={<AccountTableSkeleton count={2} />}
@@ -223,7 +223,7 @@ export function AccountOverviewPage() {
           ) : null
         }
       >
-        {invoices.listError ? <StripeErrorBanner message={invoices.listError} /> : null}
+        <CheckoutInlineError message={invoices.listError} />
         <PageLoadTransition
           isLoading={invoicesLoading}
           skeleton={<AccountTableSkeleton count={2} />}
@@ -254,7 +254,7 @@ export function AccountOverviewPage() {
         </Link>
       </div>
 
-      {orders.listError ? <StripeErrorBanner message={orders.listError} /> : null}
+      <CheckoutInlineError message={orders.listError} />
 
       <AccountDcPanel
         title={t('account.overview.recentOrders')}

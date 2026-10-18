@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { api } from '@/api/endpoints'
 import { useLocale } from '@/context/locale-context'
 import { Button } from '@/components/Button'
+import { PhonePrefixField } from '@/components/PhonePrefixField'
 import { PhotoUploadSlot } from '@/components/site/forms/PhotoUploadSlot'
 import { ui } from '@/lib/ui-classes'
 import { ExternalLink } from '@/lib/link-title'
@@ -119,11 +120,12 @@ export function SiteLeadForm({ kind, title, description, embedded = false, class
           </label>
           <label className="block text-sm">
             <span className={ui.labelSm}>Telefono / WhatsApp</span>
-            <input
+            <PhonePrefixField
+              variant="plain"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className={cn(ui.input, 'mt-1')}
+              onValueChange={setPhone}
               autoComplete="tel"
+              className="mt-1"
             />
           </label>
           {kind === 'product-not-found' ? (

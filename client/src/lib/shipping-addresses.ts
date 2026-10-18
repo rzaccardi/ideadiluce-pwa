@@ -7,6 +7,20 @@ import { normalizeAddressProvince } from '@/lib/italian-provinces'
 export const BILLING_SHIPPING_SELECTION = 'billing'
 export const OTHER_SHIPPING_SELECTION = 'other'
 
+/** Via fisica utilizzabile: esclude vuoto e placeholder tipo "-" da sync Odoo incompleto. */
+export function isUsableShippingStreet(line1: string | null | undefined): boolean {
+  const value = (line1 ?? '').trim()
+  if (!value) return false
+  if (value === '-' || value === '—' || value === '–') return false
+  return true
+}
+
+export function isUsableShippingAddress(
+  address: Pick<UserAddressDTO, 'line1'> | null | undefined,
+): boolean {
+  return isUsableShippingStreet(address?.line1)
+}
+
 export function shippingAddressFingerprint(address: UserAddressDTO | AddressInput): string {
   const street = formatStreetLine({
     line1: address.line1 ?? '',

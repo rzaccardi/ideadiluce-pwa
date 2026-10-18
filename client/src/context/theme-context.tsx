@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { useSnapshot } from 'valtio/react'
 import type { SiteTheme } from '@/lib/appearance'
 import { hydrateLightsStore, lightsStore, setLightsOn } from '@/features/lights'
@@ -19,7 +19,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { on: lightsOn } = useSnapshot(lightsStore)
   const [theme, setThemeState] = useState<SiteTheme>('light')
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     hydrateLightsStore()
     setThemeState(themeFromLights(lightsStore.on))
   }, [])

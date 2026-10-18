@@ -60,7 +60,12 @@ export function ProductBrandMark({
   // Stesso asset light/dark (es. JPG statico): un solo img, nessuna swap.
   if (light && dark && light.src === dark.src) {
     return (
-      <span className={cn('inline-flex max-w-full items-center justify-start', className)}>
+      <span
+        className={cn(
+          'inline-flex max-w-full shrink-0 items-center justify-start',
+          className,
+        )}
+      >
         <BrandLogoImage logo={light} alt={label ?? ''} height={h} />
       </span>
     )
@@ -68,22 +73,21 @@ export function ProductBrandMark({
 
   if (light || dark) {
     return (
-      <span className={cn('inline-flex max-w-full items-center justify-start', className)}>
+      <span
+        className={cn(
+          'inline-flex max-w-full shrink-0 items-center justify-start',
+          className,
+        )}
+      >
         {light ? (
-          <BrandLogoImage
-            logo={light}
-            alt={label ?? ''}
-            height={h}
-            className={dark && dark.src !== light.src ? 'dark:hidden' : undefined}
-          />
+          <span className={dark && dark.src !== light.src ? 'dark:hidden' : undefined}>
+            <BrandLogoImage logo={light} alt={label ?? ''} height={h} />
+          </span>
         ) : null}
         {dark && (!light || dark.src !== light.src) ? (
-          <BrandLogoImage
-            logo={dark}
-            alt={label ?? ''}
-            height={h}
-            className={light ? 'hidden dark:inline-flex' : undefined}
-          />
+          <span className={light ? 'hidden dark:contents' : undefined}>
+            <BrandLogoImage logo={dark} alt={label ?? ''} height={h} />
+          </span>
         ) : null}
       </span>
     )

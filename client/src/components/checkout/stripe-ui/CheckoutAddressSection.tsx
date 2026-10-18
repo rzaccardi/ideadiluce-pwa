@@ -13,6 +13,7 @@ import {
 import { isCheckoutAddressValid, isCheckoutPhoneValid, mergeResolvedStreetNumber } from '@/lib/checkout-address.validators'
 import { checkoutStore } from '@/features/checkout'
 import { AddressAutocompleteField } from '@/components/checkout/AddressAutocompleteField'
+import { PhonePrefixField } from '@/components/PhonePrefixField'
 import { useI18n } from '@/hooks/use-i18n'
 import { CheckoutAddressFields } from './CheckoutAddressFields'
 import {
@@ -217,15 +218,13 @@ export function CheckoutAddressSection({
                   : undefined
               }
             >
-              <StripeControlledInput
+              <PhonePrefixField
                 id={`${prefix}-phone`}
                 name={`${prefix}-phone`}
-                type="tel"
-                placeholder="+39 333 1234567"
                 value={address.phone ?? ''}
-                autoComplete="tel"
+                defaultCountry={address.country}
                 required
-                aria-invalid={phoneInvalid || undefined}
+                invalid={phoneInvalid}
                 onValueChange={(value) => onChange('phone', value)}
               />
             </StripeFieldGroup>

@@ -348,14 +348,9 @@ export const invoicesService = {
           })
           .map(mapApiInvoice)
       } catch (e) {
+        // Allineato a orders/quotes: fallimento Odoo non deve spezzare l'area account con 503.
         logger.warn('invoices.odoo_api_list_failed', { userId, err: String(e) })
-        throw new AppError(
-          'INVOICES_UNAVAILABLE',
-          'Invoices list failed',
-          'Impossibile caricare le fatture al momento.',
-          503,
-          true,
-        )
+        return []
       }
     }
 
@@ -392,13 +387,7 @@ export const invoicesService = {
       return rows.map(mapInvoice)
     } catch (e) {
       logger.warn('invoices.odoo_list_failed', { userId, err: String(e) })
-      throw new AppError(
-        'INVOICES_UNAVAILABLE',
-        'Invoices list failed',
-        'Impossibile caricare le fatture al momento.',
-        503,
-        true,
-      )
+      return []
     }
   },
 

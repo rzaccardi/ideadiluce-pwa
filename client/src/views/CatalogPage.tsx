@@ -41,6 +41,7 @@ import {
   translateTaxonomyPageSubtitle,
   translateTaxonomyPageTitle,
 } from '@/lib/catalog-taxonomy-i18n'
+import { findBrandMetaBySlug } from '@/lib/brand.defaults'
 import { useRouter } from '@/lib/navigation'
 
 export function CatalogPage({
@@ -137,6 +138,14 @@ export function CatalogPage({
 
   const pageTitle = taxonomy ? translateTaxonomyPageTitle(taxonomy, t, tParams) : undefined
   const pageSubtitle = taxonomy ? translateTaxonomyPageSubtitle(taxonomy, tParams, t) : undefined
+  const brandHeader =
+    taxonomy?.kind === 'brand'
+      ? {
+          slug: taxonomy.value,
+          name: taxonomy.label,
+          displayStyle: findBrandMetaBySlug(taxonomy.value)?.displayStyle ?? 'bold',
+        }
+      : undefined
   const breadcrumbParent = taxonomy
     ? { label: translateTaxonomyHubLabel(taxonomy.kind, t), href: taxonomy.hubPath }
     : undefined
@@ -668,6 +677,7 @@ export function CatalogPage({
         searchQuery={queryParam}
         pageTitle={pageTitle}
         pageSubtitle={pageSubtitle}
+        brandHeader={brandHeader}
         breadcrumbParent={breadcrumbParent}
         showWorldTabs={!taxonomy}
       />

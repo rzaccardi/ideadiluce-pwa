@@ -17,7 +17,9 @@ export function lightsFromTheme(theme: SiteTheme): boolean {
 
 export function applyDocumentTheme(theme: SiteTheme) {
   if (typeof document === 'undefined') return
+  const lightsOn = lightsFromTheme(theme)
   document.documentElement.dataset.theme = theme
+  document.documentElement.dataset.lights = lightsOn ? 'on' : 'off'
   document.documentElement.style.colorScheme = theme === 'dark' ? 'dark' : 'light'
 }
 

@@ -15,6 +15,7 @@ import { useForgotPasswordModal } from '@/hooks/use-forgot-password-modal'
 import { useLogoutConfirm } from '@/hooks/use-logout-confirm'
 import { useI18n } from '@/hooks/use-i18n'
 import { ApiRequestError } from '@/types/api'
+import { PhonePrefixField } from '@/components/PhonePrefixField'
 import { isCheckoutPhoneValid } from '@/lib/checkout-address.validators'
 import { CheckoutBusinessFieldsSection } from '@/components/checkout/stripe-ui/CheckoutBusinessFieldsSection'
 import { CheckoutRetailFiscalCodeField } from '@/components/checkout/stripe-ui/CheckoutRetailFiscalCodeField'
@@ -404,13 +405,11 @@ export function InlineAccountAuthStep({
         />
       </StripeFieldGroup>
       <StripeFieldGroup>
-        <StripeInput
-          type="tel"
+        <PhonePrefixField
           name="phone"
-          placeholder={t('common.phone')}
           autoComplete="tel"
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onValueChange={setPhone}
           required
           disabled={formsLocked}
         />

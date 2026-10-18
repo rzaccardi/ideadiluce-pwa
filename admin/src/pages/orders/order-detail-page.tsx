@@ -180,6 +180,11 @@ export function OrderDetailPage() {
             <DetailField label="Fonte">
               <DetailValue>{order.sourceLabel}</DetailValue>
             </DetailField>
+            {!order.isOdooOnly ? (
+              <DetailField label="ID PWA">
+                <DetailValue className="break-all font-mono text-xs">{order.id}</DetailValue>
+              </DetailField>
+            ) : null}
             <DetailField label="Odoo SO">
               <DetailValue>
                 {order.odooSaleOrderId != null ? (

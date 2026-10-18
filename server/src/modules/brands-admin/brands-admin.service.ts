@@ -33,16 +33,45 @@ export type AdminBrandRow = {
   updatedAt: string | null
 }
 
+type BrandLogoOverlay = {
+  slug: string
+  logoLightUrl: string | null
+  logoDarkUrl: string | null
+  updatedAt: Date
+}
+
 function publicLogoUrl(pathOrUrl: string): string {
   if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl
   const base = env.PUBLIC_SITE_URL.replace(/\/$/, '')
   return `${base}${pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`}`
 }
 
+/** I facet Odoo dei brand sono lenti: una seconda chiamata nella stessa richiesta supera il timeout Cloudflare. */
+const ODOO_BRANDS_CACHE_MS = 5 * 60 * 1000
+
+let odooBrandsCache: { at: number; brands: BrandListItemDTO[] } | null = null
+let odooBrandsInflight: Promise<BrandListItemDTO[]> | null = null
+
+function loadOdooBrands(): Promise<BrandListItemDTO[]> {
+  if (odooBrandsCache && Date.now() - odooBrandsCache.at < ODOO_BRANDS_CACHE_MS) {
+    return Promise.resolve(odooBrandsCache.brands)
+  }
+  if (!odooBrandsInflight) {
+    odooBrandsInflight = catalogStorefrontService
+      .listBrands('IT')
+      .then((brands) => {
+        odooBrandsCache = { at: Date.now(), brands }
+        return brands
+      })
+      .finally(() => {
+        odooBrandsInflight = null
+      })
+  }
+  return odooBrandsInflight
+}
+
 async function requireOdooBrand(slug: string) {
-  const odoo = (await catalogStorefrontService.listBrands('IT')).find(
-    (b) => normalizeBrandSlug(b.slug) === slug,
-  )
+  const odoo = (await loadOdooBrands()).find((b) => normalizeBrandSlug(b.slug) === slug)
   if (!odoo) {
     throw new AppError(
       'BRAND_NOT_IN_ODOO',
@@ -54,24 +83,54 @@ async function requireOdooBrand(slug: string) {
   return odoo
 }
 
-function overlayForSlug(
-  bySlug: Map<
-    string,
-    { slug: string; logoLightUrl: string | null; logoDarkUrl: string | null; updatedAt: Date }
-  >,
-  slug: string,
-) {
+function overlayForSlug(bySlug: Map<string, BrandLogoOverlay>, slug: string) {
   const direct = bySlug.get(slug)
   if (direct) return direct
   const stem = resolveStaticBrandStem(slug)
   return stem ? bySlug.get(stem) ?? null : null
 }
 
+/** Costruisce la riga admin senza richiamare listBrands. */
+function toAdminBrandRow(
+  odoo: BrandListItemDTO,
+  overlay: BrandLogoOverlay | null,
+): AdminBrandRow {
+  const slug = normalizeBrandSlug(odoo.slug)
+  const staticSrc = resolveStaticBrandLogoSrc(slug)
+  const managedLight = overlay?.logoLightUrl ?? null
+  const managedDark = overlay?.logoDarkUrl ?? null
+  const lightIsStatic = !managedLight && Boolean(staticSrc)
+  const lightUrl = managedLight
+    ? publicLogoUrl(managedLight)
+    : staticSrc
+      ? publicLogoUrl(staticSrc)
+      : null
+  const darkUrl = managedDark ? publicLogoUrl(managedDark) : null
+
+  return {
+    slug,
+    name: odoo.name,
+    productCount: odoo.productCount ?? 0,
+    worlds: odoo.worlds,
+    logoLightUrl: lightUrl,
+    logoDarkUrl: darkUrl,
+    logoLightSource: managedLight
+      ? isStaticBrandLogoUrl(managedLight)
+        ? 'static'
+        : 'managed'
+      : lightIsStatic
+        ? 'static'
+        : null,
+    hasLogos: Boolean(lightUrl || darkUrl),
+    updatedAt: overlay?.updatedAt.toISOString() ?? null,
+  }
+}
+
 export const brandsAdminService = {
   /** Solo brand provenienti da Odoo, arricchiti con loghi BO o statici `/brands`. */
   async list(): Promise<AdminBrandRow[]> {
     const [odooBrands, overlays] = await Promise.all([
-      catalogStorefrontService.listBrands('IT'),
+      loadOdooBrands(),
       prisma.catalogBrand.findMany({
         select: {
           slug: true,
@@ -85,35 +144,7 @@ export const brandsAdminService = {
 
     const rows: AdminBrandRow[] = odooBrands.map((brand) => {
       const slug = normalizeBrandSlug(brand.slug)
-      const overlay = overlayForSlug(bySlug, slug)
-      const staticSrc = resolveStaticBrandLogoSrc(slug)
-      const managedLight = overlay?.logoLightUrl ?? null
-      const managedDark = overlay?.logoDarkUrl ?? null
-      const lightIsStatic = !managedLight && Boolean(staticSrc)
-      const lightUrl = managedLight
-        ? publicLogoUrl(managedLight)
-        : staticSrc
-          ? publicLogoUrl(staticSrc)
-          : null
-      const darkUrl = managedDark ? publicLogoUrl(managedDark) : null
-
-      return {
-        slug,
-        name: brand.name,
-        productCount: brand.productCount ?? 0,
-        worlds: brand.worlds,
-        logoLightUrl: lightUrl,
-        logoDarkUrl: darkUrl,
-        logoLightSource: managedLight
-          ? isStaticBrandLogoUrl(managedLight)
-            ? 'static'
-            : 'managed'
-          : lightIsStatic
-            ? 'static'
-            : null,
-        hasLogos: Boolean(lightUrl || darkUrl),
-        updatedAt: overlay?.updatedAt.toISOString() ?? null,
-      }
+      return toAdminBrandRow(brand, overlayForSlug(bySlug, slug))
     })
 
     rows.sort((a, b) => a.name.localeCompare(b.name, 'it'))
@@ -125,7 +156,7 @@ export const brandsAdminService = {
    * Non crea brand: aggiorna solo slug che esistono in Odoo (o stem noti).
    */
   async seedStaticLogos(): Promise<{ upserted: number; stems: string[] }> {
-    const odooBrands = await catalogStorefrontService.listBrands('IT')
+    const odooBrands = await loadOdooBrands()
     const odooBySlug = new Map(
       odooBrands.map((b) => [normalizeBrandSlug(b.slug), b] as const),
     )
@@ -211,6 +242,14 @@ export const brandsAdminService = {
           400,
         )
       }
+      if (e instanceof Error && (e.name === 'TimeoutError' || e.name === 'AbortError')) {
+        throw new AppError(
+          'SPACES_TIMEOUT',
+          'Spaces upload timed out',
+          'Il caricamento del logo non ha risposto in tempo. Riprova tra poco.',
+          503,
+        )
+      }
       throw e
     }
 
@@ -221,7 +260,7 @@ export const brandsAdminService = {
     const logoField =
       variant === 'light' ? { logoLightUrl: uploaded.url } : { logoDarkUrl: uploaded.url }
 
-    await prisma.catalogBrand.upsert({
+    const saved = await prisma.catalogBrand.upsert({
       where: { slug },
       create: {
         slug,
@@ -230,6 +269,12 @@ export const brandsAdminService = {
         ...logoField,
       },
       update: logoField,
+      select: {
+        slug: true,
+        logoLightUrl: true,
+        logoDarkUrl: true,
+        updatedAt: true,
+      },
     })
     invalidateCatalogBrandAssetsCache()
 
@@ -238,34 +283,22 @@ export const brandsAdminService = {
       previousUrl !== uploaded.url &&
       !isStaticBrandLogoUrl(previousUrl)
     ) {
-      try {
-        await deleteSpacesObjectByUrl(previousUrl)
-      } catch {
-        /* best-effort */
-      }
+      void deleteSpacesObjectByUrl(previousUrl).catch(() => {
+        /* best-effort: non bloccare la risposta HTTP */
+      })
     }
 
-    const rows = await this.list()
-    const row = rows.find((r) => r.slug === slug)
-    if (!row) {
-      throw new AppError('BRAND_NOT_FOUND', 'Brand not found', 'Marchio non trovato.', 404)
-    }
-    return row
+    return toAdminBrandRow(odoo, saved)
   },
 
   async deleteLogo(slugRaw: string, variant: BrandLogoVariant): Promise<AdminBrandRow> {
     const slug = normalizeBrandSlug(slugRaw)
-    await requireOdooBrand(slug)
+    const odoo = await requireOdooBrand(slug)
 
     const existing = await prisma.catalogBrand.findUnique({ where: { slug } })
     if (!existing) {
       // Solo statico: non c’è nulla da cancellare in DB.
-      const rows = await this.list()
-      const row = rows.find((r) => r.slug === slug)
-      if (!row) {
-        throw new AppError('BRAND_NOT_FOUND', 'Brand not found', 'Marchio non trovato.', 404)
-      }
-      return row
+      return toAdminBrandRow(odoo, null)
     }
 
     const previousUrl = variant === 'light' ? existing.logoLightUrl : existing.logoDarkUrl
@@ -277,36 +310,36 @@ export const brandsAdminService = {
     const nextLight = variant === 'light' ? null : existing.logoLightUrl
     const nextDark = variant === 'dark' ? null : existing.logoDarkUrl
 
+    let overlay: BrandLogoOverlay | null = null
     if (!nextLight && !nextDark) {
       await prisma.catalogBrand.delete({ where: { slug } })
     } else {
-      await prisma.catalogBrand.update({
+      overlay = await prisma.catalogBrand.update({
         where: { slug },
         data: logoField,
+        select: {
+          slug: true,
+          logoLightUrl: true,
+          logoDarkUrl: true,
+          updatedAt: true,
+        },
       })
     }
     invalidateCatalogBrandAssetsCache()
 
     if (previousUrl && !isStaticBrandLogoUrl(previousUrl)) {
-      try {
-        await deleteSpacesObjectByUrl(previousUrl)
-      } catch {
-        /* best-effort */
-      }
+      void deleteSpacesObjectByUrl(previousUrl).catch(() => {
+        /* best-effort: non bloccare la risposta HTTP */
+      })
     }
 
-    const rows = await this.list()
-    const row = rows.find((r) => r.slug === slug)
-    if (!row) {
-      throw new AppError('BRAND_NOT_FOUND', 'Brand not found', 'Marchio non trovato.', 404)
-    }
-    return row
+    return toAdminBrandRow(odoo, overlay)
   },
 
   /** Rimuove solo i loghi BO in DB; il brand Odoo e gli asset statici restano. */
   async clearLogos(slugRaw: string): Promise<AdminBrandRow> {
     const slug = normalizeBrandSlug(slugRaw)
-    await requireOdooBrand(slug)
+    const odoo = await requireOdooBrand(slug)
 
     const existing = await prisma.catalogBrand.findUnique({ where: { slug } })
     if (existing) {
@@ -315,19 +348,12 @@ export const brandsAdminService = {
 
       for (const url of [existing.logoLightUrl, existing.logoDarkUrl]) {
         if (!url || isStaticBrandLogoUrl(url)) continue
-        try {
-          await deleteSpacesObjectByUrl(url)
-        } catch {
-          /* best-effort */
-        }
+        void deleteSpacesObjectByUrl(url).catch(() => {
+          /* best-effort: non bloccare la risposta HTTP */
+        })
       }
     }
 
-    const rows = await this.list()
-    const row = rows.find((r) => r.slug === slug)
-    if (!row) {
-      throw new AppError('BRAND_NOT_FOUND', 'Brand not found', 'Marchio non trovato.', 404)
-    }
-    return row
+    return toAdminBrandRow(odoo, null)
   },
 }

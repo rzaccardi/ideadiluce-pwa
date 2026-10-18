@@ -26,8 +26,13 @@ describe('nav-landing-paths', () => {
 
     expect(paths).toContain('/tipologia/sospensione')
     expect(paths).toContain('/tipologia/parete')
-    expect(paths).toContain('/stile/moderno')
+    expect(paths).toContain('/tipologia/soffitto')
+    expect(paths).toContain('/tipologia/esterno')
+    expect(paths).toContain('/stile/classico')
     expect(paths).toContain('/stile/design')
+    expect(paths).not.toContain('/tipologia/plafoniere')
+    expect(paths).not.toContain('/tipologia/incasso')
+    expect(paths).not.toContain('/stile/minimal')
 
     expect(paths).toContain('/categoria-tecnica/led')
     expect(paths).toContain('/categoria-tecnica/driver')
@@ -44,9 +49,9 @@ describe('nav-landing-paths', () => {
       expect.arrayContaining(['soggiorno', 'cucina', 'camera', 'bagno', 'studio', 'esterno']),
     )
     expect(listNavTipologiaSlugs()).toEqual(
-      expect.arrayContaining(['sospensione', 'parete', 'tavolo', 'terra', 'plafoniere', 'incasso']),
+      expect.arrayContaining(['sospensione', 'parete', 'tavolo', 'terra', 'soffitto', 'esterno']),
     )
-    expect(listNavStileSlugs()).toEqual(expect.arrayContaining(['moderno', 'outdoor', 'design']))
+    expect(listNavStileSlugs()).toEqual(expect.arrayContaining(['classico', 'design']))
     expect(listNavCategoriaTecnicaSlugs()).toEqual(
       expect.arrayContaining(['led', 'alogene', 'fluorescente', 'driver', 'ballast', 'accessori']),
     )

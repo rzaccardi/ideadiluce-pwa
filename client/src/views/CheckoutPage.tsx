@@ -4,7 +4,15 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from '@/lib/navigation'
 import { CheckoutLegalLinks } from '@/components/checkout/stripe-ui/CheckoutLegalLinks'
 import { useSnapshot } from 'valtio/react'
-import { cartStore, fetchCart, fetchRecommendations, removeItem, shouldRepriceCartOnLoad } from '@/features/cart'
+import {
+  cartStore,
+  discardCartAfterCheckout,
+  fetchCart,
+  fetchRecommendations,
+  refreshCartAfterCheckout,
+  removeItem,
+  shouldRepriceCartOnLoad,
+} from '@/features/cart'
 import { authStore, fetchMe } from '@/features/auth'
 import {
   canStartCheckout,
@@ -408,7 +416,7 @@ export function CheckoutPage() {
     try {
       if (checkout.selectedPaymentMethod === 'bank_transfer') {
         const orderId = await completeBankTransferCheckout()
-        void fetchCart({ force: true, reprice: true })
+        await refreshCartAfterCheckout()
         navigate(`/checkout/result/${orderId}`, { replace: true })
         return
       }
@@ -438,7 +446,9 @@ export function CheckoutPage() {
   }
 
   function handleStripePaymentSuccess(paidOrderId: string) {
-    void fetchCart({ force: true, reprice: true })
+    // Il server converte il carrello solo dopo stripeReturn, sulla thank-you.
+    // Qui scartiamo solo la copia in memoria, senza un GET che rileggerebbe le righe.
+    discardCartAfterCheckout()
     navigate(`/checkout/result/${paidOrderId}`, { replace: true })
   }
 

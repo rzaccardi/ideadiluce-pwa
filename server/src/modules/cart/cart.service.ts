@@ -170,6 +170,19 @@ async function resolveOrCreateCart(req: Request) {
       ? await cartRepository.findActiveByPartner(partnerId)
       : null) ?? (await cartRepository.findActiveBySession(session.id))
 
+  // Bonifico già confermato (PAYMENT_PENDING): non riusare quel carrello per nuovo shopping.
+  // createPaymentSession lascia PAYMENT_STARTED fino a confirm, quindi non interferisce col checkout in corso.
+  if (cart) {
+    const { releaseCartIfBankTransferPending } = await import('./cart-bank-transfer-guard.js')
+    const released = await releaseCartIfBankTransferPending(cart.id)
+    if (released) {
+      cart =
+        (partnerId != null
+          ? await cartRepository.findActiveByPartner(partnerId)
+          : null) ?? (await cartRepository.findActiveBySession(session.id))
+    }
+  }
+
   if (!cart) {
     cart = await cartRepository.create({
       currencyCode: 'EUR',

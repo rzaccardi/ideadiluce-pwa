@@ -31,7 +31,7 @@ export function BrandPageSkeleton() {
               key={i}
               className="flex flex-col rounded-xl border border-idl-tech-border bg-white p-5 dark:bg-idl-tech-panel sm:p-6"
             >
-              <div className="mb-3.5 flex h-[46px] items-center justify-center border-b border-idl-tech-panel pb-3.5">
+              <div className="mb-3.5 flex h-[56px] items-center justify-center border-b border-idl-tech-panel pb-3.5">
                 <Skeleton className="h-6 w-28" />
               </div>
               <Skeleton className="mb-2.5 h-5 w-16 rounded-[5px]" />

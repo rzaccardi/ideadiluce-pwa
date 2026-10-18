@@ -5,6 +5,7 @@ import { pricingContextLabel } from '../pricing/pricelist.service.js'
 import { splitLine1AndStreetNumber } from '../checkout/checkout-address.validators.js'
 import { normalizeAddressProvince } from '../checkout/italian-provinces.js'
 import { prisma } from '../../lib/prisma.js'
+import { isUsableShippingStreet } from '../../adapters/odoo/odoo-partner-shipping.js'
 
 function segmentToDTO(segment: CustomerSatellite['customerSegment']): CustomerSegmentDTO {
   if (segment === 'BUSINESS') return 'business'
@@ -15,7 +16,7 @@ function segmentToDTO(segment: CustomerSatellite['customerSegment']): CustomerSe
 export function parseShippingAddressJson(json: unknown): UserAddressDTO | null {
   if (!json || typeof json !== 'object') return null
   const address = json as Record<string, unknown>
-  if (typeof address.line1 !== 'string' || !address.line1.trim()) return null
+  if (typeof address.line1 !== 'string' || !isUsableShippingStreet(address.line1)) return null
 
   const split = splitLine1AndStreetNumber(
     address.line1,

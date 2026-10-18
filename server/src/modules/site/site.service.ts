@@ -713,8 +713,14 @@ async function patchShellMegaMenuColumns() {
           currentJson !== freshJson &&
           (id === 'arredo'
             ? !currentJson.includes('/tipologia/sospensione') ||
+              !currentJson.includes('/tipologia/soffitto') ||
               !currentJson.includes('IN EVIDENZA') ||
-              currentJson.includes('/brand/davide-groppi')
+              currentJson.includes('/brand/davide-groppi') ||
+              currentJson.includes('/brand/tlb') ||
+              currentJson.includes('/tipologia/plafoniere') ||
+              currentJson.includes('/tipologia/incasso') ||
+              currentJson.includes('/stile/minimal') ||
+              currentJson.includes('tag=offerta')
             : !currentJson.includes('GUIDE TECNICHE') ||
               /world=technical&q=/i.test(currentJson) ||
               !currentJson.includes('/categoria-tecnica/led') ||

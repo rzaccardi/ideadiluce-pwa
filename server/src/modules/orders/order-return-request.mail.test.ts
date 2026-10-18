@@ -11,6 +11,7 @@ const order: OrderDetailDTO = {
   pwaOrderId: 'ord-1',
   odooSaleOrderId: 1042,
   orderNumber: '#1042',
+  clientOrderRef: null,
   status: 'paid',
   paymentStatus: 'captured',
   currencyCode: 'EUR',
