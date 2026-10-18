@@ -339,12 +339,13 @@ export function ProfessionalAccountForm({ registration }: Props) {
         </label>
         <label className="block text-sm">
           <span className={ui.labelSm}>{fields.phone}</span>
-          <input
+          <PhonePrefixField
+            variant="plain"
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onValueChange={setPhone}
             placeholder={placeholders.phone}
-            className={cn(ui.input, 'mt-1.5 border-[#e3e6ea] bg-[#f7f8fa]')}
             autoComplete="tel"
+            className="mt-1.5 border-[#e3e6ea] bg-[#f7f8fa]"
           />
         </label>
       </div>
