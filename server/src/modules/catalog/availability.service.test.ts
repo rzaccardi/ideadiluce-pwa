@@ -3,12 +3,12 @@
  *
  * | S   | Fornitori | Q   | Esito |
  * |-----|-----------|-----|-------|
- * | 0   | assenti   | ≥1  | Caso 3 — out_of_stock, Avvisami |
- * | 0   | presenti  | ≥1  | Caso 2 — orderable, BASE+LT |
- * | >0  | assenti   | ≤S  | Caso 1 — available, BASE |
- * | >0  | assenti   | >S  | Edge — out_of_stock (UI cap a S) |
- * | >0  | presenti  | ≤S  | Caso 1 — available, BASE |
- * | >0  | presenti  | >S  | Caso 2 — orderable, BASE+LT |
+ * | 0   | assenti   | ≥1  | Caso 3: out_of_stock, Avvisami |
+ * | 0   | presenti  | ≥1  | Caso 2: orderable, BASE+LT |
+ * | >0  | assenti   | ≤S  | Caso 1: available, BASE |
+ * | >0  | assenti   | >S  | Edge: out_of_stock (UI cap a S) |
+ * | >0  | presenti  | ≤S  | Caso 1: available, BASE |
+ * | >0  | presenti  | >S  | Caso 2: orderable, BASE+LT |
  */
 import { describe, expect, it } from 'vitest'
 import {

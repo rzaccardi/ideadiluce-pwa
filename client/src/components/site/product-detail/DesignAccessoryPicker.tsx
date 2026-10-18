@@ -27,7 +27,7 @@ type Props = {
 function accessoryKey(item: ProductRelatedDTO, index: number): string {
   const slug = item.slug?.trim()
   if (slug) return slug
-  if (item.odooTemplateId != null) return `odoo:${item.odooTemplateId}`
+  if (item.odooTemplateId != null) return `tpl:${item.odooTemplateId}`
   return `accessory-${index}`
 }
 

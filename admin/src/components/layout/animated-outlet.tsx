@@ -3,7 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 
 /**
- * Outlet con enter animation a ogni cambio route — evita il salto secco tra pagine.
+ * Outlet con enter animation a ogni cambio route: evita il salto secco tra pagine.
  */
 export function AnimatedOutlet() {
   const location = useLocation()

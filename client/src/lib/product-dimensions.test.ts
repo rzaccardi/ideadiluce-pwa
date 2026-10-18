@@ -75,7 +75,7 @@ describe('buildAllProductDimensionRows', () => {
 })
 
 describe('isMeasureGalleryTag', () => {
-  it('riconosce i tag gallery Odoo dello schema dimensioni', () => {
+  it('riconosce i tag gallery dello schema dimensioni', () => {
     expect(isMeasureGalleryTag('dimensioni')).toBe(true)
     expect(isMeasureGalleryTag('Dimensioni')).toBe(true)
     expect(isMeasureGalleryTag('  DIMENSIONI  ')).toBe(true)

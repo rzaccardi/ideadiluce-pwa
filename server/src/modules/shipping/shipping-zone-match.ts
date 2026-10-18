@@ -1,7 +1,7 @@
 /** Token speciale: zona «resto del mondo» (solo se nessuna zona ha il paese esatto). */
 export const WORLDWIDE_COUNTRY_TOKEN = '*'
 
-/** Paesi UE esclusa Italia (ISO2) — allineati a tax.constants EU_COUNTRY_CODES. */
+/** Paesi UE esclusa Italia (ISO2): allineati a tax.constants EU_COUNTRY_CODES. */
 export const EU_EXCL_IT_COUNTRIES: readonly string[] = [
   'AT',
   'BE',

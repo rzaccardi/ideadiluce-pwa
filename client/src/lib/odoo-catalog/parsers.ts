@@ -35,7 +35,7 @@ function readId(value: unknown): string | undefined {
 
 function warnMissing(field: string) {
   if (process.env.NODE_ENV === 'development') {
-    console.warn(`[odooCatalog] availability field missing or invalid: ${field}`)
+    console.warn(`[catalog] availability field missing or invalid: ${field}`)
   }
 }
 

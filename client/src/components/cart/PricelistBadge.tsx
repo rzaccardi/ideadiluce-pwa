@@ -1,4 +1,4 @@
-/** Badge listino — nome listino non esposto in storefront (requisito commerciale). */
+/** Badge listino: nome listino non esposto in storefront (requisito commerciale). */
 'use client'
 
 import { useSnapshot } from 'valtio/react'

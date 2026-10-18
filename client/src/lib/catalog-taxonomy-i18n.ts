@@ -1,5 +1,5 @@
 /**
- * Traduzione UI per tassonomia catalogo nota (slug Odoo / label IT).
+ * Traduzione UI per tassonomia catalogo nota (slug / label IT).
  * I facet raw non mappati restano invariati (limite documentato).
  */
 import type { MessageKey } from '@/i18n/messages/keys'
@@ -184,7 +184,7 @@ export function extractTaxonomyTokenFromFilterValue(
 ): string | undefined {
   const fromQuery = queryToken?.trim()
   if (fromQuery) {
-    // queryToken può essere "parete applique" — prova prima parola nota
+    // queryToken può essere "parete applique": prova prima parola nota
     const parts = fromQuery.toLowerCase().split(/\s+/)
     for (const part of parts) {
       if (taxonomyKeyForToken(part)) return part

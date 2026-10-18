@@ -60,11 +60,23 @@ function firstFutureRestockDate(restockDate?: string | null): string | null {
 function formatRestockDate(iso: string, locale: PwaLocale): string {
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return iso
+  return formatShipDate(date, locale)
+}
+
+function formatShipDate(date: Date, locale: PwaLocale): string {
   return new Intl.DateTimeFormat(LOCALE_TAG[locale], {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   }).format(date)
+}
+
+/** Oggi + lead fornitore, a mezzogiorno locale per non slittare di giorno. */
+function shipDateFromLeadDays(leadTimeDays: number, from = new Date()): Date {
+  const date = new Date(from)
+  date.setHours(12, 0, 0, 0)
+  date.setDate(date.getDate() + leadTimeDays)
+  return date
 }
 
 function resolveLeadTimeDays(
@@ -90,7 +102,9 @@ function orderableDetail(
     })
   }
   if (leadTimeDays != null && leadTimeDays > 0) {
-    return tParams(locale, 'product.availability.basePlusLead', { days: leadTimeDays })
+    return tParams(locale, 'product.availability.shippedByDate', {
+      date: formatShipDate(shipDateFromLeadDays(leadTimeDays), locale),
+    })
   }
   // LT = 0 o assente ma fornitore presente → solo BASE
   return t(locale, 'product.availability.baseShipping')
@@ -141,7 +155,7 @@ function buildOutOfStock(
   }
 }
 
-/** Deriva ProductAvailabilityDataDTO da campi legacy finché il mapper Odoo non espone availability. */
+/** Deriva ProductAvailabilityDataDTO da campi legacy finché il mapper non espone availability. */
 export function resolveAvailabilityData(
   product: Pick<ProductDetailDTO | ProductCardDTO, 'inStock' | 'availability'>,
   variant?: Pick<ProductVariantDTO, 'inStock' | 'stockQty' | 'availability'> | null,

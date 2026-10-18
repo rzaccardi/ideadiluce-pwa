@@ -21,7 +21,7 @@ describe('parseCssColorFromOdoo', () => {
 })
 
 describe('htmlColorFromOdooAttribute', () => {
-  it('legge html_color Odoo e ignora l’indice kanban `color`', () => {
+  it('legge html_color e ignora l’indice kanban `color`', () => {
     expect(
       htmlColorFromOdooAttribute({
         attribute_id: 1,

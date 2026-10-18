@@ -43,7 +43,7 @@ function resolveAny(
 
 /**
  * Logo brand da overlay BO (light/dark) o fallback `/brands/{slug}.jpg`.
- * Con logo: stessa immagine (o dark dedicato) anche in dark mode — niente nome testuale.
+ * Con logo: stessa immagine (o dark dedicato) anche in dark mode: niente nome testuale.
  */
 export function ProductBrandMark({
   brand,
@@ -62,7 +62,7 @@ export function ProductBrandMark({
     return (
       <span
         className={cn(
-          'inline-flex max-w-full shrink-0 items-center justify-start',
+          'inline-flex shrink-0 items-center justify-start',
           className,
         )}
       >
@@ -75,7 +75,7 @@ export function ProductBrandMark({
     return (
       <span
         className={cn(
-          'inline-flex max-w-full shrink-0 items-center justify-start',
+          'inline-flex shrink-0 items-center justify-start',
           className,
         )}
       >

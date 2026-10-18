@@ -1,4 +1,4 @@
-/** Paesi UE (ISO2) — aggiornato post-Brexit (GB escluso). */
+/** Paesi UE (ISO2): aggiornato post-Brexit (GB escluso). */
 export const EU_COUNTRY_CODES = new Set([
   'AT',
   'BE',

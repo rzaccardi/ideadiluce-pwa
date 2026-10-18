@@ -10,19 +10,19 @@ import { useI18n } from '@/hooks/use-i18n'
 export function AccountSaveFeedback() {
   const { t } = useI18n()
   const account = useSnapshot(accountStore)
-  const warningMessage = account.odooSyncWarning ? t('account.profile.odooSyncWarning') : null
+  const warningMessage = account.profileSyncWarning ? t('account.profile.syncWarning') : null
 
   return (
     <>
       <ToastOnError message={account.error} />
       <ToastOnSuccess message={account.message} />
       <ToastOnWarning message={warningMessage} />
-      {account.odooSyncWarning ? (
+      {account.profileSyncWarning ? (
         <div
           className="rounded-[14px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
           role="status"
         >
-          {t('account.profile.odooSyncWarning')}
+          {t('account.profile.syncWarning')}
         </div>
       ) : null}
       <CheckoutInlineError message={account.error} />

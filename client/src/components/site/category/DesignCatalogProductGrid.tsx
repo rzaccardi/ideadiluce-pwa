@@ -9,6 +9,7 @@ import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMet
 import { ProductBrandMark } from '@/components/product/ProductBrandMark'
 import type { LocalePathFn } from '../sections/types'
 import { ProductCardLitMedia } from '@/components/product/ProductCardLitMedia'
+import { omitTrailingBrandFromProductName } from '@/lib/product-display-title'
 import { productCatalogObjectFitClass } from '@/lib/product-image-fit'
 import { cn } from '@/utils/cn'
 
@@ -62,6 +63,7 @@ export const DesignCatalogProductCard = memo(function DesignCatalogProductCard({
   brandLabel,
 }: Props) {
   const fallbackLabel = brandLabel ?? product.categorySlug?.toUpperCase() ?? null
+  const title = omitTrailingBrandFromProductName(product.name, product.brand)
 
   return (
     <Link
@@ -83,7 +85,7 @@ export const DesignCatalogProductCard = memo(function DesignCatalogProductCard({
           className="text-idl-brass"
         />
         <div className="mt-1 line-clamp-2 min-h-[2lh] font-serif text-[17px] leading-snug font-medium text-idl-ink sm:text-[19px]">
-          {product.name}
+          {title}
         </div>
         <div className="mt-1 line-clamp-2 min-h-[2lh] text-xs leading-normal text-idl-ink-muted">
           {product.shortDescription ?? '\u00A0'}

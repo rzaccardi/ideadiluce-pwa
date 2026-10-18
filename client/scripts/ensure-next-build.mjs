@@ -32,6 +32,6 @@ function shouldCleanBeforeBuild() {
 }
 
 if (shouldCleanBeforeBuild()) {
-  console.warn('[client] .next incompleto o misto dev/prod — pulizia automatica prima della build…')
+  console.warn('[client] .next incompleto o misto dev/prod: pulizia automatica prima della build…')
   fs.rmSync(nextDir, { recursive: true, force: true })
 }

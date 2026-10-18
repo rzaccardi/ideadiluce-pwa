@@ -1,7 +1,7 @@
 import { loadLocalCartMirror } from '@/lib/cart-local-storage'
 import type { CartDTO } from '@/types/dto'
 
-/** Allineato al TTL server: reprice Odoo solo se i prezzi sono vecchi. */
+/** Allineato al TTL server: reprice solo se i prezzi sono vecchi. */
 export const CART_REPRICE_TTL_MS = 30 * 60 * 1000
 
 function isOlderThan(iso: string | null | undefined, ttlMs: number): boolean {
@@ -12,7 +12,7 @@ function isOlderThan(iso: string | null | undefined, ttlMs: number): boolean {
 }
 
 /**
- * Reprice Odoo solo quando serve: carrello recuperato, riserva scaduta, prezzi mancanti o vecchi.
+ * Reprice solo quando serve: carrello recuperato, riserva scaduta, prezzi mancanti o vecchi.
  * Navigazione normale al carrello dopo add-to-cart → false (prezzi già aggiornati).
  */
 export function shouldRepriceCartOnLoad(

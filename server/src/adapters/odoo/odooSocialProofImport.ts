@@ -39,7 +39,7 @@ function text(value: string | false | undefined): string | null {
 
 /**
  * Importa lo storico ordini Odoo (non-PWA) nella cache social proof.
- * Gli ordini già collegati a un PwaOrder restano sul DB locale — evita doppioni nel feed unificato.
+ * Gli ordini già collegati a un PwaOrder restano sul DB locale: evita doppioni nel feed unificato.
  */
 export async function importSocialProofFromOdoo(
   ctx: OdooCallContext,

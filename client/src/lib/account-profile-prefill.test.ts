@@ -144,7 +144,7 @@ describe('pickProfessionalPrefillAddress', () => {
     }
   }
 
-  it('preferisce la sede Odoo all\'indirizzo di consegna predefinito', () => {
+  it('preferisce la sede all\'indirizzo di consegna predefinito', () => {
     const picked = pickProfessionalPrefillAddress([
       addr({
         id: 'odoo:2',

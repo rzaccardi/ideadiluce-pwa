@@ -46,7 +46,7 @@ async function main() {
   console.log(`Path analizzati: ${paths.length}`)
   console.log(`Redirect da applicare: ${redirects.length}`)
   if (typeFilter) console.log(`Filtro tipo: ${typeFilter}`)
-  if (dryRun) console.log('(dry-run — nessuna scrittura DB)\n')
+  if (dryRun) console.log('(dry-run: nessuna scrittura DB)\n')
 
   let applied = 0
   for (const redirect of redirects) {

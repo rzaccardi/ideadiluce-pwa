@@ -26,7 +26,7 @@ function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-/** Separa via e civico da stringhe tipo Odoo («Via Roma 69») senza perdere un civico già noto. */
+/** Separa via e civico da stringhe tipo («Via Roma 69») senza perdere un civico già noto. */
 export function splitLine1AndStreetNumber(
   line1: string,
   streetNumber = '',

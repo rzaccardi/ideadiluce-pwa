@@ -41,7 +41,7 @@ export function CheckoutAccountSection() {
     try {
       await checkoutLogin(loginEmail.trim(), loginPassword)
       await prepareCheckoutAfterAuth()
-      await fetchCart({ force: true, reprice: true })
+      await fetchCart({ force: true })
       setShowLogin(false)
       setLoginPassword('')
     } catch (err) {

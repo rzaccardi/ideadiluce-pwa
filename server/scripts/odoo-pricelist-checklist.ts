@@ -1,5 +1,5 @@
 /**
- * Checklist listini Odoo per staging — elenca product.pricelist e verifica env.
+ * Checklist listini Odoo per staging: elenca product.pricelist e verifica env.
  * Uso: cd server && ODOO_ENABLED=true npx tsx scripts/odoo-pricelist-checklist.ts
  */
 import { config } from 'dotenv'

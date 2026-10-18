@@ -68,7 +68,7 @@ function formatViesAddress(value: string | null | undefined): string {
     .join(', ')
 }
 
-/** Sede Odoo se c'è, altrimenti indirizzo predefinito. */
+/** Sede se c'è, altrimenti indirizzo predefinito. */
 export function pickProfessionalPrefillAddress(
   addresses: readonly UserShippingAddressDTO[],
 ): UserShippingAddressDTO | null {

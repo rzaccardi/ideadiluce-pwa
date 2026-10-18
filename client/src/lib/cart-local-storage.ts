@@ -61,7 +61,7 @@ export function clearLocalCartMirror(): void {
   clearLegacyStorage()
 }
 
-/** @deprecated Mirror legacy guest items — migrato a cartId + reservationExpiresAt. */
+/** @deprecated Mirror legacy guest items: migrato a cartId + reservationExpiresAt. */
 export function loadLocalCart(): null {
   return null
 }

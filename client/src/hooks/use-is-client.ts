@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-/** True solo dopo il mount client — evita mismatch hydration con createPortal. */
+/** True solo dopo il mount client: evita mismatch hydration con createPortal. */
 export function useIsClient() {
   const [isClient, setIsClient] = useState(false)
 

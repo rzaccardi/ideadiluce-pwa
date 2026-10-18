@@ -5,7 +5,7 @@ import { formatWattLabel } from '@/lib/catalog-facets-ui'
 import { cn } from '@/utils/cn'
 
 type Props = {
-  /** Valori watt ordinati crescenti (da facet Odoo). */
+  /** Valori watt ordinati crescenti (da facet ). */
   values: ReadonlyArray<number>
   min?: number
   max?: number

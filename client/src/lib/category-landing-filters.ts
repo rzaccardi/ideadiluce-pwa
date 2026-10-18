@@ -16,7 +16,7 @@ export type CategoryLandingCatalogConfig = {
 export const CATEGORY_LANDING_CATALOG_CONFIG: Record<CategoryLandingKey, CategoryLandingCatalogConfig> = {
   design: { categorySlug: 'arredo' },
   technical: { categorySlug: 'tecnico' },
-  /** Driver + ballast (slug CSV Odoo) — niente q= testuale. */
+  /** Driver + ballast (slug CSV ): niente q= testuale. */
   'technical-products': { categorySlug: 'driver,ballast' },
 }
 
@@ -116,7 +116,7 @@ export function toggleCategoryLandingFilter(
     }
   }
   if (value.startsWith('tag-')) {
-    // tag: AND multipli ammessi — non rimuovere gli altri
+    // tag: AND multipli ammessi: non rimuovere gli altri
   }
   if (value.startsWith('category-')) {
     for (const existing of next) {

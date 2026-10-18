@@ -31,7 +31,7 @@ function LightboxChevronIcon({ direction, className }: { direction: 'left' | 'ri
   return (
     <svg viewBox="0 0 24 24" aria-hidden className={className} fill="none">
       <path
-        d={direction === 'left' ? 'M15 6l-6 6 6 6' : 'M9 6l6 6 6 6'}
+        d={direction === 'left' ? 'M15 6l-6 6 6 6' : 'M9 6l6 6-6 6'}
         stroke="currentColor"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -683,7 +683,7 @@ export function ProductDetailGallery({
         ? createPortal(
             <div
               className={cn(
-                'fixed inset-0 flex h-[100dvh] w-screen items-center justify-center bg-black/80 p-4',
+                'fixed inset-0 flex h-[100dvh] items-center justify-center bg-black/80 p-4',
                 layers.dialog,
               )}
               role="dialog"

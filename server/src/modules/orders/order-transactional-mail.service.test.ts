@@ -12,9 +12,6 @@ vi.mock('../../lib/prisma.js', () => ({
       findUnique: vi.fn(),
       update: vi.fn(),
     },
-    pwaPayment: {
-      findFirst: vi.fn(),
-    },
   },
 }))
 
@@ -109,33 +106,6 @@ describe('orderTransactionalMail', () => {
       'c1',
     )
     expect(sendPwaMail).not.toHaveBeenCalled()
-  })
-
-  it('invia istruzioni bonifico con IBAN', async () => {
-    vi.mocked(prisma.pwaPayment.findFirst).mockResolvedValue({
-      instructionsJson: {
-        holder: 'TLB Italy Srl',
-        iban: 'IT00X0000000000000000000000',
-        bankName: 'Banca <Test>',
-        reference: 'IDL-42',
-        amount: 12900,
-        currencyCode: 'EUR',
-        note: 'Entro 5 giorni',
-      },
-    } as never)
-
-    await orderTransactionalMail.sendBankTransferInstructions(order(), 'c2')
-    expect(sendPwaMail).toHaveBeenCalledWith(
-      { correlationId: 'c2' },
-      expect.objectContaining({
-        templateKey: 'bank_transfer_pending',
-        vars: expect.objectContaining({
-          iban: 'IT00X0000000000000000000000',
-          bank_name_html: '<br/>Banca: Banca &lt;Test&gt;',
-          reference: 'IDL-42',
-        }),
-      }),
-    )
   })
 
   it('invia tracking solo con URL http(s) e HTML escapato', async () => {

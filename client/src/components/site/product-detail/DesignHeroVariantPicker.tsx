@@ -14,7 +14,7 @@ import {
   type MatrixValueState,
 } from '@/lib/product-variant-attributes'
 
-/** Fallback neutro se Odoo non invia `html_color` — non un colore di un altro valore. */
+/** Fallback neutro se manca `html_color`: non un colore di un altro valore. */
 const SWATCH_FALLBACK = '#8f8f93'
 
 type Props = {

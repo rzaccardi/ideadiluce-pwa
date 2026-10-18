@@ -56,7 +56,7 @@ describe('usesSessionPricelist', () => {
     ).toBe(true)
   })
 
-  it('è vero per retail con personalizedPricing (listino Odoo assegnato)', () => {
+  it('è vero per retail con personalizedPricing (listino assegnato)', () => {
     expect(
       usesSessionPricelist(user('retail', { personalizedPricing: true }), null),
     ).toBe(true)

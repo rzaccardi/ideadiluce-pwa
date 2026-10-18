@@ -1,5 +1,5 @@
 /**
- * Costanti UI storefront — utility Tailwind basate sui design token.
+ * Costanti UI storefront: utility Tailwind basate sui design token.
  * Importa da qui invece di ripetere classi arbitrarie nei componenti.
  *
  * Per modificare l'aspetto globale, aggiorna `src/styles/tokens.css`.

@@ -57,7 +57,7 @@ export const BRAND_HERO_FILTERS: { id: BrandCategory | 'all'; label: string }[] 
   { id: 'made-in-italy', label: 'Made in Italy' },
 ]
 
-/** Brand a catalogo Odoo (facet live). `defaultProductCount` = snapshot di riferimento. */
+/** Brand a catalogo (facet live). `defaultProductCount` = snapshot di riferimento. */
 export const BRAND_META: BrandMeta[] = [
   {
     slug: 'artemide',
@@ -376,7 +376,7 @@ function categoriesFromWorlds(
   return out
 }
 
-/** Categorie area da Odoo (`worlds`); i tag editoriali restano da `BRAND_META`. */
+/** Categorie area da `worlds`; i tag editoriali restano da `BRAND_META`. */
 export function resolveBrandCategories(
   hub?: Pick<BrandListItemDTO, 'worlds'>,
   meta?: Pick<BrandMeta, 'categories'>,
@@ -522,8 +522,8 @@ export function resolveHomeBrandCards(
 }
 
 /**
- * Directory `/brand`: tutti i brand da Odoo (hub), arricchiti con meta editoriale
- * se presente. Nessun brand inventato dal CMS: senza Odoo non compare.
+ * Directory `/brand`: tutti i brand dell’hub, arricchiti con meta editoriale
+ * se presente. Nessun brand inventato dal CMS.
  */
 export function mergeBrandCards(hubBrands: BrandListItemDTO[]): BrandCard[] {
   return hubBrands

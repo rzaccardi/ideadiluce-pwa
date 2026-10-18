@@ -1,4 +1,4 @@
-# Brief Lottie — Transizione navigazione IdeaDiLuce
+# Brief Lottie: Transizione navigazione IdeaDiLuce
 
 **Per:** motion designer / illustratore  
 **Progetto:** PWA e-commerce IdeaDiLuce  

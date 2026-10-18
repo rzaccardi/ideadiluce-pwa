@@ -43,7 +43,7 @@ async function main() {
 
   await prisma.pwaOrder.delete({ where: { id } })
   await prisma.cart.delete({ where: { id: cartId } })
-  console.log('OK — ordine test rimosso')
+  console.log('OK: ordine test rimosso')
 }
 
 main()

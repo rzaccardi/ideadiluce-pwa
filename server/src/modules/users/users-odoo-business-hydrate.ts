@@ -76,7 +76,7 @@ export async function hydrateUserBusinessFromOdoo(
           data: { odooPartnerId: account.commercialPartnerId },
         })
       } catch {
-        /* unique constraint se un altro user ha già quel partner — leave map */
+        /* unique constraint se un altro user ha già quel partner: leave map */
       }
     }
 

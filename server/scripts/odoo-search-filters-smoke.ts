@@ -85,7 +85,7 @@ async function main() {
   assert(fg.total_matching === s.total, `incoerenza total: search=${s.total} filters=${fg.total_matching}`)
   console.log(`  ✓ total_matching (${fg.total_matching}) == search.total (${s.total})`)
 
-  console.log('\nOK — search + filters Odoo v2 rispondono correttamente')
+  console.log('\nOK: search + filters Odoo v2 rispondono correttamente')
 }
 
 main().catch((e) => {

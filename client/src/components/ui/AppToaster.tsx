@@ -2,7 +2,7 @@
 
 import { Toaster } from 'sonner'
 
-/** Toast globali storefront — alto a destra, stile IdeaDiLuce. */
+/** Toast globali storefront: alto a destra, stile IdeaDiLuce. */
 export function AppToaster() {
   return (
     <Toaster

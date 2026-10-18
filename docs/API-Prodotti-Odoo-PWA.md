@@ -1,7 +1,7 @@
 # API Prodotti Odoo → PWA (v2)
 
 Contratto definitivo dell'API headless prodotti esposta da Odoo.
-Aggiornato al 2026-07-20 — include le estensioni recenti: **specifiche tecniche, media gallery con tag funzionali, video, documenti PDF, 6 lingue**.
+Aggiornato al 2026-07-20: include le estensioni recenti: **specifiche tecniche, media gallery con tag funzionali, video, documenti PDF, 6 lingue**.
 
 ---
 
@@ -26,7 +26,7 @@ Un valore non ammesso fa fallback silenzioso su `it_IT`. **Tutti i campi testual
 
 ---
 
-## 2. `GET /api/v2/products` — lista paginata
+## 2. `GET /api/v2/products`: lista paginata
 
 ```
 GET /api/v2/products?website=2&lang=it_IT&page=1&per_page=100
@@ -35,7 +35,7 @@ Authorization: Bearer <API_KEY>
 
 | Param | Tipo | Default | Note |
 |---|---|---|---|
-| `website` | int | — | obbligatorio, per la PWA = `2` |
+| `website` | int | - | obbligatorio, per la PWA = `2` |
 | `lang` | string | `it_IT` | vedi lingue sopra |
 | `page` | int | `1` | 1-based |
 | `per_page` | int | `24` | max `100` |
@@ -77,7 +77,7 @@ Per ricerca, filtri e facet usa gli endpoint dedicati **§6 `/api/v2/products/se
 
 ---
 
-## 3. `GET /api/v2/product/<id>` — dettaglio
+## 3. `GET /api/v2/product/<id>`: dettaglio
 
 ```
 GET /api/v2/product/6673?website=2&lang=it_IT
@@ -151,7 +151,7 @@ Risposta (campi del summary **più** i seguenti):
 }
 ```
 
-### 3.1 `gallery[]` — media con tag funzionali
+### 3.1 `gallery[]`: media con tag funzionali
 
 Ogni elemento:
 
@@ -167,7 +167,7 @@ Ogni elemento:
 - L'ordine dell'array è l'ordine editoriale deciso in backoffice: rispettalo.
 - Le immagini legate a una **variante specifica** NON compaiono qui: sono in `variants[i].image` (niente duplicati da filtrare).
 
-### 3.2 `specs[]` — specifiche tecniche
+### 3.2 `specs[]`: specifiche tecniche
 
 - `specs` a livello prodotto = specifiche comuni a tutte le varianti.
 - `variants[i].specs` = **merge effettivo** template + override della variante, già calcolato server-side. Quando l'utente seleziona una variante, mostra `variants[i].specs` così com'è: **nessun merge lato frontend**.
@@ -186,7 +186,7 @@ Se ti serve solo la visualizzazione, ignora `value` e usa direttamente `display`
 ### 3.3 `variants[]`
 
 - Sempre presente, anche per prodotti mono-variante (array con 1 elemento).
-- `ced`: codice univoco TLB a 6 cifre, copertura 100% — è l'identificatore variante di riferimento (per carrello, deep-link documenti, ecc.).
+- `ced`: codice univoco TLB a 6 cifre, copertura 100%: è l'identificatore variante di riferimento (per carrello, deep-link documenti, ecc.).
 - `manufacturer_code`: MPN/EAN del produttore, può essere `null`.
 - `attributes[]`: coppie label/value tradotte (es. Colore luce → Bianco freddo) per costruire i selettori variante. Per attributi colore/finitura includere `html_color` (hex da `product.attribute.value.html_color`) così i pallini swatch usano il RGB reale.
 - `lst_price`: prezzo della variante inclusi gli extra degli attributi.
@@ -198,7 +198,7 @@ Se ti serve solo la visualizzazione, ignora `value` e usa direttamente `display`
 | `type` | `datasheet` · `scheda_ue` (scheda prodotto UE/EPREL) · `ce` (dichiarazione CE) · `istruzioni` |
 | `url` | download diretto, relativo al base URL |
 
-In più esiste un **URL pubblico stabile per tipo** (senza auth, ottimo per link SEO/statici — fa 302 sull'ultima versione del documento):
+In più esiste un **URL pubblico stabile per tipo** (senza auth, ottimo per link SEO/statici: fa 302 sull'ultima versione del documento):
 
 ```
 GET /product-docs/<ced>/<tipo>/current
@@ -207,7 +207,7 @@ es. https://tlbdb.odoo.com/product-docs/102261/datasheet/current
 
 Se il documento non esiste → `404`.
 
-### 3.5 `related_products[]` — accessori, related ed equivalenti di marca
+### 3.5 `related_products[]`: accessori, related ed equivalenti di marca
 
 Array opzionale sul dettaglio. La PWA **non inventa matching**: se manca o è vuoto, le sezioni correlate restano nascoste.
 
@@ -216,7 +216,7 @@ Array opzionale sul dettaglio. La PWA **non inventa matching**: se manca o è vu
 | `alternative` | **`alternative_product_ids`** | Sinonimi / equivalenti: stesso attacco e specifiche, **marca diversa**. PDP tecnica: «Stesso prodotto, altre marche». |
 | `accessory` | `accessory_product_ids` | Accessori (task separato). |
 | `optional` | `optional_product_ids` | Optional / upsell, mappato come accessorio. |
-| `related` | related generici | «Ti potrebbe interessare» — **non** usato come equivalente. |
+| `related` | related generici | «Ti potrebbe interessare»: **non** usato come equivalente. |
 
 Alias accettati per gli equivalenti: `equivalent`, `equivalente`, `synonym`, `sinonimo`, `oem`, `cross_reference`.
 
@@ -240,7 +240,7 @@ Campi attesi per ogni item (oltre a `relation`):
 
 ---
 
-## 4. Immagini — dimensioni
+## 4. Immagini: dimensioni
 
 Gli URL immagine sono relativi: prefissa il base URL. Il campo finale dell'URL è la size; puoi sostituirlo liberamente con:
 
@@ -264,7 +264,7 @@ Nota: un prodotto de-pubblicato dal backoffice sparisce sia dalla lista sia dal 
 
 ---
 
-## 6. `GET /api/v2/products/search` — listing filtrato ★ NUOVO
+## 6. `GET /api/v2/products/search`: listing filtrato ★ NUOVO
 
 Stessa auth e parametri base (`website`, `lang`) del resto della v2.
 
@@ -277,17 +277,17 @@ GET /api/v2/products/search?website=2&lang=it_IT&category=tecnico&attacco=G4&wat
 | Param | Tipo | Note |
 |---|---|---|
 | `q` | string | full-text su titolo, slug, descrizioni, CED/MPN/EAN, brand, categorie, tag, specs |
-| `world` | `design` \| `technical` | equivalente a `category=arredo`/`tecnico` — mantenuto per compatibilità, la PWA può ignorarlo |
-| `category` | slug \| csv | matcha **qualsiasi nodo** del percorso categoria del prodotto (es. `fluorescente`, `led`, `tecnico`) — OR |
+| `world` | `design` \| `technical` | equivalente a `category=arredo`/`tecnico`: mantenuto per compatibilità, la PWA può ignorarlo |
+| `category` | slug \| csv | matcha **qualsiasi nodo** del percorso categoria del prodotto (es. `fluorescente`, `led`, `tecnico`): OR |
 | `subcategory` | slug \| csv | come `category`; i due param sono in AND: `category=ballast&subcategory=fluorescente` |
-| `tipologia` | slug \| csv | 1° livello Arredo (`sospensione`, `parete`, `tavolo`…) — OR |
-| `ambiente` | slug \| csv | slug stanze (vedi note §7 R1) — OR; multiplo per prodotto |
-| `stile` | slug \| csv | da spec `style` (Arredo) — OR |
-| `brand` | slug \| csv | es. `osram,tlb` — OR |
-| `attacco` | string \| csv | da spec `socket_type`, case-insensitive (`G4`, `e27`, `GU5.3`) — OR |
-| `wattaggio` | number \| csv | match esatto W (copre anche i set discreti e i range dei driver) — OR |
+| `tipologia` | slug \| csv | 1° livello Arredo (`sospensione`, `parete`, `tavolo`…): OR |
+| `ambiente` | slug \| csv | slug stanze (vedi note §7 R1): OR; multiplo per prodotto |
+| `stile` | slug \| csv | da spec `style` (Arredo): OR |
+| `brand` | slug \| csv | es. `osram,tlb`: OR |
+| `attacco` | string \| csv | da spec `socket_type`, case-insensitive (`G4`, `e27`, `GU5.3`): OR |
+| `wattaggio` | number \| csv | match esatto W (copre anche i set discreti e i range dei driver): OR |
 | `wattaggio_min` / `wattaggio_max` | number | range W (overlap con i range dei driver universali) |
-| `color_temp` | string \| csv | `3000K` o `3000` — OR |
+| `color_temp` | string \| csv | `3000K` o `3000`: OR |
 | `tag` | slug \| csv | **AND** tra tag (`t5,dimmerabile` = entrambi presenti) |
 | `sort` | enum | `relevance` (default) \| `price_asc` \| `price_desc` \| `name_asc` |
 | `page` / `per_page` | int | come §2, max 100 |
@@ -303,7 +303,7 @@ Risposta: stesso shape di §2 (card leggere) più `sort` e `applied_filters` (ec
 
 ---
 
-## 7. `GET /api/v2/filters` — facet aggregate ★ NUOVO
+## 7. `GET /api/v2/filters`: facet aggregate ★ NUOVO
 
 Accetta **gli stessi filtri della search** (senza `page`/`per_page`/`sort`). I conteggi sono calcolati **sul set già filtrato**: con `attacco=G4`, i `wattaggi`/`brands`/… contano solo prodotti G4. `total_matching` coincide sempre con `total` della search a parità di filtri: le due chiamate condividono la stessa pipeline server-side, la coerenza è strutturale.
 
@@ -346,7 +346,7 @@ Risposta:
 
 - **Slug categorie reali**: albero con root `tecnico` / `arredo` e figli tipo `fluorescente`, `led`, `alogene`, `ballast`, `driver`, `scarica`… (non `illuminazione-tecnica`/`lampadine`). Gli slug sono stabili (derivati dal nome IT), le `name` tornano tradotte nella `lang` richiesta.
 - **Specs facetabili** (9 chiavi): `socket_type`, `wattage`, `color_temperature_k`, `source_technology`, `energy_class`, `dimmable`, `bulb_shape`, `ip_rating`, `light_color`. `attacchi`/`wattaggi`/`color_temps` sono scorciatoie delle prime tre.
-- **`ambiente`** ★ R1: dimensione modellata con slug stabili `soggiorno` · `cucina` · `bagno` · `camera` · `studio` · `esterno`, assegnazione multipla per prodotto, `name` tradotta nella `lang` richiesta. Facet `ambienti[{value,label,count}]`, filtro `ambiente=<slug|csv>` (OR) e `taxonomy.ambiente[]` sul dettaglio sono attivi. Il popolamento parte dal catalogo Arredo: sui tecnici attuali la copertura sarà limitata — le facet mostrano solo ambienti con `count > 0`, quindi la UI può renderizzare direttamente ciò che arriva.
+- **`ambiente`** ★ R1: dimensione modellata con slug stabili `soggiorno` · `cucina` · `bagno` · `camera` · `studio` · `esterno`, assegnazione multipla per prodotto, `name` tradotta nella `lang` richiesta. Facet `ambienti[{value,label,count}]`, filtro `ambiente=<slug|csv>` (OR) e `taxonomy.ambiente[]` sul dettaglio sono attivi. Il popolamento parte dal catalogo Arredo: sui tecnici attuali la copertura sarà limitata: le facet mostrano solo ambienti con `count > 0`, quindi la UI può renderizzare direttamente ciò che arriva.
 - **Label kelvin**: `"3000 K"` (con spazio); in query accettiamo sia `3000K` che `3000`.
 - **Freshness**: l'indice di ricerca server-side si aggiorna da solo a ogni modifica del catalogo. La cache locale PWA resta solo per il typeahead, come da vostro §4.
 

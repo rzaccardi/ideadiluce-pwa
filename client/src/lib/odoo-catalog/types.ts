@@ -1,4 +1,4 @@
-/** Tipi payload OdooCatalog API v2 (tlb_idl_ecommerce) — contratto 2026-07-20. */
+/** Tipi payload OdooCatalog API v2 (tlb_idl_ecommerce): contratto 2026-07-20. */
 
 export type OdooCatalogImage = {
   url: string
@@ -99,7 +99,7 @@ export type OdooCatalogDimensions = {
 /**
  * Relazioni sul dettaglio prodotto (`GET /api/v2/product/<id>`).
  *
- * Campo Odoo website_sale → `relation`:
+ * Campo website_sale → `relation`:
  * - `alternative_product_ids` → `alternative` (sinonimi / equivalenti di marca)
  * - `accessory_product_ids` → `accessory`
  * - `optional_product_ids` → `optional` (accessori/optional, non equivalenti)
@@ -171,9 +171,9 @@ export type OdooCatalogVariant = {
   manufacturer_code: string | null
   attributes: OdooCatalogVariantAttribute[]
   /**
-   * Prezzo pieno (barrato se `price` < `list_price`).
-   * `lst_price` resta alias di compatibilità (= list_price).
-   */
+ * Prezzo pieno (barrato se `price` < `list_price`).
+ * `lst_price` resta alias di compatibilità (= list_price).
+ */
   list_price?: number
   /** Prezzo effettivo pubblico (prima di customer prices). */
   price?: number
@@ -211,7 +211,7 @@ export type OdooCatalogProductListItem = {
   discount_pct_max?: number
   currency: string
   image: OdooCatalogImage
-  /** Sul dettaglio è sempre presente; in lista solo se Odoo la espone. */
+  /** Sul dettaglio è sempre presente; in lista solo se la espone. */
   gallery?: OdooCatalogGalleryItem[]
   hover_image?: OdooCatalogImage
   image_ambiente?: OdooCatalogImage
@@ -230,7 +230,7 @@ export type OdooCatalogProductListItem = {
   ean?: string | null
   /** `product.template.attribute_line` con `html_color` e `variant_ids`. */
   attribute_lines?: OdooCatalogAttributeLine[]
-  /** @deprecated Non più nel contratto v2 — solo compat lettura legacy. */
+  /** @deprecated Non più nel contratto v2: solo compat lettura legacy. */
   default_code?: string | null
 }
 

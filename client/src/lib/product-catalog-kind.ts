@@ -25,7 +25,7 @@ const CATALOG_KIND_CATEGORY: Record<
   },
 }
 
-/** Allineato a `catalogWorldOfCategorySlug` — senza import circolare da catalog-filters. */
+/** Allineato a `catalogWorldOfCategorySlug`: senza import circolare da catalog-filters. */
 const DESIGN_CATEGORY_RE = /arredo|design|decorativ/i
 const TECHNICAL_CATEGORY_RE =
   /tecnica|tecnici|tecnico|ricambi|lampadine|componenti|driver|alimentator/i
@@ -61,7 +61,7 @@ function kindFromTechnicalNameSignal(text: string): ProductCatalogKind | null {
 
 /**
  * Sceglie il layout card (arredo senza Aggiungi vs tecnica con Aggiungi).
- * Default: design — meglio omettere Aggiungi su un dubbio arredo che mostrarlo per errore.
+ * Default: design: meglio omettere Aggiungi su un dubbio arredo che mostrarlo per errore.
  */
 export function resolveProductCardCatalogKind(product: ProductCardDTO): ProductCatalogKind {
   const slugOverride = PRODUCT_CATALOG_KIND_BY_SLUG[product.slug]

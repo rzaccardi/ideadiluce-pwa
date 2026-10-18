@@ -14,7 +14,7 @@ function urlsMatch(a: string | null | undefined, b: string | null | undefined) {
 describe('pickProductCardHoverImageUrl', () => {
   const packshot = 'https://cdn.example/web/image/product.template/1/image_512'
 
-  it('preferisce il tag Odoo accesa al posto di ambiente', () => {
+  it('preferisce il tag accesa al posto di ambiente', () => {
     expect(
       pickProductCardHoverImageUrl(
         [
@@ -42,7 +42,7 @@ describe('pickProductCardHoverImageUrl', () => {
     ).toBe('https://cdn.example/accesa.jpg')
   })
 
-  it('se manca accesa preferisce il tag Odoo ambiente', () => {
+  it('se manca accesa preferisce il tag ambiente', () => {
     expect(
       pickProductCardHoverImageUrl(
         [

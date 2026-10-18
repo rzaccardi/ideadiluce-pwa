@@ -26,7 +26,7 @@ function pageVariants(
   }
 }
 
-/** Editorial: fade breve — home e pagine istituzionali. */
+/** Editorial: fade breve: home e pagine istituzionali. */
 const editorialVariants = pageVariants(
   { opacity: 0, y: 8 },
   { opacity: 0 },
@@ -34,7 +34,7 @@ const editorialVariants = pageVariants(
   0.1,
 )
 
-/** Catalogo: rapido e leggero — navigazione frequente tra liste e filtri. */
+/** Catalogo: rapido e leggero: navigazione frequente tra liste e filtri. */
 const catalogVariants = pageVariants(
   { opacity: 0, y: 6 },
   { opacity: 0 },
@@ -42,7 +42,7 @@ const catalogVariants = pageVariants(
   0.08,
 )
 
-/** Prodotto: sottile profondità — focus sul contenuto. */
+/** Prodotto: sottile profondità: focus sul contenuto. */
 const productVariants: Variants = {
   initial: { opacity: 0, y: 6, scale: 0.995 },
   animate: {

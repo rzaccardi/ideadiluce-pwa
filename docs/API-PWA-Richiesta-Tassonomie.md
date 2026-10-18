@@ -1,4 +1,4 @@
-# Richiesta contratto API — tassonomie search & filters (PWA → Odoo)
+# Richiesta contratto API: tassonomie search & filters (PWA → Odoo)
 
 Addendum al contratto [`API-Prodotti-Odoo-PWA`](./API-Prodotti-Odoo-PWA.md) (§6–§7).  
 Data richiesta: **2026-07-20** · Risposta BE: **2026-07-20** · Smoke PWA: **2026-07-21** · Website: `website=2`
@@ -21,7 +21,7 @@ Data richiesta: **2026-07-20** · Risposta BE: **2026-07-20** · Smoke PWA: **20
 | Dimensione | Stato contratto | Smoke live 2026-07-21 | Azione PWA |
 |---|---|---|---|
 | Categoria | OK | OK | root `tecnico` / `arredo` |
-| Brand / Attacco | OK | OK | — |
+| Brand / Attacco | OK | OK | - |
 | Ambiente (R1) | modellato + attivo | **facet/search ancora 0** | wiring fatto; attesa popolamento dati |
 | Tipologia (R2) | param OK | **OK** (`tavolo` → 1) | `/tipologia/*` + facet |
 | Stile (R2) | param OK | **OK** (`design` → 1) | `/stile/*` + facet |
@@ -30,7 +30,7 @@ Smoke: `cd server && npx tsx scripts/odoo-taxonomy-smoke.ts`
 
 ---
 
-## 3. R1 — `ambiente` · contratto OK, dati pending
+## 3. R1: `ambiente` · contratto OK, dati pending
 
 Slug: `soggiorno` · `cucina` · `bagno` · `camera` · `studio` · `esterno`  
 Facet: `ambienti[{value,label,count}]` · search `ambiente=` · `taxonomy.ambiente[]`
@@ -45,7 +45,7 @@ Facet: `ambienti[{value,label,count}]` · search `ambiente=` · `taxonomy.ambien
 
 ---
 
-## 4. R2 — `tipologia` / `stile` · live minimale OK
+## 4. R2: `tipologia` / `stile` · live minimale OK
 
 Con `category=arredo` le facet e la search rispondono (catalogo Arredo ancora scarso).
 

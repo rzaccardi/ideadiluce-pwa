@@ -66,7 +66,7 @@ function messagesFor(locale: PwaLocale): Record<MessageKey, string> {
   return localeCache.get(locale) ?? IT
 }
 
-/** @deprecated Usare MAP solo se necessario; preferire preloadLocale + t(). */
+/** @deprecated Usare MAP solo se necessario; preferire preloadLocale + t. */
 export const MAP: Record<PwaLocale, Record<MessageKey, string>> = {
   get IT() {
     return messagesFor('IT')

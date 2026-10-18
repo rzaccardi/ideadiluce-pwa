@@ -7,13 +7,12 @@ import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { cartStore } from '@/features/cart'
 import { checkoutStore } from '@/features/checkout'
 import { useLocalePath } from '@/hooks/use-locale-path'
-import type { CartDTO, CartItemDTO, FreeShippingHintDTO, ProductCardDTO, ShippingQuoteDTO, TaxBreakdownDTO } from '@/types/dto'
+import type { CartDTO, CartItemDTO, FreeShippingHintDTO, ShippingQuoteDTO, TaxBreakdownDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
 import { cartSubtotalCents, cartTaxCents, cartTotalCents } from '@/lib/cartTotals'
 import { isDev } from '@/lib/env'
 import { cn } from '@/utils/cn'
 import { BrandWordmark } from '@/components/site/primitives'
-import { CheckoutCrossSellSection } from '@/components/checkout/CheckoutCrossSellSection'
 import { CheckoutTrustSignals } from '@/components/checkout/stripe-ui/CheckoutTrustSignals'
 import { CheckoutLegalLinks } from '@/components/checkout/stripe-ui/CheckoutLegalLinks'
 import {
@@ -48,9 +47,6 @@ type Props = {
   revealGrandTotal?: boolean
   onRemoveItem?: (itemId: string) => void
   removeDisabled?: boolean
-  recommendations?: ReadonlyArray<ProductCardDTO>
-  recommendationsLoading?: boolean
-  onCrossSellAdded?: () => void
 }
 
 const summaryThemeClasses = {
@@ -84,9 +80,6 @@ function SummaryContent({
   theme = 'light',
   onRemoveItem,
   removeDisabled = false,
-  recommendations = [],
-  recommendationsLoading = false,
-  onCrossSellAdded,
   revealGrandTotal = false,
 }: Omit<Props, 'mobileOnly'> & { theme?: SummaryTheme; revealGrandTotal?: boolean }) {
   const { t } = useI18n()
@@ -160,13 +153,6 @@ function SummaryContent({
         ))}
       </div>
 
-      <CheckoutCrossSellSection
-        products={recommendations}
-        isLoading={recommendationsLoading}
-        theme={theme}
-        onAdded={onCrossSellAdded}
-      />
-
       <dl className={cn('mt-6 space-y-2.5 border-t pt-5 text-sm', tTheme.border)}>
         <div className={cn('flex justify-between', tTheme.row)}>
           <dt>{t('checkout.summary.subtotal')}</dt>
@@ -220,9 +206,6 @@ export function CheckoutOrderSummary({
   revealGrandTotal = false,
   onRemoveItem,
   removeDisabled,
-  recommendations = [],
-  recommendationsLoading = false,
-  onCrossSellAdded,
 }: Props) {
   const { t, tParams } = useI18n()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -279,9 +262,6 @@ export function CheckoutOrderSummary({
                     revealGrandTotal={revealGrandTotal}
                     onRemoveItem={onRemoveItem}
                     removeDisabled={removeDisabled}
-                    recommendations={recommendations}
-                    recommendationsLoading={recommendationsLoading}
-                    onCrossSellAdded={onCrossSellAdded}
                   />
                 </div>
               </div>
@@ -312,9 +292,6 @@ export function CheckoutOrderSummary({
             revealGrandTotal={revealGrandTotal}
             onRemoveItem={onRemoveItem}
             removeDisabled={removeDisabled}
-            recommendations={recommendations}
-            recommendationsLoading={recommendationsLoading}
-            onCrossSellAdded={onCrossSellAdded}
           />
         </div>
         <CheckoutSummaryFooter theme="dark" cartItems={cart.items} />

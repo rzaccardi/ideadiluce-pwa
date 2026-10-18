@@ -5,12 +5,11 @@ import { publicAppUrl } from '../../lib/mail.js'
 import { sendPwaMail } from '../../adapters/odoo/odooMailAdapter.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { escapeMailHtml } from '../../adapters/odoo/odoo-mail.templates.js'
-import { parseBankTransferInstructionsJson } from '../payments/bankTransferInstructions.js'
 import { finalizeGuestAccountForOrder } from '../auth/guest-account.service.js'
 import { formatDisplayOrderNumber } from './order-display-number.js'
 import { accountOrderPublicId } from './orders-account-id.js'
 
-type MailFlag = 'orderConfirmation' | 'bankTransfer' | 'shipment' | 'abandoned'
+type MailFlag = 'orderConfirmation' | 'shipment' | 'abandoned'
 
 type OrderMailMeta = {
   pwaMail?: Partial<Record<`${MailFlag}SentAt`, string>>
@@ -95,41 +94,6 @@ export const orderTransactionalMail = {
       await markSent(order.id, 'orderConfirmation')
     } catch (e) {
       logger.warn('order_mail.confirmation_failed', {
-        orderId: order.id,
-        error: e instanceof Error ? e.message : String(e),
-      })
-    }
-  },
-
-  async sendBankTransferInstructions(order: PwaOrder, correlationId: string): Promise<void> {
-    if (alreadySent(order, 'bankTransfer')) return
-    const payment = await prisma.pwaPayment.findFirst({
-      where: { orderId: order.id, method: 'BANK_TRANSFER' },
-      orderBy: { createdAt: 'desc' },
-    })
-    const instructions = parseBankTransferInstructionsJson(payment?.instructionsJson)
-    if (!instructions) return
-    try {
-      await sendPwaMail(mailCtx(correlationId), {
-        templateKey: 'bank_transfer_pending',
-        emailTo: order.email,
-        vars: {
-          first_name_suffix: firstNameSuffix(order.shippingAddressJson),
-          order_number: formatDisplayOrderNumber(order),
-          holder: instructions.holder,
-          iban: instructions.iban,
-          bank_name_html: instructions.bankName
-            ? `<br/>Banca: ${escapeMailHtml(instructions.bankName)}`
-            : '',
-          reference: instructions.reference,
-          amount: formatAmount(instructions.amount, instructions.currencyCode),
-          note: instructions.note,
-          order_url: orderUrl(order),
-        },
-      })
-      await markSent(order.id, 'bankTransfer')
-    } catch (e) {
-      logger.warn('order_mail.bank_transfer_failed', {
         orderId: order.id,
         error: e instanceof Error ? e.message : String(e),
       })

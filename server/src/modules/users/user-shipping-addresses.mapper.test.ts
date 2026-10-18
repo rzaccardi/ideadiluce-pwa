@@ -125,7 +125,7 @@ describe('mergeShippingAddressList', () => {
           odooPartnerId: 100,
           kind: 'parent',
           label: 'Nuovo Utente',
-          profile: profile({ firstName: 'Nuovo', lastName: 'Utente', line1: '-', city: '', postalCode: '' }),
+          profile: profile({ firstName: 'Nuovo', lastName: 'Utente', line1: '/', city: '', postalCode: '' }),
         },
       ],
       local: {

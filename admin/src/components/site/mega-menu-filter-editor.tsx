@@ -251,7 +251,7 @@ export function MegaMenuFilterEditor({ menuId, panel, draftsByLocale, onLocaleCh
                 >
                   <div className="min-w-0 flex-1 space-y-0.5">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium text-gray-900">{link.label || '—'}</span>
+                      <span className="font-medium text-gray-900">{link.label || '-'}</span>
                       {pinned && link.filterKind ? (
                         <Badge variant="secondary">{filterKindLabel(link.filterKind)}</Badge>
                       ) : (

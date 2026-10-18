@@ -29,11 +29,19 @@ export function odooPartnerStreet(row: Pick<OdooPartnerAddressRow, 'street'>): s
   return asTrimmed(row.street)
 }
 
-/** Via fisica utilizzabile: esclude vuoto e placeholder tipo "-" da mapping legacy. */
+/** Solo punteggiatura, trattini o slash: in Odoo spesso sostituiscono una via assente. */
+const PLACEHOLDER_STREET =
+  /^(?:[-–—−‐‑_/\\|.,·•]+|n\/?a|n\.?d\.?|s\.?n\.?c\.?|null|false|undefined|none|vuoto|test|xxx+)$/i
+
+/** Via fisica utilizzabile: esclude vuoto e placeholder (\"-\", \"/\") da mapping legacy. */
 export function isUsableShippingStreet(line1: string | null | undefined): boolean {
-  const value = (line1 ?? '').trim()
+  const value = (line1 ?? '')
+    .normalize('NFKC')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .trim()
   if (!value) return false
-  if (value === '-' || value === '—' || value === '–') return false
+  if (PLACEHOLDER_STREET.test(value)) return false
+  if (!/\p{L}/u.test(value)) return false
   return true
 }
 
@@ -44,12 +52,29 @@ export function normalizeOdooPartnerType(type: unknown): OdooPartnerType {
   return 'contact'
 }
 
-/** Child usati come destinazione: delivery/contact/other con via fisica. Esclude invoice, private e stub senza street. */
+function rowHasLocality(row: Pick<OdooPartnerAddressRow, 'city' | 'zip'>): boolean {
+  return Boolean(asTrimmed(row.city) || asTrimmed(row.zip))
+}
+
+/** Via fisica più città o CAP. Esclude stub Odoo (nome senza destinazione). */
+export function isUsableOdooAddressRow(row: OdooPartnerAddressRow): boolean {
+  return isUsableShippingStreet(odooPartnerStreet(row)) && rowHasLocality(row)
+}
+
+/** Child usati come destinazione: delivery/contact/other con via e città o CAP. Esclude invoice, private e stub vuoti. */
 export function isOdooChildShippingDestination(row: OdooPartnerAddressRow): boolean {
   const type = normalizeOdooPartnerType(row.type)
-  const street = odooPartnerStreet(row)
   if (type === 'invoice' || type === 'private') return false
-  return isUsableShippingStreet(street)
+  return isUsableOdooAddressRow(row)
+}
+
+export function isUsableShippingProfile(profile: {
+  line1?: string | null
+  city?: string | null
+  postalCode?: string | null
+} | null | undefined): boolean {
+  if (!isUsableShippingStreet(profile?.line1)) return false
+  return Boolean(profile?.city?.trim() || profile?.postalCode?.trim())
 }
 
 export function odooShippingDestinationKind(row: OdooPartnerAddressRow): OdooShippingDestinationKind {

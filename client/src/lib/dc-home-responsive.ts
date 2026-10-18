@@ -1,4 +1,4 @@
-/** Responsive home layout — allinea il template desktop al mock mobile via CSS. */
+/** Responsive home layout: allinea il template desktop al mock mobile via CSS. */
 export const DC_HOME_RESPONSIVE_CSS = `
 [data-dc-static-root][data-dc-home] {
   --dc-home-chrome-top: 52px;

@@ -5,7 +5,7 @@ import type { PwaLocale } from '@/lib/locale'
 import { parseLocaleParam } from '@/lib/locale'
 import type { ProductCardDTO } from '@/types/dto'
 
-/** Solo ref espliciti — non interpretare suffissi numerici di slug URL come template id. */
+/** Solo ref espliciti: non interpretare suffissi numerici di slug URL come template id. */
 function parseProductRefToId(ref: string): number | null {
   const trimmed = ref.trim()
   if (/^\d+$/.test(trimmed)) {

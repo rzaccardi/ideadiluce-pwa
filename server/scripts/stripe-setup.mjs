@@ -19,10 +19,10 @@ const pk =
 const enabled = String(process.env.STRIPE_ENABLED ?? '').toLowerCase() === 'true'
 const webhook = process.env.STRIPE_WEBHOOK_SECRET?.trim()
 
-console.log('Stripe setup — Idea di Luce PWA\n')
+console.log('Stripe setup: Idea di Luce PWA\n')
 
 if (!enabled) {
-  console.log('✗ STRIPE_ENABLED=false — imposta STRIPE_ENABLED=true nel .env root')
+  console.log('✗ STRIPE_ENABLED=false: imposta STRIPE_ENABLED=true nel .env root')
 } else {
   console.log('✓ STRIPE_ENABLED=true')
 }
@@ -35,7 +35,7 @@ if (!sk) {
   })
   if (res.ok) {
     const acct = await res.json()
-    console.log(`✓ STRIPE_SECRET_KEY valida (account: ${acct.id}, ${acct.business_profile?.name ?? '—'})`)
+    console.log(`✓ STRIPE_SECRET_KEY valida (account: ${acct.id}, ${acct.business_profile?.name ?? '-'})`)
     if (!pk) {
       console.log(
         `\n⚠ Chiave pubblica mancante. Copia pk_test_… da:\n  https://dashboard.stripe.com/${acct.id}/test/apikeys\n` +
@@ -70,7 +70,7 @@ if (webhook) {
       `  stripe listen --forward-to localhost:4000/api/v1/payments/webhook/stripe --api-key ${sk.slice(0, 20)}…`,
     )
   } else {
-    console.log('  (stripe CLI non disponibile o errore — installa stripe CLI)')
+    console.log('  (stripe CLI non disponibile o errore: installa stripe CLI)')
   }
 }
 

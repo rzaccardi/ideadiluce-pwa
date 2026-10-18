@@ -16,9 +16,9 @@ export function removeTablesFromHtml(html: string): string {
 
 export type SplitProductDescription = {
   descriptionHtml: string | null
-  /** Tabella compatta (es. Informazioni aggiuntive) — prima tabella se piccola. */
+  /** Tabella compatta (es. Informazioni aggiuntive): prima tabella se piccola. */
   additionalInfoTableHtml: string | null
-  /** Tabella tecnica principale — la più grande per righe. */
+  /** Tabella tecnica principale: la più grande per righe. */
   specsTableHtml: string | null
 }
 

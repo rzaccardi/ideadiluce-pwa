@@ -24,7 +24,7 @@ function isOptimizableRemote(src: string) {
   return ODOO_IMAGE_PATTERN.test(src)
 }
 
-/** Immagini locali e Odoo via next/image; altri URL esterni via img nativo. */
+/** Immagini locali e via next/image; altri URL esterni via img nativo. */
 export function SiteImage({
   src,
   alt = '',

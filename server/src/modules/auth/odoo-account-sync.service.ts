@@ -55,7 +55,7 @@ export function assertOdooAuthReadyForIdentity(): void {
 export async function persistOdooCustomerMap(params: {
   email: string
   odooPartnerId: number
-  /** @deprecated Ignorato — la mappa è keyed da odooPartnerId. */
+  /** @deprecated Ignorato: la mappa è keyed da odooPartnerId. */
   userId?: string
 }) {
   const emailLower = normalizeEmail(params.email)

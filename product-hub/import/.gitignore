@@ -1,4 +1,4 @@
-# Dump DB produzione — non versionare
+# Dump DB produzione: non versionare
 *.sql
 *.sql.gz
 *.csv

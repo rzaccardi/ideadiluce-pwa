@@ -25,6 +25,20 @@ function withTrailingSlashVariants(
   }
 }
 
+/** Permalink del mega menu Arredo senza prodotti nelle facet. */
+const ARREDO_EMPTY_TAXONOMY_REDIRECTS = [
+  { source: '/tipologia/plafoniere', destination: '/tipologia/soffitto' },
+  { source: '/tipologia/plafoniera', destination: '/tipologia/soffitto' },
+  { source: '/tipologia/incasso', destination: '/illuminazione-arredo' },
+  { source: '/tipologia/faretti', destination: '/illuminazione-arredo' },
+  { source: '/tipologia/faretti-e-incassi', destination: '/illuminazione-arredo' },
+  { source: '/stile/moderno', destination: '/illuminazione-arredo' },
+  { source: '/stile/minimal', destination: '/illuminazione-arredo' },
+  { source: '/stile/decorativo', destination: '/illuminazione-arredo' },
+  { source: '/stile/industrial', destination: '/illuminazione-arredo' },
+  { source: '/stile/outdoor', destination: '/illuminazione-arredo' },
+]
+
 function buildSeoRedirects() {
   const rules: Array<{ source: string; destination: string; permanent: boolean }> = []
   const legacyPosts = [
@@ -43,6 +57,9 @@ function buildSeoRedirects() {
     for (const alias of SEO_CANONICAL_ALIAS_REDIRECTS) {
       withTrailingSlashVariants(rules, `${prefix}${alias.fromPath}`, `${prefix}${alias.toPath}`)
     }
+    for (const alias of ARREDO_EMPTY_TAXONOMY_REDIRECTS) {
+      withTrailingSlashVariants(rules, `${prefix}${alias.source}`, `${prefix}${alias.destination}`)
+    }
     withTrailingSlashVariants(rules, `${prefix}/showroom`, `${prefix}/contatti`)
   }
   return rules
@@ -54,7 +71,7 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['zod'],
   experimental: {
     optimizePackageImports: ['motion', 'framer-motion'],
-    // Dev proxy: add-to-cart può superare 30s (OdooCatalog + Odoo).
+    // Dev proxy: add-to-cart può superare 30s.
     proxyTimeout: 120_000,
   },
   eslint: {

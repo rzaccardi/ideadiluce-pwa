@@ -13,7 +13,7 @@ type Props = {
   immediate?: boolean
 }
 
-/** Entra in scena allo scroll — una sola volta per sezione */
+/** Entra in scena allo scroll: una sola volta per sezione */
 export function Reveal({ children, className, delay = 0, immediate = false }: Props) {
   const reduceMotion = useReducedMotion()
 

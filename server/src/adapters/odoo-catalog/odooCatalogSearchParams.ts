@@ -1,7 +1,7 @@
 /**
  * Parametri query per GET /api/v2/products/search e GET /api/v2/filters.
  * Alias slug storefront legacy → category Odoo v2 (tecnico/arredo).
- * Paradigma PWA: niente `world` in uscita — solo `category`.
+ * Paradigma PWA: niente `world` in uscita: solo `category`.
  */
 import type { OdooCatalogProductSearchSort } from './odooCatalog.types.js'
 

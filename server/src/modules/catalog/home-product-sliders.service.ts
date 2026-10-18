@@ -29,7 +29,7 @@ export { HOME_SLIDER_PRODUCT_COUNT } from './home-product-sliders.types.js'
 const LOOKBACK_DAYS = 90
 const SLIDER_LIMIT = HOME_SLIDER_PRODUCT_COUNT
 
-/** Slug taxonomy `ambiente` (contratto Odoo R1) — niente q= testuale. */
+/** Slug taxonomy `ambiente` (contratto Odoo R1): niente q= testuale. */
 const ROOM_AMBIENTE: Record<Extract<HomeProductSliderKey, `room-${string}`>, string> = {
   'room-soggiorno': 'soggiorno',
   'room-cucina': 'cucina',

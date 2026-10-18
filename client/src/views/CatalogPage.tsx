@@ -401,7 +401,7 @@ export function CatalogPage({
     authSnap.impersonation,
   ])
 
-  // Facet UI: solo world + q + locale (category/brand/attacco non vanno a Odoo filters).
+  // Facet UI: solo world + q + locale (category/brand/attacco non vanno a filters).
   useEffect(() => {
     void fetchCatalogFilters({
       q: effectiveQuery,

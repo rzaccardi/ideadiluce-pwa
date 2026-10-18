@@ -108,8 +108,11 @@ describe('shippingAddressFingerprint', () => {
 
 describe('isUsableShippingAddress', () => {
   it('rifiuta vuoto e placeholder', () => {
-    expect(isUsableShippingAddress({ line1: '' })).toBe(false)
-    expect(isUsableShippingAddress({ line1: '-' })).toBe(false)
-    expect(isUsableShippingAddress({ line1: 'Via Roma' })).toBe(true)
+    expect(isUsableShippingAddress({ line1: '', city: '', postalCode: '' })).toBe(false)
+    expect(isUsableShippingAddress({ line1: '-', city: 'Roma', postalCode: '00100' })).toBe(false)
+    expect(isUsableShippingAddress({ line1: '/', city: '', postalCode: '' })).toBe(false)
+    expect(isUsableShippingAddress({ line1: 'n/a', city: 'Roma', postalCode: '00100' })).toBe(false)
+    expect(isUsableShippingAddress({ line1: 'Via Roma', city: '', postalCode: '' })).toBe(false)
+    expect(isUsableShippingAddress({ line1: 'Via Roma', city: 'Roma', postalCode: '00100' })).toBe(true)
   })
 })

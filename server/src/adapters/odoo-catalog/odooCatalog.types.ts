@@ -1,4 +1,4 @@
-/** Tipi payload OdooCatalog API v2 (tlb_idl_ecommerce) — contratto 2026-07-20. */
+/** Tipi payload OdooCatalog API v2 (tlb_idl_ecommerce): contratto 2026-07-20. */
 
 export type OdooCatalogImage = {
   url: string
@@ -240,7 +240,7 @@ export type OdooCatalogProductListItem = {
   ean?: string | null
   /** `product.template.attribute_line` con `html_color` e `variant_ids`. */
   attribute_lines?: OdooCatalogAttributeLine[]
-  /** @deprecated Non più nel contratto v2 — solo compat lettura legacy. */
+  /** @deprecated Non più nel contratto v2: solo compat lettura legacy. */
   default_code?: string | null
 }
 

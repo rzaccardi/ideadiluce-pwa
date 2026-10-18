@@ -1,5 +1,5 @@
 /**
- * Task 2 — Guest quote flow (API integration).
+ * Task 2: Guest quote flow (API integration).
  * Uso: cd server && npx tsx scripts/guest-quote-flow-test.ts
  */
 import { config } from 'dotenv'
@@ -55,7 +55,7 @@ function unwrap(d: { data?: unknown } | unknown) {
 
 function check(name: string, ok: boolean, note?: string) {
   results.push({ name, ok, note })
-  console.log(ok ? '✓' : '✗', name, note ? `— ${note}` : '')
+  console.log(ok ? '✓' : '✗', name, note ? `- ${note}` : '')
 }
 
 async function findOrderableProduct(): Promise<{ slug: string; variantRef: string } | null> {

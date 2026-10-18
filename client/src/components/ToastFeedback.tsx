@@ -7,7 +7,7 @@ type Props = {
   message: string | null | undefined
 }
 
-/** Mostra un toast errore quando `message` cambia — niente banner inline. */
+/** Mostra un toast errore quando `message` cambia: niente banner inline. */
 export function ToastOnError({ message }: Props) {
   useEffect(() => {
     if (message) notify.error(message)

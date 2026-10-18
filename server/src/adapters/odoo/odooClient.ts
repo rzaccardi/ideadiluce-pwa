@@ -545,7 +545,7 @@ async function getAuthenticatedUid(ctx: OdooCallContext): Promise<number> {
   return uid
 }
 
-/** `common.version` — non richiede autenticazione. */
+/** `common.version`: non richiede autenticazione. */
 export async function odooXmlRpcVersion(ctx: OdooCallContext): Promise<unknown> {
   assertOdooConfigured()
   const operation = 'common/version'
@@ -672,7 +672,7 @@ export async function odooExecuteKw<T>(
   }
 }
 
-/** GET HTTP opzionale sulla stessa origine Odoo (es. `/doc`) — senza API key JSON-2. */
+/** GET HTTP opzionale sulla stessa origine Odoo (es. `/doc`): senza API key JSON-2. */
 export async function odooHttpGetSimple(
   ctx: OdooCallContext,
   absolutePath: string,

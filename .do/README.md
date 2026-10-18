@@ -1,11 +1,11 @@
-# DigitalOcean App Platform — Idea di Luce
+# DigitalOcean App Platform: Idea di Luce
 
 | File | Uso |
 |------|-----|
-| [`platform-map.yaml`](platform-map.yaml) | **Mappa collegamenti** — solo topologia, niente deploy/env/secret |
-| [`GO-LIVE.md`](GO-LIVE.md) | **Mappa go-live** — architettura, sistemi annessi, checklist |
-| [`app.yaml`](app.yaml) | **Produzione** — spec deploy completo (`main`) |
-| [`app.staging.yaml`](app.staging.yaml) | Staging — spec deploy (`staging`) |
+| [`platform-map.yaml`](platform-map.yaml) | **Mappa collegamenti**: solo topologia, niente deploy/env/secret |
+| [`GO-LIVE.md`](GO-LIVE.md) | **Mappa go-live**: architettura, sistemi annessi, checklist |
+| [`app.yaml`](app.yaml) | **Produzione**: spec deploy completo (`main`) |
+| [`app.staging.yaml`](app.staging.yaml) | Staging: spec deploy (`staging`) |
 | [`secrets.production.env.example`](secrets.production.env.example) | Checklist secret da incollare nella UI |
 
 ## Deploy rapido
@@ -25,7 +25,7 @@ doctl apps list
 | `api` | Web Service | `server/` | `build:server` + migrazioni | `${api.PUBLIC_URL}` |
 | `shop` | Web Service | `client/` | Next.js workspace | `${shop.PUBLIC_URL}` |
 | `admin` | Static Site | `admin/` | Vite → `admin/dist` | `${admin.PUBLIC_URL}` |
-| `db-ideadiluce-pwa` | Managed DB | PG 18, pool `ideadiluce-api` | — | rete interna |
+| `db-ideadiluce-pwa` | Managed DB | PG 18, pool `ideadiluce-api` | - | rete interna |
 
 Tutti i componenti usano `source_dir: /` (root monorepo npm workspaces). L’`ingress` punta l’URL principale dell’app allo shop; api e admin hanno sottodomini dedicati.
 

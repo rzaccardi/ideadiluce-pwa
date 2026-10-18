@@ -84,13 +84,34 @@ describe('isOdooChildShippingDestination', () => {
     ).toBe(false)
   })
 
-  it('esclude stub con via placeholder "-"', () => {
+  it('esclude una via senza città né CAP', () => {
+    expect(
+      isOdooChildShippingDestination({
+        id: 15,
+        name: 'Rob Zac',
+        type: 'delivery',
+        street: 'Via Roma',
+        city: false,
+        zip: false,
+      }),
+    ).toBe(false)
+  })
+
+  it('esclude stub con via placeholder "-" o "/"', () => {
     expect(
       isOdooChildShippingDestination({
         id: 13,
         name: 'Nuovo utente',
         type: 'delivery',
         street: '-',
+      }),
+    ).toBe(false)
+    expect(
+      isOdooChildShippingDestination({
+        id: 14,
+        name: 'Nuovo utente',
+        type: 'delivery',
+        street: '/',
       }),
     ).toBe(false)
   })

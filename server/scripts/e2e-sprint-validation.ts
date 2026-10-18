@@ -60,7 +60,7 @@ async function main() {
   console.log(`API_BASE=${API_BASE}`)
   console.log(`ODOO_ENABLED=${env.ODOO_ENABLED} configured=${isOdooConfigured()}\n`)
 
-  // —— Unit: payability ——
+  // -- Unit: payability --
   const sentOk = resolveOdooQuotePayability({ state: 'sent', validityDate: '2099-12-31' })
   sentOk.payable ? pass('payability: sent valido') : fail('payability: sent valido')
 
@@ -72,13 +72,13 @@ async function main() {
   const cancelled = resolveOdooQuotePayability({ state: 'cancel' })
   cancelled.reason === 'cancelled' ? pass('payability: cancelled') : fail('payability: cancelled')
 
-  // —— Config ritiro ——
+  // -- Config ritiro --
   const pickup = getStorePickupLocation()
   pickup.line1.includes('Pignatelli')
     ? pass('store pickup', pickup.displayAddress)
     : fail('store pickup', pickup.displayAddress)
 
-  // —— API health + footer ——
+  // -- API health + footer --
   const health = await api('/health')
   health.status === 200 ? pass('API health') : fail('API health', String(health.status))
 
@@ -90,7 +90,7 @@ async function main() {
     ? pass('contatti indirizzo allineato', contact.address)
     : fail('contatti indirizzo allineato', contact?.address ?? 'missing')
 
-  // —— VIES ——
+  // -- VIES --
   try {
     const vat = await vatValidationService.checkOnce(TEST_VAT, 'IT')
     vat.valid ? pass('VIES P.IVA test', vat.vatNumber) : fail('VIES P.IVA test', 'non valida')
@@ -98,7 +98,7 @@ async function main() {
     fail('VIES P.IVA test', e instanceof Error ? e.message : String(e))
   }
 
-  // —— Odoo XML-RPC ——
+  // -- Odoo XML-RPC --
   if (env.ODOO_ENABLED && isOdooConfigured()) {
     const ctx = { correlationId: 'e2e-sprint-validation' }
     try {
@@ -123,10 +123,10 @@ async function main() {
       fail('Odoo list quotations', e instanceof Error ? e.message : String(e))
     }
   } else {
-    fail('Odoo abilitato', 'ODOO_ENABLED=false o credenziali mancanti — riavvia server con ODOO_ENABLED=true')
+    fail('Odoo abilitato', 'ODOO_ENABLED=false o credenziali mancanti: riavvia server con ODOO_ENABLED=true')
   }
 
-  // —— Shipping pickup label (sessione + carrello + indirizzo Roma) ——
+  // -- Shipping pickup label (sessione + carrello + indirizzo Roma) --
   await api('/api/v1/cart')
   const catalog = await api('/api/v1/catalog/products?locale=IT&pageSize=5')
   const product = (catalog.json as { data?: { items?: { slug?: string }[] } })?.data?.items?.[0]

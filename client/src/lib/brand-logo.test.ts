@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeEach } from 'vitest'
 import {
   brandLogoContentAspect,
+  brandLogoCropLayout,
   resolveBrandLogo,
   resolveBrandLogoSrc,
   setManagedBrandLogos,
@@ -44,6 +45,17 @@ describe('resolveBrandLogo', () => {
     const artemide = resolveBrandLogo('artemide')
     expect(artemide?.content[0]).toBe(0)
     expect(artemide?.content[2]).toBe(1)
+  })
+})
+
+describe('brandLogoCropLayout', () => {
+  it('dà al box altezza e larghezza in px, senza collassare', () => {
+    const flos = resolveBrandLogo('flos')!
+    const layout = brandLogoCropLayout(22, flos.content)
+    expect(layout.boxHeight).toBeCloseTo(22, 5)
+    expect(layout.boxWidth).toBeGreaterThan(40)
+    expect(layout.imgWidth).toBeGreaterThan(layout.boxWidth)
+    expect(layout.imgLeft).toBeLessThan(0)
   })
 })
 

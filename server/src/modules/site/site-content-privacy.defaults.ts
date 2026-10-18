@@ -1,9 +1,9 @@
 import type { ContentPageContent } from './site.types.js'
 
-/** Versione contenuto privacy — incrementare per forzare migrazione da versioni precedenti. */
+/** Versione contenuto privacy: incrementare per forzare migrazione da versioni precedenti. */
 export const PRIVACY_CONTENT_VERSION = 1
 
-/** Privacy Policy — versione italiana (fonte per BO e traduzioni). */
+/** Privacy Policy: versione italiana (fonte per BO e traduzioni). */
 export const DEFAULT_PRIVACY_IT: ContentPageContent = {
   layout: 'legal',
   title: 'Privacy Policy',

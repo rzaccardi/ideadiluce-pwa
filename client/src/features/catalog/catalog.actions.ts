@@ -80,7 +80,7 @@ function applyCatalogClientFilters(
     inStockOnly: filters.inStockOnly,
     minPriceCents: filters.minPriceCents,
     maxPriceCents: filters.maxPriceCents,
-    // Sort gestito da Odoo search quando serverSideCatalogFilters.
+    // Sort gestito da search quando serverSideCatalogFilters.
     sort: filters.serverSideCatalogFilters ? undefined : filters.sort,
     locale: filters.locale,
   })
@@ -560,7 +560,7 @@ export function catalogFacetsFetchKey(filters: {
  * Carica i facet per la sidebar.
  *
  * Richiede solo `world` + `q` (+ locale): se inoltrassimo category / brand /
- * attacco / tassonomie, Odoo restringerebbe i facet al sottoinsieme filtrato
+ * attacco / tassonomie, la ricerca restringerebbe i facet al sottoinsieme filtrato
  * (es. `category=scarica` nasconde altri attacchi e le categorie sibling).
  * La selezione resta in URL / store; qui servono tutte le opzioni navigabili.
  *

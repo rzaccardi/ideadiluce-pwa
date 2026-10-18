@@ -1,10 +1,19 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   getProductAvailabilityStatus,
   resolveMaxOrderableQty,
 } from './product-availability'
 
 describe('getProductAvailabilityStatus - matrice requisiti', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 9, 18, 12, 0, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('Caso 1: Q ≤ S → Disponibile + BASE', () => {
     const r = getProductAvailabilityStatus({
       availability: { qtyAvailable: 7, isOrderable: false },
@@ -39,8 +48,7 @@ describe('getProductAvailabilityStatus - matrice requisiti', () => {
     })
     expect(r.status).toBe('orderable')
     expect(r.canAddToCart).toBe(true)
-    expect(r.detail).toContain('24/48h')
-    expect(r.detail).toContain('5')
+    expect(r.detail).toBe('Spedito indicativamente entro il 23 ottobre 2026')
     expect(r.leadTimeDays).toBe(5)
   })
 
@@ -117,8 +125,7 @@ describe('getProductAvailabilityStatus - matrice requisiti', () => {
       locale: 'IT',
     })
     expect(q20.status).toBe('orderable')
-    expect(q20.detail).toContain('24/48h')
-    expect(q20.detail).toMatch(/\+\s*2/)
+    expect(q20.detail).toBe('Spedito indicativamente entro il 20 ottobre 2026')
   })
 
   it('Caso 2: LT 0 → solo BASE', () => {

@@ -21,7 +21,7 @@ export function resolveOdooCatalogMediaUrl(path: string | null | undefined): str
   return `${base}${path.startsWith('/') ? path : `/${path}`}`
 }
 
-/** Sostituisce la size nell'URL Odoo `/web/image/.../image_N` (proporzioni preservate, no crop). */
+/** Sostituisce la size nell'URL `/web/image/.../image_N` (proporzioni preservate, no crop). */
 export function withOdooCatalogImageSize(
   url: string | null | undefined,
   size: OdooCatalogImageSize,
@@ -38,7 +38,7 @@ export function resolveOdooCatalogMediaUrlWithSize(
   return withOdooCatalogImageSize(resolveOdooCatalogMediaUrl(path), size)
 }
 
-/** Confronta URL Odoo ignorando la size (`image_512` vs `image_1920`). */
+/** Confronta URL ignorando la size (`image_512` vs `image_1920`). */
 export function odooCatalogImageUrlsMatch(
   a: string | null | undefined,
   b: string | null | undefined,

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Prepara un template .dc.html per il rendering statico nel client Next.js.
+ * Prepara un template.dc.html per il rendering statico nel client Next.js.
  * Usage: node scripts/prepare-dc-html.mjs <source> <output> [--content-only]
  */
 import fs from 'node:fs'
@@ -160,7 +160,7 @@ function main() {
   body = fixDocLinks(body)
   body = body.trim()
 
-  const doc = `<!-- Generated from ${path.basename(source)} — do not edit by hand. Re-run prepare-dc-html.mjs -->
+  const doc = `<!-- Generated from ${path.basename(source)}: do not edit by hand. Re-run prepare-dc-html.mjs -->
 ${fonts}
 ${styles}
 ${body}

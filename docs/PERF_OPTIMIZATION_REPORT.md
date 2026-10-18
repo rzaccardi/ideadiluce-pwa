@@ -2,7 +2,7 @@
 
 ## Fase 4
 
-### Feature 1 — BE: Cart batch reprice + unified product resolve
+### Feature 1: BE: Cart batch reprice + unified product resolve
 
 **Prima:** `dtoFromCartId` e `checkStock` risolvevano ogni `productRef` due volte (lookup catalogo display/prezzo + lookup availability) con `resolveCatalogProduct` in parallelo duplicato.
 
@@ -10,9 +10,9 @@
 
 **Impatto misurabile:** per un carrello con N righe uniche → da ~2N chiamate OdooCatalog a ~N (stima −50% round-trip catalogo su GET/reprice).
 
-**Test:** `cd server && npm run build && npm run test` — OK.
+**Test:** `cd server && npm run build && npm run test`: OK.
 
-### Feature 2 — BE: Merchant feed parallel build + persistence
+### Feature 2: BE: Merchant feed parallel build + persistence
 
 **Prima:** batch parallelo a 24 slug; cache solo in memoria (cold start = rebuild O(n) al primo hit).
 
@@ -20,44 +20,44 @@
 
 **Impatto:** cold start serve feed da disco se presente; build più graduale sotto carico OdooCatalog.
 
-**Test:** server build + 131 test — OK.
+**Test:** server build + 131 test: OK.
 
-### Feature 3 — BE: Session middleware skip DB su route pubbliche
+### Feature 3: BE: Session middleware skip DB su route pubbliche
 
 **Prima:** ogni richiesta `/api/v1/*` senza cookie creava sessione guest in DB.
 
-**Dopo:** `loadV1Session` — senza cookie su path non-privati (`catalog`, `site`, `seo`, …) nessun hit DB; con cookie carica sessione per listino B2B; path privati (`cart`, `checkout`, …) invariati.
+**Dopo:** `loadV1Session`: senza cookie su path non-privati (`catalog`, `site`, `seo`, …) nessun hit DB; con cookie carica sessione per listino B2B; path privati (`cart`, `checkout`, …) invariati.
 
-**Test:** 133 test — OK.
+**Test:** 133 test: OK.
 
-### Feature 4 — FE: Catalog bootstrap SSR
+### Feature 4: FE: Catalog bootstrap SSR
 
 **Prima:** primo paint catalogo → `fetchCatalogBootstrap` client (`/api/v1/catalog/bootstrap`).
 
 **Dopo:** `fetchCatalogBootstrapServer` in `catalog-route.tsx` + `seedCatalogBootstrap` con `skipIfFresh` sul client.
 
-**Test:** client build + 46 test — OK.
+**Test:** client build + 46 test: OK.
 
-### Feature 5 — FE: waterfall catalogo/landing residui
+### Feature 5: FE: waterfall catalogo/landing residui
 
 **Dopo:** bootstrap SSR anche su landing categoria (arredo/tecnica); `skipIfFresh` su search palette e autocomplete.
 
-**Test:** client build + 46 test — OK.
+**Test:** client build + 46 test: OK.
 
-### Feature 6 — BO: endpoint allLocales batch
+### Feature 6: BO: endpoint allLocales batch
 
 **Prima:** `fetchSitePageAllLocales` = 5 richieste HTTP parallele.
 
 **Dopo:** `GET /admin/site/pages/:pageKey?allLocales=1` → 1 richiesta.
 
-**Test:** server 133 test + admin build — OK.
+**Test:** server 133 test + admin build: OK.
 
-### Feature 7 — Cleanup: FloatingCartMonitor rimosso
+### Feature 7: Cleanup: FloatingCartMonitor rimosso
 
 Componente non montato (duplicava polling di `useCartSync` in `HeaderMiniCart`). File eliminato.
 
-### Feature 8 — Admin: paginazione guide e redirect SEO
+### Feature 8: Admin: paginazione guide e redirect SEO
 
 **Dopo:** `GET /admin/guides?page&pageSize` e `GET /admin/seo/redirects?page&pageSize` con infinite scroll in BO.
 
-**Test:** server 133 test + admin build — OK.
+**Test:** server 133 test + admin build: OK.

@@ -1,6 +1,6 @@
 import type { PwaLocale } from '@/lib/locale'
 
-/** Lingue ammesse dal contratto Odoo API v2. */
+/** Lingue ammesse dal contratto API v2. */
 export const ODOO_CATALOG_SUPPORTED_LANGS = [
   'it_IT',
   'en_US',
@@ -25,7 +25,7 @@ export function toOdooCatalogLang(locale: PwaLocale): OdooCatalogLang {
   return ODOO_CATALOG_LANG_BY_PWA[locale]
 }
 
-/** Valori non ammessi → it_IT (come fallback silenzioso Odoo). */
+/** Valori non ammessi → it_IT (come fallback silenzioso ). */
 export function normalizeOdooCatalogLang(lang: string | undefined | null): OdooCatalogLang {
   if (!lang?.trim()) return 'it_IT'
   const normalized = lang.trim()

@@ -25,9 +25,9 @@ type LoadingState = {
   messageKey: MessageKey
   scope: CheckoutLoadingScope
   /**
-   * Se false, lo sfondo non intercetta i click (es. «Torna al carrello» resta usabile).
-   * True solo per stati critici (pagamento in corso).
-   */
+ * Se false, lo sfondo non intercetta i click (es. «Torna al carrello» resta usabile).
+ * True solo per stati critici (pagamento in corso).
+ */
   blockInteraction?: boolean
 }
 

@@ -168,7 +168,7 @@ export function TechnicalProductDetailView({ product, state }: Props) {
     parsedSpecs,
     selectedVariant?.attributes,
   )
-  /** Compatibilità solo con dati specs reali — niente sezione basata sulla short description. */
+  /** Compatibilità solo con dati specs reali: niente sezione basata sulla short description. */
   const hasCompatSection = compatRows.length > 0
   const shortDescription = product.shortDescription?.trim() || ''
   const showPurchaseWarning =
@@ -445,7 +445,7 @@ export function TechnicalProductDetailView({ product, state }: Props) {
 
       {sectionNav.length > 0 ? (
         <nav
-          className="sticky top-[72px] z-20 border-y border-idl-tech-border bg-white/95 backdrop-blur-sm dark:bg-idl-tech-panel/95"
+          className="border-y border-idl-tech-border bg-white/95 dark:bg-idl-tech-panel/95"
           aria-label="Sezioni scheda prodotto"
         >
           <SectionContainer className="flex gap-1 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -560,7 +560,7 @@ export function TechnicalProductDetailView({ product, state }: Props) {
             </div>
             ) : <div />}
 
-            <div className="flex flex-col gap-6 lg:sticky lg:top-28">
+            <div className="flex flex-col gap-6">
               <ProductDetailCard variant="technical">
                 <h3 className="mb-3.5 text-base font-extrabold tracking-tight">Come scegliere il ricambio corretto</h3>
                 <ol className="space-y-3">

@@ -13,7 +13,7 @@ type Props = {
   allowOverflow?: boolean
 }
 
-/** Contenitore input raggruppati — bordo condiviso stile mock. */
+/** Contenitore input raggruppati: bordo condiviso stile mock. */
 export function StripeFieldGroup({ children, className, allowOverflow }: Props) {
   return (
     <div
@@ -95,7 +95,7 @@ type ControlledInputProps = Omit<InputProps, 'value' | 'defaultValue' | 'onChang
   normalize?: (value: string) => string
 }
 
-/** Input checkout collegato a store globali — mantiene il cursore durante l'editing. */
+/** Input checkout collegato a store globali: mantiene il cursore durante l'editing. */
 export function StripeControlledInput({
   value,
   onValueChange,

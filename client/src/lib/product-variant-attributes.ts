@@ -38,7 +38,7 @@ export type AttributeValueSubgroup = {
 }
 
 /**
- * Se un unico attributo Odoo mescola misure e configurazioni (es. `22 cm` + `Cluster Linear`),
+ * Se un unico attributo mescola misure e configurazioni (es. `22 cm` + `Cluster Linear`),
  * spezza in sottogruppi UI. Resta un solo asse di selezione (valori mutuamente esclusivi).
  */
 export function subgroupAttributeValues(
@@ -72,7 +72,7 @@ export function isSwatchAttribute(name: string): boolean {
   return /finitura|colore|color|finish|colour/i.test(name) && !/luce|kelvin|temperatura/i.test(name)
 }
 
-/** Hex Odoo (`html_color`) per un valore attributo; null se assente. */
+/** Hex (`html_color`) per un valore attributo; null se assente. */
 export function htmlColorForAttributeValue(
   variants: ReadonlyArray<ProductVariantDTO>,
   attrName: string,
@@ -141,9 +141,9 @@ export type MatrixValueState = 'available' | 'out_of_stock' | 'unavailable'
 
 /**
  * Stato di un valore nella matrice rispetto alla selezione corrente:
- * - `available` — esiste combinazione esatta acquistabile
- * - `out_of_stock` — esiste ma non acquistabile
- * - `unavailable` — combinazione assente (asse multiplo)
+ * - `available`: esiste combinazione esatta acquistabile
+ * - `out_of_stock`: esiste ma non acquistabile
+ * - `unavailable`: combinazione assente (asse multiplo)
  */
 export function getMatrixValueState(
   variants: ReadonlyArray<ProductVariantDTO>,

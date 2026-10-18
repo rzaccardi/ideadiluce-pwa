@@ -16,7 +16,7 @@ const paths = [...new Set(data.urls.map((u) => {
   return p
 }))].sort()
 
-const content = `/** Generato da scripts/generate-wordpress-indexed-paths.mjs — non modificare a mano. */
+const content = `/** Generato da scripts/generate-wordpress-indexed-paths.mjs: non modificare a mano. */
 export const WORDPRESS_INDEXED_PATHS: readonly string[] = ${JSON.stringify(paths, null, 2)} as const
 
 export const WORDPRESS_INDEXED_EXTRACTED_AT = ${JSON.stringify(data.extractedAt ?? null)}

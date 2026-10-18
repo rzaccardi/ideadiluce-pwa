@@ -1,6 +1,6 @@
 import type { ProductVariantAttributeDTO } from '@/types/dto'
 
-/** Chip UI adattivi dalla matrice attributi (mai ID Odoo grezzi). */
+/** Chip UI adattivi dalla matrice attributi (mai ID grezzi). */
 export function variantAttributeChips(
   attributes: ReadonlyArray<ProductVariantAttributeDTO> | null | undefined,
   fallbackLabel?: string | null,

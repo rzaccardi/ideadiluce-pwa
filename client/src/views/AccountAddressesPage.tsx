@@ -74,7 +74,7 @@ export function AccountAddressesPage() {
         const usableOwn = (next.addresses ?? []).filter(
           (address) => !address.dropship && isUsableShippingAddress(address),
         )
-        // Nuovo utente / stub Odoo: niente card selezionata, form “aggiungi” con anagrafica.
+        // Nuovo utente / stub: niente card selezionata, form “aggiungi” con anagrafica.
         if (usableOwn.length === 0) {
           setDraft((current) => {
             if (current.line1.trim() || current.city.trim() || current.postalCode.trim()) {

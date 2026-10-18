@@ -28,6 +28,7 @@ import { professionalAccountRouter } from '../../modules/professional-account/pr
 import { professionalRequestsAdminRouter } from '../../modules/professional-requests-admin/professional-requests-admin.routes.js'
 import { siteInquiriesAdminRouter } from '../../modules/site-inquiries-admin/site-inquiries-admin.routes.js'
 import { mailLogAdminRouter } from '../../modules/mail-log-admin/mail-log-admin.routes.js'
+import { mailTemplatesAdminRouter } from '../../modules/mail-templates-admin/mail-templates-admin.routes.js'
 import { odooAdminRouter } from '../../modules/odoo/odoo-admin.routes.js'
 import { quotesRouter } from '../../modules/quotes/quotes.routes.js'
 import { invoicesRouter } from '../../modules/invoices/invoices.routes.js'
@@ -81,6 +82,7 @@ v1Router.use('/admin/abandoned-carts', abandonedCartsAdminRouter)
 v1Router.use('/admin/professional-requests', professionalRequestsAdminRouter)
 v1Router.use('/admin/site-inquiries', siteInquiriesAdminRouter)
 v1Router.use('/admin/mail-log', mailLogAdminRouter)
+v1Router.use('/admin/mail-templates', mailTemplatesAdminRouter)
 v1Router.use('/admin/uptime', uptimeAdminRouter)
 v1Router.use('/admin/odoo', odooAdminRouter)
 v1Router.use('/admin/document-downloads', documentDownloadsAdminRouter)

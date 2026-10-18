@@ -111,7 +111,7 @@ export function ProductGallery({ images, alt, activeUrl }: Props) {
       <ViewportPortal open={lightboxOpen} lockScroll>
         <div
           className={cn(
-            'fixed inset-0 flex h-[100dvh] w-screen items-center justify-center bg-black/80 p-4',
+            'fixed inset-0 flex h-[100dvh] items-center justify-center bg-black/80 p-4',
             layers.dialog,
           )}
           role="dialog"

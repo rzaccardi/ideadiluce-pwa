@@ -38,7 +38,7 @@ describe('catalog-taxonomy-i18n', () => {
     expect(translateCatalogTaxonomyLabel('led', tEn)).toBe('LED')
   })
 
-  it('lascia invariati valori non mappati (facet Odoo raw)', () => {
+  it('lascia invariati valori non mappati (facet raw)', () => {
     expect(translateCatalogTaxonomyLabel('sospensione-2', tEn, 'Sospensione 2')).toBe('Sospensione 2')
     expect(translateCatalogTaxonomyLabel('dimmerabile-xyz', tEn)).toBe('Dimmerabile xyz')
   })

@@ -21,7 +21,7 @@ export function invoiceStateLabel(state: string, locale: PwaLocale = 'IT'): stri
   return key ? t(locale, key) : state
 }
 
-/** Odoo `account.move.payment_state === 'paid'`. */
+/** `account.move.payment_state === 'paid'`. */
 export function invoiceIsPaid(paymentState: string | null | undefined): boolean {
   return (paymentState ?? '').toLowerCase() === 'paid'
 }

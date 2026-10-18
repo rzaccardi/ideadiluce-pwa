@@ -114,7 +114,7 @@ export type ItalianProvinceCode = (typeof ITALIAN_PROVINCES)[number]['code']
 
 const CODE_SET = new Set<string>(ITALIAN_PROVINCES.map((row) => row.code))
 
-/** Province soppresse (Sardegna 2016) ancora presenti su alcune anagrafiche Odoo. */
+/** Province soppresse (Sardegna 2016) ancora presenti su alcune anagrafiche. */
 const LEGACY_CODES: Record<string, ItalianProvinceCode> = {
   CI: 'SU',
   VS: 'SU',

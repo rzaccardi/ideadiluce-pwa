@@ -117,7 +117,7 @@ const envSchema = z.object({
   ODOO_DB: z.string().optional(),
   ODOO_USERNAME: z.string().optional(),
   ODOO_PASSWORD: z.string().optional(),
-  /** @deprecated Solo per eventuale JSON-2 Odoo 19+ — non usato dall’implementazione XML-RPC attuale. */
+  /** @deprecated Solo per eventuale JSON-2 Odoo 19+: non usato dall’implementazione XML-RPC attuale. */
   ODOO_API_KEY: z.string().optional(),
   ODOO_TIMEOUT_MS: z.coerce.number().default(25_000),
   /**
@@ -180,7 +180,7 @@ const envSchema = z.object({
   STRIPE_ENABLED: boolish.default(false),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
-  /** Chiave pubblica Stripe (pk_*) — esposta al client via /payments/stripe/config se assente nel build. */
+  /** Chiave pubblica Stripe (pk_*): esposta al client via /payments/stripe/config se assente nel build. */
   STRIPE_PUBLISHABLE_KEY: z.string().optional(),
   /** @deprecated Usare login backoffice (`AdminUser`). Mantenuto solo per compatibilità script. */
   ADMIN_API_TOKEN: z.string().optional(),
@@ -234,7 +234,7 @@ const envSchema = z.object({
   STORE_PICKUP_POSTAL_CODE: z.string().optional(),
   STORE_PICKUP_CITY: z.string().optional(),
   STORE_PICKUP_COUNTRY: z.string().optional(),
-  /** Autocomplete indirizzi checkout — Google ha priorità su Mapbox. */
+  /** Autocomplete indirizzi checkout: Google ha priorità su Mapbox. */
   GOOGLE_MAPS_API_KEY: z.string().optional(),
   MAPBOX_ACCESS_TOKEN: z.string().optional(),
   /** DigitalOcean Spaces (S3-compatible) per media catalogo caricati dall’admin. */

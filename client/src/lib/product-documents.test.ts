@@ -34,7 +34,7 @@ describe('mergeProductDocuments', () => {
 })
 
 describe('resolveProductDocumentHref', () => {
-  it('usa il download PWA invece dell URL pubblico Odoo', () => {
+  it('usa il download PWA invece dell URL pubblico', () => {
     expect(resolveProductDocumentHref(datasheet, { slug: 'lampada', variantRef: '9124' })).toBe(
       catalogDocumentDownloadPath('lampada', '184223', '9124'),
     )

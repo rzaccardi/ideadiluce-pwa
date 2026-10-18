@@ -133,7 +133,7 @@ function AccountRouteSkeleton({ route }: { route: BootstrapRoute }) {
   )
 }
 
-/** Skeleton pagina (senza SiteShell) in base al pathname — usato da loading.tsx e bootstrap. */
+/** Skeleton pagina (senza SiteShell) in base al pathname: usato da loading.tsx e bootstrap. */
 export function BootstrapRouteSkeleton({
   pathname,
   route: routeOverride,

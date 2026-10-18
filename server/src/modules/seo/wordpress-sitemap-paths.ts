@@ -1,6 +1,6 @@
 import { WORDPRESS_INDEXED_PATHS } from './wordpress-indexed-paths.js'
 
-/** URL non indicizzabili o obsolete — esclusi dalla sitemap. */
+/** URL non indicizzabili o obsolete: esclusi dalla sitemap. */
 export const WORDPRESS_SITEMAP_EXCLUDED_PATHS = new Set([
   '/et_tb_item_type/template',
 ])

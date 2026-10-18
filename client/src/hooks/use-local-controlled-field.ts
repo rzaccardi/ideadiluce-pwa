@@ -3,7 +3,7 @@
 import { useEffect, useState, type ChangeEvent, type FocusEvent } from 'react'
 
 type Options = {
-  /** Normalizza il valore salvato (es. uppercase) — applicato solo on blur. */
+  /** Normalizza il valore salvato (es. uppercase): applicato solo on blur. */
   normalize?: (value: string) => string
 }
 

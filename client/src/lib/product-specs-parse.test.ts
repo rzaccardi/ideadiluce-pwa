@@ -7,14 +7,14 @@ import {
 } from './product-specs-parse'
 
 describe('mergeDesignSpecRows', () => {
-  it('mantiene le specs canoniche e appende quelle Odoo non in whitelist', () => {
+  it('mantiene le specs canoniche e appende quelle non in whitelist', () => {
     const merged = mergeDesignSpecRows(
       specsToRows([
         { key: 'designer', label: 'Designer', display: 'Ernesto Gismondi' },
         { key: 'wattage', label: 'Wattaggio', display: '21W' },
         { key: 'material_main', label: 'Materiale principale', display: 'Alluminio' },
         { key: 'socket_type', label: 'Attacco', display: 'LED' },
-        { key: 'custom_foo', label: 'Campo custom Odoo', display: 'Sì' },
+        { key: 'custom_foo', label: 'Campo custom extra', display: 'Sì' },
         { key: 'diameter_mm', label: 'Diametro', display: '220 mm' },
       ]),
     )
@@ -26,14 +26,14 @@ describe('mergeDesignSpecRows', () => {
         'Wattaggio',
         'Materiale principale',
         'Attacco',
-        'Campo custom Odoo',
+        'Campo custom extra',
         'Diametro',
       ]),
     )
-    expect(withValues.find((r) => r.label === 'Campo custom Odoo')?.value).toBe('Sì')
+    expect(withValues.find((r) => r.label === 'Campo custom extra')?.value).toBe('Sì')
   })
 
-  it('riconosce alias Odoo (Anno di design, Materiale principale)', () => {
+  it('riconosce alias (Anno di design, Materiale principale)', () => {
     const merged = mergeDesignSpecRows(
       specsToRows([
         { key: 'design_year', label: 'Anno di design', display: '2017' },

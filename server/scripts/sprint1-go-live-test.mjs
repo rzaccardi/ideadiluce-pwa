@@ -94,7 +94,7 @@ function productPriceFromDetail(json) {
 }
 
 // --- Task 4: SSR pricing (session su /api/v2) ---
-await check('Task4 — login shop', async () => {
+await check('Task4: login shop', async () => {
   const ok = await shopLogin()
   return ok ? true : { ok: false, note: `login fallito per ${shopEmail}` }
 })
@@ -103,7 +103,7 @@ let productId = null
 let priceAnon = null
 let priceLogged = null
 
-await check('Task4 — prezzo /api/v2 con sessione vs anonimo', async () => {
+await check('Task4: prezzo /api/v2 con sessione vs anonimo', async () => {
   productId = await getFirstProductId()
   if (!productId) return { ok: false, note: 'catalogo vuoto' }
 
@@ -128,11 +128,11 @@ await check('Task4 — prezzo /api/v2 con sessione vs anonimo', async () => {
     ok: true,
     note: pricesDiffer
       ? `anon=${priceAnon} logged=${priceLogged} (listino sessione applicato)`
-      : `prezzo=${priceLogged} (stesso listino anon/logged — verifica carrello sotto)`,
+      : `prezzo=${priceLogged} (stesso listino anon/logged: verifica carrello sotto)`,
   }
 })
 
-await check('Task4 — prezzo carrello allineato a /api/v2 (loggato)', async () => {
+await check('Task4: prezzo carrello allineato a /api/v2 (loggato)', async () => {
   if (!productId || priceLogged == null) return { ok: true, note: '(skip)' }
   const detailRes = await req('GET', `/api/v2/product/${productId}?lang=it`)
   const product = unwrap(detailRes.json)?.product
@@ -167,12 +167,12 @@ await check('Task4 — prezzo carrello allineato a /api/v2 (loggato)', async () 
 // --- Task 1: Restock BO ---
 let restockRequestId = null
 
-await check('Task1 — admin login', async () => {
+await check('Task1: admin login', async () => {
   const ok = await adminLogin()
   return ok ? true : { ok: false, note: `admin login fallito ${adminEmail}` }
 })
 
-await check('Task1 — RESTOCK_NOTIFY + visibilità BO', async () => {
+await check('Task1: RESTOCK_NOTIFY + visibilità BO', async () => {
   const list = await req('GET', '/api/v2/products?lang=it&per_page=30')
   const items = unwrap(list.json)?.items ?? []
   let targetSlug = null
@@ -232,7 +232,7 @@ await check('Task1 — RESTOCK_NOTIFY + visibilità BO', async () => {
     : { ok: false, note: `admin list status=${adminList.status} found=${!!found}` }
 })
 
-await check('Task1 — PATCH adminStatus + adminNotes', async () => {
+await check('Task1: PATCH adminStatus + adminNotes', async () => {
   if (!restockRequestId) {
     const adminList = await req(
       'GET',
@@ -260,7 +260,7 @@ await check('Task1 — PATCH adminStatus + adminNotes', async () => {
     : { ok: false, note: `status=${patch.status} body=${JSON.stringify(row)}` }
 })
 
-await check('Task1 — filtro adminStatus', async () => {
+await check('Task1: filtro adminStatus', async () => {
   const r = await req(
     'GET',
     '/api/v1/admin/customers/restock-requests?adminStatus=IN_PROGRESS&pageSize=5',
@@ -275,7 +275,7 @@ await check('Task1 — filtro adminStatus', async () => {
 })
 
 // --- Task 2: PAID_SYNC alert API ---
-await check('Task2 — GET paid-sync-pending (admin)', async () => {
+await check('Task2: GET paid-sync-pending (admin)', async () => {
   const r = await req('GET', '/api/v1/admin/orders/paid-sync-pending', null, adminJar)
   const data = unwrap(r.json)
   const shapeOk =
@@ -288,7 +288,7 @@ await check('Task2 — GET paid-sync-pending (admin)', async () => {
 })
 
 // --- Task 5: availability flags in enrich ---
-await check('Task5 — isOrderable vs isUnrecoverable in enrich', async () => {
+await check('Task5: isOrderable vs isUnrecoverable in enrich', async () => {
   const list = await req('GET', '/api/v2/products?lang=it&per_page=15')
   const items = unwrap(list.json)?.items ?? []
   let sawOrderable = false

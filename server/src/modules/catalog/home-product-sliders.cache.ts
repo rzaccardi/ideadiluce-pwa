@@ -1,7 +1,7 @@
 import type { HubLocale } from '../../lib/hub-locale.js'
 import type { HomeProductSliderDTO } from './home-product-sliders.types.js'
 
-/** 48 ore — slider homepage aggiornati al massimo due volte al giorno. */
+/** 48 ore: slider homepage aggiornati al massimo due volte al giorno. */
 export const HOME_PRODUCT_SLIDERS_CACHE_TTL_MS = 48 * 60 * 60 * 1000
 
 export const HOME_PRODUCT_SLIDERS_CACHE_MAX_AGE_SEC = 48 * 60 * 60

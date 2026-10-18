@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { LayoutGroup } from '@/lib/motion-client'
 import { Link } from '@/lib/navigation'
 import { useHeaderChromeCollapse } from '@/hooks/use-header-chrome-collapse'
@@ -26,12 +25,9 @@ type Props = {
 /** Slot che chiude in altezza lo chrome secondario (banner / utility) in scroll down. */
 function ChromeCollapseSlot({
   collapsed,
-  allowOverflow = false,
   children,
 }: {
   collapsed: boolean
-  /** Consente dropdown (es. lingua) di uscire dallo slot senza essere tagliati. */
-  allowOverflow?: boolean
   children: React.ReactNode
 }) {
   return (
@@ -42,16 +38,7 @@ function ChromeCollapseSlot({
       )}
       aria-hidden={collapsed || undefined}
     >
-      <div
-        className={cn(
-          'min-h-0',
-          collapsed
-            ? 'overflow-hidden pointer-events-none'
-            : allowOverflow
-              ? 'overflow-visible'
-              : 'overflow-hidden',
-        )}
-      >
+      <div className={cn('min-h-0', collapsed ? 'overflow-hidden pointer-events-none' : 'overflow-hidden')}>
         {children}
       </div>
     </div>
@@ -61,8 +48,6 @@ function ChromeCollapseSlot({
 export function SiteShell({ shell, activeNavId = null, children }: Props) {
   const resolvedShell = shell ?? FALLBACK_SITE_SHELL
   const chromeCollapsed = useHeaderChromeCollapse()
-  /** Dropdown lingua nella utility bar: serve overflow-visible sullo slot di collapse. */
-  const [utilityDropdownOpen, setUtilityDropdownOpen] = useState(false)
 
   return (
     <LayoutGroup id="site-shell">
@@ -71,8 +56,8 @@ export function SiteShell({ shell, activeNavId = null, children }: Props) {
           <ChromeCollapseSlot collapsed={chromeCollapsed}>
             <LegacySiteNoticeBanner />
           </ChromeCollapseSlot>
-          <ChromeCollapseSlot collapsed={chromeCollapsed} allowOverflow={utilityDropdownOpen}>
-            <UtilityBar bar={resolvedShell.utilityBar} onDropdownOpenChange={setUtilityDropdownOpen} />
+          <ChromeCollapseSlot collapsed={chromeCollapsed}>
+            <UtilityBar bar={resolvedShell.utilityBar} />
           </ChromeCollapseSlot>
           <SiteHeader
             nav={resolvedShell.nav}

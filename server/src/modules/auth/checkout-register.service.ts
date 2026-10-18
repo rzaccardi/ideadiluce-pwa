@@ -53,7 +53,7 @@ export const checkoutRegisterService = {
       const existingPortal = await findOdooPortalUserByEmail(ctx, normalized)
       portalExisted = Boolean(existingPortal)
       if (existingPortal) {
-        // Portal già presente: non inventare account PWA — l'utente deve fare login.
+        // Portal già presente: non inventare account PWA: l'utente deve fare login.
         throw new AppError(
           'EMAIL_TAKEN',
           'Email already registered on Odoo portal',

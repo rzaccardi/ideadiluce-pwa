@@ -1,4 +1,4 @@
-# Idea di Luce — DigitalOcean App Platform (PRODUZIONE)
+# Idea di Luce: DigitalOcean App Platform (PRODUZIONE)
 #
 # Monorepo npm workspaces: client (shop), server (api), admin (BO).
 # Ogni componente è un deploy separato con URL proprio:
@@ -44,7 +44,7 @@ databases:
     db_user: doadmin
 
 services:
-  # ——— Backend API (Express, Prisma, Hub) ———
+  # --- Backend API (Express, Prisma, Hub) ---
   - name: api
     source_dir: /
     environment_slug: node-js
@@ -73,7 +73,7 @@ services:
       - key: DATABASE_URL
         scope: RUN_AND_BUILD_TIME
         type: SECRET
-      # Connessione diretta defaultdb:25060 — obbligatoria per `prisma migrate deploy`.
+      # Connessione diretta defaultdb:25060: obbligatoria per `prisma migrate deploy`.
       - key: DIRECT_URL
         scope: RUN_AND_BUILD_TIME
         type: SECRET
@@ -200,7 +200,7 @@ services:
       - key: ODOO_API_TOKEN
         scope: RUN_TIME
         type: SECRET
-      # Produzione Odoo.sh (es. inspirethenext1-tlb-odoo-sh-main-…) — secret ODOO_DB
+      # Produzione Odoo.sh (es. inspirethenext1-tlb-odoo-sh-main-…): secret ODOO_DB
       - key: ODOO_DB
         scope: RUN_TIME
         type: SECRET
@@ -229,7 +229,7 @@ services:
         scope: RUN_TIME
         type: SECRET
 
-  # ——— Client storefront (Next.js) ———
+  # --- Client storefront (Next.js) ---
   - name: shop
     source_dir: /
     environment_slug: node-js
@@ -274,7 +274,7 @@ services:
         type: SECRET
 
 static_sites:
-  # ——— Backoffice admin (Vite SPA) ———
+  # --- Backoffice admin (Vite SPA) ---
   - name: admin
     source_dir: /
     environment_slug: node-js

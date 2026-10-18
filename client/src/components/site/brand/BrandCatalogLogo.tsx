@@ -1,6 +1,5 @@
-import type { CSSProperties } from 'react'
 import {
-  brandLogoContentAspect,
+  brandLogoCropLayout,
   type BrandLogoContentBox,
 } from '@/lib/brand-logo'
 import { cn } from '@/utils/cn'
@@ -21,8 +20,9 @@ type Props = {
  * Niente mix-blend: con parent animati (opacity/transform) il multiply
  * isolerebbe i wordmark e li renderebbe invisibili su fondi chiari.
  *
- * Dimensioni in px (niente `width: … 100%`): in flex/inline-flex la % ciclica
- * collassa il box a 0 e i loghi spariscono sopra il titolo prodotto.
+ * Larghezza e altezza solo in px, anche sull’img. `max-width: 100%`,
+ * `aspect-ratio` e `width: auto` dentro flex o sotto un `transform`
+ * collassano il marchio a 0×N e sopra il titolo non resta nulla.
  */
 export function BrandCatalogLogo({
   src,
@@ -33,39 +33,36 @@ export function BrandCatalogLogo({
   align = 'left',
   maxWidthRem = 8.5,
 }: Props) {
-  const [x0, y0, x1, y1] = content
-  const cw = Math.max(0.01, x1 - x0)
-  const ch = Math.max(0.01, y1 - y0)
-  const aspect = brandLogoContentAspect(content)
-  const widthPx = Math.min(height * aspect, maxWidthRem * 16)
+  const layout = brandLogoCropLayout(height, content, maxWidthRem)
 
   return (
     <span
       className={cn(
-        'relative inline-block max-w-full shrink-0 overflow-hidden',
+        'relative inline-block shrink-0 overflow-hidden',
         align === 'center' && 'mx-auto',
         className,
       )}
-      style={
-        {
-          width: widthPx,
-          maxWidth: '100%',
-          aspectRatio: aspect,
-        } as CSSProperties
-      }
+      style={{
+        width: layout.boxWidth,
+        height: layout.boxHeight,
+        minWidth: layout.boxWidth,
+        minHeight: layout.boxHeight,
+      }}
     >
       <img
         src={src}
         alt={alt}
+        width={Math.round(layout.imgWidth)}
+        height={Math.round(layout.imgHeight)}
         decoding="async"
-        loading="lazy"
         draggable={false}
         className="absolute max-w-none"
         style={{
-          height: `${(1 / ch) * 100}%`,
-          width: 'auto',
-          left: `${(-x0 / cw) * 100}%`,
-          top: `${(-y0 / ch) * 100}%`,
+          width: layout.imgWidth,
+          height: layout.imgHeight,
+          maxWidth: 'none',
+          left: layout.imgLeft,
+          top: layout.imgTop,
         }}
       />
     </span>

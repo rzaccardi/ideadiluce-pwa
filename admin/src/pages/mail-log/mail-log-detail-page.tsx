@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useSnapshot } from 'valtio/react'
 import { ArrowLeftIcon, ExternalLinkIcon } from 'lucide-react'
@@ -20,6 +20,31 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatDateTime } from '@/lib/format'
+
+function MailHtmlPreview({ html }: { html: string }) {
+  const frameRef = useRef<HTMLIFrameElement>(null)
+
+  const fitHeight = () => {
+    const frame = frameRef.current
+    const doc = frame?.contentDocument
+    if (!frame || !doc) return
+    const height = Math.max(doc.documentElement?.scrollHeight ?? 0, doc.body?.scrollHeight ?? 0)
+    if (height > 0) frame.style.height = `${height}px`
+  }
+
+  return (
+    <iframe
+      ref={frameRef}
+      title="Anteprima email"
+      sandbox="allow-same-origin"
+      referrerPolicy="no-referrer"
+      srcDoc={html}
+      onLoad={fitHeight}
+      className="w-full rounded-md border border-gray-200 bg-[#f0f0f0]"
+      style={{ minHeight: 480 }}
+    />
+  )
+}
 
 function stateBadgeVariant(state: string): 'default' | 'secondary' | 'destructive' | 'outline' {
   if (state === 'sent') return 'default'
@@ -155,17 +180,13 @@ export function MailLogDetailPage() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Anteprima</CardTitle>
-          <CardDescription>Contenuto HTML così come salvato da Odoo. Gli script sono disattivati.</CardDescription>
+          <CardDescription>
+            Email completa, con header e footer. Gli script sono disattivati.
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {mail.bodyHtml.trim() ? (
-            <iframe
-              title="Anteprima email"
-              sandbox=""
-              referrerPolicy="no-referrer"
-              srcDoc={mail.bodyHtml}
-              className="min-h-[420px] w-full rounded-md border border-gray-200 bg-white"
-            />
+            <MailHtmlPreview html={mail.bodyHtml} />
           ) : (
             <p className="text-sm italic text-gray-400">Nessun HTML disponibile.</p>
           )}

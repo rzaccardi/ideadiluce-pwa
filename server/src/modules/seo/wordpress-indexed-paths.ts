@@ -1,4 +1,4 @@
-/** Generato da scripts/generate-wordpress-indexed-paths.mjs — non modificare a mano. */
+/** Generato da scripts/generate-wordpress-indexed-paths.mjs: non modificare a mano. */
 export const WORDPRESS_INDEXED_PATHS: readonly string[] = [
   "/",
   "/2024/06/04/calipso-artemide-io-vengo-dalla-luna",

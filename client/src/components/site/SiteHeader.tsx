@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from '@/lib/motion-client'
 import { Link, usePathname } from '@/lib/navigation'
 import { useLocalePath } from '@/hooks/use-locale-path'
@@ -12,6 +12,7 @@ import { layers } from '@/lib/layering'
 import { slideDownVariants, transitionBase } from '@/lib/motion/presets'
 import dynamic from 'next/dynamic'
 import { AttaccoMegaPanel } from './AttaccoMegaPanel'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { SiteHeaderActions, SiteHeaderSearch } from './SiteHeaderActions'
 import { HeaderLightsToggle } from './HeaderLightsToggle'
 
@@ -286,6 +287,28 @@ export function SiteHeader({
     }
   }, [mobileOpen])
 
+  const [backdropTop, setBackdropTop] = useState(0)
+
+  useLayoutEffect(() => {
+    if (!openMenu) return
+    const chrome = document.querySelector('.site-chrome')
+    if (!(chrome instanceof HTMLElement)) return
+
+    const update = () => {
+      setBackdropTop(Math.max(0, Math.round(chrome.getBoundingClientRect().bottom)))
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(chrome)
+    window.addEventListener('resize', update)
+    window.addEventListener('scroll', update, true)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', update)
+      window.removeEventListener('scroll', update, true)
+    }
+  }, [openMenu])
+
   const isDropdownActive = (id: string) => openMenu === id || (openMenu === null && activeNavId === id)
 
   const activeDropdown = nav.items.find(
@@ -303,7 +326,8 @@ export function SiteHeader({
             key="menu-backdrop"
             type="button"
             aria-label="Chiudi menu"
-            className={cn('fixed inset-0 bg-idl-backdrop', layers.megaBackdrop)}
+            className={cn('fixed inset-x-0 bottom-0 bg-idl-backdrop', layers.megaBackdrop)}
+            style={{ top: backdropTop }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -326,7 +350,8 @@ export function SiteHeader({
       >
         <SectionContainer
           className={cn(
-            'relative flex flex-nowrap items-center justify-between gap-2 transition-[padding] duration-300 ease-out md:gap-3 lg:gap-3 xl:gap-4',
+            'relative flex flex-nowrap items-center justify-between gap-2 bg-idl-paper transition-[padding] duration-300 ease-out md:gap-3 lg:gap-3 xl:gap-4',
+            layers.headerRow,
             chromeCollapsed ? 'py-2.5 md:py-2.5 lg:py-2.5' : 'py-3 md:py-4 lg:py-4',
           )}
         >
@@ -347,10 +372,10 @@ export function SiteHeader({
             </button>
             <Link
               to={lp('/')}
-              className="shrink-0 rounded-sm transition-opacity hover:opacity-80"
+              className="shrink-0 rounded-sm transition-opacity hover:opacity-80 max-lg:min-w-0 max-lg:shrink"
               onClick={closeMenu}
             >
-              <BrandWordmark className="text-[22px] md:text-[24px] lg:text-[28px] dark:brightness-0 dark:invert" />
+              <BrandWordmark className="block text-[22px] md:text-[24px] lg:text-[28px] max-lg:max-w-full dark:brightness-0 dark:invert" />
             </Link>
             <nav
               className={cn(
@@ -426,31 +451,32 @@ export function SiteHeader({
               )}
             </nav>
           </div>
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 lg:gap-3">
+            <LanguageSwitcher variant="header" />
             <SiteHeaderSearch compact={chromeCollapsed} />
             <HeaderLightsToggle />
             <SiteHeaderActions />
           </div>
-          <AnimatePresence>
-            {activeDropdown?.id === 'attacco' ? (
-              <AttaccoMegaPanel
-                key="attacco"
-                onNavigate={closeMenu}
-                onMouseEnter={cancelHoverClose}
-                onMouseLeave={scheduleHoverClose}
-              />
-            ) : activeDropdown && activeDropdown.panel.columns.length > 0 ? (
-              <MegaPanel
-                key={activeDropdown.id}
-                panel={activeDropdown.panel}
-                variant={activeDropdown.id === 'arredo' ? 'design' : 'technical'}
-                onNavigate={closeMenu}
-                onMouseEnter={cancelHoverClose}
-                onMouseLeave={scheduleHoverClose}
-              />
-            ) : null}
-          </AnimatePresence>
         </SectionContainer>
+        <AnimatePresence>
+          {activeDropdown?.id === 'attacco' ? (
+            <AttaccoMegaPanel
+              key="attacco"
+              onNavigate={closeMenu}
+              onMouseEnter={cancelHoverClose}
+              onMouseLeave={scheduleHoverClose}
+            />
+          ) : activeDropdown && activeDropdown.panel.columns.length > 0 ? (
+            <MegaPanel
+              key={activeDropdown.id}
+              panel={activeDropdown.panel}
+              variant={activeDropdown.id === 'arredo' ? 'design' : 'technical'}
+              onNavigate={closeMenu}
+              onMouseEnter={cancelHoverClose}
+              onMouseLeave={scheduleHoverClose}
+            />
+          ) : null}
+        </AnimatePresence>
       </motion.header>
       <AnimatePresence>
         {mobileOpen ? (

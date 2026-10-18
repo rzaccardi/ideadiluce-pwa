@@ -1,4 +1,4 @@
-# Mappa go-live — Idea di Luce su DigitalOcean
+# Mappa go-live: Idea di Luce su DigitalOcean
 
 Documento di riferimento per la **messa online** del monorepo e di tutti i **sistemi annessi** (ERP, pagamenti, spedizioni, email, media).
 
@@ -21,22 +21,22 @@ flowchart TB
     ADMIN_USER[Operatore BO]
   end
 
-  subgraph do [DigitalOcean — region fra1]
-    SHOP[shop — Next.js :3000]
-    API[api — Express :8080]
-    ADMIN[admin — Vite static]
-    PG[(postgres — PG 18)]
-    SPACES[(Spaces CDN — opzionale)]
+  subgraph do [DigitalOcean - region fra1]
+    SHOP[shop - Next.js :3000]
+    API[api - Express :8080]
+    ADMIN[admin - Vite static]
+    PG[(postgres - PG 18)]
+    SPACES[(Spaces CDN - opzionale)]
   end
 
   subgraph external [Sistemi esterni]
-    ODOO[Odoo — catalogo, ordini, email]
-    STRIPE[Stripe — pagamenti + webhook]
+    ODOO[Odoo - catalogo, ordini, email]
+    STRIPE[Stripe - pagamenti + webhook]
     DHL[DHL API]
     FEDEX[FedEx API]
-    DEEPL[DeepL — traduzioni BO]
-    GMAPS[Google Places — autocomplete]
-    UPTIME[UptimeRobot — uptime shop/API/Odoo]
+    DEEPL[DeepL - traduzioni BO]
+    GMAPS[Google Places - autocomplete]
+    UPTIME[UptimeRobot - uptime shop/API/Odoo]
   end
 
   SHOP_USER --> SHOP
@@ -64,7 +64,7 @@ flowchart TB
 |---------|------|-------|----------------|--------|
 | `api` | Web Service | Express, Prisma, Product Hub, job in-process | 8080 | `GET /health` |
 | `shop` | Web Service | Next.js (`client/`) | 3000 | `GET /` |
-| `admin` | Static Site | Vite SPA (`admin/dist`) | — | build artifact |
+| `admin` | Static Site | Vite SPA (`admin/dist`) | - | build artifact |
 | `db-ideadiluce-pwa` | Managed DB | PostgreSQL 18, pool `ideadiluce-api` | 25060 / 25061 | managed |
 
 **Schema DB:** `public` (BFF: utenti, carrelli, ordini PWA, CMS, shipping, tax) + `hub` (catalogo import Woo / arricchimenti).
@@ -141,7 +141,7 @@ Verifica locale: `npm run stripe:setup`, `npm run stripe:webhook`.
 
 - **Spedizione internazionale:** zone BO seedate per UE (ex IT) e Extra-UE/Mondo (`*` + DHL/FedEx live). Credenziali corriere in BO necessarie per quote reali (altrimenti stime fallback). Copy `/spedizioni` allineato a tracking mondiale e dazi extra-UE.
 
-**Nota:** non c’è showroom fisico — `/showroom` resta 301 → `/contatti`; il copy “Showroom a Roma” è stato rimosso da header/shell.
+**Nota:** non c’è showroom fisico: `/showroom` resta 301 → `/contatti`; il copy “Showroom a Roma” è stato rimosso da header/shell.
 
 ### 3.4 Email (Odoo)
 
@@ -204,7 +204,7 @@ Monitoraggio esterno di shop, API, catalogo, Odoo e back office. Lo stato si leg
 | Env | Note |
 |-----|------|
 | `UPTIMEROBOT_API_KEY` | Main API Key da [Integrations & API](https://uptimerobot.com/dashboard#mySettings) (read-write per creare i monitor dal BO) |
-| `API_PUBLIC_URL` | `${api.PUBLIC_URL}` — check diretto `GET /health` senza passare dallo shop |
+| `API_PUBLIC_URL` | `${api.PUBLIC_URL}`: check diretto `GET /health` senza passare dallo shop |
 | `UPTIMEROBOT_INTERVAL_SECONDS` | Default 300 (piano free). Piani a pagamento: 60 |
 
 Setup:
@@ -234,7 +234,7 @@ Alert: email (e Slack/app se collegati in UptimeRobot). IP dei checker: [locatio
 
 Legenda scope DO: **R** = RUN_TIME, **B** = BUILD_TIME, **RB** = RUN_AND_BUILD_TIME.
 
-### `api` — obbligatorie go-live
+### `api`: obbligatorie go-live
 
 | Variabile | Scope | Fonte |
 |-----------|-------|-------|
@@ -247,7 +247,7 @@ Legenda scope DO: **R** = RUN_TIME, **B** = BUILD_TIME, **RB** = RUN_AND_BUILD_T
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | R | Secret Stripe |
 | `SHIPPING_CREDENTIALS_KEY` | R | Generata (32+ char) |
 
-### `api` — consigliate
+### `api`: consigliate
 
 | Variabile | Note |
 |-----------|------|
@@ -275,7 +275,7 @@ Legenda scope DO: **R** = RUN_TIME, **B** = BUILD_TIME, **RB** = RUN_AND_BUILD_T
 | Variabile | Scope | Note |
 |-----------|-------|------|
 | `VITE_API_URL` | B | `${api.PUBLIC_URL}` |
-| `VITE_STOREFRONT_URL` | B | `${shop.PUBLIC_URL}` — link anteprima guide e pagine storefront dal BO |
+| `VITE_STOREFRONT_URL` | B | `${shop.PUBLIC_URL}`: link anteprima guide e pagine storefront dal BO |
 
 Elenco secret completo: [`secrets.production.env.example`](secrets.production.env.example).
 
@@ -301,14 +301,14 @@ Stessa topologia, DB dev (`production: false`), istanze più piccole.
 
 ## 6. Checklist go-live (fasi)
 
-### Fase A — Infrastruttura DO
+### Fase A: Infrastruttura DO
 
 - [ ] Creare app: `doctl apps create --spec .do/app.yaml`
 - [ ] Verificare `github.repo` e branch `main`
 - [ ] Attendere deploy verde su `api`, `shop`, `admin`, `db-ideadiluce-pwa`
 - [ ] Annotare URL temporanei `*.ondigitalocean.app`
 
-### Fase B — Secret e integrazioni
+### Fase B: Secret e integrazioni
 
 - [ ] Impostare secret da `secrets.production.env.example`
 - [ ] Configurare webhook Stripe su URL `api`
@@ -316,13 +316,13 @@ Stessa topologia, DB dev (`production: false`), istanze più piccole.
 - [ ] Generare `SHIPPING_CREDENTIALS_KEY`
 - [ ] (Consigliato) `UPTIMEROBOT_API_KEY` e creazione monitor dal BO
 
-### Fase C — Verifica URL e Stripe
+### Fase C: Verifica URL e Stripe
 
 - [ ] Confermare che `CLIENT_ORIGIN`, `ADMIN_ORIGIN`, ecc. puntano ai placeholder DO (automatico nello spec)
 - [ ] Configurare webhook Stripe sull’URL `https://<api-….ondigitalocean.app>/api/v1/payments/webhook/stripe`
 - [ ] (Opzionale) Registrare dominio shop su Stripe per Apple Pay
 
-### Fase D — Dati iniziali
+### Fase D: Dati iniziali
 
 Tunnel verso Postgres produzione:
 
@@ -335,7 +335,7 @@ npm run hub:enrich
 
 Vedi [`docs/hub-production-import.md`](../docs/hub-production-import.md).
 
-### Fase E — Smoke test
+### Fase E: Smoke test
 
 ```bash
 npm run smoke:prod   # con BASE_URL impostati
@@ -354,7 +354,7 @@ curl -s "https://<api-….ondigitalocean.app>/api/v1/catalog/products?pageSize=2
 - [ ] Verifica sync ordine su Odoo
 - [ ] Pagina CMS home (`/api/v1/site/pages/home`)
 
-### Fase F — Post go-live
+### Fase F: Post go-live
 
 - [ ] Rimuovere `ADMIN_SEED_PASSWORD` da env se non serve re-seed
 - [ ] Abilitare alert `DEPLOYMENT_FAILED` / `DOMAIN_FAILED` (già in spec)
@@ -403,4 +403,4 @@ doctl apps create --spec .do/app.staging.yaml
 
 ---
 
-*Ultimo aggiornamento: generato insieme a `.do/app.yaml` — aggiornare questo file quando cambiano componenti o integrazioni.*
+*Ultimo aggiornamento: generato insieme a `.do/app.yaml`: aggiornare questo file quando cambiano componenti o integrazioni.*

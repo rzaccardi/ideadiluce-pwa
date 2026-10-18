@@ -1,10 +1,10 @@
 ---
-description: UX/UI backoffice Idea di Luce — stile enterprise VIX (shadcn, gray shell, italiano)
+description: UX/UI backoffice Idea di Luce: stile enterprise VIX (shadcn, gray shell, italiano)
 globs: admin/**/*
 alwaysApply: false
 ---
 
-# Admin BO — UX/UI (VIX Capital)
+# Admin BO: UX/UI (VIX Capital)
 
 Stack attuale in `admin/`: React + Vite + TypeScript, Tailwind v4, shadcn **base-nova**, Radix/base-ui, Lucide, CVA, `cn()` in `@/lib/utils`.
 
@@ -59,7 +59,7 @@ Composizione: `@/components/ui/*` + `@/components/shared/*`. Mai spinner fullscr
 - CTA colorate fuori semantica (primary/success/destructive)
 - Font custom, hex hardcoded, copy mista IT/EN
 - `rounded-2xl` o ombre pesanti
-- Paginazione client con `limit: 500` — sempre server-side + infinite scroll
+- Paginazione client con `limit: 500`: sempre server-side + infinite scroll
 
 ## Checklist prima di chiudere una UI
 

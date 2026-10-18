@@ -60,7 +60,7 @@ const SCENARIOS: Scenario[] = [
 async function main() {
   const rules = await prisma.taxRule.findMany({ orderBy: { priority: 'desc' } })
   if (rules.length === 0) {
-    console.error('Nessuna TaxRule in DB — esegui prima db:seed')
+    console.error('Nessuna TaxRule in DB: esegui prima db:seed')
     process.exit(1)
   }
 

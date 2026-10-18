@@ -119,7 +119,7 @@ export function resolveVariantAvailability(
     }
   }
 
-  // Edge / Caso 3: senza fornitori — non acquistabile oltre S
+  // Edge / Caso 3: senza fornitori: non acquistabile oltre S
   // (lato UI edge case con S>0 si cap-pa a S prima di arrivare qui)
   return {
     state: 'out_of_stock',
@@ -156,7 +156,7 @@ export function isBackorderAllowedFromSnapshot(snapshot: {
 }
 
 /**
- * CTA «Avvisami quando disponibile»: Caso 3 —
+ * CTA «Avvisami quando disponibile»: Caso 3 -
  * stock zero, nessun fornitore, non irrecuperabile.
  */
 export function isRestockNotifyEligible(
@@ -207,7 +207,7 @@ export function snapshotToAvailabilityData(
         : snapshot.leadTimeDays != null && snapshot.leadTimeDays > 0
           ? snapshot.leadTimeDays
           : null,
-    /** Fuori produzione / sale_ok false — distinto da semplice esaurito non ordinabile. */
+    /** Fuori produzione / sale_ok false: distinto da semplice esaurito non ordinabile. */
     isUnrecoverable: !snapshot.saleOk,
     isStorable: snapshot.isStorable,
   }

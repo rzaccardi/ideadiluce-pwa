@@ -1,5 +1,5 @@
 /**
- * Colore swatch da valori attributo Odoo (`product.attribute.value.html_color`).
+ * Colore swatch da valori attributo (`product.attribute.value.html_color`).
  * Accetta hex / RGB; non mappa per nome (evita pallini di un altro valore).
  */
 
@@ -34,7 +34,7 @@ function expandHexBody(body: string): string {
   return lower
 }
 
-/** Normalizza un codice Odoo (hex, rgb, intero packed) in `#rrggbb`, o null. */
+/** Normalizza un codice (hex, rgb, intero packed) in `#rrggbb`, o null. */
 export function parseCssColorFromOdoo(raw: unknown): string | null {
   if (raw == null || raw === false) return null
 
@@ -103,7 +103,7 @@ export function htmlColorFromOdooAttribute(attr: object | null | undefined): str
   const rec = attr as Record<string, unknown>
   for (const key of COLOR_FIELD_KEYS) {
     const val = rec[key]
-    // `color` intero in Odoo è spesso l'indice kanban (0–11), non RGB packed.
+    // `color` intero è spesso l'indice kanban (0–11), non RGB packed.
     if (key === 'color' && typeof val === 'number') continue
     const parsed = parseCssColorFromOdoo(val)
     if (parsed) return parsed

@@ -67,7 +67,7 @@ export function pickProductCardPackshotUrl(
  * 1. prima immagine taggata `accesa`
  * 2. altrimenti prima immagine taggata `ambiente`
  * 3. fallback: ultima extra `foto` diversa dal packshot
- *    (in Odoo la seconda è spesso un duplicato del packshot; l’ambientata è in coda)
+ * (in la seconda è spesso un duplicato del packshot; l’ambientata è in coda)
  * Se manca una seconda foto utile → `null` (resta solo packshot).
  */
 export function pickProductCardHoverImageUrl(

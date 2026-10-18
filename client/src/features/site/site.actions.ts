@@ -30,7 +30,7 @@ export function setSitePageContent(pageKey: SitePageKey, locale: string, content
   siteStore.pageLocales[pageKey] = locale
 }
 
-/** Applica contenuto SSR senza attendere useEffect — evita skeleton su navigazioni con dati già noti. */
+/** Applica contenuto SSR senza attendere useEffect: evita skeleton su navigazioni con dati già noti. */
 export function hydrateSitePageContent(pageKey: SitePageKey, locale: string, content: unknown) {
   const existingLocale = siteStore.pageLocales[pageKey]
   if (existingLocale && existingLocale !== locale) return
@@ -90,7 +90,7 @@ export function fetchSitePage<K extends SitePageKey>(
     } catch (e) {
       siteStore.error = siteErrorMessage(e)
       const cached = siteStore.pages[pageKey]
-      // Soft-fail: i caller usano `void fetchSitePage` — non propagare all'overlay Next.
+      // Soft-fail: i caller usano `void fetchSitePage`: non propagare all'overlay Next.
       return { content: cached ?? null } as SitePageDTO<K>
     } finally {
       siteStore.loading[pageKey] = false

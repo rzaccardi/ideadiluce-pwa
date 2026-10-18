@@ -93,7 +93,7 @@ export type FetchCartOptions = {
   force?: boolean
   /** Salta controllo mirror localStorage (es. dopo mutazione già sincronizzata). */
   skipMirrorCheck?: boolean
-  /** Richiede reprice Odoo lato server (cart/checkout). */
+  /** Richiede il ricalcolo prezzi lato server. Usato dalla pagina carrello. */
   reprice?: boolean
   /** Non mostrare lo stato di caricamento globale del carrello. */
   silent?: boolean
@@ -317,7 +317,7 @@ export async function reprice() {
   }
 }
 
-/** Conferma i prezzi Odoo aggiornati (consuma needsPricingConfirmation). */
+/** Conferma i prezzi aggiornati (consuma needsPricingConfirmation). */
 export async function acknowledgePricing() {
   cartStore.error = null
   try {

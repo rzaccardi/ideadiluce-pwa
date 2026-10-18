@@ -72,7 +72,11 @@ export function AccountOrderRow({ order, className }: { order: OrderDTO; classNa
           ) : null}
           {order.source !== 'pwa' ? (
             <AccountStatusBadge
-              label={order.sourceLabel || ORDER_SOURCE_LABEL[order.source]}
+              label={
+                order.sourceLabel && !/odoo/i.test(order.sourceLabel)
+                  ? order.sourceLabel
+                  : ORDER_SOURCE_LABEL[order.source]
+              }
               tone="neutral"
             />
           ) : null}

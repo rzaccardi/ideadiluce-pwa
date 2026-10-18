@@ -12,7 +12,7 @@ export type SiteLink = {
   href: string
   imageUrl?: string
   videoUrl?: string
-  /** Pin filtro Odoo: label/href risolti a runtime per locale. */
+  /** Pin filtro: label/href risolti a runtime per locale. */
   filterKind?: SiteNavFilterKind
   filterValue?: string
   filterWorld?: 'design' | 'technical'
@@ -435,7 +435,7 @@ export type BrandListItemDTO = {
   slug: string
   name: string
   productCount?: number
-  /** Aree in cui il brand ha prodotti (da categorie Odoo). */
+  /** Aree in cui il brand ha prodotti (da categorie ). */
   worlds?: ReadonlyArray<CatalogWorld>
   /** Logo light gestito dal BO (CDN). */
   logoLightUrl?: string | null

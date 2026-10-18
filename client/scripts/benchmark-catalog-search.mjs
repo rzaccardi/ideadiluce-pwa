@@ -3,8 +3,8 @@
  * Benchmark qualità ricerca catalogo (OdooCatalog via BFF).
  *
  * Uso:
- *   node client/scripts/benchmark-catalog-search.mjs
- *   API_BASE=http://localhost:4000 node client/scripts/benchmark-catalog-search.mjs --locale IT
+ * node client/scripts/benchmark-catalog-search.mjs
+ * API_BASE=http://localhost:4000 node client/scripts/benchmark-catalog-search.mjs --locale IT
  *
  * Output: report JSON in stdout + file opzionale con --out report.json
  */

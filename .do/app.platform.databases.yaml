@@ -1,4 +1,4 @@
-# DEPRECATO — il DB è integrato in app.platform.yaml / app.yaml
+# DEPRECATO: il DB è integrato in app.platform.yaml / app.yaml
 #
 # Cluster produzione: db-ideadiluce-pwa (PG 18, defaultdb / doadmin).
 # DATABASE_URL sull'api è il secret del pool PgBouncer `ideadiluce-api`, non ${db-ideadiluce-pwa.DATABASE_URL}.

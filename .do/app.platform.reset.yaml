@@ -1,4 +1,4 @@
-# Reset routing su app ESISTENTE ideadiluce-platform — solo via doctl (non UI)
+# Reset routing su app ESISTENTE ideadiluce-platform: solo via doctl (non UI)
 #
 #   DO_APP_NAME=ideadiluce-platform DIGITALOCEAN_ACCESS_TOKEN=dop_v1_... \
 #     ./scripts/do-update-platform-spec.sh .do/app.platform.reset.yaml

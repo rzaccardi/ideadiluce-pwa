@@ -1,4 +1,4 @@
-/** Meta prezzi carrello (warnings Odoo, cache snapshot) — non persistito in DB. */
+/** Meta prezzi carrello (warnings Odoo, cache snapshot): non persistito in DB. */
 
 export type CartPricingMeta = {
   snapshotAt: string | null

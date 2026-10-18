@@ -7,7 +7,7 @@ type RouteSkeletonProps = {
   variant?: RouteSkeletonVariant
 }
 
-/** Skeleton di pagina admin — layout coerente con lista, dettaglio o form. */
+/** Skeleton di pagina admin: layout coerente con lista, dettaglio o form. */
 export function RouteSkeleton({ variant = 'default' }: RouteSkeletonProps) {
   if (variant === 'list') {
     return (

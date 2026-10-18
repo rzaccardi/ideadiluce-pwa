@@ -17,7 +17,7 @@ describe('buildCartAddHintFromCard', () => {
     expect(toServerCartAddHint(hint)).toBeUndefined()
   })
 
-  it('invia l’hint al server solo con template Odoo', () => {
+  it('invia l’hint al server solo con template', () => {
     const hint = buildCartAddHintFromCard({
       slug: 'lampada',
       name: 'Lampada',

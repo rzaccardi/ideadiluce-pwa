@@ -149,7 +149,7 @@ describe('applyOptimisticAdd', () => {
 })
 
 describe('cartLineMatchesAdd', () => {
-  it('riconosce slug, template Odoo e variante', () => {
+  it('riconosce slug, template e variante', () => {
     expect(
       cartLineMatchesAdd(
         { productRef: '1997', productSlug: 'lampada', variantRef: '88' },

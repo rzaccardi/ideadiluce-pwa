@@ -33,7 +33,7 @@ export function ResetPasswordPageView() {
     >
       <AuthCard>
         <AuthCardHeader title={t('reset.title')} />
-        <AuthBodyText>{t('reset.odooDelegated')}</AuthBodyText>
+        <AuthBodyText>{t('reset.viaEmail')}</AuthBodyText>
       </AuthCard>
     </AuthPageShell>
   )

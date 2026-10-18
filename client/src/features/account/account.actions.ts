@@ -17,7 +17,7 @@ function applyPatchResult(result: { user: UserDTO; odooSyncFailed: boolean }, su
   setAuthUser(result.user)
   accountStore.message = successMessage
   if (result.odooSyncFailed) {
-    accountStore.odooSyncWarning = true
+    accountStore.profileSyncWarning = true
   }
   return result.user
 }
@@ -69,7 +69,7 @@ export async function saveBusiness(patch: {
 export function clearAccountFeedback() {
   accountStore.error = null
   accountStore.message = null
-  accountStore.odooSyncWarning = false
+  accountStore.profileSyncWarning = false
 }
 
 function applyShippingMutation(

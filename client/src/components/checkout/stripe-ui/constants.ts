@@ -56,7 +56,7 @@ export const checkoutTitleTypographyClass =
 export const checkoutFormTitleClass =
   'text-lg font-semibold leading-tight tracking-tight sm:text-xl md:text-2xl lg:text-[1.75rem] xl:text-3xl'
 
-/** Gutter orizzontale condiviso tra colonne checkout — allineato alle pagine storefront. */
+/** Gutter orizzontale condiviso tra colonne checkout: allineato alle pagine storefront. */
 export const checkoutColumnGutterClass = SITE_PAGE_X_CLASS
 
 /** Larghezza massima del blocco form nel main. */
@@ -91,13 +91,13 @@ export const checkoutSummaryInnerClass = [
   'lg:py-10 xl:py-[46px]',
 ].join(' ')
 
-/** Sidebar checkout desktop — occupa la prima colonna della grid a tutta altezza. */
+/** Sidebar checkout desktop: occupa la prima colonna della grid a tutta altezza. */
 export const checkoutSummaryAsideClass = [
   'checkout-summary-dark hidden min-h-0 min-w-0',
   'lg:col-start-1 lg:row-start-1 lg:flex lg:h-full lg:min-h-0 lg:flex-col lg:overflow-y-auto lg:overscroll-contain',
 ].join(' ')
 
-/** Spacer sotto la barra fixed — evita che il form finisca sotto il toggle. */
+/** Spacer sotto la barra fixed: evita che il form finisca sotto il toggle. */
 export const checkoutMobileSummarySpacerClass =
   'h-[calc(3.25rem+env(safe-area-inset-top,0px))] shrink-0 lg:hidden'
 
@@ -119,7 +119,7 @@ export const checkoutMobileSummaryPanelClass = [
 /** Pulsante indietro: stessa cap-height del titolo a ogni breakpoint. */
 export const checkoutBackButtonSizeClass = 'size-7 shrink-0 sm:size-8'
 
-/** Palette checkout — allineata al mock IdeaDiLuce Checkout. */
+/** Palette checkout: allineata al mock IdeaDiLuce Checkout. */
 export const CHECKOUT_BRAND = {
   fg: '#14161b',
   fgMuted: '#6c727c',

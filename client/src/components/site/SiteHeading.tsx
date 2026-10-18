@@ -19,7 +19,7 @@ export function SiteHeading({ level, children, className, id }: Props) {
   )
 }
 
-/** Titolo card/lista sotto una sezione h2 — stile invariato, tag semantico h3. */
+/** Titolo card/lista sotto una sezione h2: stile invariato, tag semantico h3. */
 export function SiteCardHeading({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <SiteHeading level={3} className={cn('text-base font-bold', className)}>

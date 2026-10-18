@@ -1,6 +1,6 @@
-/** Classi Tailwind condivise — design system IdeaDiLuce (idl-*). */
+/** Classi Tailwind condivise: design system IdeaDiLuce (idl-*). */
 export const ui = {
-  /** Transizione colore leggera — stesso feeling dei link testuali. */
+  /** Transizione colore leggera: stesso feeling dei link testuali. */
   interactive: 'cursor-pointer transition-colors duration-150',
   /** Button testuali in nav/menu: reset browser + hover come i link. */
   navButton:
@@ -39,7 +39,7 @@ export const ui = {
   headerAction:
     'inline-flex size-[38px] shrink-0 items-center justify-center gap-2 rounded-full border p-0 text-sm font-bold lg:size-auto lg:px-4 lg:py-2',
   headerActionText: 'hidden lg:inline',
-  /** Header / utility bar — reattivo al tema via token superficie. */
+  /** Header / utility bar: reattivo al tema via token superficie. */
   headerBar: 'border-b border-idl-border bg-idl-paper text-idl-ink-soft',
   headerNavLink:
     'text-idl-ink-soft no-underline transition-colors duration-150 hover:text-idl-ink',

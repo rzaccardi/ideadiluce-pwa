@@ -561,7 +561,7 @@ async function patchHomeVisualSections() {
   }
 }
 
-/** Rimuove copy showroom (utility bar, trust bar, footer) — non esiste showroom fisico. */
+/** Rimuove copy showroom (utility bar, trust bar, footer): non esiste showroom fisico. */
 async function patchShellRemoveShowroomCopy() {
   const isShowroomText = (value: string) => /showroom/i.test(value)
 
@@ -683,6 +683,22 @@ async function patchShellNavCategoryLinks() {
   }
 }
 
+const STALE_ARREDO_MEGA_MENU_HREFS = [
+  '/tipologia/incasso',
+  '/tipologia/faretti',
+  '/stile/moderno',
+  '/stile/minimal',
+  '/stile/decorativo',
+  '/stile/industrial',
+  '/stile/outdoor',
+  '/brand/tlb',
+]
+
+function isStaleArredoMegaMenuHref(href: string): boolean {
+  if (href.includes('tag=offerta')) return true
+  return STALE_ARREDO_MEGA_MENU_HREFS.some((stale) => href.includes(stale))
+}
+
 /** Riduce i mega-menu Arredo/Tecnico a 4 colonne (layout header). */
 async function patchShellMegaMenuColumns() {
   const menuIds = ['arredo', 'tecnico'] as const
@@ -720,6 +736,10 @@ async function patchShellMegaMenuColumns() {
               currentJson.includes('/tipologia/plafoniere') ||
               currentJson.includes('/tipologia/incasso') ||
               currentJson.includes('/stile/minimal') ||
+              currentJson.includes('/stile/moderno') ||
+              currentJson.includes('/stile/decorativo') ||
+              currentJson.includes('/stile/industrial') ||
+              currentJson.includes('/stile/outdoor') ||
               currentJson.includes('tag=offerta')
             : !currentJson.includes('GUIDE TECNICHE') ||
               /world=technical&q=/i.test(currentJson) ||
@@ -733,6 +753,33 @@ async function patchShellMegaMenuColumns() {
         if (needsPanelRefresh) {
           item.panel = structuredClone(fresh.panel)
           changed = true
+        }
+        continue
+      }
+
+      if (id === 'arredo') {
+        for (let columnIndex = 0; columnIndex < item.panel.columns.length; columnIndex += 1) {
+          const column = item.panel.columns[columnIndex]
+          const freshColumn = fresh.panel.columns[columnIndex]
+          const beforeJson = JSON.stringify(column.links)
+          const seen = new Set<string>()
+          column.links = column.links.flatMap((link) => {
+            const href =
+              link.href.includes('/tipologia/plafoniere') || link.href.includes('/tipologia/plafoniera')
+                ? '/tipologia/soffitto'
+                : link.href
+            if (isStaleArredoMegaMenuHref(href) || seen.has(href)) return []
+            seen.add(href)
+            return href === link.href ? [link] : [{ ...link, href }]
+          })
+          if (freshColumn) {
+            for (const freshLink of freshColumn.links) {
+              if (seen.has(freshLink.href)) continue
+              column.links.push(structuredClone(freshLink))
+              seen.add(freshLink.href)
+            }
+          }
+          if (JSON.stringify(column.links) !== beforeJson) changed = true
         }
         continue
       }

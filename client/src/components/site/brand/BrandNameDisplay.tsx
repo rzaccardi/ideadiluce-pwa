@@ -29,7 +29,7 @@ export function BrandNameDisplay({
 }: Props) {
   const h = logoHeight ?? LOGO_HEIGHT[size]
 
-  // TLB: wordmark vettoriale dedicato (meglio del JPG catalogo) — anche in dark.
+  // TLB: wordmark vettoriale dedicato (meglio del JPG catalogo): anche in dark.
   if (style === 'bold-accent' && name.toLowerCase().includes('tlb')) {
     return (
       <img

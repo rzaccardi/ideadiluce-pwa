@@ -1,6 +1,6 @@
 import type { Transition, Variants } from 'framer-motion'
 
-/** Curva ease-out premium — coerente con il design IdeaDiLuce */
+/** Curva ease-out premium: coerente con il design IdeaDiLuce */
 export const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
 export const transitionFast: Transition = { duration: 0.18, ease: EASE_OUT }

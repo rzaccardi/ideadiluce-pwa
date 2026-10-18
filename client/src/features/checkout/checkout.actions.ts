@@ -38,7 +38,7 @@ import {
 import { loadShippingAddresses } from '@/features/account'
 import { dedupeAsync } from '@/lib/async-cache'
 import { isCheckoutAddressValid, mergeResolvedStreetNumber, isCheckoutPhoneValid } from '@/lib/checkout-address.validators'
-import { fetchCart, shouldRepriceCartOnLoad, waitForPendingCartMutations } from '@/features/cart'
+import { fetchCart, waitForPendingCartMutations } from '@/features/cart'
 import { cartStore } from '@/features/cart/cart.store'
 import {
   filterVisibleShippingQuotes,
@@ -63,7 +63,7 @@ function errMessage(e: unknown) {
 
 function shippingAddressPayload() {
   if ((checkoutStore.deliveryRecipient.mode ?? 'self') === 'other') {
-    // Destinatario dropship già salvato: usa l'id Odoo in draft.shipping.
+    // Destinatario dropship già salvato: usa l'id in draft.shipping.
     if (checkoutStore.draft.shipping.id?.startsWith('odoo:')) {
       return { ...checkoutStore.draft.shipping }
     }
@@ -353,7 +353,7 @@ function applyTaxValidationResult(res: TaxValidationResultDTO) {
   }
 }
 
-/** Dati fiscali invariati rispetto al profilo BE già verificato — niente re-validazione API. */
+/** Dati fiscali invariati rispetto al profilo BE già verificato: niente re-validazione API. */
 function taxFieldsTrustedFromAuth(): boolean {
   const user = authStore.me
   if (!user || !checkoutStore.anagraficaCollectedAtAccount) return false
@@ -616,7 +616,7 @@ function isAddressReadyWithoutPhone(address: AddressInput): boolean {
  * True quando manca un telefono valido e l’indirizzo è già pronto:
  * - destinazione spedizione senza telefono, oppure
  * - telefono fatturazione mancante (campo in alto) mentre la destinazione è pronta
- *   (billingComplete blocca i metodi anche se lo shipping ha già un phone da Odoo).
+ * (billingComplete blocca i metodi anche se lo shipping ha già un phone da ).
  */
 export function isShippingBlockedByMissingPhone(): boolean {
   const shipping = shippingAddressPayload()
@@ -736,7 +736,7 @@ export function isBusinessCheckout(): boolean {
   return seg === 'business'
 }
 
-/** Dropship / consegna a terzi: solo con `b2b_active` Odoo. */
+/** Dropship / consegna a terzi: solo con `b2b_active`. */
 export function canUseDropship(): boolean {
   return Boolean(authStore.me?.b2bActive)
 }
@@ -781,7 +781,7 @@ function businessBillingComplete(): boolean {
 function dropshipPayload() {
   const mode = checkoutStore.deliveryRecipient.mode ?? 'self'
   if (mode !== 'other') return undefined
-  // Se il destinatario è già in rubrica Odoo, non ricrearlo al sync ordine.
+  // Se il destinatario è già in rubrica, non ricrearlo al sync ordine.
   if (checkoutStore.draft.shipping.id?.startsWith('odoo:')) return undefined
   const selected = checkoutStore.savedShippingAddresses.find(
     (address) => address.id === checkoutStore.selectedShippingAddressId && address.dropship,
@@ -1326,11 +1326,8 @@ export async function refreshCheckoutAfterCartChange() {
     clearCheckoutPricingState()
 
     try {
-      const reprice = shouldRepriceCartOnLoad(cartStore.cart, {
-        reservationExpiredNotice: false,
-      })
-      checkoutDbg.api('fetchCart', { force: true, reprice })
-      await fetchCart({ force: true, reprice, silent: true })
+      checkoutDbg.api('fetchCart', { force: true, reprice: false })
+      await fetchCart({ force: true, silent: true })
 
       if (
         checkoutStepNeedsShippingRefresh(step) &&

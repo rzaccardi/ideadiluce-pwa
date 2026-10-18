@@ -48,7 +48,7 @@ type Props = {
   selectedWattaggioMax?: number
   selectedPriceBucket?: CatalogPriceBucket
   inStockOnly: boolean
-  /** Facet live Odoo — popola attacco / Kelvin / watt / brand / categorie. */
+  /** Facet live: popola attacco / Kelvin / watt / brand / categorie. */
   facets?: CatalogFiltersDTO | null | Readonly<CatalogFiltersDTO>
   /** Area corrente: nasconde filtri/categorie dell’altra area. */
   world?: CatalogWorldTab

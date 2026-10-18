@@ -18,9 +18,9 @@ export type CatalogTaxonomyContext = {
   value: string
   /** Label UI (es. GU10, Moderno). */
   label: string
-  /** Tab negozio (UI); non è un filtro Odoo — preferire `category`. */
+  /** Tab negozio (UI); non è un filtro: preferire `category`. */
   world?: 'design' | 'technical'
-  /** Root categoria Odoo (`tecnico` / `arredo`) da applicare al listing. */
+  /** Root categoria (`tecnico` / `arredo`) da applicare al listing. */
   category?: string
   hubPath: string
   hubLabel: string
@@ -109,7 +109,7 @@ export function buildAttaccoTaxonomy(pathSlug: string): CatalogTaxonomyContext {
   }
 }
 
-/** Alias slug menu/WP ↔ slug facet Odoo (tipologie Arredo). */
+/** Alias slug menu/WP ↔ slug facet (tipologie Arredo). */
 const TIPOLOGIA_SLUG_ALIASES: Record<string, string> = {
   plafoniere: 'soffitto',
   plafoniera: 'soffitto',
@@ -159,7 +159,7 @@ export function buildAmbienteTaxonomy(slug: string, label?: string): CatalogTaxo
   }
 }
 
-/** Alias slug CMS/hub ↔ slug search Odoo (allineato a server odoo-catalog-slug). */
+/** Alias slug CMS/hub ↔ slug search (allineato a server odoo-catalog-slug). */
 const BRAND_SLUG_ALIASES: Record<string, string> = {
   'tlb-italy': 'tlb',
   tlbitaly: 'tlb',
@@ -183,7 +183,7 @@ export function buildBrandTaxonomy(slug: string, name: string): CatalogTaxonomyC
   }
 }
 
-/** Alias slug CMS/WP ↔ slug search Odoo (categorie tecniche). */
+/** Alias slug CMS/WP ↔ slug search (categorie tecniche). */
 const CATEGORY_SLUG_ALIASES: Record<string, string> = {
   alogena: 'alogene',
   fluorescenza: 'fluorescente',

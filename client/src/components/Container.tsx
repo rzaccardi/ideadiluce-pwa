@@ -1,7 +1,7 @@
 import { SITE_PAGE_X_CLASS } from '@/components/site/primitives'
 import { cn } from '@/utils/cn'
 
-/** Larghezza contenuto pagine storefront — allineata a SectionContainer. */
+/** Larghezza contenuto pagine storefront: allineata a SectionContainer. */
 export const SITE_CONTENT_CLASS = cn('mx-auto w-full max-w-[1320px]', SITE_PAGE_X_CLASS)
 
 /** Container form auth (login, register, reset password, …). */

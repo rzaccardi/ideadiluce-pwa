@@ -63,7 +63,7 @@ describe('catalog-facets-ui', () => {
     expect(children.map((c) => c.slug)).toEqual(['strip'])
   })
 
-  it('costruisce chip tecnici da categorie Odoo', () => {
+  it('costruisce chip tecnici da categorie', () => {
     const chips = buildTechnicalSubtypeChipsFromFacets(facetsFixture, { catalogMode: true })
     expect(chips[0]?.label).toBe('Tutti')
     expect(chips.some((c) => c.label === 'LED' && c.href?.includes('category=led'))).toBe(true)

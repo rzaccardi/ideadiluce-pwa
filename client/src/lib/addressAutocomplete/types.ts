@@ -11,7 +11,7 @@ export type ResolvedAddress = {
 export type AddressSuggestion = {
   id: string
   label: string
-  /** Presente subito (es. Mapbox); altrimenti usa resolve() */
+  /** Presente subito (es. Mapbox); altrimenti usa resolve */
   resolved?: ResolvedAddress
   provider?: 'google' | 'mapbox'
 }

@@ -327,7 +327,7 @@ export const DEFAULT_TECHNICAL_PRODUCTS_CATEGORY_IT: CategoryLandingContent = {
   ],
   title: 'Prodotti tecnici',
   description:
-    'Driver, ballast, portalampade, accenditori e accessori dal catalogo Odoo live. Ogni voce punta a una categoria o tag reale.',
+    'Driver, ballast, portalampade, accenditori e accessori. Ogni voce punta a una categoria o tag reale.',
   subtypeChips: [
     { label: 'Tutti', href: '/categoria-prodotto/illuminazione-tecnica' },
     { label: 'Driver', href: '/negozio?world=technical&category=driver', active: true },

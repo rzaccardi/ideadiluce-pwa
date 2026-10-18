@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { phoneFlagUrl } from '@/lib/phone-flags'
-import { joinPhone, PHONE_COUNTRIES, splitPhone } from '@/lib/phone-prefix'
+import { joinPhone, normalizePhoneCountry, PHONE_COUNTRIES, splitPhone } from '@/lib/phone-prefix'
 import { useI18n } from '@/hooks/use-i18n'
 import { layers } from '@/lib/layering'
 import { cn } from '@/utils/cn'
@@ -57,14 +57,15 @@ export function PhonePrefixField({
   const { t } = useI18n()
   const listId = useId()
   const rootRef = useRef<HTMLDivElement>(null)
-  const buttonRef = useRef<HTMLButtonElement>(null)
   const [open, setOpen] = useState(false)
   const [focused, setFocused] = useState(false)
   const [mounted, setMounted] = useState(false)
   const parsed = splitPhone(value, defaultCountry)
   const [country, setCountry] = useState(parsed.country)
   const [national, setNational] = useState(parsed.national)
+  const [countryTouched, setCountryTouched] = useState(false)
   const [menuBox, setMenuBox] = useState<{ top: number; left: number; width: number } | null>(null)
+  const shownPlaceholder = placeholder.replace(/^(?:\+|00)\d{1,4}\s*/, '').trim() || '333 1234567'
 
   useEffect(() => {
     setMounted(true)
@@ -72,9 +73,14 @@ export function PhonePrefixField({
 
   useEffect(() => {
     if (focused) return
-    setCountry(parsed.country)
-    setNational(parsed.national)
-  }, [focused, parsed.country, parsed.national])
+    if (value.trim()) {
+      setCountry(parsed.country)
+      setNational(parsed.national)
+      return
+    }
+    setNational('')
+    if (!countryTouched) setCountry(normalizePhoneCountry(defaultCountry))
+  }, [focused, value, parsed.country, parsed.national, defaultCountry, countryTouched])
 
   useEffect(() => {
     if (!open) return
@@ -158,6 +164,7 @@ export function PhonePrefixField({
                   role="option"
                   aria-selected={active}
                   onClick={() => {
+                    setCountryTouched(true)
                     commit(item.code, national)
                     setOpen(false)
                   }}
@@ -184,28 +191,37 @@ export function PhonePrefixField({
         variant === 'stripe'
           ? 'idl-field flex w-full items-center gap-0 px-0'
           : 'flex w-full items-center gap-0 rounded-lg border border-idl-border bg-idl-tech-panel px-0 text-idl-graphite outline-none transition focus-within:border-idl-brass focus-within:ring-2 focus-within:ring-idl-brass/20',
-        invalid && 'border-red-500 ring-2 ring-red-200',
+        invalid && variant === 'plain' && 'border-red-500 ring-2 ring-red-200',
         disabled && 'opacity-60',
         className,
       )}
     >
-      <button
-        ref={buttonRef}
-        type="button"
-        disabled={disabled}
+      <div
+        role="button"
+        tabIndex={disabled ? -1 : 0}
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-controls={listId}
         aria-label={t('common.phonePrefix')}
-        onClick={() => setOpen((current) => !current)}
-        className="inline-flex shrink-0 items-center gap-1.5 py-3.5 pr-2 pl-[15px] text-[15px] font-semibold text-idl-graphite outline-none"
+        aria-disabled={disabled || undefined}
+        onClick={() => {
+          if (!disabled) setOpen((current) => !current)
+        }}
+        onKeyDown={(event) => {
+          if (disabled) return
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            setOpen((current) => !current)
+          }
+        }}
+        className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 py-3.5 pr-2 pl-[15px] text-[15px] font-semibold text-idl-graphite outline-none focus-visible:ring-2 focus-visible:ring-idl-ink/35"
       >
         <Flag country={country} />
         <span className="tabular-nums">{dialLabel}</span>
         <span className="text-[10px] text-idl-muted" aria-hidden>
           ▾
         </span>
-      </button>
+      </div>
       <span className="h-5 w-px shrink-0 bg-idl-tech-border" aria-hidden />
       <input
         id={id}
@@ -215,7 +231,7 @@ export function PhonePrefixField({
         autoComplete={autoComplete}
         required={required}
         disabled={disabled}
-        placeholder={placeholder}
+        placeholder={shownPlaceholder}
         aria-invalid={invalid || undefined}
         value={focused ? national : parsed.national}
         onChange={(event) => onNationalChange(event.target.value)}

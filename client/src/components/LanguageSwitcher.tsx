@@ -163,15 +163,12 @@ export function LanguageSwitcher({ variant = 'icon', onOpenChange, onLocaleChang
             >
               {isUtilityBar ? LOCALE_NAME[locale] : LOCALE_LABEL[locale]}
             </span>
-            {/* <span
-              className={cn(
-                isHeader && ui.headerActionText,
-                'text-[9px] opacity-60',
-              )}
+            <span
+              className={cn('text-[9px] leading-none opacity-60', isHeader && 'max-lg:hidden')}
               aria-hidden
             >
               ▾
-            </span> */}
+            </span>
           </>
         ) : null}
       </button>
@@ -182,43 +179,26 @@ export function LanguageSwitcher({ variant = 'icon', onOpenChange, onLocaleChang
           role="listbox"
           aria-label={t('language.switcher.other')}
           className={cn(
-            isLabeled
-              ? cn(
-                  'absolute right-0 w-[188px] rounded-[14px] border border-idl-border bg-idl-paper p-2 shadow-[0_20px_54px_rgba(0,0,0,0.2)]',
-                  layers.headerDropdown,
-                  'top-full mt-2',
-                )
-              : cn(
-                  'absolute right-0 top-full mt-2 flex w-max flex-col gap-1.5 rounded-xl border border-idl-border bg-idl-tech-panel p-1 shadow-lg shadow-idl-ink/10',
-                  layers.headerDropdown,
-                ),
+            'absolute top-full mt-2 w-[188px] rounded-[14px] border border-idl-border bg-idl-paper p-2 shadow-[0_20px_54px_rgba(0,0,0,0.2)]',
+            isHeader ? 'right-0 max-lg:left-0 max-lg:right-auto' : 'right-0',
+            layers.headerDropdown,
           )}
         >
           {otherLocales.map((loc) => (
-              <button
-                key={loc}
-                type="button"
-                role="option"
-                aria-selected={false}
-                lang={HTML_LANG[loc]}
-                title={LOCALE_NAME[loc]}
-                onClick={() => selectLocale(loc)}
-                className={cn(
-                  ui.navButton,
-                  isLabeled
-                    ? cn(ui.headerDropdownItem, 'px-2.5')
-                    : cn(
-                        ui.interactive,
-                        'inline-flex size-5 shrink-0 items-center justify-center rounded-full p-0 opacity-90',
-                        'hover:opacity-100 hover:ring-2 hover:ring-idl-border hover:ring-offset-1',
-                        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-idl-brass',
-                      ),
-                )}
-              >
-                <LocaleFlag locale={loc} size={isLabeled ? 22 : FLAG_SIZE_OPTION} />
-                {isLabeled ? <span lang={HTML_LANG[loc]}>{LOCALE_NAME[loc]}</span> : null}
-              </button>
-            ))}
+            <button
+              key={loc}
+              type="button"
+              role="option"
+              aria-selected={false}
+              lang={HTML_LANG[loc]}
+              title={LOCALE_NAME[loc]}
+              onClick={() => selectLocale(loc)}
+              className={cn(ui.navButton, ui.headerDropdownItem, 'px-2.5')}
+            >
+              <LocaleFlag locale={loc} size={22} />
+              <span lang={HTML_LANG[loc]}>{LOCALE_NAME[loc]}</span>
+            </button>
+          ))}
         </div>
       ) : null}
     </div>

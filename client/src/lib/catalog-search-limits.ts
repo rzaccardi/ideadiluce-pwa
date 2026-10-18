@@ -1,4 +1,4 @@
-/** Limiti ricerca catalogo — allineare a server/catalog-search-guard.ts */
+/** Limiti ricerca catalogo: allineare a server/catalog-search-guard.ts */
 
 export const CATALOG_SEARCH_LIMITS = {
   minLocalLength: 2,
@@ -11,7 +11,7 @@ export const CATALOG_SEARCH_LIMITS = {
   duplicateCacheMs: 30_000,
 } as const
 
-/** Chip "Prova:" in Home: 5 codici Odoo stanno su una riga nel container da 1000px. */
+/** Chip "Prova:" in Home: 5 codici stanno su una riga nel container da 1000px. */
 export const HOME_SEARCH_HINTS_DISPLAY_LIMIT = 5
 
 export function limitHomeSearchHints<T>(hints: ReadonlyArray<T>): T[] {
@@ -30,7 +30,7 @@ export function createCatalogSearchApiGateState(): CatalogSearchApiGateState {
   return { lastApiQuery: '', lastApiAtMs: 0, apiTimestamps: [] }
 }
 
-/** Sanitizza input mentre l'utente digita — senza trim per non bloccare gli spazi tra parole. */
+/** Sanitizza input mentre l'utente digita: senza trim per non bloccare gli spazi tra parole. */
 export function sanitizeCatalogSearchInputLive(raw: string): string {
   return raw
     .replace(/[\u0000-\u001F\u007F]/g, '')

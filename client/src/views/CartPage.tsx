@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useSnapshot } from 'valtio/react'
 import { cartStore, fetchCart, fetchRecommendations } from '@/features/cart'
-import { shouldRepriceCartOnLoad } from '@/features/cart/cart-reprice.policy'
 import { CartPageView } from '@/components/cart/CartPageView'
 import { CartPageSkeleton } from '@/components/cart/CartPageSkeleton'
 import { PageLoadTransition } from '@/components/motion'
@@ -19,10 +18,7 @@ export function CartPage() {
 
   useEffect(() => {
     let active = true
-    const reprice = shouldRepriceCartOnLoad(cartStore.cart, {
-      reservationExpiredNotice: cartStore.reservationExpiredNotice,
-    })
-    void fetchCart({ force: true, reprice }).finally(() => {
+    void fetchCart({ force: true, reprice: true }).finally(() => {
       if (active) setIsPageReady(true)
     })
     return () => {

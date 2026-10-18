@@ -1,4 +1,4 @@
-/** Meta tag homepage — allineati a H1 e copy visibile in hero. */
+/** Meta tag homepage: allineati a H1 e copy visibile in hero. */
 export const HOME_SEO_TITLE = 'Illumina con stile - Illuminazione d\'arredo e prodotti tecnici'
 
 export const HOME_SEO_DESCRIPTION =

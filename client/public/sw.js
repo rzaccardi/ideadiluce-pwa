@@ -1,4 +1,4 @@
-/* Legacy Vite PWA cleanup — sostituisce il service worker Workbox precedente. */
+/* Legacy Vite PWA cleanup: sostituisce il service worker Workbox precedente. */
 self.addEventListener('install', () => {
   self.skipWaiting()
 })

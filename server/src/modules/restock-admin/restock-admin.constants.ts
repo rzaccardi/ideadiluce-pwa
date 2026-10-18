@@ -1,4 +1,4 @@
-/** Stati workflow BO — string literal (coerente con ProfessionalAccountRequest.status). */
+/** Stati workflow BO: string literal (coerente con ProfessionalAccountRequest.status). */
 export const STOCK_RESTOCK_ADMIN_STATUSES = [
   'NEW',
   'IN_PROGRESS',

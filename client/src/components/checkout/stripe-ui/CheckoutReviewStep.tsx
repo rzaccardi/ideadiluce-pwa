@@ -92,8 +92,8 @@ export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Pro
   const [pricingConfirmOpen, setPricingConfirmOpen] = useState(false)
   const [pricingConfirmPending, setPricingConfirmPending] = useState(false)
 
-  const pricingWarnings = (cart.warnings ?? []).filter((w) =>
-    /price|prezzo|listino|odoo|cache/i.test(w),
+  const pricingWarnings = (cart.warnings ?? []).filter(
+    (w) => /price|prezzo|listino|cache/i.test(w) && !/odoo/i.test(w),
   )
 
   async function proceedToPay() {

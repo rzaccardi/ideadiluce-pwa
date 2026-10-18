@@ -22,7 +22,7 @@ function titleFromSlug(slug: string): string {
     .join(' ')
 }
 
-/** Contenuto llms.txt per crawler AI — pagine indicizzabili principali. */
+/** Contenuto llms.txt per crawler AI: pagine indicizzabili principali. */
 export async function buildLlmsTxt(): Promise<string> {
   const site = env.PUBLIC_SITE_URL.replace(/\/$/, '')
   const [guideSlugs, roomSlugs, attaccoSlugs, tipologiaSlugs, tecnicaSlugs, categories, brands] =

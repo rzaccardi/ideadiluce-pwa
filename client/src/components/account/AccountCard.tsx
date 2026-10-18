@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/utils/cn'
 
-/** Card su sfondo zinc-50 — come le sezioni della thank you page. */
+/** Card su sfondo zinc-50: come le sezioni della thank you page. */
 export function AccountCard({
   children,
   className,

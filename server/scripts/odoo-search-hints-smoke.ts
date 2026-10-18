@@ -16,7 +16,7 @@ async function main() {
   if (!env.ODOO_ENABLED || !isOdooConfigured()) {
     console.log(
       JSON.stringify(
-        { ok: false, skipped: true, error: 'Odoo non configurato — smoke test saltato' },
+        { ok: false, skipped: true, error: 'Odoo non configurato: smoke test saltato' },
         null,
         2,
       ),

@@ -8,7 +8,7 @@ build/
 client/.next/
 *.tsbuildinfo
 
-# Env (solo root — non usare server/.env, client/.env, ecc.)
+# Env (solo root: non usare server/.env, client/.env, ecc.)
 .env.*.local
 server/.env
 client/.env
@@ -36,7 +36,7 @@ coverage/
 # Vite
 client/*.local
 
-# Product Hub — dump DB import (contenuti in product-hub/import/.gitignore)
+# Product Hub: dump DB import (contenuti in product-hub/import/.gitignore)
 product-hub/import/*.sql
 product-hub/import/*.sql.gz
 product-hub/import/*.csv

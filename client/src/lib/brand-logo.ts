@@ -1,7 +1,7 @@
 /**
  * Loghi marchi catalogo.
  *
- * 1. Overlay gestiti dal BO (`setManagedBrandLogos`) — light/dark su CDN.
+ * 1. Overlay gestiti dal BO (`setManagedBrandLogos`): light/dark su CDN.
  * 2. Fallback statico `/public/brands/{stem}.jpg` (solo light; in dark di solito testo).
  *
  * Gli asset statici sono JPG 150×32 con canvas bianco e padding irregolare.
@@ -224,7 +224,7 @@ function resolvedFromSrc(
 /**
  * Logo risolto per tema.
  * - managed: URL CDN (dark dedicato se c’è, altrimenti light)
- * - static: JPG `/brands` con crop — stesso asset anche in dark mode
+ * - static: JPG `/brands` con crop: stesso asset anche in dark mode
  */
 export function resolveBrandLogo(
   slug: string | null | undefined,
@@ -255,4 +255,41 @@ export function brandLogoContentAspect(content: BrandLogoContentBox): number {
   const cw = Math.max(0.01, x1 - x0)
   const ch = Math.max(0.01, y1 - y0)
   return (BRAND_LOGO_CANVAS.width * cw) / (BRAND_LOGO_CANVAS.height * ch)
+}
+
+export type BrandLogoCropLayout = {
+  boxWidth: number
+  boxHeight: number
+  imgWidth: number
+  imgHeight: number
+  imgLeft: number
+  imgTop: number
+}
+
+/**
+ * Geometria in px del crop JPG.
+ * Niente percentuali: in flex, con un antenato `transform` (motion) o
+ * `max-width: 100%`, Safari azzera il box o la `width: auto` dell’img.
+ */
+export function brandLogoCropLayout(
+  height: number,
+  content: BrandLogoContentBox,
+  maxWidthRem = 8.5,
+): BrandLogoCropLayout {
+  const [x0, y0, x1, y1] = content
+  const cw = Math.max(0.01, x1 - x0)
+  const ch = Math.max(0.01, y1 - y0)
+  const aspect = brandLogoContentAspect(content)
+  const boxWidth = Math.min(Math.max(0, height) * aspect, maxWidthRem * 16)
+  const boxHeight = aspect > 0 ? boxWidth / aspect : 0
+  const imgHeight = boxHeight / ch
+  const imgWidth = imgHeight * (BRAND_LOGO_CANVAS.width / BRAND_LOGO_CANVAS.height)
+  return {
+    boxWidth,
+    boxHeight,
+    imgWidth,
+    imgHeight,
+    imgLeft: (-x0 / cw) * boxWidth,
+    imgTop: (-y0 / ch) * boxHeight,
+  }
 }

@@ -193,6 +193,14 @@ export const navSections: NavSection[] = [
         match: (p) => p.startsWith('/mail-log'),
       },
       {
+        to: '/mail-templates',
+        label: 'Template email',
+        icon: LayoutTemplateIcon,
+        accentClass: 'text-indigo-600',
+        accentBgClass: 'bg-indigo-50',
+        match: (p) => p.startsWith('/mail-templates'),
+      },
+      {
         to: '/professional-requests',
         label: 'Professionisti',
         icon: BriefcaseBusinessIcon,
@@ -332,6 +340,12 @@ export function getBreadcrumbs(pathname: string, _search = ''): BreadcrumbItem[]
     return [
       { label: 'Richieste contatto', href: '/site-inquiries' },
       { label: 'Moduli Contatti e lead dal sito' },
+    ]
+  }
+  if (pathname.startsWith('/mail-templates')) {
+    return [
+      { label: 'Template email', href: '/mail-templates' },
+      { label: 'Anteprima dei template transazionali del sito' },
     ]
   }
   if (pathname.startsWith('/mail-log/') && pathname !== '/mail-log') {
@@ -575,6 +589,15 @@ export function getPageMeta(pathname: string, _search = ''): {
       icon: MailIcon,
       iconClassName: 'text-sky-600',
       iconBgClassName: 'bg-sky-50',
+    }
+  }
+  if (pathname.startsWith('/mail-templates')) {
+    return {
+      title: 'Template email',
+      description: 'Anteprima dei template transazionali del sito, con dati di esempio',
+      icon: LayoutTemplateIcon,
+      iconClassName: 'text-indigo-600',
+      iconBgClassName: 'bg-indigo-50',
     }
   }
   if (pathname.startsWith('/mail-log/') && pathname !== '/mail-log') {

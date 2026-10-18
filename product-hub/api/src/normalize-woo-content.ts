@@ -53,7 +53,7 @@ export function normalizeWooContent(raw: string | null | undefined): string | nu
     },
   )
 
-  // Spazi multipli (non dentro tag — approssimazione sufficiente per export Woo)
+  // Spazi multipli (non dentro tag: approssimazione sufficiente per export Woo)
   s = s.replace(/\s{2,}/g, ' ')
 
   s = s.trim()

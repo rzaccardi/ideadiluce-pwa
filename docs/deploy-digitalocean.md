@@ -6,8 +6,8 @@ Guida per mettere online monorepo, database e (opzionale) storage media con **Ap
 
 | File | Ambiente |
 |------|----------|
-| [`.do/platform-map.yaml`](../.do/platform-map.yaml) | **Mappa collegamenti** — solo topologia, no deploy |
-| [`.do/GO-LIVE.md`](../.do/GO-LIVE.md) | **Mappa go-live** — piattaforma + sistemi annessi + checklist |
+| [`.do/platform-map.yaml`](../.do/platform-map.yaml) | **Mappa collegamenti**: solo topologia, no deploy |
+| [`.do/GO-LIVE.md`](../.do/GO-LIVE.md) | **Mappa go-live**: piattaforma + sistemi annessi + checklist |
 | [`.do/app.yaml`](../.do/app.yaml) | **Produzione** (`main`, Postgres `production: true`) |
 | [`.do/app.staging.yaml`](../.do/app.staging.yaml) | Staging (`staging`, Postgres dev) |
 | [`.do/secrets.production.env.example`](../.do/secrets.production.env.example) | Secret da impostare in UI |
@@ -22,11 +22,11 @@ Tre componenti **separati** nello stesso monorepo (ognuno con URL proprio `*.ond
 | **Web Service** | `api` | `server/` | Express :8080, Prisma, Hub | `${api.PUBLIC_URL}` |
 | **Web Service** | `shop` | `client/` | Next.js :3000 | `${shop.PUBLIC_URL}` (anche URL principale app) |
 | **Static Site** | `admin` | `admin/` | Vite SPA → `admin/dist` | `${admin.PUBLIC_URL}` |
-| **Managed PostgreSQL** | `db-ideadiluce-pwa` | — | PG 18, pool `ideadiluce-api`, schema `public` + `hub` | interno |
+| **Managed PostgreSQL** | `db-ideadiluce-pwa` | - | PG 18, pool `ideadiluce-api`, schema `public` + `hub` | interno |
 
 Lo spec usa `source_dir: /` (root monorepo) perché i build npm workspaces devono vedere `package.json` root, `client/`, `server/` e `admin/` insieme.
 
-Costo indicativo EU `fra1`: API + shop ~10–20 €/mese, static site admin incluso, DB produzione ~15–30 €/mese — verifica prezzi aggiornati nel pannello.
+Costo indicativo EU `fra1`: API + shop ~10–20 €/mese, static site admin incluso, DB produzione ~15–30 €/mese: verifica prezzi aggiornati nel pannello.
 
 ## Setup produzione
 
@@ -34,13 +34,13 @@ Costo indicativo EU `fra1`: API + shop ~10–20 €/mese, static site admin incl
 
 **Importante:** non usare l’auto-detect di DigitalOcean (rileva un solo componente Node). Serve lo spec esplicito.
 
-**Opzione A — CLI (consigliata):**
+**Opzione A: CLI (consigliata):**
 
 ```bash
 doctl apps create --spec .do/app.yaml
 ```
 
-**Opzione B — Control Panel:**
+**Opzione B: Control Panel:**
 
 1. **Apps** → **Create App** → GitHub → repo `ideadiluce-pwa`
 2. Seleziona **Use existing app spec** e conferma il path `.do/app.yaml`
@@ -81,7 +81,7 @@ Con tunnel verso il Postgres di produzione:
 # Admin BO + pagine CMS
 npm run db:seed --workspace=server
 
-# Catalogo Hub (import Woo — può richiedere ore)
+# Catalogo Hub (import Woo: può richiedere ore)
 npm run hub:import
 npm run hub:enrich
 npm run hub:import-content
@@ -129,13 +129,13 @@ doctl apps logs <APP_ID> api --type run
 
 ## Media / Spaces (opzionale)
 
-Catalogo attuale: URL immagini Woo/Odoo in DB — **Spaces non obbligatorio** per go-live.
+Catalogo attuale: URL immagini Woo/Odoo in DB: **Spaces non obbligatorio** per go-live.
 
 Per upload futuri dall’admin: crea Space `fra1` + env `SPACES_*` su `api` (vedi `.env.example`).
 
 ## Limitazioni
 
-- **Odoo** restano su `tlbdb.odoo.com` — solo variabili verso l’istanza esterna
+- **Odoo** restano su `tlbdb.odoo.com`: solo variabili verso l’istanza esterna
 - **Cookie sessione**: `trust proxy` già attivo su Express
 - **Re-build shop** necessario dopo cambio `NEXT_PUBLIC_*`
 

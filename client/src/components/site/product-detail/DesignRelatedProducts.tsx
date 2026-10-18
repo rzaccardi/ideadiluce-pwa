@@ -5,6 +5,7 @@ import type { ProductCardDTO } from '@/types/dto'
 import { ProductPrice } from '@/components/product/ProductPrice'
 import { DesignProductCardMedia } from '@/components/site/category/DesignCatalogProductGrid'
 import { ProductBrandMark } from '@/components/product/ProductBrandMark'
+import { omitTrailingBrandFromProductName } from '@/lib/product-display-title'
 import type { LocalePathFn } from '@/components/site/sections/types'
 
 type Props = {
@@ -36,7 +37,7 @@ export function DesignRelatedProducts({ products, lp, brandName }: Props) {
             />
           </div>
           <div className="line-clamp-2 min-h-[2lh] font-serif text-[17px] leading-snug font-medium text-idl-ink sm:text-[19px]">
-            {product.name.split(/\s*[—–-]\s+/)[0]}
+            {omitTrailingBrandFromProductName(product.name, product.brand).split(/\s*[—–-]\s+/)[0]}
           </div>
           <div className="mt-1 line-clamp-2 min-h-[2lh] text-[12.5px] leading-normal text-idl-ink-muted">
             {product.shortDescription ?? '\u00A0'}

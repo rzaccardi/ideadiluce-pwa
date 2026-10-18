@@ -1,5 +1,5 @@
 /**
- * Costruisce opzioni UI filtri da `CatalogFiltersDTO` (Odoo `/api/v2/filters`).
+ * Costruisce opzioni UI filtri da `CatalogFiltersDTO` (`/api/v2/filters`).
  */
 import type { CatalogFiltersDTO, CatalogFiltersFacetOptionDTO } from '@/types/dto'
 import type {
@@ -65,7 +65,7 @@ export function colorTempFacetToParam(value: string | number): string {
 export function attaccoFacetToParam(value: string, label?: string): string {
   const raw = (label || value).trim()
   if (!raw) return String(value).trim()
-  // Preferisci label UI (G4, GU5.3) — Odoo accetta case-insensitive.
+  // Preferisci label UI (G4, GU5.3): il confronto è case-insensitive.
   return raw
 }
 
@@ -171,7 +171,7 @@ export function facetTaxonomyOptions(
     .map((o) => {
       const raw = String(o.value).trim()
       return {
-        // Param search/filters: slug Odoo (value), non la label.
+        // Param search/filters: slug (value), non la label.
         value: slugToken(raw) || raw.toLowerCase(),
         label: o.label?.trim() || humanizeFacetValue(raw),
         count: o.count,
@@ -200,7 +200,7 @@ function mapCategoryNode(
 /**
  * Radici + figli per sidebar categorie.
  * Se c'è una sola radice mondo (tecnico/arredo) con figli, promuove i figli
- * come categorie navigabili (allineato agli slug Odoo live).
+ * come categorie navigabili (allineato agli slug live).
  */
 export function facetCategoryOptions(
   facets: CatalogFiltersDTO | null | undefined,
@@ -225,7 +225,7 @@ export function facetCategoryOptions(
   return { roots, children }
 }
 
-/** Tipologie design (tile) da facet — fallback ai figli di `arredo`. */
+/** Tipologie design (tile) da facet: fallback ai figli di `arredo`. */
 export function buildDesignTypeTilesFromFacets(
   facets: CatalogFiltersDTO | null | undefined,
   fallback: ReadonlyArray<CategoryTypeTile> = [],
@@ -409,7 +409,7 @@ const PRICE_STOCK_GROUPS: CategoryFilterGroup[] = [
 ]
 
 /**
- * Gruppi filtri landing (design/tecnico) da facet Odoo.
+ * Gruppi filtri landing (design/tecnico) da facet.
  * Fallback: gruppi statici CMS se facet assenti.
  */
 export function buildLandingFilterGroupsFromFacets(
@@ -454,7 +454,7 @@ export function buildLandingFilterGroupsFromFacets(
       kelvin.label = 'Kelvin'
       groups.push(kelvin)
     }
-    // Wattaggio: UI range dedicata (non chip) — vedi CategoryFilterSidebar.
+    // Wattaggio: UI range dedicata (non chip): vedi CategoryFilterSidebar.
     const brands = brandsToLandingGroup(scoped.brands)
     if (brands) groups.push(brands)
     const { roots: cats } = facetCategoryOptions(scoped, 'technical')
@@ -484,7 +484,7 @@ export function buildLandingFilterGroupsFromFacets(
     }
   }
 
-  // Prezzo + stock restano client-side (non in facet Odoo).
+  // Prezzo + stock restano client-side (non arrivano dai facet).
   groups.push(...PRICE_STOCK_GROUPS)
 
   return groups.length > PRICE_STOCK_GROUPS.length ? groups : [...fallback]

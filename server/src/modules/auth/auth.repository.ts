@@ -5,14 +5,14 @@ import { invalidateSessionCacheForSession } from '../../middlewares/session.js'
 
 export const authRepository = {
   /**
-   * Lookup satellite per email — NON autorità auth.
+   * Lookup satellite per email: NON autorità auth.
    * Usare solo per prefs/FK dopo che Odoo ha già autenticato/provisionato.
    */
   findSatelliteByEmail(email: string) {
     return prisma.customerSatellite.findUnique({ where: { email: email.toLowerCase() } })
   },
 
-  /** @deprecated Alias di findSatelliteByEmail — non usare per identity resolution. */
+  /** @deprecated Alias di findSatelliteByEmail: non usare per identity resolution. */
   findUserByEmail(email: string) {
     return this.findSatelliteByEmail(email)
   },

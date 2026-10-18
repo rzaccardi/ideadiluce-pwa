@@ -245,8 +245,8 @@ await check('cart add item', async () => {
     : {
         ok: false,
         note: process.env.CART_SKIP_STOCK_CHECK === 'true'
-          ? 'add fallito anche con CART_SKIP_STOCK_CHECK — verifica catalogo/API'
-          : 'nessun prodotto acquistabile (stock Odoo/OdooCatalog) — imposta API_TEST_PRODUCT_REF o CART_SKIP_STOCK_CHECK=true sul server',
+          ? 'add fallito anche con CART_SKIP_STOCK_CHECK: verifica catalogo/API'
+          : 'nessun prodotto acquistabile (stock Odoo/OdooCatalog): imposta API_TEST_PRODUCT_REF o CART_SKIP_STOCK_CHECK=true sul server',
       }
 })
 

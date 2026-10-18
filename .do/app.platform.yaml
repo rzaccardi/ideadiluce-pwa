@@ -1,4 +1,4 @@
-# Idea di Luce — App Platform produzione (solo URL DO, no domini, no ingress)
+# Idea di Luce: App Platform produzione (solo URL DO, no domini, no ingress)
 # Creare come nuova app `ideadiluce-pwa`. Env: importa dopo da .do/env.production.compiled.env
 
 name: ideadiluce-pwa

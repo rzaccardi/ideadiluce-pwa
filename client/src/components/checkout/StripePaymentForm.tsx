@@ -24,7 +24,7 @@ function formatCardholderName(firstName: string, lastName: string) {
   return [firstName.trim(), lastName.trim()].filter(Boolean).join(' ')
 }
 
-/** Billing/shipping per Stripe confirm(). Non passare phoneNumber: Checkout Elements lo rifiuta. */
+/** Billing/shipping per Stripe confirm. Non passare phoneNumber: Checkout Elements lo rifiuta. */
 function buildConfirmAddressDetails(cardholderName: string) {
   const billing = getCheckoutBillingAddress()
   const shipping = getCheckoutShippingAddress()

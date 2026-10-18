@@ -4,6 +4,7 @@ import { useSnapshot } from 'valtio/react'
 import { appStore, DEFAULT_LEGACY_SITE_URL } from '@/features/app'
 import { ExternalLink } from '@/lib/link-title'
 import { useI18n } from '@/hooks/use-i18n'
+import { layers } from '@/lib/layering'
 import { cn } from '@/utils/cn'
 import { SectionContainer } from './primitives'
 
@@ -26,7 +27,10 @@ export function LegacySiteNoticeBanner() {
   return (
     <div
       role="status"
-      className="border-b border-white/10 bg-idl-design text-idl-design-fg dark:border-idl-glow/25 dark:bg-idl-design-elevated"
+      className={cn(
+        'relative border-b border-white/10 bg-idl-design text-idl-design-fg dark:border-idl-glow/25 dark:bg-idl-design-elevated',
+        layers.utilityBar,
+      )}
     >
       <SectionContainer className="flex flex-col gap-2 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <p className="text-[13px] leading-snug sm:text-[13.5px]">{t('legacySite.notice.message')}</p>

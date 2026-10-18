@@ -18,7 +18,7 @@ function hostFromUrl(url: string): string {
   return new URL(normalizePublicUrl(url)).host
 }
 
-/** Tenant arredo/design — ideadiluce.com (Fase 1 go-live). */
+/** Tenant arredo/design: ideadiluce.com (Fase 1 go-live). */
 export function getDesignTenant(): SiteTenantConfig {
   const publicUrl = normalizePublicUrl(env.PUBLIC_SITE_URL)
   return {
@@ -30,7 +30,7 @@ export function getDesignTenant(): SiteTenantConfig {
   }
 }
 
-/** Tenant tecnico — attivo solo quando TECHNICAL_SITE_URL è configurato (Fase 2). */
+/** Tenant tecnico: attivo solo quando TECHNICAL_SITE_URL è configurato (Fase 2). */
 export function getTechnicalTenant(): SiteTenantConfig | null {
   const raw = env.TECHNICAL_SITE_URL?.trim()
   if (!raw) return null

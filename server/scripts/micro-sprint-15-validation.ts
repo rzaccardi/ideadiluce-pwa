@@ -1,5 +1,5 @@
 /**
- * Micro Sprint 1.5 — Validazione go-live Sprint 1.
+ * Micro Sprint 1.5: Validazione go-live Sprint 1.
  * Uso: cd server && npx tsx scripts/micro-sprint-15-validation.ts
  */
 import { config } from 'dotenv'
@@ -276,7 +276,7 @@ async function runRestockE2E() {
 
     report.restock.push({
       scenario,
-      slug: '(fixture BO — storefront skip: nessun prodotto edge in catalogo dev)',
+      slug: '(fixture BO: storefront skip: nessun prodotto edge in catalogo dev)',
       cta,
       requestType,
       recordDb: true,
@@ -391,7 +391,7 @@ async function investigateVariantPrice() {
           ? 'Allineato: PDP enrich Odoo = carrello'
           : 'Odoo reprice ≠ PDP enrich (verificare listino/context)',
       fix: cartCents !== pdpCents ? 'Verificare enrich-detail + listino Odoo' : 'Nessuno',
-      bloccante: cartCents !== pdpCents ? 'Medio — verificare UX in staging' : 'No',
+      bloccante: cartCents !== pdpCents ? 'Medio: verificare UX in staging' : 'No',
     }
     return
   }

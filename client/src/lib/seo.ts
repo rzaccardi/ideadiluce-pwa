@@ -52,7 +52,7 @@ export function buildMetadata(input: {
   noindex?: boolean
   alternates?: ProductAlternateDTO[]
   ogImage?: string | null
-  /** Next.js accetta solo tipi OG limitati (es. website, article) — non `product`. */
+  /** Next.js accetta solo tipi OG limitati (es. website, article): non `product`. */
   ogType?: string
 }): Metadata {
   const { title, description, canonical, noindex, alternates = [], ogImage, ogType } = input

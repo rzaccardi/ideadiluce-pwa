@@ -26,7 +26,7 @@ type Props = {
 
 /**
  * Sinonimi / equivalenti di marca sulla PDP tecnica.
- * Visibile solo se Odoo ha popolato `related_products` con relation alternative / synonym.
+ * Visibile solo se ha popolato `related_products` con relation alternative / synonym.
  */
 export function TechnicalEquivalentProducts({ products, currentSlug, lp }: Props) {
   const { t } = useI18n()

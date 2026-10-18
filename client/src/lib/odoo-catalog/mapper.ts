@@ -316,7 +316,7 @@ function resolveCardGallery(product: OdooCatalogCardImageSource) {
   }))
 }
 
-/** Packshot su bianco + hover accesa/ambientata, anche se `image` Odoo è l’ambientata. */
+/** Packshot su bianco + hover accesa/ambientata, anche se `image` è l’ambientata. */
 export function resolveOdooCatalogCardImageUrls(product: OdooCatalogCardImageSource): {
   imageUrl: string | null
   hoverImageUrl: string | null

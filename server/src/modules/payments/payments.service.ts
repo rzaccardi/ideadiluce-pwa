@@ -1127,10 +1127,8 @@ export const paymentsService = {
         sessionId: updated.sessionId,
         odooPartnerId: updated.odooPartnerId,
       })
-      await orderTransactionalMail.sendBankTransferInstructions(
-        updated,
-        req.correlationId ?? 'bank-transfer',
-      )
+      // Bonifico: nessuna mail PWA. Resta la conferma nativa Odoo (mittente orders@)
+      // inviata dalla registrazione pagamento sotto.
       if (env.ODOO_ENABLED && updated.odooSaleOrderId) {
         const reg = await registerPayment(
           { correlationId: req.correlationId, req },

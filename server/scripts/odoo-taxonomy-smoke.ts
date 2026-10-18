@@ -1,5 +1,5 @@
 /**
- * Smoke live Odoo — tassonomie R1 (ambiente) / R2 (tipologia, stile) / paradigma category.
+ * Smoke live Odoo: tassonomie R1 (ambiente) / R2 (tipologia, stile) / paradigma category.
  * Uso: cd server && npx tsx scripts/odoo-taxonomy-smoke.ts
  */
 import 'dotenv/config'

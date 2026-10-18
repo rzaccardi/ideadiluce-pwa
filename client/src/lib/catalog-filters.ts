@@ -26,7 +26,7 @@ function categoryLabelFromFacets(
 }
 
 export const CATALOG_DESIGN_CATEGORY_SLUG = 'arredo'
-/** Root Odoo live (alias legacy `illuminazione-tecnica` → `tecnico` lato BFF). */
+/** Root live (alias legacy `illuminazione-tecnica` → `tecnico` lato BFF). */
 export const CATALOG_TECHNICAL_CATEGORY_SLUG = 'tecnico'
 
 const DESIGN_ROOT_SLUGS = new Set([
@@ -52,7 +52,7 @@ export function catalogWorldShowsTechnicalFilters(world: CatalogWorldTab): boole
   return world === 'all' || world === 'technical'
 }
 
-/** Mondo della radice categoria (slug Odoo / alias storefront). */
+/** Mondo della radice categoria (slug / alias storefront). */
 export function catalogWorldOfCategorySlug(slug: string | null | undefined): CatalogWorldTab {
   const key = slug?.trim().toLowerCase() ?? ''
   if (!key) return 'all'
@@ -125,7 +125,7 @@ function brandWorldsLookup(
   return lookup
 }
 
-/** Brand visibili in un’area: solo quelli con prodotti in quel mondo Odoo. */
+/** Brand visibili in un’area: solo quelli con prodotti in quel mondo. */
 export function filterBrandsForCatalogWorld<T extends { slug: string; worlds?: ReadonlyArray<'design' | 'technical'> }>(
   brands: ReadonlyArray<T>,
   world: CatalogWorldTab,

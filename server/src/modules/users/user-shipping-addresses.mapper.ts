@@ -1,7 +1,7 @@
 import type { UserAddressDTO, UserShippingAddressDTO } from '../../types/dto.js'
 import type { OdooCustomerProfile, OdooShippingDestination } from '../../adapters/odoo/odooCustomerAdapter.js'
 import {
-  isUsableShippingStreet,
+  isUsableShippingProfile,
   odooShippingAddressId,
   shippingAddressesMatch,
 } from '../../adapters/odoo/odoo-partner-shipping.js'
@@ -73,11 +73,8 @@ export function mergeShippingAddressList(input: {
   odoo: OdooShippingDestination[]
   local: UserAddressDTO | null
 }): UserShippingAddressDTO[] {
-  const usableLocal =
-    input.local && isUsableShippingStreet(input.local.line1) ? input.local : null
-  const usableOdoo = input.odoo.filter((destination) =>
-    isUsableShippingStreet(destination.profile.line1),
-  )
+  const usableLocal = input.local && isUsableShippingProfile(input.local) ? input.local : null
+  const usableOdoo = input.odoo.filter((destination) => isUsableShippingProfile(destination.profile))
 
   const matchedLocal = usableLocal
     ? usableOdoo.find((destination) => {

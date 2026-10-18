@@ -2,13 +2,13 @@
 
 Cartella per i dump esportati da phpMyAdmin (prefisso tabelle `wpidl_`).
 
-**Non committare file `.sql` / `.csv`** — sono ignorati da git.
+**Non committare file `.sql` / `.csv`**: sono ignorati da git.
 
 ## File attesi
 
 | Nome suggerito | Contenuto |
 |----------------|-----------|
-| `wpidl_posts.sql` | Prodotti + varianti (ID, slug, SKU, parent) — export ridotto per import catalogo |
+| `wpidl_posts.sql` | Prodotti + varianti (ID, slug, SKU, parent): export ridotto per import catalogo |
 | `wpidl_posts_full.sql` | **Consigliato per testi HTML:** tabella `wpidl_posts` completa dallo **stesso database** usato per `wpidl_posts.sql` |
 | `cvtg56_*.sql` (dump completo) | Gallery / postmeta (`hub:enrich`). Per `post_content` funziona solo se ID/slug coincidono con il catalogo importato |
 | `wpidl_yoast_indexable.sql` | Permalink, meta SEO, focus keyword, OG image |

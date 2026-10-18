@@ -42,7 +42,7 @@ export function catalogProductSlugMatches(
 
 /**
  * Risolve slug → id prodotto via Odoo live (search, poi scan lista).
- * Match solo su `item.slug` della scheda API — mai su suffissi numerici dell’URL.
+ * Match solo su `item.slug` della scheda API: mai su suffissi numerici dell’URL.
  * Non usa l’indice cache catalogo (riservato al typeahead).
  */
 export async function findOdooCatalogProductIdBySlug(

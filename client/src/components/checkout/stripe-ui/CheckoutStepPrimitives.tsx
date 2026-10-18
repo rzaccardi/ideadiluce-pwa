@@ -148,7 +148,7 @@ export function CheckoutEyebrowLabel({ children }: { children: ReactNode }) {
   )
 }
 
-/** Card selezionabile con radio dot — spedizione / pagamento. */
+/** Card selezionabile con radio dot: spedizione / pagamento. */
 export function CheckoutSelectableCard({
   selected,
   disabled,

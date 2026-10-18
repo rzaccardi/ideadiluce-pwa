@@ -1,4 +1,4 @@
-/** Stili condivisi dal template DC «Account» — token idl-* theme-aware. */
+/** Stili condivisi dal template DC «Account»: token idl-* theme-aware. */
 export const accountDcPageClass = 'min-h-screen bg-idl-tech-panel text-idl-graphite'
 
 export const accountDcUserBandClass = 'border-b border-idl-tech-border bg-idl-tech-panel'

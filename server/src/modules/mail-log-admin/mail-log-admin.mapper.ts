@@ -1,5 +1,6 @@
 import {
   PWA_MAIL_TEMPLATES,
+  ensurePwaMailDocument,
   parsePwaMailTemplateKey,
   pwaMailTemplateLabel,
   type PwaMailTemplateKey,
@@ -107,7 +108,7 @@ export function mailLogSinceCutoff(sinceDays: number, now = new Date()): string 
   return cutoff.toISOString().slice(0, 19).replace('T', ' ')
 }
 
-/** Domain PWA: in Odoo 18 `mail.mail` non ha `mail_template_id` — usare solo gli header. */
+/** Domain PWA: in Odoo 18 `mail.mail` non ha `mail_template_id`: usare solo gli header. */
 export function buildPwaMailLogDomain(
   query: {
     q?: string
@@ -270,7 +271,7 @@ export function mapMailLogDetail(
   return {
     ...mapMailLogListItem(row, notification),
     replyTo: text(row.reply_to),
-    bodyHtml: typeof row.body_html === 'string' ? row.body_html : '',
+    bodyHtml: ensurePwaMailDocument(typeof row.body_html === 'string' ? row.body_html : ''),
     bodyText: text(row.body) || '',
     odooUrl,
     attachments,

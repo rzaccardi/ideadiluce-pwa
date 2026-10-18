@@ -1,6 +1,6 @@
 import type { ProductCardDTO, ProductRelatedDTO } from '@/types/dto'
 
-/** Solo equivalenti dichiarati da Odoo (`relation: alternative`). Niente fallback related. */
+/** Solo equivalenti dichiarati da (`relation: alternative`). Niente fallback related. */
 export function selectTechnicalEquivalents(
   products: ReadonlyArray<ProductRelatedDTO | ProductCardDTO> | undefined,
   currentSlug: string,

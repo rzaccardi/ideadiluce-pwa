@@ -126,8 +126,28 @@ describe('mail-log-admin mapper', () => {
     expect(parsePwaMailTemplateKey(row.headers)).toBe('account_credentials')
 
     const detail = mapMailLogDetail(row, [], 'https://odoo.example/web#id=44')
-    expect(detail.bodyHtml).toBe('<p>Ciao Mario</p>')
+    expect(detail.bodyHtml).toContain('<p>Ciao Mario</p>')
+    expect(detail.bodyHtml).toContain('wordmark-white.png')
+    expect(detail.bodyHtml).toContain('wordmark-lockup.png')
+    expect(detail.bodyHtml).toContain('<html')
     expect(detail.odooUrl).toContain('id=44')
+  })
+
+  it('non duplica header e footer se Odoo ha già il documento completo', () => {
+    const full = '<html><body><img src="https://shop.ideadiluce.it/brand/wordmark-white.png" alt="Idea di Luce"><p>Ciao</p></body></html>'
+    const detail = mapMailLogDetail(
+      {
+        id: 45,
+        subject: 'Già completa',
+        email_to: 'mario@test.it',
+        state: 'sent',
+        headers: buildPwaMailHeaders('generic'),
+        body_html: full,
+      },
+      [],
+      null,
+    )
+    expect(detail.bodyHtml).toBe(full)
   })
 
   it('mostra errore Odoo quando lo stato è exception', () => {

@@ -1,9 +1,25 @@
+import { redactStorefrontVendor } from '@/lib/api-user-message'
+
 export type ProductSpecRow = {
   label: string
   value: string
   href?: string | null
-  /** Key Odoo (es. `diameter_mm`) — utile per riconoscere misure. */
+  /** Key (es. `diameter_mm`): utile per riconoscere misure. */
   key?: string
+}
+
+function presentCatalogText(text: string): string {
+  const trimmed = text.trim()
+  if (/^https?:\/\//i.test(trimmed) && /odoo/i.test(trimmed)) {
+    try {
+      const last = decodeURIComponent(new URL(trimmed).pathname.split('/').filter(Boolean).pop() ?? '')
+      if (last && !/odoo/i.test(last)) return last
+    } catch {
+      /* URL non analizzabile */
+    }
+    return 'Documento'
+  }
+  return redactStorefrontVendor(trimmed)
 }
 
 function cellTextToPlain(html: string): string {
@@ -41,18 +57,18 @@ export function specsToRows(
   return specs
     .filter((s) => s.label?.trim() && s.display?.trim())
     .map((s) => {
-      const value = s.display
-      const href = /^https?:\/\//i.test(value.trim()) ? value.trim() : undefined
+      const raw = s.display.trim()
+      const href = /^https?:\/\//i.test(raw) ? raw : undefined
       return {
-        label: s.label,
-        value,
+        label: presentCatalogText(s.label),
+        value: presentCatalogText(raw),
         ...(href ? { href } : {}),
         ...(s.key?.trim() ? { key: s.key.trim() } : {}),
       }
     })
 }
 
-/** Estrae righe label/valore da tabella HTML specs (OdooCatalog o Hub). */
+/** Estrae righe label/valore da tabella HTML specs. */
 export function parseProductSpecRows(tableHtml: string | null | undefined): ProductSpecRow[] {
   if (!tableHtml?.trim()) return []
 
@@ -60,10 +76,11 @@ export function parseProductSpecRows(tableHtml: string | null | undefined): Prod
   for (const tr of tableHtml.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)) {
     const cells = [...tr[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((m) => m[1])
     if (cells.length < 2) continue
-    const label = cellTextToPlain(cells[0])
-    const { value, href } = cellTextOrLink(cells[1])
+    const label = presentCatalogText(cellTextToPlain(cells[0]))
+    const parsed = cellTextOrLink(cells[1])
+    const value = presentCatalogText(parsed.value)
     if (!label || !value || /^(n\/a|na|—|-)$/i.test(value)) continue
-    rows.push({ label, value, href })
+    rows.push({ label, value, href: parsed.href })
   }
   return rows
 }
@@ -118,7 +135,7 @@ export function groupSpecRowsForTechnical(rows: ReadonlyArray<ProductSpecRow>) {
   return groups.filter((g) => g.rows.length > 0)
 }
 
-/** Righe attese per la scheda arredo — ordine preferito; le altre specs Odoo vengono appendate. */
+/** Righe attese per la scheda arredo: ordine preferito; le altre specs vengono appendate. */
 export const DESIGN_SPEC_LABELS = [
   'Designer',
   'Serie',
@@ -153,7 +170,7 @@ export const DESIGN_HERO_META_LABELS = [
   'Attacco',
 ] as const
 
-/** Alias Odoo → label canoniche (match flessibile). */
+/** Alias → label canoniche (match flessibile). */
 const DESIGN_SPEC_MATCHERS: Record<string, RegExp> = {
   Designer: /designer/,
   Serie: /serie|collection|collezione/,
@@ -195,7 +212,7 @@ function designSpecMatcher(expectedLabel: string): RegExp {
 
 /**
  * Ordina le specs arredo: prima le label canoniche (se presenti),
- * poi **tutte** le altre specs Odoo non ancora usate (niente drop).
+ * poi **tutte** le altre specs non ancora usate (niente drop).
  * Le misure spaziali restano al pannello Dimensioni (filtrate in UI).
  */
 export function mergeDesignSpecRows(
@@ -238,7 +255,7 @@ export function mergeDesignSpecRows(
   return [...preferred, ...extras]
 }
 
-/** Chip hero arredo: match flessibile sulle label canoniche (anche se Odoo usa nomi diversi). */
+/** Chip hero arredo: match flessibile sulle label canoniche (anche se usa nomi diversi). */
 export function pickDesignHeroMeta(
   rows: ReadonlyArray<{ label: string; value: string | null; key?: string }>,
 ): Array<{ label: string; value: string }> {
@@ -295,11 +312,11 @@ export function mergeProductAndVariantSpecs(input: {
 export const DIMENSION_SPEC_LABEL_RE =
   /dimensioni|larghezza|profondit|altezza|diametro|lunghezza|ingombr|spessore|raggio|^peso$|largh\.?|prof\.?|^alt\.?$|ø|diameter|^width$|^height$|^depth$|^length$|^weight$|misure/i
 
-/** Key Odoo tipiche per misure. */
+/** Key tipiche per misure. */
 export const DIMENSION_SPEC_KEY_RE =
   /diameter|width|height|length|depth|weight|dimension|ingomb|spess|raggio|misur|_(mm|cm|kg|m)$/i
 
-/** Tag gallery Odoo per lo schema dimensioni (case-insensitive + alias). */
+/** Tag gallery per lo schema dimensioni (case-insensitive + alias). */
 export function isMeasureGalleryTag(tag: string | null | undefined): boolean {
   const t = (tag || '').trim().toLowerCase()
   return t === 'misure' || t === 'misura' || t === 'dimensions' || t === 'dimensioni'
@@ -334,7 +351,7 @@ function dimensionSortKey(label: string): number {
   return idx >= 0 ? idx : DIMENSION_LABEL_ORDER.length
 }
 
-/** Tutte le specs dimensionali disponibili (dedup per key Odoo o label). */
+/** Tutte le specs dimensionali disponibili (dedup per key o label). */
 export function collectDimensionSpecRows(
   rows: ReadonlyArray<ProductSpecRow>,
 ): ProductSpecRow[] {

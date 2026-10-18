@@ -1,7 +1,7 @@
 import { t, type MessageKey } from '@/i18n/messages'
 import { parseLocaleFromPathname, type PwaLocale } from '@/lib/locale'
 
-/** Prefisso Zod `campo.annidato: messaggio` — solo identificatori camelCase, non "Errore: …". */
+/** Prefisso Zod `campo.annidato: messaggio`: solo identificatori camelCase, non "Errore: …". */
 const FIELD_PREFIX_RE =
   /^(?:[a-z][a-zA-Z0-9]*(?:\.[a-z][a-zA-Z0-9]*)+|[a-z][a-zA-Z0-9]*):\s+/
 
@@ -47,6 +47,23 @@ export function stripValidationFieldPrefix(message: string): string {
   return message.replace(FIELD_PREFIX_RE, '').trim()
 }
 
+/** Il sito non nomina il gestionale nei testi mostrati al cliente. */
+export function redactStorefrontVendor(message: string): string {
+  if (!/odoo/i.test(message)) return message
+  const rewritten = message
+    .replace(/odoo non configurato\.?/gi, 'Servizio non disponibile al momento.')
+    .replace(/configurazione odoo incompleta\.?/gi, 'il servizio non è disponibile al momento.')
+    .replace(/integrazione odoo disattivata\.?/gi, 'Servizio non disponibile al momento.')
+    .replace(/\s*\([^)]*odoo[^)]*\)/gi, '')
+    .replace(/\b(?:su|con|da|in|di|per|from|with|via)\s+odoo\b/gi, '')
+    .replace(/\bodoo\b/gi, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\s+([,.;:])/g, '$1')
+    .replace(/\(\s*\)/g, '')
+    .trim()
+  return /odoo/i.test(rewritten) ? 'Servizio non disponibile al momento.' : rewritten
+}
+
 function currentLocale(): PwaLocale {
   if (typeof window === 'undefined') return 'IT'
   return parseLocaleFromPathname(window.location.pathname)
@@ -69,5 +86,5 @@ function keyForSourceMessage(message: string): MessageKey | undefined {
 export function localizeApiUserMessage(message: string, locale: PwaLocale = currentLocale()): string {
   const stripped = stripValidationFieldPrefix(message)
   const key = keyForSourceMessage(stripped)
-  return key ? t(locale, key) : stripped
+  return redactStorefrontVendor(key ? t(locale, key) : stripped)
 }

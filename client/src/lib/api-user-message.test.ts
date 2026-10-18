@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeAll } from 'vitest'
 import { preloadLocale } from '@/i18n/messages'
-import { localizeApiUserMessage, stripValidationFieldPrefix } from './api-user-message'
+import { localizeApiUserMessage, redactStorefrontVendor, stripValidationFieldPrefix } from './api-user-message'
 
 describe('stripValidationFieldPrefix', () => {
   it('rimuove il path Zod', () => {
@@ -29,6 +29,15 @@ describe('localizeApiUserMessage', () => {
     ).toBe('Enter the street number, or select “No street number”.')
     expect(localizeApiUserMessage('Street number or SNC required', 'DE')).toBe(
       'Geben Sie die Hausnummer ein oder wählen Sie «Keine Hausnummer».',
+    )
+  })
+
+  it('non mostra il nome del gestionale nei messaggi API', () => {
+    expect(redactStorefrontVendor('Non siamo riusciti a creare l’account su Odoo. Riprova tra poco.')).toBe(
+      'Non siamo riusciti a creare l’account. Riprova tra poco.',
+    )
+    expect(localizeApiUserMessage('Odoo non configurato.', 'IT')).toBe(
+      'Servizio non disponibile al momento.',
     )
   })
 

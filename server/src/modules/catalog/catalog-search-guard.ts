@@ -1,4 +1,4 @@
-/** Limiti ricerca catalogo — allineare a client/lib/catalog-search-limits.ts */
+/** Limiti ricerca catalogo: allineare a client/lib/catalog-search-limits.ts */
 
 export const CATALOG_SEARCH_GUARD = {
   maxQueryLength: 120,

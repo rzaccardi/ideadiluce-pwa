@@ -1,4 +1,4 @@
-# Server — API proxy eCommerce headless
+# Server: API proxy eCommerce headless
 
 Backend **Express + TypeScript + Prisma + Zod**. Il frontend deve chiamare solo queste API; **Odoo** è integrato solo qui.
 
@@ -81,7 +81,7 @@ In produzione/staging: eseguire solo `migrate deploy` dopo il merge del branch c
 
 ## Endpoint principali
 
-- `GET /health` — liveness  
+- `GET /health`: liveness  
 - Prefisso API: `/api/v1` (auth, catalog, cart, wishlist, checkout, orders, users, **integrations**)  
 - Prefisso proxy catalogo: `/api/v2` (OdooCatalog trasparente)
 
@@ -126,7 +126,7 @@ Tutti sotto **`/api/v1/integrations/`**, protetti così:
 | GET | `/api/v1/integrations/odoo/doc-check` | Come ping + GET opzionale su `/doc` (senza API key; può essere HTML). |
 | POST | `/api/v1/integrations/odoo/test-checkout` | Bridge: carrello locale → partner Odoo → `sale.order` → aggiorna `CheckoutSession` e `OdooCustomerMap` (vedi body Zod). |
 
-Body **`test-checkout`** (JSON) — indirizzi con nome/cognome e CAP:
+Body **`test-checkout`** (JSON): indirizzi con nome/cognome e CAP:
 
 ```json
 {
@@ -190,7 +190,7 @@ I dettagli grezzi Odoo **non** sono esposti al client; errori upstream vengono m
 
 | Variabile | Significato |
 |------------|-------------|
-| `ODOO_ENABLED` | `true`/`false` — abilita catalogo live e pipeline Odoo negli adapter. |
+| `ODOO_ENABLED` | `true`/`false`: abilita catalogo live e pipeline Odoo negli adapter. |
 | `ODOO_URL` | Origine Odoo incluso path di deploy (es. `https://www.esempio.it/odoo`). I path XML-RPC sono `<ODOO_URL>/xmlrpc/2/common` e `.../object`. |
 | `ODOO_DB` | Nome database Odoo (come in login). |
 | `ODOO_USERNAME` | Login utente tecnico (diritti minimi consigliati). |
@@ -300,7 +300,7 @@ Nota provider:
 - **`create` / `write`**: nomi campi dipendono dai moduli (es. `website_slug`). Dettagli redatti in **`IntegrationLog`**.  
 - Aggiusta **`ODOO_PRODUCT_DOMAIN`** se i prodotti non compaiono (`is_published` richiede modulo website).
 
-## Google Places — autocomplete indirizzi checkout
+## Google Places: autocomplete indirizzi checkout
 
 Il backend espone proxy sicuro (chiave **non** nel browser):
 

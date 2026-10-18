@@ -14,7 +14,7 @@ export type StorePickupLocation = {
   displayAddress: string
 }
 
-/** Sede ritiro unica — configurabile via env, usata in shipping, footer e thank-you. */
+/** Sede ritiro unica: configurabile via env, usata in shipping, footer e thank-you. */
 export function getStorePickupLocation(): StorePickupLocation {
   const line1 = env.STORE_PICKUP_LINE1?.trim() || 'Via Appia Pignatelli 450'
   const postalCode = env.STORE_PICKUP_POSTAL_CODE?.trim() || '00178'

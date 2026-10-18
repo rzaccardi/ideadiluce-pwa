@@ -7,18 +7,27 @@ import { normalizeAddressProvince } from '@/lib/italian-provinces'
 export const BILLING_SHIPPING_SELECTION = 'billing'
 export const OTHER_SHIPPING_SELECTION = 'other'
 
-/** Via fisica utilizzabile: esclude vuoto e placeholder tipo "-" da sync Odoo incompleto. */
+/** Solo punteggiatura, trattini o slash: in spesso sostituiscono una via assente. */
+const PLACEHOLDER_STREET =
+  /^(?:[-–—−‐‑_/\\|.,·•]+|n\/?a|n\.?d\.?|s\.?n\.?c\.?|null|false|undefined|none|vuoto|test|xxx+)$/i
+
+/** Via fisica utilizzabile: esclude vuoto e placeholder (\"-\", \"/\") da sync incompleto. */
 export function isUsableShippingStreet(line1: string | null | undefined): boolean {
-  const value = (line1 ?? '').trim()
+  const value = (line1 ?? '')
+    .normalize('NFKC')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .trim()
   if (!value) return false
-  if (value === '-' || value === '—' || value === '–') return false
+  if (PLACEHOLDER_STREET.test(value)) return false
+  if (!/\p{L}/u.test(value)) return false
   return true
 }
 
 export function isUsableShippingAddress(
-  address: Pick<UserAddressDTO, 'line1'> | null | undefined,
+  address: Pick<UserAddressDTO, 'line1' | 'city' | 'postalCode'> | null | undefined,
 ): boolean {
-  return isUsableShippingStreet(address?.line1)
+  if (!isUsableShippingStreet(address?.line1)) return false
+  return Boolean(address?.city?.trim() || address?.postalCode?.trim())
 }
 
 export function shippingAddressFingerprint(address: UserAddressDTO | AddressInput): string {
@@ -85,7 +94,7 @@ export function formatShippingAddressCard(address: UserShippingAddressDTO | Addr
   }
 }
 
-/** Etichetta compatta per la select checkout (nome — via, CAP città). */
+/** Etichetta compatta per la select checkout (nome: via, CAP città). */
 export function formatShippingAddressSelectOption(address: UserShippingAddressDTO | AddressInput): string {
   const card = formatShippingAddressCard(address)
   if (!card.lines || card.lines === '-') return card.title

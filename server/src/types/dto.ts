@@ -287,7 +287,7 @@ export type ProductVariantDTO = {
   stockQty?: number | null
   availability?: ProductAvailabilityDataDTO
   ean?: string | null
-  /** Codice univoco TLB a 6 cifre — identificatore variante di riferimento. */
+  /** Codice univoco TLB a 6 cifre: identificatore variante di riferimento. */
   ced?: string | null
   manufacturerCode?: string | null
   /** Merge template + override variante (già calcolato server-side). */
@@ -426,7 +426,7 @@ export type CartItemDTO = {
   productSlug: string | null
   productName: string | null
   imageUrl: string | null
-  /** Label variante (es. attributi uniti) — mai ID grezzo. */
+  /** Label variante (es. attributi uniti): mai ID grezzo. */
   variantLabel?: string | null
   /** Attributi matrice selezionati (Dimensioni, Colore, …). */
   variantAttributes?: ReadonlyArray<{ name: string; value: string }>
@@ -481,7 +481,7 @@ export type CartDTO = {
   purchasableItemCount: number
   warnings: string[]
   deliveryLeadDays: number | null
-  /** Max lead time (giorni lavorativi) tra prodotti acquistabili — alias semantico di deliveryLeadDays. */
+  /** Max lead time (giorni lavorativi) tra prodotti acquistabili: alias semantico di deliveryLeadDays. */
   deliveryEstimateDays: number | null
   /** Timestamp ISO dell'ultimo ricalcolo prezzi Odoo. */
   repricedAt: string | null

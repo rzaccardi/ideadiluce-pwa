@@ -1,6 +1,6 @@
 import type { ProductCardDTO, ProductDetailDTO, ProductVariantDTO } from '@/types/dto'
 
-/** Snapshot prodotto già in memoria (catalogo/PDP) per saltare OdooCatalog su POST /cart/items. */
+/** Snapshot prodotto già in memoria (catalogo/PDP) per saltare il round-trip su POST /cart/items. */
 export type CartAddProductHint = {
   /** Se manca, l’hint resta solo client-side (totale ottimistico); il POST non lo invia. */
   odooTemplateId?: number

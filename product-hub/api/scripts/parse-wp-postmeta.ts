@@ -26,7 +26,7 @@ function unescapeSql(s: string): string {
   return s.replace(/\\'/g, "'").replace(/\\\\/g, '\\')
 }
 
-/** Tuple postmeta: (meta_id, post_id, 'key', 'value') — value senza apici interni per le chiavi che ci interessano. */
+/** Tuple postmeta: (meta_id, post_id, 'key', 'value'): value senza apici interni per le chiavi che ci interessano. */
 function extractPostmetaTuples(line: string): Array<{ postId: number; key: string; value: string }> {
   const out: Array<{ postId: number; key: string; value: string }> = []
   const re =
@@ -42,7 +42,7 @@ function extractPostmetaTuples(line: string): Array<{ postId: number; key: strin
   return out
 }
 
-/** Da riga posts WP: attachment guid (URL completo) — colonne fisse, post_type attachment. */
+/** Da riga posts WP: attachment guid (URL completo): colonne fisse, post_type attachment. */
 function extractAttachmentGuids(line: string): Array<{ id: number; guid: string }> {
   const out: Array<{ id: number; guid: string }> = []
   const re =
@@ -57,14 +57,14 @@ function extractAttachmentGuids(line: string): Array<{ id: number; guid: string 
 /** Estratto semplificato post_content / post_excerpt per product (post_type product, publish). */
 function extractProductContent(line: string): Array<{ id: number; excerpt: string; content: string }> {
   const out: Array<{ id: number; excerpt: string; content: string }> = []
-  // Cerca pattern ,ID,...,'product','...',0) con excerpt/content embedded — troppo fragile su righe intere.
+  // Cerca pattern ,ID,...,'product','...',0) con excerpt/content embedded: troppo fragile su righe intere.
   // Usiamo regex più stretto: post_type 'product' dopo guid
   const chunks = line.split("),'product',")
   for (let i = 1; i < chunks.length; i++) {
     const chunk = chunks[i]
     const idMatch = /\((\d+),/.exec(chunks[i - 1].slice(-30) + '(' + chunk.slice(0, 5))
     if (!idMatch) continue
-    // skip — parsing full posts too fragile
+    // skip: parsing full posts too fragile
   }
   return out
 }

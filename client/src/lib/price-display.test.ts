@@ -4,6 +4,7 @@ import {
   catalogGrossCents,
   catalogVatCentsFromNet,
   displaysCatalogPriceIncVat,
+  isB2bProfessionalUser,
   formatDiscountPctLabel,
   formatPriceDisplayModeLabel,
   resolveCatalogPriceDisplay,
@@ -67,9 +68,24 @@ describe('catalog VAT display', () => {
     expect(retail.captionKey).toBe('product.price.vatIncluded')
   })
 
-  it('mostra IVA esclusa per listino sessione B2B/pro', () => {
-    expect(displaysCatalogPriceIncVat(user('business'))).toBe(false)
+  it('mostra IVA inclusa per business e listino personalizzato non professional', () => {
+    expect(isB2bProfessionalUser(user('business'))).toBe(false)
+    expect(displaysCatalogPriceIncVat(user('business'))).toBe(true)
+    expect(
+      displaysCatalogPriceIncVat(user('retail', { personalizedPricing: true, isProfessional: false })),
+    ).toBe(true)
+    const business = resolveCatalogPriceDisplay(10_000, user('business'))
+    expect(business.vatIncluded).toBe(true)
+    expect(business.cents).toBe(12_200)
+    expect(business.captionKey).toBe('product.price.vatIncluded')
+  })
+
+  it('mostra IVA esclusa solo per B2B professional', () => {
+    expect(isB2bProfessionalUser(user('professional'))).toBe(true)
     expect(displaysCatalogPriceIncVat(user('professional'))).toBe(false)
+    expect(
+      displaysCatalogPriceIncVat(user('business', { isProfessional: true })),
+    ).toBe(false)
     const pro = resolveCatalogPriceDisplay(10_000, user('professional'))
     expect(pro.vatIncluded).toBe(false)
     expect(pro.cents).toBe(10_000)

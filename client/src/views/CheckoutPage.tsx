@@ -8,10 +8,8 @@ import {
   cartStore,
   discardCartAfterCheckout,
   fetchCart,
-  fetchRecommendations,
   refreshCartAfterCheckout,
   removeItem,
-  shouldRepriceCartOnLoad,
 } from '@/features/cart'
 import { authStore, fetchMe } from '@/features/auth'
 import {
@@ -122,10 +120,7 @@ export function CheckoutPage() {
     }
 
     void (async () => {
-      const reprice = shouldRepriceCartOnLoad(cartStore.cart, {
-        reservationExpiredNotice: cartStore.reservationExpiredNotice,
-      })
-      await fetchCart({ force: true, reprice })
+      await fetchCart({ force: true })
       await fetchMe()
       if (frozenOrderId) {
         try {
@@ -219,20 +214,6 @@ export function CheckoutPage() {
   const totalCents = displayCart
     ? checkoutTotalCents(displayCart, shippingQuote, checkout.taxBreakdown)
     : checkout.order?.amountTotal ?? 0
-
-  const recommendationKey =
-    displayCart?.items.map((line) => `${line.productRef}:${line.quantity}`).sort().join('|') ?? ''
-
-  useEffect(() => {
-    if (recommendationKey) {
-      checkoutDbg.effect('fetchRecommendations', { recommendationKey })
-      void fetchRecommendations()
-    }
-  }, [recommendationKey])
-
-  function handleCrossSellAdded() {
-    void refreshCheckoutAfterCartChange()
-  }
 
   const loadingState = useStableCheckoutLoading(
     resolveCheckoutLoading({
@@ -518,9 +499,6 @@ export function CheckoutPage() {
             taxBreakdown={checkout.taxBreakdown}
             mobileOnly
             revealGrandTotal={step === 'payment' || step === 'review'}
-            recommendations={cart.recommendations}
-            recommendationsLoading={cart.isRecommendationsLoading}
-            onCrossSellAdded={handleCrossSellAdded}
             onRemoveItem={frozenCheckout ? undefined : (id) => void handleRemoveFromCheckout(id)}
             removeDisabled={cart.isLoading || checkout.cartRefreshing || frozenCheckout}
           />
@@ -530,9 +508,6 @@ export function CheckoutPage() {
             freeShippingHint={checkout.freeShippingHint}
             taxBreakdown={checkout.taxBreakdown}
             revealGrandTotal={step === 'payment' || step === 'review'}
-            recommendations={cart.recommendations}
-            recommendationsLoading={cart.isRecommendationsLoading}
-            onCrossSellAdded={handleCrossSellAdded}
             onRemoveItem={frozenCheckout ? undefined : (id) => void handleRemoveFromCheckout(id)}
             removeDisabled={cart.isLoading || checkout.cartRefreshing || frozenCheckout}
           />

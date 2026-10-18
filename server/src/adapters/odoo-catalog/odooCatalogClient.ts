@@ -122,7 +122,7 @@ export function toOdooCatalogError(e: OdooCatalogClientError, correlationId: str
   )
 }
 
-/** GET /api/v2/products — solo website, lang, page, per_page (max 100). */
+/** GET /api/v2/products: solo website, lang, page, per_page (max 100). */
 export async function fetchOdooCatalogProductList(options: {
   locale: HubLocale
   page: number
@@ -136,7 +136,7 @@ export async function fetchOdooCatalogProductList(options: {
   })
 }
 
-/** GET /api/v2/product/<id> — solo website, lang. */
+/** GET /api/v2/product/<id>: solo website, lang. */
 export async function fetchOdooCatalogProductDetail(
   productId: number,
   locale: HubLocale,
@@ -146,7 +146,7 @@ export async function fetchOdooCatalogProductDetail(
   })
 }
 
-/** GET /api/v2/products/search — listing filtrato live (negozio / facet refinement). */
+/** GET /api/v2/products/search: listing filtrato live (negozio / facet refinement). */
 export async function fetchOdooCatalogProductSearch(options: {
   locale: HubLocale
 } & OdooCatalogSearchParams): Promise<OdooCatalogProductSearchResponse> {
@@ -157,7 +157,7 @@ export async function fetchOdooCatalogProductSearch(options: {
   })
 }
 
-/** GET /api/v2/filters — facet aggregate sul set già filtrato. */
+/** GET /api/v2/filters: facet aggregate sul set già filtrato. */
 export async function fetchOdooCatalogFilters(options: {
   locale: HubLocale
 } & OdooCatalogFilterParams): Promise<OdooCatalogFiltersResponse> {

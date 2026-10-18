@@ -49,7 +49,7 @@ export type RestockNotifyBody = {
   requestType?: 'RESTOCK_NOTIFY' | 'PRODUCT_REQUEST'
 }
 
-/** Contratto con GET /api/v1 del backend — solo proxy interno. */
+/** Contratto con GET /api/v1 del backend: solo proxy interno. */
 export const api = {
   auth: {
     register(body: {
@@ -129,7 +129,7 @@ export const api = {
       search.set('lang', toOdooCatalogLang(params.locale ?? 'IT'))
       if (params.page) search.set('page', String(params.page))
       if (params.pageSize) search.set('per_page', String(params.pageSize))
-      // q/category/brand: proxy BFF → Odoo /products/search se presenti
+      // q/category/brand: proxy BFF → /products/search se presenti
       if (params.q) search.set('q', params.q)
       if (params.category) search.set('category', params.category)
       if (params.brand) search.set('brand', params.brand)
@@ -142,7 +142,7 @@ export const api = {
       locale: PwaLocale = 'IT',
       _options: { partnerId?: number; pricelistId?: number } = {},
     ) {
-      // Contratto Odoo: GET /api/v2/product/<id>?website=&lang= (proxy BFF inietta website)
+      // Contratto: GET /api/v2/product/<id>?website=&lang= (proxy BFF inietta website)
       const search = new URLSearchParams({ lang: toOdooCatalogLang(locale) })
       return apiClient.get<OdooCatalogProductDetailResponse>(
         `/api/v2/product/${productId}?${search.toString()}`,
@@ -150,7 +150,7 @@ export const api = {
     },
     /**
      * BFF resolve slug→id dalla cache contratto, poi GET /api/v2/product/<id>.
-     * Non esiste by-slug nel contratto Odoo.
+     * Non esiste by-slug nel contratto.
      */
     productBySlug(
       slug: string,
@@ -365,7 +365,7 @@ export const api = {
       wattaggioMax?: string | number
       tag?: string
       sort?: string
-      /** Typeahead: usa cache locale invece di Odoo search. */
+      /** Typeahead: usa cache locale invece della ricerca live. */
       suggest?: boolean
     },
       init?: Pick<RequestInit, 'signal'>,
@@ -392,7 +392,7 @@ export const api = {
         init,
       )
     },
-    /** Listing filtrato live Odoo (`/api/v2/products/search`). */
+    /** Listing filtrato live (`/api/v2/products/search`). */
     search(
       params: {
         locale?: string
@@ -440,7 +440,7 @@ export const api = {
         init,
       )
     },
-    /** Facet aggregate live Odoo (`/api/v2/filters`). */
+    /** Facet aggregate live (`/api/v2/filters`). */
     filters(params: {
       locale?: string
       q?: string

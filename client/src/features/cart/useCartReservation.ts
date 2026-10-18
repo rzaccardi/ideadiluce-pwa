@@ -20,7 +20,7 @@ export function useCartReservationSync(enabled = true) {
         window.clearInterval(intervalId)
         intervalId = undefined
       }
-      void fetchCart({ force: true, reprice: true })
+      void fetchCart({ force: true })
     }
 
     const tick = () => {

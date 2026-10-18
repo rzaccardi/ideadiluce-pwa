@@ -56,7 +56,7 @@ describe('product-variant-attributes', () => {
     expect(isSwatchAttribute('Colore luce')).toBe(false)
   })
 
-  it('usa htmlColor Odoo del valore, senza fallback su un altro colore', () => {
+  it('usa htmlColor del valore, senza fallback su un altro colore', () => {
     const colored = [
       {
         ...v('1', [{ name: 'Colore', value: 'Nero' }]),
@@ -112,7 +112,7 @@ describe('product-variant-attributes', () => {
 })
 
 describe('odooCatalogImageUrlsMatch', () => {
-  it('ignora la size Odoo', () => {
+  it('ignora la size', () => {
     expect(
       odooCatalogImageUrlsMatch(
         'https://tlbdb.odoo.com/web/image/123/image_512',

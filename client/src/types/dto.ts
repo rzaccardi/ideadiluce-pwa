@@ -1,4 +1,4 @@
-/** Allineati ai DTO del backend — non usare shape Prisma/Odoo. */
+/** Allineati ai DTO del backend: non usare shape Prisma/. */
 export type ApiErrorDTO = {
   code: string
   message: string
@@ -64,7 +64,7 @@ export type UserDTO = {
   pricelistLabel: string
   /** Account con condizioni listino professional (segmento PROFESSIONAL). */
   isProfessional: boolean
-  /** Condizioni B2B attive Odoo: abilita dropship / consegna a terzi. */
+  /** Condizioni B2B attive: abilita dropship / consegna a terzi. */
   b2bActive: boolean
   /** True se catalogo/carrello devono usare il listino sessione (B2B/pro/partner). */
   personalizedPricing: boolean
@@ -254,7 +254,7 @@ export type ProductCardDTO = {
   manufacturerCode?: string | null
   defaultCode?: string | null
   ean?: string | null
-  /** ID Odoo `product.template` (da catalogo BFF, per add-to-cart senza OdooCatalog). */
+  /** ID `product.template` (da catalogo BFF, per add-to-cart senza OdooCatalog). */
   odooTemplateId?: number | null
   inStock?: boolean
   availability?: ProductAvailabilityDataDTO
@@ -276,7 +276,7 @@ export type StockRestockRequestDTO = {
 export type ProductVariantAttributeDTO = {
   name: string
   value: string
-  /** Hex `#rrggbb` da Odoo `product.attribute.value.html_color`. */
+  /** Hex `#rrggbb` da `product.attribute.value.html_color`. */
   htmlColor?: string | null
 }
 
@@ -299,7 +299,7 @@ export type ProductVariantDTO = {
   stockQty?: number | null
   availability?: ProductAvailabilityDataDTO
   ean?: string | null
-  /** Codice univoco TLB a 6 cifre — identificatore variante di riferimento. */
+  /** Codice univoco TLB a 6 cifre: identificatore variante di riferimento. */
   ced?: string | null
   manufacturerCode?: string | null
   /** Merge template + override variante (già calcolato server-side). */
@@ -336,7 +336,7 @@ export type CatalogFiltersCategoryDTO = {
   children: CatalogFiltersCategoryDTO[]
 }
 
-/** Facet aggregate da GET /api/v1/catalog/filters (Odoo `/api/v2/filters`). */
+/** Facet aggregate da GET /api/v1/catalog/filters ( `/api/v2/filters`). */
 export type CatalogFiltersDTO = {
   totalMatching: number
   appliedFilters: Record<string, unknown>
@@ -766,7 +766,7 @@ export type OrderSourceDTO = 'pwa' | 'odoo_manual' | 'other_ecommerce' | 'odoo_h
 
 export const ORDER_SOURCE_LABEL: Record<OrderSourceDTO, string> = {
   pwa: 'E-commerce',
-  odoo_manual: 'Odoo manuale',
+  odoo_manual: 'Inserito manualmente',
   other_ecommerce: 'Altro canale',
   odoo_historical: 'Storico',
 }
@@ -834,7 +834,7 @@ export type OrderDTO = {
   pwaOrderId: string | null
   /** Identificativo ordine nel gestionale (esposto dal backend come DTO, non shape DB grezza). */
   odooSaleOrderId: number
-  /** Numero ordine assegnato (es. 4CSVKG), non l’ID interno Odoo. */
+  /** Numero ordine assegnato (es. 4CSVKG), non l’ID interno. */
   orderNumber: string
   /** Riferimento ordine del cliente (checkout opzionale). */
   clientOrderRef: string | null
@@ -848,7 +848,7 @@ export type OrderDTO = {
   sourceLabel: string
   returnRequest: OrderReturnRequestDTO | null
   shipment: OrderShipmentDTO | null
-  /** Riepilogo consegna reale da Odoo. */
+  /** Riepilogo consegna reale da. */
   delivery: OrderDeliveryDTO | null
   returnWindow: OrderReturnWindowDTO
 }

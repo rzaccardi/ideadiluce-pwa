@@ -197,5 +197,5 @@ export function ProductSocialProofNotifications({ slug, productName }: Props) {
   )
 }
 
-/** Alias toast floating — notifiche acquisti in basso a destra. */
+/** Alias toast floating: notifiche acquisti in basso a destra. */
 export const ProductSocialProofToast = ProductSocialProofNotifications

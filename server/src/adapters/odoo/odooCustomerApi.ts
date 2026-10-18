@@ -9,7 +9,7 @@ import type {
 } from './odooCustomerAdapter.js'
 import { AppError } from '../../types/errors.js'
 import {
-  isUsableShippingStreet,
+  isUsableShippingProfile,
   odooShippingAddressId,
   parseOdooShippingAddressId,
   shippingAddressesMatch,
@@ -65,7 +65,7 @@ function destinationsFromCustomer(customer: OdooApiCustomer): OdooShippingDestin
   const out: OdooShippingDestination[] = []
   if (main) {
     const profile = odooApiAddressToProfile(main, customer.email)
-    if (isUsableShippingStreet(profile.line1)) {
+    if (isUsableShippingProfile(profile)) {
       out.push({
         odooPartnerId: main.id,
         kind: 'parent',
@@ -76,7 +76,7 @@ function destinationsFromCustomer(customer: OdooApiCustomer): OdooShippingDestin
     }
   } else {
     const profile = odooApiCustomerToAccount(customer).profile
-    if (isUsableShippingStreet(profile.line1)) {
+    if (isUsableShippingProfile(profile)) {
       out.push({
         odooPartnerId: customer.id,
         kind: 'parent',
@@ -88,7 +88,7 @@ function destinationsFromCustomer(customer: OdooApiCustomer): OdooShippingDestin
   }
   for (const addr of customer.addresses ?? []) {
     const profile = odooApiAddressToProfile(addr, customer.email)
-    if (!isUsableShippingStreet(profile.line1)) continue
+    if (!isUsableShippingProfile(profile)) continue
     out.push({
       odooPartnerId: addr.id,
       kind: addr.type === 'delivery' ? 'delivery' : 'contact',

@@ -7,7 +7,7 @@ import {
 } from './checkout-address.validators'
 
 describe('splitLine1AndStreetNumber', () => {
-  it('estrae il civico da una via tipo Odoo', () => {
+  it('estrae il civico da una via tipo', () => {
     expect(splitLine1AndStreetNumber('Via Roma 69')).toEqual({
       line1: 'Via Roma',
       streetNumber: '69',

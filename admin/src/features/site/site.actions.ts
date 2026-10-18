@@ -322,6 +322,6 @@ export function updateDraftJson(json: string) {
       siteStore.draftContent = parsed as Record<string, unknown>
     }
   } catch {
-    // JSON incompleto in modalità avanzata — non sincronizzare finché non è valido
+    // JSON incompleto in modalità avanzata: non sincronizzare finché non è valido
   }
 }

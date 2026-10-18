@@ -34,7 +34,7 @@ export const passwordResetService = {
       try {
         const result = await requestOdooPasswordReset(ctx, normalized)
         if (result === 'sent') return
-        // Odoo non trova / non invia: fail-closed — non inventare reset su User locale.
+        // Odoo non trova / non invia: fail-closed: non inventare reset su User locale.
         logger.warn('password_reset.odoo_no_local_fallback', {
           correlationId,
           email: normalized,

@@ -156,7 +156,7 @@ model AdminSession {
 }
 
 /**
- * Proiezione satellite PWA keyed da `odooPartnerId` — NON directory identità/auth.
+ * Proiezione satellite PWA keyed da `odooPartnerId`: NON directory identità/auth.
  * Prefs e cache locale; lookup auth = solo Odoo. Creato solo dopo successo Odoo (o path locale con id sintetico).
  */
 model CustomerSatellite {
@@ -173,7 +173,7 @@ model CustomerSatellite {
   phone                  String?
   shippingAddressJson    Json?
   preferredPaymentMethod PwaPaymentMethod?
-  /** B2C retail o B2B business — determina listino Odoo predefinito. */
+  /** B2C retail o B2B business: determina listino Odoo predefinito. */
   customerSegment        CustomerSegment   @default(RETAIL)
   /** Listino professional Odoo (flag sincronizzato da partner/listino). */
   isProfessional         Boolean           @default(false)
@@ -1023,7 +1023,7 @@ model SocialProofOdooEvent {
   @@index([purchasedAt])
 }
 
-/** Regola matrice fiscale BO — aliquota IVA per paese/segmento/VAT. */
+/** Regola matrice fiscale BO: aliquota IVA per paese/segmento/VAT. */
 model TaxRule {
   id                   String           @id @default(cuid())
   priority             Int
@@ -1031,7 +1031,7 @@ model TaxRule {
   isProfessional       Boolean?
   /** ISO2 o codici speciali: `*`, `EU`, `EU_EXCL_IT`, `EXTRA_EU`. */
   billingCountry       String?
-  /** ISO2 o codici speciali — chiave principale (paese spedizione). */
+  /** ISO2 o codici speciali: chiave principale (paese spedizione). */
   shippingCountry      String
   /** null=ignora; true/false=condizione obbligatoria. */
   vatValid             Boolean?
@@ -1060,7 +1060,7 @@ model VatValidationAttempt {
   @@index([sessionId])
 }
 
-/** Cache risultati VIES — TTL 24h per evitare chiamate ripetute. */
+/** Cache risultati VIES: TTL 24h per evitare chiamate ripetute. */
 model VatValidationCache {
   id          String   @id @default(cuid())
   countryCode String
@@ -1076,7 +1076,7 @@ model VatValidationCache {
   @@index([expiresAt])
 }
 
-/** Audit validazioni fiscali — hash dei dati sensibili, no CF/P.IVA in chiaro. */
+/** Audit validazioni fiscali: hash dei dati sensibili, no CF/P.IVA in chiaro. */
 model TaxValidationLog {
   id               String   @id @default(cuid())
   odooPartnerId    Int?
@@ -1109,7 +1109,7 @@ model SitePage {
   @@index([pageKey])
 }
 
-/// Metadati guide editoriali (slug, indicizzazione, ordine) — contenuti per locale in SitePage.
+/// Metadati guide editoriali (slug, indicizzazione, ordine): contenuti per locale in SitePage.
 model SiteGuide {
   id          String   @id @default(cuid())
   slug        String   @unique

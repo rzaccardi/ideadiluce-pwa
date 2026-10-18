@@ -1,9 +1,9 @@
 import type { ContentPageContent } from './site.types.js'
 
-/** Versione contenuto termini — incrementare per forzare migrazione da versioni precedenti. */
+/** Versione contenuto termini: incrementare per forzare migrazione da versioni precedenti. */
 export const TERMINI_CONTENT_VERSION = 2
 
-/** Termini d'Uso e CGV — versione italiana (fonte per BO e traduzioni). */
+/** Termini d'Uso e CGV: versione italiana (fonte per BO e traduzioni). */
 export const DEFAULT_TERMINI_IT: ContentPageContent = {
   layout: 'legal',
   title: "Termini d'Uso e Condizioni di Vendita",

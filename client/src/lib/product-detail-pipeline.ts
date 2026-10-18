@@ -11,7 +11,7 @@ export type CatalogPricingOptions = {
 }
 
 /**
- * Pipeline unificata PDP: OdooCatalog by-slug → map DTO → enrich stock Odoo (BFF).
+ * Pipeline unificata PDP: OdooCatalog by-slug → map DTO → enrich stock (BFF).
  * Usata da CSR; SSR usa la stessa sequenza via server-catalog + cookie forward.
  */
 export async function loadProductDetailPipeline(
@@ -44,7 +44,7 @@ export async function loadProductDetailPipeline(
   try {
     product = await api.catalog.enrichProductDetail(product)
   } catch {
-    // Mantieni dati OdooCatalog se arricchimento non disponibile
+    // Mantieni i dati già mappati se l’arricchimento non è disponibile
   }
   return product
 }

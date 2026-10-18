@@ -53,7 +53,7 @@ describe('catalog-taxonomy', () => {
     expect(taxonomyPageTitle(t)).toBe('TLB')
   })
 
-  it('canonica alias tipologie menu/WP → slug Odoo', () => {
+  it('canonica alias tipologie menu/WP → slug', () => {
     expect(canonicalizeTipologiaSlug('plafoniere')).toBe('soffitto')
     expect(canonicalizeTipologiaSlug('plafoniera')).toBe('soffitto')
     expect(canonicalizeTipologiaSlug('faretti')).toBe('incasso')
@@ -61,7 +61,7 @@ describe('catalog-taxonomy', () => {
     expect(buildTipologiaTaxonomy('plafoniere').value).toBe('soffitto')
   })
 
-  it('canonica alias categorie tecniche WP → slug Odoo', () => {
+  it('canonica alias categorie tecniche WP → slug', () => {
     expect(canonicalizeCategorySlug('alogena')).toBe('alogene')
     expect(canonicalizeCategorySlug('fluorescenza')).toBe('fluorescente')
     expect(canonicalizeCategorySlug('lampade-scarica')).toBe('scarica')

@@ -17,6 +17,7 @@ import { SiteInquiriesPage } from '@/pages/site-inquiries/site-inquiries-page'
 import { SiteInquiryDetailPage } from '@/pages/site-inquiries/site-inquiry-detail-page'
 import { MailLogPage } from '@/pages/mail-log/mail-log-page'
 import { MailLogDetailPage } from '@/pages/mail-log/mail-log-detail-page'
+import { MailTemplatesPage } from '@/pages/mail-templates/mail-templates-page'
 import { TaxRulesPage } from '@/pages/tax-rules/tax-rules-page'
 import { ExperiencePage } from '@/pages/experience/experience-page'
 import { SearchAnalyticsPage } from '@/pages/search-analytics/search-analytics-page'
@@ -189,6 +190,7 @@ export function App() {
               <Route path="site-inquiries/:id" element={<SiteInquiryDetailPage />} />
               <Route path="mail-log" element={<MailLogPage />} />
               <Route path="mail-log/:id" element={<MailLogDetailPage />} />
+              <Route path="mail-templates" element={<MailTemplatesPage />} />
             </Route>
           </Route>
         </Routes>

@@ -83,7 +83,7 @@ export async function fetchFeaturedProducts(locale: PwaLocale, pageSize = 3): Pr
   return mapOdooCatalogListResponse(raw, locale).items
 }
 
-/** Related SSR: solo quelli già sul prodotto — evita un secondo round-trip catalogo sul TTFB. */
+/** Related SSR: solo quelli già sul prodotto: evita un secondo round-trip catalogo sul TTFB. */
 function loadRelatedProducts(
   relatedFromProduct: ProductCardDTO[],
 ): ProductCardDTO[] {
@@ -92,7 +92,7 @@ function loadRelatedProducts(
 
 /**
  * PDP SSR: by-slug (con fallback slug→id nel BFF) → map DTO.
- * L'arricchimento stock/prezzi Odoo avviene lato client per non bloccare il TTFB.
+ * L'arricchimento stock/prezzi avviene lato client per non bloccare il TTFB.
  */
 export const fetchProductDetailServer = cache(async function fetchProductDetailServer(
   slug: string,

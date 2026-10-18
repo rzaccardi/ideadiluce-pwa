@@ -31,7 +31,7 @@ describe('invoice payment badge', () => {
     expect(invoicePaymentTone('paid')).toBe('success')
   })
 
-  it('mostra Non Pagato rosso per gli altri stati Odoo', () => {
+  it('mostra Non Pagato rosso per gli altri stati', () => {
     for (const state of ['not_paid', 'in_payment', 'partial', 'reversed']) {
       expect(invoiceIsPaid(state)).toBe(false)
       expect(invoicePaymentLabel(state)).toBe('Non Pagato')

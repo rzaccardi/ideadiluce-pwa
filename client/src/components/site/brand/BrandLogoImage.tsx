@@ -26,7 +26,7 @@ export function BrandLogoImage({
     return (
       <span
         className={cn(
-          'inline-flex max-w-full shrink-0 items-center',
+          'inline-flex shrink-0 items-center',
           align === 'center' && 'mx-auto justify-center',
           className,
         )}
@@ -35,10 +35,11 @@ export function BrandLogoImage({
         <img
           src={logo.src}
           alt={alt}
+          height={height}
           decoding="async"
-          loading="lazy"
           draggable={false}
-          className="h-full w-auto max-w-full object-contain"
+          className="w-auto object-contain"
+          style={{ height, maxWidth: `${maxWidthRem}rem` }}
         />
       </span>
     )

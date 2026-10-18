@@ -23,7 +23,9 @@ async function hydrateSessionStores(scope: HydrateSessionStoresScope = 'full') {
   authStore.isHydrating = true
   resetCartForAuthChange()
   try {
-    const tasks: Promise<unknown>[] = [fetchCart({ force: true, reprice: true })]
+    const tasks: Promise<unknown>[] = [
+      fetchCart({ force: true, reprice: scope !== 'checkout' }),
+    ]
     if (scope === 'full') {
       // La wishlist alimenta l'header globale; ordini/preventivi/fatture restano lazy
       // nelle rispettive route account per non allungare login e registrazione.

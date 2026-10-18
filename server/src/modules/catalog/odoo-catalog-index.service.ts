@@ -66,7 +66,7 @@ export type OdooCatalogIndexEntry = ProductCardDTO & {
   searchText: string
   categorySlugs: string[]
   brandSlug: string | null
-  /** Specs tipizzate dal dettaglio v2 — fonte filtri attacco/Kelvin. */
+  /** Specs tipizzate dal dettaglio v2: fonte filtri attacco/Kelvin. */
   specs?: OdooCatalogSpec[]
 }
 

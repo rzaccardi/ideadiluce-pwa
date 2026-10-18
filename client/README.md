@@ -1,4 +1,4 @@
-# Client — frontend eCommerce headless (Next.js)
+# Client: frontend eCommerce headless (Next.js)
 
 React 19, Next.js 15 App Router, TypeScript, Tailwind 4, Valtio. Tutte le chiamate passano da **`api/browser.ts`** verso il backend interno (`NEXT_PUBLIC_API_URL` + path `/api/v1/...`). In dev, Next.js fa rewrite di `/api` verso `API_URL` (default `http://localhost:4000`).
 
@@ -20,7 +20,7 @@ cp ../.env.example ../.env   # dalla root del monorepo
 | `npm run build` | build produzione |
 | `npm run start` | server Node produzione (porta 3000) |
 
-Dalla **root** del monorepo (consigliato — avvia anche l’API):
+Dalla **root** del monorepo (consigliato: avvia anche l’API):
 
 ```bash
 npm run dev:shop    # shop + API → http://localhost:5173
@@ -35,13 +35,13 @@ Se resti bloccato: Chrome DevTools → **Application** → **Service Workers** �
 
 ## Struttura (`src/`)
 
-- **`app/`** — App Router (route groups `(storefront)` / `(fullscreen)`), middleware locale, layout
-- **`views/`** — componenti pagina client-side (ex `pages/`)
-- **`api/`** — `request.ts`, `browser.ts`, `server.ts`, `endpoints.ts`
-- **`features/*/`** — store Valtio + actions per dominio
-- **`components/`** — UI riutilizzabile
-- **`lib/`** — locale, SEO, server-catalog, navigation (compat React Router)
-- **`providers.tsx`** — bootstrap sessione + LocaleProvider
+- **`app/`**: App Router (route groups `(storefront)` / `(fullscreen)`), middleware locale, layout
+- **`views/`**: componenti pagina client-side (ex `pages/`)
+- **`api/`**: `request.ts`, `browser.ts`, `server.ts`, `endpoints.ts`
+- **`features/*/`**: store Valtio + actions per dominio
+- **`components/`**: UI riutilizzabile
+- **`lib/`**: locale, SEO, server-catalog, navigation (compat React Router)
+- **`providers.tsx`**: bootstrap sessione + LocaleProvider
 
 ## SEO
 

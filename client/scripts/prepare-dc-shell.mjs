@@ -86,12 +86,12 @@ function main() {
   fs.mkdirSync(outDir, { recursive: true })
   fs.writeFileSync(
     path.join(outDir, 'header.partial.html'),
-    `<!-- Generated from IdeaDiLuce Header.dc.html — npm run prepare:dc-shell -->\n${headerHtml.trim()}\n`,
+    `<!-- Generated from IdeaDiLuce Header.dc.html: npm run prepare:dc-shell -->\n${headerHtml.trim()}\n`,
     'utf8',
   )
   fs.writeFileSync(
     path.join(outDir, 'footer.partial.html'),
-    `<!-- Generated from Home - desktop.dc.html (newsletter + trust + footer) — npm run prepare:dc-shell -->\n${footerHtml}\n`,
+    `<!-- Generated from Home - desktop.dc.html (newsletter + trust + footer): npm run prepare:dc-shell -->\n${footerHtml}\n`,
     'utf8',
   )
 

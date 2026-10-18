@@ -28,6 +28,6 @@ function isBrokenNextDir() {
 }
 
 if (isBrokenNextDir()) {
-  console.warn('[client] .next incompleto o misto prod/dev — pulizia automatica…')
+  console.warn('[client] .next incompleto o misto prod/dev: pulizia automatica…')
   fs.rmSync(nextDir, { recursive: true, force: true })
 }

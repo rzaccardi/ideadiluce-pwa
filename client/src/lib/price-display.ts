@@ -1,8 +1,7 @@
 import type { ImpersonationInfoDTO, PriceDisplayModeDTO, UserDTO } from '@/types/dto'
-import { usesSessionPricelist } from '@/lib/catalog-pricing'
 import { formatMoney } from '@/lib/format'
 
-/** Aliquota vetrina Italia — stesso arrotondamento del tax service. */
+/** Aliquota vetrina Italia: stesso arrotondamento del tax service. */
 export const CATALOG_VAT_RATE_PCT = 22
 
 export function catalogVatCentsFromNet(netCents: number, ratePct = CATALOG_VAT_RATE_PCT): number {
@@ -17,12 +16,22 @@ export function catalogGrossCents(netCents: number, ratePct = CATALOG_VAT_RATE_P
   return netCents + catalogVatCentsFromNet(netCents, ratePct)
 }
 
-/** Retail/guest: vetrina IVA inclusa. Listino sessione B2B/pro: IVA esclusa. */
+/** Account con listino professional: prezzi netti e didascalia IVA esclusa. */
+export function isB2bProfessionalUser(user?: UserDTO | null): boolean {
+  if (!user) return false
+  return user.isProfessional || user.customerSegment === 'professional'
+}
+
+/**
+ * Vetrina IVA inclusa per guest, retail e business.
+ * Solo i B2B Professional vedono il netto con «IVA esclusa».
+ * `impersonation` resta in firma per i chiamanti del listino sessione.
+ */
 export function displaysCatalogPriceIncVat(
   user?: UserDTO | null,
-  impersonation?: ImpersonationInfoDTO | null,
+  _impersonation?: ImpersonationInfoDTO | null,
 ): boolean {
-  return !usesSessionPricelist(user, impersonation)
+  return !isB2bProfessionalUser(user)
 }
 
 export type CatalogPriceCaptionKey = 'product.price.vatIncluded' | 'product.price.vatExcluded'

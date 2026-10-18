@@ -27,7 +27,7 @@ export function parseOdooTemplateId(productRef: string): number | null {
   const explicit = parseExplicitOdooTemplateId(productRef)
   if (explicit != null) return explicit
   const trimmed = productRef.trim()
-  // Legacy cart/mock: `nome-prodotto-{templateId}` — non usare per resolve slug storefront.
+  // Legacy cart/mock: `nome-prodotto-{templateId}`: non usare per resolve slug storefront.
   const legacy = /-(\d+)$/.exec(trimmed)
   if (!legacy) return null
   return positiveInt(legacy[1])

@@ -112,7 +112,7 @@ async function loadEnrichedDetail(slug) {
   return body
 }
 
-await check('sitemap root — categorie, brand o prodotti', async () => {
+await check('sitemap root: categorie, brand o prodotti', async () => {
   const res = await fetch(`${base}/sitemap.xml`)
   const text = await res.text()
   const hasCategory = text.includes('/categoria/')
@@ -163,7 +163,7 @@ let variantWithPrice = null
 let orderableLowStock = null
 let unrecoverableSlug = null
 
-await check('scan catalogo — candidati test', async () => {
+await check('scan catalogo: candidati test', async () => {
   const list = await req('GET', '/api/v1/catalog/products?locale=IT&pageSize=40')
   const items = unwrap(list.json)?.items ?? []
   if (!items.length) return { ok: false, note: 'catalogo vuoto' }
@@ -211,7 +211,7 @@ await check('scan catalogo — candidati test', async () => {
     : { ok: false, note: 'nessun prodotto caricabile' }
 })
 
-await check('pipeline enrich-detail — risposta valida', async () => {
+await check('pipeline enrich-detail: risposta valida', async () => {
   if (!testSlug) return { ok: true, note: '(skip)' }
   const detail = await loadEnrichedDetail(testSlug)
   const hasVariants = Array.isArray(detail?.variants) && detail.variants.length > 0
@@ -221,7 +221,7 @@ await check('pipeline enrich-detail — risposta valida', async () => {
   if (!hasVariants) return { ok: false, note: 'varianti assenti' }
   return hasAvailability
     ? { ok: true, note: 'availability presente' }
-    : { ok: true, note: '(warn: availability assente — Odoo non arricchisce in questo env)' }
+    : { ok: true, note: '(warn: availability assente: Odoo non arricchisce in questo env)' }
 })
 
 await check('prezzo variante al add-to-cart', async () => {
@@ -248,7 +248,7 @@ await check('prezzo variante al add-to-cart', async () => {
       }
 })
 
-await check('qty > stock ordinabile — checkout draft non bloccato', async () => {
+await check('qty > stock ordinabile: checkout draft non bloccato', async () => {
   if (!orderableLowStock) return { ok: true, note: '(skip: nessun prodotto orderable con stock basso trovato)' }
   await req('POST', '/api/v1/auth/login', {
     email: process.env.API_TEST_EMAIL ?? 'demo@example.com',
@@ -304,7 +304,7 @@ await check('PRODUCT_REQUEST su isUnrecoverable', async () => {
   return ok
     ? { ok: true, note: unrecoverableSlug }
     : wrong409
-      ? { ok: false, note: '409 PRODUCT_IN_STOCK su prodotto unrecoverable — bug isRequestAllowed' }
+      ? { ok: false, note: '409 PRODUCT_IN_STOCK su prodotto unrecoverable: bug isRequestAllowed' }
       : { ok: false, note: `status=${r.status} ${JSON.stringify(r.json?.error)}` }
 })
 
@@ -325,7 +325,7 @@ await check('RESTOCK_NOTIFY rifiutato su in-stock', async () => {
   return { ok: true, note: '(skip: prodotto senza stock positivo)' }
 })
 
-await check('download documento — tracking (se presente)', async () => {
+await check('download documento: tracking (se presente)', async () => {
   if (!testSlug) return { ok: true, note: '(skip)' }
   const detail = await loadEnrichedDetail(testSlug)
   const docs = detail?.documents ?? detail?.variants?.[0]?.documents ?? []
