@@ -17,8 +17,6 @@ import { createOdooPaymentAdapter } from '../../adapters/odoo/odooPaymentAdapter
 import { createOdooOrderAdapter } from '../../adapters/odoo/odooOrderAdapter.js'
 import { enqueueOdooSyncFailure, enqueueOrderOdooSaga } from '../odoo/odoo-sync-queue.service.js'
 import { writeStructuredIntegrationLog } from '../../lib/integration-log-context.js'
-import { sendPwaMail } from '../../adapters/odoo/odooMailAdapter.js'
-import { publicAppUrl } from '../../lib/mail.js'
 import { orderTransactionalMail } from '../orders/order-transactional-mail.service.js'
 import { canStripeReturnMutateOrder } from './payment-session-guard.js'
 import { healBankTransferFalselyMarkedFailed } from './bank-transfer-order-heal.js'
@@ -188,47 +186,6 @@ export async function finalizeStripeCheckout(
   await orderTransactionalMail.notifyPaidCustomer(updated, req.correlationId ?? 'stripe-finalize')
 
   const ctx: OdooCallContext = { correlationId: req.correlationId, req }
-
-  if (!isOdooApiV2Configured()) {
-  const billing = (updated.billingAddressJson as { firstName?: string } | null) ?? null
-  const amount =
-    updated.amountTotal != null
-      ? new Intl.NumberFormat('it-IT', { style: 'currency', currency: updated.currencyCode || 'EUR' }).format(
-          updated.amountTotal / 100,
-        )
-      : ''
-  try {
-    await sendPwaMail(ctx, {
-      templateKey: 'order_confirmation',
-      emailTo: updated.email,
-      vars: {
-        first_name_suffix: billing?.firstName ? ` ${billing.firstName}` : '',
-        order_number: updated.clientOrderRef?.trim() || updated.id,
-        amount,
-        order_url: publicAppUrl(`/account/orders/${updated.id}`),
-      },
-    })
-    const meta = (updated.metadataJson as Record<string, unknown> | null) ?? {}
-    await prisma.pwaOrder.update({
-      where: { id: updated.id },
-      data: {
-        metadataJson: {
-          ...meta,
-          orderConfirmationMailAt: new Date().toISOString(),
-        },
-      },
-    })
-  } catch (e) {
-    logger.warn('stripe.order_confirmation_mail_failed', {
-      orderId: updated.id,
-      error: e instanceof Error ? e.message : String(e),
-    })
-    void enqueueOrderOdooSaga(updated.id, {
-      includeMail: true,
-      lastError: e instanceof Error ? e.message : String(e),
-    }).catch(() => undefined)
-  }
-  }
 
   if (env.ODOO_ENABLED && !saleOrderId) {
     await prisma.pwaOrder.update({

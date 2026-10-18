@@ -4,6 +4,7 @@ import { logger } from '../../lib/logger.js'
 import { normalizeOdooCreateId } from './odooId.js'
 import { isOdooConfigured, odooExecuteKw, type OdooCallContext } from './odooClient.js'
 import {
+  PWA_MAIL_FROM,
   PWA_MAIL_TEMPLATES,
   buildPwaMailHeaders,
   renderPwaMailPlaceholders,
@@ -11,7 +12,7 @@ import {
   type PwaMailTemplateKey,
 } from './odoo-mail.templates.js'
 
-export { PWA_ADMIN_MAIL_TO, type PwaMailTemplateKey } from './odoo-mail.templates.js'
+export { PWA_ADMIN_MAIL_TO, PWA_MAIL_FROM, type PwaMailTemplateKey } from './odoo-mail.templates.js'
 
 export type OdooMailInput = {
   emailTo: string
@@ -44,6 +45,17 @@ export function resetOdooMailTemplateCache(): void {
 
 function mailContext(ctx?: OdooCallContext): OdooCallContext {
   return ctx ?? { correlationId: `pwa-mail-${Date.now()}` }
+}
+
+/** Mittente Idea di Luce (non l'utente XML-RPC / azienda TLB di default). */
+export function resolvePwaMailFrom(): string {
+  const override = env.ODOO_MAIL_FROM?.trim()
+  return override || PWA_MAIL_FROM
+}
+
+function pwaMailServerId(): number | undefined {
+  const id = env.ODOO_MAIL_SERVER_ID
+  return typeof id === 'number' && id > 0 ? id : undefined
 }
 
 function stripHtml(html: string): string {
@@ -85,6 +97,15 @@ async function findTemplateId(ctx: OdooCallContext, name: string): Promise<numbe
   return rows[0]?.id ?? null
 }
 
+function pwaMailIdentityVals(): { email_from: string; mail_server_id?: number } {
+  const vals: { email_from: string; mail_server_id?: number } = {
+    email_from: resolvePwaMailFrom(),
+  }
+  const serverId = pwaMailServerId()
+  if (serverId != null) vals.mail_server_id = serverId
+  return vals
+}
+
 async function createTemplate(ctx: OdooCallContext, key: PwaMailTemplateKey): Promise<number> {
   const def = PWA_MAIL_TEMPLATES[key]
   const modelId = await partnerModelId(ctx)
@@ -99,6 +120,7 @@ async function createTemplate(ctx: OdooCallContext, key: PwaMailTemplateKey): Pr
         subject: def.subject,
         body_html: def.bodyHtml,
         auto_delete: false,
+        ...pwaMailIdentityVals(),
       },
     ],
     {},
@@ -108,7 +130,13 @@ async function createTemplate(ctx: OdooCallContext, key: PwaMailTemplateKey): Pr
 
 async function writeTemplateSeed(ctx: OdooCallContext, templateId: number, key: PwaMailTemplateKey): Promise<void> {
   const def = PWA_MAIL_TEMPLATES[key]
-  await odooExecuteKw(ctx, 'mail.template', 'write', [[templateId], { subject: def.subject, body_html: def.bodyHtml }], {})
+  await odooExecuteKw(
+    ctx,
+    'mail.template',
+    'write',
+    [[templateId], { subject: def.subject, body_html: def.bodyHtml, ...pwaMailIdentityVals() }],
+    {},
+  )
 }
 
 async function ensureTemplateId(
@@ -205,6 +233,7 @@ async function sendViaOdooMail(
 ): Promise<void> {
   const vals: Record<string, unknown> = {
     email_to: input.emailTo,
+    ...pwaMailIdentityVals(),
     subject: input.subject,
     body_html: input.bodyHtml,
     body: input.bodyText,

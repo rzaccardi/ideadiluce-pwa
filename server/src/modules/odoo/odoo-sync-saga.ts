@@ -6,14 +6,13 @@ import {
   findOdooPortalUserByEmail,
 } from '../../adapters/odoo/odooPortalUserAdapter.js'
 import { registerPayment } from '../../adapters/odoo/odooPaymentLive.js'
-import { sendPwaMail } from '../../adapters/odoo/odooMailAdapter.js'
 import { syncSaleOrderFunnelState, type OdooFunnelState } from '../../adapters/odoo/odooFunnelSync.js'
 import { isOdooLiveConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
 import { env } from '../../config/env.js'
 import { generateAccountPassword } from '../../lib/generate-password.js'
-import { publicAppUrl } from '../../lib/mail.js'
 import { prisma } from '../../lib/prisma.js'
+import { orderTransactionalMail } from '../orders/order-transactional-mail.service.js'
 import { AppError } from '../../types/errors.js'
 import type { CheckoutFiscalInput } from '../checkout/checkout-order.types.js'
 import type { TestCheckoutAddressInput } from '../integrations/integrations.validators.js'
@@ -427,32 +426,12 @@ export async function executeEnsurePortalUser(
 }
 
 export async function executeSendMail(ctx: OdooCallContext, pwaOrderId: string): Promise<void> {
-  if (isOdooApiV2Configured()) return
   const order = await loadOrder(pwaOrderId)
-  const meta = (order.metadataJson as Record<string, unknown> | null) ?? {}
-  if (meta.orderConfirmationMailAt) return
-
   const paid = isPaidOrderStatus(order.orderStatus, order.paymentStatus)
   if (!paid) return
 
-  const billing = asAddress(order.billingAddressJson)
-  const amount =
-    order.amountTotal != null
-      ? new Intl.NumberFormat('it-IT', { style: 'currency', currency: order.currencyCode || 'EUR' }).format(
-          order.amountTotal / 100,
-        )
-      : ''
-  const orderNumber = order.clientOrderRef?.trim() || order.id
-  await sendPwaMail(ctx, {
-    templateKey: 'order_confirmation',
-    emailTo: order.email,
-    vars: {
-      first_name_suffix: billing?.firstName ? ` ${billing.firstName}` : '',
-      order_number: orderNumber,
-      amount,
-      order_url: publicAppUrl(`/account/orders/${order.id}`),
-    },
-  })
+  // Template [PWA] Idea di Luce + URL shop (idempotente via metadata pwaMail).
+  await orderTransactionalMail.sendOrderConfirmation(order, ctx.correlationId)
   await prisma.pwaOrder.update({
     where: { id: order.id },
     data: { metadataJson: mergeMetadata(order, { orderConfirmationMailAt: new Date().toISOString() }) },
@@ -529,7 +508,14 @@ export async function enqueueOrderOdooSaga(
   if (paid) ops.push('funnel_sync')
   const includePortal = !apiV2 && (opts?.includePortal ?? Boolean(order.odooPartnerId || meta.createAccount))
   if (includePortal) ops.push('ensure_portal_user')
-  const includeMail = !apiV2 && (opts?.includeMail ?? (paid && !meta.orderConfirmationMailAt))
+  const pwaMailMeta =
+    meta.pwaMail && typeof meta.pwaMail === 'object'
+      ? (meta.pwaMail as Record<string, unknown>)
+      : null
+  const confirmationAlreadySent = Boolean(
+    meta.orderConfirmationMailAt || pwaMailMeta?.orderConfirmationSentAt,
+  )
+  const includeMail = opts?.includeMail ?? (paid && !confirmationAlreadySent)
   if (includeMail) ops.push('send_mail')
 
   for (const operation of ops) {

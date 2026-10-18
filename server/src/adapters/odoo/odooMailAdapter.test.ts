@@ -4,7 +4,11 @@ const { odooExecuteKw, sendMail, isSmtpConfigured, envState, odooConfigured, res
   odooExecuteKw: vi.fn(),
   sendMail: vi.fn(),
   isSmtpConfigured: vi.fn(() => false),
-  envState: { ODOO_ENABLED: true },
+  envState: {
+    ODOO_ENABLED: true,
+    ODOO_MAIL_FROM: undefined as string | undefined,
+    ODOO_MAIL_SERVER_ID: undefined as number | undefined,
+  },
   odooConfigured: { value: true },
   resilience: { emergency: false, smtpFallback: false },
 }))
@@ -68,6 +72,8 @@ describe('sendPwaMail', () => {
     isSmtpConfigured.mockReturnValue(false)
     resetOdooMailTemplateCache()
     envState.ODOO_ENABLED = true
+    envState.ODOO_MAIL_FROM = undefined
+    envState.ODOO_MAIL_SERVER_ID = undefined
     odooConfigured.value = true
     resilience.emergency = false
     resilience.smtpFallback = false
@@ -105,14 +111,17 @@ describe('sendPwaMail', () => {
     expect(odooExecuteKw.mock.calls[2]?.[3]?.[0]).toMatchObject({
       name: '[PWA] Credenziali account cliente',
       model_id: 7,
+      email_from: '"Idea di Luce" <info@ideadiluce.com>',
     })
     expect(odooExecuteKw.mock.calls[4]?.[1]).toBe('mail.mail')
     expect(odooExecuteKw.mock.calls[4]?.[2]).toBe('create')
     expect(odooExecuteKw.mock.calls[4]?.[3]?.[0]).toMatchObject({
       email_to: 'mario@test.it',
+      email_from: '"Idea di Luce" <info@ideadiluce.com>',
       auto_delete: false,
     })
     expect(odooExecuteKw.mock.calls[4]?.[3]?.[0]).not.toHaveProperty('mail_template_id')
+    expect(odooExecuteKw.mock.calls[4]?.[3]?.[0]).not.toHaveProperty('mail_server_id')
     expect(String(odooExecuteKw.mock.calls[4]?.[3]?.[0]?.headers)).toContain('X-PWA-Mail: 1')
     expect(String(odooExecuteKw.mock.calls[4]?.[3]?.[0]?.headers)).toContain('X-PWA-Template: account_credentials')
     expect(String(odooExecuteKw.mock.calls[4]?.[3]?.[0]?.body_html)).toContain('Ciao Mario')
@@ -121,6 +130,30 @@ describe('sendPwaMail', () => {
     expect(odooExecuteKw.mock.calls[6]?.[1]).toBe('mail.mail')
     expect(odooExecuteKw.mock.calls[6]?.[2]).toBe('read')
     expect(sendMail).not.toHaveBeenCalled()
+  })
+
+  it('usa ODOO_MAIL_FROM e ODOO_MAIL_SERVER_ID quando configurati', async () => {
+    envState.ODOO_MAIL_FROM = '"Shop Idea di Luce" <shop@ideadiluce.com>'
+    envState.ODOO_MAIL_SERVER_ID = 42
+    odooExecuteKw
+      .mockResolvedValueOnce([{ id: 11 }]) // template search
+      .mockResolvedValueOnce([
+        { subject: 'Benvenuto su Idea di Luce', body_html: '<p>ok</p>' },
+      ])
+      .mockResolvedValueOnce(99) // mail.mail create
+      .mockResolvedValueOnce(true) // send
+      .mockResolvedValueOnce(odooAccepted())
+
+    await sendPwaMail(
+      { correlationId: 't-from' },
+      { templateKey: 'account_welcome', emailTo: 'nuovo@test.it' },
+    )
+
+    expect(odooExecuteKw.mock.calls[2]?.[3]?.[0]).toMatchObject({
+      email_to: 'nuovo@test.it',
+      email_from: '"Shop Idea di Luce" <shop@ideadiluce.com>',
+      mail_server_id: 42,
+    })
   })
 
   it('riusa un template già presente in Odoo', async () => {

@@ -1,6 +1,9 @@
 /** Destinatario interno (notifiche PWA verso il negozio). */
 export const PWA_ADMIN_MAIL_TO = 'info@ideadiluce.com'
 
+/** Mittente ufficiale (evita che Odoo spedisca come utente tecnico / Roberto Zaccardi). */
+export const PWA_MAIL_FROM = `"Idea di Luce" <${PWA_ADMIN_MAIL_TO}>`
+
 export const PWA_MAIL_TEMPLATE_KEYS = [
   'generic',
   'account_credentials',
@@ -165,7 +168,8 @@ export const PWA_MAIL_TEMPLATES: Record<PwaMailTemplateKey, PwaMailTemplateDef> 
     bodyHtml: wrap(`<p>Ciao{{first_name_suffix}},</p>
 <p>Abbiamo ricevuto il tuo ordine <strong>{{order_number}}</strong> e il pagamento è confermato.</p>
 <p>Totale: {{amount}}</p>
-<p>Puoi seguirlo da: <a href="{{order_url}}">{{order_url}}</a></p>
+<p><a href="{{order_url}}" style="display:inline-block;margin-top:8px;padding:12px 18px;background:#1a1a1a;color:#fff;text-decoration:none;letter-spacing:0.04em">Visualizza ordine</a></p>
+<p style="margin-top:16px;font-size:13px;color:#666">Oppure apri: <a href="{{order_url}}">{{order_url}}</a></p>
 <p>Ti scriveremo di nuovo quando il pacco parte, con il link di tracking.</p>`),
   },
   bank_transfer_pending: {

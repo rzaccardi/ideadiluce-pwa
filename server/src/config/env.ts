@@ -151,6 +151,14 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().email().optional(),
+  /**
+   * Mittente Odoo per le mail PWA (`mail.mail.email_from`).
+   * Default in codice: `"Idea di Luce" <info@ideadiluce.com>`.
+   * Formato libero (display name + email), non solo indirizzo.
+   */
+  ODOO_MAIL_FROM: z.string().optional(),
+  /** ID `ir.mail_server` Idea di Luce (se diverso dal server default TLB). */
+  ODOO_MAIL_SERVER_ID: z.coerce.number().optional(),
   /** URL base PWA per link nelle email (es. https://shop.ideadiluce.it). */
   APP_PUBLIC_URL: z.string().optional(),
   PASSWORD_RESET_TOKEN_HOURS: z.coerce.number().default(24),

@@ -3,12 +3,12 @@ import { prisma } from '../../lib/prisma.js'
 import { logger } from '../../lib/logger.js'
 import { publicAppUrl } from '../../lib/mail.js'
 import { sendPwaMail } from '../../adapters/odoo/odooMailAdapter.js'
-import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { escapeMailHtml } from '../../adapters/odoo/odoo-mail.templates.js'
 import { parseBankTransferInstructionsJson } from '../payments/bankTransferInstructions.js'
 import { finalizeGuestAccountForOrder } from '../auth/guest-account.service.js'
 import { formatDisplayOrderNumber } from './order-display-number.js'
+import { accountOrderPublicId } from './orders-account-id.js'
 
 type MailFlag = 'orderConfirmation' | 'bankTransfer' | 'shipment' | 'abandoned'
 
@@ -67,9 +67,7 @@ function firstNameSuffix(shippingJson: unknown): string {
 }
 
 function orderUrl(order: Pick<PwaOrder, 'id' | 'odooSaleOrderName'>): string {
-  const name = order.odooSaleOrderName?.trim()
-  if (name) return publicAppUrl(`/account/orders/${name}`)
-  return publicAppUrl(`/account/orders/pwa-${order.id}`)
+  return publicAppUrl(`/account/orders/${accountOrderPublicId(order)}`)
 }
 
 function formatAmount(cents: number | null | undefined, currency = 'EUR'): string {
@@ -80,7 +78,8 @@ function formatAmount(cents: number | null | undefined, currency = 'EUR'): strin
 
 export const orderTransactionalMail = {
   async sendOrderConfirmation(order: PwaOrder, correlationId: string): Promise<void> {
-    if (isOdooApiV2Configured()) return
+    // Sempre i template [PWA] Idea di Luce (anche con API v2): la conferma nativa Odoo
+    // punta al portale Odoo/WordPress e non va usata come mail cliente.
     if (alreadySent(order, 'orderConfirmation')) return
     try {
       await sendPwaMail(mailCtx(correlationId), {
@@ -103,7 +102,6 @@ export const orderTransactionalMail = {
   },
 
   async sendBankTransferInstructions(order: PwaOrder, correlationId: string): Promise<void> {
-    if (isOdooApiV2Configured()) return
     if (alreadySent(order, 'bankTransfer')) return
     const payment = await prisma.pwaPayment.findFirst({
       where: { orderId: order.id, method: 'BANK_TRANSFER' },
