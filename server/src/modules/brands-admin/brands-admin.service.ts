@@ -70,17 +70,10 @@ function loadOdooBrands(): Promise<BrandListItemDTO[]> {
   return odooBrandsInflight
 }
 
-async function requireOdooBrand(slug: string) {
-  const odoo = (await loadOdooBrands()).find((b) => normalizeBrandSlug(b.slug) === slug)
-  if (!odoo) {
-    throw new AppError(
-      'BRAND_NOT_IN_ODOO',
-      'Brand not present in Odoo catalog',
-      'Il marchio non è presente nel catalogo Odoo: non si possono creare brand dal proxy.',
-      404,
-    )
-  }
-  return odoo
+/** Solo cache già calda dalla lista: upload e delete non devono aprire una chiamata Odoo. */
+function cachedOdooBrand(slug: string): BrandListItemDTO | null {
+  if (!odooBrandsCache || Date.now() - odooBrandsCache.at >= ODOO_BRANDS_CACHE_MS) return null
+  return odooBrandsCache.brands.find((b) => normalizeBrandSlug(b.slug) === slug) ?? null
 }
 
 function overlayForSlug(bySlug: Map<string, BrandLogoOverlay>, slug: string) {
@@ -124,6 +117,25 @@ function toAdminBrandRow(
     hasLogos: Boolean(lightUrl || darkUrl),
     updatedAt: overlay?.updatedAt.toISOString() ?? null,
   }
+}
+
+/** Riga dopo upload/delete: loghi dal DB, senza facet Odoo. */
+function toMutationBrandRow(
+  slug: string,
+  overlay: BrandLogoOverlay | null,
+  displayName?: string | null,
+): AdminBrandRow {
+  const cached = cachedOdooBrand(slug)
+  if (cached) return toAdminBrandRow(cached, overlay)
+  return toAdminBrandRow(
+    {
+      slug,
+      name: displayName?.trim() || slug,
+      productCount: 0,
+      worlds: [],
+    },
+    overlay,
+  )
 }
 
 export const brandsAdminService = {
@@ -228,8 +240,6 @@ export const brandsAdminService = {
       throw new AppError('INVALID_SLUG', 'Invalid brand slug', 'Slug marchio non valido.', 400)
     }
 
-    const odoo = await requireOdooBrand(slug)
-
     let uploaded: { url: string }
     try {
       uploaded = await uploadBrandLogo(slug, variant, file)
@@ -264,13 +274,14 @@ export const brandsAdminService = {
       where: { slug },
       create: {
         slug,
-        displayName: odoo.name,
+        displayName: cachedOdooBrand(slug)?.name ?? existing?.displayName ?? null,
         manual: false,
         ...logoField,
       },
       update: logoField,
       select: {
         slug: true,
+        displayName: true,
         logoLightUrl: true,
         logoDarkUrl: true,
         updatedAt: true,
@@ -288,17 +299,19 @@ export const brandsAdminService = {
       })
     }
 
-    return toAdminBrandRow(odoo, saved)
+    return toMutationBrandRow(slug, saved, saved.displayName)
   },
 
   async deleteLogo(slugRaw: string, variant: BrandLogoVariant): Promise<AdminBrandRow> {
     const slug = normalizeBrandSlug(slugRaw)
-    const odoo = await requireOdooBrand(slug)
+    if (!slug) {
+      throw new AppError('INVALID_SLUG', 'Invalid brand slug', 'Slug marchio non valido.', 400)
+    }
 
     const existing = await prisma.catalogBrand.findUnique({ where: { slug } })
     if (!existing) {
       // Solo statico: non c’è nulla da cancellare in DB.
-      return toAdminBrandRow(odoo, null)
+      return toMutationBrandRow(slug, null)
     }
 
     const previousUrl = variant === 'light' ? existing.logoLightUrl : existing.logoDarkUrl
@@ -333,13 +346,15 @@ export const brandsAdminService = {
       })
     }
 
-    return toAdminBrandRow(odoo, overlay)
+    return toMutationBrandRow(slug, overlay, existing.displayName)
   },
 
-  /** Rimuove solo i loghi BO in DB; il brand Odoo e gli asset statici restano. */
+  /** Rimuove solo i loghi BO in DB; gli asset statici restano. */
   async clearLogos(slugRaw: string): Promise<AdminBrandRow> {
     const slug = normalizeBrandSlug(slugRaw)
-    const odoo = await requireOdooBrand(slug)
+    if (!slug) {
+      throw new AppError('INVALID_SLUG', 'Invalid brand slug', 'Slug marchio non valido.', 400)
+    }
 
     const existing = await prisma.catalogBrand.findUnique({ where: { slug } })
     if (existing) {
@@ -354,6 +369,6 @@ export const brandsAdminService = {
       }
     }
 
-    return toAdminBrandRow(odoo, null)
+    return toMutationBrandRow(slug, null, existing?.displayName)
   },
 }

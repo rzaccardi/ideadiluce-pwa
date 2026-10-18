@@ -28,6 +28,18 @@ export async function refreshBrands() {
   return loadBrands()
 }
 
+/** Nome e conteggi restano quelli della lista: la risposta non richiama Odoo. */
+function applyLogoRow(current: AdminBrandRow, next: AdminBrandRow): AdminBrandRow {
+  return {
+    ...current,
+    logoLightUrl: next.logoLightUrl,
+    logoDarkUrl: next.logoDarkUrl,
+    logoLightSource: next.logoLightSource,
+    hasLogos: next.hasLogos,
+    updatedAt: next.updatedAt,
+  }
+}
+
 export async function uploadBrandLogo(slug: string, variant: 'light' | 'dark', file: File) {
   brandsStore.busySlug = slug
   brandsStore.error = null
@@ -39,7 +51,9 @@ export async function uploadBrandLogo(slug: string, variant: 'light' | 'dark', f
       `/admin/brands/${encodeURIComponent(slug)}/logo`,
       form,
     )
-    brandsStore.items = brandsStore.items.map((item) => (item.slug === slug ? row : item))
+    brandsStore.items = brandsStore.items.map((item) =>
+      item.slug === slug ? applyLogoRow(item, row) : item,
+    )
   } catch (e) {
     brandsStore.error = errMessage(e)
     throw e
@@ -56,7 +70,9 @@ export async function deleteBrandLogo(slug: string, variant: 'light' | 'dark') {
       `/admin/brands/${encodeURIComponent(slug)}/logo/${variant}`,
       { method: 'DELETE' },
     )
-    brandsStore.items = brandsStore.items.map((item) => (item.slug === slug ? row : item))
+    brandsStore.items = brandsStore.items.map((item) =>
+      item.slug === slug ? applyLogoRow(item, row) : item,
+    )
   } catch (e) {
     brandsStore.error = errMessage(e)
     throw e
@@ -87,7 +103,9 @@ export async function clearBrandLogos(slug: string) {
     const row = await adminApi<AdminBrandRow>(`/admin/brands/${encodeURIComponent(slug)}`, {
       method: 'DELETE',
     })
-    brandsStore.items = brandsStore.items.map((item) => (item.slug === slug ? row : item))
+    brandsStore.items = brandsStore.items.map((item) =>
+      item.slug === slug ? applyLogoRow(item, row) : item,
+    )
   } catch (e) {
     brandsStore.error = errMessage(e)
     throw e
