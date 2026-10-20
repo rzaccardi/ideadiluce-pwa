@@ -4,12 +4,20 @@ import { useState } from 'react'
 import { useSnapshot } from 'valtio/react'
 import { Link } from '@/lib/navigation'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { authStore } from '@/features/auth'
 import { cartStore } from '@/features/cart'
 import { checkoutStore } from '@/features/checkout'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import type { CartDTO, CartItemDTO, FreeShippingHintDTO, ShippingQuoteDTO, TaxBreakdownDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
-import { cartSubtotalCents, cartTaxCents, cartTotalCents } from '@/lib/cartTotals'
+import {
+  cartCheckoutHeadlineCents,
+  cartDisplaySubtotalCents,
+  cartDisplayVatRatePct,
+  cartLineDisplayCents,
+} from '@/lib/cart-price-display'
+import { cartTaxCents, cartTotalCents } from '@/lib/cartTotals'
+import { displaysCatalogPriceIncVat } from '@/lib/price-display'
 import { isDev } from '@/lib/env'
 import { cn } from '@/utils/cn'
 import { BrandWordmark } from '@/components/site/primitives'
@@ -82,11 +90,14 @@ function SummaryContent({
   removeDisabled = false,
   revealGrandTotal = false,
 }: Omit<Props, 'mobileOnly'> & { theme?: SummaryTheme; revealGrandTotal?: boolean }) {
-  const { t } = useI18n()
+  const { t, tParams } = useI18n()
+  const auth = useSnapshot(authStore)
   const tTheme = summaryThemeClasses[theme]
-  const subtotal = taxBreakdown?.netCents ?? cartSubtotalCents(cart)
+  const vatIncluded = displaysCatalogPriceIncVat(auth.me, auth.impersonation)
+  const subtotal = cartDisplaySubtotalCents(cart, auth.me, auth.impersonation, taxBreakdown)
   const tax = cartTaxCents(cart, taxBreakdown)
   const total = cartTotalCents(cart, selectedShipping?.amountCents, taxBreakdown)
+  const vatRatePct = cartDisplayVatRatePct(cart, taxBreakdown)
   const hint = freeShippingHint ?? cart.freeShippingHint
   const shippingDisplay = selectedShipping?.amountCents ?? null
   const shippingIsFree = selectedShipping != null && (hint?.eligible === true || shippingDisplay === 0)
@@ -128,7 +139,11 @@ function SummaryContent({
               {item.quantity > 1 && item.lineTotalEstimateCents != null ? (
                 <p className={cn('mt-0.5 text-xs', tTheme.itemMeta)}>
                   {formatMoney(
-                    Math.round(item.lineTotalEstimateCents / item.quantity),
+                    cartLineDisplayCents(
+                      Math.round(item.lineTotalEstimateCents / item.quantity),
+                      auth.me,
+                      auth.impersonation,
+                    ),
                     cart.currencyCode,
                   )}{' '}
                   {t('cart.perUnit')}
@@ -138,7 +153,10 @@ function SummaryContent({
             <div className="flex shrink-0 items-start gap-1">
               <p className={cn('text-sm font-semibold tabular-nums', tTheme.itemTitle)}>
                 {item.lineTotalEstimateCents != null
-                  ? formatMoney(item.lineTotalEstimateCents, cart.currencyCode)
+                  ? formatMoney(
+                      cartLineDisplayCents(item.lineTotalEstimateCents, auth.me, auth.impersonation),
+                      cart.currencyCode,
+                    )
                   : t('common.notAvailable')}
               </p>
               {onRemoveItem ? (
@@ -158,7 +176,19 @@ function SummaryContent({
           <dt>{t('checkout.summary.subtotal')}</dt>
           <dd className="tabular-nums">{formatMoney(subtotal, cart.currencyCode)}</dd>
         </div>
-        {revealGrandTotal ? (
+        {vatIncluded ? (
+          <div className={cn('text-xs', tTheme.rowMuted)}>
+            <dt>
+              {tax > 0
+                ? tParams('cart.summary.taxIncluded', {
+                    rate: String(vatRatePct),
+                    amount: formatMoney(tax, cart.currencyCode),
+                  })
+                : t('product.price.vatIncluded')}
+            </dt>
+          </div>
+        ) : null}
+        {revealGrandTotal && !vatIncluded ? (
           <div className={cn('flex justify-between', tTheme.row)}>
             <dt>{taxBreakdown?.taxLabel ?? t('checkout.summary.tax')}</dt>
             <dd className="tabular-nums">{formatMoney(tax, cart.currencyCode)}</dd>
@@ -208,10 +238,15 @@ export function CheckoutOrderSummary({
   removeDisabled,
 }: Props) {
   const { t, tParams } = useI18n()
+  const auth = useSnapshot(authStore)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const headlineCents = revealGrandTotal
-    ? cartTotalCents(cart, selectedShipping?.amountCents, taxBreakdown)
-    : (taxBreakdown?.netCents ?? cartSubtotalCents(cart))
+  const headlineCents = cartCheckoutHeadlineCents(cart, {
+    user: auth.me,
+    impersonation: auth.impersonation,
+    selectedShippingAmountCents: selectedShipping?.amountCents,
+    liveTax: taxBreakdown,
+    revealGrandTotal,
+  })
 
   if (mobileOnly) {
     const mobileToggle = (

@@ -10,7 +10,7 @@ import { Button } from '@/components/Button'
 import { cn } from '@/utils/cn'
 
 type Props = {
-  /** Subtotale prodotti (niente totale stimato con spedizione/IVA in carrello). */
+  /** Subtotale prodotti già in display (IVA inclusa per guest/retail; senza spedizione). */
   subtotalCents: number
   currencyCode: string
   checkoutDisabled?: boolean

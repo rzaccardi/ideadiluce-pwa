@@ -1,8 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useSnapshot } from 'valtio/react'
 import { Link } from '@/lib/navigation'
 import type { CartDTO, CartItemDTO, CartStockInsufficientDTO, ProductCardDTO } from '@/types/dto'
+import { authStore } from '@/features/auth'
 import { clearCart } from '@/features/cart'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { CartCompatibilitySupport } from '@/components/cart/CartCompatibilitySupport'
@@ -19,10 +21,10 @@ import { CartPageBody, CartPageShell } from '@/components/cart/CartPageShell'
 import { CART_CARD_SURFACE_OVERFLOW } from '@/components/cart/cart-surfaces'
 import { SectionContainer } from '@/components/site/primitives'
 import { ToastOnError } from '@/components/ToastFeedback'
+import { cartDisplaySubtotalCents } from '@/lib/cart-price-display'
 import {
   cartHasBlockedLines,
   cartPurchasableItemCount,
-  cartSubtotalCents,
 } from '@/lib/cartTotals'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { useI18n } from '@/hooks/use-i18n'
@@ -47,6 +49,7 @@ type Props = {
 export function CartPageView({ state }: Props) {
   const lp = useLocalePath()
   const { t } = useI18n()
+  const auth = useSnapshot(authStore)
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
   const [clearPending, setClearPending] = useState(false)
   const cart = state.cart
@@ -162,7 +165,7 @@ export function CartPageView({ state }: Props) {
       </CartPageBody>
 
       <CartCheckoutStickyBar
-        subtotalCents={cartSubtotalCents(cart)}
+        subtotalCents={cartDisplaySubtotalCents(cart, auth.me, auth.impersonation)}
         currencyCode={cart.currencyCode}
         checkoutDisabled={checkoutDisabled}
         noPurchasableLines={purchasableCount === 0}
