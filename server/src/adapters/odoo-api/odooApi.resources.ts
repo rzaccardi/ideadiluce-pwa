@@ -2,6 +2,8 @@ import { asApiItems, odooApiV2Request, odooApiWebsiteQuery } from './odooApiClie
 import type {
   OdooApiAddress,
   OdooApiAddressWrite,
+  OdooApiAuthRegisterResult,
+  OdooApiAuthRegisterWrite,
   OdooApiCustomer,
   OdooApiCustomerValidate,
   OdooApiCustomerWrite,
@@ -35,6 +37,19 @@ export async function odooApiUpsertCustomer(
   correlationId?: string,
 ): Promise<OdooApiCustomer> {
   const { data } = await odooApiV2Request<OdooApiCustomer>('/api/v2/customers', {
+    method: 'POST',
+    body,
+    correlationId,
+  })
+  return data
+}
+
+/** Crea login portal per un customer già esistente (sostituisce `res.users.create` XML-RPC). */
+export async function odooApiAuthRegister(
+  body: OdooApiAuthRegisterWrite,
+  correlationId?: string,
+): Promise<OdooApiAuthRegisterResult> {
+  const { data } = await odooApiV2Request<OdooApiAuthRegisterResult>('/api/v2/auth/register', {
     method: 'POST',
     body,
     correlationId,

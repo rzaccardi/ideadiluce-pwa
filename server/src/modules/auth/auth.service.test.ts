@@ -41,6 +41,7 @@ vi.mock('../../lib/prisma.js', () => ({
     cart: { updateMany: vi.fn(), findMany: vi.fn(async () => []), update: vi.fn() },
     wishlistItem: { findMany: vi.fn(async () => []), deleteMany: vi.fn(), createMany: vi.fn() },
     session: { create: vi.fn(), findUnique: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
+    pwaOrder: { findMany: vi.fn(async () => []), updateMany: vi.fn() },
     $transaction: vi.fn(async (fn: (tx: unknown) => unknown) => fn({})),
   },
 }))
@@ -115,7 +116,7 @@ describe('authService.register', () => {
     sendPwaMail.mockResolvedValue(undefined)
   })
 
-  it('con Odoo disabilitato crea solo satellite locale e invia welcome', async () => {
+  it('con Odoo disabilitato crea solo satellite locale senza account_welcome', async () => {
     await authService.register(
       { email: 'new@example.com', password: 'secret123', firstName: 'Ada' },
       'sess-1',
@@ -135,10 +136,7 @@ describe('authService.register', () => {
       'sess-1',
       expect.objectContaining({ odooPartnerId: -1 }),
     )
-    expect(sendPwaMail).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ templateKey: 'account_welcome' }),
-    )
+    expect(sendPwaMail).not.toHaveBeenCalled()
   })
 
   it('con Odoo richiesto crea identità Odoo poi proiezione satellite (niente passwordHash)', async () => {

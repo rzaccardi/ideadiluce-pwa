@@ -14,6 +14,7 @@ vi.mock('./odooApiClient.js', async (importOriginal) => {
 })
 
 import {
+  odooApiAuthRegister,
   odooApiComputeOrderTotals,
   odooApiGetInvoicePdf,
   odooApiGetPrices,
@@ -86,5 +87,22 @@ describe('odooApi v2 resources', () => {
       query: { website: '2', customer_id: 7 },
       correlationId: 'corr-pdf',
     })
+  })
+
+  it('POST /auth/register con customer_id e password', async () => {
+    requestMock.mockResolvedValue({
+      status: 201,
+      data: { user_id: 40, login: 'a@b.it', created: true },
+    })
+    const res = await odooApiAuthRegister(
+      { customer_id: 14645, password: 'secret123' },
+      'corr-register',
+    )
+    expect(requestMock).toHaveBeenCalledWith('/api/v2/auth/register', {
+      method: 'POST',
+      body: { customer_id: 14645, password: 'secret123' },
+      correlationId: 'corr-register',
+    })
+    expect(res.user_id).toBe(40)
   })
 })

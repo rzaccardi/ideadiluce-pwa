@@ -10,9 +10,6 @@ import { authRepository } from './auth.repository.js'
 import { authService } from './auth.service.js'
 import { AppError } from '../../types/errors.js'
 import type { UserDTO } from '../../types/dto.js'
-import { sendPwaMail } from '../../adapters/odoo/odooMailAdapter.js'
-import { publicAppUrl } from '../../lib/mail.js'
-import { logger } from '../../lib/logger.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { findOdooPortalUserByEmail } from '../../adapters/odoo/odooPortalUserAdapter.js'
 
@@ -47,11 +44,9 @@ export const checkoutRegisterService = {
 
     let odooPartnerId: number | null = null
     let odooUid: number | null = null
-    let portalExisted = false
 
     if (odooRequired) {
       const existingPortal = await findOdooPortalUserByEmail(ctx, normalized)
-      portalExisted = Boolean(existingPortal)
       if (existingPortal) {
         // Portal già presente: non inventare account PWA: l'utente deve fare login.
         throw new AppError(
@@ -119,28 +114,6 @@ export const checkoutRegisterService = {
           lastName: input.lastName.trim(),
           phone: input.phone.trim(),
           customerSegment: segment,
-        })
-      }
-    }
-
-    if (!portalExisted) {
-      const firstNameSuffix = user.firstName?.trim() ? ` ${user.firstName.trim()}` : ''
-      try {
-        await sendPwaMail(ctx, {
-          templateKey: 'account_welcome',
-          emailTo: user.email,
-          vars: {
-            first_name_suffix: firstNameSuffix,
-            email: user.email,
-            login_url: publicAppUrl('/login'),
-          },
-        })
-      } catch (e) {
-        logger.warn('checkout_register.welcome_mail_failed', {
-          correlationId,
-          userId: user.id,
-          odooPartnerId,
-          error: e instanceof Error ? e.message : String(e),
         })
       }
     }

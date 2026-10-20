@@ -9,7 +9,6 @@ const {
   isOdooAuthIdentityRequired,
   ensureSatelliteProjection,
   establishLoggedInSession,
-  sendPwaMail,
   findOdooPortalUserByEmail,
   prismaUserUpdate,
 } = vi.hoisted(() => ({
@@ -20,7 +19,6 @@ const {
   isOdooAuthIdentityRequired: vi.fn(() => false),
   ensureSatelliteProjection: vi.fn(),
   establishLoggedInSession: vi.fn(async () => ({ id: 'u1', email: 'c@example.com' })),
-  sendPwaMail: vi.fn(),
   findOdooPortalUserByEmail: vi.fn(),
   prismaUserUpdate: vi.fn(),
 }))
@@ -55,14 +53,6 @@ vi.mock('../../adapters/odoo/odooPortalUserAdapter.js', () => ({
   findOdooPortalUserByEmail,
 }))
 
-vi.mock('../../adapters/odoo/odooMailAdapter.js', () => ({
-  sendPwaMail,
-}))
-
-vi.mock('../../lib/mail.js', () => ({
-  publicAppUrl: (path: string) => `https://shop.test${path}`,
-}))
-
 import { checkoutRegisterService } from './checkout-register.service.js'
 
 describe('checkoutRegisterService.register', () => {
@@ -75,7 +65,6 @@ describe('checkoutRegisterService.register', () => {
       email: 'c@example.com',
       firstName: 'Carlo',
     })
-    sendPwaMail.mockResolvedValue(undefined)
     findOdooPortalUserByEmail.mockResolvedValue(null)
   })
 

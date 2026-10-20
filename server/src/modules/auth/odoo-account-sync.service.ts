@@ -90,8 +90,8 @@ export type ProvisionOdooAuthIdentityInput = {
  * Crea/assicura partner + utente portal Odoo con la password scelta.
  * Fallisce se Odoo non può materializzare l'identità (fonte di verità).
  *
- * Nota email: `ensureOdooPortalUser` crea il portal con `no_reset_password`
- * (niente invito nativo auth_signup); la PWA invia `account_welcome` dopo.
+ * Portal: con API v2 → POST `/api/v2/auth/register`; altrimenti XML-RPC
+ * `res.users.create` con `no_reset_password` (niente invito auth_signup).
  */
 export async function provisionOdooAuthIdentity(
   ctx: OdooCallContext,
