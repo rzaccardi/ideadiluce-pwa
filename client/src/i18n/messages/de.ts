@@ -591,6 +591,19 @@ export const messages: Record<MessageKey, string> = {
   'paymentResult.status.paid': 'Zahlung abgeschlossen',
   'paymentResult.status.pending': 'Zahlung ausstehend',
   'paymentResult.status.failed': 'Zahlung fehlgeschlagen',
+  'paymentResult.error.payment_not_found':
+    'Wir konnten die Zahlung beim Anbieter nicht finden. Falls ein Betrag abgebucht wurde, kontaktieren Sie den Support.',
+  'paymentResult.error.payment_not_succeeded':
+    'Die Zahlung wurde nicht abgeschlossen. Bitte erneut versuchen oder eine andere Zahlungsmethode wählen.',
+  'paymentResult.error.payment_env_mismatch':
+    'Die Zahlung stimmt nicht mit der erwarteten Umgebung überein. Bitte Support kontaktieren.',
+  'paymentResult.error.payment_currency_mismatch':
+    'Die Währung der Zahlung stimmt nicht mit der Bestellung überein. Bitte Support kontaktieren.',
+  'paymentResult.error.payment_already_used':
+    'Diese Zahlung wurde bereits für eine andere Bestellung verwendet. Bitte Support kontaktieren.',
+  'paymentResult.error.serviceUnavailable':
+    'Die Zahlungsprüfung ist vorübergehend nicht verfügbar. Bitte versuchen Sie es in Kürze erneut.',
+  'paymentResult.retryVerify': 'Prüfung erneut versuchen',
   'thankYou.hero.confirmedEyebrow': 'BESTELLUNG BESTÄTIGT',
   'thankYou.hero.pendingEyebrow': 'BESTELLUNG ERHALTEN',
   'thankYou.hero.failedEyebrow': 'ZAHLUNG FEHLGESCHLAGEN',

@@ -1,6 +1,7 @@
 import { env } from '../../config/env.js'
 import { getOdooPublicBaseUrl, odooExecuteKw, type OdooCallContext } from './odooClient.js'
 import { isOdooApiV2Configured, OdooApiV2Error } from '../odoo-api/odooApiClient.js'
+import { toOdooPaymentVerifyAppError } from '../odoo-api/odooPaymentErrors.js'
 import { odooApiRegisterPayment } from '../odoo-api/odooApi.resources.js'
 import { alertOdooPaymentConflict } from '../odoo-api/odooApi.sideEffects.js'
 import { mapOdooApiPaymentMethod } from '../odoo-api/odooApi.mapping.js'
@@ -394,22 +395,36 @@ async function registerPaymentApiV2(
     if (input.status === 'pending') return { status: 'synced', odooData: data }
     return { status: 'synced', odooData: data }
   } catch (e) {
-    if (e instanceof OdooApiV2Error && e.httpStatus === 409) {
-      const order = await prisma.pwaOrder.findUnique({
-        where: { id: input.pwaOrderId },
-        select: { odooSaleOrderName: true },
-      })
-      await alertOdooPaymentConflict({
-        ctx,
-        pwaOrderId: input.pwaOrderId,
-        odooSaleOrderId: input.saleOrderId,
-        odooSaleOrderName: order?.odooSaleOrderName,
-        amountCents: input.amountCents,
-        error: e,
-      })
-      return { status: 'failed' }
+    if (e instanceof OdooApiV2Error) {
+      const verifyErr = toOdooPaymentVerifyAppError(e, ctx.correlationId)
+      if (verifyErr) throw verifyErr
+
+      if (e.httpStatus === 409) {
+        const order = await prisma.pwaOrder.findUnique({
+          where: { id: input.pwaOrderId },
+          select: { odooSaleOrderName: true },
+        })
+        await alertOdooPaymentConflict({
+          ctx,
+          pwaOrderId: input.pwaOrderId,
+          odooSaleOrderId: input.saleOrderId,
+          odooSaleOrderName: order?.odooSaleOrderName,
+          amountCents: input.amountCents,
+          error: e,
+        })
+        return { status: 'failed' }
+      }
+      if (e.httpStatus >= 500) {
+        throw new AppError(
+          'payment_service_unavailable',
+          e.message,
+          'Verifica del pagamento temporaneamente non disponibile. Riprova tra poco.',
+          503,
+          true,
+          { correlationId: ctx.correlationId, body: e.body, odooHttpStatus: e.httpStatus },
+        )
+      }
     }
-    if (e instanceof OdooApiV2Error && e.httpStatus >= 500) return { status: 'failed' }
     throw e
   }
 }

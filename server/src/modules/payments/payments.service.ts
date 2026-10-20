@@ -1135,23 +1135,32 @@ export const paymentsService = {
       // inviata dalla registrazione pagamento sotto.
       let odooPaymentData: Awaited<ReturnType<typeof registerPayment>>['odooData']
       if (env.ODOO_ENABLED && updated.odooSaleOrderId) {
-        const reg = await registerPayment(
-          { correlationId: req.correlationId, req },
-          {
-            saleOrderId: updated.odooSaleOrderId,
-            pwaOrderId: updated.id,
-            method: 'bank_transfer',
-            amountCents: updated.amountTotal ?? payment.amount,
-            transactionId: payment.providerSessionId,
-            status: 'pending',
-            currencyCode: updated.currencyCode,
-          },
-        )
-        odooPaymentData = reg.odooData
-        if (reg.status === 'failed') {
+        try {
+          const reg = await registerPayment(
+            { correlationId: req.correlationId, req },
+            {
+              saleOrderId: updated.odooSaleOrderId,
+              pwaOrderId: updated.id,
+              method: 'bank_transfer',
+              amountCents: updated.amountTotal ?? payment.amount,
+              transactionId: payment.providerSessionId,
+              status: 'pending',
+              currencyCode: updated.currencyCode,
+            },
+          )
+          odooPaymentData = reg.odooData
+          if (reg.status === 'failed') {
+            await prisma.pwaOrder.update({
+              where: { id: updated.id },
+              data: { odooLastSyncStatus: 'FAILED' },
+            })
+          }
+        } catch (e) {
+          // Bonifico resta PAYMENT_PENDING (non "pagato"): consegna comunque le istruzioni.
+          const msg = e instanceof AppError ? e.userMessage : e instanceof Error ? e.message : String(e)
           await prisma.pwaOrder.update({
             where: { id: updated.id },
-            data: { odooLastSyncStatus: 'FAILED' },
+            data: { odooLastSyncStatus: 'FAILED', lastPaymentError: msg },
           })
         }
       }
