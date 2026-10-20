@@ -1169,12 +1169,6 @@ export const messages: Record<MessageKey, string> = {
   'impersonation.banner.viewing': 'Stai visualizzando la PWA come',
   'impersonation.banner.startedBy': '(impersonazione avviata da {admin})',
   'impersonation.banner.end': 'Esci da impersonazione',
-  'legacySite.notice.message':
-    'Stai usando il nuovo sito. Se qualcosa non funziona o non riesci a completare l’ordine, puoi continuare sul sito precedente.',
-  'legacySite.notice.cta': 'Apri il sito precedente',
-  'legacySite.checkout.hint':
-    'Non riesci a completare l’ordine? Puoi procedere sul sito precedente mentre sistemiamo questo.',
-  'legacySite.footer.link': 'Problemi con il nuovo sito? Continua su old.ideadiluce.com',
   'cart.floating.close': 'Chiudi carrello',
   'cart.floating.loading': 'Caricamento mini carrello…',
   'cart.floating.items': 'Articoli',

@@ -1157,12 +1157,6 @@ export const messages: Record<MessageKey, string> = {
   'impersonation.banner.viewing': 'You are viewing the shop as',
   'impersonation.banner.startedBy': '(impersonation started by {admin})',
   'impersonation.banner.end': 'End impersonation',
-  'legacySite.notice.message':
-    'You are on our new website. If something does not work or you cannot complete your order, you can continue on the previous site.',
-  'legacySite.notice.cta': 'Open the previous site',
-  'legacySite.checkout.hint':
-    'Unable to complete your order? You can continue on the previous site while we sort this out.',
-  'legacySite.footer.link': 'Having trouble with the new site? Continue on old.ideadiluce.com',
   'cart.floating.close': 'Close cart',
   'cart.floating.loading': 'Loading mini cart…',
   'cart.floating.items': 'Items',

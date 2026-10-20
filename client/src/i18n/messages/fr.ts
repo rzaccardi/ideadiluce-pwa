@@ -1109,12 +1109,6 @@ export const messages: Record<MessageKey, string> = {
   'checkout.summary.securePayment': 'Paiement sécurisé',
   'checkout.summary.showOrderSummary': 'Afficher le récapitulatif',
   'impersonation.banner.end': 'Terminer l’impersonation',
-  'legacySite.notice.message':
-    'Vous êtes sur notre nouveau site. Si quelque chose ne fonctionne pas ou si vous ne parvenez pas à finaliser la commande, vous pouvez continuer sur l’ancien site.',
-  'legacySite.notice.cta': 'Ouvrir l’ancien site',
-  'legacySite.checkout.hint':
-    'Impossible de finaliser la commande ? Vous pouvez continuer sur l’ancien site pendant que nous corrigeons le problème.',
-  'legacySite.footer.link': 'Un souci avec le nouveau site ? Continuez sur old.ideadiluce.com',
   'impersonation.banner.startedBy': '(impersonation démarrée par {admin})',
   'impersonation.banner.viewing': 'Vous consultez la boutique en tant que',
   'product.card.addAria': 'Ajouter {productName} au panier',

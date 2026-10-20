@@ -189,8 +189,6 @@ export const api = {
     settings() {
       return apiClient.get<{
         soundsEnabled: boolean
-        legacySiteNoticeEnabled: boolean
-        legacySiteUrl: string
       }>('/api/v1/site/settings')
     },
     submitInquiry(body: {
