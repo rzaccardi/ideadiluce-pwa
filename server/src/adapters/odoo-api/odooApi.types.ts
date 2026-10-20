@@ -66,6 +66,18 @@ export type OdooApiCustomerValidate = {
   valid?: boolean
 }
 
+/** POST `/api/v2/auth/register` — crea utente portal legato al customer. */
+export type OdooApiAuthRegisterWrite = {
+  customer_id: number
+  password: string
+}
+
+export type OdooApiAuthRegisterResult = {
+  user_id: number
+  login: string
+  created?: boolean
+}
+
 export type OdooApiAddressRecipient = 'own' | 'third_party'
 
 export type OdooApiAddressWrite = {

@@ -20,7 +20,6 @@ import { linkOrdersToUser } from '../orders/orders-user-link.service.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { absorbCartLines, cartLineKey, type MergedCartLine } from './cart-merge.js'
 import { sendPwaMail, PWA_ADMIN_MAIL_TO } from '../../adapters/odoo/odooMailAdapter.js'
-import { publicAppUrl } from '../../lib/mail.js'
 import { logger } from '../../lib/logger.js'
 
 function sessionExpiry(): Date {
@@ -287,20 +286,11 @@ export const authService = {
       odooUid,
     })
 
-    const firstNameSuffix = user.firstName?.trim() ? ` ${user.firstName.trim()}` : ''
-    // Non bloccare la risposta HTTP sulla mail Odoo (SMTP/XML-RPC può superare i timeout edge).
-    void (async () => {
-      try {
-        await sendPwaMail(mailCtx, {
-          templateKey: 'account_welcome',
-          emailTo: user.email,
-          vars: {
-            first_name_suffix: firstNameSuffix,
-            email: user.email,
-            login_url: publicAppUrl('/login'),
-          },
-        })
-        if (segment === 'BUSINESS') {
+    // Nessuna account_welcome: il portal nasce via /api/v2/auth/register.
+    // Solo alert interno per registrazioni business (non blocca la risposta HTTP).
+    if (segment === 'BUSINESS') {
+      void (async () => {
+        try {
           await sendPwaMail(mailCtx, {
             templateKey: 'business_registration_admin',
             emailTo: PWA_ADMIN_MAIL_TO,
@@ -319,16 +309,16 @@ export const authService = {
                 .join('\n'),
             },
           })
+        } catch (e) {
+          logger.warn('auth.register.business_admin_mail_failed', {
+            correlationId: mailCtx.correlationId,
+            userId: user.id,
+            odooPartnerId,
+            error: e instanceof Error ? e.message : String(e),
+          })
         }
-      } catch (e) {
-        logger.warn('auth.register.welcome_mail_failed', {
-          correlationId: mailCtx.correlationId,
-          userId: user.id,
-          odooPartnerId,
-          error: e instanceof Error ? e.message : String(e),
-        })
-      }
-    })()
+      })()
+    }
 
     return dto
   },

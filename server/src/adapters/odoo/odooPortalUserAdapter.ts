@@ -2,6 +2,8 @@ import { env } from '../../config/env.js'
 import { logger } from '../../lib/logger.js'
 import { isOdooConfigured, odooExecuteKw, type OdooCallContext } from './odooClient.js'
 import { normalizeOdooCreateId } from './odooId.js'
+import { isOdooApiV2Configured, OdooApiV2Error } from '../odoo-api/odooApiClient.js'
+import { odooApiAuthRegister } from '../odoo-api/odooApi.resources.js'
 
 type PortalUserRow = { id: number; partner_id: [number, string] | number | false }
 
@@ -142,9 +144,34 @@ export async function ensureOdooPortalUser(
     return { odooUserId: existing.odooUserId, created: false }
   }
 
+  // Preferisci REST: POST /api/v2/auth/register (niente res.users.create / mail nativa XML-RPC).
+  if (isOdooApiV2Configured()) {
+    try {
+      const registered = await odooApiAuthRegister(
+        { customer_id: input.partnerId, password: input.password },
+        ctx.correlationId,
+      )
+      return { odooUserId: registered.user_id, created: registered.created !== false }
+    } catch (e) {
+      if (e instanceof OdooApiV2Error && e.httpStatus === 409) {
+        const again = await findOdooPortalUserByEmail(ctx, input.email)
+        if (again) {
+          await odooExecuteKw(
+            ctx,
+            'res.users',
+            'write',
+            [[again.odooUserId], { password: input.password, partner_id: input.partnerId }],
+            {},
+          )
+          return { odooUserId: again.odooUserId, created: false }
+        }
+      }
+      throw e
+    }
+  }
+
   const groupId = await portalGroupId(ctx)
-  // Senza no_reset_password Odoo 18 invia l'invito auth_signup a nome dell'utente XML-RPC
-  // (es. "Roberto Zaccardi") oltre alla welcome PWA.
+  // Fallback XML-RPC: senza no_reset_password Odoo 18 invia l'invito auth_signup.
   const created = await odooExecuteKw<unknown>(
     ctx,
     'res.users',
