@@ -2,6 +2,7 @@ import type { Request } from 'express'
 import { prisma } from '../../lib/prisma.js'
 import { logger } from '../../lib/logger.js'
 import { registerPayment } from '../../adapters/odoo/odooPaymentLive.js'
+import { isAppError } from '../../types/errors.js'
 
 const CAPTURE_COMPLETED = 'PAYMENT.CAPTURE.COMPLETED'
 
@@ -101,6 +102,102 @@ export async function handlePaypalWebhookEvent(
 
   const amountCents = centsFromPaypalAmount(resource?.amount?.value) ?? order.amountTotal
   const payment = order.payments[0]
+  const alreadyPaid = ['PAID', 'PAID_SYNC_PENDING', 'SYNCED', 'CONFIRMED', 'COMPLETED'].includes(
+    order.orderStatus,
+  )
+
+  if (!alreadyPaid && order.odooSaleOrderId) {
+    try {
+      const reg = await registerPayment(
+        { correlationId: req.correlationId ?? `paypal:${captureId ?? order.id}` },
+        {
+          saleOrderId: order.odooSaleOrderId,
+          pwaOrderId: order.id,
+          method: 'paypal',
+          amountCents: amountCents ?? order.amountTotal ?? 0,
+          transactionId: captureId ?? order.id,
+          status: 'captured',
+        },
+      )
+      if (reg.status === 'failed') {
+        await prisma.pwaOrder.update({
+          where: { id: order.id },
+          data: {
+            orderStatus: 'PAYMENT_FAILED',
+            paymentStatus: 'FAILED',
+            lastPaymentError: 'Il pagamento non è allineato con l’ordine. Contatta l’assistenza.',
+            odooLastSyncStatus: 'FAILED',
+          },
+        })
+        if (payment) {
+          await prisma.pwaPayment.update({
+            where: { id: payment.id },
+            data: { status: 'FAILED', failedAt: new Date(), provider: 'paypal', providerTransactionId: captureId },
+          })
+        }
+        if (eventId) {
+          await prisma.webhookEvent.create({
+            data: {
+              source: 'paypal',
+              eventName: eventType,
+              externalId: eventId,
+              processed: true,
+              processedAt: new Date(),
+              result: 'payment_verify_failed',
+              payloadRedacted: { captureId, orderId: order.id } as object,
+            },
+          })
+        }
+        return { accepted: true, processed: true, orderId: order.id }
+      }
+    } catch (e) {
+      const msg = isAppError(e) ? e.userMessage : e instanceof Error ? e.message : String(e)
+      const retriable = isAppError(e) && e.retriable
+      if (!retriable) {
+        await prisma.pwaOrder.update({
+          where: { id: order.id },
+          data: {
+            orderStatus: 'PAYMENT_FAILED',
+            paymentStatus: 'FAILED',
+            lastPaymentError: msg,
+            odooLastSyncStatus: 'FAILED',
+          },
+        })
+        if (payment) {
+          await prisma.pwaPayment.update({
+            where: { id: payment.id },
+            data: { status: 'FAILED', failedAt: new Date(), provider: 'paypal', providerTransactionId: captureId },
+          })
+        }
+      } else {
+        await prisma.pwaOrder.update({
+          where: { id: order.id },
+          data: { lastPaymentError: msg, odooLastSyncStatus: 'FAILED' },
+        })
+      }
+      logger.warn('paypal.webhook.payment_verify_failed', {
+        orderId: order.id,
+        code: isAppError(e) ? e.code : undefined,
+        retriable,
+      })
+      if (retriable) throw e
+      if (eventId) {
+        await prisma.webhookEvent.create({
+          data: {
+            source: 'paypal',
+            eventName: eventType,
+            externalId: eventId,
+            processed: true,
+            processedAt: new Date(),
+            result: `payment_verify_failed:${isAppError(e) ? e.code : 'error'}`,
+            payloadRedacted: { captureId, orderId: order.id } as object,
+          },
+        })
+      }
+      return { accepted: true, processed: true, orderId: order.id }
+    }
+  }
+
   if (payment) {
     await prisma.pwaPayment.update({
       where: { id: payment.id },
@@ -113,9 +210,6 @@ export async function handlePaypalWebhookEvent(
     })
   }
 
-  const alreadyPaid = ['PAID', 'PAID_SYNC_PENDING', 'SYNCED', 'CONFIRMED', 'COMPLETED'].includes(
-    order.orderStatus,
-  )
   const updated = alreadyPaid
     ? order
     : await prisma.pwaOrder.update({
@@ -128,18 +222,25 @@ export async function handlePaypalWebhookEvent(
         },
       })
 
-  if (updated.odooSaleOrderId) {
-    await registerPayment(
-      { correlationId: req.correlationId ?? `paypal:${captureId ?? updated.id}` },
-      {
-        saleOrderId: updated.odooSaleOrderId,
-        pwaOrderId: updated.id,
-        method: 'paypal',
-        amountCents: amountCents ?? updated.amountTotal ?? 0,
-        transactionId: captureId ?? updated.id,
-        status: 'captured',
-      },
-    )
+  if (alreadyPaid && updated.odooSaleOrderId) {
+    try {
+      await registerPayment(
+        { correlationId: req.correlationId ?? `paypal:${captureId ?? updated.id}` },
+        {
+          saleOrderId: updated.odooSaleOrderId,
+          pwaOrderId: updated.id,
+          method: 'paypal',
+          amountCents: amountCents ?? updated.amountTotal ?? 0,
+          transactionId: captureId ?? updated.id,
+          status: 'captured',
+        },
+      )
+    } catch (e) {
+      logger.warn('paypal.webhook.reregister_failed', {
+        orderId: updated.id,
+        error: e instanceof Error ? e.message : String(e),
+      })
+    }
   }
 
   if (eventId) {

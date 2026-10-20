@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParam, useSearchParams } from '@/lib/navigation'
 import { useSnapshot } from 'valtio/react'
 import { api } from '@/api/endpoints'
@@ -15,7 +15,12 @@ import { ThankYouPageView } from '@/components/checkout/thank-you/ThankYouPageVi
 import { ThankYouPageSkeleton } from '@/components/checkout/thank-you/ThankYouPageSkeleton'
 import { PageLoadTransition } from '@/components/motion'
 import { useI18n } from '@/hooks/use-i18n'
-import { shouldFinalizeStripeOnThankYou } from '@/lib/checkout-payment-result'
+import {
+  isPaymentVerifyRetriable,
+  isThankYouPaymentSucceeded,
+  paymentVerifyMessageKey,
+  shouldFinalizeStripeOnThankYou,
+} from '@/lib/checkout-payment-result'
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -43,9 +48,32 @@ export function ThankYouPage() {
   const [order, setOrder] = useState<ThankYouOrderDTO | null>(null)
   const [recommendations, setRecommendations] = useState<ProductCardDTO[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [errorRetriable, setErrorRetriable] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [retryNonce, setRetryNonce] = useState(0)
   const sessionId = searchParams.get('session_id')
   const paymentIntent = searchParams.get('payment_intent')
+
+  const resolveErrorMessage = useCallback(
+    (e: unknown): { message: string; retriable: boolean } => {
+      if (e instanceof ApiRequestError) {
+        const key = paymentVerifyMessageKey(e.code)
+        return {
+          message: key ? t(key) : e.userMessage ?? e.message ?? t('paymentResult.fetchError'),
+          retriable: isPaymentVerifyRetriable({
+            code: e.code,
+            status: e.status,
+            retriable: e.retriable,
+          }),
+        }
+      }
+      return {
+        message: e instanceof Error ? e.message : t('paymentResult.fetchError'),
+        retriable: false,
+      }
+    },
+    [t],
+  )
 
   useEffect(() => {
     if (!orderId) return
@@ -54,6 +82,7 @@ export function ThankYouPage() {
     async function load() {
       setLoading(true)
       setError(null)
+      setErrorRetriable(false)
       try {
         const hasStripeReturnParams = Boolean(sessionId || paymentIntent)
         if (hasStripeReturnParams) {
@@ -78,14 +107,10 @@ export function ThankYouPage() {
         resetOrdersStore()
         setOrder(detail)
 
-        const paymentSucceeded =
-          detail.paymentStatus === 'captured' ||
-          detail.paymentStatus === 'authorized' ||
-          detail.orderStatus === 'paid' ||
-          detail.orderStatus === 'confirmed' ||
-          detail.orderStatus === 'completed' ||
-          detail.orderStatus === 'paid_sync_pending' ||
-          detail.orderStatus === 'synced'
+        const paymentSucceeded = isThankYouPaymentSucceeded({
+          paymentStatus: detail.paymentStatus,
+          orderStatus: detail.orderStatus,
+        })
         const bankTransferPlaced =
           detail.paymentMethod === 'bank_transfer' &&
           detail.orderStatus !== 'payment_failed' &&
@@ -104,7 +129,11 @@ export function ThankYouPage() {
           }
         }
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : t('paymentResult.fetchError'))
+        if (!cancelled) {
+          const resolved = resolveErrorMessage(e)
+          setError(resolved.message)
+          setErrorRetriable(resolved.retriable)
+        }
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -114,7 +143,7 @@ export function ThankYouPage() {
     return () => {
       cancelled = true
     }
-  }, [orderId, sessionId, paymentIntent])
+  }, [orderId, sessionId, paymentIntent, retryNonce, resolveErrorMessage])
 
   const isFailed =
     order?.paymentStatus === 'failed' || order?.orderStatus === 'payment_failed'
@@ -131,7 +160,16 @@ export function ThankYouPage() {
       <>
         <ToastOnError message={error ?? t('paymentResult.notFound')} />
         <div className="mx-auto max-w-md py-16 text-center text-sm text-idl-muted">
-          {error ?? t('paymentResult.notFound')}
+          <p>{error ?? t('paymentResult.notFound')}</p>
+          {errorRetriable ? (
+            <button
+              type="button"
+              className="mt-6 inline-flex items-center justify-center rounded-[10px] bg-idl-amber px-6 py-3 text-[15px] font-extrabold text-white transition hover:brightness-95"
+              onClick={() => setRetryNonce((n) => n + 1)}
+            >
+              {t('paymentResult.retryVerify')}
+            </button>
+          ) : null}
         </div>
       </>
     )

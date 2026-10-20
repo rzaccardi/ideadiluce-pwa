@@ -811,6 +811,19 @@ export const messages: Record<MessageKey, string> = {
   'paymentResult.status.paid': 'Payment completed',
   'paymentResult.status.pending': 'Payment pending',
   'paymentResult.status.failed': 'Payment failed',
+  'paymentResult.error.payment_not_found':
+    'We could not find the payment with the provider. If you were charged, please contact support.',
+  'paymentResult.error.payment_not_succeeded':
+    'The payment was not completed. Try again or choose another payment method.',
+  'paymentResult.error.payment_env_mismatch':
+    'The payment does not match the expected environment. Please contact support.',
+  'paymentResult.error.payment_currency_mismatch':
+    'The payment currency does not match the order. Please contact support.',
+  'paymentResult.error.payment_already_used':
+    'This payment has already been used for another order. Please contact support.',
+  'paymentResult.error.serviceUnavailable':
+    'Payment verification is temporarily unavailable. Please try again shortly.',
+  'paymentResult.retryVerify': 'Retry verification',
   'thankYou.hero.confirmedEyebrow': 'ORDER CONFIRMED',
   'thankYou.hero.pendingEyebrow': 'ORDER RECEIVED',
   'thankYou.hero.failedEyebrow': 'PAYMENT FAILED',

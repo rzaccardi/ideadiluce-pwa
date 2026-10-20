@@ -47,6 +47,7 @@ import {
   isShippingQuoteSelectable,
 } from './shipping-quotes'
 import { checkoutDbg } from './checkout-debug'
+import { paymentVerifyMessageKey } from '@/lib/checkout-payment-result'
 
 function currentLocale() {
   if (typeof window === 'undefined') return 'IT' as const
@@ -2375,7 +2376,12 @@ export async function confirmPayment(mockStatus?: 'captured' | 'pending' | 'fail
   try {
     checkoutStore.result = await api.payments.confirm({ paymentId, mockStatus })
   } catch (e) {
-    checkoutStore.error = errMessage(e)
+    if (e instanceof ApiRequestError) {
+      const key = paymentVerifyMessageKey(e.code)
+      checkoutStore.error = key ? localeMessage(key) : errMessage(e)
+    } else {
+      checkoutStore.error = errMessage(e)
+    }
     throw e
   } finally {
     checkoutStore.isPaying = false

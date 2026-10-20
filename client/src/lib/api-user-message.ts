@@ -41,6 +41,18 @@ const SOURCE_TO_KEY: Record<string, MessageKey> = {
   'Valore troppo lungo.': 'validation.tooLong',
   'Email non valida.': 'validation.invalidEmail',
   'Dati non validi.': 'validation.invalid',
+  'Non abbiamo trovato il pagamento presso il gestore. Se l’importo è stato addebitato, contatta l’assistenza.':
+    'paymentResult.error.payment_not_found',
+  'Il pagamento non risulta completato. Riprova oppure scegli un altro metodo di pagamento.':
+    'paymentResult.error.payment_not_succeeded',
+  'Il pagamento non è allineato con l’ambiente previsto. Contatta l’assistenza.':
+    'paymentResult.error.payment_env_mismatch',
+  'La valuta del pagamento non corrisponde a quella dell’ordine. Contatta l’assistenza.':
+    'paymentResult.error.payment_currency_mismatch',
+  'Questo pagamento risulta già utilizzato per un altro ordine. Contatta l’assistenza.':
+    'paymentResult.error.payment_already_used',
+  'Verifica del pagamento temporaneamente non disponibile. Riprova tra poco.':
+    'paymentResult.error.serviceUnavailable',
 }
 
 export function stripValidationFieldPrefix(message: string): string {

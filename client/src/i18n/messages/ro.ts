@@ -808,6 +808,19 @@ export const messages: Record<MessageKey, string> = {
   'paymentResult.status.paid': 'Plată finalizată',
   'paymentResult.status.pending': 'Plată în așteptare',
   'paymentResult.status.failed': 'Plată eșuată',
+  'paymentResult.error.payment_not_found':
+    'Nu am găsit plata la procesator. Dacă suma a fost debitată, contactează asistența.',
+  'paymentResult.error.payment_not_succeeded':
+    'Plata nu este finalizată. Încearcă din nou sau alege o altă metodă de plată.',
+  'paymentResult.error.payment_env_mismatch':
+    'Plata nu corespunde mediului așteptat. Contactează asistența.',
+  'paymentResult.error.payment_currency_mismatch':
+    'Moneda plății nu corespunde comenzii. Contactează asistența.',
+  'paymentResult.error.payment_already_used':
+    'Această plată a fost deja folosită pentru o altă comandă. Contactează asistența.',
+  'paymentResult.error.serviceUnavailable':
+    'Verificarea plății este temporar indisponibilă. Încearcă din nou în scurt timp.',
+  'paymentResult.retryVerify': 'Reîncearcă verificarea',
   'thankYou.hero.confirmedEyebrow': 'COMANDĂ CONFIRMATĂ',
   'thankYou.hero.pendingEyebrow': 'COMANDĂ PRIMITĂ',
   'thankYou.hero.failedEyebrow': 'PLATĂ EȘUATĂ',

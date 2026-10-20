@@ -20,9 +20,46 @@ import { writeStructuredIntegrationLog } from '../../lib/integration-log-context
 import { orderTransactionalMail } from '../orders/order-transactional-mail.service.js'
 import { canStripeReturnMutateOrder } from './payment-session-guard.js'
 import { healBankTransferFalselyMarkedFailed } from './bank-transfer-order-heal.js'
+import { AppError, isAppError } from '../../types/errors.js'
 
 const paymentUrlAdapter = createOdooPaymentAdapter()
 const orderAdapter = createOdooOrderAdapter()
+
+/** Non marca l’ordine come pagato se la verifica Odoo fallisce (retriable → lascia ritentabile). */
+async function persistStripeOdooVerifyFailure(input: {
+  orderId: string
+  paymentId?: string | null
+  err: AppError
+}): Promise<void> {
+  const retriable = input.err.retriable || input.err.statusCode === 503
+  if (retriable) {
+    await prisma.pwaOrder.update({
+      where: { id: input.orderId },
+      data: {
+        lastPaymentError: input.err.userMessage,
+        odooLastSyncStatus: 'FAILED',
+      },
+    })
+    return
+  }
+
+  await prisma.pwaOrder.update({
+    where: { id: input.orderId },
+    data: {
+      orderStatus: 'PAYMENT_FAILED',
+      paymentStatus: 'FAILED',
+      lastPaymentError: input.err.userMessage,
+      odooLastSyncStatus: 'FAILED',
+      paidAt: null,
+    },
+  })
+  if (input.paymentId) {
+    await prisma.pwaPayment.update({
+      where: { id: input.paymentId },
+      data: { status: 'FAILED', failedAt: new Date() },
+    })
+  }
+}
 
 export async function finalizeStripeCheckoutByOrderId(req: Request, orderId: string) {
   await healBankTransferFalselyMarkedFailed(orderId)
@@ -150,57 +187,14 @@ export async function finalizeStripeCheckout(
   }
 
   const payment = order.payments[0]
-  if (payment) {
-    await prisma.pwaPayment.update({
-      where: { id: payment.id },
-      data: {
-        status: 'CAPTURED',
-        providerTransactionId: paymentIntentId,
-        capturedAt: new Date(),
-      },
-    })
-  }
-
-  const updated = await prisma.pwaOrder.update({
-    where: { id: order.id },
-    data: {
-      orderStatus: 'PAID',
-      paymentStatus: 'CAPTURED',
-      paymentMethod: 'STRIPE',
-      providerTransactionId: paymentIntentId,
-      paidAt: new Date(),
-      lastPaymentError: null,
-      ...(odooSaleOrderId != null ? { odooSaleOrderId } : {}),
-      ...(req.sessionRecord?.user?.id && !order.odooPartnerId
-        ? { odooPartnerId: req.sessionRecord.odooPartnerId }
-        : {}),
-    },
-  })
-  const saleOrderId = updated.odooSaleOrderId ?? odooSaleOrderId
-
-  await prisma.cart.update({
-    where: { id: updated.cartId },
-    data: { status: 'CONVERTED', convertedOrderId: updated.id },
-  })
-
-  await orderTransactionalMail.notifyPaidCustomer(updated, req.correlationId ?? 'stripe-finalize')
-
+  const saleOrderId = odooSaleOrderId ?? order.odooSaleOrderId
   const ctx: OdooCallContext = { correlationId: req.correlationId, req }
 
-  if (env.ODOO_ENABLED && !saleOrderId) {
-    await prisma.pwaOrder.update({
-      where: { id: updated.id },
-      data: { orderStatus: 'PAID_SYNC_PENDING', odooLastSyncStatus: 'FAILED' },
-    })
-    await enqueueOrderOdooSaga(updated.id, {
-      includeMail: false,
-      lastError: 'Pagato in locale senza sale.order Odoo.',
-    })
-  }
-
+  // Verifica Odoo PRIMA di marcare l’ordine come pagato: il cliente non deve vedere "pagato" se Odoo rifiuta.
+  let odooRegisterSynced = false
   if (env.ODOO_ENABLED && saleOrderId) {
     const cart = await prisma.cart.findUnique({
-      where: { id: updated.cartId },
+      where: { id: order.cartId },
       include: { items: true, shippingSelection: true },
     })
     if (cart && !isOdooApiV2Configured()) {
@@ -225,19 +219,23 @@ export async function finalizeStripeCheckout(
         )
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e)
-        await prisma.pwaOrder.update({
-          where: { id: updated.id },
-          data: {
-            orderStatus: 'PAID_SYNC_PENDING',
-            lastPaymentError: `Pagamento ricevuto ma sync Odoo righe fallita: ${msg}`,
-            odooLastSyncStatus: 'FAILED',
-          },
+        const verifyErr = new AppError(
+          'payment_service_unavailable',
+          msg,
+          'Verifica del pagamento temporaneamente non disponibile. Riprova tra poco.',
+          503,
+          true,
+        )
+        await persistStripeOdooVerifyFailure({
+          orderId: order.id,
+          paymentId: payment?.id,
+          err: verifyErr,
         })
         await enqueueOdooSyncFailure({
-          pwaOrderId: updated.id,
+          pwaOrderId: order.id,
           operation: 'reconcile_lines',
           payload: {
-            pwaOrderId: updated.id,
+            pwaOrderId: order.id,
             odooSaleOrderId: saleOrderId,
             lines: cart.items.map((i) => ({
               productRef: i.productRef,
@@ -261,11 +259,51 @@ export async function finalizeStripeCheckout(
           operation: 'checkout_finalize',
           correlationId: ctx.correlationId,
           success: false,
-          orderId: updated.id,
+          orderId: order.id,
           odooSaleOrderId: saleOrderId ?? undefined,
           error: msg,
           extra: { step: 'reconcile_lines', sessionId: session.id },
         })
+        throw verifyErr
+      }
+    }
+
+    let funnelResult: Awaited<ReturnType<typeof registerPayment>>
+    try {
+      funnelResult = await registerPayment(ctx, {
+        saleOrderId,
+        pwaOrderId: order.id,
+        method: 'stripe',
+        amountCents: order.amountTotal ?? stripeTotal,
+        transactionId: paymentIntentId,
+        status: 'captured',
+      })
+    } catch (e) {
+      const appErr = isAppError(e)
+        ? e
+        : new AppError(
+            'payment_service_unavailable',
+            e instanceof Error ? e.message : String(e),
+            'Verifica del pagamento temporaneamente non disponibile. Riprova tra poco.',
+            503,
+            true,
+          )
+      await persistStripeOdooVerifyFailure({
+        orderId: order.id,
+        paymentId: payment?.id,
+        err: appErr,
+      })
+      await writeStructuredIntegrationLog({
+        service: 'stripe',
+        operation: 'checkout_finalize',
+        correlationId: ctx.correlationId,
+        success: false,
+        orderId: order.id,
+        odooSaleOrderId: saleOrderId ?? undefined,
+        error: appErr.message,
+        extra: { step: 'register_payment', code: appErr.code, sessionId: session.id },
+      })
+      if (!appErr.retriable) {
         await prisma.webhookEvent.create({
           data: {
             source: 'stripe',
@@ -273,38 +311,39 @@ export async function finalizeStripeCheckout(
             externalId: `session:${session.id}`,
             processed: true,
             processedAt: new Date(),
-            result: 'odoo_reconcile_failed',
-            payloadRedacted: { sessionId: session.id, error: msg } as object,
+            result: `payment_verify_failed:${appErr.code}`,
+            payloadRedacted: { sessionId: session.id, code: appErr.code } as object,
           },
         })
-        return { orderId: pwaOrderId, alreadyProcessed: false }
       }
+      throw appErr
     }
-    const funnelResult = await registerPayment(ctx, {
-      saleOrderId,
-      pwaOrderId: updated.id,
-      method: 'stripe',
-      amountCents: updated.amountTotal ?? stripeTotal,
-      transactionId: paymentIntentId,
-      status: 'captured',
-    })
+
     if (funnelResult.status === 'failed') {
-      await prisma.pwaOrder.update({
-        where: { id: updated.id },
-        data: { orderStatus: 'PAID_SYNC_PENDING', odooLastSyncStatus: 'FAILED' },
+      const amountConflict = new AppError(
+        'ODOO_API_CONFLICT',
+        'Odoo payment amount conflict',
+        'Il pagamento non è allineato con l’ordine. Contatta l’assistenza.',
+        409,
+        false,
+      )
+      await persistStripeOdooVerifyFailure({
+        orderId: order.id,
+        paymentId: payment?.id,
+        err: amountConflict,
       })
       await enqueueOdooSyncFailure({
-        pwaOrderId: updated.id,
+        pwaOrderId: order.id,
         operation: 'funnel_sync',
         payload: {
-          pwaOrderId: updated.id,
+          pwaOrderId: order.id,
           funnelState: {
-            pwaOrderId: updated.id,
-            orderStatus: 'paid',
-            paymentStatus: 'captured',
+            pwaOrderId: order.id,
+            orderStatus: 'payment_failed',
+            paymentStatus: 'failed',
             paymentMethod: 'stripe',
-            cartId: updated.cartId,
-            sessionId: updated.sessionId,
+            cartId: order.cartId,
+            sessionId: order.sessionId,
             providerTransactionId: paymentIntentId,
           },
         },
@@ -315,21 +354,73 @@ export async function finalizeStripeCheckout(
         operation: 'checkout_finalize',
         correlationId: ctx.correlationId,
         success: false,
-        orderId: updated.id,
+        orderId: order.id,
         odooSaleOrderId: saleOrderId ?? undefined,
         error: 'Conferma ordine Odoo fallita dopo pagamento Stripe',
         extra: { step: 'funnel_sync', sessionId: session.id },
       })
-    } else if (funnelResult.status === 'synced') {
-      await prisma.pwaOrder.update({
-        where: { id: updated.id },
+      await prisma.webhookEvent.create({
         data: {
-          orderStatus: 'SYNCED',
-          odooLastSyncAt: new Date(),
-          odooLastSyncStatus: 'SYNCED',
+          source: 'stripe',
+          eventName: 'checkout.session.completed',
+          externalId: `session:${session.id}`,
+          processed: true,
+          processedAt: new Date(),
+          result: 'payment_verify_failed:ODOO_API_CONFLICT',
+          payloadRedacted: { sessionId: session.id } as object,
         },
       })
+      throw amountConflict
     }
+    odooRegisterSynced = funnelResult.status === 'synced'
+  }
+
+  if (payment) {
+    await prisma.pwaPayment.update({
+      where: { id: payment.id },
+      data: {
+        status: 'CAPTURED',
+        providerTransactionId: paymentIntentId,
+        capturedAt: new Date(),
+      },
+    })
+  }
+
+  const updated = await prisma.pwaOrder.update({
+    where: { id: order.id },
+    data: {
+      orderStatus: odooRegisterSynced ? 'SYNCED' : 'PAID',
+      paymentStatus: 'CAPTURED',
+      paymentMethod: 'STRIPE',
+      providerTransactionId: paymentIntentId,
+      paidAt: new Date(),
+      lastPaymentError: null,
+      ...(odooSaleOrderId != null ? { odooSaleOrderId } : {}),
+      ...(odooRegisterSynced
+        ? { odooLastSyncAt: new Date(), odooLastSyncStatus: 'SYNCED' }
+        : {}),
+      ...(req.sessionRecord?.user?.id && !order.odooPartnerId
+        ? { odooPartnerId: req.sessionRecord.odooPartnerId }
+        : {}),
+    },
+  })
+
+  await prisma.cart.update({
+    where: { id: updated.cartId },
+    data: { status: 'CONVERTED', convertedOrderId: updated.id },
+  })
+
+  await orderTransactionalMail.notifyPaidCustomer(updated, req.correlationId ?? 'stripe-finalize')
+
+  if (env.ODOO_ENABLED && !saleOrderId) {
+    await prisma.pwaOrder.update({
+      where: { id: updated.id },
+      data: { orderStatus: 'PAID_SYNC_PENDING', odooLastSyncStatus: 'FAILED' },
+    })
+    await enqueueOrderOdooSaga(updated.id, {
+      includeMail: false,
+      lastError: 'Pagato in locale senza sale.order Odoo.',
+    })
   }
 
   if (updated.odooPartnerId && saleOrderId) {
@@ -418,7 +509,20 @@ export async function handleStripeWebhookEvent(req: Request, event: Stripe.Event
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
-    if (session.id) await finalizeStripeCheckout(req, session.id)
+    if (!session.id) return
+    try {
+      await finalizeStripeCheckout(req, session.id)
+    } catch (e) {
+      if (isAppError(e) && !e.retriable) {
+        logger.warn('stripe.webhook.payment_verify_failed', {
+          sessionId: session.id,
+          code: e.code,
+          correlationId: req.correlationId,
+        })
+        return
+      }
+      throw e
+    }
     return
   }
 

@@ -103,4 +103,75 @@ describe('registerPayment API v2', () => {
       }),
     )
   })
+
+  it('422 payment_not_found: AppError stabile', async () => {
+    registerPaymentMock.mockRejectedValue(
+      new OdooApiV2Error('not found', 422, { code: 'payment_not_found' }),
+    )
+
+    await expect(
+      registerPayment(
+        { correlationId: 'stripe-wh' },
+        {
+          saleOrderId: 88,
+          pwaOrderId: 'ord-1',
+          method: 'stripe',
+          amountCents: 100,
+          transactionId: 'pi_abc',
+          status: 'captured',
+        },
+      ),
+    ).rejects.toMatchObject({
+      name: 'AppError',
+      code: 'payment_not_found',
+      statusCode: 422,
+      retriable: false,
+    })
+  })
+
+  it('409 payment_already_used: AppError senza alert importo', async () => {
+    registerPaymentMock.mockRejectedValue(
+      new OdooApiV2Error('used', 409, { code: 'payment_already_used' }),
+    )
+
+    await expect(
+      registerPayment(
+        { correlationId: 'stripe-wh' },
+        {
+          saleOrderId: 88,
+          pwaOrderId: 'ord-1',
+          method: 'stripe',
+          amountCents: 100,
+          transactionId: 'pi_abc',
+          status: 'captured',
+        },
+      ),
+    ).rejects.toMatchObject({
+      code: 'payment_already_used',
+      statusCode: 409,
+    })
+    expect(alertConflict).not.toHaveBeenCalled()
+  })
+
+  it('503: AppError ritentabile', async () => {
+    registerPaymentMock.mockRejectedValue(new OdooApiV2Error('unavailable', 503, null))
+
+    await expect(
+      registerPayment(
+        { correlationId: 'stripe-wh' },
+        {
+          saleOrderId: 88,
+          pwaOrderId: 'ord-1',
+          method: 'stripe',
+          amountCents: 100,
+          transactionId: 'pi_abc',
+          status: 'captured',
+        },
+      ),
+    ).rejects.toMatchObject({
+      code: 'payment_service_unavailable',
+      statusCode: 503,
+      retriable: true,
+    })
+  })
 })

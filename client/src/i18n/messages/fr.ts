@@ -592,6 +592,19 @@ export const messages: Record<MessageKey, string> = {
   'paymentResult.status.paid': 'Paiement effectué',
   'paymentResult.status.pending': 'Paiement en attente',
   'paymentResult.status.failed': 'Paiement échoué',
+  'paymentResult.error.payment_not_found':
+    'Nous n’avons pas trouvé le paiement auprès du prestataire. Si le montant a été débité, contactez le support.',
+  'paymentResult.error.payment_not_succeeded':
+    'Le paiement n’est pas terminé. Réessayez ou choisissez un autre moyen de paiement.',
+  'paymentResult.error.payment_env_mismatch':
+    'Le paiement ne correspond pas à l’environnement attendu. Contactez le support.',
+  'paymentResult.error.payment_currency_mismatch':
+    'La devise du paiement ne correspond pas à celle de la commande. Contactez le support.',
+  'paymentResult.error.payment_already_used':
+    'Ce paiement a déjà été utilisé pour une autre commande. Contactez le support.',
+  'paymentResult.error.serviceUnavailable':
+    'La vérification du paiement est temporairement indisponible. Réessayez dans un instant.',
+  'paymentResult.retryVerify': 'Réessayer la vérification',
   'thankYou.hero.confirmedEyebrow': 'COMMANDE CONFIRMÉE',
   'thankYou.hero.pendingEyebrow': 'COMMANDE REÇUE',
   'thankYou.hero.failedEyebrow': 'PAIEMENT ÉCHOUÉ',
