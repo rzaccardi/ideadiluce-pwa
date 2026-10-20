@@ -4,6 +4,8 @@ import { AppError } from '../../types/errors.js'
 
 const {
   sendPwaMail,
+  odooApiCreateBusinessRequest,
+  isOdooApiV2Configured,
   hasOpenRequest,
   createRequest,
   updateRequest,
@@ -22,6 +24,8 @@ const {
   updateCustomerBusiness,
 } = vi.hoisted(() => ({
   sendPwaMail: vi.fn(),
+  odooApiCreateBusinessRequest: vi.fn(),
+  isOdooApiV2Configured: vi.fn(() => false),
   hasOpenRequest: vi.fn(),
   createRequest: vi.fn(),
   updateRequest: vi.fn(),
@@ -51,6 +55,14 @@ vi.mock('../../lib/mail.js', () => ({
 vi.mock('../../adapters/odoo/odooMailAdapter.js', () => ({
   sendPwaMail,
   PWA_ADMIN_MAIL_TO: 'info@ideadiluce.com',
+}))
+
+vi.mock('../../adapters/odoo-api/odooApiClient.js', () => ({
+  isOdooApiV2Configured: () => isOdooApiV2Configured(),
+}))
+
+vi.mock('../../adapters/odoo-api/odooApi.resources.js', () => ({
+  odooApiCreateBusinessRequest: (...args: unknown[]) => odooApiCreateBusinessRequest(...args),
 }))
 
 vi.mock('../../adapters/odoo/odooCustomerAdapter.js', () => ({
@@ -132,10 +144,12 @@ function mockReq(overrides: Partial<Request> = {}): Request {
   } as unknown as Request
 }
 
-describe('professionalAccountService.submit - mail', () => {
+describe('professionalAccountService.submit - business-request', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     isOdooAuthIdentityRequired.mockReturnValue(false)
+    isOdooApiV2Configured.mockReturnValue(true)
+    odooApiCreateBusinessRequest.mockResolvedValue({ logged: true, activity_id: 1, customer_id: 99 })
     sendPwaMail.mockResolvedValue(undefined)
     hasOpenRequest.mockResolvedValue(false)
     createRequest.mockResolvedValue({
@@ -168,30 +182,30 @@ describe('professionalAccountService.submit - mail', () => {
     prismaUserUpdate.mockResolvedValue({})
   })
 
-  it('invia sempre conferma al richiedente e notifica admin', async () => {
+  it('notifica Odoo via business-request quando c’è partner', async () => {
     findSatelliteByEmail.mockResolvedValue({
       id: 'user-existing',
       passwordHash: 'hash',
-      odooPartnerId: null,
+      odooPartnerId: 99,
+    })
+    prismaUserUpdate.mockResolvedValue({
+      id: 'user-existing',
+      odooPartnerId: 99,
     })
 
     await professionalAccountService.submit(mockReq(), baseInput)
 
     expect(assertOdooAuthReadyForIdentity).toHaveBeenCalled()
-    expect(sendPwaMail).toHaveBeenCalledWith(
-      expect.objectContaining({ correlationId: 'corr-pro-1' }),
+    expect(odooApiCreateBusinessRequest).toHaveBeenCalledWith(
+      99,
       expect.objectContaining({
-        templateKey: 'professional_request_admin',
-        emailTo: 'info@ideadiluce.com',
+        company_name: 'Acme Illuminazione Srl',
+        vat: 'IT12345678901',
+        contact_name: 'Mario Rossi',
+        email: 'mario@acme.it',
+        sector: 'Installatori',
       }),
-    )
-    expect(sendPwaMail).toHaveBeenCalledWith(
-      expect.objectContaining({ correlationId: 'corr-pro-1' }),
-      expect.objectContaining({
-        templateKey: 'professional_request_customer',
-        emailTo: 'mario@acme.it',
-        vars: expect.objectContaining({ first_name_suffix: ' Mario' }),
-      }),
+      'corr-pro-1',
     )
     expect(sendPwaMail).not.toHaveBeenCalledWith(
       expect.anything(),
@@ -216,17 +230,13 @@ describe('professionalAccountService.submit - mail', () => {
     )
   })
 
-  it('non fallisce la submit se la mail di conferma fallisce', async () => {
+  it('non fallisce la submit se business-request fallisce', async () => {
     findSatelliteByEmail.mockResolvedValue({
       id: 'user-existing',
       passwordHash: 'hash',
-      odooPartnerId: null,
+      odooPartnerId: 99,
     })
-    sendPwaMail.mockImplementation(async (_ctx, input) => {
-      if (input.templateKey === 'professional_request_customer') {
-        throw new Error('smtp down')
-      }
-    })
+    odooApiCreateBusinessRequest.mockRejectedValue(new Error('odoo down'))
 
     const result = await professionalAccountService.submit(mockReq(), baseInput)
     expect(result).toMatchObject({ submitted: true, id: 'req-1' })
@@ -237,6 +247,8 @@ describe('professionalAccountService.submit - Odoo-first', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     isOdooAuthIdentityRequired.mockReturnValue(true)
+    isOdooApiV2Configured.mockReturnValue(true)
+    odooApiCreateBusinessRequest.mockResolvedValue({ logged: true, activity_id: 1, customer_id: 42 })
     sendPwaMail.mockResolvedValue(undefined)
     hasOpenRequest.mockResolvedValue(false)
     createRequest.mockResolvedValue({
@@ -314,6 +326,14 @@ describe('professionalAccountService.submit - Odoo-first', () => {
       expect.objectContaining({
         odooPartnerId: 42,
       }),
+    )
+    expect(odooApiCreateBusinessRequest).toHaveBeenCalledWith(
+      42,
+      expect.objectContaining({
+        company_name: 'Acme Illuminazione Srl',
+        vat: 'IT12345678901',
+      }),
+      'corr-pro-1',
     )
     expect(sendPwaMail).toHaveBeenCalledWith(
       expect.anything(),

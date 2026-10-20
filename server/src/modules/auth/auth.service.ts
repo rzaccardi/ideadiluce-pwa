@@ -19,7 +19,8 @@ import { hydrateUserBusinessFromOdoo } from '../users/users-odoo-business-hydrat
 import { linkOrdersToUser } from '../orders/orders-user-link.service.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import { absorbCartLines, cartLineKey, type MergedCartLine } from './cart-merge.js'
-import { sendPwaMail, PWA_ADMIN_MAIL_TO } from '../../adapters/odoo/odooMailAdapter.js'
+import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
+import { odooApiCreateBusinessRequest } from '../../adapters/odoo-api/odooApi.resources.js'
 import { logger } from '../../lib/logger.js'
 
 function sessionExpiry(): Date {
@@ -287,30 +288,29 @@ export const authService = {
     })
 
     // Nessuna account_welcome: il portal nasce via /api/v2/auth/register.
-    // Solo alert interno per registrazioni business (non blocca la risposta HTTP).
-    if (segment === 'BUSINESS') {
+    // Registrazione business → POST /api/v2/customers/<id>/business-request (mail Odoo).
+    if (
+      segment === 'BUSINESS' &&
+      odooPartnerId &&
+      isOdooApiV2Configured() &&
+      user.companyName?.trim() &&
+      user.vatNumber?.trim()
+    ) {
       void (async () => {
         try {
-          await sendPwaMail(mailCtx, {
-            templateKey: 'business_registration_admin',
-            emailTo: PWA_ADMIN_MAIL_TO,
-            vars: {
-              customer_email: user.email,
-              body_text: [
-                `Nuova registrazione azienda da /register`,
-                `Email: ${user.email}`,
-                `Nome: ${[user.firstName, user.lastName].filter(Boolean).join(' ') || '-'}`,
-                `Telefono: ${user.phone ?? '-'}`,
-                `Ragione sociale: ${user.companyName ?? '-'}`,
-                `P.IVA: ${user.vatNumber ?? '-'}`,
-                odooPartnerId ? `Partner Odoo: #${odooPartnerId}` : null,
-              ]
-                .filter(Boolean)
-                .join('\n'),
+          await odooApiCreateBusinessRequest(
+            odooPartnerId,
+            {
+              company_name: user.companyName!.trim(),
+              vat: user.vatNumber!.trim(),
+              contact_name: [user.firstName, user.lastName].filter(Boolean).join(' ') || null,
+              email: user.email,
+              phone: user.phone,
             },
-          })
+            mailCtx.correlationId,
+          )
         } catch (e) {
-          logger.warn('auth.register.business_admin_mail_failed', {
+          logger.warn('auth.register.business_request_failed', {
             correlationId: mailCtx.correlationId,
             userId: user.id,
             odooPartnerId,

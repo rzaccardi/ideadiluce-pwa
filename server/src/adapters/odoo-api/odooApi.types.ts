@@ -78,6 +78,57 @@ export type OdooApiAuthRegisterResult = {
   created?: boolean
 }
 
+/** POST `/api/v2/orders/<id>/return-request` — log attività reso + mail Odoo. */
+export type OdooApiReturnRequestLineWrite = {
+  line_id?: number
+  product_id?: number
+  qty: number
+  reason?: string | null
+}
+
+export type OdooApiReturnRequestWrite = {
+  lines: OdooApiReturnRequestLineWrite[]
+  notes?: string | null
+}
+
+export type OdooApiReturnRequestResult = {
+  logged?: boolean
+  activity_id?: number
+  order_id?: number
+  order_name?: string
+  items?: Array<{
+    line_id?: number
+    product_id?: number
+    qty?: number
+    reason?: string | null
+  }>
+}
+
+/** POST `/api/v2/customers/<id>/business-request` — log attività B2B + mail Odoo. */
+export type OdooApiBusinessRequestWrite = {
+  company_name: string
+  vat: string
+  sector?: string | null
+  sector_other?: string | null
+  contact_name?: string | null
+  email?: string | null
+  phone?: string | null
+  pec?: string | null
+  sdi_code?: string | null
+  fiscal_code?: string | null
+  address_line?: string | null
+  message?: string | null
+  locale?: string | null
+  country?: string | null
+  visura_url?: string | null
+}
+
+export type OdooApiBusinessRequestResult = {
+  logged?: boolean
+  activity_id?: number
+  customer_id?: number
+}
+
 export type OdooApiAddressRecipient = 'own' | 'third_party'
 
 export type OdooApiAddressWrite = {
