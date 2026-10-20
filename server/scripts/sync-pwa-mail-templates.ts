@@ -19,7 +19,6 @@ async function main() {
     { correlationId: `sync-pwa-mail-${Date.now()}` },
     { updateExisting },
   )
-  const target = rows.find((r) => r.key === 'professional_request_customer')
   console.log(
     'Synced %d PWA mail templates (updateExisting=%s)',
     rows.length,
@@ -28,10 +27,6 @@ async function main() {
   for (const row of rows) {
     console.log('  %s → id=%s name=%s', row.key, row.id, row.name)
   }
-  if (!target) {
-    throw new Error('Template professional_request_customer assente dopo sync')
-  }
-  console.log('OK professional_request_customer id=%s', target.id)
 }
 
 main().catch((e) => {

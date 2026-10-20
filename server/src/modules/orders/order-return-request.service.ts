@@ -1,17 +1,17 @@
 import type { OrderDTO, OrderDetailDTO, OrderReturnRequestDTO, OrderReturnRequestResultDTO } from '../../types/dto.js'
 import { Prisma } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
-import { publicAppUrl } from '../../lib/mail.js'
 import { logger } from '../../lib/logger.js'
 import { parseHubLocale } from '../../lib/hub-locale.js'
 import { AppError } from '../../types/errors.js'
-import { sendPwaMail, PWA_ADMIN_MAIL_TO } from '../../adapters/odoo/odooMailAdapter.js'
-import { resolveOdooPartnerId } from '../../lib/satellite-lookup.js'
 import {
-  buildAdminReturnRequestEmail,
-  buildCustomerReturnRequestEmail,
-  customerNotificationCopy,
-} from './order-return-request.mail.js'
+  isOdooApiV2Configured,
+  OdooApiV2Error,
+  toOdooApiV2AppError,
+} from '../../adapters/odoo-api/odooApiClient.js'
+import { odooApiCreateReturnRequest, odooApiGetOrder } from '../../adapters/odoo-api/odooApi.resources.js'
+import { resolveOdooPartnerId } from '../../lib/satellite-lookup.js'
+import { customerNotificationCopy } from './order-return-request.mail.js'
 
 function toDto(row: { id: string; createdAt: Date; status: string }): OrderReturnRequestDTO {
   return {
@@ -19,11 +19,6 @@ function toDto(row: { id: string; createdAt: Date; status: string }): OrderRetur
     createdAt: row.createdAt.toISOString(),
     status: row.status,
   }
-}
-
-function customerDisplayName(user: { firstName: string | null; lastName: string | null }): string | null {
-  const name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim()
-  return name || null
 }
 
 export const orderReturnRequestService = {
@@ -74,9 +69,80 @@ export const orderReturnRequestService = {
       )
     }
 
+    if (!input.order.odooSaleOrderId) {
+      throw new AppError(
+        'RETURN_ORDER_NOT_SYNCED',
+        'Order not synced to Odoo',
+        'Ordine non ancora sincronizzato: riprova tra poco.',
+        409,
+        true,
+      )
+    }
+
+    if (!isOdooApiV2Configured()) {
+      throw new AppError(
+        'ODOO_API_UNAVAILABLE',
+        'Odoo API v2 not configured',
+        'Servizio resi temporaneamente non disponibile. Riprova tra poco.',
+        503,
+        true,
+      )
+    }
+
+    const correlationId = `return-request-${input.order.id}`
+    let returnLines: Array<{ line_id?: number; product_id?: number; qty: number }>
+    try {
+      const apiOrder = await odooApiGetOrder(input.order.odooSaleOrderId, correlationId)
+      returnLines = (apiOrder.lines ?? [])
+        .filter((line) => !line.is_delivery && (line.qty ?? 0) > 0 && (line.id != null || line.product_id != null))
+        .map((line) => ({
+          ...(line.id != null ? { line_id: line.id } : {}),
+          ...(line.product_id != null ? { product_id: line.product_id } : {}),
+          qty: line.qty ?? 0,
+        }))
+    } catch (err) {
+      if (err instanceof OdooApiV2Error) throw toOdooApiV2AppError(err, correlationId)
+      throw err
+    }
+
+    if (returnLines.length === 0) {
+      throw new AppError(
+        'RETURN_NO_LINES',
+        'No returnable lines',
+        'Non ci sono articoli restituibili su questo ordine.',
+        422,
+        false,
+      )
+    }
+
     const locale = parseHubLocale(input.locale)
     const notes = input.notes?.trim() || null
-    const customerName = customerDisplayName(user)
+
+    try {
+      await odooApiCreateReturnRequest(
+        input.order.odooSaleOrderId,
+        {
+          lines: returnLines,
+          notes,
+        },
+        correlationId,
+      )
+    } catch (err) {
+      if (err instanceof OdooApiV2Error) {
+        if (err.httpStatus === 409 || err.httpStatus === 422) {
+          throw new AppError(
+            err.httpStatus === 409 ? 'RETURN_NOT_ALLOWED' : 'RETURN_INVALID_LINES',
+            err.message,
+            err.message || 'Non è possibile avviare il reso su questo ordine.',
+            err.httpStatus,
+            false,
+            { correlationId, body: err.body },
+          )
+        }
+        throw toOdooApiV2AppError(err, correlationId)
+      }
+      throw err
+    }
 
     let row
     try {
@@ -108,64 +174,14 @@ export const orderReturnRequestService = {
       throw err
     }
 
-    const mailInput = {
-      requestId: row.id,
-      locale,
-      customerName,
-      customerEmail: user.email,
-      notes,
-      order: input.order,
-      orderUrl: publicAppUrl(`/account/orders/${input.order.id}`),
-    }
-    const adminMail = buildAdminReturnRequestEmail(mailInput)
-    const customerMail = buildCustomerReturnRequestEmail(mailInput)
-
     logger.info('orders.return_request', {
       id: row.id,
       orderId: input.order.id,
+      odooSaleOrderId: input.order.odooSaleOrderId,
       odooPartnerId: user.odooPartnerId,
       email: user.email,
+      via: 'odoo_api_v2',
     })
-
-    try {
-      await sendPwaMail(
-        { correlationId: `return-request-${row.id}` },
-        {
-          templateKey: 'return_request_admin',
-          emailTo: PWA_ADMIN_MAIL_TO,
-          replyTo: user.email,
-          vars: {
-            order_ref: input.order.orderNumber?.trim() || `#${input.order.odooSaleOrderId}`,
-            customer_email: user.email,
-            body_text: adminMail.text,
-          },
-        },
-      )
-    } catch (err) {
-      logger.warn('orders.return_request.admin_mail_failed', {
-        id: row.id,
-        error: err instanceof Error ? err.message : String(err),
-      })
-    }
-
-    try {
-      await sendPwaMail(
-        { correlationId: `return-request-${row.id}` },
-        {
-          templateKey: 'return_request_customer',
-          emailTo: user.email,
-          vars: {
-            subject: customerMail.subject,
-            body_text: customerMail.text,
-          },
-        },
-      )
-    } catch (err) {
-      logger.warn('orders.return_request.customer_mail_failed', {
-        id: row.id,
-        error: err instanceof Error ? err.message : String(err),
-      })
-    }
 
     const notification = customerNotificationCopy(locale)
     await prisma.userNotification.create({

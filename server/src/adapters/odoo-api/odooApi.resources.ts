@@ -4,6 +4,8 @@ import type {
   OdooApiAddressWrite,
   OdooApiAuthRegisterResult,
   OdooApiAuthRegisterWrite,
+  OdooApiBusinessRequestResult,
+  OdooApiBusinessRequestWrite,
   OdooApiCustomer,
   OdooApiCustomerValidate,
   OdooApiCustomerWrite,
@@ -16,6 +18,8 @@ import type {
   OdooApiPaymentWrite,
   OdooApiPriceItem,
   OdooApiPricesResponse,
+  OdooApiReturnRequestResult,
+  OdooApiReturnRequestWrite,
   OdooApiShipment,
   OdooApiStockItem,
 } from './odooApi.types.js'
@@ -54,6 +58,40 @@ export async function odooApiAuthRegister(
     body,
     correlationId,
   })
+  return data
+}
+
+/** Log richiesta reso su ordine confermato (mail gestite da Odoo). */
+export async function odooApiCreateReturnRequest(
+  orderId: number,
+  body: OdooApiReturnRequestWrite,
+  correlationId?: string,
+): Promise<OdooApiReturnRequestResult> {
+  const { data } = await odooApiV2Request<OdooApiReturnRequestResult>(
+    `/api/v2/orders/${orderId}/return-request`,
+    {
+      method: 'POST',
+      body,
+      correlationId,
+    },
+  )
+  return data
+}
+
+/** Log richiesta account business sul customer (mail gestite da Odoo). */
+export async function odooApiCreateBusinessRequest(
+  customerId: number,
+  body: OdooApiBusinessRequestWrite,
+  correlationId?: string,
+): Promise<OdooApiBusinessRequestResult> {
+  const { data } = await odooApiV2Request<OdooApiBusinessRequestResult>(
+    `/api/v2/customers/${customerId}/business-request`,
+    {
+      method: 'POST',
+      body,
+      correlationId,
+    },
+  )
   return data
 }
 

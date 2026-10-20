@@ -16,6 +16,8 @@ vi.mock('./odooApiClient.js', async (importOriginal) => {
 import {
   odooApiAuthRegister,
   odooApiComputeOrderTotals,
+  odooApiCreateBusinessRequest,
+  odooApiCreateReturnRequest,
   odooApiGetInvoicePdf,
   odooApiGetPrices,
   odooApiGetStock,
@@ -104,5 +106,41 @@ describe('odooApi v2 resources', () => {
       correlationId: 'corr-register',
     })
     expect(res.user_id).toBe(40)
+  })
+
+  it('POST /orders/:id/return-request con lines', async () => {
+    requestMock.mockResolvedValue({
+      status: 201,
+      data: { logged: true, activity_id: 1, order_id: 5000 },
+    })
+    const res = await odooApiCreateReturnRequest(
+      5000,
+      { lines: [{ product_id: 8025, qty: 1 }], notes: 'nota' },
+      'corr-return',
+    )
+    expect(requestMock).toHaveBeenCalledWith('/api/v2/orders/5000/return-request', {
+      method: 'POST',
+      body: { lines: [{ product_id: 8025, qty: 1 }], notes: 'nota' },
+      correlationId: 'corr-return',
+    })
+    expect(res.logged).toBe(true)
+  })
+
+  it('POST /customers/:id/business-request con company_name e vat', async () => {
+    requestMock.mockResolvedValue({
+      status: 201,
+      data: { logged: true, activity_id: 2, customer_id: 99 },
+    })
+    const res = await odooApiCreateBusinessRequest(
+      99,
+      { company_name: 'Acme SRL', vat: 'IT12345678901', email: 'a@b.it' },
+      'corr-biz',
+    )
+    expect(requestMock).toHaveBeenCalledWith('/api/v2/customers/99/business-request', {
+      method: 'POST',
+      body: { company_name: 'Acme SRL', vat: 'IT12345678901', email: 'a@b.it' },
+      correlationId: 'corr-biz',
+    })
+    expect(res.customer_id).toBe(99)
   })
 })

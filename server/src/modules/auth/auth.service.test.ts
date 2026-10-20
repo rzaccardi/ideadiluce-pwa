@@ -8,6 +8,8 @@ const {
   linkSessionToIdentity,
   prismaUserFindUniqueOrThrow,
   sendPwaMail,
+  odooApiCreateBusinessRequest,
+  isOdooApiV2Configured,
   loginWithOdooCredentials,
   provisionOdooAuthIdentity,
   assertOdooAuthReadyForIdentity,
@@ -22,6 +24,8 @@ const {
   linkSessionToIdentity: vi.fn(),
   prismaUserFindUniqueOrThrow: vi.fn(),
   sendPwaMail: vi.fn(),
+  odooApiCreateBusinessRequest: vi.fn(),
+  isOdooApiV2Configured: vi.fn(() => false),
   loginWithOdooCredentials: vi.fn(),
   provisionOdooAuthIdentity: vi.fn(),
   assertOdooAuthReadyForIdentity: vi.fn(),
@@ -84,6 +88,14 @@ vi.mock('../../adapters/odoo/odooMailAdapter.js', () => ({
   PWA_ADMIN_MAIL_TO: 'admin@example.com',
 }))
 
+vi.mock('../../adapters/odoo-api/odooApiClient.js', () => ({
+  isOdooApiV2Configured: () => isOdooApiV2Configured(),
+}))
+
+vi.mock('../../adapters/odoo-api/odooApi.resources.js', () => ({
+  odooApiCreateBusinessRequest: (...args: unknown[]) => odooApiCreateBusinessRequest(...args),
+}))
+
 vi.mock('../../lib/mail.js', () => ({
   publicAppUrl: (path: string) => `https://shop.test${path}`,
 }))
@@ -114,6 +126,8 @@ describe('authService.register', () => {
       odooPartnerId: -1,
     })
     sendPwaMail.mockResolvedValue(undefined)
+    odooApiCreateBusinessRequest.mockResolvedValue({ logged: true })
+    isOdooApiV2Configured.mockReturnValue(false)
   })
 
   it('con Odoo disabilitato crea solo satellite locale senza account_welcome', async () => {
@@ -183,6 +197,57 @@ describe('authService.register', () => {
         odooUid: 7,
       }),
     )
+    expect(odooApiCreateBusinessRequest).not.toHaveBeenCalled()
+  })
+
+  it('registrazione business chiama business-request su Odoo API v2', async () => {
+    isOdooAuthIdentityRequired.mockReturnValue(true)
+    isOdooApiV2Configured.mockReturnValue(true)
+    provisionOdooAuthIdentity.mockResolvedValue({
+      odooPartnerId: 42,
+      odooUserId: 7,
+      portalCreated: true,
+    })
+    ensureSatelliteProjection.mockResolvedValue({
+      id: 'u1',
+      email: 'biz@example.com',
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      phone: null,
+      companyName: 'Acme SRL',
+      vatNumber: 'IT12345678901',
+      odooPartnerId: 42,
+    })
+
+    await authService.register(
+      {
+        email: 'biz@example.com',
+        password: 'secret123',
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        customerSegment: 'business',
+        companyName: 'Acme SRL',
+        vatNumber: 'IT12345678901',
+      },
+      'sess-1',
+      'corr-biz',
+    )
+
+    // fire-and-forget: attendi il microtask
+    await vi.waitFor(() => {
+      expect(odooApiCreateBusinessRequest).toHaveBeenCalled()
+    })
+
+    expect(odooApiCreateBusinessRequest).toHaveBeenCalledWith(
+      42,
+      expect.objectContaining({
+        company_name: 'Acme SRL',
+        vat: 'IT12345678901',
+        email: 'biz@example.com',
+      }),
+      'corr-biz',
+    )
+    expect(sendPwaMail).not.toHaveBeenCalled()
   })
 
   it('fallisce senza satellite se Odoo identity fallisce', async () => {

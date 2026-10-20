@@ -3,7 +3,9 @@ import { randomUUID } from 'node:crypto'
 import path from 'node:path'
 import bcrypt from 'bcryptjs'
 import { logger } from '../../lib/logger.js'
-import { sendPwaMail, PWA_ADMIN_MAIL_TO } from '../../adapters/odoo/odooMailAdapter.js'
+import { sendPwaMail } from '../../adapters/odoo/odooMailAdapter.js'
+import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
+import { odooApiCreateBusinessRequest } from '../../adapters/odoo-api/odooApi.resources.js'
 import { parseHubLocale } from '../../lib/hub-locale.js'
 import { isSpacesConfigured, spacesPublicUrl, uploadProductImage } from '../../adapters/spaces/spaces.storage.js'
 import { createOdooCustomerAdapter, type OdooBusinessProfile } from '../../adapters/odoo/odooCustomerAdapter.js'
@@ -436,36 +438,6 @@ export const professionalAccountService = {
       }
     }
 
-    const viesLabel = vatValidated
-      ? 'VIES: valida'
-      : viesUnavailable
-        ? 'VIES: non disponibile - da verificare'
-        : 'VIES: non verificata'
-
-    const lines = [
-      'Tipo: Attivazione account business / professionisti',
-      `Ragione sociale: ${row.companyName}`,
-      `P.IVA: ${row.vatNumber} (${viesLabel})`,
-      `Paese: ${country}`,
-      taxCheck.vat?.vies.name ? `Denominazione VIES: ${taxCheck.vat.vies.name}` : null,
-      `Settore: ${sectorLabel}`,
-      `Referente: ${row.contactName}`,
-      `Email: ${row.email}`,
-      row.phone ? `Telefono: ${row.phone}` : null,
-      row.pec ? `PEC: ${row.pec}` : null,
-      row.sdiCode ? `Codice SDI: ${row.sdiCode}` : null,
-      visuraUrl ? `Visura: ${visuraUrl}` : visuraFile ? 'Visura: allegata a questa email' : null,
-      userResult.odooPartnerId ? `Partner Odoo: #${userResult.odooPartnerId}` : null,
-      userResult.odooSyncError ? `Sync Odoo: fallita - ${userResult.odooSyncError}` : null,
-      userResult.accountCreated
-        ? `Account PWA creato (userId: ${userResult.userId})`
-        : `Utente collegato: ${userResult.userId}`,
-      `Lingua: ${row.locale}`,
-      `ID richiesta: ${row.id}`,
-      '',
-      row.message || '(nessuna nota aggiuntiva)',
-    ].filter(Boolean)
-
     logger.info('professional-account.request', {
       id: row.id,
       email: row.email,
@@ -477,38 +449,41 @@ export const professionalAccountService = {
     const ctx: OdooCallContext = { correlationId: req.correlationId, req }
     const firstNameSuffix = firstName ? ` ${firstName}` : ''
 
-    try {
-      await sendPwaMail(ctx, {
-        templateKey: 'professional_request_admin',
-        emailTo: PWA_ADMIN_MAIL_TO,
-        vars: {
-          company_name: row.companyName,
-          body_text: lines.join('\n'),
-        },
-        attachments:
-          visuraFile && !visuraUrl
-            ? [{ filename: visuraFile.originalname, content: visuraFile.buffer, mimetype: visuraFile.mimetype }]
-            : undefined,
-      })
-    } catch (err) {
-      logger.warn('professional-account.admin_mail_failed', {
+    // Notifica B2B via Odoo: POST /api/v2/customers/<id>/business-request
+    if (userResult.odooPartnerId && isOdooApiV2Configured()) {
+      try {
+        await odooApiCreateBusinessRequest(
+          userResult.odooPartnerId,
+          {
+            company_name: row.companyName,
+            vat: row.vatNumber,
+            sector: sectorLabel,
+            contact_name: row.contactName,
+            email: row.email,
+            phone: row.phone,
+            pec: row.pec,
+            sdi_code: row.sdiCode,
+            fiscal_code: input.fiscalCode?.trim().toUpperCase() || null,
+            address_line: input.addressLine?.trim() || null,
+            message: row.message,
+            locale: row.locale,
+            country,
+            visura_url: visuraUrl,
+          },
+          req.correlationId,
+        )
+      } catch (err) {
+        logger.warn('professional-account.business_request_failed', {
+          id: row.id,
+          odooPartnerId: userResult.odooPartnerId,
+          error: err instanceof Error ? err.message : String(err),
+        })
+      }
+    } else {
+      logger.warn('professional-account.business_request_skipped', {
         id: row.id,
-        error: err instanceof Error ? err.message : String(err),
-      })
-    }
-
-    try {
-      await sendPwaMail(ctx, {
-        templateKey: 'professional_request_customer',
-        emailTo: email,
-        vars: {
-          first_name_suffix: firstNameSuffix,
-        },
-      })
-    } catch (err) {
-      logger.warn('professional-account.customer_mail_failed', {
-        id: row.id,
-        error: err instanceof Error ? err.message : String(err),
+        odooPartnerId: userResult.odooPartnerId,
+        apiConfigured: isOdooApiV2Configured(),
       })
     }
 
