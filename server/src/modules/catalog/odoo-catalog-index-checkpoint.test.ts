@@ -13,6 +13,7 @@ import {
   loadSyncDetails,
   loadSyncEntries,
   markRunningHistoryInterrupted,
+  missingDetailIds,
   nextDetailBatch,
   parseJsonl,
   remainingDetailIds,
@@ -59,6 +60,12 @@ describe('catalog index checkpoint', () => {
     expect(remaining).toEqual([4, 5])
     expect(nextDetailBatch(remaining, 1)).toEqual([4])
     expect(nextDetailBatch(remaining, 10)).toEqual([4, 5])
+  })
+
+  it('missingDetailIds ignora il cursore e trova i gap precedenti', () => {
+    // cursore oltre id 2 fallito: remainingDetailIds lo salterebbe, missingDetailIds no
+    expect(missingDetailIds([1, 2, 3, 4], new Set([1, 3]))).toEqual([2, 4])
+    expect(remainingDetailIds([1, 2, 3, 4], 3, new Set([1, 3]))).toEqual([4])
   })
 
   it('salva e ricarica meta + jsonl, ignorando la riga troncata', async () => {

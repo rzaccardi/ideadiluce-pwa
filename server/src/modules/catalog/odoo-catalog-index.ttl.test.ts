@@ -16,9 +16,9 @@ describe('catalog index cache policy', () => {
     expect([...CATALOG_INDEX_REFRESH_HOURS_ROME]).toEqual([3, 15])
   })
 
-  it('sync paginato: 100 per pagina lista, 20 dettagli per batch, max 2 in volo', () => {
-    expect(CATALOG_INDEX_LIST_PER_PAGE).toBe(100)
-    expect(CATALOG_INDEX_DETAIL_BATCH_SIZE).toBe(20)
-    expect(CATALOG_INDEX_DETAIL_CONCURRENCY).toBe(2)
+  it('sync paginato conservativo: 50/lista, 8 dettagli/batch, max 1 in volo (override via env)', () => {
+    expect(CATALOG_INDEX_LIST_PER_PAGE).toBe(50)
+    expect(CATALOG_INDEX_DETAIL_BATCH_SIZE).toBe(8)
+    expect(CATALOG_INDEX_DETAIL_CONCURRENCY).toBe(1)
   })
 })

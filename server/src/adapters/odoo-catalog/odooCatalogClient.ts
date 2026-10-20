@@ -27,10 +27,27 @@ export class OdooCatalogClientError extends Error {
   constructor(
     message: string,
     public readonly httpStatus: number,
+    /** Attesa suggerita da `Retry-After` (ms), se presente. */
+    public readonly retryAfterMs: number | null = null,
   ) {
     super(message)
     this.name = 'OdooCatalogClientError'
   }
+}
+
+/** Interpreta header Retry-After (secondi o HTTP-date) in millisecondi. */
+export function parseRetryAfterMs(header: string | null | undefined): number | null {
+  if (!header?.trim()) return null
+  const trimmed = header.trim()
+  const asSeconds = Number(trimmed)
+  if (Number.isFinite(asSeconds) && asSeconds >= 0) {
+    return Math.min(Math.ceil(asSeconds * 1000), 120_000)
+  }
+  const asDate = Date.parse(trimmed)
+  if (Number.isFinite(asDate)) {
+    return Math.min(Math.max(0, asDate - Date.now()), 120_000)
+  }
+  return null
 }
 
 function odooCatalogApiKey(): string {
@@ -85,9 +102,11 @@ async function odooCatalogFetch<T>(path: string, searchParams: Record<string, st
 
   const text = await res.text()
   if (!res.ok) {
+    const status = res.status >= 400 && res.status < 600 ? res.status : 502
     throw new OdooCatalogClientError(
-      `HTTP ${res.status} da OdooCatalog ${path}: ${text.slice(0, 300)}`,
-      res.status >= 400 && res.status < 600 ? res.status : 502,
+      `HTTP ${status} da OdooCatalog ${path}: ${text.slice(0, 300)}`,
+      status,
+      status === 429 ? parseRetryAfterMs(res.headers.get('retry-after')) : null,
     )
   }
 
