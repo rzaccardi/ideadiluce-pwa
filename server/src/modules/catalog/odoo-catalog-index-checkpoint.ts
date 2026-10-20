@@ -117,6 +117,14 @@ export function remainingDetailIds(
   return entryIds.slice(Math.max(0, nextDetailIndex)).filter((id) => id > 0 && !alreadyHave.has(id))
 }
 
+/**
+ * Tutti gli id ancora senza dettaglio (ignora il cursore): serve a riprendere i gap
+ * dopo 429/errori senza lasciare buchi permanenti nell'indice.
+ */
+export function missingDetailIds(entryIds: number[], alreadyHave: Set<number>): number[] {
+  return entryIds.filter((id) => id > 0 && !alreadyHave.has(id))
+}
+
 export function nextDetailBatch(remaining: number[], batchSize: number): number[] {
   if (batchSize <= 0) return []
   return remaining.slice(0, batchSize)

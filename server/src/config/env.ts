@@ -101,6 +101,16 @@ const envSchema = z.object({
   /** ID website Odoo PWA (= 2). */
   ODOO_WEBSITE_ID: z.coerce.number().default(2),
   ODOO_CATALOG_TIMEOUT_MS: z.coerce.number().default(25_000),
+  /**
+   * Sync indice catalogo → Odoo.sh: paging/concurrency conservativi per evitare 429.
+   * Lo sync si auto-regola (riduce concurrency / aumenta delay) quando vede rate limit.
+   */
+  CATALOG_INDEX_LIST_PER_PAGE: z.coerce.number().int().min(1).max(100).default(50),
+  CATALOG_INDEX_DETAIL_BATCH_SIZE: z.coerce.number().int().min(1).max(50).default(8),
+  CATALOG_INDEX_DETAIL_CONCURRENCY: z.coerce.number().int().min(1).max(8).default(1),
+  CATALOG_INDEX_PAGE_DELAY_MS: z.coerce.number().int().min(0).max(60_000).default(1_000),
+  CATALOG_INDEX_MAX_DELAY_MS: z.coerce.number().int().min(1_000).max(120_000).default(30_000),
+  CATALOG_INDEX_MAX_DETAIL_ATTEMPTS: z.coerce.number().int().min(1).max(12).default(5),
   SESSION_COOKIE_NAME: z.string().default('sid'),
   SESSION_DAYS: z.coerce.number().default(30),
   /** Attiva chiamate reali verso Odoo via XML-RPC (Odoo 18). */

@@ -10,6 +10,7 @@ import {
   fetchOdooCatalogProductDetail,
   fetchOdooCatalogProductList,
   isOdooCatalogConfigured,
+  OdooCatalogClientError,
 } from '../../adapters/odoo-catalog/odooCatalogClient.js'
 import { toOdooCatalogLang } from '../../adapters/odoo-catalog/odooCatalogLocale.js'
 import {
@@ -51,15 +52,20 @@ import {
   loadSyncDetails,
   loadSyncEntries,
   markRunningHistoryInterrupted,
+  missingDetailIds,
   nextDetailBatch,
   readSyncHistory,
   readSyncMeta,
-  remainingDetailIds,
   upsertHistoryLocale,
   writeSyncMeta,
   type CatalogIndexSyncHistoryEntry,
   type CatalogIndexSyncProgressDTO,
 } from './odoo-catalog-index-checkpoint.js'
+import {
+  CatalogIndexThrottle,
+  clampInt,
+  computeBackoffMs,
+} from './odoo-catalog-index-throttle.js'
 
 export type OdooCatalogIndexEntry = ProductCardDTO & {
   odooTemplateId: number
@@ -110,15 +116,42 @@ export const CATALOG_INDEX_TTL_MS = 12 * 60 * 60 * 1000
 /** Ore Europe/Rome in cui lo scheduler riallinea l'indice da Odoo (ogni 12h). */
 export const CATALOG_INDEX_REFRESH_HOURS_ROME = [3, 15] as const
 export const CATALOG_INDEX_REFRESH_TZ = 'Europe/Rome'
-const MAX_PAGES = 20
-export const CATALOG_INDEX_LIST_PER_PAGE = 100
+/** Safety cap pagine lista (total_pages Odoo resta la fonte di verità sotto questo tetto). */
+const MAX_LIST_PAGES = 500
+export const CATALOG_INDEX_LIST_PER_PAGE = clampInt(env.CATALOG_INDEX_LIST_PER_PAGE, 1, 100)
 /** Dettagli per pagina di lavoro: checkpoint dopo ogni batch. */
-export const CATALOG_INDEX_DETAIL_BATCH_SIZE = 20
-/** Max chiamate dettaglio in volo (mai l'intero catalogo). */
-export const CATALOG_INDEX_DETAIL_CONCURRENCY = 2
-/** Pausa tra pagine lista e tra batch dettagli, per non saturare Odoo. */
-export const CATALOG_INDEX_PAGE_DELAY_MS = 300
+export const CATALOG_INDEX_DETAIL_BATCH_SIZE = clampInt(env.CATALOG_INDEX_DETAIL_BATCH_SIZE, 1, 50)
+/** Max chiamate dettaglio in volo (default 1; auto-throttle può restare a 1 dopo 429). */
+export const CATALOG_INDEX_DETAIL_CONCURRENCY = clampInt(env.CATALOG_INDEX_DETAIL_CONCURRENCY, 1, 8)
+/** Pausa base tra pagine lista e tra batch dettagli (auto-throttle può aumentarla). */
+export const CATALOG_INDEX_PAGE_DELAY_MS = clampInt(env.CATALOG_INDEX_PAGE_DELAY_MS, 0, 60_000)
+const CATALOG_INDEX_MAX_DELAY_MS = clampInt(env.CATALOG_INDEX_MAX_DELAY_MS, 1_000, 120_000)
+const CATALOG_INDEX_MAX_DETAIL_ATTEMPTS = clampInt(env.CATALOG_INDEX_MAX_DETAIL_ATTEMPTS, 1, 12)
 const DISK_CACHE_DIR = catalogIndexCacheDir()
+
+function createIndexThrottle(): CatalogIndexThrottle {
+  return new CatalogIndexThrottle({
+    initialConcurrency: CATALOG_INDEX_DETAIL_CONCURRENCY,
+    minConcurrency: 1,
+    maxConcurrency: CATALOG_INDEX_DETAIL_CONCURRENCY,
+    initialDelayMs: CATALOG_INDEX_PAGE_DELAY_MS,
+    minDelayMs: Math.min(CATALOG_INDEX_PAGE_DELAY_MS, 250),
+    maxDelayMs: CATALOG_INDEX_MAX_DELAY_MS,
+  })
+}
+
+function isRateLimitedError(err: unknown): err is OdooCatalogClientError {
+  return err instanceof OdooCatalogClientError && err.httpStatus === 429
+}
+
+function isRetriableCatalogError(err: unknown): boolean {
+  if (!(err instanceof OdooCatalogClientError)) return true
+  return err.httpStatus === 429 || err.httpStatus === 408 || err.httpStatus >= 500
+}
+
+function isPermanentCatalogMiss(err: unknown): boolean {
+  return err instanceof OdooCatalogClientError && (err.httpStatus === 404 || err.httpStatus === 400)
+}
 
 const indexByLocale = new Map<HubLocale, IndexBucket>()
 const inflight = new Map<HubLocale, Promise<IndexBucket>>()
@@ -330,22 +363,81 @@ function mapListItem(raw: Parameters<typeof mapOdooCatalogListItem>[0], locale: 
   }
 }
 
-async function fetchListPage(locale: HubLocale, page: number) {
-  try {
-    return await fetchOdooCatalogProductList({
-      locale,
-      page,
-      perPage: CATALOG_INDEX_LIST_PER_PAGE,
-    })
-  } catch (err) {
-    logger.warn('catalog_index.list_page_retry', { locale, page, err: String(err) })
-    await sleep(CATALOG_INDEX_PAGE_DELAY_MS * 2)
-    return fetchOdooCatalogProductList({
-      locale,
-      page,
-      perPage: CATALOG_INDEX_LIST_PER_PAGE,
-    })
+async function fetchListPage(
+  locale: HubLocale,
+  page: number,
+  throttle: CatalogIndexThrottle,
+) {
+  let lastErr: unknown
+  for (let attempt = 1; attempt <= CATALOG_INDEX_MAX_DETAIL_ATTEMPTS; attempt += 1) {
+    try {
+      const list = await fetchOdooCatalogProductList({
+        locale,
+        page,
+        perPage: CATALOG_INDEX_LIST_PER_PAGE,
+      })
+      throttle.onSuccess()
+      return list
+    } catch (err) {
+      lastErr = err
+      if (!isRetriableCatalogError(err) || attempt >= CATALOG_INDEX_MAX_DETAIL_ATTEMPTS) break
+      const waitMs = isRateLimitedError(err)
+        ? throttle.onRateLimit(err.retryAfterMs)
+        : computeBackoffMs({
+            attempt,
+            baseDelayMs: throttle.onTransientError(),
+            maxDelayMs: CATALOG_INDEX_MAX_DELAY_MS,
+            retryAfterMs: err instanceof OdooCatalogClientError ? err.retryAfterMs : null,
+          })
+      logger.warn('catalog_index.list_page_retry', {
+        locale,
+        page,
+        attempt,
+        waitMs,
+        err: String(err),
+        ...throttle.snapshot(),
+      })
+      await sleep(waitMs)
+    }
   }
+  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr))
+}
+
+async function fetchDetailWithRetry(
+  id: number,
+  locale: HubLocale,
+  throttle: CatalogIndexThrottle,
+): Promise<OdooCatalogProductDetail | 'permanent_miss'> {
+  let lastErr: unknown
+  for (let attempt = 1; attempt <= CATALOG_INDEX_MAX_DETAIL_ATTEMPTS; attempt += 1) {
+    try {
+      const res = await fetchOdooCatalogProductDetail(id, locale)
+      throttle.onSuccess()
+      return res.product
+    } catch (err) {
+      lastErr = err
+      if (isPermanentCatalogMiss(err)) return 'permanent_miss'
+      if (!isRetriableCatalogError(err) || attempt >= CATALOG_INDEX_MAX_DETAIL_ATTEMPTS) break
+      const waitMs = isRateLimitedError(err)
+        ? throttle.onRateLimit(err.retryAfterMs)
+        : computeBackoffMs({
+            attempt,
+            baseDelayMs: throttle.onTransientError(),
+            maxDelayMs: CATALOG_INDEX_MAX_DELAY_MS,
+            retryAfterMs: err instanceof OdooCatalogClientError ? err.retryAfterMs : null,
+          })
+      logger.warn('catalog_index.detail_retry', {
+        locale,
+        id,
+        attempt,
+        waitMs,
+        err: String(err),
+        ...throttle.snapshot(),
+      })
+      await sleep(waitMs)
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr))
 }
 
 async function mapPool<T, R>(
@@ -462,14 +554,21 @@ function finalizeBucket(
 async function pullListPagesResumable(
   locale: HubLocale,
   meta: ReturnType<typeof createSyncMeta>,
+  throttle: CatalogIndexThrottle,
 ): Promise<void> {
   while (meta.phase === 'list') {
-    if (meta.nextListPage > MAX_PAGES) {
+    if (meta.nextListPage > MAX_LIST_PAGES) {
+      logger.warn('catalog_index.list_page_cap', {
+        locale,
+        nextListPage: meta.nextListPage,
+        maxPages: MAX_LIST_PAGES,
+        entryCount: meta.entryCount,
+      })
       meta.phase = 'details'
       await writeSyncMeta(meta)
       break
     }
-    const list = await fetchListPage(locale, meta.nextListPage)
+    const list = await fetchListPage(locale, meta.nextListPage, throttle)
     const mapped = list.items.map((raw) => mapListItem(raw, locale))
     await appendSyncEntries(locale, mapped)
     meta.listTotalPages = list.total_pages
@@ -484,74 +583,119 @@ async function pullListPagesResumable(
       items: mapped.length,
       totalPages: list.total_pages,
       entryCount: meta.entryCount,
+      ...throttle.snapshot(),
     })
-    if (meta.phase === 'list') await sleep(CATALOG_INDEX_PAGE_DELAY_MS)
+    if (meta.phase === 'list') await sleep(throttle.currentDelayMs())
   }
 }
 
 async function pullDetailsResumable(
   locale: HubLocale,
   meta: ReturnType<typeof createSyncMeta>,
+  throttle: CatalogIndexThrottle,
 ): Promise<void> {
   const entries = await loadSyncEntries(locale)
   const detailsById = await loadSyncDetails(locale)
   const have = new Set(Object.keys(detailsById).map((id) => Number(id)))
+  /** Solo 404/400: i failedDetailIds del checkpoint restano retriabili (tipicamente 429). */
+  const permanentMiss = new Set<number>()
   const ids = entries.map((e) => e.odooTemplateId).filter((id) => id > 0)
   meta.entryCount = entries.length
   meta.detailCount = have.size
+  /** Evita loop infiniti se Odoo continua a rate-limitare: dopo N passate complete sui gap, promote. */
+  let emptyProgressRounds = 0
+  const maxEmptyProgressRounds = 3
 
   while (meta.phase === 'details') {
-    const remaining = remainingDetailIds(ids, meta.nextDetailIndex, have)
+    const remaining = missingDetailIds(ids, have).filter((id) => !permanentMiss.has(id))
     if (!remaining.length) {
       meta.phase = 'promote'
+      meta.failedDetailIds = [...permanentMiss]
       await writeSyncMeta(meta)
       break
     }
     const batch = nextDetailBatch(remaining, CATALOG_INDEX_DETAIL_BATCH_SIZE)
     const pulled: OdooCatalogProductDetail[] = []
-    const failed: number[] = []
-    await mapPool(batch, CATALOG_INDEX_DETAIL_CONCURRENCY, async (id) => {
+    const failedRetriable: number[] = []
+    const beforeHave = have.size
+    await mapPool(batch, throttle.currentConcurrency(), async (id) => {
       try {
-        const res = await fetchOdooCatalogProductDetail(id, locale)
-        pulled.push(res.product)
+        const product = await fetchDetailWithRetry(id, locale, throttle)
+        if (product === 'permanent_miss') {
+          permanentMiss.add(id)
+          return
+        }
+        pulled.push(product)
         have.add(id)
+        permanentMiss.delete(id)
       } catch {
-        failed.push(id)
+        failedRetriable.push(id)
       }
     })
-    await appendSyncDetails(locale, pulled)
+    if (pulled.length) await appendSyncDetails(locale, pulled)
     meta.detailCount = have.size
-    meta.failedDetailIds = [...new Set([...meta.failedDetailIds, ...failed])]
-    const lastId = batch[batch.length - 1]
-    const lastPos = lastId == null ? meta.nextDetailIndex : ids.lastIndexOf(lastId)
-    meta.nextDetailIndex = lastPos + 1
+    meta.failedDetailIds = [...new Set([...failedRetriable, ...permanentMiss])]
+    meta.nextDetailIndex = ids.length - missingDetailIds(ids, have).length
     await writeSyncMeta(meta)
     logger.info('catalog_index.details_batch', {
       locale,
       ok: pulled.length,
-      failed: failed.length,
+      failed: failedRetriable.length,
+      permanentMiss: permanentMiss.size,
       have: have.size,
       total: ids.length,
+      remaining: remaining.length - pulled.length,
       nextDetailIndex: meta.nextDetailIndex,
+      ...throttle.snapshot(),
     })
-    if (meta.phase === 'details') await sleep(CATALOG_INDEX_PAGE_DELAY_MS)
+
+    if (have.size === beforeHave && failedRetriable.length) {
+      emptyProgressRounds += 1
+      const coolDown = throttle.onRateLimit(null)
+      logger.warn('catalog_index.details_stalled', {
+        locale,
+        emptyProgressRounds,
+        coolDown,
+        remaining: missingDetailIds(ids, have).filter((id) => !permanentMiss.has(id)).length,
+      })
+      if (emptyProgressRounds >= maxEmptyProgressRounds) {
+        // Promote ciò che abbiamo: i gap restano in failedDetailIds e verranno ripresi
+        // al prossimo sync (checkpoint non cancellato se lasciamo phase? → promote clears).
+        // Scriviamo i gap in failedDetailIds prima del promote; un sync successivo con force
+        // ricostruisce. Per ripresa immediata: non promote se troppi gap? Preferiamo
+        // promuovere la cache parziale e lasciare i miss in failedDetailIds nel meta history.
+        meta.failedDetailIds = missingDetailIds(ids, have)
+        meta.phase = 'promote'
+        await writeSyncMeta(meta)
+        break
+      }
+      await sleep(coolDown)
+      continue
+    }
+    emptyProgressRounds = 0
+    if (meta.phase === 'details') await sleep(throttle.currentDelayMs())
   }
 
-  if (meta.failedDetailIds.length) {
-    const retry = [...meta.failedDetailIds]
-    meta.failedDetailIds = []
-    for (const id of retry) {
-      if (have.has(id)) continue
+  // Passata sequenziale finale sui gap retriabili (concurrency 1, delay alto).
+  const gapRetry = missingDetailIds(ids, have).filter((id) => !permanentMiss.has(id))
+  if (gapRetry.length) {
+    throttle.onRateLimit(null)
+    for (const id of gapRetry) {
       try {
-        const res = await fetchOdooCatalogProductDetail(id, locale)
-        await appendSyncDetails(locale, [res.product])
+        const product = await fetchDetailWithRetry(id, locale, throttle)
+        if (product === 'permanent_miss') {
+          permanentMiss.add(id)
+          continue
+        }
+        await appendSyncDetails(locale, [product])
         have.add(id)
       } catch {
-        meta.failedDetailIds.push(id)
+        /* resta in failed */
       }
-      await sleep(CATALOG_INDEX_PAGE_DELAY_MS)
+      await sleep(throttle.currentDelayMs())
     }
     meta.detailCount = have.size
+    meta.failedDetailIds = [...new Set([...missingDetailIds(ids, have), ...permanentMiss])]
     await writeSyncMeta(meta)
   }
 }
@@ -571,7 +715,34 @@ async function promoteCheckpoint(locale: HubLocale): Promise<IndexBucket> {
   return bucket
 }
 
-async function buildBucket(locale: HubLocale): Promise<IndexBucket> {
+async function seedGapFillFromExisting(
+  locale: HubLocale,
+  bucket: IndexBucket,
+): Promise<ReturnType<typeof createSyncMeta>> {
+  await clearSyncCheckpoint(locale)
+  const meta = createSyncMeta(locale)
+  meta.phase = 'details'
+  meta.entryCount = bucket.entries.length
+  meta.detailCount = Object.keys(bucket.detailsById).length
+  meta.nextDetailIndex = meta.detailCount
+  meta.listTotalPages = 0
+  await appendSyncEntries(locale, bucket.entries)
+  await appendSyncDetails(locale, Object.values(bucket.detailsById))
+  await writeSyncMeta(meta)
+  logger.info('catalog_index.gap_fill_start', {
+    locale,
+    entries: meta.entryCount,
+    details: meta.detailCount,
+    missing: meta.entryCount - meta.detailCount,
+  })
+  return meta
+}
+
+async function buildBucket(
+  locale: HubLocale,
+  options?: { preferGapFill?: boolean },
+): Promise<IndexBucket> {
+  const throttle = createIndexThrottle()
   let meta = await readSyncMeta(locale)
   if (isCheckpointResumable(meta)) {
     meta.resumedFrom = meta.resumedFrom ?? meta.startedAt
@@ -582,16 +753,32 @@ async function buildBucket(locale: HubLocale): Promise<IndexBucket> {
       nextDetailIndex: meta.nextDetailIndex,
       entryCount: meta.entryCount,
       detailCount: meta.detailCount,
+      ...throttle.snapshot(),
     })
   } else {
     if (meta) await clearSyncCheckpoint(locale)
-    meta = createSyncMeta(locale)
-    await writeSyncMeta(meta)
-    logger.info('catalog_index.sync_start', { locale })
+    const existing = indexByLocale.get(locale) ?? (await readDiskBucket(locale))
+    const existingDetails = existing ? Object.keys(existing.detailsById).length : 0
+    const canGapFill =
+      Boolean(options?.preferGapFill) &&
+      Boolean(existing?.entries.length) &&
+      existingDetails < (existing?.entries.length ?? 0)
+    if (canGapFill && existing) {
+      meta = await seedGapFillFromExisting(locale, existing)
+    } else {
+      meta = createSyncMeta(locale)
+      await writeSyncMeta(meta)
+      logger.info('catalog_index.sync_start', {
+        locale,
+        listPerPage: CATALOG_INDEX_LIST_PER_PAGE,
+        detailBatchSize: CATALOG_INDEX_DETAIL_BATCH_SIZE,
+        ...throttle.snapshot(),
+      })
+    }
   }
 
-  if (meta.phase === 'list') await pullListPagesResumable(locale, meta)
-  if (meta.phase === 'details') await pullDetailsResumable(locale, meta)
+  if (meta.phase === 'list') await pullListPagesResumable(locale, meta, throttle)
+  if (meta.phase === 'details') await pullDetailsResumable(locale, meta, throttle)
   return promoteCheckpoint(locale)
 }
 
@@ -621,6 +808,7 @@ export async function hydrateOdooCatalogIndexFromDisk(): Promise<void> {
 /** Sync forzato (cron 03:00/15:00 / admin): lista + dettagli v2. */
 export async function syncOdooCatalogIndex(
   locale: HubLocale,
+  options?: { preferGapFill?: boolean },
 ): Promise<{ count: number; details: number; syncedAt: string }> {
   if (!isOdooCatalogConfigured()) {
     return { count: 0, details: 0, syncedAt: new Date().toISOString() }
@@ -637,7 +825,7 @@ export async function syncOdooCatalogIndex(
   }
 
   const job = (async () => {
-    return buildBucket(locale)
+    return buildBucket(locale, options)
   })().finally(() => {
     inflight.delete(locale)
   })
@@ -674,7 +862,8 @@ export async function syncAllOdooCatalogIndexes(options?: {
     const checkpoint = await readSyncMeta(locale)
     const resumable = isCheckpointResumable(checkpoint)
     const live = getOdooCatalogIndexMeta(locale)
-    if (!options?.force && !resumable && !live.stale && live.count > 0) {
+    const incomplete = live.count > 0 && live.details < live.count
+    if (!options?.force && !resumable && !live.stale && live.count > 0 && !incomplete) {
       history = upsertHistoryLocale(history, {
         locale,
         status: 'skipped',
@@ -685,10 +874,17 @@ export async function syncAllOdooCatalogIndexes(options?: {
       continue
     }
 
-    history = upsertHistoryLocale(history, { locale, status: 'running', resumed: resumable })
+    history = upsertHistoryLocale(history, {
+      locale,
+      status: 'running',
+      resumed: resumable || incomplete,
+    })
     await appendSyncHistory(history)
     try {
-      const result = await syncOdooCatalogIndex(locale)
+      const result = await syncOdooCatalogIndex(locale, {
+        // Gap-fill solo se incompleto e non force: un force admin ricostruisce lista+dettagli.
+        preferGapFill: incomplete && !options?.force,
+      })
       locales.push({ locale, ...result })
       history = upsertHistoryLocale(history, {
         locale,
