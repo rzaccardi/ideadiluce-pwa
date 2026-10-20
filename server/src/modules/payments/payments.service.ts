@@ -17,7 +17,10 @@ import { syncSaleOrderFunnelState } from '../../adapters/odoo/odooFunnelSync.js'
 import { registerPayment } from '../../adapters/odoo/odooPaymentLive.js'
 import { createProviderPaymentSession } from '../../adapters/payments/paymentProviderAdapter.js'
 import { getStripePublishableKey, getStripeClientConfig, decodeStripeClientSecret } from '../../lib/stripe-config.js'
-import { parseBankTransferInstructionsJson } from './bankTransferInstructions.js'
+import {
+  buildBankTransferInstructions,
+  parseBankTransferInstructionsJson,
+} from './bankTransferInstructions.js'
 import {
   parseStripePwaAddress,
   retrieveStripeCheckoutSession,
@@ -973,6 +976,7 @@ export const paymentsService = {
         taxLabel: taxLabelFromOrder(order),
         billingAddress: parseStripePwaAddress(order.billingAddressJson),
         shippingAddress: parseStripePwaAddress(order.shippingAddressJson),
+        bankTransferOrder: order,
       })
     } catch (err) {
       if (!reuseIncompletePayment && payment.provider === 'pending') {
@@ -1129,6 +1133,7 @@ export const paymentsService = {
       })
       // Bonifico: nessuna mail PWA. Resta la conferma nativa Odoo (mittente orders@)
       // inviata dalla registrazione pagamento sotto.
+      let odooPaymentData: Awaited<ReturnType<typeof registerPayment>>['odooData']
       if (env.ODOO_ENABLED && updated.odooSaleOrderId) {
         const reg = await registerPayment(
           { correlationId: req.correlationId, req },
@@ -1139,14 +1144,30 @@ export const paymentsService = {
             amountCents: updated.amountTotal ?? payment.amount,
             transactionId: payment.providerSessionId,
             status: 'pending',
+            currencyCode: updated.currencyCode,
           },
         )
-        if (reg === 'failed') {
+        odooPaymentData = reg.odooData
+        if (reg.status === 'failed') {
           await prisma.pwaOrder.update({
             where: { id: updated.id },
             data: { odooLastSyncStatus: 'FAILED' },
           })
         }
+      }
+
+      const orderForInstructions = await prisma.pwaOrder.findUnique({ where: { id: updated.id } })
+      if (orderForInstructions) {
+        const instructions = buildBankTransferInstructions({
+          order: orderForInstructions,
+          amountCents: orderForInstructions.amountTotal ?? payment.amount,
+          currencyCode: orderForInstructions.currencyCode,
+          odooResult: odooPaymentData,
+        })
+        await prisma.pwaPayment.update({
+          where: { id: payment.id },
+          data: { instructionsJson: jsonValue(instructions) },
+        })
       }
     }
 

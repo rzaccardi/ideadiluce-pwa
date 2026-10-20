@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
-import { env } from '../../config/env.js'
 import { AppError } from '../../types/errors.js'
 import type { PwaPaymentMethodDTO } from '../../types/dto.js'
+import { buildBankTransferInstructions } from '../../modules/payments/bankTransferInstructions.js'
 import { alignStripeLineItems } from '../../modules/payments/stripe-line-items.js'
 import {
   createStripeCheckoutSession,
@@ -26,6 +26,7 @@ export type ProviderSessionInput = {
   taxLabel?: string | null
   billingAddress?: StripePwaAddress | null
   shippingAddress?: StripePwaAddress | null
+  bankTransferOrder?: Parameters<typeof buildBankTransferInstructions>[0]['order']
 }
 
 export type ProviderSessionResult = {
@@ -37,25 +38,6 @@ export type ProviderSessionResult = {
   clientSecret?: string | null
   instructions?: Record<string, unknown> | null
   raw?: Record<string, unknown>
-}
-
-function bankTransferInstructions(input: ProviderSessionInput): Record<string, unknown> {
-  const holder = env.BANK_TRANSFER_HOLDER?.trim() || 'Intestatario non configurato'
-  const iban = env.BANK_TRANSFER_IBAN?.trim() || 'IBAN non configurato'
-  const bankName = env.BANK_TRANSFER_BANK_NAME?.trim() || null
-  const reference = input.odooSaleOrderId
-    ? `ORDINE ODOO ${input.odooSaleOrderId}`
-    : `ORDINE PWA ${input.orderId}`
-
-  return {
-    holder,
-    iban,
-    bankName,
-    reference,
-    amount: input.amount,
-    currencyCode: input.currencyCode,
-    note: 'Il pagamento verra confermato dopo verifica/ricezione del bonifico.',
-  }
 }
 
 function unsupportedCheckoutMethodError(method: string): AppError {
@@ -118,11 +100,26 @@ export async function createProviderPaymentSession(
   }
 
   if (input.method === 'bank_transfer') {
+    const order = input.bankTransferOrder ?? {
+      id: input.orderId,
+      odooSaleOrderId: input.odooSaleOrderId,
+      odooSaleOrderName: null,
+      createdAt: new Date(),
+      billingAddressJson: null,
+      shippingAddressJson: null,
+      fiscalJson: null,
+      email: input.email,
+      currencyCode: input.currencyCode,
+    }
     return {
       provider: 'bank_transfer',
       providerSessionId: `bt_${randomUUID()}`,
       status: 'pending',
-      instructions: bankTransferInstructions(input),
+      instructions: buildBankTransferInstructions({
+        order,
+        amountCents: input.amount,
+        currencyCode: input.currencyCode,
+      }),
       raw: { mode: 'offline' },
     }
   }

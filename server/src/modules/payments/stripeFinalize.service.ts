@@ -288,7 +288,7 @@ export async function finalizeStripeCheckout(
       transactionId: paymentIntentId,
       status: 'captured',
     })
-    if (funnelResult === 'failed') {
+    if (funnelResult.status === 'failed') {
       await prisma.pwaOrder.update({
         where: { id: updated.id },
         data: { orderStatus: 'PAID_SYNC_PENDING', odooLastSyncStatus: 'FAILED' },
@@ -320,7 +320,7 @@ export async function finalizeStripeCheckout(
         error: 'Conferma ordine Odoo fallita dopo pagamento Stripe',
         extra: { step: 'funnel_sync', sessionId: session.id },
       })
-    } else if (funnelResult === 'synced') {
+    } else if (funnelResult.status === 'synced') {
       await prisma.pwaOrder.update({
         where: { id: updated.id },
         data: {

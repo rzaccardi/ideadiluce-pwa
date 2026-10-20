@@ -4,6 +4,7 @@ import { isOdooApiV2Configured, OdooApiV2Error } from '../odoo-api/odooApiClient
 import { odooApiRegisterPayment } from '../odoo-api/odooApi.resources.js'
 import { alertOdooPaymentConflict } from '../odoo-api/odooApi.sideEffects.js'
 import { mapOdooApiPaymentMethod } from '../odoo-api/odooApi.mapping.js'
+import type { OdooApiPaymentResult } from '../odoo-api/odooApi.types.js'
 import { prisma } from '../../lib/prisma.js'
 import { syncSaleOrderFunnelState } from './odooFunnelSync.js'
 import { AppError } from '../../types/errors.js'
@@ -363,10 +364,15 @@ export type RegisterPaymentInput = {
   currencyCode?: string
 }
 
+export type RegisterPaymentOutcome = {
+  status: 'synced' | 'skipped' | 'failed'
+  odooData?: OdooApiPaymentResult
+}
+
 async function registerPaymentApiV2(
   ctx: OdooCallContext,
   input: RegisterPaymentInput,
-): Promise<'synced' | 'skipped' | 'failed'> {
+): Promise<RegisterPaymentOutcome> {
   const provider = mapOdooApiPaymentMethod(input.method === 'stripe' ? 'card' : input.method)
   const body = {
     provider,
@@ -383,10 +389,10 @@ async function registerPaymentApiV2(
       data?.transaction_state === 'done' ||
       data?.idempotent
     ) {
-      return 'synced'
+      return { status: 'synced', odooData: data }
     }
-    if (input.status === 'pending') return 'synced'
-    return 'synced'
+    if (input.status === 'pending') return { status: 'synced', odooData: data }
+    return { status: 'synced', odooData: data }
   } catch (e) {
     if (e instanceof OdooApiV2Error && e.httpStatus === 409) {
       const order = await prisma.pwaOrder.findUnique({
@@ -401,9 +407,9 @@ async function registerPaymentApiV2(
         amountCents: input.amountCents,
         error: e,
       })
-      return 'failed'
+      return { status: 'failed' }
     }
-    if (e instanceof OdooApiV2Error && e.httpStatus >= 500) return 'failed'
+    if (e instanceof OdooApiV2Error && e.httpStatus >= 500) return { status: 'failed' }
     throw e
   }
 }
@@ -415,8 +421,8 @@ async function registerPaymentApiV2(
 export async function registerPayment(
   ctx: OdooCallContext,
   input: RegisterPaymentInput,
-): Promise<'synced' | 'skipped' | 'failed'> {
-  if (!env.ODOO_ENABLED) return 'skipped'
+): Promise<RegisterPaymentOutcome> {
+  if (!env.ODOO_ENABLED) return { status: 'skipped' }
 
   if (isOdooApiV2Configured()) {
     return registerPaymentApiV2(ctx, input)
@@ -433,7 +439,7 @@ export async function registerPayment(
     providerTransactionId: input.transactionId ?? null,
   })
 
-  if (result === 'failed') return 'failed'
+  if (result === 'failed') return { status: 'failed' }
 
   try {
     const fields = await odooExecuteKw<Record<string, unknown>>(
@@ -455,7 +461,7 @@ export async function registerPayment(
     /* campi custom opzionali */
   }
 
-  return result
+  return { status: result }
 }
 
 /**

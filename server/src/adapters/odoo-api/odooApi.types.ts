@@ -267,6 +267,23 @@ export type OdooApiPaymentWrite = {
   currency?: string
 }
 
+export type OdooApiBankTransferDetails = {
+  account_holder?: string
+  intestatario?: string
+  holder?: string
+  iban?: string
+  bank_name?: string
+  banca?: string
+  bank?: string
+  amount?: number
+  amount_cents?: number
+  currency?: string
+  currency_code?: string
+  payment_reason?: string
+  causale?: string
+  reference?: string
+}
+
 export type OdooApiPaymentResult = {
   transaction_id?: number
   transaction_reference?: string
@@ -281,6 +298,7 @@ export type OdooApiPaymentResult = {
   order_state?: string
   idempotent?: boolean
   reconciliation?: OdooApiReconciliation
+  bank_transfer?: OdooApiBankTransferDetails
 }
 
 export type OdooApiStockItem = {
