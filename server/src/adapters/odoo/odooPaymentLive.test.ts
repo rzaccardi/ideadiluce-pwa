@@ -65,7 +65,7 @@ describe('registerPayment API v2', () => {
       },
     )
 
-    expect(result).toBe('synced')
+    expect(result.status).toBe('synced')
     expect(registerPaymentMock).toHaveBeenCalledWith(
       88,
       {
@@ -93,7 +93,7 @@ describe('registerPayment API v2', () => {
       },
     )
 
-    expect(result).toBe('failed')
+    expect(result.status).toBe('failed')
     expect(alertConflict).toHaveBeenCalledWith(
       expect.objectContaining({
         pwaOrderId: 'ord-1',

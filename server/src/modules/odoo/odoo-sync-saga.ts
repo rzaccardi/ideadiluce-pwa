@@ -344,8 +344,8 @@ export async function executeFunnelSync(
       transactionId: order.providerTransactionId,
       status: 'captured',
     })
-    if (result === 'failed') throw new Error('Registrazione pagamento Odoo fallita')
-    if (result === 'skipped') {
+    if (result.status === 'failed') throw new Error('Registrazione pagamento Odoo fallita')
+    if (result.status === 'skipped') {
       throw new AppError('ODOO_DISABLED', 'Odoo sync skipped', 'Odoo non abilitato.', 503, false)
     }
     await prisma.pwaOrder.update({
