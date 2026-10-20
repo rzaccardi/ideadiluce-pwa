@@ -12,7 +12,6 @@ import { AcceptedPaymentMethods } from '@/components/payment-method-logos'
 import { SocialBrandIcon, hasSocialBrandIcon } from '@/components/site/social-brand-icons'
 import { BrandWordmark, SectionContainer } from './primitives'
 import { CookiebotConsentLink } from './CookiebotConsentLink'
-import { LegacySiteFooterLink } from './LegacySiteNoticeBanner'
 import { useI18n } from '@/hooks/use-i18n'
 
 function FooterLegalLinks({ className }: { className?: string }) {
@@ -163,7 +162,6 @@ export function SiteFooter({ footer }: { footer: SiteShellContent['footer'] }) {
                   {company.email}
                 </ExternalLink>
               </p>
-              <LegacySiteFooterLink />
             </div>
             <div className="mt-5">
               <FooterHeading>Orari</FooterHeading>

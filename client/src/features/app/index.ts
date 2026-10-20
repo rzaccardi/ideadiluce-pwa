@@ -1,2 +1,2 @@
-export { appStore, DEFAULT_LEGACY_SITE_URL } from './app.store'
+export { appStore } from './app.store'
 export { fetchStorefrontSettings } from './app.actions'

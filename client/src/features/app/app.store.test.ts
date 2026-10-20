@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { appStore, DEFAULT_LEGACY_SITE_URL } from './app.store'
+import { appStore } from './app.store'
 
-describe('appStore legacy site defaults', () => {
-  it('tiene notice e URL legacy accesi di default', () => {
-    expect(appStore.legacySiteNoticeEnabled).toBe(true)
-    expect(appStore.legacySiteUrl).toBe(DEFAULT_LEGACY_SITE_URL)
-    expect(DEFAULT_LEGACY_SITE_URL).toBe('https://old.ideadiluce.com/')
+describe('appStore defaults', () => {
+  it('tiene i suoni accesi di default', () => {
+    expect(appStore.soundsEnabled).toBe(true)
   })
 })

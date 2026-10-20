@@ -1128,12 +1128,6 @@ export const messages: Record<MessageKey, string> = {
   'impersonation.banner.viewing': 'Vizualizezi magazinul ca',
   'impersonation.banner.startedBy': '(impersonare începută de {admin})',
   'impersonation.banner.end': 'Încheie impersonarea',
-  'legacySite.notice.message':
-    'Ești pe noul nostru site. Dacă ceva nu funcționează sau nu poți finaliza comanda, poți continua pe site-ul anterior.',
-  'legacySite.notice.cta': 'Deschide site-ul anterior',
-  'legacySite.checkout.hint':
-    'Nu poți finaliza comanda? Poți continua pe site-ul anterior cât rezolvăm problema.',
-  'legacySite.footer.link': 'Probleme cu noul site? Continuă pe old.ideadiluce.com',
   'cart.floating.close': 'Închide coșul',
   'cart.floating.loading': 'Se încarcă mini-coșul…',
   'cart.floating.items': 'Produse',

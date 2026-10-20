@@ -787,8 +787,8 @@ model AbandonedCartEvent {
 model StorefrontSettings {
   id                       String   @id @default("default")
   soundsEnabled            Boolean  @default(true)
-  /** Barra go-live: rimanda al sito precedente se il nuovo ha problemi. */
-  legacySiteNoticeEnabled  Boolean  @default(true)
+  /** @deprecated Colonne residue go-live; non più esposte in API. */
+  legacySiteNoticeEnabled  Boolean  @default(false)
   legacySiteUrl            String   @default("https://old.ideadiluce.com/")
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
