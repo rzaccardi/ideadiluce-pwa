@@ -1,5 +1,6 @@
 'use client'
 
+import { useSnapshot } from 'valtio/react'
 import { Link } from '@/lib/navigation'
 import type { CartDTO, CartItemDTO } from '@/types/dto'
 
@@ -9,11 +10,18 @@ type CartLike = Omit<CartDTO, 'items' | 'warnings'> & {
   warnings?: ReadonlyArray<string>
 }
 import { formatMoney } from '@/lib/format'
+import { authStore } from '@/features/auth'
+import {
+  cartDisplaySubtotalCents,
+  cartDisplayVatRatePct,
+} from '@/lib/cart-price-display'
 import {
   cartHasBlockedLines,
   cartShippingCents,
   cartSubtotalCents,
+  cartTaxCents,
 } from '@/lib/cartTotals'
+import { catalogVatCentsFromNet, displaysCatalogPriceIncVat } from '@/lib/price-display'
 import { Button } from '@/components/Button'
 import { ProfessionalCartBanner } from '@/components/cart/PricelistBadge'
 import {
@@ -72,9 +80,18 @@ export function CartSummary({
   noPurchasableLines,
   hasBlockedLines,
 }: Props) {
-  const { t } = useI18n()
-  // Solo subtotale in carrello: totale (IVA/spedizione) solo nelle fasi finali checkout.
-  const subtotal = cartSubtotalCents(cart)
+  const { t, tParams } = useI18n()
+  const auth = useSnapshot(authStore)
+  const vatIncluded = displaysCatalogPriceIncVat(auth.me, auth.impersonation)
+  const netSubtotal = cartSubtotalCents(cart)
+  const subtotal = cartDisplaySubtotalCents(cart, auth.me, auth.impersonation)
+  const hasTaxSignal = cart.taxBreakdown != null || cart.estimatedTax != null
+  const tax = hasTaxSignal
+    ? cartTaxCents(cart)
+    : vatIncluded
+      ? catalogVatCentsFromNet(netSubtotal)
+      : 0
+  const vatRatePct = cartDisplayVatRatePct(cart)
   const shipping = cartShippingCents(cart)
   const blocked = hasBlockedLines ?? cartHasBlockedLines(cart)
   const quoteDisabled = checkoutDisabled || blocked || noPurchasableLines
@@ -108,6 +125,15 @@ export function CartSummary({
             {formatMoney(subtotal, cart.currencyCode)}
           </span>
         </div>
+
+        {vatIncluded && tax > 0 ? (
+          <p className="mt-0.5 text-right text-[11.5px] text-[#9298a3]">
+            {tParams('cart.summary.taxIncluded', {
+              rate: String(vatRatePct),
+              amount: formatMoney(tax, cart.currencyCode),
+            })}
+          </p>
+        ) : null}
 
         {shipping == null ? (
           <p className="mt-0.5 text-right text-[11.5px] text-[#9298a3]">

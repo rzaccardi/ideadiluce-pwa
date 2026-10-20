@@ -1,9 +1,12 @@
 'use client'
 
+import { useSnapshot } from 'valtio/react'
 import { Link } from '@/lib/navigation'
 import type { CartItemDTO, CartStockInsufficientDTO } from '@/types/dto'
 import { formatMoney } from '@/lib/format'
+import { authStore } from '@/features/auth'
 import { moveLineToWishlist, removeItem, updateItem } from '@/features/cart'
+import { cartLineDisplayCents } from '@/lib/cart-price-display'
 import { CartLineStockAlert, getCartStockIssue } from '@/components/cart/CartStockAlert'
 import { CartLineThumb } from '@/components/cart/CartLineThumb'
 import { CartQuantityStepper } from '@/components/cart/CartQuantityStepper'
@@ -25,6 +28,7 @@ type Props = {
 
 export function CartLineItem({ line, currencyCode, stockInsufficient, isLoading, isLast }: Props) {
   const { t, tParams } = useI18n()
+  const auth = useSnapshot(authStore)
   const stockIssue = getCartStockIssue(line.productRef, stockInsufficient)
   const blocked = line.availabilityStatus === 'blocked'
   const unpurchasable = blocked || line.purchasable === false
@@ -34,12 +38,18 @@ export function CartLineItem({ line, currencyCode, stockInsufficient, isLoading,
 
   const unitPrice =
     line.clientUnitPriceEstimateCents != null
-      ? formatMoney(line.clientUnitPriceEstimateCents, currencyCode)
+      ? formatMoney(
+          cartLineDisplayCents(line.clientUnitPriceEstimateCents, auth.me, auth.impersonation),
+          currencyCode,
+        )
       : t('common.notAvailable')
 
   const lineTotal =
     line.lineTotalEstimateCents != null
-      ? formatMoney(line.lineTotalEstimateCents, currencyCode)
+      ? formatMoney(
+          cartLineDisplayCents(line.lineTotalEstimateCents, auth.me, auth.impersonation),
+          currencyCode,
+        )
       : t('common.notAvailable')
 
   return (

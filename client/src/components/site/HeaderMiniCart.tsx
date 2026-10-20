@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useLocation } from '@/lib/navigation'
 import { useSnapshot } from 'valtio/react'
+import { authStore } from '@/features/auth'
 import { cartStore } from '@/features/cart'
 import { isCartFlowPath, isCartPagePath } from '@/features/cart/cart.utils'
 import { cartFeedbackStore } from '@/features/cart/cart-feedback.store'
@@ -19,7 +20,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { formatMoney } from '@/lib/format'
-import { cartSubtotalCents } from '@/lib/cartTotals'
+import { cartDisplaySubtotalCents, cartLineDisplayCents } from '@/lib/cart-price-display'
 import { AnimatePresence, motion, useReducedMotion } from '@/lib/motion-client'
 import { transitionBase } from '@/lib/motion/presets'
 import { cn } from '@/utils/cn'
@@ -86,6 +87,7 @@ function MiniCartPanel({
 }: MiniCartPanelProps) {
   const lp = useLocalePath()
   const { t, tParams } = useI18n()
+  const auth = useSnapshot(authStore)
   const isSheet = layout === 'sheet'
   const visibleItems = isSheet ? cart?.items ?? [] : (cart?.items ?? []).slice(0, 4)
   const hiddenCount = isSheet ? 0 : Math.max(0, (cart?.items.length ?? 0) - 4)
@@ -175,7 +177,14 @@ function MiniCartPanel({
                   </div>
                   {item.lineTotalEstimateCents != null && item.lineTotalEstimateCents > 0 ? (
                     <span className="shrink-0 text-xs font-medium text-idl-ink-soft">
-                      {formatMoney(item.lineTotalEstimateCents, cart.currencyCode)}
+                      {formatMoney(
+                        cartLineDisplayCents(
+                          item.lineTotalEstimateCents,
+                          auth.me,
+                          auth.impersonation,
+                        ),
+                        cart.currencyCode,
+                      )}
                     </span>
                   ) : null}
                 </div>
@@ -217,6 +226,7 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
   const isClient = useIsClient()
   const reduceMotion = useReducedMotion()
   const { cart, error, isLoading, stockInsufficient } = useSnapshot(cartStore)
+  const auth = useSnapshot(authStore)
   const { cartPulse, miniCartOpenRequest } = useSnapshot(cartFeedbackStore)
   const { pathname } = useLocation()
   const isCartFlow = isCartFlowPath(pathname)
@@ -282,8 +292,11 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
 
   const itemCountFromLines = cart?.items.reduce((sum, line) => sum + line.quantity, 0) ?? 0
   const itemCount = Math.max(cart?.itemCount ?? 0, itemCountFromLines)
-  // Solo subtotale: IVA/spedizione solo nell'ultima fase checkout (non “Totale stimato”).
-  const total = cart && cart.items.length > 0 ? cartSubtotalCents(cart) : null
+  // Subtotale display (IVA inclusa per guest/retail); spedizione solo al checkout.
+  const total =
+    cart && cart.items.length > 0
+      ? cartDisplaySubtotalCents(cart, auth.me, auth.impersonation)
+      : null
 
   // Checkout: nascosto ovunque. Pagina carrello: nascosto su mobile via CSS (evita branch SSR su viewport).
   if (isCartFlow && !isCartPage) return null
