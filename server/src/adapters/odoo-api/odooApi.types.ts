@@ -87,8 +87,9 @@ export type OdooApiReturnRequestLineWrite = {
 }
 
 export type OdooApiReturnRequestWrite = {
+  customer_id: number
   lines: OdooApiReturnRequestLineWrite[]
-  notes?: string | null
+  note?: string | null
 }
 
 export type OdooApiReturnRequestResult = {

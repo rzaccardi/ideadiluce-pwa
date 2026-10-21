@@ -115,12 +115,12 @@ describe('odooApi v2 resources', () => {
     })
     const res = await odooApiCreateReturnRequest(
       5000,
-      { lines: [{ product_id: 8025, qty: 1 }], notes: 'nota' },
+      { customer_id: 14647, lines: [{ product_id: 8025, qty: 1 }], note: 'nota' },
       'corr-return',
     )
     expect(requestMock).toHaveBeenCalledWith('/api/v2/orders/5000/return-request', {
       method: 'POST',
-      body: { lines: [{ product_id: 8025, qty: 1 }], notes: 'nota' },
+      body: { customer_id: 14647, lines: [{ product_id: 8025, qty: 1 }], note: 'nota' },
       correlationId: 'corr-return',
     })
     expect(res.logged).toBe(true)

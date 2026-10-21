@@ -122,8 +122,9 @@ export const orderReturnRequestService = {
       await odooApiCreateReturnRequest(
         input.order.odooSaleOrderId,
         {
+          customer_id: user.odooPartnerId,
           lines: returnLines,
-          notes,
+          note: notes,
         },
         correlationId,
       )
