@@ -426,6 +426,7 @@ export async function executeEnsurePortalUser(
 }
 
 export async function executeSendMail(ctx: OdooCallContext, pwaOrderId: string): Promise<void> {
+  if (!env.PWA_ORDER_CONFIRMATION_MAIL) return
   const order = await loadOrder(pwaOrderId)
   const paid = isPaidOrderStatus(order.orderStatus, order.paymentStatus)
   if (!paid) return
@@ -515,8 +516,8 @@ export async function enqueueOrderOdooSaga(
   const confirmationAlreadySent = Boolean(
     meta.orderConfirmationMailAt || pwaMailMeta?.orderConfirmationSentAt,
   )
-  const includeMail = opts?.includeMail ?? (paid && !confirmationAlreadySent)
-  if (includeMail) ops.push('send_mail')
+  const wantMail = opts?.includeMail ?? (paid && !confirmationAlreadySent)
+  if (wantMail && env.PWA_ORDER_CONFIRMATION_MAIL) ops.push('send_mail')
 
   for (const operation of ops) {
     const input: EnqueueOdooSyncInput = {
