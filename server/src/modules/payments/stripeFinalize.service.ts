@@ -417,8 +417,9 @@ export async function finalizeStripeCheckout(
       where: { id: updated.id },
       data: { orderStatus: 'PAID_SYNC_PENDING', odooLastSyncStatus: 'FAILED' },
     })
+    // includeMail di default: la conferma [PWA] è differita finché non c'è sale.order
+    // (così mail.mail nasce con model/res_id e appare nel chatter).
     await enqueueOrderOdooSaga(updated.id, {
-      includeMail: false,
       lastError: 'Pagato in locale senza sale.order Odoo.',
     })
   }

@@ -27,12 +27,20 @@ export type PwaMailAttachment = {
   mimetype?: string
 }
 
+/** Collegamento al documento Odoo (es. chatter di `sale.order`). */
+export type PwaMailRecordRef = {
+  model: string
+  resId: number
+}
+
 export type PwaMailInput = {
   templateKey: PwaMailTemplateKey
   emailTo: string
   vars?: Record<string, string>
   replyTo?: string
   attachments?: PwaMailAttachment[]
+  /** Se presente, `mail.mail` viene creato con model/res_id (appare nel chatter). */
+  record?: PwaMailRecordRef
 }
 
 const templateIdCache = new Map<PwaMailTemplateKey, number>()
@@ -229,6 +237,7 @@ async function sendViaOdooMail(
     templateKey: PwaMailTemplateKey
     replyTo?: string
     attachmentIds?: number[]
+    record?: PwaMailRecordRef
   },
 ): Promise<void> {
   const vals: Record<string, unknown> = {
@@ -242,6 +251,10 @@ async function sendViaOdooMail(
   }
   if (input.replyTo) vals.reply_to = input.replyTo
   if (input.attachmentIds?.length) vals.attachment_ids = [[6, 0, input.attachmentIds]]
+  if (input.record && input.record.resId > 0) {
+    vals.model = input.record.model
+    vals.res_id = input.record.resId
+  }
 
   const created = await odooExecuteKw<unknown>(ctx, 'mail.mail', 'create', [vals], {})
   const mailId = normalizeOdooCreateId(created)
@@ -409,6 +422,7 @@ export async function sendPwaMail(ctx: OdooCallContext | undefined, input: PwaMa
       templateKey: input.templateKey,
       replyTo: input.replyTo,
       attachmentIds,
+      record: input.record,
     })
   } catch (e) {
     if (e instanceof OdooMailDeliveryError) {
@@ -437,6 +451,7 @@ export async function sendPwaMail(ctx: OdooCallContext | undefined, input: PwaMa
         bodyText: vars.body_text || stripHtml(bodyHtml),
         templateKey: input.templateKey,
         replyTo: input.replyTo,
+        record: input.record,
       })
     } catch (inner) {
       logger.error('odoo.mail_send_failed', {

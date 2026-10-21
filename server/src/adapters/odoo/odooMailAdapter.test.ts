@@ -8,6 +8,7 @@ const { odooExecuteKw, sendMail, isSmtpConfigured, envState, odooConfigured, res
     ODOO_ENABLED: true,
     ODOO_MAIL_FROM: undefined as string | undefined,
     ODOO_MAIL_SERVER_ID: undefined as number | undefined,
+    PUBLIC_SITE_URL: 'https://www.ideadiluce.com',
   },
   odooConfigured: { value: true },
   resilience: { emergency: false, smtpFallback: false },
@@ -153,6 +154,33 @@ describe('sendPwaMail', () => {
       email_to: 'nuovo@test.it',
       email_from: '"Shop Idea di Luce" <shop@ideadiluce.com>',
       mail_server_id: 42,
+    })
+  })
+
+  it('collega mail.mail a sale.order quando passa record', async () => {
+    odooExecuteKw
+      .mockResolvedValueOnce([{ id: 11 }])
+      .mockResolvedValueOnce([
+        { subject: 'Conferma ordine {{order_number}} - Idea di Luce', body_html: '<p>ok</p>' },
+      ])
+      .mockResolvedValueOnce(99)
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(odooAccepted())
+
+    await sendPwaMail(
+      { correlationId: 't-chatter' },
+      {
+        templateKey: 'order_confirmation',
+        emailTo: 'mario@test.it',
+        record: { model: 'sale.order', resId: 12345 },
+        vars: { order_number: '4CSVKG', amount: '€ 10.00', order_url: 'https://x/o', first_name_suffix: '' },
+      },
+    )
+
+    expect(odooExecuteKw.mock.calls[2]?.[3]?.[0]).toMatchObject({
+      email_to: 'mario@test.it',
+      model: 'sale.order',
+      res_id: 12345,
     })
   })
 
