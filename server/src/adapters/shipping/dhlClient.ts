@@ -5,6 +5,7 @@ import { writeStructuredIntegrationLog } from '../../lib/integration-log-context
 import { CarrierProvider } from '@prisma/client'
 import type { CartWeightInput, ShippingAddressInput, ShippingQuoteLine } from './types.js'
 import { logger } from '../../lib/logger.js'
+import { filterSellableCarrierQuotes } from './sellable-carrier-services.js'
 
 function apiBase(): string {
   return (
@@ -122,16 +123,17 @@ export async function fetchDhlRates(
       source: 'dhl',
     })
   }
-  if (correlationId && lines.length > 0) {
+  const sellable = filterSellableCarrierQuotes(address.country, lines)
+  if (correlationId && sellable.length > 0) {
     await writeStructuredIntegrationLog({
       service: 'dhl',
       operation: 'rates',
       correlationId,
       success: true,
-      extra: { quotes: lines.length, country: address.country },
+      extra: { quotes: sellable.length, filteredFrom: lines.length, country: address.country },
     })
   }
-  return lines
+  return sellable
 }
 
 export async function trackDhlNumber(

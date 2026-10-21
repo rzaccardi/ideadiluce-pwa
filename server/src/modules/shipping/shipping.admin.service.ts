@@ -266,12 +266,6 @@ export async function seedDefaultShippingZones() {
         methods: {
           create: [
             {
-              name: 'Spedizione standard',
-              type: ShippingMethodType.FLAT_RATE,
-              flatAmountCents: 590,
-              priority: 1,
-            },
-            {
               name: 'Spedizione gratuita',
               type: ShippingMethodType.FREE_SHIPPING,
               freeAboveCents: 20000,
@@ -303,6 +297,7 @@ export async function seedDefaultShippingZones() {
   await syncCarrierCredentialsFromEnv()
   await ensurePickupMethodAndFreeThreshold()
   await ensureItaliaDomesticMethods()
+  await disableUnsupportedStandardFlatRate()
   await ensureInternationalShippingZones()
 }
 
@@ -446,13 +441,6 @@ const ITALIA_DOMESTIC_METHODS: Array<{
   priority: number
 }> = [
   {
-    name: 'Spedizione standard',
-    type: ShippingMethodType.FLAT_RATE,
-    flatAmountCents: 590,
-    surchargePct: 0,
-    priority: 1,
-  },
-  {
     name: 'DHL Express (live)',
     type: ShippingMethodType.LIVE_DHL,
     flatAmountCents: null,
@@ -469,9 +457,8 @@ const ITALIA_DOMESTIC_METHODS: Array<{
 ]
 
 /**
- * Italia: ripristina combinazioni complete (standard, gratuita, DHL, FedEx, ritiro Roma).
- * Il ritiro resta opzionale e filtrato da `isRomePickupEligible` in quotes — non è l’unica scelta.
- * Idempotente: riaggiunge metodi rimossi da `ensureItaliaDomesticMethodsOnly` (ace2ba9).
+ * Italia: gratuita, DHL, FedEx, ritiro Roma (niente flat “Spedizione standard” — non la forniamo).
+ * Idempotente: riaggiunge metodi live se mancanti.
  */
 async function ensureItaliaDomesticMethods() {
   const itZone = await prisma.shippingZone.findFirst({
@@ -493,4 +480,16 @@ async function ensureItaliaDomesticMethods() {
       },
     })
   }
+}
+
+/** Disattiva “Spedizione standard” (Emil): non è un servizio che forniamo. */
+async function disableUnsupportedStandardFlatRate() {
+  await prisma.shippingMethod.updateMany({
+    where: {
+      type: ShippingMethodType.FLAT_RATE,
+      enabled: true,
+      name: { equals: 'Spedizione standard', mode: 'insensitive' },
+    },
+    data: { enabled: false },
+  })
 }

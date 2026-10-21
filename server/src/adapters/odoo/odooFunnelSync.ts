@@ -59,21 +59,11 @@ export async function syncSaleOrderFunnelState(
       if (fields.has(field)) vals[field] = value
     }
 
-    if (fields.has('tlb_hl_ref')) {
-      vals.tlb_hl_ref = `pwa-${state.pwaOrderId}`
-    }
+    // Non scrivere `tlb_hl_ref` (Rif. sito): lo imposta solo la creazione ordine.
+    // Non chiamare `action_confirm`: conferma solo Odoo dopo POST /api/v2/orders/{id}/payments 2xx.
 
     if (Object.keys(vals).length > 0) {
       await odooExecuteKw<boolean>(ctx, 'sale.order', 'write', [[saleOrderId], vals], {})
-    }
-
-    if (state.orderStatus === 'paid' || state.paymentStatus === 'captured') {
-      try {
-        await odooExecuteKw<unknown>(ctx, 'sale.order', 'action_confirm', [[saleOrderId]], {})
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e)
-        if (!msg.includes('cannot marshal None unless allow_none is enabled')) throw e
-      }
     }
 
     return 'synced'
