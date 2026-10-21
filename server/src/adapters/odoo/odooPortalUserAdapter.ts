@@ -1,84 +1,10 @@
 import { env } from '../../config/env.js'
-import { logger } from '../../lib/logger.js'
 import { isOdooConfigured, odooExecuteKw, type OdooCallContext } from './odooClient.js'
 import { normalizeOdooCreateId } from './odooId.js'
 import { isOdooApiV2Configured, OdooApiV2Error } from '../odoo-api/odooApiClient.js'
 import { odooApiAuthRegister } from '../odoo-api/odooApi.resources.js'
 
 type PortalUserRow = { id: number; partner_id: [number, string] | number | false }
-
-export type OdooPasswordResetResult = 'sent' | 'not_found' | 'mail_failed'
-
-function isOdooPasswordResetNotFoundError(message: string): boolean {
-  const lower = message.toLowerCase()
-  return (
-    lower.includes('no account found') ||
-    lower.includes('nessun account') ||
-    lower.includes('multiple accounts') ||
-    lower.includes('più account') ||
-    lower.includes('archived user') ||
-    lower.includes('utente archiviat') ||
-    lower.includes('cannot perform this action on an archived')
-  )
-}
-
-function isOdooPasswordResetMailError(message: string): boolean {
-  const lower = message.toLowerCase()
-  return (
-    (lower.includes('mail') || lower.includes('email')) &&
-    (lower.includes('send') ||
-      lower.includes('deliver') ||
-      lower.includes('server') ||
-      lower.includes('config') ||
-      lower.includes('invia') ||
-      lower.includes('consegn'))
-  )
-}
-
-/** Richiede reset password nativo Odoo (`auth_signup` → email con link `/web/reset_password`). */
-export async function requestOdooPasswordReset(
-  ctx: OdooCallContext,
-  email: string,
-): Promise<OdooPasswordResetResult> {
-  if (!env.ODOO_ENABLED || !isOdooConfigured()) return 'not_found'
-
-  const login = email.toLowerCase().trim()
-  const portal = await findOdooPortalUserByEmail(ctx, login)
-  if (!portal) {
-    logger.info('odoo.password_reset_not_found', { correlationId: ctx.correlationId, email: login })
-    return 'not_found'
-  }
-
-  try {
-    await odooExecuteKw(ctx, 'res.users', 'action_reset_password', [[portal.odooUserId]], {})
-    logger.info('odoo.password_reset_requested', {
-      correlationId: ctx.correlationId,
-      email: login,
-      odooUserId: portal.odooUserId,
-    })
-    return 'sent'
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e)
-    if (isOdooPasswordResetNotFoundError(msg)) {
-      logger.info('odoo.password_reset_not_found', { correlationId: ctx.correlationId, email: login })
-      return 'not_found'
-    }
-    if (isOdooPasswordResetMailError(msg)) {
-      logger.warn('odoo.password_reset_mail_failed', {
-        correlationId: ctx.correlationId,
-        email: login,
-        error: msg,
-      })
-      return 'mail_failed'
-    }
-    logger.error('odoo.password_reset_failed', {
-      correlationId: ctx.correlationId,
-      email: login,
-      error: msg,
-    })
-    throw e
-  }
-}
 
 async function portalGroupId(ctx: OdooCallContext): Promise<number> {
   try {

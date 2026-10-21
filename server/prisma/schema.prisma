@@ -210,26 +210,11 @@ model CustomerSatellite {
   quoteRequests         QuoteRequest[]
   notifications         UserNotification[]
   returnRequests        OrderReturnRequest[]
-  passwordResetTokens   PasswordResetToken[]
   impersonationTokens   ImpersonationToken[]
 
   @@index([email])
   @@index([status])
   @@index([customerSegment])
-}
-
-model PasswordResetToken {
-  id            String    @id @default(cuid())
-  odooPartnerId Int
-  tokenHash     String    @unique
-  expiresAt     DateTime
-  usedAt        DateTime?
-  createdAt     DateTime  @default(now())
-
-  customer CustomerSatellite @relation(fields: [odooPartnerId], references: [odooPartnerId], onDelete: Cascade)
-
-  @@index([odooPartnerId])
-  @@index([expiresAt])
 }
 
 model Session {

@@ -1,12 +1,14 @@
 import type { Request, Response } from 'express'
 import { ok } from '../lib/api-response.js'
 import { clearSessionCookie, setSessionCookie } from '../lib/cookies.js'
+import { localeFromRequest } from '../lib/validation-user-message.js'
 import { authService } from '../modules/auth/auth.service.js'
 import { checkEmailService } from '../modules/auth/check-email.service.js'
 import { checkoutRegisterService } from '../modules/auth/checkout-register.service.js'
 import { passwordResetService } from '../modules/auth/password-reset.service.js'
 import { impersonationService } from '../modules/impersonation/impersonation.service.js'
 import { asyncHandler } from '../utils/async-handler.js'
+import { logger } from '../lib/logger.js'
 
 export const authController = {
   register: asyncHandler(async (req: Request, res: Response) => {
@@ -104,14 +106,35 @@ export const authController = {
 
   forgotPassword: asyncHandler(async (req: Request, res: Response) => {
     const { email } = req.body as { email: string }
-    await passwordResetService.requestReset(email, req.correlationId)
+    const locale = localeFromRequest(req)
+    await passwordResetService.requestReset(email, req.correlationId, locale)
     res.json(ok({ sent: true }))
   }),
 
+  /** Conferma token Odoo via API v2, poi login PWA con la nuova password. */
   resetPassword: asyncHandler(async (req: Request, res: Response) => {
     const { token, password } = req.body as { token: string; password: string }
-    await passwordResetService.resetPassword(token, password, req.correlationId)
-    res.json(ok({ reset: true }))
+    const confirmed = await passwordResetService.resetPassword(
+      token,
+      password,
+      req.correlationId,
+    )
+    const sessionId = req.sessionRecord!.id
+    try {
+      const user = await authService.login(
+        { email: confirmed.email, password },
+        sessionId,
+        req.correlationId,
+      )
+      res.json(ok({ reset: true, user, email: confirmed.email }))
+    } catch (e) {
+      logger.warn('password_reset.login_after_confirm_failed', {
+        correlationId: req.correlationId,
+        email: confirmed.email,
+        error: e instanceof Error ? e.message : String(e),
+      })
+      res.json(ok({ reset: true, user: null, email: confirmed.email }))
+    }
   }),
 
   refresh: asyncHandler(async (req: Request, res: Response) => {

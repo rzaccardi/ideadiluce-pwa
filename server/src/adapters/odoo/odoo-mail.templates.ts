@@ -17,7 +17,6 @@ export const PWA_MAIL_TEMPLATE_KEYS = [
   'restock_notify_admin',
   'paid_sync_alert_admin',
   'sync_exhausted_admin',
-  'password_reset',
   'order_confirmation',
   'order_shipped',
   'abandoned_cart',
@@ -248,18 +247,6 @@ export const PWA_MAIL_TEMPLATES: Record<PwaMailTemplateKey, PwaMailTemplateDef> 
     name: '[PWA] Coda sync Odoo esaurita',
     subject: '[Idea di Luce] Sync Odoo esaurita - ordine {{pwa_order_id}}',
     bodyHtml: wrap('<pre style="white-space:pre-wrap;font-family:inherit">{{body_text}}</pre>'),
-  },
-  password_reset: {
-    key: 'password_reset',
-    name: '[PWA] Reimposta password',
-    subject: 'Reimposta la password - Idea di Luce',
-    bodyHtml: wrap(mailCopy(`Ciao,
-        <br><br>
-        per reimpostare la password apri questo link (valido <span style="font-weight:bold">{{hours}}</span> ore):
-        <br><br>
-        <a href="{{reset_url}}" style="color:#1a1a1a">{{reset_url}}</a>
-        <br><br>
-        Se non hai richiesto il reset, ignora questa email.`)),
   },
   order_confirmation: {
     key: 'order_confirmation',

@@ -40,13 +40,19 @@ function readPersistedDevDbFallback(): { databaseUrl: string; directUrl: string 
 /** `ensure-postgres-dev.mjs` può già aver impostato il Postgres locale: non farlo sovrascrivere da `.env`. */
 const inheritedDatabaseUrl = process.env.DATABASE_URL?.trim()
 const inheritedDirectUrl = process.env.DIRECT_URL?.trim()
+const requireRemoteDb =
+  process.env.IDL_REQUIRE_REMOTE_DB === '1' ||
+  /^(true|yes)$/i.test(String(process.env.IDL_REQUIRE_REMOTE_DB ?? ''))
 const keepDevDbFallback =
-  process.env.IDL_POSTGRES_DEV_FALLBACK === '1' ||
-  Boolean(inheritedDatabaseUrl && /^(localhost|127\.0\.0\.1)$/i.test(safeDbHost(inheritedDatabaseUrl)))
+  !requireRemoteDb &&
+  (process.env.IDL_POSTGRES_DEV_FALLBACK === '1' ||
+    Boolean(inheritedDatabaseUrl && /^(localhost|127\.0\.0\.1)$/i.test(safeDbHost(inheritedDatabaseUrl))))
 
 config({ path: path.join(repoRoot, '.env'), override: true })
 
-if (keepDevDbFallback && inheritedDatabaseUrl) {
+if (requireRemoteDb) {
+  /* Pin remoto (.env): ignora fallback Docker e cache .cache/postgres-dev-fallback.json */
+} else if (keepDevDbFallback && inheritedDatabaseUrl) {
   applyDevDbFallback(inheritedDatabaseUrl, inheritedDirectUrl)
 } else {
   const envHost = safeDbHost(process.env.DATABASE_URL ?? '')
@@ -176,7 +182,6 @@ const envSchema = z.object({
   ODOO_MAIL_SERVER_ID: z.coerce.number().optional(),
   /** URL base PWA per link nelle email (es. https://shop.ideadiluce.it). */
   APP_PUBLIC_URL: z.string().optional(),
-  PASSWORD_RESET_TOKEN_HOURS: z.coerce.number().default(24),
   CHECKOUT_REDIRECT_BASE: z.string().optional(),
   /** Provider PWA checkout: Nexi/PayPal sono opzionali finché non configurati. */
   NEXI_ENABLED: boolish.default(false),

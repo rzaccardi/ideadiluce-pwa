@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { api } from '@/api/endpoints'
+import { completePasswordReset } from '@/features/auth'
 import { ToastOnError } from '@/components/ToastFeedback'
 import { useI18n } from '@/hooks/use-i18n'
 import { useLocalePath } from '@/hooks/use-locale-path'
-import { useSearchParams } from '@/lib/navigation'
+import { useNavigate, useSearchParams } from '@/lib/navigation'
+import { notify } from '@/lib/notify'
 import { ApiRequestError } from '@/types/api'
 import {
   AuthBodyText,
@@ -26,8 +27,11 @@ import {
 export function ResetPasswordPageView() {
   const { t } = useI18n()
   const lp = useLocalePath()
+  const navigate = useNavigate()
   const searchParams = useSearchParams()
+  /** Token opaco Odoo: non validare lunghezza/formato; solo presenza dopo decode URL. */
   const token = (searchParams.get('token') ?? '').trim()
+  const emailFromLink = (searchParams.get('email') ?? '').trim()
 
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -35,7 +39,7 @@ export function ResetPasswordPageView() {
   const [done, setDone] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const hasToken = token.length >= 32
+  const hasToken = token.length > 0
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -56,7 +60,12 @@ export function ResetPasswordPageView() {
 
     setLoading(true)
     try {
-      await api.auth.resetPassword(token, password)
+      const { loggedIn } = await completePasswordReset(token, password)
+      if (loggedIn) {
+        notify.success(t('auth.loggedIn'))
+        navigate(lp('/account'), { replace: true })
+        return
+      }
       setDone(true)
     } catch (err) {
       if (err instanceof ApiRequestError) {
@@ -90,7 +99,10 @@ export function ResetPasswordPageView() {
     >
       <ToastOnError message={error} />
       <AuthCard>
-        <AuthCardHeader title={t('reset.title')} />
+        <AuthCardHeader
+          title={t('reset.title')}
+          subtitle={emailFromLink || undefined}
+        />
 
         {!hasToken ? (
           <AuthBodyText>{t('reset.invalidLink')}</AuthBodyText>

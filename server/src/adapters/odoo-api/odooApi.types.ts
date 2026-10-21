@@ -78,6 +78,30 @@ export type OdooApiAuthRegisterResult = {
   created?: boolean
 }
 
+/** POST `/api/v2/auth/password-reset` — Odoo emette token e manda la mail del sito. */
+export type OdooApiPasswordResetWrite = {
+  email: string
+  /** URL pagina PWA (https, dominio del sito); Odoo aggiunge `?token=&email=`. */
+  return_url?: string
+}
+
+export type OdooApiPasswordResetResult = {
+  accepted: boolean
+}
+
+/** POST `/api/v2/auth/password-reset/confirm` — imposta la password col token Odoo. */
+export type OdooApiPasswordResetConfirmWrite = {
+  token: string
+  password: string
+}
+
+export type OdooApiPasswordResetConfirmResult = {
+  customer_id: number
+  email: string
+  password_set: boolean
+  user_created?: boolean
+}
+
 /** POST `/api/v2/orders/<id>/return-request` — log attività reso + mail Odoo. */
 export type OdooApiReturnRequestLineWrite = {
   line_id?: number

@@ -21,6 +21,8 @@ import {
   odooApiGetInvoicePdf,
   odooApiGetPrices,
   odooApiGetStock,
+  odooApiPasswordReset,
+  odooApiPasswordResetConfirm,
 } from './odooApi.resources.js'
 
 describe('odooApi v2 resources', () => {
@@ -106,6 +108,37 @@ describe('odooApi v2 resources', () => {
       correlationId: 'corr-register',
     })
     expect(res.user_id).toBe(40)
+  })
+
+  it('POST /auth/password-reset con email e return_url', async () => {
+    requestMock.mockResolvedValue({ status: 202, data: { accepted: true } })
+    const res = await odooApiPasswordReset(
+      { email: 'a@b.it', return_url: 'https://ideadiluce.com/en/reset-password' },
+      'corr-reset',
+    )
+    expect(requestMock).toHaveBeenCalledWith('/api/v2/auth/password-reset', {
+      method: 'POST',
+      body: { email: 'a@b.it', return_url: 'https://ideadiluce.com/en/reset-password' },
+      correlationId: 'corr-reset',
+    })
+    expect(res.accepted).toBe(true)
+  })
+
+  it('POST /auth/password-reset/confirm con token e password', async () => {
+    requestMock.mockResolvedValue({
+      status: 200,
+      data: { customer_id: 9, email: 'a@b.it', password_set: true, user_created: false },
+    })
+    const res = await odooApiPasswordResetConfirm(
+      { token: 'odoo-opaque', password: 'secret123' },
+      'corr-confirm',
+    )
+    expect(requestMock).toHaveBeenCalledWith('/api/v2/auth/password-reset/confirm', {
+      method: 'POST',
+      body: { token: 'odoo-opaque', password: 'secret123' },
+      correlationId: 'corr-confirm',
+    })
+    expect(res).toMatchObject({ customer_id: 9, password_set: true })
   })
 
   it('POST /orders/:id/return-request con lines', async () => {

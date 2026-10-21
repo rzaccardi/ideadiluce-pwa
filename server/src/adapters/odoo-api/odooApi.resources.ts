@@ -14,6 +14,10 @@ import type {
   OdooApiOrderTotalsResponse,
   OdooApiOrderTotalsWrite,
   OdooApiOrderWrite,
+  OdooApiPasswordResetConfirmResult,
+  OdooApiPasswordResetConfirmWrite,
+  OdooApiPasswordResetResult,
+  OdooApiPasswordResetWrite,
   OdooApiPaymentResult,
   OdooApiPaymentWrite,
   OdooApiPriceItem,
@@ -58,6 +62,35 @@ export async function odooApiAuthRegister(
     body,
     correlationId,
   })
+  return data
+}
+
+/** Richiede reset password: Odoo manda la mail (sempre 202, anche se l’email non esiste). */
+export async function odooApiPasswordReset(
+  body: OdooApiPasswordResetWrite,
+  correlationId?: string,
+): Promise<OdooApiPasswordResetResult> {
+  const { data } = await odooApiV2Request<OdooApiPasswordResetResult>('/api/v2/auth/password-reset', {
+    method: 'POST',
+    body,
+    correlationId,
+  })
+  return data
+}
+
+/** Conferma reset con token opaco emesso da Odoo. */
+export async function odooApiPasswordResetConfirm(
+  body: OdooApiPasswordResetConfirmWrite,
+  correlationId?: string,
+): Promise<OdooApiPasswordResetConfirmResult> {
+  const { data } = await odooApiV2Request<OdooApiPasswordResetConfirmResult>(
+    '/api/v2/auth/password-reset/confirm',
+    {
+      method: 'POST',
+      body,
+      correlationId,
+    },
+  )
   return data
 }
 

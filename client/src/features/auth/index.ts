@@ -6,6 +6,7 @@ export {
   checkoutLogin,
   checkoutRegister,
   register,
+  completePasswordReset,
   logout,
   refreshAuthSession,
   attachSessionRefreshListener,
