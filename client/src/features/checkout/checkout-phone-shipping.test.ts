@@ -126,6 +126,35 @@ describe('isShippingBlockedByMissingPhone', () => {
     expect(billing.phone).toBe('+393339998877')
   })
 
+  it('digitando nome su billing non perde i caratteri con billingSameAsShipping', () => {
+    checkoutStore.deliveryRecipient.mode = 'self'
+    checkoutStore.draft.billingSameAsShipping = true
+    checkoutStore.draft.billing = readyAddress({ firstName: '', lastName: '', phone: '' })
+    checkoutStore.draft.shipping = readyAddress({ firstName: '', lastName: '', phone: '' })
+
+    updateCheckoutAddress('billing', 'firstName', 'M')
+    updateCheckoutAddress('billing', 'firstName', 'Ma')
+    updateCheckoutAddress('billing', 'firstName', 'Mar')
+    updateCheckoutAddress('billing', 'firstName', 'Mario')
+
+    expect(checkoutStore.draft.billing.firstName).toBe('Mario')
+    expect(checkoutStore.draft.shipping.firstName).toBe('Mario')
+  })
+
+  it('digitando città su billing non viene azzerata dal sync shipping', () => {
+    checkoutStore.deliveryRecipient.mode = 'self'
+    checkoutStore.draft.billingSameAsShipping = true
+    checkoutStore.draft.billing = readyAddress({ city: '', line1: 'Via Roma', streetNumber: '1' })
+    checkoutStore.draft.shipping = readyAddress({ city: '', line1: 'Via Roma', streetNumber: '1' })
+
+    updateCheckoutAddress('billing', 'city', 'R')
+    updateCheckoutAddress('billing', 'city', 'Ro')
+    updateCheckoutAddress('billing', 'city', 'Roma')
+
+    expect(checkoutStore.draft.billing.city).toBe('Roma')
+    expect(checkoutStore.draft.shipping.city).toBe('Roma')
+  })
+
   it('sblocca se telefono solo sul profilo e destinazione già pronta', () => {
     authStore.isAuthenticated = true
     authStore.me = {

@@ -757,9 +757,23 @@ function syncCheckoutContactFromProfile() {
   if (!(ship.phone ?? '').trim() && bestPhone) ship.phone = bestPhone
 }
 
+function isBillingLinkedToShippingDestination() {
+  return (
+    checkoutStore.draft.billingSameAsShipping &&
+    (checkoutStore.deliveryRecipient.mode ?? 'self') !== 'other'
+  )
+}
+
 function syncShippingContactFromBillingIfNeeded() {
   const ship = checkoutStore.draft.shipping
   const bill = checkoutStore.draft.billing
+  // Con destinazione collegata, billing è la fonte di verità del contatto: mantieni shipping allineato.
+  if (isBillingLinkedToShippingDestination()) {
+    ship.firstName = bill.firstName
+    ship.lastName = bill.lastName
+    ship.phone = bill.phone
+    return
+  }
   if (!ship.firstName.trim() && bill.firstName.trim()) ship.firstName = bill.firstName
   if (!ship.lastName.trim() && bill.lastName.trim()) ship.lastName = bill.lastName
   if (!(ship.phone ?? '').trim() && (bill.phone ?? '').trim()) ship.phone = bill.phone
@@ -769,20 +783,26 @@ function syncShippingContactFromBillingIfNeeded() {
 function syncBillingContactFromShippingIfNeeded() {
   const ship = checkoutStore.draft.shipping
   const bill = checkoutStore.draft.billing
+  if (isBillingLinkedToShippingDestination()) {
+    bill.firstName = ship.firstName
+    bill.lastName = ship.lastName
+    bill.phone = ship.phone
+    return
+  }
   if (!(bill.phone ?? '').trim() && (ship.phone ?? '').trim()) bill.phone = ship.phone
   if (!bill.firstName.trim() && ship.firstName.trim()) bill.firstName = ship.firstName
   if (!bill.lastName.trim() && ship.lastName.trim()) bill.lastName = ship.lastName
 }
 
 function syncBillingDestinationFromShippingIfNeeded() {
-  if ((checkoutStore.deliveryRecipient.mode ?? 'self') === 'other') return
-  if (!checkoutStore.draft.billingSameAsShipping) return
+  if (!isBillingLinkedToShippingDestination()) return
   const ship = checkoutStore.draft.shipping
   const bill = checkoutStore.draft.billing
-  // Contatto (nome/telefono) vive in anagrafica su billing; non azzerarlo se shipping è vuoto.
-  const firstName = ship.firstName.trim() || bill.firstName
-  const lastName = ship.lastName.trim() || bill.lastName
-  const phone = (ship.phone ?? '').trim() || (bill.phone ?? '')
+  // Contatto (nome/telefono) vive in anagrafica su billing: billing vince sempre sul contatto.
+  // Preferire shipping qui faceva perdere i caratteri digitati (shipping restava un keystroke indietro).
+  const firstName = bill.firstName.trim() || ship.firstName
+  const lastName = bill.lastName.trim() || ship.lastName
+  const phone = (bill.phone ?? '').trim() || (ship.phone ?? '')
   if (!ship.firstName.trim() && firstName.trim()) ship.firstName = firstName
   if (!ship.lastName.trim() && lastName.trim()) ship.lastName = lastName
   if (!(ship.phone ?? '').trim() && phone.trim()) ship.phone = phone
@@ -1755,8 +1775,11 @@ export function updateCheckoutAddress<K extends AddressKey>(
   value: AddressInput[K],
 ) {
   checkoutStore.draft[kind][key] = value
+  const isContact = key === 'phone' || key === 'firstName' || key === 'lastName'
+  const linked = isBillingLinkedToShippingDestination()
+
   if (kind === 'shipping') {
-    if (key === 'phone' || key === 'firstName' || key === 'lastName') {
+    if (isContact) {
       syncBillingContactFromShippingIfNeeded()
     }
     syncBillingDestinationFromShippingIfNeeded()
@@ -1767,19 +1790,21 @@ export function updateCheckoutAddress<K extends AddressKey>(
     if (key === 'country') scheduleTaxRecalculate()
     return
   }
-  if (kind === 'billing') {
-    if (key === 'phone' || key === 'firstName' || key === 'lastName') {
-      syncShippingContactFromBillingIfNeeded()
-    }
-    syncShippingDestinationFromBillingIfNeeded()
-    if (destinationComplete(shippingAddressPayload())) {
-      scheduleShippingQuotesFetch()
-    }
+
+  // billing
+  if (isContact) {
+    syncShippingContactFromBillingIfNeeded()
+  } else if (linked) {
+    // Destinazione digitata su billing con same-as: shipping è la fonte di verità → mirror subito,
+    // altrimenti syncBillingDestination riscriverebbe billing con lo shipping (ancora vuoto/stale).
+    checkoutStore.draft.shipping[key] = value
+  }
+  syncShippingDestinationFromBillingIfNeeded()
+  if (destinationComplete(shippingAddressPayload())) {
+    scheduleShippingQuotesFetch()
   }
   invalidateShippingIfDestinationChanged()
-  if (kind === 'billing') {
-    scheduleTaxRecalculate()
-  }
+  scheduleTaxRecalculate()
 }
 
 export function setCheckoutAddressFields(
