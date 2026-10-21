@@ -40,7 +40,7 @@ function resolveVariantProductId(line: SaleOrderLineInput): number | null {
   return parseOdooVariantId(line.variantRef)
 }
 
-/** Fingerprint righe+spedizione: POST /orders è idempotente su client_ref e non aggiorna le righe. */
+/** Fingerprint righe+spedizione (utile per confronti cart; non va in `tlb_hl_ref`). */
 export function checkoutLinesFingerprint(
   lines: Array<{ product_id: number; qty: number; price_unit_net?: number }>,
   shipping: { carrier: string; amount_net: number } | null | undefined,
@@ -50,12 +50,6 @@ export function checkoutLinesFingerprint(
     shipping: shipping ? { c: shipping.carrier, a: shipping.amount_net } : null,
   })
   return createHash('sha256').update(payload).digest('hex').slice(0, 10)
-}
-
-function withCartFingerprint(baseRef: string, fingerprint: string): string {
-  if (/^PWA-QUOTE-/i.test(baseRef)) return baseRef
-  const stripped = baseRef.replace(/-[a-f0-9]{10}$/i, '')
-  return `${stripped}-${fingerprint}`
 }
 
 function buildOrderPayload(
@@ -109,22 +103,22 @@ function buildOrderPayload(
         }
       : null
 
-  // Un solo client_ref per ordine PWA: i chiamanti passano sia `pwa-<id>` sia `PWA <id>` e Odoo
-  // riconosce il doppione solo a riferimento identico (prima: due SO per lo stesso checkout).
-  const baseRef = input.pwaOrderId ? `pwa-${input.pwaOrderId}` : input.clientOrderRef?.trim() || ''
-  if (!baseRef) {
+  // `tlb_hl_ref` stabile per ordine PWA: usato per riprendere il SO dell’utente (niente client_ref).
+  const tlbHlRef = input.pwaOrderId
+    ? `pwa-${input.pwaOrderId}`
+    : input.clientOrderRef?.trim() || ''
+  if (!tlbHlRef) {
     throw new AppError(
-      'ODOO_CLIENT_REF_MISSING',
-      'client_ref missing',
+      'ODOO_TLB_HL_REF_MISSING',
+      'tlb_hl_ref missing',
       'Riferimento ordine PWA assente.',
       400,
       false,
     )
   }
-  const clientRef = withCartFingerprint(baseRef, checkoutLinesFingerprint(lines, shipping))
 
   const payload: OdooApiOrderWrite = {
-    client_ref: clientRef,
+    tlb_hl_ref: tlbHlRef,
     customer_id: input.odooPartnerId,
     currency: input.currencyCode || 'EUR',
     lines,
@@ -214,7 +208,7 @@ async function postOrder(
         correlationId: ctx.correlationId,
         pwaOrderId: input.pwaOrderId ?? null,
         odooSaleOrderId: result.odooSaleOrderId,
-        clientRef: payload.client_ref,
+        tlbHlRef: payload.tlb_hl_ref,
         chargedCents: input.chargedCents,
         odooGrossCents: odooGross,
       })
@@ -266,7 +260,7 @@ export function createApiV2OdooOrderAdapter(): OdooOrderAdapter {
     },
 
     async reconcileSaleOrderLines(ctx, odooSaleOrderId, lines, shippingLine) {
-      // POST idempotente non aggiorna le righe: nuovo client_ref (fingerprint) → nuovo SO.
+      // Idempotenza su `tlb_hl_ref` stabile (`pwa-<id>`): Odoo deve aggiornare il SO esistente.
       try {
         const existing = await odooApiGetOrder(odooSaleOrderId, ctx.correlationId)
         const partnerId = existing.customer?.id
@@ -287,7 +281,10 @@ export function createApiV2OdooOrderAdapter(): OdooOrderAdapter {
           odooPartnerId: partnerId,
           odooSaleOrderId,
           clientOrderRef:
-            linked?.clientOrderRef ?? existing.client_ref ?? `pwa-reconcile-${odooSaleOrderId}`,
+            linked?.clientOrderRef ??
+            existing.tlb_hl_ref ??
+            existing.client_ref ??
+            `pwa-reconcile-${odooSaleOrderId}`,
           lines,
           shippingLine: shippingLine ?? null,
           currencyCode: existing.currency ?? 'EUR',

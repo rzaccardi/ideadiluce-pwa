@@ -716,7 +716,7 @@ export const paymentsService = {
     const clientOrderRef =
       checkoutBody.clientOrderRef?.trim() ||
       existing?.clientOrderRef ||
-      (existing?.id ? `PWA ${existing.id}` : undefined)
+      (existing?.id ? `pwa-${existing.id}` : undefined)
     if (env.ODOO_ENABLED && isOdooLiveConfigured() && odooPartnerId != null) {
       try {
         const orderResult = await orderAdapter.createOrUpdateSaleOrder(ctx, {

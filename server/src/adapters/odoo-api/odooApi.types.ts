@@ -157,7 +157,8 @@ export type OdooApiOrderLineWrite = {
 export type OdooApiPaymentMethod = 'card' | 'paypal' | 'bank_transfer'
 
 export type OdooApiOrderWrite = {
-  client_ref: string
+  /** Riferimento stabile PWA (`pwa-<id>`) per riprendere l’ordine utente; non usare `client_ref`. */
+  tlb_hl_ref: string
   customer_id: number
   shipping_address_id?: number
   invoice_address_id?: number
@@ -268,6 +269,8 @@ export type OdooApiReconciliation = {
 export type OdooApiOrder = {
   id: number
   name: string
+  /** Riferimento PWA stabile; `client_ref` solo legacy in lettura. */
+  tlb_hl_ref?: string | null
   client_ref?: string | null
   state?: string
   date_order?: string | null

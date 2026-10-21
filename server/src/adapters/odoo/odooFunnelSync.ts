@@ -60,7 +60,7 @@ export async function syncSaleOrderFunnelState(
     }
 
     if (fields.has('tlb_hl_ref')) {
-      vals.tlb_hl_ref = `PWA ${state.pwaOrderId}`
+      vals.tlb_hl_ref = `pwa-${state.pwaOrderId}`
     }
 
     if (Object.keys(vals).length > 0) {

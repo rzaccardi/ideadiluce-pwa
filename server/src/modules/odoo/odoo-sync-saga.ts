@@ -177,7 +177,7 @@ export async function executeEnsureSaleOrder(ctx: OdooCallContext, pwaOrderId: s
       odooPartnerId: order.odooPartnerId,
       odooSaleOrderId: order.odooSaleOrderId,
       pwaOrderId: order.id,
-      clientOrderRef: order.clientOrderRef ?? `PWA ${order.id}`,
+      clientOrderRef: order.clientOrderRef ?? `pwa-${order.id}`,
       orderNotes: order.orderNotes,
       courierNotes: order.courierNotes,
       paymentMethod: order.paymentMethod ? paymentMethodToDTO(order.paymentMethod) : null,

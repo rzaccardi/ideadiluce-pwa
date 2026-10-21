@@ -26,7 +26,7 @@ function isPwaOrderRef(value: string | null | undefined): boolean {
   return /^PWA\b/i.test(ref) || /^pwa-/i.test(ref)
 }
 
-/** Domain XML-RPC: confermati + bozze PWA (`tlb_hl_ref` `PWA …`; legacy `client_order_ref`). */
+/** Domain XML-RPC: confermati + bozze PWA (`tlb_hl_ref` `pwa-…`; legacy `client_order_ref`). */
 export function buildAccountSaleOrderDomain(input?: {
   partnerIds?: number[] | null
   includePwaDrafts?: boolean
@@ -40,8 +40,8 @@ export function buildAccountSaleOrderDomain(input?: {
         '&',
         ['state', 'in', ['draft', 'sent']],
         '|',
-        ['tlb_hl_ref', '=ilike', 'PWA%'],
-        ['client_order_ref', '=ilike', 'PWA%'],
+        ['tlb_hl_ref', '=ilike', 'pwa%'],
+        ['client_order_ref', '=ilike', 'pwa%'],
       ]
     : [['state', 'in', states]]
   if (input?.partnerIds && input.partnerIds.length > 0) {

@@ -204,7 +204,7 @@ export function createLiveOdooOrderAdapter(): OdooOrderAdapter {
       const partnerShippingId = await resolveShippingPartnerId(ctx, input)
       const clientRef =
         input.clientOrderRef?.trim() ||
-        (input.pwaOrderId && input.pwaOrderId !== 'new' ? `PWA ${input.pwaOrderId}` : undefined)
+        (input.pwaOrderId && input.pwaOrderId !== 'new' ? `pwa-${input.pwaOrderId}` : undefined)
       return adapter.createOrUpdateSaleOrder(ctx, {
         odooPartnerId: input.odooPartnerId,
         odooPartnerShippingId: partnerShippingId,

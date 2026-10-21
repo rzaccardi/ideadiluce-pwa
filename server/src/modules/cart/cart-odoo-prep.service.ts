@@ -69,7 +69,7 @@ async function syncDraftSaleOrderIfPresent(input: CartOdooPrepInput): Promise<vo
   await orderAdapter.createOrUpdateSaleOrder(ctx, {
     odooPartnerId: order.odooPartnerId,
     odooSaleOrderId: order.odooSaleOrderId,
-    clientOrderRef: order.clientOrderRef ?? `PWA ${order.id}`,
+    clientOrderRef: order.clientOrderRef ?? `pwa-${order.id}`,
     orderNotes: order.orderNotes ?? undefined,
     courierNotes: order.courierNotes ?? undefined,
     currencyCode: cart.currencyCode,
