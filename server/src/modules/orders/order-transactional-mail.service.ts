@@ -184,7 +184,7 @@ export const orderTransactionalMail = {
     }
   },
 
-  /** Conferma ordine + account ospite se richiesto. Idempotente. */
+  /** Conferma ordine (se PWA_ORDER_CONFIRMATION_MAIL) + account ospite. Idempotente. */
   async notifyPaidCustomer(order: PwaOrder, correlationId: string): Promise<void> {
     await this.sendOrderConfirmation(order, correlationId)
     try {
