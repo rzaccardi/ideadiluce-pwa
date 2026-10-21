@@ -33,8 +33,10 @@ export function mapOdooApiCarrier(
 ): string {
   const carrier = shipping?.carrierCode?.trim().toLowerCase() ?? ''
   const service = shipping?.serviceCode?.trim().toLowerCase() ?? ''
-  if (carrier === 'dhl' || carrier === 'dhl_express') return 'dhl'
-  if (carrier === 'fedex') return 'fedex'
+  // Odoo sceglie il vettore per servizio (tlb_hl_carrier_map: "fedex:fedex_priority", "dhl:p", ...)
+  const rawService = shipping?.serviceCode?.trim() ?? ''
+  if (carrier === 'dhl' || carrier === 'dhl_express') return rawService ? `dhl:${rawService}` : 'dhl'
+  if (carrier === 'fedex') return rawService ? `fedex:${rawService}` : 'fedex'
   if (carrier === 'internal' || carrier === '') {
     if (service.startsWith('pickup') || /ritiro|pickup/i.test(shipping?.label ?? '')) return 'pickup'
     if (service === 'free' || /gratis|free/i.test(shipping?.label ?? '')) return 'free'

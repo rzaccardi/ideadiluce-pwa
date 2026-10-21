@@ -13,11 +13,12 @@ import {
 
 describe('mapOdooApiCarrier', () => {
   it('normalizza dhl_express e internal pickup/free/flat', () => {
-    expect(mapOdooApiCarrier({ carrierCode: 'dhl_express', serviceCode: 'express', label: 'DHL' })).toBe('dhl')
+    expect(mapOdooApiCarrier({ carrierCode: 'dhl_express', serviceCode: 'P', label: 'DHL' })).toBe('dhl:P')
+    expect(mapOdooApiCarrier({ carrierCode: 'dhl', serviceCode: '', label: 'DHL' })).toBe('dhl')
     expect(mapOdooApiCarrier({ carrierCode: 'internal', serviceCode: 'pickup_roma', label: 'Ritiro' })).toBe('pickup')
     expect(mapOdooApiCarrier({ carrierCode: 'internal', serviceCode: 'free', label: 'Gratis' })).toBe('free')
     expect(mapOdooApiCarrier({ carrierCode: 'internal', serviceCode: 'flat', label: 'Tariffa fissa' })).toBe('flat')
-    expect(mapOdooApiCarrier({ carrierCode: 'fedex', serviceCode: 'ip', label: 'FedEx' })).toBe('fedex')
+    expect(mapOdooApiCarrier({ carrierCode: 'fedex', serviceCode: 'FEDEX_PRIORITY', label: 'FedEx' })).toBe('fedex:FEDEX_PRIORITY')
   })
 })
 
