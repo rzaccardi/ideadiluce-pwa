@@ -25,7 +25,7 @@ const PREVIEW_VARS: Record<string, string> = {
   order_short: 'G6B82C',
   pwa_order_id: 'ord_esempio',
   hours: '24',
-  reset_url: 'https://shop.ideadiluce.it/account/reimposta-password?token=esempio',
+  reset_url: 'https://shop.ideadiluce.it/reset-password?token=esempio',
   order_ref: 'G6B82C',
   order_number: 'G6B82C',
   amount: '€ 312,32',

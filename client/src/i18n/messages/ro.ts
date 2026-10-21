@@ -477,9 +477,11 @@ export const messages: Record<MessageKey, string> = {
   'reset.invalidLink': 'Link invalid.',
   'reset.expiredLink': 'Link expirat sau invalid. Solicită un link nou.',
   'reset.passwordLabel': 'Parolă nouă (min. 8 caractere)',
+  'reset.confirmPassword': 'Confirmă parola nouă',
+  'reset.mismatch': 'Parolele nu coincid.',
+  'reset.success': 'Parolă actualizată. Acum te poți autentifica.',
+  'reset.error': 'Nu s-a putut actualiza parola. Încearcă din nou.',
   'reset.requestNewLink': 'Solicită un link nou',
-  'reset.viaEmail':
-    'Resetarea parolei se face prin linkul primit pe email. Deschide acel link, setează parola nouă, apoi autentifică-te pe site cu noile date.',
   'cart.title': 'Coș',
   'cart.pageTitle': 'Coșul tău',
   'cart.description': 'Verifică produsele, actualizează cantitățile și continuă către checkout.',

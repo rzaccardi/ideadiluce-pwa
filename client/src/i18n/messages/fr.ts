@@ -407,9 +407,11 @@ export const messages: Record<MessageKey, string> = {
   'reset.invalidLink': 'Lien non valide.',
   'reset.expiredLink': 'Lien expiré ou non valide. Demandez un nouveau lien.',
   'reset.passwordLabel': 'Nouveau mot de passe (min. 8 caractères)',
+  'reset.confirmPassword': 'Confirmer le nouveau mot de passe',
+  'reset.mismatch': 'Les mots de passe ne correspondent pas.',
+  'reset.success': 'Mot de passe mis à jour. Vous pouvez maintenant vous connecter.',
+  'reset.error': 'Impossible de mettre à jour le mot de passe. Veuillez réessayer.',
   'reset.requestNewLink': 'Demander un nouveau lien',
-  'reset.viaEmail':
-    'La réinitialisation du mot de passe se fait via le lien reçu par e-mail. Ouvrez ce lien, définissez votre nouveau mot de passe, puis connectez-vous au site.',
   'cart.title': 'Panier',
   'cart.pageTitle': 'Votre panier',
   'cart.description': 'Vérifiez les articles, mettez à jour les quantités et passez au checkout.',

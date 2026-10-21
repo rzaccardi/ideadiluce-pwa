@@ -6,7 +6,6 @@ import { publicAppUrl } from '../../lib/mail.js'
 import { logger } from '../../lib/logger.js'
 import { hashSessionToken } from '../../lib/token-hash.js'
 import { AppError } from '../../types/errors.js'
-import { requestOdooPasswordReset } from '../../adapters/odoo/odooPortalUserAdapter.js'
 import { sendPwaMail } from '../../adapters/odoo/odooMailAdapter.js'
 import {
   ensureSatelliteFromOdooPortal,
@@ -19,50 +18,43 @@ function resetExpiry(): Date {
   return new Date(Date.now() + env.PASSWORD_RESET_TOKEN_HOURS * 60 * 60 * 1000)
 }
 
-/** Preferisci reset nativo Odoo (auth_signup) quando l'identità portal è la fonte di verità. */
-function odooPasswordResetEnabled(): boolean {
-  return isOdooAuthIdentityRequired()
-}
-
 export const passwordResetService = {
+  /**
+   * Emette token PWA e invia `[PWA] Reimposta password` con
+   * `{APP_PUBLIC_URL}/reset-password?token=…` (mail via Odoo).
+   * Non usa il reset nativo auth_signup (`/web/reset_password`).
+   */
   async requestReset(email: string, correlationId?: string): Promise<void> {
     const normalized = email.toLowerCase().trim()
     const emergency = await isEmergencyMode()
     const ctx = { correlationId: correlationId ?? 'password-reset' }
+    const odooIdentity = isOdooAuthIdentityRequired()
 
-    if (odooPasswordResetEnabled() && !emergency) {
+    let user = await prisma.customerSatellite.findUnique({ where: { email: normalized } })
+
+    // Proietta satellite dal portal Odoo se manca (identità Odoo oppure emergency).
+    if (!user && (odooIdentity || emergency)) {
       try {
-        const result = await requestOdooPasswordReset(ctx, normalized)
-        if (result === 'sent') return
-        // Odoo non trova / non invia: fail-closed: non inventare reset su User locale.
-        logger.warn('password_reset.odoo_no_local_fallback', {
-          correlationId,
-          email: normalized,
-          result,
-        })
-        return
+        const ok = await ensureSatelliteFromOdooPortal(ctx, normalized)
+        if (!ok && odooIdentity && !emergency) {
+          logger.info('password_reset.odoo_portal_missing_no_mail', {
+            correlationId,
+            email: normalized,
+          })
+          return
+        }
       } catch (e) {
-        logger.warn('password_reset.odoo_failed_no_local_fallback', {
+        logger.warn('password_reset.ensure_satellite_failed', {
           correlationId,
           email: normalized,
           error: e instanceof Error ? e.message : String(e),
         })
-        return
-      }
-    }
-
-    // Path locale / emergency: solo satellite già presente (niente stub inventato da email).
-    let user = await prisma.customerSatellite.findUnique({ where: { email: normalized } })
-
-    if (!user && emergency && correlationId) {
-      try {
-        await ensureSatelliteFromOdooPortal({ correlationId }, normalized)
-      } catch {
-        /* Odoo giù */
+        if (odooIdentity && !emergency) return
       }
       user = await prisma.customerSatellite.findUnique({ where: { email: normalized } })
     }
 
+    // Fail-closed: niente email se non esiste un account noto.
     if (!user) return
 
     const rawToken = crypto.randomBytes(32).toString('hex')
@@ -88,7 +80,6 @@ export const passwordResetService = {
   },
 
   async resetPassword(token: string, password: string, correlationId?: string): Promise<void> {
-    // Path PWA: emergency / ODOO_ENABLED=false. Con Odoo attivo la password va solo sul portal.
     const tokenHash = hashSessionToken(token)
     const row = await prisma.passwordResetToken.findUnique({
       where: { tokenHash },

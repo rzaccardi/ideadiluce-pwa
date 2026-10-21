@@ -407,9 +407,11 @@ export const messages: Record<MessageKey, string> = {
   'reset.invalidLink': 'Ungültiger Link.',
   'reset.expiredLink': 'Link abgelaufen oder ungültig. Fordern Sie einen neuen Link an.',
   'reset.passwordLabel': 'Neues Passwort (mind. 8 Zeichen)',
+  'reset.confirmPassword': 'Neues Passwort bestätigen',
+  'reset.mismatch': 'Die Passwörter stimmen nicht überein.',
+  'reset.success': 'Passwort aktualisiert. Sie können sich jetzt anmelden.',
+  'reset.error': 'Passwort konnte nicht aktualisiert werden. Bitte erneut versuchen.',
   'reset.requestNewLink': 'Neuen Link anfordern',
-  'reset.viaEmail':
-    'Das Zurücksetzen des Passworts erfolgt über den Link in der E-Mail. Öffnen Sie diesen Link, legen Sie ein neues Passwort fest und melden Sie sich dann auf der Website an.',
   'cart.title': 'Warenkorb',
   'cart.pageTitle': 'Ihr Warenkorb',
   'cart.description': 'Artikel prüfen, Mengen aktualisieren und zum Checkout gehen.',

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const {
-  requestOdooPasswordReset,
+  ensureSatelliteFromOdooPortal,
   isOdooAuthIdentityRequired,
   syncPasswordToOdooPortal,
   isEmergencyMode,
@@ -9,7 +9,7 @@ const {
   prismaPasswordResetCreate,
   sendPwaMail,
 } = vi.hoisted(() => ({
-  requestOdooPasswordReset: vi.fn(),
+  ensureSatelliteFromOdooPortal: vi.fn(),
   isOdooAuthIdentityRequired: vi.fn(() => false),
   syncPasswordToOdooPortal: vi.fn(),
   isEmergencyMode: vi.fn(async () => false),
@@ -23,11 +23,11 @@ vi.mock('../../config/env.js', () => ({
 }))
 
 vi.mock('../../adapters/odoo/odooPortalUserAdapter.js', () => ({
-  requestOdooPasswordReset,
+  requestOdooPasswordReset: vi.fn(),
 }))
 
 vi.mock('./odoo-account-sync.service.js', () => ({
-  ensureSatelliteFromOdooPortal: vi.fn(),
+  ensureSatelliteFromOdooPortal,
   ensurePwaUserStubFromOdoo: vi.fn(),
   isOdooAuthIdentityRequired,
   syncPasswordToOdooPortal,
@@ -66,21 +66,34 @@ describe('passwordResetService.requestReset', () => {
     isEmergencyMode.mockResolvedValue(false)
   })
 
-  it('con Odoo attivo preferisce reset nativo e non invia mail PWA se sent', async () => {
+  it('con Odoo attivo proietta satellite e invia mail PWA con reset_url', async () => {
     isOdooAuthIdentityRequired.mockReturnValue(true)
-    requestOdooPasswordReset.mockResolvedValue('sent')
+    prismaUserFindUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ odooPartnerId: 9, email: 'a@b.it' })
+    ensureSatelliteFromOdooPortal.mockResolvedValue(true)
+    prismaPasswordResetCreate.mockResolvedValue({})
+    sendPwaMail.mockResolvedValue(undefined)
 
     await passwordResetService.requestReset('a@b.it', 'corr-1')
 
-    expect(requestOdooPasswordReset).toHaveBeenCalled()
-    expect(sendPwaMail).not.toHaveBeenCalled()
-    expect(prismaPasswordResetCreate).not.toHaveBeenCalled()
+    expect(ensureSatelliteFromOdooPortal).toHaveBeenCalled()
+    expect(prismaPasswordResetCreate).toHaveBeenCalled()
+    expect(sendPwaMail).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        templateKey: 'password_reset',
+        vars: expect.objectContaining({
+          reset_url: expect.stringMatching(/^https:\/\/shop\.test\/reset-password\?token=/),
+        }),
+      }),
+    )
   })
 
-  it('con Odoo attivo non fa fallback su User locale se portal non trovato', async () => {
+  it('con Odoo attivo non invia mail se portal non trovato', async () => {
     isOdooAuthIdentityRequired.mockReturnValue(true)
-    requestOdooPasswordReset.mockResolvedValue('not_found')
-    prismaUserFindUnique.mockResolvedValue({ id: 'u1', email: 'a@b.it' })
+    prismaUserFindUnique.mockResolvedValue(null)
+    ensureSatelliteFromOdooPortal.mockResolvedValue(false)
 
     await passwordResetService.requestReset('a@b.it', 'corr-1')
 
@@ -89,13 +102,13 @@ describe('passwordResetService.requestReset', () => {
   })
 
   it('con Odoo disabilitato usa reset PWA su satellite esistente', async () => {
-    prismaUserFindUnique.mockResolvedValue({ id: 'u1', email: 'a@b.it' })
+    prismaUserFindUnique.mockResolvedValue({ odooPartnerId: 1, email: 'a@b.it' })
     prismaPasswordResetCreate.mockResolvedValue({})
     sendPwaMail.mockResolvedValue(undefined)
 
     await passwordResetService.requestReset('a@b.it', 'corr-1')
 
-    expect(requestOdooPasswordReset).not.toHaveBeenCalled()
+    expect(ensureSatelliteFromOdooPortal).not.toHaveBeenCalled()
     expect(prismaPasswordResetCreate).toHaveBeenCalled()
     expect(sendPwaMail).toHaveBeenCalledWith(
       expect.anything(),

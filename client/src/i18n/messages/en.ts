@@ -476,9 +476,11 @@ export const messages: Record<MessageKey, string> = {
   'reset.invalidLink': 'Invalid link.',
   'reset.expiredLink': 'Link expired or invalid. Request a new link.',
   'reset.passwordLabel': 'New password (min 8 characters)',
+  'reset.confirmPassword': 'Confirm new password',
+  'reset.mismatch': 'Passwords do not match.',
+  'reset.success': 'Password updated. You can now sign in.',
+  'reset.error': 'Unable to update the password. Please try again.',
   'reset.requestNewLink': 'Request new link',
-  'reset.viaEmail':
-    'Password reset happens via the link you receive by email. Open that link, set your new password, then sign in on the site with your new credentials.',
   'cart.title': 'Cart',
   'cart.pageTitle': 'Your cart',
   'cart.description': 'Review items, update quantities, and proceed to checkout.',
