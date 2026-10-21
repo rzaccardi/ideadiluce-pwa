@@ -9,6 +9,8 @@ import {
   isRomePickupEligible,
   selectShippingMethod,
 } from '@/features/checkout'
+import { cartStore } from '@/features/cart/cart.store'
+import { resolveCartMaxLeadTimeDays } from '@/lib/product-availability'
 import { CheckoutShippingOptions } from './CheckoutShippingOptions'
 import { CheckoutInfoNote } from './CheckoutStepPrimitives'
 import { useI18n } from '@/hooks/use-i18n'
@@ -18,6 +20,9 @@ import { CheckoutStepBackButton } from './CheckoutStepBackButton'
 export function CheckoutShippingMethodStep() {
   const { t, tParams } = useI18n()
   const checkout = useSnapshot(checkoutStore)
+  const cart = useSnapshot(cartStore)
+  const deliveryEstimateDays =
+    resolveCartMaxLeadTimeDays(cart.cart?.items ?? []) ?? checkout.deliveryEstimateDays
 
   return (
     <section className="space-y-5">
@@ -34,12 +39,14 @@ export function CheckoutShippingMethodStep() {
       />
 
       {freeShippingSelectionLocked() ? (
-        <CheckoutInfoNote>{t('checkout.shipping.freeShippingLockedHint')}</CheckoutInfoNote>
+        <CheckoutInfoNote tone="success">
+          {t('checkout.shipping.freeShippingLockedHint')}
+        </CheckoutInfoNote>
       ) : null}
 
-      {checkout.deliveryEstimateDays != null ? (
+      {deliveryEstimateDays != null ? (
         <CheckoutInfoNote>
-          {tParams('checkout.shipping.deliveryEstimate', { days: checkout.deliveryEstimateDays })}
+          {tParams('checkout.shipping.deliveryEstimate', { days: deliveryEstimateDays })}
         </CheckoutInfoNote>
       ) : null}
 
@@ -56,12 +63,12 @@ export function CheckoutShippingMethodStep() {
           disabled={
             !canAdvanceFromStep('shipping_method') ||
             checkout.isLoading ||
-            checkout.shippingQuotesLoading ||
-            Boolean(checkout.shippingSelectingRef)
+            checkout.shippingQuotesLoading
           }
+          loading={checkout.isLoading || checkout.shippingQuotesLoading}
           onClick={() => void advanceCheckoutStep()}
         >
-          {checkout.isLoading || checkout.shippingQuotesLoading || checkout.shippingSelectingRef
+          {checkout.isLoading || checkout.shippingQuotesLoading
             ? t('checkout.processing')
             : t('checkout.continueToPayment')}
         </StripePayButton>

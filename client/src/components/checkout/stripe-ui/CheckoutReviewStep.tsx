@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSnapshot } from 'valtio/react'
 import type { ReactNode } from 'react'
 import type { CartDTO, ShippingQuoteDTO } from '@/types/dto'
@@ -8,10 +8,12 @@ import { formatStreetLine } from '@/lib/checkout-address.validators'
 import {
   canStartCheckout,
   checkoutStore,
+  isBusinessCheckout,
   prepareCheckoutPayment,
   selectedShippingQuote,
   setTermsAccepted,
   updateCheckoutOrderNotes,
+  updateClientOrderRef,
 } from '@/features/checkout'
 import { acknowledgePricing } from '@/features/cart'
 import { formatMoney } from '@/lib/format'
@@ -25,9 +27,13 @@ import {
 import { useI18n } from '@/hooks/use-i18n'
 import {
   CheckoutActionRow,
+  StripeControlledInput,
+  StripeFieldGroup,
+  StripeFieldLabel,
   StripePayButton,
 } from './StripeFields'
 import { CheckoutStepBackButton } from './CheckoutStepBackButton'
+import { CheckoutLegalLinks } from './CheckoutLegalLinks'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 
 type Props = {
@@ -35,6 +41,10 @@ type Props = {
   onConfirmPay: () => void
   payLabel: string
   canPay: boolean
+  /** Solo note, termini e CTA paga (niente riepilogo duplicato). */
+  embedded?: boolean
+  /** Con embedded: mostra Indietro verso lo step indirizzi. */
+  showBack?: boolean
 }
 
 function formatAddress(address: {
@@ -81,20 +91,35 @@ function LegalPolicyLink({ href, children }: { href: string; children: ReactNode
   )
 }
 
-export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Props) {
+export function CheckoutReviewStep({
+  cart,
+  onConfirmPay,
+  payLabel,
+  canPay,
+  embedded = false,
+  showBack = false,
+}: Props) {
   const { t } = useI18n()
   const lp = useLocalePath()
   const checkout = useSnapshot(checkoutStore)
+  const business = isBusinessCheckout()
   const shippingQuote: ShippingQuoteDTO | null = selectedShippingQuote()
   const totalCents = checkoutTotalCents(cart, shippingQuote, checkout.taxBreakdown)
   const tax = checkout.taxBreakdown
   const needsPricingConfirmation = Boolean(cart.needsPricingConfirmation)
+  /** Flusso a step (embedded): niente banner/dialog — non interrompere l'acquisto. */
+  const gateOnPricingConfirm = !embedded && needsPricingConfirmation
   const [pricingConfirmOpen, setPricingConfirmOpen] = useState(false)
   const [pricingConfirmPending, setPricingConfirmPending] = useState(false)
 
   const pricingWarnings = (cart.warnings ?? []).filter(
     (w) => /price|prezzo|listino|cache/i.test(w) && !/odoo/i.test(w),
   )
+
+  useEffect(() => {
+    if (!embedded || !needsPricingConfirmation) return
+    void acknowledgePricing().catch(() => undefined)
+  }, [embedded, needsPricingConfirmation])
 
   async function proceedToPay() {
     setTermsAccepted(true)
@@ -103,11 +128,14 @@ export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Pro
   }
 
   async function handlePayClick() {
-    if (needsPricingConfirmation) {
+    if (gateOnPricingConfirm) {
       setPricingConfirmOpen(true)
       return
     }
     try {
+      if (embedded && needsPricingConfirmation) {
+        await acknowledgePricing().catch(() => undefined)
+      }
       await proceedToPay()
     } catch {
       /* errore in store */
@@ -137,7 +165,7 @@ export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Pro
 
   return (
     <section className="space-y-5">
-      {needsPricingConfirmation ? (
+      {gateOnPricingConfirm ? (
         <div
           role="status"
           className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950"
@@ -156,65 +184,87 @@ export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Pro
         </div>
       ) : null}
 
-      <CheckoutReviewCard title={t('checkout.review.summaryTitle')}>
-        {shippingQuote ? (
-          <CheckoutReviewRow label={t('checkout.summary.shipping')} value={shippingQuote.label} />
-        ) : null}
-        {tax ? (
-          <>
+      {!embedded ? (
+        <>
+          <CheckoutReviewCard title={t('checkout.review.summaryTitle')}>
+            {shippingQuote ? (
+              <CheckoutReviewRow label={t('checkout.summary.shipping')} value={shippingQuote.label} />
+            ) : null}
+            {tax ? (
+              <>
+                <CheckoutReviewRow
+                  label={t('checkout.summary.subtotal')}
+                  value={formatMoney(tax.netCents, cart.currencyCode)}
+                />
+                <CheckoutReviewRow label={tax.taxLabel} value={formatMoney(tax.taxCents, cart.currencyCode)} />
+                <CheckoutReviewRow
+                  label={t('checkout.summary.shipping')}
+                  value={
+                    shippingQuote?.amountCents === 0
+                      ? t('checkout.summary.free')
+                      : formatMoney(shippingQuote?.amountCents ?? 0, cart.currencyCode)
+                  }
+                />
+              </>
+            ) : null}
             <CheckoutReviewRow
-              label={t('checkout.summary.subtotal')}
-              value={formatMoney(tax.netCents, cart.currencyCode)}
+              label={t('checkout.summary.total')}
+              value={formatMoney(totalCents, cart.currencyCode)}
+              strong
             />
-            <CheckoutReviewRow label={tax.taxLabel} value={formatMoney(tax.taxCents, cart.currencyCode)} />
-            <CheckoutReviewRow
-              label={t('checkout.summary.shipping')}
-              value={
-                shippingQuote?.amountCents === 0
-                  ? t('checkout.summary.free')
-                  : formatMoney(shippingQuote?.amountCents ?? 0, cart.currencyCode)
-              }
-            />
-          </>
-        ) : null}
-        <CheckoutReviewRow
-          label={t('checkout.summary.total')}
-          value={formatMoney(totalCents, cart.currencyCode)}
-          strong
-        />
-      </CheckoutReviewCard>
+          </CheckoutReviewCard>
 
-      <details className="rounded-xl border border-[#e7eaee] bg-idl-tech-panel px-4 py-3">
-        <summary className="cursor-pointer text-sm font-bold text-idl-graphite">
-          {t('checkout.review.detailsToggle')}
-        </summary>
-        <div className="mt-3 space-y-3 border-t border-idl-tech-border pt-3 text-sm text-[#5b616b]">
-          <div>
-            <p className="font-semibold text-idl-graphite">{t('common.email')}</p>
-            <p>{checkout.draft.email}</p>
-          </div>
-          <div>
-            <p className="font-semibold text-idl-graphite">{t('checkout.billingAddress')}</p>
-            <pre className="mt-1 whitespace-pre-wrap font-sans">
-              {formatAddress(checkout.draft.billing)}
-            </pre>
-          </div>
-          <div>
-            <p className="font-semibold text-idl-graphite">{t('checkout.shippingAddress')}</p>
-            <pre className="mt-1 whitespace-pre-wrap font-sans">
-              {formatAddress(checkout.draft.shipping)}
-            </pre>
-          </div>
-          <CheckoutReviewRow
-            label={t('checkout.payment')}
-            value={
-              checkout.selectedPaymentMethod === 'bank_transfer'
-                ? t('checkout.payment.bankTransfer')
-                : t('checkout.payment.card')
-            }
-          />
+          <details className="rounded-xl border border-[#e7eaee] bg-idl-tech-panel px-4 py-3">
+            <summary className="cursor-pointer text-sm font-bold text-idl-graphite">
+              {t('checkout.review.detailsToggle')}
+            </summary>
+            <div className="mt-3 space-y-3 border-t border-idl-tech-border pt-3 text-sm text-[#5b616b]">
+              <div>
+                <p className="font-semibold text-idl-graphite">{t('common.email')}</p>
+                <p>{checkout.draft.email}</p>
+              </div>
+              <div>
+                <p className="font-semibold text-idl-graphite">{t('checkout.billingAddress')}</p>
+                <pre className="mt-1 whitespace-pre-wrap font-sans">
+                  {formatAddress(checkout.draft.billing)}
+                </pre>
+              </div>
+              <div>
+                <p className="font-semibold text-idl-graphite">{t('checkout.shippingAddress')}</p>
+                <pre className="mt-1 whitespace-pre-wrap font-sans">
+                  {formatAddress(checkout.draft.shipping)}
+                </pre>
+              </div>
+              <CheckoutReviewRow
+                label={t('checkout.payment')}
+                value={
+                  checkout.selectedPaymentMethod === 'bank_transfer'
+                    ? t('checkout.payment.bankTransfer')
+                    : t('checkout.payment.card')
+                }
+              />
+            </div>
+          </details>
+        </>
+      ) : null}
+
+      {/* Sotto il pagamento (pagina unica): note (+ ref azienda) → termini/policy → CTA → link legali. */}
+      {business ? (
+        <div>
+          <StripeFieldLabel htmlFor="checkout-client-order-ref">
+            {t('checkout.review.clientOrderRef')}
+          </StripeFieldLabel>
+          <StripeFieldGroup>
+            <StripeControlledInput
+              id="checkout-client-order-ref"
+              name="clientOrderRef"
+              placeholder={t('checkout.billing.clientOrderRefOptional')}
+              value={checkout.clientOrderRef}
+              onValueChange={(value) => updateClientOrderRef(value)}
+            />
+          </StripeFieldGroup>
         </div>
-      </details>
+      ) : null}
 
       <div className="space-y-2">
         <label htmlFor="checkout-order-notes" className="block text-sm font-semibold text-idl-graphite">
@@ -241,10 +291,8 @@ export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Pro
         {t('checkout.review.legalAcceptanceAfter')}
       </p>
 
-      <p className="text-center text-xs text-[#9298a3]">{t('checkout.review.secureFooter')}</p>
-
       <CheckoutActionRow>
-        <CheckoutStepBackButton />
+        {!embedded || showBack ? <CheckoutStepBackButton /> : null}
         <StripePayButton
           className="min-w-0 flex-1"
           disabled={!canPay || !canStartCheckout() || pricingConfirmPending}
@@ -259,6 +307,8 @@ export function CheckoutReviewStep({ cart, onConfirmPay, payLabel, canPay }: Pro
           {payLabel}
         </StripePayButton>
       </CheckoutActionRow>
+
+      {embedded ? <CheckoutLegalLinks theme="light" className="justify-center" /> : null}
 
       <ConfirmDialog
         open={pricingConfirmOpen}

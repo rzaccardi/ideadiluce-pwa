@@ -156,6 +156,27 @@ export function isCheckoutAddressValid(address: unknown): address is CheckoutAdd
   return checkoutAddressSchema.safeParse(address).success
 }
 
+/**
+ * Allinea billing a shipping quando:
+ * - utente autenticato senza dropship (same-as-shipping forzato), oppure
+ * - billing incompleto ma shipping completo (evita payload stale verso Odoo/DB).
+ */
+export function resolveCheckoutBillingAddress<T extends CheckoutAddressInput>(input: {
+  billingAddress: T
+  shippingAddress: T
+  authenticated?: boolean
+  hasDropship?: boolean
+}): T {
+  const { billingAddress, shippingAddress, authenticated = false, hasDropship = false } = input
+  if (authenticated && !hasDropship) {
+    return { ...shippingAddress }
+  }
+  if (!isCheckoutAddressValid(billingAddress) && isCheckoutAddressValid(shippingAddress)) {
+    return { ...shippingAddress }
+  }
+  return billingAddress
+}
+
 export function normalizeCheckoutAddress(
   address: Partial<CheckoutAddressInput> & Pick<CheckoutAddressInput, 'line1' | 'city' | 'postalCode' | 'country'>,
 ): CheckoutAddressInput {

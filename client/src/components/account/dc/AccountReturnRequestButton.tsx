@@ -42,6 +42,7 @@ export function AccountReturnRequestButton({
   const [open, setOpen] = useState(false)
   const [notes, setNotes] = useState('')
   const [pending, setPending] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(alreadyRequested)
   const ignoreBackdropUntilRef = useRef(0)
   const expired = !returnEligible && !submitted
@@ -53,6 +54,7 @@ export function AccountReturnRequestButton({
   useEffect(() => {
     if (!open) return
     ignoreBackdropUntilRef.current = Date.now() + 400
+    setSubmitError(null)
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape' && !pending) setOpen(false)
@@ -73,6 +75,7 @@ export function AccountReturnRequestButton({
 
   async function handleSubmit() {
     setPending(true)
+    setSubmitError(null)
     try {
       const result = await requestOrderReturn(orderId, notes.trim() || undefined, locale)
       setSubmitted(true)
@@ -82,7 +85,13 @@ export function AccountReturnRequestButton({
         result.alreadyRequested ? t('orders.return.toastAlready') : t('orders.return.toastSuccess'),
       )
     } catch (e) {
-      const message = e instanceof ApiRequestError ? (e.userMessage ?? e.message) : String(e)
+      const fromApi =
+        e instanceof ApiRequestError ? (e.userMessage ?? e.message).trim() : ''
+      const message =
+        e instanceof ApiRequestError && e.code === 'RETURN_NOT_ALLOWED'
+          ? t('orders.return.errorNotAllowed')
+          : fromApi || t('orders.return.errorGeneric')
+      setSubmitError(message)
       toast.error(message)
     } finally {
       setPending(false)
@@ -143,14 +152,29 @@ export function AccountReturnRequestButton({
                   <span className={ui.labelSm}>{t('orders.return.notesLabel')}</span>
                   <textarea
                     value={notes}
-                    onChange={(event) => setNotes(event.target.value)}
+                    onChange={(event) => {
+                      setNotes(event.target.value)
+                      if (submitError) setSubmitError(null)
+                    }}
                     maxLength={2000}
                     rows={4}
                     disabled={pending}
                     placeholder={t('orders.return.notesPlaceholder')}
                     className={cn(ui.input, 'mt-1 resize-y')}
+                    aria-invalid={Boolean(submitError)}
+                    aria-describedby={submitError ? 'return-request-error' : undefined}
                   />
                 </label>
+
+                {submitError ? (
+                  <p
+                    id="return-request-error"
+                    role="alert"
+                    className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/80 dark:bg-[#3a1518] dark:text-[#f5c4c4]"
+                  >
+                    {submitError}
+                  </p>
+                ) : null}
 
                 <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                   <button

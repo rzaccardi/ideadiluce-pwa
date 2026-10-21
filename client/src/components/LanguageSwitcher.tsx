@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useId, useRef, useState } from 'react'
-import { PWA_LOCALES, LOCALE_LABEL, LOCALE_NAME, HTML_LANG, type PwaLocale } from '@/lib/locale'
+import { PWA_LOCALES, LOCALE_NAME, HTML_LANG, type PwaLocale } from '@/lib/locale'
 import { localeFlagUrl } from '@/lib/locale-flags'
 import { useLocale } from '@/context/locale-context'
 import { useI18n } from '@/hooks/use-i18n'
@@ -15,10 +15,25 @@ const FLAG_SIZE_OPTION = 20
 function LocaleFlag({
   locale,
   size,
+  className,
 }: {
   locale: PwaLocale
-  size: typeof FLAG_SIZE_TRIGGER | typeof FLAG_SIZE_OPTION | 22 | 16
+  size: typeof FLAG_SIZE_TRIGGER | typeof FLAG_SIZE_OPTION | 22 | 16 | 'fill'
+  className?: string
 }) {
+  if (size === 'fill') {
+    return (
+      <img
+        src={localeFlagUrl(locale)}
+        alt=""
+        width={38}
+        height={38}
+        className={cn('absolute inset-0 size-full max-w-none object-cover', className)}
+        decoding="async"
+      />
+    )
+  }
+
   const px =
     size === FLAG_SIZE_TRIGGER
       ? 'size-6'
@@ -33,7 +48,7 @@ function LocaleFlag({
       alt=""
       width={size}
       height={size}
-      className={cn('block max-w-none shrink-0 rounded-full', px)}
+      className={cn('block max-w-none shrink-0 rounded-full', px, className)}
       decoding="async"
     />
   )
@@ -87,7 +102,6 @@ export function LanguageSwitcher({ variant = 'icon', onOpenChange, onLocaleChang
   const isHeader = variant === 'header'
   const isUtilityBar = variant === 'utilityBar'
   const isMobileNav = variant === 'mobileNav'
-  const isLabeled = isHeader || isUtilityBar
   const otherLocales = PWA_LOCALES.filter((loc) => loc !== locale)
 
   if (isMobileNav) {
@@ -124,7 +138,7 @@ export function LanguageSwitcher({ variant = 'icon', onOpenChange, onLocaleChang
   }
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className={cn(isHeader ? ui.headerIconSlot : 'relative')}>
       <button
         type="button"
         onClick={() => setMenuOpen(!open)}
@@ -132,45 +146,40 @@ export function LanguageSwitcher({ variant = 'icon', onOpenChange, onLocaleChang
         aria-haspopup="listbox"
         aria-controls={listId}
         aria-label={tParams('language.switcher.current', { locale: LOCALE_NAME[locale] })}
+        title={LOCALE_NAME[locale]}
         className={cn(
           ui.interactive,
-          isUtilityBar
-            ? ui.utilityBarLink
-            : ui.headerAction,
           isHeader
-            ? ui.headerActionBtn
-            : !isUtilityBar
-              ? cn(
-                  'size-6 rounded-full p-0 ring-2 ring-idl-ink ring-offset-2 ring-offset-idl-paper focus-visible:outline-idl-brass',
+            ? cn(
+                ui.headerIconBtn,
+                'relative overflow-hidden border-idl-border-strong hover:border-idl-brass',
+                open && 'border-idl-brass',
+              )
+            : isUtilityBar
+              ? ui.utilityBarLink
+              : cn(
+                  'size-6 overflow-hidden rounded-full p-0 ring-2 ring-idl-ink ring-offset-2 ring-offset-idl-paper focus-visible:outline-idl-brass',
                   open && 'ring-idl-brass',
-                )
-              : undefined,
+                ),
         )}
       >
-        <LocaleFlag
-          locale={locale}
-          size={isUtilityBar ? 16 : isHeader ? 22 : FLAG_SIZE_TRIGGER}
-        />
-        {isLabeled ? (
+        {isHeader ? (
+          <LocaleFlag locale={locale} size="fill" />
+        ) : (
           <>
-            <span
-              className={cn(
-                isHeader && ui.headerActionText,
-                isHeader && 'text-[12.5px] tracking-wide',
-                isUtilityBar && 'text-[12.5px]',
-              )}
-              lang={isUtilityBar ? HTML_LANG[locale] : undefined}
-            >
-              {isUtilityBar ? LOCALE_NAME[locale] : LOCALE_LABEL[locale]}
-            </span>
-            <span
-              className={cn('text-[9px] leading-none opacity-60', isHeader && 'max-lg:hidden')}
-              aria-hidden
-            >
-              ▾
-            </span>
+            <LocaleFlag locale={locale} size={isUtilityBar ? 16 : FLAG_SIZE_TRIGGER} />
+            {isUtilityBar ? (
+              <>
+                <span className="text-[12.5px]" lang={HTML_LANG[locale]}>
+                  {LOCALE_NAME[locale]}
+                </span>
+                <span className="text-[9px] leading-none opacity-60" aria-hidden>
+                  ▾
+                </span>
+              </>
+            ) : null}
           </>
-        ) : null}
+        )}
       </button>
 
       {open ? (

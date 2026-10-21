@@ -31,8 +31,24 @@ export { sessionExpiry }
 
 const AUTH_MERGE_TRANSACTION = { timeout: 15_000 } as const
 
-/** Unisce il carrello guest della sessione corrente con eventuali carrelli ACTIVE del partner. */
-export async function mergeCartsForUser(sessionId: string, odooPartnerId: number) {
+/** Come collegare i carrelli alla sessione dopo login/registrazione. */
+export type CartAttachMode =
+  /** Unisce guest + eventuali ACTIVE del partner (login account classico). */
+  | 'merge'
+  /**
+   * Checkout: adotta solo il carrello guest della sessione corrente;
+   * altri ACTIVE del partner vengono abbandonati (niente merge righe).
+   */
+  | 'adopt_session'
+
+/** Unisce / adotta il carrello guest della sessione corrente sul partner. */
+export async function mergeCartsForUser(
+  sessionId: string,
+  odooPartnerId: number,
+  options?: { mode?: CartAttachMode },
+) {
+  const mode = options?.mode ?? 'merge'
+
   await prisma.cart.updateMany({
     where: { sessionId, odooPartnerId: null, status: 'ACTIVE' },
     data: { odooPartnerId },
@@ -43,6 +59,29 @@ export async function mergeCartsForUser(sessionId: string, odooPartnerId: number
     '../cart/cart-bank-transfer-guard.js'
   )
   await detachActiveCartsBoundToPendingBankTransfer(odooPartnerId)
+
+  if (mode === 'adopt_session') {
+    // Checkout: tieni solo il carrello della sessione corrente; niente restore/merge
+    // di altri ACTIVE del partner (altrimenti `findActiveByPartner` riporta prodotti abbandonati).
+    const sessionCart = await prisma.cart.findFirst({
+      where: { status: 'ACTIVE', odooPartnerId, sessionId },
+      include: { items: true },
+      orderBy: { updatedAt: 'desc' },
+    })
+
+    const abandonedAt = new Date()
+    await prisma.cart.updateMany({
+      where: sessionCart
+        ? { status: 'ACTIVE', odooPartnerId, id: { not: sessionCart.id } }
+        : { status: 'ACTIVE', odooPartnerId },
+      data: { status: 'ABANDONED', abandonedAt, sessionId: null },
+    })
+
+    if (!sessionCart) return
+
+    await bumpCartReservation(sessionCart.id, sessionCart.items.length > 0)
+    return
+  }
 
   const carts = await prisma.cart.findMany({
     where: { status: 'ACTIVE', odooPartnerId },
@@ -161,6 +200,8 @@ export const authService = {
     sessionId: string
     odooPartnerId?: number | null
     odooUid?: number | null
+    /** Default `merge`. Checkout login/register usa `adopt_session`. */
+    cartMode?: CartAttachMode
   }): Promise<UserDTO> {
     const { user, sessionId, odooUid } = params
     const partnerId = params.odooPartnerId ?? user.odooPartnerId
@@ -178,9 +219,23 @@ export const authService = {
       odooUid: odooUid ?? null,
       expiresAt: sessionExpiry(),
     })
-    await mergeCartsForUser(sessionId, partnerId)
-    await mergeWishlistForPartner(sessionId, partnerId)
-    await mergeOrdersForPartner(sessionId, partnerId, user.email)
+    // Carrello: critico per la sessione checkout. Wishlist/ordini: background
+    // così mail/sync Odoo non ritardano la risposta auth (overlay UI).
+    await mergeCartsForUser(sessionId, partnerId, { mode: params.cartMode ?? 'merge' })
+    void mergeWishlistForPartner(sessionId, partnerId).catch((e) => {
+      logger.warn('auth.merge_wishlist_failed', {
+        sessionId,
+        odooPartnerId: partnerId,
+        error: e instanceof Error ? e.message : String(e),
+      })
+    })
+    void mergeOrdersForPartner(sessionId, partnerId, user.email).catch((e) => {
+      logger.warn('auth.merge_orders_failed', {
+        sessionId,
+        odooPartnerId: partnerId,
+        error: e instanceof Error ? e.message : String(e),
+      })
+    })
     return toUserDTO(user)
   },
 
@@ -327,8 +382,10 @@ export const authService = {
     input: { email: string; password: string },
     sessionId: string,
     correlationId?: string,
+    options?: { cartMode?: CartAttachMode },
   ): Promise<UserDTO> {
     const ctxCorrelationId = correlationId ?? `login:${input.email.toLowerCase().trim()}`
+    const cartMode = options?.cartMode ?? 'merge'
 
     // Odoo-first: se Odoo è richiesto, SOLO portal. Nessun fallback bcrypt / find locale.
     if (isOdooAuthIdentityRequired()) {
@@ -337,6 +394,7 @@ export const authService = {
         input.email,
         input.password,
         sessionId,
+        { cartMode },
       )
       if (odooUser) return odooUser
       throw new AppError(
@@ -360,6 +418,7 @@ export const authService = {
           user: hydrated,
           sessionId,
           odooPartnerId: hydrated.odooPartnerId,
+          cartMode,
         })
       }
     }

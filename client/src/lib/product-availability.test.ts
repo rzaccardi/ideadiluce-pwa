@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   getProductAvailabilityStatus,
+  resolveAvailabilityLeadTimeDays,
+  resolveCartMaxLeadTimeDays,
   resolveMaxOrderableQty,
 } from './product-availability'
 
@@ -152,6 +154,75 @@ describe('getProductAvailabilityStatus - matrice requisiti', () => {
     expect(r.status).toBe('out_of_stock')
     expect(r.canAddToCart).toBe(false)
     expect(r.showRestockNotify).toBe(false)
+  })
+})
+
+describe('resolveCartMaxLeadTimeDays - allineato PDP', () => {
+  it('max tra righe miste in-stock + ordinabili', () => {
+    const days = resolveCartMaxLeadTimeDays([
+      {
+        quantity: 1,
+        purchasable: true,
+        availabilityStatus: 'available',
+        availability: { stockQty: 5, effectiveLeadDays: null, isOrderable: true },
+      },
+      {
+        quantity: 3,
+        purchasable: true,
+        availabilityStatus: 'available',
+        availability: { stockQty: 0, effectiveLeadDays: 5, isOrderable: true },
+      },
+      {
+        quantity: 1,
+        purchasable: true,
+        availabilityStatus: 'available',
+        availability: { stockQty: 0, effectiveLeadDays: 12, isOrderable: true },
+      },
+      {
+        quantity: 1,
+        purchasable: false,
+        availabilityStatus: 'blocked',
+        availability: { stockQty: 0, effectiveLeadDays: 99, isOrderable: false },
+      },
+    ])
+    expect(days).toBe(12)
+  })
+
+  it('null se tutte le righe sono Caso 1 (solo BASE)', () => {
+    expect(
+      resolveCartMaxLeadTimeDays([
+        {
+          quantity: 2,
+          purchasable: true,
+          availabilityStatus: 'available',
+          availability: { stockQty: 10, effectiveLeadDays: null, isOrderable: true },
+        },
+      ]),
+    ).toBeNull()
+  })
+
+  it('rispetta qty: Q ≤ S → nessun lead anche se LT fornitore noto', () => {
+    expect(
+      resolveAvailabilityLeadTimeDays({
+        availability: {
+          qtyAvailable: 16,
+          isOrderable: true,
+          customerLeadTimeDays: 15,
+        },
+        requestedQty: 10,
+      }),
+    ).toBeNull()
+
+    expect(
+      resolveAvailabilityLeadTimeDays({
+        availability: {
+          qtyAvailable: 16,
+          isOrderable: true,
+          customerLeadTimeDays: 15,
+        },
+        requestedQty: 20,
+      }),
+    ).toBe(15)
   })
 })
 

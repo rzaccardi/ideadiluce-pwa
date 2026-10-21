@@ -236,15 +236,33 @@ export async function seedDefaultShippingZones() {
         methods: {
           create: [
             {
+              name: 'Spedizione standard',
+              type: ShippingMethodType.FLAT_RATE,
+              flatAmountCents: 590,
+              priority: 1,
+            },
+            {
               name: 'Spedizione gratuita',
               type: ShippingMethodType.FREE_SHIPPING,
               freeAboveCents: 20000,
-              priority: 1,
+              priority: 2,
+            },
+            {
+              name: 'DHL Express (live)',
+              type: ShippingMethodType.LIVE_DHL,
+              surchargePct: 0,
+              priority: 3,
+            },
+            {
+              name: 'FedEx (live)',
+              type: ShippingMethodType.LIVE_FEDEX,
+              surchargePct: 0,
+              priority: 4,
             },
             {
               name: pickupLabel,
               type: ShippingMethodType.PICKUP,
-              priority: 2,
+              priority: 5,
             },
           ],
         },
@@ -254,7 +272,7 @@ export async function seedDefaultShippingZones() {
 
   await syncCarrierCredentialsFromEnv()
   await ensurePickupMethodAndFreeThreshold()
-  await ensureItaliaDomesticMethodsOnly()
+  await ensureItaliaDomesticMethods()
   await ensureInternationalShippingZones()
 }
 
@@ -371,7 +389,7 @@ async function ensurePickupMethodAndFreeThreshold() {
         zoneId: itZone.id,
         name: pickupLabel,
         type: ShippingMethodType.PICKUP,
-        priority: 2,
+        priority: 5,
       },
     })
   }
@@ -384,32 +402,65 @@ async function ensurePickupMethodAndFreeThreshold() {
         name: 'Spedizione gratuita',
         type: ShippingMethodType.FREE_SHIPPING,
         freeAboveCents: 20000,
-        priority: 1,
+        priority: 2,
       },
     })
   }
 }
 
+const ITALIA_DOMESTIC_METHODS: Array<{
+  name: string
+  type: ShippingMethodType
+  flatAmountCents: number | null
+  surchargePct: number
+  priority: number
+}> = [
+  {
+    name: 'Spedizione standard',
+    type: ShippingMethodType.FLAT_RATE,
+    flatAmountCents: 590,
+    surchargePct: 0,
+    priority: 1,
+  },
+  {
+    name: 'DHL Express (live)',
+    type: ShippingMethodType.LIVE_DHL,
+    flatAmountCents: null,
+    surchargePct: 0,
+    priority: 3,
+  },
+  {
+    name: 'FedEx (live)',
+    type: ShippingMethodType.LIVE_FEDEX,
+    flatAmountCents: null,
+    surchargePct: 0,
+    priority: 4,
+  },
+]
+
 /**
- * Italia: solo gratuita + ritiro.
- * Niente flat «Spedizione standard» né live Worldwide/International (UE / Extra-UE).
+ * Italia: ripristina combinazioni complete (standard, gratuita, DHL, FedEx, ritiro Roma).
+ * Il ritiro resta opzionale e filtrato da `isRomePickupEligible` in quotes — non è l’unica scelta.
+ * Idempotente: riaggiunge metodi rimossi da `ensureItaliaDomesticMethodsOnly` (ace2ba9).
  */
-async function ensureItaliaDomesticMethodsOnly() {
+async function ensureItaliaDomesticMethods() {
   const itZone = await prisma.shippingZone.findFirst({
     where: { countries: { has: 'IT' } },
+    include: { methods: true },
   })
   if (!itZone) return
 
-  await prisma.shippingMethod.deleteMany({
-    where: {
-      zoneId: itZone.id,
-      type: {
-        in: [
-          ShippingMethodType.FLAT_RATE,
-          ShippingMethodType.LIVE_DHL,
-          ShippingMethodType.LIVE_FEDEX,
-        ],
+  for (const desired of ITALIA_DOMESTIC_METHODS) {
+    if (itZone.methods.some((m) => m.type === desired.type)) continue
+    await prisma.shippingMethod.create({
+      data: {
+        zoneId: itZone.id,
+        name: desired.name,
+        type: desired.type,
+        flatAmountCents: desired.flatAmountCents,
+        surchargePct: desired.surchargePct,
+        priority: desired.priority,
       },
-    },
-  })
+    })
+  }
 }

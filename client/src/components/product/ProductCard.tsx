@@ -20,6 +20,7 @@ import { ProductPrice } from '@/components/product/ProductPrice'
 import { ProductCardLitMedia } from '@/components/product/ProductCardLitMedia'
 import { ProductIdentifierMeta } from '@/components/product/ProductIdentifierMeta'
 import { ProductBrandMark } from '@/components/product/ProductBrandMark'
+import { resolveProductCardCatalogKind } from '@/lib/product-catalog-kind'
 import { productCardObjectFitClass } from '@/lib/product-image-fit'
 import { cn } from '@/utils/cn'
 
@@ -86,6 +87,7 @@ export function ProductCard({ product, className }: Props) {
   }
 
   const imageFitClass = productCardObjectFitClass(product)
+  const showBrandLogo = resolveProductCardCatalogKind(product) === 'design'
 
   return (
     <article
@@ -121,7 +123,7 @@ export function ProductCard({ product, className }: Props) {
       </Link>
       <div className="flex flex-1 flex-col p-4">
         <Link to={productHref} className="block flex-1 text-left">
-          {product.brand ? (
+          {product.brand && showBrandLogo ? (
             <div className="mb-1.5">
               <ProductBrandMark brand={product.brand} size="sm" className="text-idl-muted" />
             </div>

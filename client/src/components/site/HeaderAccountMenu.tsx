@@ -127,10 +127,9 @@ export function HeaderAccountMenu({ variant = 'header', onOpenChange, onNavigate
         to={lp('/login')}
         aria-label={t('nav.login')}
         title={t('nav.login')}
-        className={cn(ui.interactive, ui.headerAction, ui.headerActionBtn, 'no-underline')}
+        className={cn(ui.interactive, ui.headerIconBtn, ui.headerActionBtn, 'no-underline')}
       >
-        <UserIcon className="size-[17px] shrink-0" />
-        <span className={ui.headerActionText}>{t('nav.login')}</span>
+        <UserIcon className={ui.headerIcon} />
       </Link>
     )
   }
@@ -227,7 +226,7 @@ export function HeaderAccountMenu({ variant = 'header', onOpenChange, onNavigate
 
   return (
     <>
-      <div ref={rootRef} className="relative">
+      <div ref={rootRef} className={ui.headerIconSlot}>
         <button
           type="button"
           onClick={() => setMenuOpen(!open)}
@@ -238,7 +237,7 @@ export function HeaderAccountMenu({ variant = 'header', onOpenChange, onNavigate
           className={cn(
             ui.interactive,
             ui.headerIconBtn,
-            'border-idl-border-strong bg-idl-design font-serif text-[17px] font-semibold text-idl-glow hover:border-idl-brass',
+            'border-idl-border-strong bg-idl-design font-serif text-[17px] font-semibold leading-none text-idl-glow hover:border-idl-brass',
           )}
         >
           {userInitial(user)}

@@ -1,19 +1,14 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { CheckoutElementsProvider } from '@stripe/react-stripe-js/checkout'
-import { useSnapshot } from 'valtio/react'
 import { StripePaymentForm, type StripePaymentFormHandle } from './StripePaymentForm'
 import { getCheckoutStripeAppearance } from './stripe-ui/constants'
 import { useTheme } from '@/context/theme-context'
 import { getStripePublishableKey } from '@/lib/env'
 import { normalizeStripeClientSecret } from '@/lib/stripe-client-secret'
 import { getStripePromise, preloadStripe, preloadStripeCheckoutModule, resolvePublishableKey } from '@/lib/stripe-loader'
-import {
-  checkoutStore,
-  getCheckoutBillingAddress,
-  getCheckoutShippingAddress,
-} from '@/features/checkout'
+import { getCheckoutBillingAddress, getCheckoutShippingAddress } from '@/features/checkout'
 import { stripeCheckoutAddressDefaults } from '@/lib/stripe-checkout-address'
 
 type Props = {
@@ -38,7 +33,6 @@ export function StripePaymentShell({
   onPaymentSuccess,
 }: Props) {
   const { isDark } = useTheme()
-  const checkout = useSnapshot(checkoutStore)
   const stripeAppearance = getCheckoutStripeAppearance(isDark)
   const envPublishableKey = getStripePublishableKey()
   const [remotePublishableKey, setRemotePublishableKey] = useState<string | null>(null)
@@ -82,15 +76,27 @@ export function StripePaymentShell({
     [clientSecret],
   )
 
-  const stripeAddressDefaults = useMemo(
-    () => stripeCheckoutAddressDefaults(getCheckoutBillingAddress(), getCheckoutShippingAddress()),
-    [
-      checkout.draft.billing,
-      checkout.draft.shipping,
-      checkout.draft.billingSameAsShipping,
-      checkout.dropshipAddress,
-      checkout.deliveryRecipient,
-    ],
+  // Congela defaultValues al clientSecret: altrimenti ogni edit indirizzo ricrea `options`
+  // e CheckoutElementsProvider (deps su options) fa churn su Payment/Express Checkout.
+  const addressDefaultsRef = useRef<ReturnType<typeof stripeCheckoutAddressDefaults>>(undefined)
+  const defaultsSecretRef = useRef<string | null>(null)
+  if (defaultsSecretRef.current !== normalizedClientSecret) {
+    defaultsSecretRef.current = normalizedClientSecret
+    addressDefaultsRef.current = stripeCheckoutAddressDefaults(
+      getCheckoutBillingAddress(),
+      getCheckoutShippingAddress(),
+    )
+  }
+
+  const checkoutElementsOptions = useMemo(
+    () => ({
+      clientSecret: normalizedClientSecret,
+      ...(addressDefaultsRef.current ? { defaultValues: addressDefaultsRef.current } : {}),
+      elementsOptions: {
+        appearance: stripeAppearance,
+      },
+    }),
+    [normalizedClientSecret, stripeAppearance],
   )
 
   if (configLoading) {
@@ -116,13 +122,7 @@ export function StripePaymentShell({
     <CheckoutElementsProvider
       key={isDark ? 'stripe-dark' : 'stripe-light'}
       stripe={stripePromise}
-      options={{
-        clientSecret: normalizedClientSecret,
-        ...(stripeAddressDefaults ? { defaultValues: stripeAddressDefaults } : {}),
-        elementsOptions: {
-          appearance: stripeAppearance,
-        },
-      }}
+      options={checkoutElementsOptions}
     >
       <StripePaymentForm
         ref={formRef}

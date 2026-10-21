@@ -272,20 +272,22 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
     }
     document.addEventListener('keydown', onKey)
 
+    // Scroll lock solo sotto lg. Non chiudere al change di matchMedia:
+    // `overflow: hidden` toglie la scrollbar, può far passare la viewport
+    // sopra i 1023px e richiudere subito il mini-cart (click «non fa nulla»).
+    // Sheet vs dropdown resta gestito via CSS (`lg:hidden` / `lg:block`).
     const mq = window.matchMedia('(max-width: 1023px)')
-    const lockScroll = mq.matches
     const prevOverflow = document.body.style.overflow
 
-    const onViewportChange = () => {
-      if (!mq.matches) setCartOpen(false)
+    const syncScrollLock = () => {
+      document.body.style.overflow = mq.matches ? 'hidden' : prevOverflow
     }
-    mq.addEventListener('change', onViewportChange)
-
-    if (lockScroll) document.body.style.overflow = 'hidden'
+    syncScrollLock()
+    mq.addEventListener('change', syncScrollLock)
 
     return () => {
       document.removeEventListener('keydown', onKey)
-      mq.removeEventListener('change', onViewportChange)
+      mq.removeEventListener('change', syncScrollLock)
       document.body.style.overflow = prevOverflow
     }
   }, [open])
@@ -313,7 +315,7 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
   const showMiniCart = open && !isCartPageDesktop
 
   return (
-    <div className={cn('relative', isCartPage && 'hidden lg:block')}>
+    <div className={cn(ui.headerIconSlot, isCartPage && 'hidden lg:block')}>
       <button
         type="button"
         onClick={isCartPageDesktop ? undefined : () => setCartOpen(!open)}
@@ -325,63 +327,61 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
           ui.interactive,
           ui.headerIconBtn,
           ui.headerActionBtn,
-          'relative text-sm font-bold',
-          '2xl:size-auto 2xl:gap-1.5 2xl:px-3 2xl:py-1.5 2xl:text-[13px]',
           isCartPageDesktop && 'cursor-default border-idl-brass text-idl-brass',
           isBouncing && !isCartPageDesktop && 'cart-bounce',
         )}
       >
         <CartIcon className={ui.headerIcon} />
-        <span className="hidden 2xl:inline">{t('nav.cart')}</span>
-        {itemCount > 0 ? (
-          <span
-            className={cn(
-              'absolute bottom-0 right-0 inline-flex min-h-[18px] min-w-[18px] translate-x-1/4 translate-y-1/4 items-center justify-center rounded-full bg-idl-amber px-1.5 text-[11px] font-bold text-white dark:text-idl-design 2xl:static 2xl:translate-x-0 2xl:translate-y-0',
-              badgePop && 'cart-badge-pop',
-            )}
-          >
-            {itemCount}
-          </span>
-        ) : null}
       </button>
+      {itemCount > 0 ? (
+        <span
+          className={cn(
+            'pointer-events-none absolute -right-1 -bottom-1 z-[1] inline-flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-idl-amber px-1.5 text-[11px] font-bold leading-none text-white dark:text-idl-design',
+            badgePop && 'cart-badge-pop',
+          )}
+          aria-hidden
+        >
+          {itemCount}
+        </span>
+      ) : null}
 
       {isClient
         ? createPortal(
             <AnimatePresence>
               {showMiniCart ? (
-                <>
-                  <motion.button
-                    key="mini-cart-backdrop"
-                    type="button"
-                    aria-label={t('cart.floating.close')}
-                    className={cn(
-                      'fixed inset-0 h-[100dvh] w-screen bg-idl-backdrop lg:hidden',
-                      layers.sheetBackdrop,
-                    )}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={transitionBase}
-                    onClick={() => setCartOpen(false)}
-                  />
-                  <motion.section
-                    key="mini-cart-sheet"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label={t('cart.title')}
-                    className={cn(
-                      'fixed inset-x-0 bottom-0 flex max-h-[min(96dvh,100%)] flex-col rounded-t-[20px] border border-idl-border border-t bg-idl-paper p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl shadow-zinc-950/20 lg:hidden',
-                      layers.sheet,
-                      SITE_PAGE_X_CLASS,
-                    )}
-                    initial={reduceMotion ? false : { y: '100%' }}
-                    animate={{ y: 0 }}
-                    exit={{ y: '100%' }}
-                    transition={transitionBase}
-                  >
-                    <MiniCartPanel {...panelProps} layout="sheet" />
-                  </motion.section>
-                </>
+                <motion.button
+                  key="mini-cart-backdrop"
+                  type="button"
+                  aria-label={t('cart.floating.close')}
+                  className={cn(
+                    'fixed inset-0 h-[100dvh] w-screen bg-idl-backdrop lg:hidden',
+                    layers.sheetBackdrop,
+                  )}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={transitionBase}
+                  onClick={() => setCartOpen(false)}
+                />
+              ) : null}
+              {showMiniCart ? (
+                <motion.section
+                  key="mini-cart-sheet"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={t('cart.title')}
+                  className={cn(
+                    'fixed inset-x-0 bottom-0 flex max-h-[min(96dvh,100%)] flex-col rounded-t-[20px] border border-idl-border border-t bg-idl-paper p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl shadow-zinc-950/20 lg:hidden',
+                    layers.sheet,
+                    SITE_PAGE_X_CLASS,
+                  )}
+                  initial={reduceMotion ? false : { y: '100%' }}
+                  animate={{ y: 0 }}
+                  exit={{ y: '100%' }}
+                  transition={transitionBase}
+                >
+                  <MiniCartPanel {...panelProps} layout="sheet" />
+                </motion.section>
               ) : null}
             </AnimatePresence>,
             document.body,
@@ -390,7 +390,7 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
 
       <AnimatePresence>
         {showMiniCart ? (
-          <section
+          <motion.section
             key="mini-cart-dropdown"
             role="dialog"
             aria-label={t('cart.title')}
@@ -398,9 +398,13 @@ export function HeaderMiniCart({ onOpenChange }: Props) {
               'absolute right-0 top-full mt-2 hidden w-[min(calc(100vw-2.5rem),380px)] rounded-2xl border border-idl-border bg-idl-tech-panel p-4 shadow-2xl shadow-zinc-950/20 lg:block',
               layers.headerDropdown,
             )}
+            initial={reduceMotion ? false : { opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={transitionBase}
           >
             <MiniCartPanel {...panelProps} layout="dropdown" />
-          </section>
+          </motion.section>
         ) : null}
       </AnimatePresence>
     </div>

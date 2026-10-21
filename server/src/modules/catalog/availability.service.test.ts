@@ -10,7 +10,7 @@
  * | >0  | presenti  | ≤S  | Caso 1: available, BASE |
  * | >0  | presenti  | >S  | Caso 2: orderable, BASE+LT |
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   isProductRequestEligible,
   isRestockNotifyEligible,
@@ -73,6 +73,22 @@ describe('resolveVariantAvailability - matrice requisiti', () => {
     const r = resolveVariantAvailability({ stockQty: 0, orderable: true, leadTimeDays: 0 }, 1)
     expect(r.state).toBe('orderable')
     expect(r.effectiveLeadDays).toBe(0)
+  })
+
+  it('Caso 2: LT assente + restockDate futura → lead = giorni a restock (come PDP)', () => {
+    vi.useFakeTimers()
+    // Prima del cambio ora legale (ultimo dom. ottobre) per evitare ±1 da DST.
+    vi.setSystemTime(new Date(2026, 9, 10, 12, 0, 0))
+    try {
+      const r = resolveVariantAvailability(
+        { stockQty: 0, orderable: true, leadTimeDays: null, restockDate: '2026-10-20' },
+        1,
+      )
+      expect(r.state).toBe('orderable')
+      expect(r.effectiveLeadDays).toBe(10)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('Caso 3: S = 0 senza fornitori → out_of_stock, non purchasable', () => {

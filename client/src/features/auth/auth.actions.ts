@@ -70,7 +70,7 @@ async function applyRefreshResult(fallbackUser?: UserDTO) {
 
 async function establishAuthenticatedSession(
   fallbackUser?: UserDTO,
-  options?: { hydrateScope?: HydrateSessionStoresScope },
+  options?: { hydrateScope?: HydrateSessionStoresScope; deferHydrate?: boolean },
 ) {
   let lastError: unknown
   let user: UserDTO | null = null
@@ -100,7 +100,12 @@ async function establishAuthenticatedSession(
       false,
     )
   }
-  await hydrateSessionStores(options?.hydrateScope ?? 'full')
+  // Checkout: sblocca UI appena cookie/JWT/me sono pronti; cart hydrate in background.
+  if (options?.deferHydrate) {
+    void hydrateSessionStores(options.hydrateScope ?? 'full')
+  } else {
+    await hydrateSessionStores(options?.hydrateScope ?? 'full')
+  }
   return user
 }
 
@@ -174,14 +179,16 @@ export async function checkoutRegister(input: {
   password: string
   firstName: string
   lastName: string
-  phone: string
+  phone?: string
   customerSegment?: 'retail' | 'business'
+  companyName?: string
+  vatNumber?: string
 }) {
   authStore.isLoading = true
   authStore.error = null
   try {
     const { user } = await api.auth.checkoutRegister(input)
-    await establishAuthenticatedSession(user, { hydrateScope: 'checkout' })
+    await establishAuthenticatedSession(user, { hydrateScope: 'checkout', deferHydrate: true })
   } catch (e) {
     authStore.error = errMessage(e)
     throw e
@@ -195,7 +202,7 @@ export async function checkoutLogin(email: string, password: string) {
   authStore.error = null
   try {
     const { user } = await api.auth.checkoutLogin({ email, password })
-    await establishAuthenticatedSession(user, { hydrateScope: 'checkout' })
+    await establishAuthenticatedSession(user, { hydrateScope: 'checkout', deferHydrate: true })
   } catch (e) {
     authStore.error = errMessage(e)
     throw e

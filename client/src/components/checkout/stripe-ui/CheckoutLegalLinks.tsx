@@ -9,11 +9,9 @@ type Theme = 'light' | 'dark'
 
 export function CheckoutLegalLinks({
   theme = 'light',
-  showPoweredBy = true,
   className,
 }: {
   theme?: Theme
-  showPoweredBy?: boolean
   className?: string
 }) {
   const lp = useLocalePath()
@@ -29,14 +27,6 @@ export function CheckoutLegalLinks({
           className,
         )}
       >
-        {showPoweredBy ? (
-          <>
-            <li>{t('checkout.poweredByStripe')}</li>
-            <li aria-hidden className={dark ? 'text-[#8a8a90]/60' : 'text-[#9298a3]/60'}>
-              ·
-            </li>
-          </>
-        ) : null}
         <li>
           <Link
             to={lp('/tos')}

@@ -77,6 +77,7 @@ export function usePasswordVisibility(initial = false) {
   const [show, setShow] = useState(initial)
   return {
     show,
+    setShow,
     toggle: () => setShow((v) => !v),
     inputType: show ? ('text' as const) : ('password' as const),
   }

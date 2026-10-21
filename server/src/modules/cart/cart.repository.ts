@@ -31,7 +31,11 @@ export const cartRepository = {
     id: string,
     data: Pick<Prisma.CartUpdateInput, 'estimatedSubtotal' | 'estimatedTax' | 'estimatedShipping' | 'estimatedTotal' | 'lastPricedAt'>,
   ) {
-    return prisma.cart.update({ where: { id }, data, include: { items: true } })
+    return prisma.cart.update({
+      where: { id },
+      data,
+      include: { items: true, shippingSelection: true },
+    })
   },
 
   findItem(cartId: string, itemId: string) {

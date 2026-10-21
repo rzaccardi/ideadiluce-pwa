@@ -12,6 +12,8 @@ export function AppToaster() {
       visibleToasts={4}
       offset={{ top: 16, right: 16 }}
       gap={10}
+      // Sopra i modal storefront (z-[10000]) così gli errori restano leggibili.
+      style={{ zIndex: 10050 }}
       toastOptions={{
         unstyled: true,
         classNames: {

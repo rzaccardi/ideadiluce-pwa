@@ -79,6 +79,9 @@ export const api = {
     login(body: { email: string; password: string }) {
       return apiClient.post<{ user: UserDTO }>('/api/v1/auth/login', body)
     },
+    checkEmail(email: string) {
+      return apiClient.post<{ exists: boolean }>('/api/v1/auth/check-email', { email })
+    },
     checkoutLogin(body: { email: string; password: string }) {
       return apiClient.post<{ user: UserDTO }>('/api/v1/auth/checkout-login', body)
     },
@@ -87,8 +90,10 @@ export const api = {
       password: string
       firstName: string
       lastName: string
-      phone: string
+      phone?: string
       customerSegment?: 'retail' | 'business'
+      companyName?: string
+      vatNumber?: string
     }) {
       return apiClient.post<{ user: UserDTO }>('/api/v1/auth/checkout-register', body)
     },

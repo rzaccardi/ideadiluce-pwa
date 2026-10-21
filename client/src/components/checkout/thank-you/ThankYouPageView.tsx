@@ -174,6 +174,11 @@ export function ThankYouPageView({ order, recommendations, isAuthenticated }: Pr
               {isPending ? t('thankYou.hero.pendingBody') : t('thankYou.hero.confirmedBody')}
             </>
           </p>
+          {!isAuthenticated ? (
+            <p className="mx-auto mt-3 max-w-[560px] text-sm leading-relaxed text-[#5b616b]">
+              {t('checkout.contact.accountCreatedHint')}
+            </p>
+          ) : null}
 
           <div className="mt-5 inline-flex flex-wrap items-center justify-center gap-4 rounded-[10px] border border-[#e7eaee] bg-[#f7f8fa] px-5 py-3.5 sm:gap-[18px] sm:px-[22px]">
               <div className="text-left">

@@ -71,7 +71,12 @@ import { parseShippingAddressJson } from '../users/user.mapper.js'
 import { loadPwaOrderLines } from '../orders/pwa-order-lines.js'
 import { enqueueOdooSyncFailure, enqueueOrderOdooSaga } from '../odoo/odoo-sync-queue.service.js'
 import type { TestCheckoutAddressInput } from '../integrations/integrations.validators.js'
-import { isCheckoutAddressValid, normalizeCheckoutAddress, toE164Phone } from '../checkout/checkout-address.validators.js'
+import {
+  isCheckoutAddressValid,
+  normalizeCheckoutAddress,
+  resolveCheckoutBillingAddress,
+  toE164Phone,
+} from '../checkout/checkout-address.validators.js'
 import {
   buildLinesSnapshot,
   findReusableCheckoutOrder,
@@ -459,8 +464,16 @@ function mapOrderStatus(
 export const paymentsService = {
   async startCheckout(req: Request, body: CheckoutStartBody): Promise<CheckoutStartDTO> {
     const s = assertSession(req)
-    assertLocalTaxFields(body)
-    assertEuVatRequirement(body)
+    const dropshipAddress = body.dropshipAddress ?? body.deliveryRecipient ?? null
+    const billingAddress = resolveCheckoutBillingAddress({
+      billingAddress: body.billingAddress,
+      shippingAddress: body.shippingAddress,
+      authenticated: Boolean(s.odooPartnerId ?? s.user),
+      hasDropship: Boolean(dropshipAddress?.line1?.trim()),
+    })
+    const checkoutBody = { ...body, billingAddress }
+    assertLocalTaxFields(checkoutBody)
+    assertEuVatRequirement(checkoutBody)
     const cart = await activeCartForRequest(req)
     const ctx: OdooCallContext = { correlationId: req.correlationId, req }
     const idempotencyKey = resolveIdempotencyKey(req, body.idempotencyKey, cart.updatedAt)
@@ -469,7 +482,12 @@ export const paymentsService = {
       return mapCheckoutStart(reusable, reusable.checkoutSessionId)
     }
     const pricing = await resolvePricingContext(req)
-    if (reusable?.orderStatus !== 'CHECKOUT_LOCKED') {
+    // Come createSession: se i prezzi Odoo sono freschi (es. dopo shipping.select),
+    // non ripetere /orders/totals — tipicamente 5–15s sul path critico.
+    const needsReprice =
+      reusable?.orderStatus !== 'CHECKOUT_LOCKED' &&
+      !(cartPricedRecently(cart.lastPricedAt) && cart.estimatedSubtotal != null)
+    if (needsReprice) {
       await repriceCartFromOdoo({ correlationId: req.correlationId, req }, cart.id, pricing)
     }
     const cartFresh = await activeCartForRequest(req)
@@ -495,9 +513,9 @@ export const paymentsService = {
     const user = req.sessionRecord?.user
     const segment = user
       ? pricing.segment
-      : (segmentFromDto(body.customerSegment) === 'PROFESSIONAL'
+      : (segmentFromDto(checkoutBody.customerSegment) === 'PROFESSIONAL'
           ? 'RETAIL'
-          : (segmentFromDto(body.customerSegment) ?? pricing.segment))
+          : (segmentFromDto(checkoutBody.customerSegment) ?? pricing.segment))
 
     // Source of truth: totali Odoo già scritti da repriceCartFromOdoo (`/orders/totals`).
     // tax.service resta solo fallback stima UI se Odoo non ha popolato estimatedTax.
@@ -517,8 +535,8 @@ export const paymentsService = {
     if (cartForSnapshot.estimatedTax == null || cartForSnapshot.estimatedSubtotal == null) {
       const fallbackTax = await taxService.calculateForOrder({
         netCents: subtotal,
-        billingCountry: body.billingAddress.country,
-        shippingCountry: body.shippingAddress.country,
+        billingCountry: billingAddress.country,
+        shippingCountry: checkoutBody.shippingAddress.country,
         customerSegment: segment,
         isProfessional: Boolean(user?.isProfessional || user?.customerSegment === 'PROFESSIONAL'),
         vatValid: user?.viesValid ?? null,
@@ -556,8 +574,8 @@ export const paymentsService = {
       throw new AppError('CART_NOT_FOUND', 'Cart not found', 'Carrello non trovato.', 404, false)
     }
     const vatWarning =
-      body.vatForceAccepted && body.business?.vatNumber
-        ? `[VAT forzato] P.IVA ${body.business.vatNumber} non validata VIES - proseguimento manuale.`
+      checkoutBody.vatForceAccepted && checkoutBody.business?.vatNumber
+        ? `[VAT forzato] P.IVA ${checkoutBody.business.vatNumber} non validata VIES - proseguimento manuale.`
         : null
     const priceSnapshot = buildCheckoutPriceSnapshot(cartPriced, {
       estimatedTax: taxOrder.taxCents,
@@ -565,85 +583,99 @@ export const paymentsService = {
       taxLabel: taxOrder.taxLabel,
       disclaimerKey: taxOrder.disclaimerKey,
       odooFiscalPositionId: taxOrder.odooFiscalPositionId,
-      vatForceAccepted: body.vatForceAccepted,
+      vatForceAccepted: checkoutBody.vatForceAccepted,
     })
 
     const isBusiness =
-      body.customerSegment === 'business' ||
-      body.isProfessional === true ||
+      checkoutBody.customerSegment === 'business' ||
+      checkoutBody.isProfessional === true ||
       segment === 'BUSINESS' ||
       segment === 'PROFESSIONAL'
     const businessProfile = isBusiness
       ? {
-          companyName: body.business?.companyName ?? null,
-          vatNumber: body.business?.vatNumber ?? null,
-          fiscalCode: body.business?.fiscalCode ?? null,
-          pec: body.business?.pec ?? null,
-          sdiCode: body.business?.sdiCode ?? null,
-          viesName: body.business?.viesName ?? null,
-          viesAddress: body.business?.viesAddress ?? null,
-          viesRequestDate: body.business?.viesRequestDate ?? null,
+          companyName: checkoutBody.business?.companyName ?? null,
+          vatNumber: checkoutBody.business?.vatNumber ?? null,
+          fiscalCode: checkoutBody.business?.fiscalCode ?? null,
+          pec: checkoutBody.business?.pec ?? null,
+          sdiCode: checkoutBody.business?.sdiCode ?? null,
+          viesName: checkoutBody.business?.viesName ?? null,
+          viesAddress: checkoutBody.business?.viesAddress ?? null,
+          viesRequestDate: checkoutBody.business?.viesRequestDate ?? null,
           isCompany: true,
         }
       : null
 
-    let odooPartnerId: number | null = null
+    let odooPartnerId: number | null = s.odooPartnerId ?? reusable?.odooPartnerId ?? null
     try {
-      const partner = await customerAdapter.findOrCreateCustomer(ctx, {
-        email: body.email,
-        firstName: body.billingAddress.firstName,
-        lastName: body.billingAddress.lastName,
-        phone: body.billingAddress.phone,
-        business: businessProfile,
-        billingAddress: body.billingAddress,
-      })
-      odooPartnerId = partner.odooPartnerId
+      // Sessione già autenticata (register step 1): riusa partner, evita findOrCreate
+      // + sync B2B sul path critico (~secondi Odoo ridondanti dopo register).
+      if (!odooPartnerId) {
+        const partner = await customerAdapter.findOrCreateCustomer(ctx, {
+          email: checkoutBody.email,
+          firstName: billingAddress.firstName,
+          lastName: billingAddress.lastName,
+          phone: billingAddress.phone,
+          business: businessProfile,
+          billingAddress,
+        })
+        odooPartnerId = partner.odooPartnerId
+      }
 
-      if (businessProfile && odooPartnerId) {
+      if (businessProfile && odooPartnerId && !s.odooPartnerId) {
         await customerAdapter.updateCustomerBusiness(ctx, odooPartnerId, businessProfile)
+      } else if (businessProfile && odooPartnerId && s.odooPartnerId) {
+        // Business già noto in sessione: sync Odoo in background.
+        void customerAdapter.updateCustomerBusiness(ctx, odooPartnerId, businessProfile).catch(() => undefined)
       }
 
       if (s.odooPartnerId && odooPartnerId) {
-        const isProFromOdoo = await customerAdapter.syncProfessionalFlagFromPartner(ctx, odooPartnerId)
-        let b2bActive: boolean | undefined
-        try {
-          const account = await customerAdapter.getCustomerAccountByPartnerId(ctx, odooPartnerId)
-          if (account?.b2bActive != null) b2bActive = Boolean(account.b2bActive)
-        } catch {
-          /* best-effort */
-        }
-        const userUpdate: {
-          customerSegment?: 'RETAIL' | 'BUSINESS' | 'PROFESSIONAL'
-          isProfessional?: boolean
-          b2bActive?: boolean
-          companyName?: string | null
-          vatNumber?: string | null
-          fiscalCode?: string | null
-          pec?: string | null
-          sdiCode?: string | null
-        } = {}
-        if (body.customerSegment === 'business') userUpdate.customerSegment = 'BUSINESS'
-        if (body.customerSegment === 'retail') userUpdate.customerSegment = 'RETAIL'
-        if (isProFromOdoo || body.isProfessional) userUpdate.isProfessional = true
-        if (b2bActive != null) userUpdate.b2bActive = b2bActive
-        if (businessProfile?.companyName) userUpdate.companyName = businessProfile.companyName
-        if (businessProfile?.vatNumber) userUpdate.vatNumber = businessProfile.vatNumber
-        if (businessProfile?.fiscalCode) userUpdate.fiscalCode = businessProfile.fiscalCode
-        if (businessProfile?.pec) userUpdate.pec = businessProfile.pec
-        if (businessProfile?.sdiCode) userUpdate.sdiCode = businessProfile.sdiCode
-        if (Object.keys(userUpdate).length > 0) {
-          await prisma.customerSatellite.update({
-            where: { odooPartnerId: s.odooPartnerId },
-            data: userUpdate,
-          })
-        }
+        // Hydrate pro/B2B in background — non blocca create sale.order.
+        void (async () => {
+          try {
+            const isProFromOdoo = await customerAdapter.syncProfessionalFlagFromPartner(ctx, odooPartnerId!)
+            let b2bActive: boolean | undefined
+            try {
+              const account = await customerAdapter.getCustomerAccountByPartnerId(ctx, odooPartnerId!)
+              if (account?.b2bActive != null) b2bActive = Boolean(account.b2bActive)
+            } catch {
+              /* best-effort */
+            }
+            const userUpdate: {
+              customerSegment?: 'RETAIL' | 'BUSINESS' | 'PROFESSIONAL'
+              isProfessional?: boolean
+              b2bActive?: boolean
+              companyName?: string | null
+              vatNumber?: string | null
+              fiscalCode?: string | null
+              pec?: string | null
+              sdiCode?: string | null
+            } = {}
+            if (checkoutBody.customerSegment === 'business') userUpdate.customerSegment = 'BUSINESS'
+            if (checkoutBody.customerSegment === 'retail') userUpdate.customerSegment = 'RETAIL'
+            if (isProFromOdoo || checkoutBody.isProfessional) userUpdate.isProfessional = true
+            if (b2bActive != null) userUpdate.b2bActive = b2bActive
+            if (businessProfile?.companyName) userUpdate.companyName = businessProfile.companyName
+            if (businessProfile?.vatNumber) userUpdate.vatNumber = businessProfile.vatNumber
+            if (businessProfile?.fiscalCode) userUpdate.fiscalCode = businessProfile.fiscalCode
+            if (businessProfile?.pec) userUpdate.pec = businessProfile.pec
+            if (businessProfile?.sdiCode) userUpdate.sdiCode = businessProfile.sdiCode
+            if (Object.keys(userUpdate).length > 0) {
+              await prisma.customerSatellite.update({
+                where: { odooPartnerId: s.odooPartnerId! },
+                data: userUpdate,
+              })
+            }
+          } catch {
+            /* best-effort */
+          }
+        })()
       }
     } catch {
-      odooPartnerId = reusable?.odooPartnerId ?? null
+      odooPartnerId = odooPartnerId ?? reusable?.odooPartnerId ?? null
     }
 
     const checkoutPhone =
-      body.billingAddress.phone?.trim() || body.shippingAddress.phone?.trim() || ''
+      billingAddress.phone?.trim() || checkoutBody.shippingAddress.phone?.trim() || ''
     if (s.odooPartnerId != null && checkoutPhone) {
       await prisma.customerSatellite.update({
         where: { odooPartnerId: s.odooPartnerId },
@@ -651,24 +683,23 @@ export const paymentsService = {
       })
     }
 
-    const dropshipAddress = body.dropshipAddress ?? body.deliveryRecipient ?? null
     let odooPartnerShippingId: number | null = null
     if (env.ODOO_ENABLED && isOdooLiveConfigured() && odooPartnerId) {
       try {
         const resolved = await customerAdapter.resolveOrderShippingPartner(ctx, odooPartnerId, {
           shippingAddress: {
-            firstName: body.shippingAddress.firstName,
-            lastName: body.shippingAddress.lastName,
-            line1: body.shippingAddress.line1,
-            streetNumber: body.shippingAddress.streetNumber ?? '',
-            isSnc: body.shippingAddress.isSnc ?? false,
-            line2: body.shippingAddress.line2,
-            city: body.shippingAddress.city,
-            postalCode: body.shippingAddress.postalCode,
-            province: body.shippingAddress.province,
-            country: body.shippingAddress.country,
-            phone: body.shippingAddress.phone,
-            id: body.shippingAddress.id,
+            firstName: checkoutBody.shippingAddress.firstName,
+            lastName: checkoutBody.shippingAddress.lastName,
+            line1: checkoutBody.shippingAddress.line1,
+            streetNumber: checkoutBody.shippingAddress.streetNumber ?? '',
+            isSnc: checkoutBody.shippingAddress.isSnc ?? false,
+            line2: checkoutBody.shippingAddress.line2,
+            city: checkoutBody.shippingAddress.city,
+            postalCode: checkoutBody.shippingAddress.postalCode,
+            province: checkoutBody.shippingAddress.province,
+            country: checkoutBody.shippingAddress.country,
+            phone: checkoutBody.shippingAddress.phone,
+            id: checkoutBody.shippingAddress.id,
           },
           dropshipAddress,
         })
@@ -683,7 +714,7 @@ export const paymentsService = {
 
     let odooSaleOrderId = existing?.odooSaleOrderId ?? null
     const clientOrderRef =
-      body.clientOrderRef?.trim() ||
+      checkoutBody.clientOrderRef?.trim() ||
       existing?.clientOrderRef ||
       (existing?.id ? `PWA ${existing.id}` : undefined)
     if (env.ODOO_ENABLED && isOdooLiveConfigured() && odooPartnerId != null) {
@@ -693,8 +724,8 @@ export const paymentsService = {
           odooPartnerShippingId,
           odooSaleOrderId,
           clientOrderRef,
-          orderNotes: [body.orderNotes?.trim(), vatWarning].filter(Boolean).join('\n') || undefined,
-          courierNotes: body.shippingAddress.courierNotes,
+          orderNotes: [checkoutBody.orderNotes?.trim(), vatWarning].filter(Boolean).join('\n') || undefined,
+          courierNotes: checkoutBody.shippingAddress.courierNotes,
           fiscalPositionId: taxOrder.odooFiscalPositionId ?? undefined,
           currencyCode: cartFresh.currencyCode,
           lines: cartFresh.items.map((i) => ({
@@ -729,25 +760,25 @@ export const paymentsService = {
         ? await prisma.checkoutSession.update({
             where: { id: existing.checkoutSessionId },
             data: {
-              email: body.email,
+              email: checkoutBody.email,
               odooPartnerId: odooPartnerId,
               odooSaleOrderId,
               shippingMethodRef: shippingSel.methodRef,
-              billingAddressJson: body.billingAddress as object,
-              shippingAddressJson: body.shippingAddress as object,
+              billingAddressJson: billingAddress as object,
+              shippingAddressJson: checkoutBody.shippingAddress as object,
               priceSnapshotJson: priceSnapshot,
             },
           })
         : await prisma.checkoutSession.create({
             data: {
               cartId: cartFresh.id,
-              email: body.email,
+              email: checkoutBody.email,
               state: 'COMMITTED',
               odooPartnerId: s.odooPartnerId ?? undefined,
               odooSaleOrderId,
               shippingMethodRef: shippingSel.methodRef,
-              billingAddressJson: body.billingAddress as object,
-              shippingAddressJson: body.shippingAddress as object,
+              billingAddressJson: billingAddress as object,
+              shippingAddressJson: checkoutBody.shippingAddress as object,
               priceSnapshotJson: priceSnapshot,
               expiresAt: new Date(Date.now() + 86400000),
             },
@@ -761,7 +792,7 @@ export const paymentsService = {
       taxCents: taxOrder.taxCents,
     })
 
-    const lockPrices = Boolean(body.lockPrices)
+    const lockPrices = Boolean(checkoutBody.lockPrices)
     const linesSnapshot = lockPrices ? buildLinesSnapshot(cartPriced) : null
     const orderStatus = lockPrices ? ('CHECKOUT_LOCKED' as const) : ('CHECKOUT_STARTED' as const)
 
@@ -770,25 +801,25 @@ export const paymentsService = {
       checkoutSessionId: checkoutSession.id,
       odooPartnerId: odooPartnerId ?? s.odooPartnerId ?? null,
       sessionId: s.id,
-      email: body.email,
+      email: checkoutBody.email,
       orderStatus,
       paymentStatus: 'NOT_STARTED' as const,
       currencyCode: cartFresh.currencyCode,
       amountTotal: total,
-      billingAddressJson: jsonValue(body.billingAddress),
-      shippingAddressJson: jsonValue(body.shippingAddress),
+      billingAddressJson: jsonValue(billingAddress),
+      shippingAddressJson: jsonValue(checkoutBody.shippingAddress),
       dropshipAddressJson: dropshipAddress ? jsonValue(dropshipAddress) : undefined,
-      clientOrderRef: body.clientOrderRef?.trim() || existing?.clientOrderRef || null,
-      orderNotes: body.orderNotes?.trim() || vatWarning || existing?.orderNotes || null,
-      courierNotes: body.shippingAddress.courierNotes?.trim() || existing?.courierNotes || null,
+      clientOrderRef: checkoutBody.clientOrderRef?.trim() || existing?.clientOrderRef || null,
+      orderNotes: checkoutBody.orderNotes?.trim() || vatWarning || existing?.orderNotes || null,
+      courierNotes: checkoutBody.shippingAddress.courierNotes?.trim() || existing?.courierNotes || null,
       fiscalJson: jsonValue({
-        vatNumber: body.business?.vatNumber ?? null,
+        vatNumber: checkoutBody.business?.vatNumber ?? null,
         fiscalPositionId: taxOrder.odooFiscalPositionId ?? null,
-        vatWarningForced: body.vatForceAccepted ?? false,
-        viesName: body.business?.viesName ?? null,
-        viesAddress: body.business?.viesAddress ?? null,
-        viesValid: body.business?.viesValid ?? body.vatValidated ?? null,
-        viesRequestDate: body.business?.viesRequestDate ?? null,
+        vatWarningForced: checkoutBody.vatForceAccepted ?? false,
+        viesName: checkoutBody.business?.viesName ?? null,
+        viesAddress: checkoutBody.business?.viesAddress ?? null,
+        viesValid: checkoutBody.business?.viesValid ?? checkoutBody.vatValidated ?? null,
+        viesRequestDate: checkoutBody.business?.viesRequestDate ?? null,
       }),
       linesSnapshotJson: linesSnapshot ? jsonValue(linesSnapshot) : existing?.linesSnapshotJson ?? undefined,
       odooSaleOrderId,
@@ -808,12 +839,13 @@ export const paymentsService = {
         taxLabel: taxOrder.taxLabel,
         disclaimerKey: taxOrder.disclaimerKey,
         odooFiscalPositionId: taxOrder.odooFiscalPositionId,
-        vatForceAccepted: body.vatForceAccepted,
+        vatForceAccepted: checkoutBody.vatForceAccepted,
       })
     }
 
     await syncCartContactEmail(cartFresh.id)
-    await syncOrderToOdoo(ctx, order)
+    // Funnel sync non deve ritardare la risposta di start (~1–3s Odoo tipici).
+    void syncOrderToOdoo(ctx, order).catch(() => undefined)
     if (!order.odooPartnerId || !order.odooSaleOrderId) {
       void enqueueOrderOdooSaga(order.id, {
         includeMail: false,

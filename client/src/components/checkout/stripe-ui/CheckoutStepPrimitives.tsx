@@ -44,17 +44,44 @@ export function CheckoutPanel({
   )
 }
 
-/** Nota informativa con icona (es. IVA / corriere). */
-export function CheckoutInfoNote({ children }: { children: ReactNode }) {
+/** Nota informativa con icona (es. IVA / corriere). `success` = entitlement spedizione gratuita. */
+export function CheckoutInfoNote({
+  children,
+  tone = 'neutral',
+}: {
+  children: ReactNode
+  tone?: 'neutral' | 'success'
+}) {
+  const isSuccess = tone === 'success'
   return (
-    <div className="flex gap-2.5 rounded-[11px] border border-[#ededea] bg-idl-tech-panel px-[15px] py-3.5">
-      <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center text-idl-ink" aria-hidden>
+    <div
+      className={cn(
+        'flex gap-2.5 rounded-[11px] border px-[15px] py-3.5',
+        isSuccess
+          ? 'border-[#b7e0c8] bg-[#e8f6ee]'
+          : 'border-[#ededea] bg-idl-tech-panel',
+      )}
+    >
+      <span
+        className={cn(
+          'mt-0.5 flex size-5 shrink-0 items-center justify-center',
+          isSuccess ? 'text-idl-success' : 'text-idl-ink',
+        )}
+        aria-hidden
+      >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.25" />
           <path d="M8 7v4M8 5.5v0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       </span>
-      <p className="text-[12.5px] leading-relaxed text-idl-muted">{children}</p>
+      <p
+        className={cn(
+          'text-[12.5px] leading-relaxed',
+          isSuccess ? 'font-medium text-[#1a8a4a]' : 'text-idl-muted',
+        )}
+      >
+        {children}
+      </p>
     </div>
   )
 }

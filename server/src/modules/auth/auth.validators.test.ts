@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { loginBodySchema, registerBodySchema } from './auth.validators.js'
+import { checkEmailBodySchema, loginBodySchema, registerBodySchema } from './auth.validators.js'
 
 describe('registerBodySchema', () => {
   it('accetta registrazione privato (retail) senza campi azienda', () => {
@@ -66,5 +66,12 @@ describe('loginBodySchema', () => {
     expect(loginBodySchema.safeParse({ email: 'bad', password: 'x' }).success).toBe(false)
     expect(loginBodySchema.safeParse({ email: 'ok@example.com', password: '' }).success).toBe(false)
     expect(loginBodySchema.safeParse({ email: 'ok@example.com', password: 'x' }).success).toBe(true)
+  })
+})
+
+describe('checkEmailBodySchema', () => {
+  it('richiede email valida', () => {
+    expect(checkEmailBodySchema.safeParse({ email: 'bad' }).success).toBe(false)
+    expect(checkEmailBodySchema.safeParse({ email: 'ok@example.com' }).success).toBe(true)
   })
 })

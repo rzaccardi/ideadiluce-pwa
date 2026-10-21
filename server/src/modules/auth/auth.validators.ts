@@ -44,6 +44,10 @@ export const resetPasswordBodySchema = z.object({
   password: z.string().min(8),
 })
 
+export const checkEmailBodySchema = z.object({
+  email: z.string().email(),
+})
+
 export const loginBodySchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
@@ -54,15 +58,38 @@ export const checkoutLoginBodySchema = z.object({
   password: z.string().min(1),
 })
 
-export const checkoutRegisterBodySchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  phone: z
-    .string()
-    .trim()
-    .min(1)
-    .refine(isCheckoutPhoneValid, { message: 'Invalid phone number' }),
-  customerSegment: z.enum(['retail', 'business']).optional(),
-})
+export const checkoutRegisterBodySchema = z
+  .object({
+    email: z.string().email(),
+    password: z.string().min(8),
+    firstName: z.string().min(1),
+    lastName: z.string().min(1),
+    /** Opzionale: raccolto dopo in fatturazione se assente. */
+    phone: z
+      .string()
+      .trim()
+      .optional()
+      .refine((value) => !value || isCheckoutPhoneValid(value), {
+        message: 'Invalid phone number',
+      }),
+    customerSegment: z.enum(['retail', 'business']).optional(),
+    companyName: z.string().trim().min(1).optional(),
+    vatNumber: z.string().trim().min(5).max(32).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.customerSegment !== 'business') return
+    if (!data.companyName?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['companyName'],
+        message: 'Company name required for business accounts',
+      })
+    }
+    if (!data.vatNumber?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['vatNumber'],
+        message: 'VAT number required for business accounts',
+      })
+    }
+  })

@@ -5,8 +5,8 @@
  * Per modificare l'aspetto globale, aggiorna `src/styles/tokens.css`.
  */
 
-/** Padding orizzontale pagine: 16px mobile, 32px tablet, 48px desktop. */
-export const SITE_PAGE_X_CLASS = 'px-4 md:px-8 lg:px-12'
+/** Padding orizzontale pagine: 16px mobile, 32px tablet/lg, 48px da xl. */
+export const SITE_PAGE_X_CLASS = 'px-4 md:px-8 lg:px-8 xl:px-12'
 
 /**
  * Track slider full-bleed: allinea prima/ultima card a SectionContainer

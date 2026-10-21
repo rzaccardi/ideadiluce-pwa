@@ -190,6 +190,8 @@ export function InlineAccountAuthStep({
         phone: trimmedPhone,
         customerSegment: collectCustomerTypeOnRegister ? segment : undefined,
       })
+      // Sessione PWA pronta: chiudi overlay auth prima di onAuthSuccess (prefill).
+      clearAuthLoading()
       setPostAuthPending(true)
       try {
         await onAuthSuccess?.({
@@ -204,7 +206,6 @@ export function InlineAccountAuthStep({
         setPostAuthPending(false)
       }
     } catch (err) {
-      clearAuthLoading()
       if (err instanceof ApiRequestError && err.code === 'EMAIL_TAKEN') {
         setLoginEmail(trimmedEmail)
         setLoginError(err.userMessage ?? err.message)
@@ -214,9 +215,7 @@ export function InlineAccountAuthStep({
           err instanceof ApiRequestError ? (err.userMessage ?? err.message) : t('checkout.account.registerError'),
         )
       }
-      return
-    } finally {
-      setRegisterLoading(false)
+      clearAuthLoading()
     }
   }
 
@@ -230,6 +229,10 @@ export function InlineAccountAuthStep({
     const trimmedEmail = loginEmail.trim()
     try {
       await checkoutLogin(trimmedEmail, loginPassword)
+      if (collectCustomerTypeOnRegister && checkoutStore.initLoadingPhase === 'login') {
+        checkoutStore.initLoadingPhase = null
+      }
+      setLoginLoading(false)
       setPostAuthPending(true)
       try {
         await onAuthSuccess?.({
@@ -240,14 +243,13 @@ export function InlineAccountAuthStep({
         setPostAuthPending(false)
       }
     } catch (err) {
-      if (collectCustomerTypeOnRegister && checkoutStore.initLoadingPhase === 'login') {
-        checkoutStore.initLoadingPhase = null
-      }
       setLoginPassword('')
       setLoginError(
         err instanceof ApiRequestError ? (err.userMessage ?? err.message) : t('checkout.account.loginError'),
       )
-    } finally {
+      if (collectCustomerTypeOnRegister && checkoutStore.initLoadingPhase === 'login') {
+        checkoutStore.initLoadingPhase = null
+      }
       setLoginLoading(false)
     }
   }

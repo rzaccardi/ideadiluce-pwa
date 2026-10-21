@@ -76,7 +76,6 @@ export const MAIL_LOG_TEMPLATE_FILTER_OPTIONS: { value: string; label: string }[
   { value: 'sync_exhausted_admin', label: 'Coda sync esaurita' },
   { value: 'password_reset', label: 'Reset password' },
   { value: 'order_confirmation', label: 'Conferma ordine' },
-  { value: 'bank_transfer_pending', label: 'Istruzioni bonifico' },
   { value: 'order_shipped', label: 'Ordine spedito' },
   { value: 'abandoned_cart', label: 'Carrello abbandonato' },
   { value: 'generic', label: 'Notifica generica' },

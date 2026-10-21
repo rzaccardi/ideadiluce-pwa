@@ -1,6 +1,7 @@
 'use client'
 
 import { useSnapshot } from 'valtio/react'
+import { authStore } from '@/features/auth'
 import {
   advanceCheckoutStep,
   applyResolvedAddress,
@@ -18,7 +19,10 @@ import { CheckoutStepBackButton } from './CheckoutStepBackButton'
 export function CheckoutShippingStep() {
   const { t } = useI18n()
   const checkout = useSnapshot(checkoutStore)
+  const auth = useSnapshot(authStore)
   const form = checkout.draft
+  const forceBillingSameAsShipping =
+    auth.isAuthenticated && (checkout.deliveryRecipient.mode ?? 'self') === 'self'
 
   return (
     <section className="space-y-5">
@@ -35,8 +39,12 @@ export function CheckoutShippingStep() {
       />
 
       <CheckoutToggleCheckbox
-        checked={form.billingSameAsShipping}
-        onChange={(checked) => setBillingSameAsShipping(checked)}
+        checked={forceBillingSameAsShipping || form.billingSameAsShipping}
+        disabled={forceBillingSameAsShipping}
+        onChange={(checked) => {
+          if (forceBillingSameAsShipping) return
+          setBillingSameAsShipping(checked)
+        }}
         label={t('checkout.shipping.diffFromBilling')}
         className="mt-2"
       />

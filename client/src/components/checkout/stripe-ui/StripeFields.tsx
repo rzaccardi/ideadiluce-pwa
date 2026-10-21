@@ -49,12 +49,24 @@ export function StripeFieldLabel({ children, htmlFor }: { children: ReactNode; h
 
 type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   noBorder?: boolean
+  /** Visibilità password controllata (es. forzare show dopo "genera password"). */
+  showPassword?: boolean
+  onShowPasswordChange?: (show: boolean) => void
 }
 
-export function StripeInput({ className, noBorder, type, ...props }: InputProps) {
+export function StripeInput({
+  className,
+  noBorder,
+  type,
+  showPassword: showPasswordControlled,
+  onShowPasswordChange,
+  ...props
+}: InputProps) {
   const password = usePasswordVisibility()
   const isPassword = type === 'password'
-  const resolvedType = isPassword ? password.inputType : type
+  const controlled = showPasswordControlled !== undefined
+  const show = controlled ? showPasswordControlled : password.show
+  const resolvedType = isPassword ? (show ? 'text' : 'password') : type
 
   const input = (
     <input
@@ -79,8 +91,14 @@ export function StripeInput({ className, noBorder, type, ...props }: InputProps)
       {input}
       <div className="absolute right-3 top-1/2 -translate-y-1/2">
         <PasswordVisibilityToggle
-          show={password.show}
-          onToggle={password.toggle}
+          show={show}
+          onToggle={() => {
+            if (controlled) {
+              onShowPasswordChange?.(!showPasswordControlled)
+            } else {
+              password.toggle()
+            }
+          }}
           className="text-idl-muted hover:text-idl-graphite"
         />
       </div>

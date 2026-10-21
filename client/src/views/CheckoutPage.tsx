@@ -1,26 +1,30 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from '@/lib/navigation'
-import { CheckoutLegalLinks } from '@/components/checkout/stripe-ui/CheckoutLegalLinks'
 import { useSnapshot } from 'valtio/react'
 import {
   cartStore,
   discardCartAfterCheckout,
+  dismissReservationExpiredNotice,
   fetchCart,
   refreshCartAfterCheckout,
   removeItem,
 } from '@/features/cart'
 import { authStore, fetchMe } from '@/features/auth'
 import {
+  canFetchShippingQuotes,
   canStartCheckout,
   cartFromFrozenQuoteSummary,
+  checkoutPaymentPrefetchFingerprint,
   checkoutStore,
   completeBankTransferCheckout,
-  createPaymentSession,
+  awaitCheckoutTransitionPrefetch,
+  getNextCheckoutStep,
   hasUsableCheckoutPaymentSession,
   initializeCheckoutNavigation,
   refreshCheckoutAfterCartChange,
+  isCheckoutFormUnlocked,
   isFrozenQuoteCheckout,
   prepareCheckoutPayment,
   prefetchCheckoutPayment,
@@ -30,7 +34,7 @@ import {
   setPaymentMethod,
   refreshTaxBreakdown,
   selectedShippingQuote,
-  startCheckout,
+  shouldSkipCheckoutStep,
   isPaymentRetryCheckout,
 } from '@/features/checkout'
 import type { CartDTO } from '@/types/dto'
@@ -42,15 +46,12 @@ import {
   CheckoutSummaryHeader,
   checkoutTotalCents,
 } from '@/components/checkout/stripe-ui/CheckoutOrderSummary'
-import { CheckoutRegistrationStep } from '@/components/checkout/stripe-ui/CheckoutRegistrationStep'
-import { CheckoutCustomerTypeStep } from '@/components/checkout/stripe-ui/CheckoutCustomerTypeStep'
+import { CheckoutContactSection } from '@/components/checkout/stripe-ui/CheckoutContactSection'
 import { CheckoutAddressesStep } from '@/components/checkout/stripe-ui/CheckoutAddressesStep'
-import { CheckoutDeliveryRecipientStep } from '@/components/checkout/stripe-ui/CheckoutDeliveryRecipientStep'
-import { CheckoutShippingMethodStep } from '@/components/checkout/stripe-ui/CheckoutShippingMethodStep'
 import { CheckoutPaymentStep } from '@/components/checkout/stripe-ui/CheckoutPaymentStep'
 import { CheckoutReviewStep } from '@/components/checkout/stripe-ui/CheckoutReviewStep'
-import { CheckoutStepIndicator } from '@/components/checkout/stripe-ui/CheckoutStepIndicator'
 import { CheckoutStepBody } from '@/components/checkout/stripe-ui/CheckoutStepBody'
+import { CheckoutStepIndicator } from '@/components/checkout/stripe-ui/CheckoutStepIndicator'
 import { CheckoutInlineError } from '@/components/checkout/stripe-ui/StripeFields'
 import { CheckoutPaymentSkeleton } from '@/components/checkout/CheckoutPaymentSkeleton'
 import { StripePaymentShell } from '@/components/checkout/StripePaymentShell'
@@ -61,6 +62,7 @@ import {
   resolveCheckoutLoading,
   useStableCheckoutLoading,
 } from '@/components/checkout/CheckoutLoadingOverlay'
+import { CheckoutCartExpiredModal } from '@/components/checkout/CheckoutCartExpiredModal'
 import { CheckoutSummarySkeleton } from '@/components/checkout/stripe-ui/CheckoutSummarySkeleton'
 import {
   checkoutColumnGutterClass,
@@ -89,11 +91,49 @@ export function CheckoutPage() {
   } | null>(null)
   const checkoutPrepareKeyRef = useRef<string | null>(null)
   const checkoutPrepareBlockedRef = useRef(false)
+  const [cartExpiredModalOpen, setCartExpiredModalOpen] = useState(false)
+
+  const formUnlocked = isCheckoutFormUnlocked()
+  const frozenCheckout = isFrozenQuoteCheckout()
+  const paymentRetry = isPaymentRetryCheckout()
+  const lockedCheckout = frozenCheckout || paymentRetry
+
+  useEffect(() => {
+    if (frozenCheckout || paymentRetry) return
+    if (cart.reservationExpiredNotice || cart.cart?.reservation.expired) {
+      setCartExpiredModalOpen(true)
+    }
+  }, [
+    frozenCheckout,
+    paymentRetry,
+    cart.reservationExpiredNotice,
+    cart.cart?.reservation.expired,
+  ])
+
+  const leaveCheckoutAfterCartExpired = useCallback(
+    (path: '/cart' | '/negozio') => {
+      dismissReservationExpiredNotice()
+      setCartExpiredModalOpen(false)
+      resetCheckout()
+      void fetchCart({ force: true })
+      navigate(path, { replace: true })
+    },
+    [navigate],
+  )
 
   useEffect(() => {
     checkoutDbg.effect('normalizeLegacySteps', { step: checkoutStore.currentStep })
     if (checkoutStore.currentStep === 'billing' || checkoutStore.currentStep === 'shipping') {
       checkoutStore.currentStep = 'addresses'
+    }
+  }, [])
+
+  // Evita overlay «Creazione account» / login bloccato se si esce dal checkout a metà.
+  useEffect(() => {
+    return () => {
+      if (checkoutStore.initLoadingPhase) {
+        checkoutStore.initLoadingPhase = null
+      }
     }
   }, [])
 
@@ -112,8 +152,6 @@ export function CheckoutPage() {
       checkoutStore.paymentRetryStep = searchParams.get('step') === 'review' ? 'review' : 'payment'
     }
 
-    // Reset subito (non dopo fetchCart/fetchMe) così non si cancella input guest
-    // e la precompilazione auth non viene sovrascritta dal reset tardivo.
     if (!isResumeFlow) {
       resetCheckout()
     }
@@ -157,6 +195,7 @@ export function CheckoutPage() {
       frozen: isFrozenQuoteCheckout(),
       paymentRetry: checkoutStore.paymentRetryActive,
       step: checkoutStore.currentStep,
+      formUnlocked: isCheckoutFormUnlocked(),
     })
     if (isFrozenQuoteCheckout()) return
     if (checkoutStore.paymentRetryActive) {
@@ -185,16 +224,55 @@ export function CheckoutPage() {
     if (!auth.isLoading && auth.me) {
       void initializeCheckoutNavigation()
     }
-    if (!auth.isLoading && !auth.isAuthenticated && checkoutStore.currentStep !== 'account') {
-      if (!checkoutStore.guestCheckoutAccepted) {
+    if (!auth.isLoading && !auth.isAuthenticated && !isCheckoutFormUnlocked()) {
+      checkoutStore.currentStep = 'account'
+    }
+  }, [
+    auth.isLoading,
+    auth.isAuthenticated,
+    auth.me,
+    checkout.guestCheckoutAccepted,
+    checkout.emailLookup.exists,
+    checkout.contactForceLogin,
+  ])
+
+  // Macro-step: ospite resta su contatto; loggato → skip automatico allo step indirizzi.
+  // Durante creazione account / login non avanzare: evita Indirizzo di spedizione dietro overlay.
+  useEffect(() => {
+    if (frozenCheckout || paymentRetry) return
+    if (
+      checkoutStore.initLoadingPhase === 'account' ||
+      checkoutStore.initLoadingPhase === 'login'
+    ) {
+      return
+    }
+    if (!isCheckoutFormUnlocked()) {
+      if (checkoutStore.currentStep !== 'account') {
         checkoutStore.currentStep = 'account'
       }
+      return
     }
-  }, [auth.isLoading, auth.isAuthenticated, auth.me])
+    if (
+      auth.isAuthenticated &&
+      shouldSkipCheckoutStep('account') &&
+      (checkoutStore.currentStep === 'account' || checkoutStore.currentStep === 'customer_type')
+    ) {
+      const next = getNextCheckoutStep('account')
+      if (next) checkoutStore.currentStep = next
+    }
+  }, [
+    formUnlocked,
+    frozenCheckout,
+    paymentRetry,
+    auth.isAuthenticated,
+    checkout.initLoadingPhase,
+    checkout.guestCheckoutAccepted,
+    checkout.emailLookup.exists,
+    checkout.draft.email,
+    checkout.contactStepPinned,
+  ])
 
   const c = cart.cart
-  const frozenCheckout = isFrozenQuoteCheckout()
-  const paymentRetry = isPaymentRetryCheckout()
   const summaryFromOrder =
     (frozenCheckout || paymentRetry) && checkout.frozenOrderSummary
       ? cartFromFrozenQuoteSummary({
@@ -227,19 +305,33 @@ export function CheckoutPage() {
     }),
   )
 
+  // Tax API usa solo country (+ segment/VAT): non includere line1/civico o ogni keystroke
+  // rilancia l'effect (log SKIP spam) mentre la destinazione è ancora incompleta.
+  const shippingTaxCountry = checkout.draft.shipping.country.trim().toUpperCase()
+  const billingTaxCountry = checkout.draft.billing.country.trim().toUpperCase()
+  const taxDestinationReady = canFetchShippingQuotes()
+  const taxEffectKey = [
+    taxDestinationReady ? '1' : '0',
+    shippingTaxCountry,
+    billingTaxCountry,
+  ].join('|')
+
   useEffect(() => {
     if (isFrozenQuoteCheckout()) return
-    if (step === 'addresses' || step === 'payment' || step === 'review') {
-      checkoutDbg.effect('refreshTaxBreakdown', {
-        step,
-        vatValidated: checkout.business.vatValidated,
-      })
-      void refreshTaxBreakdown()
-    }
+    if (!isCheckoutFormUnlocked()) return
+    if (checkout.addressPrefillLoading || checkout.initLoadingPhase) return
+    checkoutDbg.effect('refreshTaxBreakdown', {
+      step,
+      vatValidated: checkout.business.vatValidated,
+      taxEffectKey,
+    })
+    void refreshTaxBreakdown('CheckoutPage.useEffect:refreshTaxBreakdown')
   }, [
+    formUnlocked,
     step,
-    checkout.draft.shipping,
-    checkout.draft.billing,
+    taxEffectKey,
+    checkout.addressPrefillLoading,
+    checkout.initLoadingPhase,
     checkout.business.vatValidated,
     checkout.business.vatForceAccepted,
     checkout.customerSegment,
@@ -286,29 +378,30 @@ export function CheckoutPage() {
     checkoutPrepareKeyRef.current = null
   }, [checkout.selectedPaymentMethod])
 
+  // Prefetch Stripe solo quando cambiano importo/spedizione/metodo/ordine — non a ogni keystroke.
   useEffect(() => {
     if (isFrozenQuoteCheckout()) return
-    // Stripe/sessione pagamento solo quando l'utente è sullo step pagamento (non in indirizzi).
-    if (step !== 'payment' && step !== 'review') return
-    prefetchCheckoutPayment()
+    if (!isCheckoutFormUnlocked()) return
+    if (!checkout.shippingSelectionPersisted) return
+    prefetchCheckoutPayment('CheckoutPage.useEffect:prefetchCheckoutPayment')
   }, [
-    step,
-    checkout.draft.email,
-    checkout.draft.shipping,
-    checkout.draft.billing,
-    checkout.draft.billingSameAsShipping,
+    formUnlocked,
     checkout.selectedShippingMethodRef,
     checkout.shippingSelectionPersisted,
     checkout.shippingSelectingRef,
     checkout.selectedPaymentMethod,
     checkout.cartRefreshing,
-    checkout.payment,
-    checkout.order,
+    checkout.order?.orderId,
+    checkout.order?.amountTotal,
+    checkout.order?.currencyCode,
+    checkout.payment?.clientSecret,
+    checkout.payment?.amount,
+    checkout.payment?.orderId,
   ])
 
   useEffect(() => {
     const guards = {
-      step,
+      formUnlocked: isCheckoutFormUnlocked(),
       method: checkout.selectedPaymentMethod,
       canStart: canStartCheckout(),
       isLoading: checkout.isLoading,
@@ -321,7 +414,7 @@ export function CheckoutPage() {
     }
     checkoutDbg.effect('prepareStripeSession', guards)
 
-    if (step !== 'payment' && step !== 'review') return
+    if (!isCheckoutFormUnlocked()) return
     if (checkout.selectedPaymentMethod !== 'stripe') return
     if (
       !canStartCheckout() ||
@@ -339,15 +432,7 @@ export function CheckoutPage() {
       return
     }
 
-    const form = checkout.draft
-    const prepareKey = [
-      checkout.selectedShippingMethodRef,
-      form.email,
-      form.billingSameAsShipping ? 'same' : 'diff',
-      JSON.stringify(form.shipping),
-      JSON.stringify(form.billing),
-      checkout.selectedPaymentMethod,
-    ].join('|')
+    const prepareKey = checkoutPaymentPrefetchFingerprint()
 
     if (checkoutPrepareBlockedRef.current && checkoutPrepareKeyRef.current === prepareKey) {
       checkoutDbg.fn('prepareStripeSession', 'skip', { reason: 'blocked after error', prepareKey })
@@ -358,8 +443,12 @@ export function CheckoutPage() {
     void (async () => {
       checkoutPrepareKeyRef.current = prepareKey
       try {
-        if (!checkoutStore.order) await startCheckout({ silent: true })
-        if (!hasUsableCheckoutPaymentSession()) await createPaymentSession({ silent: true })
+        // Una sola pipeline con prefetch transition/payment (dedupe start + createSession).
+        await awaitCheckoutTransitionPrefetch()
+        await prepareCheckoutPayment({
+          silent: true,
+          via: 'CheckoutPage.useEffect:prepareStripeSession',
+        })
         checkoutPrepareBlockedRef.current = false
         checkoutDbg.fn('prepareStripeSession', 'exit', {
           orderId: checkoutStore.order?.orderId,
@@ -367,17 +456,21 @@ export function CheckoutPage() {
         })
       } catch (e) {
         checkoutPrepareBlockedRef.current = true
+        if (
+          e instanceof ApiRequestError &&
+          (e.code === 'EMPTY_CART' || e.code === 'CART_NOT_FOUND')
+        ) {
+          cartStore.reservationExpiredNotice = true
+          setCartExpiredModalOpen(true)
+          void fetchCart({ force: true })
+        }
         checkoutDbg.fn('prepareStripeSession', 'error', {
           message: e instanceof Error ? e.message : String(e),
         })
       }
     })()
   }, [
-    step,
-    checkout.draft.email,
-    checkout.draft.shipping,
-    checkout.draft.billing,
-    checkout.draft.billingSameAsShipping,
+    formUnlocked,
     checkout.selectedShippingMethodRef,
     checkout.shippingSelectionPersisted,
     checkout.shippingSelectingRef,
@@ -385,8 +478,12 @@ export function CheckoutPage() {
     checkout.isLoading,
     checkout.isPaying,
     checkout.cartRefreshing,
-    checkout.payment,
-    checkout.order,
+    checkout.order?.orderId,
+    checkout.order?.amountTotal,
+    checkout.order?.currencyCode,
+    checkout.payment?.clientSecret,
+    checkout.payment?.amount,
+    checkout.payment?.orderId,
   ])
 
   async function handlePay() {
@@ -414,6 +511,15 @@ export function CheckoutPage() {
       }
       await form.pay()
     } catch (e) {
+      if (
+        e instanceof ApiRequestError &&
+        (e.code === 'EMPTY_CART' || e.code === 'CART_NOT_FOUND')
+      ) {
+        cartStore.reservationExpiredNotice = true
+        setCartExpiredModalOpen(true)
+        void fetchCart({ force: true })
+        return
+      }
       checkoutStore.error =
         e instanceof ApiRequestError
           ? (e.userMessage ?? e.message)
@@ -426,14 +532,24 @@ export function CheckoutPage() {
   }
 
   function handleStripePaymentSuccess(paidOrderId: string) {
-    // Il server converte il carrello solo dopo stripeReturn, sulla thank-you.
-    // Qui scartiamo solo la copia in memoria, senza un GET che rileggerebbe le righe.
     discardCartAfterCheckout()
     navigate(`/checkout/result/${paidOrderId}`, { replace: true })
   }
 
   const isCartUnresolved = !frozenCheckout && !paymentRetry && !c
   const isCartEmpty = !frozenCheckout && !paymentRetry && c != null && c.items.length === 0
+
+  if (cartExpiredModalOpen) {
+    return (
+      <div className="checkout-root min-h-screen bg-idl-tech-panel">
+        <CheckoutCartExpiredModal
+          open
+          onBackToCart={() => leaveCheckoutAfterCartExpired('/cart')}
+          onBrowseCatalog={() => leaveCheckoutAfterCartExpired('/negozio')}
+        />
+      </div>
+    )
+  }
 
   if (isCartEmpty && !cart.isLoading) {
     return (
@@ -467,7 +583,25 @@ export function CheckoutPage() {
         }
       : null)
 
-  const shouldMountPaymentStep = step === 'payment' || step === 'review'
+  const paymentDetailsReady = canStartCheckout() || lockedCheckout
+  const isContactStep = step === 'account' || step === 'customer_type'
+  const isAddressesStep =
+    step === 'addresses' ||
+    step === 'billing' ||
+    step === 'shipping' ||
+    step === 'details' ||
+    step === 'delivery_recipient' ||
+    step === 'shipping_method'
+  // Non montare form indirizzi dietro overlay auth/prefill (via vuota editabile a torto).
+  // Solo initLoadingPhase: addressPrefillLoading da solo può essere geocode puntuale già in form.
+  const authInitHidesAddresses =
+    checkout.initLoadingPhase === 'account' ||
+    checkout.initLoadingPhase === 'login' ||
+    checkout.initLoadingPhase === 'anagrafica' ||
+    checkout.initLoadingPhase === 'indirizzi' ||
+    checkout.initLoadingPhase === 'spedizioni'
+  const isPaymentStep = step === 'payment' || step === 'payment_method' || step === 'review'
+  const showPaymentStep = lockedCheckout || isPaymentStep
 
   const stripeCardDetails = activeStripeSession ? (
     <StripePaymentShell
@@ -482,7 +616,7 @@ export function CheckoutPage() {
         checkoutStore.error = msg?.trim() ? msg : null
       }}
     />
-  ) : canStartCheckout() && checkout.selectedPaymentMethod === 'stripe' ? (
+  ) : (formUnlocked || lockedCheckout) && checkout.selectedPaymentMethod === 'stripe' ? (
     <CheckoutPaymentSkeleton />
   ) : null
 
@@ -496,7 +630,7 @@ export function CheckoutPage() {
             freeShippingHint={checkout.freeShippingHint}
             taxBreakdown={checkout.taxBreakdown}
             mobileOnly
-            revealGrandTotal={step === 'payment' || step === 'review'}
+            revealGrandTotal={formUnlocked || lockedCheckout}
             onRemoveItem={frozenCheckout ? undefined : (id) => void handleRemoveFromCheckout(id)}
             removeDisabled={cart.isLoading || checkout.cartRefreshing || frozenCheckout}
           />
@@ -505,7 +639,7 @@ export function CheckoutPage() {
             selectedShipping={shippingQuote}
             freeShippingHint={checkout.freeShippingHint}
             taxBreakdown={checkout.taxBreakdown}
-            revealGrandTotal={step === 'payment' || step === 'review'}
+            revealGrandTotal={formUnlocked || lockedCheckout}
             onRemoveItem={frozenCheckout ? undefined : (id) => void handleRemoveFromCheckout(id)}
             removeDisabled={cart.isLoading || checkout.cartRefreshing || frozenCheckout}
           />
@@ -540,75 +674,56 @@ export function CheckoutPage() {
             </p>
           ) : null}
 
-          <CheckoutStepIndicator currentStep={step} />
-
           {checkout.error ? <CheckoutInlineError message={checkout.error} /> : null}
 
-          {step === 'account' ? (
-            <CheckoutStepBody>
-              <CheckoutRegistrationStep />
-            </CheckoutStepBody>
-          ) : null}
-          {step === 'customer_type' ? (
-            <CheckoutStepBody>
-              <CheckoutCustomerTypeStep />
-            </CheckoutStepBody>
-          ) : null}
-          {step === 'addresses' ? (
-            <CheckoutStepBody>
-              <CheckoutAddressesStep />
-            </CheckoutStepBody>
-          ) : null}
-          {step === 'delivery_recipient' ? (
-            <CheckoutStepBody>
-              <CheckoutDeliveryRecipientStep />
-            </CheckoutStepBody>
-          ) : null}
-          {step === 'shipping_method' ? (
-            <CheckoutStepBody>
-              <CheckoutShippingMethodStep />
-            </CheckoutStepBody>
-          ) : null}
-          {shouldMountPaymentStep ? (
-            <div
-              className={cn(
-                step !== 'payment' &&
-                  'pointer-events-none fixed -left-[10000px] top-0 z-[-1] h-[520px] w-[min(100%,24rem)] overflow-hidden opacity-0',
-              )}
-              aria-hidden={step !== 'payment'}
-            >
+          {!lockedCheckout ? <CheckoutStepIndicator currentStep={step} /> : null}
+
+          <div className="space-y-8">
+            {!lockedCheckout && isContactStep ? (
+              <CheckoutStepBody>
+                <CheckoutContactSection />
+              </CheckoutStepBody>
+            ) : null}
+
+            {!lockedCheckout && isAddressesStep && !authInitHidesAddresses ? (
+              <CheckoutStepBody>
+                <CheckoutAddressesStep disabled={!formUnlocked} />
+              </CheckoutStepBody>
+            ) : null}
+
+            {showPaymentStep ? (
               <CheckoutStepBody>
                 <CheckoutPaymentStep
+                  embedded
+                  disabled={!formUnlocked && !lockedCheckout}
                   stripeCardDetails={stripeCardDetails}
                   stripeFormReady={stripeReady}
                   stripeSessionReady={Boolean(activeStripeSession)}
                 />
+                {checkout.selectedPaymentMethod === 'bank_transfer' && paymentDetailsReady ? (
+                  <section className="mt-6 rounded-xl border border-idl-tech-border bg-idl-tech-panel p-4">
+                    <BankTransferAwaitingNote />
+                  </section>
+                ) : null}
+                {displayCart ? (
+                  <div className="mt-6">
+                    <CheckoutReviewStep
+                      embedded
+                      showBack={!lockedCheckout}
+                      cart={displayCart as CartDTO}
+                      onConfirmPay={() => void handlePay()}
+                      payLabel={payLabel}
+                      canPay={
+                        canPay &&
+                        (checkout.selectedPaymentMethod !== 'stripe' ||
+                          Boolean(activeStripeSession?.clientSecret && stripeReady))
+                      }
+                    />
+                  </div>
+                ) : null}
               </CheckoutStepBody>
-            </div>
-          ) : null}
-          {step === 'review' ? (
-            <CheckoutStepBody>
-              <CheckoutReviewStep
-                cart={displayCart as CartDTO}
-                onConfirmPay={() => void handlePay()}
-                payLabel={payLabel}
-                canPay={
-                  canPay &&
-                  (checkout.selectedPaymentMethod !== 'stripe' ||
-                    Boolean(activeStripeSession?.clientSecret && stripeReady))
-                }
-              />
-              {checkout.selectedPaymentMethod === 'bank_transfer' ? (
-                <section className="mt-6 rounded-xl border border-idl-tech-border bg-idl-tech-panel p-4">
-                  <BankTransferAwaitingNote />
-                </section>
-              ) : null}
-            </CheckoutStepBody>
-          ) : null}
-
-          <footer className="mt-10 lg:hidden">
-            <CheckoutLegalLinks theme="light" className="justify-center" />
-          </footer>
+            ) : null}
+          </div>
         </div>
       </main>
     </div>

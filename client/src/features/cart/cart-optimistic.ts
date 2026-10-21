@@ -120,6 +120,17 @@ function resolveOptimisticUnitPrice(
 function recountCart(cart: CartDTO): CartDTO {
   const items = cart.items
   const itemCount = items.reduce((sum, line) => sum + line.quantity, 0)
+  if (items.length === 0) {
+    return {
+      ...cart,
+      itemCount: 0,
+      purchasableItemCount: 0,
+      estimatedSubtotal: 0,
+      estimatedTax: null,
+      estimatedShipping: null,
+      estimatedTotal: 0,
+    }
+  }
   const purchasable = items.filter((line) => line.purchasable !== false)
   const priced = purchasable.filter((line) => line.lineTotalEstimateCents != null)
   const subtotal = priced.reduce((sum, line) => sum + (line.lineTotalEstimateCents ?? 0), 0)
@@ -200,5 +211,39 @@ export function applyOptimisticAdd(input: {
   }
 
   base.items.push(line)
+  return recountCart(base)
+}
+
+function cloneCart(cart: CartDTO): CartDTO {
+  return {
+    ...cart,
+    items: cart.items.map((line) => ({ ...line })),
+  }
+}
+
+/** Aggiorna quantità e totali locali senza attendere il server. */
+export function applyOptimisticQuantity(
+  cart: CartDTO | null,
+  lineId: string,
+  quantity: number,
+): CartDTO | null {
+  if (!cart) return null
+  const nextQty = Math.max(1, Math.floor(quantity))
+  const base = cloneCart(cart)
+  const line = base.items.find((item) => item.id === lineId)
+  if (!line) return cart
+
+  line.quantity = nextQty
+  if (line.clientUnitPriceEstimateCents != null && line.clientUnitPriceEstimateCents > 0) {
+    line.lineTotalEstimateCents = line.clientUnitPriceEstimateCents * nextQty
+  }
+  return recountCart(base)
+}
+
+/** Rimuove una riga e ricalcola i totali locali senza attendere il server. */
+export function applyOptimisticRemove(cart: CartDTO | null, lineId: string): CartDTO | null {
+  if (!cart) return null
+  const base = cloneCart(cart)
+  base.items = base.items.filter((item) => item.id !== lineId)
   return recountCart(base)
 }

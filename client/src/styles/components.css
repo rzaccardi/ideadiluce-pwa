@@ -414,8 +414,8 @@ html[data-theme='dark'] .checkout-shell {
 
 /*
  * Slider full-bleed: gutter allineato a SectionContainer (max-w-idl-wide +
- * px-4 / md:px-8 / lg:px-12). Usa spacer, non padding: lo snap mandatory
- * (Safari) ignora il padding e tira la prima card fuori schermo.
+ * px-4 / md:px-8 / lg:px-8 / xl:px-12). Usa spacer, non padding: lo snap
+ * mandatory (Safari) ignora il padding e tira la prima card fuori schermo.
  */
 .site-full-bleed-track {
   width: 100%;
@@ -436,7 +436,7 @@ html[data-theme='dark'] .checkout-shell {
   }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .site-full-bleed-track {
     --site-full-bleed-gutter: max(3rem, calc((100% - var(--max-width-idl-wide)) / 2 + 3rem));
   }

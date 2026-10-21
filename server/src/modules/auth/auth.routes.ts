@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { validateRequest } from '../../middlewares/validate-request.js'
 import { requireLogin } from '../../middlewares/session.js'
 import {
+  checkEmailBodySchema,
   checkoutLoginBodySchema,
   checkoutRegisterBodySchema,
   checkoutForgotPasswordBodySchema,
@@ -29,10 +30,16 @@ authRouter.post(
   authController.login,
 )
 authRouter.post(
+  '/check-email',
+  authSensitiveRateLimit,
+  validateRequest({ body: checkEmailBodySchema }),
+  authController.checkEmail,
+)
+authRouter.post(
   '/checkout-login',
   authSensitiveRateLimit,
   validateRequest({ body: checkoutLoginBodySchema }),
-  authController.login,
+  authController.checkoutLogin,
 )
 authRouter.post(
   '/checkout-register',

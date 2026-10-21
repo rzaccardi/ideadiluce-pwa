@@ -20,7 +20,12 @@ import {
 } from '../../adapters/odoo/odooClient.js'
 import { AppError } from '../../types/errors.js'
 import { authRepository } from './auth.repository.js'
-import { authService, mergeCartsForUser, sessionExpiry } from './auth.service.js'
+import {
+  authService,
+  mergeCartsForUser,
+  sessionExpiry,
+  type CartAttachMode,
+} from './auth.service.js'
 import type { UserDTO } from '../../types/dto.js'
 import type { OdooCustomerAccount, OdooCustomerProfile } from '../../adapters/odoo/odooCustomerAdapter.js'
 import { hydrateUserBusinessFromOdoo } from '../users/users-odoo-business-hydrate.js'
@@ -82,7 +87,10 @@ export type ProvisionOdooAuthIdentityInput = {
   lastName?: string | null
   phone?: string | null
   business?: OdooBusinessProfile | null
-  /** Se false, un portal già esistente aggiorna la password (default true → EMAIL_TAKEN). */
+  /**
+   * Se false, un portal già esistente aggiorna la password (default true → EMAIL_TAKEN).
+   * Passare false anche dopo un check esterno già fatto, per evitare un secondo search_read.
+   */
   rejectExistingPortal?: boolean
 }
 
@@ -210,6 +218,7 @@ export async function loginWithOdooCredentials(
   email: string,
   password: string,
   sessionId: string,
+  options?: { cartMode?: CartAttachMode },
 ): Promise<UserDTO | null> {
   if (!env.ODOO_ENABLED || !isOdooConfigured()) return null
 
@@ -272,6 +281,7 @@ export async function loginWithOdooCredentials(
     sessionId,
     odooPartnerId,
     odooUid,
+    cartMode: options?.cartMode ?? 'merge',
   })
 }
 
@@ -409,7 +419,8 @@ export async function provisionOdooAccountAfterOrder(
   if (odooUserCreated) {
     const loginUrl = publicAppUrl('/login')
     const firstName = input.shippingProfile?.firstName?.trim()
-    await sendPwaMail(ctx, {
+    // Mail fuori dal path critico: non awaitare SMTP/Odoo sul caller.
+    void sendPwaMail(ctx, {
       templateKey: 'account_credentials',
       emailTo: normalized,
       vars: {
@@ -419,6 +430,12 @@ export async function provisionOdooAccountAfterOrder(
         password: plainPassword,
         login_url: loginUrl,
       },
+    }).catch((e) => {
+      logger.error('odoo.provision_after_order.mail_failed', {
+        correlationId: ctx.correlationId,
+        orderId: input.orderId,
+        error: e instanceof Error ? e.message : String(e),
+      })
     })
   }
 }

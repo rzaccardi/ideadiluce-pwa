@@ -43,10 +43,15 @@ export function daysUntilIsoDate(iso: string | null | undefined): number | null 
   return diff > 0 ? diff : null
 }
 
-/** Lead effettivo Caso 2: LT fornitore (senza floor artificiale). */
+/**
+ * Lead effettivo Caso 2 — allineato al PDP client (`resolveLeadTimeDays`):
+ * LT fornitore se > 0, altrimenti giorni fino a restockDate futura.
+ */
 function resolveOrderableLeadDays(input: VariantAvailabilityInput): number {
   const lt = input.leadTimeDays
   if (lt != null && Number.isFinite(lt) && lt > 0) return lt
+  const fromRestock = daysUntilIsoDate(input.restockDate)
+  if (fromRestock != null && fromRestock > 0) return fromRestock
   return 0
 }
 

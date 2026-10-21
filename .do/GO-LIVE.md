@@ -150,7 +150,8 @@ Le email transazionali (clienti e notifiche interne a `info@ideadiluce.com`) par
 | Uso | Template Odoo (`mail.template.name`) |
 |-----|--------------------------------------|
 | Credenziali / reset password PWA | `[PWA] Credenziali account cliente`, `[PWA] Reimposta password` |
-| Conferma ordine / bonifico / spedito / carrello | `[PWA] Conferma ordine`, `[PWA] Istruzioni bonifico`, `[PWA] Ordine spedito`, `[PWA] Carrello abbandonato` |
+| Conferma ordine | modello Odoo IdeaDiLuce (nativa alla conferma ordine / pagamento carta). `[PWA] Conferma ordine` solo se `PWA_ORDER_CONFIRMATION_MAIL=true` (default off, evita doppia mail) |
+| Spedito / carrello | `[PWA] Ordine spedito`, `[PWA] Carrello abbandonato` (istruzioni bonifico: mail nativa Odoo) |
 | Alert sync / preventivi / contatti | altri `[PWA] …` (stesso adapter) |
 | Reso / richiesta business | mail native Odoo via API v2 (`POST /orders/<id>/return-request`, `POST /customers/<id>/business-request`) — non template PWA |
 | Reset password portal user (nativo Odoo) | Odoo `auth_signup` (non PWA) |
@@ -164,10 +165,13 @@ cd server && npx tsx scripts/sync-pwa-mail-templates.ts --update
 
 | Env | Ruolo |
 |-----|-------|
+| `PWA_ORDER_CONFIRMATION_MAIL` | Default `false`: conferma ordine da Odoo. `true` riattiva `[PWA] Conferma ordine` (rischio doppia mail). Account ospite invariato. |
 | `PAID_SYNC_ALERT_EMAIL` | Destinatario alert sync (override di `info@ideadiluce.com`) |
 | `SMTP_*` | Fallback solo se Odoo è spento (dev) |
 
-**Nota API v2:** con Odoo API v2 attiva la PWA non invia le mail ordine (`order_confirmation` ecc.), resi né richieste business: le gestisce Odoo. Credenziali/reset restano via `sendPwaMail` / template `[PWA] …`.
+**Nota API v2:** con Odoo API v2 attiva la PWA non invia resi né richieste business: le gestisce Odoo. Credenziali/reset restano via `sendPwaMail` / template `[PWA] …`.
+
+**Incidente PVNJLW (21/10/2026):** la PWA aveva mandato «pagamento confermato» al cliente mentre Odoo rifiutava la verifica pagamento (422 ×2) — preventivo senza transazione Stripe, niente conferma magazzino. Cause: chiamate da IP Starlink (PWA locale di Roberto, non DigitalOcean) con chiavi Stripe di test contro Odoo produzione; la PWA inviava la propria conferma indipendentemente dall’esito Odoo. **Fix** (`PWA_ORDER_CONFIRMATION_MAIL=false` + saga senza `send_mail`; verify pagamento solo su 2xx Odoo). **Regola ops:** i test contro Odoo produzione vanno dalla PWA di produzione o, meglio, dallo staging — da locale si creano ordini e mail reali in produzione.
 
 ### 3.5 DeepL (opzionale)
 
@@ -387,6 +391,7 @@ doctl apps create --spec .do/app.staging.yaml
 - **Rebuild shop** necessario dopo ogni cambio `NEXT_PUBLIC_*`.
 - **Odoo** è single point esterno: timeout API 25s (`ODOO_CATALOG_TIMEOUT_MS`, `ODOO_TIMEOUT_MS`).
 - **Catalogo:** con `ODOO_CATALOG_ENABLED=true` ha priorità su Hub e XML-RPC per lo storefront.
+- **Dev locale ↔ Odoo prod:** non usare la PWA locale (né Stripe test) contro Odoo produzione: crea preventivi/mail reali (vedi incidente PVNJLW in §3.4). Preferire staging o DigitalOcean.
 
 ---
 

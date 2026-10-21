@@ -13,6 +13,11 @@ type Props = {
   className?: string
   /** Se false e non c’è logo, non mostra il nome testuale. */
   showNameFallback?: boolean
+  /**
+   * Se false, non usa mai l’immagine logo (solo nome testuale).
+   * Utile sulle card tecniche: il logo resta solo sulle card arredo.
+   */
+  showLogo?: boolean
 }
 
 const HEIGHT: Record<Size, number> = {
@@ -51,9 +56,10 @@ export function ProductBrandMark({
   size = 'sm',
   className,
   showNameFallback = true,
+  showLogo = true,
 }: Props) {
-  const light = resolveAny('light', brand, fallbackLabel)
-  const dark = resolveAny('dark', brand, fallbackLabel)
+  const light = showLogo ? resolveAny('light', brand, fallbackLabel) : null
+  const dark = showLogo ? resolveAny('dark', brand, fallbackLabel) : null
   const label = brand?.name?.trim() || fallbackLabel?.trim() || null
   const h = HEIGHT[size]
 

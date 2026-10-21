@@ -53,6 +53,9 @@ const SOURCE_TO_KEY: Record<string, MessageKey> = {
     'paymentResult.error.payment_already_used',
   'Verifica del pagamento temporaneamente non disponibile. Riprova tra poco.':
     'paymentResult.error.serviceUnavailable',
+  'Reso possibile solo su ordini confermati': 'orders.return.errorNotAllowed',
+  'Non è possibile avviare il reso su questo ordine.': 'orders.return.errorNotAllowed',
+  'Non ci sono articoli restituibili su questo ordine.': 'orders.return.errorGeneric',
 }
 
 export function stripValidationFieldPrefix(message: string): string {

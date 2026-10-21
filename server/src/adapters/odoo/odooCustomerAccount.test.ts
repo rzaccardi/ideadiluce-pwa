@@ -52,7 +52,7 @@ describe('mapOdooPartnerAccount', () => {
       vat: 'IT01234567890',
       l10n_it_codice_fiscale: '01234567890',
       l10n_it_pec_email: 'elettrowatt@pec.it',
-      l10n_it_codice_destinatario: 'M5UXCR1',
+      l10n_it_pa_index: 'M5UXCR1',
     })
     const contact = partner({
       id: 20,
@@ -76,7 +76,7 @@ describe('mapOdooPartnerAccount', () => {
     })
   })
 
-  it('legge lo SDI da l10n_it_pa_index (Odoo 18 IT) se destinatario non c’è', () => {
+  it('legge lo SDI da l10n_it_pa_index', () => {
     const company = partner({
       id: 10,
       name: 'LBL Elettrica SRL',

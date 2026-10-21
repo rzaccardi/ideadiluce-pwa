@@ -1,6 +1,14 @@
-type DbgPhase = 'enter' | 'exit' | 'skip' | 'schedule' | 'api' | 'error' | 'state'
+type DbgPhase = 'enter' | 'exit' | 'skip' | 'schedule' | 'api' | 'error' | 'state' | 'race'
 
 type CallWindow = { count: number; firstAt: number; lastAt: number }
+
+type InFlightEntry = {
+  id: number
+  name: string
+  via?: string
+  startedAt: number
+  stack?: string
+}
 
 const LOOP_WINDOW_MS = 3_000
 const LOOP_THRESHOLD = 5
@@ -8,6 +16,7 @@ const LOOP_THRESHOLD = 5
 let seq = 0
 
 const callWindows = new Map<string, CallWindow>()
+const inFlight = new Map<string, InFlightEntry[]>()
 
 function isEnabled(): boolean {
   if (process.env.NEXT_PUBLIC_CHECKOUT_DEBUG === 'false') return false
@@ -17,6 +26,18 @@ function isEnabled(): boolean {
 
 function now() {
   return new Date().toISOString().slice(11, 23)
+}
+
+function captureStack(skipFrames = 2): string | undefined {
+  if (!isEnabled()) return undefined
+  const raw = new Error().stack
+  if (!raw) return undefined
+  return raw
+    .split('\n')
+    .slice(skipFrames, skipFrames + 8)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join('\n')
 }
 
 function trackLoop(key: string) {
@@ -55,6 +76,8 @@ function phaseStyle(phase: DbgPhase): string {
       return 'color:#f87171'
     case 'state':
       return 'color:#a78bfa'
+    case 'race':
+      return 'color:#fb923c;font-weight:bold'
     default:
       return 'color:#e5e7eb'
   }
@@ -99,23 +122,90 @@ export const checkoutDbg = {
     this.fn(label, 'state', data)
   },
 
+  /** Avvia tracking di una chiamata in-flight; avvisa se ne parte una seconda in parallelo. */
+  beginInFlight(name: string, meta?: { via?: string; detail?: unknown }) {
+    if (!isEnabled()) return -1
+    const id = ++seq
+    const entry: InFlightEntry = {
+      id,
+      name,
+      via: meta?.via,
+      startedAt: Date.now(),
+      stack: captureStack(3),
+    }
+    const list = inFlight.get(name) ?? []
+    list.push(entry)
+    inFlight.set(name, list)
+
+    const payload = {
+      via: meta?.via,
+      inFlight: list.length,
+      detail: meta?.detail,
+      peers: list.map((e) => ({
+        id: e.id,
+        via: e.via,
+        ageMs: Date.now() - e.startedAt,
+      })),
+      stack: entry.stack,
+    }
+
+    if (list.length > 1) {
+      console.warn(
+        `%c[checkout #${id}] ${now()} RACE ${name} — ${list.length} chiamate in parallelo`,
+        phaseStyle('race'),
+        payload,
+      )
+    } else {
+      log('enter', `${name} (in-flight)`, payload)
+    }
+
+    return id
+  },
+
+  endInFlight(name: string, token: number, meta?: { via?: string; detail?: unknown; error?: string }) {
+    if (!isEnabled() || token < 0) return
+    const list = inFlight.get(name) ?? []
+    const next = list.filter((e) => e.id !== token)
+    if (next.length === 0) inFlight.delete(name)
+    else inFlight.set(name, next)
+
+    log(meta?.error ? 'error' : 'exit', `${name} (in-flight done)`, {
+      via: meta?.via,
+      remaining: next.length,
+      detail: meta?.detail,
+      error: meta?.error,
+    })
+  },
+
   dump() {
     return {
       seq,
       loops: Object.fromEntries(callWindows.entries()),
+      inFlight: Object.fromEntries(
+        [...inFlight.entries()].map(([name, entries]) => [
+          name,
+          entries.map((e) => ({
+            id: e.id,
+            via: e.via,
+            ageMs: Date.now() - e.startedAt,
+            stack: e.stack,
+          })),
+        ]),
+      ),
     }
   },
 
   reset() {
     seq = 0
     callWindows.clear()
+    inFlight.clear()
     console.info('[checkout] debug counters reset')
   },
 }
 
 if (typeof window !== 'undefined' && isEnabled()) {
   console.info(
-    '%c[checkout] debug attivo - filtra la console con "checkout". Comandi: __checkoutDebug.dump(), __checkoutDebug.reset()',
+    '%c[checkout] debug attivo - filtra la console con "checkout" o "RACE". Comandi: __checkoutDebug.dump(), __checkoutDebug.reset()',
     'color:#60a5fa;font-weight:bold',
   )
   ;(window as Window & { __checkoutDebug?: typeof checkoutDbg }).__checkoutDebug = checkoutDbg

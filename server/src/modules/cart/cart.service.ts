@@ -162,7 +162,11 @@ function assertSession(req: Request) {
   return s
 }
 
-async function resolveOrCreateCart(req: Request) {
+async function resolveOrCreateCart(
+  req: Request,
+  options?: { syncContact?: boolean },
+) {
+  const syncContact = options?.syncContact !== false
   const session = assertSession(req)
   const partnerId = session.odooPartnerId
   let cart =
@@ -198,8 +202,8 @@ async function resolveOrCreateCart(req: Request) {
       data: { customer: { connect: { odooPartnerId: partnerId } } },
       include: { items: true },
     })
-    await syncCartContactEmail(cart.id)
-  } else if (partnerId != null) {
+    if (syncContact) await syncCartContactEmail(cart.id)
+  } else if (partnerId != null && syncContact) {
     await syncCartContactEmail(cart.id)
   }
   return cart
@@ -251,14 +255,14 @@ async function persistCartTotalsEstimate(
   shippingCents: number | null,
 ) {
   const subtotal = subtotalCentsFromCartItems(items)
-  if (subtotal == null) return
+  if (subtotal == null) return null
   const taxBreakdown = await taxService.estimateForCart(subtotal, shipCountry, {
     customerSegment: pricing.segment,
     isProfessional: pricing.segment === 'PROFESSIONAL',
   })
   // Solo se c'è un metodo selezionato: niente flat €5,90 “fantasma” senza indirizzo.
   const shipping = shippingCents
-  await cartRepository.updateTotals(cartId, {
+  return cartRepository.updateTotals(cartId, {
     estimatedSubtotal: subtotal,
     estimatedTax: taxBreakdown.taxCents,
     estimatedShipping: shipping,
@@ -430,14 +434,13 @@ async function dtoFromCartId(
       : Promise.resolve(null)
 
   if (options?.fastMutation) {
-    await persistCartTotalsEstimate(
+    const refreshed = await persistCartTotalsEstimate(
       full.id,
       full.items,
       pricing,
       shipCountry,
       full.shippingSelection?.amountCents ?? null,
     )
-    const refreshed = await cartRepository.getWithItems(cartId)
     if (refreshed) full = refreshed
   }
 
@@ -519,15 +522,19 @@ async function buildFastMutationCartDto(
     typeof req.query.country === 'string' ? req.query.country : 'IT',
   )
 
-  await persistCartTotalsEstimate(
+  const refreshed = await persistCartTotalsEstimate(
     full.id,
     full.items,
     pricing,
     shipCountry,
     full.shippingSelection?.amountCents ?? null,
   )
-  const refreshed = await cartRepository.getWithItems(cartId)
   if (refreshed) full = refreshed
+
+  const { getCartPricingMeta } = await import('../pricing/cart-pricing-meta.js')
+  const pricingMeta = getCartPricingMeta(full.id)
+  const odooNet = full.estimatedSubtotal
+  const odooTax = full.estimatedTax
 
   const [freeShippingHint, taxBreakdown] = await Promise.all([
     full.items.length > 0
@@ -535,10 +542,22 @@ async function buildFastMutationCartDto(
       : Promise.resolve(null),
     full.items.length === 0
       ? Promise.resolve(null)
-      : taxService.estimateForCart(purchasableSubtotal, shipCountry, {
-          customerSegment: pricing.segment,
-          isProfessional: pricing.segment === 'PROFESSIONAL',
-        }),
+      : odooNet != null && odooTax != null && full.lastPricedAt != null
+        ? Promise.resolve({
+            netCents: odooNet,
+            taxCents: odooTax,
+            taxRatePct: pricingMeta?.taxRatePct ?? 22,
+            taxLabel: 'IVA',
+            grossCents: odooNet + odooTax,
+            isEstimate: pricingMeta?.fromCache === true,
+            disclaimerKey: pricingMeta?.fromCache
+              ? 'cart.tax.fromCache'
+              : 'cart.tax.fromOdoo',
+          })
+        : taxService.estimateForCart(purchasableSubtotal, shipCountry, {
+            customerSegment: pricing.segment,
+            isProfessional: pricing.segment === 'PROFESSIONAL',
+          }),
   ])
 
   return mapCartToDTO(
@@ -556,9 +575,13 @@ async function buildFastMutationCartDto(
   )
 }
 
-async function syncReservationAfterItemsChange(cartId: string) {
-  const full = await cartRepository.getWithItems(cartId)
-  await bumpCartReservation(cartId, (full?.items.length ?? 0) > 0)
+async function syncReservationAfterItemsChange(cartId: string, hasItems?: boolean) {
+  if (hasItems === undefined) {
+    const full = await cartRepository.getWithItems(cartId)
+    await bumpCartReservation(cartId, (full?.items.length ?? 0) > 0)
+    return
+  }
+  await bumpCartReservation(cartId, hasItems)
 }
 
 function resolveVariantRef(product: ProductDetailDTO, variantRef: string | null | undefined) {
@@ -933,22 +956,25 @@ export const cartService = {
       catalog: catalogEntryFromProduct(line.product, line.unitPriceCents, line.variantRef),
       product: line.product,
     })
-    scheduleCartOdooPrep({ cartId: cart.id, correlationId: req.correlationId })
+    // Dopo il DTO: evita lock contention col reprice Odoo durante la response HTTP.
+    setImmediate(() => {
+      scheduleCartOdooPrep({ cartId: cart.id, correlationId: req.correlationId })
+    })
     return dto
   },
 
   async patchItem(req: Request, itemId: string, quantity: number) {
     const pricing = await resolvePricingContext(req, { skipOdoo: true })
-    const cart = await resolveOrCreateCart(req)
+    const cart = await resolveOrCreateCart(req, { syncContact: false })
     const item = await cartRepository.findItem(cart.id, itemId)
     if (!item) {
       throw new AppError('LINE_NOT_FOUND', 'Line not found', 'Riga non trovata.', 404, false)
     }
     await cartRepository.updateItem(itemId, { quantity })
-    await syncReservationAfterItemsChange(cart.id)
-    scheduleCartOdooPrep({ cartId: cart.id, correlationId: req.correlationId })
+    const remainingCount = cart.items?.length ?? 1
+    await syncReservationAfterItemsChange(cart.id, remainingCount > 0)
     const meta = parseCartLineVariantMeta(item.metadataJson)
-    return buildFastMutationCartDto(req, cart.id, pricing, {
+    const dto = await buildFastMutationCartDto(req, cart.id, pricing, {
       productRef: item.productRef,
       variantRef: item.variantRef,
       availability: OPTIMISTIC_LINE_AVAILABILITY,
@@ -959,18 +985,37 @@ export const cartService = {
         imageUrl: meta?.imageUrl ?? null,
       },
     })
+    setImmediate(() => {
+      scheduleCartOdooPrep({ cartId: cart.id, correlationId: req.correlationId })
+    })
+    return dto
   },
 
   async removeItem(req: Request, itemId: string) {
-    const cart = await resolveOrCreateCart(req)
+    const pricing = await resolvePricingContext(req, { skipOdoo: true })
+    const cart = await resolveOrCreateCart(req, { syncContact: false })
     const item = await cartRepository.findItem(cart.id, itemId)
     if (!item) {
       throw new AppError('LINE_NOT_FOUND', 'Line not found', 'Riga non trovata.', 404, false)
     }
     await cartRepository.deleteItem(itemId)
-    await syncReservationAfterItemsChange(cart.id)
-    scheduleCartOdooPrep({ cartId: cart.id, correlationId: req.correlationId })
-    const { dto } = await dtoFromCartId(req, cart.id, { reprice: false, fastMutation: true })
+    const remainingCount = Math.max(0, (cart.items?.length ?? 1) - 1)
+    await syncReservationAfterItemsChange(cart.id, remainingCount > 0)
+    const meta = parseCartLineVariantMeta(item.metadataJson)
+    const dto = await buildFastMutationCartDto(req, cart.id, pricing, {
+      productRef: item.productRef,
+      variantRef: item.variantRef,
+      availability: OPTIMISTIC_LINE_AVAILABILITY,
+      catalog: {
+        priceCents: item.clientUnitPriceEstimate ?? 0,
+        slug: meta?.productSlug ?? item.productRef,
+        name: meta?.productName ?? item.productRef,
+        imageUrl: meta?.imageUrl ?? null,
+      },
+    })
+    setImmediate(() => {
+      scheduleCartOdooPrep({ cartId: cart.id, correlationId: req.correlationId })
+    })
     return dto
   },
 

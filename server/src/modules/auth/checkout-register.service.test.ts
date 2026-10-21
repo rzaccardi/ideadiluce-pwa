@@ -9,7 +9,6 @@ const {
   isOdooAuthIdentityRequired,
   ensureSatelliteProjection,
   establishLoggedInSession,
-  findOdooPortalUserByEmail,
   prismaUserUpdate,
 } = vi.hoisted(() => ({
   findSatelliteByEmail: vi.fn(),
@@ -19,7 +18,6 @@ const {
   isOdooAuthIdentityRequired: vi.fn(() => false),
   ensureSatelliteProjection: vi.fn(),
   establishLoggedInSession: vi.fn(async () => ({ id: 'u1', email: 'c@example.com' })),
-  findOdooPortalUserByEmail: vi.fn(),
   prismaUserUpdate: vi.fn(),
 }))
 
@@ -49,10 +47,6 @@ vi.mock('./auth.service.js', () => ({
   authService: { establishLoggedInSession },
 }))
 
-vi.mock('../../adapters/odoo/odooPortalUserAdapter.js', () => ({
-  findOdooPortalUserByEmail,
-}))
-
 import { checkoutRegisterService } from './checkout-register.service.js'
 
 describe('checkoutRegisterService.register', () => {
@@ -65,7 +59,6 @@ describe('checkoutRegisterService.register', () => {
       email: 'c@example.com',
       firstName: 'Carlo',
     })
-    findOdooPortalUserByEmail.mockResolvedValue(null)
   })
 
   it('con Odoo richiesto provisioning poi satellite keyed da partner', async () => {
@@ -94,7 +87,6 @@ describe('checkoutRegisterService.register', () => {
       'corr-1',
     )
 
-    expect(findOdooPortalUserByEmail).toHaveBeenCalled()
     expect(provisionOdooAuthIdentity).toHaveBeenCalledWith(
       { correlationId: 'corr-1' },
       expect.objectContaining({
@@ -116,6 +108,7 @@ describe('checkoutRegisterService.register', () => {
         sessionId: 'sess-1',
         odooPartnerId: 99,
         odooUid: 3,
+        cartMode: 'adopt_session',
       }),
     )
   })
@@ -144,12 +137,17 @@ describe('checkoutRegisterService.register', () => {
     expect(createUser).not.toHaveBeenCalled()
   })
 
-  it('se portal Odoo già esiste rifiuta (niente inventare account PWA)', async () => {
+  it('se portal Odoo già esiste rifiuta (via provision rejectExistingPortal)', async () => {
     isOdooAuthIdentityRequired.mockReturnValue(true)
-    findOdooPortalUserByEmail.mockResolvedValue({
-      odooUserId: 1,
-      odooPartnerId: 11,
-    })
+    provisionOdooAuthIdentity.mockRejectedValue(
+      new AppError(
+        'EMAIL_TAKEN',
+        'Email already registered on Odoo portal',
+        'Questa email è già registrata. Accedi con email e password.',
+        409,
+        false,
+      ),
+    )
 
     await expect(
       checkoutRegisterService.register(
@@ -165,7 +163,8 @@ describe('checkoutRegisterService.register', () => {
       ),
     ).rejects.toMatchObject({ code: 'EMAIL_TAKEN' })
 
-    expect(provisionOdooAuthIdentity).not.toHaveBeenCalled()
+    expect(provisionOdooAuthIdentity).toHaveBeenCalled()
     expect(ensureSatelliteProjection).not.toHaveBeenCalled()
+    expect(createUser).not.toHaveBeenCalled()
   })
 })

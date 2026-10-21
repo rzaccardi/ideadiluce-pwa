@@ -451,10 +451,10 @@ export function SiteHeader({
               )}
             </nav>
           </div>
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 lg:gap-3">
-            <LanguageSwitcher variant="header" />
+          <div className={ui.headerIconRow}>
             <SiteHeaderSearch compact={chromeCollapsed} />
             <HeaderLightsToggle />
+            <LanguageSwitcher variant="header" />
             <SiteHeaderActions />
           </div>
         </SectionContainer>

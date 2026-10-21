@@ -5,13 +5,14 @@ import { authStore } from '@/features/auth'
 import { HeaderAccountMenu } from '@/components/site/HeaderAccountMenu'
 import { HeaderMiniCart } from '@/components/site/HeaderMiniCart'
 import { HeaderCatalogSearch } from '@/components/site/catalog/CatalogSearchModal'
+import { ui } from '@/lib/ui-classes'
 import { cn } from '@/utils/cn'
 
 export function SiteHeaderActions() {
   const auth = useSnapshot(authStore)
 
   return (
-    <div className="flex min-w-0 shrink-0 items-center gap-3 lg:justify-end">
+    <div className={cn(ui.headerIconRow, 'min-w-0 lg:justify-end')}>
       <div className="lg:hidden">
         <HeaderCatalogSearch variant="icon" />
       </div>

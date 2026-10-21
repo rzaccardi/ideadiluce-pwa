@@ -2,6 +2,7 @@ import type { Request, Response } from 'express'
 import { ok } from '../lib/api-response.js'
 import { clearSessionCookie, setSessionCookie } from '../lib/cookies.js'
 import { authService } from '../modules/auth/auth.service.js'
+import { checkEmailService } from '../modules/auth/check-email.service.js'
 import { checkoutRegisterService } from '../modules/auth/checkout-register.service.js'
 import { passwordResetService } from '../modules/auth/password-reset.service.js'
 import { impersonationService } from '../modules/impersonation/impersonation.service.js'
@@ -31,14 +32,32 @@ export const authController = {
     res.json(ok({ user }))
   }),
 
+  /** Login da checkout: adotta il carrello guest corrente, senza merge di carrelli abbandonati. */
+  checkoutLogin: asyncHandler(async (req: Request, res: Response) => {
+    const body = req.body as { email: string; password: string }
+    const sessionId = req.sessionRecord!.id
+    const user = await authService.login(body, sessionId, req.correlationId, {
+      cartMode: 'adopt_session',
+    })
+    res.json(ok({ user }))
+  }),
+
+  checkEmail: asyncHandler(async (req: Request, res: Response) => {
+    const { email } = req.body as { email: string }
+    const result = await checkEmailService.checkEmail(email, req.correlationId)
+    res.json(ok(result))
+  }),
+
   checkoutRegister: asyncHandler(async (req: Request, res: Response) => {
     const body = req.body as {
       email: string
       password: string
       firstName: string
       lastName: string
-      phone: string
+      phone?: string
       customerSegment?: 'retail' | 'business'
+      companyName?: string
+      vatNumber?: string
     }
     const sessionId = req.sessionRecord!.id
     const user = await checkoutRegisterService.register(body, sessionId, req.correlationId)

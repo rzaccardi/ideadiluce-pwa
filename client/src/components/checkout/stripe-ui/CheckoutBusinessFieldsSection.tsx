@@ -10,7 +10,7 @@ import {
   validateCheckoutVat,
   validateTaxFields,
 } from '@/features/checkout'
-import { CheckoutInfoNote, CheckoutPanel } from './CheckoutStepPrimitives'
+import { CheckoutInfoNote } from './CheckoutStepPrimitives'
 import { useI18n } from '@/hooks/use-i18n'
 import {
   StripeControlledInput,
@@ -217,10 +217,6 @@ export function CheckoutBusinessFieldsSection({
     return <>{fields}</>
   }
 
-  return (
-    <CheckoutPanel className="space-y-3 bg-idl-tech-panel">
-      <p className="text-sm font-bold text-idl-graphite">{t('checkout.billing.businessTitle')}</p>
-      {fields}
-    </CheckoutPanel>
-  )
+  // Flat stack come CF retail: niente card/pannello dedicato.
+  return <div className="space-y-3">{fields}</div>
 }

@@ -26,6 +26,7 @@ import {
   cartHasBlockedLines,
   cartPurchasableItemCount,
 } from '@/lib/cartTotals'
+import { resolveCartMaxLeadTimeDays } from '@/lib/product-availability'
 import { useLocalePath } from '@/hooks/use-locale-path'
 import { useI18n } from '@/hooks/use-i18n'
 
@@ -84,6 +85,8 @@ export function CartPageView({ state }: Props) {
   const hasBlockedLines = cartHasBlockedLines(cart)
   const checkoutDisabled =
     purchasableCount === 0 || hasBlockedLines || state.stockInsufficient.length > 0
+  const deliveryLeadDays =
+    resolveCartMaxLeadTimeDays(cart.items) ?? cart.deliveryLeadDays ?? null
 
   return (
     <CartPageShell>
@@ -97,7 +100,7 @@ export function CartPageView({ state }: Props) {
         <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1fr)_372px] lg:gap-8">
           <div className="flex min-w-0 flex-col gap-[18px]">
             <CartFreeShippingBanner hint={cart.freeShippingHint} currencyCode={cart.currencyCode} />
-            <CartDeliveryBanner deliveryLeadDays={cart.deliveryLeadDays ?? null} />
+            <CartDeliveryBanner deliveryLeadDays={deliveryLeadDays} />
 
             <div className={CART_CARD_SURFACE_OVERFLOW}>
               {cart.items.map((line, index) => (

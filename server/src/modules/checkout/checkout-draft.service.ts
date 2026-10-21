@@ -6,7 +6,10 @@ import { resolvePricingContext } from '../pricing/pricelist.service.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
 import type { CheckoutStartDTO } from '../../types/dto.js'
 import type { CheckoutDraftBody } from './checkout-draft.validators.js'
-import { isCheckoutAddressValid } from './checkout-address.validators.js'
+import {
+  isCheckoutAddressValid,
+  resolveCheckoutBillingAddress,
+} from './checkout-address.validators.js'
 import { assertOdooReadyForCheckoutFromRequest } from '../../lib/odoo-checkout-health.js'
 import { isEmergencyMode } from '../odoo/odoo-resilience.settings.js'
 import { isCatalogDegraded } from '../odoo/odoo-degraded-state.js'
@@ -40,7 +43,9 @@ export const checkoutDraftService = {
 
     const cartFresh = await loadActiveCart(req)
 
-    if (body.step === 'shipping' || body.step === 'lock') {
+    // Stock/availability: solo al lock prezzi (o startCheckout). Non ri-validare su ogni
+    // patchDraft shipping/details — evita Odoo ripetuti e ricalcoli durante gli step.
+    if (body.step === 'lock') {
       const orderLocked = priceLocked || body.orderId != null
       const skipStock = (await isEmergencyMode()) || isCatalogDegraded()
       if (!orderLocked && !skipStock) {
@@ -77,14 +82,14 @@ export const checkoutDraftService = {
       throw new AppError('EMAIL_REQUIRED', 'Email required', 'Email obbligatoria.', 400, false)
     }
 
-    const billing =
+    const billingRaw =
       body.billingAddress ??
       (existing?.billingAddressJson as CheckoutDraftBody['billingAddress'] | undefined)
     const shipping =
       body.shippingAddress ??
       (existing?.shippingAddressJson as CheckoutDraftBody['shippingAddress'] | undefined)
 
-    if (!billing || !shipping) {
+    if (!billingRaw || !shipping) {
       throw new AppError(
         'ADDRESS_REQUIRED',
         'Address required',
@@ -93,6 +98,14 @@ export const checkoutDraftService = {
         false,
       )
     }
+
+    const dropship = body.dropshipAddress ?? body.deliveryRecipient ?? undefined
+    const billing = resolveCheckoutBillingAddress({
+      billingAddress: billingRaw,
+      shippingAddress: shipping,
+      authenticated: Boolean(req.sessionRecord?.odooPartnerId ?? req.sessionRecord?.user),
+      hasDropship: Boolean(dropship?.line1?.trim()),
+    })
 
     if (
       body.step === 'details' &&
@@ -116,7 +129,6 @@ export const checkoutDraftService = {
       })
     }
 
-    const dropship = body.dropshipAddress ?? body.deliveryRecipient ?? undefined
     const vatWarning =
       body.vatForceAccepted && body.business?.vatNumber
         ? `[VAT forzato] P.IVA ${body.business.vatNumber} non validata VIES.`

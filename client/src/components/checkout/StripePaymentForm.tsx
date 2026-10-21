@@ -1,6 +1,6 @@
 'use client'
 
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import {
   ExpressCheckoutElement,
   PaymentElement,
@@ -179,6 +179,44 @@ export const StripePaymentForm = forwardRef<StripePaymentFormHandle, Props>(func
     [ready, pay],
   )
 
+  const expressCheckoutOptions = useMemo(
+    () =>
+      ({
+        paymentMethods: {
+          applePay: 'always',
+          googlePay: 'always',
+          paypal: 'auto',
+          link: 'never',
+        },
+        layout: { maxColumns: 2, maxRows: 1 },
+        buttonType: {
+          applePay: 'buy',
+          googlePay: 'pay',
+        },
+      }) as React.ComponentProps<typeof ExpressCheckoutElement>['options'],
+    [],
+  )
+
+  const paymentElementOptions = useMemo(
+    () => ({
+      layout: 'tabs' as const,
+      wallets: {
+        applePay: 'auto' as const,
+        googlePay: 'auto' as const,
+        link: 'never' as const,
+      },
+      fields: {
+        billingDetails: {
+          name: 'never' as const,
+          email: 'never' as const,
+          phone: 'never' as const,
+          address: 'never' as const,
+        },
+      },
+    }),
+    [],
+  )
+
   if (checkoutState.type === 'loading') {
     return (
       <div className="rounded-xl border border-idl-tech-border bg-idl-tech-chip px-4 py-6 text-sm text-idl-muted">
@@ -196,21 +234,7 @@ export const StripePaymentForm = forwardRef<StripePaymentFormHandle, Props>(func
   return (
     <div className={busy ? 'pointer-events-none opacity-70' : undefined}>
       <ExpressCheckoutElement
-        options={
-          {
-            paymentMethods: {
-              applePay: 'always',
-              googlePay: 'always',
-              paypal: 'auto',
-              link: 'never',
-            },
-            layout: { maxColumns: 2, maxRows: 1 },
-            buttonType: {
-              applePay: 'buy',
-              googlePay: 'pay',
-            },
-          } as React.ComponentProps<typeof ExpressCheckoutElement>['options']
-        }
+        options={expressCheckoutOptions}
         onReady={({ availablePaymentMethods }) => {
           const wallets = availablePaymentMethods
           const hasExpress = Boolean(wallets?.applePay || wallets?.googlePay || wallets?.paypal)
@@ -263,20 +287,7 @@ export const StripePaymentForm = forwardRef<StripePaymentFormHandle, Props>(func
           setPaymentComplete(event.complete)
           if (event.complete) onError('')
         }}
-        options={{
-          layout: 'tabs',
-          wallets: {
-            link: 'never',
-          },
-          fields: {
-            billingDetails: {
-              name: 'never',
-              email: 'never',
-              phone: 'never',
-              address: 'never',
-            },
-          },
-        }}
+        options={paymentElementOptions}
       />
       <p className="sr-only">{tParams('checkout.payment.orderSr', { orderId })}</p>
     </div>

@@ -11,28 +11,28 @@ import {
   freeShippingSelectionLocked,
   hasCheckoutContactFromProfile,
   isShippingBlockedByMissingPhone,
-  initShippingFromBilling,
+  initBillingFromShipping,
   canUseDropship,
   isBusinessCheckout,
   isBusinessAnagraficaComplete,
   isRomePickupEligible,
+  refreshShippingQuotesIfNeeded,
   selectCheckoutDropshipAddress,
   selectCheckoutShippingAddress,
   selectShippingMethod,
   setBillingSameAsShipping,
   setDeliveryRecipientMode,
   updateCheckoutAddress,
-  updateClientOrderRef,
   updateDeliveryRecipientField,
   updateDropshipAddress,
 } from '@/features/checkout'
 import { authStore } from '@/features/auth'
+import { cartStore } from '@/features/cart/cart.store'
 import { isCheckoutAddressValid, mergeResolvedStreetNumber } from '@/lib/checkout-address.validators'
+import { resolveCartMaxLeadTimeDays } from '@/lib/product-availability'
 import { CheckoutAccountSection } from './CheckoutAccountSection'
 import { PhonePrefixField } from '@/components/PhonePrefixField'
 import { CheckoutAddressSection } from './CheckoutAddressSection'
-import { CheckoutBusinessFieldsSection } from './CheckoutBusinessFieldsSection'
-import { CheckoutRetailFiscalCodeField } from './CheckoutRetailFiscalCodeField'
 import { CourierNotesField } from './CheckoutAddressFields'
 import { CheckoutShippingOptions } from './CheckoutShippingOptions'
 import { ShippingAddressPicker } from '@/components/account/ShippingAddressPicker'
@@ -44,6 +44,7 @@ import {
   CheckoutToggleCheckbox,
 } from './CheckoutStepPrimitives'
 import { useI18n } from '@/hooks/use-i18n'
+import { cn } from '@/utils/cn'
 import {
   CheckoutActionRow,
   StripeControlledInput,
@@ -55,15 +56,23 @@ import {
 } from './StripeFields'
 import { CheckoutStepBackButton } from './CheckoutStepBackButton'
 
-export function CheckoutAddressesStep() {
+type Props = {
+  /** Pagina unica: niente back/continua e niente sezione account duplicata. */
+  embedded?: boolean
+  disabled?: boolean
+}
+
+export function CheckoutAddressesStep({ embedded = false, disabled = false }: Props) {
   const { t, tParams } = useI18n()
   const checkout = useSnapshot(checkoutStore)
   const auth = useSnapshot(authStore)
+  const cart = useSnapshot(cartStore)
+  const deliveryEstimateDays =
+    resolveCartMaxLeadTimeDays(cart.cart?.items ?? []) ?? checkout.deliveryEstimateDays
   const business = isBusinessCheckout()
   const dropshipEnabled = canUseDropship()
-  const hideBusinessFields = business && checkout.anagraficaCollectedAtAccount
-  const hideRetailFiscalCode = !business && auth.isAuthenticated
   const stepBusy =
+    disabled ||
     checkout.isLoading ||
     checkout.initLoadingPhase != null ||
     checkout.addressPrefillLoading
@@ -74,79 +83,122 @@ export function CheckoutAddressesStep() {
   const hasSavedShippingAddresses = savedAddresses.length > 0
   const hasMultipleSavedShippingAddresses = savedAddresses.length > 1
   const selectedSavedId = checkout.selectedShippingAddressId
-  const shipToDifferentAddress = !checkout.draft.billingSameAsShipping
-  const useBillingForShipping =
-    !shipToDifferentAddress && deliveryMode === 'self' && selectedSavedId !== OTHER_SHIPPING_SELECTION
-  const showOtherShippingForm =
+  const billingSameAsShipping = checkout.draft.billingSameAsShipping
+  // Loggato + consegna a sé: toggle forzato checked (billing = shipping verso Odoo).
+  const forceBillingSameAsShipping = auth.isAuthenticated && deliveryMode === 'self'
+  const showPrimaryShippingForm =
     deliveryMode === 'self' &&
-    (selectedSavedId === OTHER_SHIPPING_SELECTION || (!hasSavedShippingAddresses && shipToDifferentAddress))
+    (selectedSavedId === OTHER_SHIPPING_SELECTION || !hasSavedShippingAddresses)
+  const showSavedShippingOnly =
+    deliveryMode === 'self' &&
+    hasSavedShippingAddresses &&
+    selectedSavedId !== OTHER_SHIPPING_SELECTION
   const showNewDropshipForm =
     deliveryMode === 'other' && selectedSavedId === OTHER_SHIPPING_SELECTION
-  const billingComplete =
-    isCheckoutAddressValid(checkout.draft.billing) &&
+  const shippingComplete =
+    isCheckoutAddressValid(checkout.draft.shipping) &&
     (!business || isBusinessAnagraficaComplete())
-  const shippingSectionReady = billingComplete && canFetchShippingQuotes()
-  // Accesso esplicito per reattività valtio (isShippingBlockedByMissingPhone legge lo store raw).
+  const addressReady = canFetchShippingQuotes()
+  // Accesso esplicito per reattività valtio.
   void checkout.draft.billing.phone
   void checkout.draft.shipping.phone
   void checkout.deliveryRecipient.phone
   const phoneBlockingShipping = isShippingBlockedByMissingPhone()
-  const hideContact = hasCheckoutContactFromProfile() && !phoneBlockingShipping
-  const continueBusy =
-    stepBusy ||
-    checkout.shippingQuotesLoading ||
-    Boolean(checkout.shippingSelectingRef)
+  /** Destinazione incompleta (non solo telefono): pulse sul campo via. */
+  const highlightIncompleteShippingAddress =
+    !addressReady && !phoneBlockingShipping && !stepBusy
+  // Nome/cognome/telefono restano in anagrafica contatto; qui solo indirizzo.
+  // Telefono in Addresses solo se loggato e ancora mancante (fallback).
+  const hideShippingPerson = true
+  const hasPhone =
+    Boolean(checkout.draft.shipping.phone?.trim()) || Boolean(checkout.draft.billing.phone?.trim())
+  const hideShippingPhone =
+    !auth.isAuthenticated ||
+    (!phoneBlockingShipping && hasPhone && hasCheckoutContactFromProfile())
+  // Non includere shippingSelectingRef: la selezione è ottimistica; Continua resta
+  // disabilitato da canAdvance (shippingSelectionPersisted) senza bloccare la pagina.
+  const continueBusy = stepBusy || checkout.shippingQuotesLoading
 
   useEffect(() => {
     if (checkoutStore.deliveryRecipient.mode == null) {
       setDeliveryRecipientMode('self')
     }
     if (!checkoutStore.selectedShippingAddressId && checkoutStore.savedShippingAddresses.length === 0) {
-      initShippingFromBilling()
+      initBillingFromShipping()
     }
   }, [])
 
+  // Loggato + self: ripristina always-on same-as-shipping se lo store era rimasto a false.
+  useEffect(() => {
+    if (!forceBillingSameAsShipping) return
+    if (checkoutStore.draft.billingSameAsShipping) return
+    setBillingSameAsShipping(true)
+  }, [forceBillingSameAsShipping])
+
+  // Spedizione-first: se stesso indirizzo, allinea fatturazione ← spedizione.
+  useEffect(() => {
+    if (!forceBillingSameAsShipping && !checkout.draft.billingSameAsShipping) return
+    if ((checkout.deliveryRecipient.mode ?? 'self') !== 'self') return
+    if (!shippingComplete) return
+    if (phoneBlockingShipping) return
+    const bill = checkoutStore.draft.billing
+    const ship = checkoutStore.draft.shipping
+    const drifted =
+      bill.line1 !== ship.line1 ||
+      bill.streetNumber !== ship.streetNumber ||
+      bill.isSnc !== ship.isSnc ||
+      bill.city !== ship.city ||
+      bill.postalCode !== ship.postalCode ||
+      bill.province !== ship.province ||
+      bill.country !== ship.country ||
+      (bill.phone ?? '') !== (ship.phone ?? '')
+    if (!drifted) return
+    initBillingFromShipping()
+  }, [
+    shippingComplete,
+    forceBillingSameAsShipping,
+    checkout.draft.billingSameAsShipping,
+    checkout.deliveryRecipient.mode,
+    checkout.draft.billing,
+    checkout.draft.shipping,
+    phoneBlockingShipping,
+  ])
+
+  // Quando l’indirizzo (spedizione-first / saved) diventa valido → refresh quote.
+  // Include selectedShippingAddressId + billing.phone: da loggato il telefono può
+  // arrivare dal profilo/billing senza cambiare i campi via/CAP dello shipping.
+  useEffect(() => {
+    if (phoneBlockingShipping) return
+    if (checkout.initLoadingPhase != null || checkout.addressPrefillLoading) return
+    if (!canFetchShippingQuotes()) return
+    void refreshShippingQuotesIfNeeded().catch(() => {})
+  }, [
+    addressReady,
+    phoneBlockingShipping,
+    checkout.initLoadingPhase,
+    checkout.addressPrefillLoading,
+    checkout.selectedShippingAddressId,
+    checkout.draft.shipping.line1,
+    checkout.draft.shipping.streetNumber,
+    checkout.draft.shipping.isSnc,
+    checkout.draft.shipping.city,
+    checkout.draft.shipping.postalCode,
+    checkout.draft.shipping.province,
+    checkout.draft.shipping.country,
+    checkout.draft.shipping.phone,
+    checkout.draft.billing.phone,
+  ])
+
   return (
-    <section className="space-y-5">
-      {auth.me ? <CheckoutAccountSection /> : null}
+    <section className={cn(embedded ? 'space-y-4' : 'space-y-5', disabled && 'pointer-events-none opacity-60')}>
+      {!embedded && auth.me ? <CheckoutAccountSection /> : null}
 
       {auth.me?.isProfessional ? (
         <CheckoutInfoNote>{t('checkout.billing.professionalActive')}</CheckoutInfoNote>
       ) : null}
 
-      {!hideBusinessFields ? (
-        <CheckoutBusinessFieldsSection showClientOrderRef={business} disabled={stepBusy} />
-      ) : business ? (
-        <div>
-          <StripeFieldLabel htmlFor="clientOrderRef">{t('checkout.billing.clientOrderRefOptional')}</StripeFieldLabel>
-          <StripeFieldGroup>
-            <StripeControlledInput
-              id="clientOrderRef"
-              name="clientOrderRef"
-              placeholder={t('checkout.billing.clientOrderRefOptional')}
-              value={checkout.clientOrderRef}
-              onValueChange={(value) => updateClientOrderRef(value)}
-            />
-          </StripeFieldGroup>
-        </div>
-      ) : null}
-
-      {!business && !hideRetailFiscalCode ? <CheckoutRetailFiscalCodeField disabled={stepBusy} /> : null}
-
-      <CheckoutAddressSection
-        title={t('checkout.billingAddress')}
-        prefix="bill"
-        showTitle
-        hideContactFields={hideContact}
-        highlightPhoneError={phoneBlockingShipping}
-        address={checkout.draft.billing}
-        onChange={(key, value) => updateCheckoutAddress('billing', key, value)}
-        onAddressResolved={(resolved) =>
-          void applyResolvedAddress('billing', resolved).catch(() => {})
-        }
-      />
-
-      <div className="space-y-4 border-t border-idl-tech-border pt-5">
+      {/* Indirizzo di spedizione (primario) */}
+      <div className="space-y-4">
         <StripeSectionTitle>{t('checkout.shippingAddress')}</StripeSectionTitle>
 
         {dropshipEnabled ? (
@@ -196,24 +248,60 @@ export function CheckoutAddressesStep() {
               }}
             />
           </>
-        ) : deliveryMode === 'self' ? (
+        ) : null}
+
+        {showPrimaryShippingForm ? (
           <>
-            <CheckoutToggleCheckbox
-              checked={checkout.draft.billingSameAsShipping}
+            <CheckoutAddressSection
+              title={t('checkout.shippingAddress')}
+              prefix="ship"
+              showTitle={false}
+              hideContactFields={hideShippingPerson}
+              highlightPhoneError={phoneBlockingShipping && !hideShippingPhone}
+              highlightIncompleteAddress={highlightIncompleteShippingAddress}
               disabled={stepBusy}
-              onChange={(checked) => setBillingSameAsShipping(checked)}
-              label={t('checkout.shipping.diffFromBilling')}
+              address={checkout.draft.shipping}
+              showCourierNotes
+              onChange={(key, value) => updateCheckoutAddress('shipping', key, value)}
+              onAddressResolved={(resolved) =>
+                void applyResolvedAddress('shipping', resolved).catch(() => {})
+              }
             />
-            {useBillingForShipping ? (
-              <CheckoutInfoNote>{t('checkout.shipping.sameAsBillingHint')}</CheckoutInfoNote>
+            {hideShippingPerson && !hideShippingPhone ? (
+              <div>
+                <StripeFieldLabel htmlFor="ship-phone">{t('common.phone')}</StripeFieldLabel>
+                <StripeFieldGroup
+                  className={
+                    phoneBlockingShipping
+                      ? 'border-red-500 shadow-none ring-2 ring-red-200'
+                      : undefined
+                  }
+                >
+                  <PhonePrefixField
+                    id="ship-phone"
+                    name="ship-phone"
+                    value={checkout.draft.shipping.phone ?? ''}
+                    defaultCountry={checkout.draft.shipping.country}
+                    required
+                    invalid={phoneBlockingShipping}
+                    disabled={stepBusy}
+                    onValueChange={(value) => updateCheckoutAddress('shipping', 'phone', value)}
+                  />
+                </StripeFieldGroup>
+                {phoneBlockingShipping ? (
+                  <p
+                    className="mt-2 rounded-[10px] border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700"
+                    role="alert"
+                  >
+                    {t('checkout.shipping.phoneRequired')}
+                  </p>
+                ) : null}
+              </div>
             ) : null}
           </>
         ) : null}
 
-        {useBillingForShipping ||
-        (deliveryMode === 'self' &&
-          hasSavedShippingAddresses &&
-          selectedSavedId !== OTHER_SHIPPING_SELECTION) ? (
+        {showSavedShippingOnly ? (
           <div>
             <StripeFieldLabel htmlFor="ship-courier-notes">{t('checkout.address.courierNotes')}</StripeFieldLabel>
             <StripeFieldGroup>
@@ -228,20 +316,34 @@ export function CheckoutAddressesStep() {
           </div>
         ) : null}
 
-        {showOtherShippingForm ? (
-          <CheckoutAddressSection
-            title={t('checkout.shippingAddress')}
-            prefix="ship"
-            showTitle={false}
-            address={checkout.draft.shipping}
-            showCourierNotes
-            hideContactFields={hideContact}
-            highlightPhoneError={phoneBlockingShipping}
-            onChange={(key, value) => updateCheckoutAddress('shipping', key, value)}
-            onAddressResolved={(resolved) =>
-              void applyResolvedAddress('shipping', resolved).catch(() => {})
-            }
+        {deliveryMode === 'self' ? (
+          <CheckoutToggleCheckbox
+            checked={forceBillingSameAsShipping || billingSameAsShipping}
+            disabled={stepBusy || forceBillingSameAsShipping}
+            onChange={(checked) => {
+              if (forceBillingSameAsShipping) return
+              setBillingSameAsShipping(checked)
+            }}
+            label={t('checkout.billingSameAsShipping')}
           />
+        ) : null}
+
+        {deliveryMode === 'self' && !forceBillingSameAsShipping && !billingSameAsShipping ? (
+          <CheckoutPanel className="space-y-4 bg-idl-tech-panel">
+            <StripeSectionTitle>{t('checkout.billingAddress')}</StripeSectionTitle>
+            <CheckoutAddressSection
+              title={t('checkout.billingAddress')}
+              prefix="bill"
+              showTitle={false}
+              hideContactFields={hideShippingPerson}
+              disabled={stepBusy}
+              address={checkout.draft.billing}
+              onChange={(key, value) => updateCheckoutAddress('billing', key, value)}
+              onAddressResolved={(resolved) =>
+                void applyResolvedAddress('billing', resolved).catch(() => {})
+              }
+            />
+          </CheckoutPanel>
         ) : null}
 
         {dropshipEnabled && deliveryMode === 'other' ? (
@@ -303,6 +405,11 @@ export function CheckoutAddressesStep() {
                   prefix="dropship"
                   showTitle={false}
                   hideContactFields
+                  highlightIncompleteAddress={
+                    highlightIncompleteShippingAddress &&
+                    (showNewDropshipForm || dropshipRecipients.length === 0)
+                  }
+                  disabled={stepBusy}
                   address={checkout.dropshipAddress}
                   onChange={(key, value) => updateDropshipAddress(key, value)}
                   onAddressResolved={(resolved) => {
@@ -324,6 +431,7 @@ export function CheckoutAddressesStep() {
         ) : null}
       </div>
 
+      {/* Metodi di spedizione: sempre visibili; refresh quote quando indirizzo valido */}
       <div className="space-y-4 border-t border-idl-tech-border pt-5">
         <StripeSectionTitle>{t('checkout.shipping.title')}</StripeSectionTitle>
 
@@ -331,28 +439,28 @@ export function CheckoutAddressesStep() {
           quotes={checkout.shippingQuotes}
           selectedRef={checkout.selectedShippingMethodRef}
           selectingRef={checkout.shippingSelectingRef}
-          loading={checkout.shippingQuotesLoading}
-          blocked={!shippingSectionReady}
-          blockedReason={
-            phoneBlockingShipping
-              ? t('checkout.shipping.phoneRequired')
-              : t('checkout.shipping.addressIncomplete')
+          loading={
+            addressReady && !phoneBlockingShipping && checkout.shippingQuotesLoading
           }
+          blocked={!addressReady || phoneBlockingShipping}
+          blockedReason={phoneBlockingShipping ? t('checkout.shipping.phoneRequired') : undefined}
           selectionLocked={freeShippingSelectionLocked()}
           onSelect={(ref) => {
             void selectShippingMethod(ref).catch(() => {})
           }}
         />
 
-        {shippingSectionReady ? (
+        {addressReady ? (
           <>
             {freeShippingSelectionLocked() ? (
-              <CheckoutInfoNote>{t('checkout.shipping.freeShippingLockedHint')}</CheckoutInfoNote>
+              <CheckoutInfoNote tone="success">
+                {t('checkout.shipping.freeShippingLockedHint')}
+              </CheckoutInfoNote>
             ) : null}
 
-            {checkout.deliveryEstimateDays != null ? (
+            {deliveryEstimateDays != null ? (
               <CheckoutInfoNote>
-                {tParams('checkout.shipping.deliveryEstimate', { days: checkout.deliveryEstimateDays })}
+                {tParams('checkout.shipping.deliveryEstimate', { days: deliveryEstimateDays })}
               </CheckoutInfoNote>
             ) : null}
 
@@ -365,17 +473,19 @@ export function CheckoutAddressesStep() {
         ) : null}
       </div>
 
-      <CheckoutActionRow>
-        <CheckoutStepBackButton disabled={continueBusy} />
-        <StripePayButton
-          className="min-w-0 flex-1"
-          disabled={!canAdvanceFromStep('addresses') || continueBusy}
-          loading={continueBusy}
-          onClick={() => void advanceCheckoutStep()}
-        >
-          {continueBusy ? t('checkout.processing') : t('checkout.continueToPayment')}
-        </StripePayButton>
-      </CheckoutActionRow>
+      {!embedded ? (
+        <CheckoutActionRow>
+          <CheckoutStepBackButton disabled={continueBusy} />
+          <StripePayButton
+            className="min-w-0 flex-1"
+            disabled={!canAdvanceFromStep('addresses') || continueBusy}
+            loading={continueBusy}
+            onClick={() => void advanceCheckoutStep()}
+          >
+            {continueBusy ? t('checkout.processing') : t('checkout.continueToPayment')}
+          </StripePayButton>
+        </CheckoutActionRow>
+      ) : null}
     </section>
   )
 }

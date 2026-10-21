@@ -17,7 +17,6 @@ export type OdooPartnerAccountRow = {
   vat?: string | false
   l10n_it_codice_fiscale?: string | false
   l10n_it_pec_email?: string | false
-  l10n_it_codice_destinatario?: string | false
   l10n_it_pa_index?: string | false
 }
 
@@ -89,7 +88,7 @@ function pickFiscalField(
   contact: OdooPartnerAccountRow,
   key: keyof Pick<
     OdooPartnerAccountRow,
-    'vat' | 'l10n_it_codice_fiscale' | 'l10n_it_pec_email' | 'l10n_it_codice_destinatario' | 'l10n_it_pa_index'
+    'vat' | 'l10n_it_codice_fiscale' | 'l10n_it_pec_email' | 'l10n_it_pa_index'
   >,
 ): string {
   return odooText(commercial?.[key]) || odooText(contact[key])
@@ -103,9 +102,7 @@ export function mapOdooPartnerAccount(
   const vatNumber = pickFiscalField(commercial, contact, 'vat').toUpperCase() || null
   const fiscalCode = pickFiscalField(commercial, contact, 'l10n_it_codice_fiscale').toUpperCase() || null
   const pec = pickFiscalField(commercial, contact, 'l10n_it_pec_email') || null
-  const sdiCode =
-    normalizeOdooSdiCode(pickFiscalField(commercial, contact, 'l10n_it_codice_destinatario')) ||
-    normalizeOdooSdiCode(pickFiscalField(commercial, contact, 'l10n_it_pa_index'))
+  const sdiCode = normalizeOdooSdiCode(pickFiscalField(commercial, contact, 'l10n_it_pa_index'))
 
   const contactIsCompany = odooBool(contact.is_company)
   const commercialIsCompany = odooBool(company.is_company) || Boolean(vatNumber)

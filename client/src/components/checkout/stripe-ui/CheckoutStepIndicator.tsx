@@ -17,22 +17,22 @@ type StepGroup = {
   steps: CheckoutStep[]
 }
 
-/** Tre macro-step: Anagrafica · Spedizione · Pagamento */
+/** Tre macro-step: Contatto · Indirizzo di spedizione · Pagamento */
 const STEP_GROUPS: StepGroup[] = [
   {
     id: 'account',
-    labelKey: 'checkout.steps.group.anagrafica',
+    labelKey: 'checkout.contactInfo',
     steps: ['account', 'customer_type'],
   },
   {
     id: 'addresses',
-    labelKey: 'checkout.steps.group.shipping',
-    steps: ['addresses', 'delivery_recipient', 'shipping_method'],
+    labelKey: 'checkout.shippingAddress',
+    steps: ['addresses', 'delivery_recipient', 'shipping_method', 'billing', 'shipping', 'details'],
   },
   {
     id: 'payment',
     labelKey: 'checkout.steps.group.payment',
-    steps: ['payment', 'review'],
+    steps: ['payment', 'payment_method', 'review'],
   },
 ]
 
@@ -57,8 +57,8 @@ export function CheckoutStepIndicator({ currentStep }: Props) {
   const auth = useSnapshot(authStore)
   const checkout = useSnapshot(checkoutStore)
   const activeGroup = groupIndex(currentStep)
-  const accountConfirmed =
-    currentStep === 'account' && (auth.isAuthenticated || checkout.guestCheckoutAccepted)
+  // Titolo “account confermato” solo se loggato (ospite resta su “Informazioni di contatto”).
+  const accountConfirmed = currentStep === 'account' && auth.isAuthenticated
   const pageTitle = t(
     checkoutStepPageTitleKey(currentStep, { accountConfirmed }),
   )

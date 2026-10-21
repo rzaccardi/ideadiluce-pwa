@@ -82,6 +82,7 @@ export function TechnicalEquivalentProducts({ products, currentSlug, lp }: Props
                     brand={brand}
                     fallbackLabel={brand?.name ?? 'Altra marca'}
                     size="xs"
+                    showLogo={false}
                     className="text-idl-muted"
                   />
                   <Link

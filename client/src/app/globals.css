@@ -304,6 +304,28 @@ button:disabled,
   }
 }
 
+/* Soft pulse: indirizzo incompleto → metodi spedizione bloccati */
+@keyframes idl-checkout-line1-pulse {
+  0%,
+  100% {
+    background-color: color-mix(in srgb, var(--color-idl-amber) 7%, var(--color-idl-tech-panel));
+  }
+  50% {
+    background-color: color-mix(in srgb, var(--color-idl-amber) 18%, var(--color-idl-tech-panel));
+  }
+}
+
+.idl-checkout-line1-pulse {
+  animation: idl-checkout-line1-pulse 1.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .idl-checkout-line1-pulse {
+    animation: none;
+    background-color: color-mix(in srgb, var(--color-idl-amber) 12%, var(--color-idl-tech-panel));
+  }
+}
+
 .account-nav ul {
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;

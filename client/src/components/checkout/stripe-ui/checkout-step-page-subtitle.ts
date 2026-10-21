@@ -13,26 +13,19 @@ export function checkoutStepPageSubtitleKey(
 ): MessageKey | null {
   switch (step) {
     case 'account':
-      return options?.accountConfirmed ? null : 'checkout.account.requiredHint'
     case 'customer_type':
-      return 'checkout.customerType.hint'
+      return options?.accountConfirmed ? null : 'checkout.account.requiredHint'
     case 'addresses':
     case 'billing':
     case 'details':
-      return 'checkout.addresses.subtitleUnified'
     case 'shipping':
-      return options?.billingSameAsShipping
-        ? 'checkout.shipping.addressSubtitle'
-        : 'checkout.shipping.diffAddressSubtitle'
     case 'delivery_recipient':
-      return 'checkout.deliveryRecipient.hint'
     case 'shipping_method':
-      return 'checkout.shipping.methodSubtitle'
+      return 'checkout.addresses.subtitleUnified'
     case 'payment':
     case 'payment_method':
-      return 'checkout.paymentNote'
     case 'review':
-      return 'checkout.review.hint'
+      return 'checkout.paymentNote'
     default:
       return null
   }

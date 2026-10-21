@@ -244,6 +244,57 @@ export function formatAvailabilityPrimaryLabel(result: ProductAvailabilityResult
   return result.label
 }
 
+/**
+ * Giorni di lead effettivi come sul PDP (Caso 2: Q > S con fornitori).
+ * `null` se solo BASE 24/48h o non acquistabile.
+ */
+export function resolveAvailabilityLeadTimeDays(input: {
+  availability: ProductAvailabilityDataDTO | null | undefined
+  requestedQty?: number
+}): number | null {
+  const days = getProductAvailabilityStatus({
+    availability: input.availability,
+    requestedQty: input.requestedQty,
+  }).leadTimeDays
+  return days != null && days > 0 ? days : null
+}
+
+type CartLineForLeadTime = {
+  quantity: number
+  purchasable: boolean
+  availabilityStatus: 'available' | 'blocked' | 'limited'
+  availability: {
+    stockQty: number | null
+    effectiveLeadDays: number | null
+    isOrderable: boolean
+  }
+}
+
+/**
+ * Consegna unica carrello/checkout: max dei lead PDP per riga acquistabile
+ * (stesso calcolo del prodotto singolo, tempo più lungo nel carrello).
+ */
+export function resolveCartMaxLeadTimeDays(
+  items: ReadonlyArray<CartLineForLeadTime>,
+): number | null {
+  const leads: number[] = []
+  for (const item of items) {
+    if (!item.purchasable || item.availabilityStatus === 'blocked') continue
+    const days = resolveAvailabilityLeadTimeDays({
+      availability: {
+        qtyAvailable: Math.max(0, item.availability.stockQty ?? 0),
+        isOrderable: item.availability.isOrderable,
+        // `effectiveLeadDays` è già il LT fornitore risolto server-side per la qty riga
+        // (stessa matrice stock/fornitori del PDP).
+        customerLeadTimeDays: item.availability.effectiveLeadDays,
+      },
+      requestedQty: item.quantity,
+    })
+    if (days != null) leads.push(days)
+  }
+  return leads.length > 0 ? Math.max(...leads) : null
+}
+
 export function isCatalogProductPurchasable(
   product: Pick<ProductCardDTO, 'inStock' | 'availability'>,
   locale: PwaLocale = 'IT',

@@ -12,14 +12,13 @@ import {
 } from '@/lib/addressAutocomplete'
 import { isCheckoutAddressValid, isCheckoutPhoneValid, mergeResolvedStreetNumber } from '@/lib/checkout-address.validators'
 import { checkoutStore } from '@/features/checkout'
-import { AddressAutocompleteField } from '@/components/checkout/AddressAutocompleteField'
 import { PhonePrefixField } from '@/components/PhonePrefixField'
 import { useI18n } from '@/hooks/use-i18n'
 import { CheckoutAddressFields } from './CheckoutAddressFields'
 import {
   StripeFieldGroup,
-  StripeFieldLabel,
   StripeControlledInput,
+  StripeFieldLabel,
   StripeSectionTitle,
 } from './StripeFields'
 
@@ -33,6 +32,12 @@ type Props = {
   hideContactFields?: boolean
   /** Evidenzia il telefono mancante/non valido (metodi spedizione bloccati). */
   highlightPhoneError?: boolean
+  /**
+   * Destinazione incompleta + metodi spedizione locked: pulse soft sul campo via
+   * (non se manca solo il civico — lì resta focusStreetNumber).
+   */
+  highlightIncompleteAddress?: boolean
+  disabled?: boolean
   onChange: <K extends keyof AddressInput>(key: K, value: AddressInput[K]) => void
   onAddressResolved?: (resolved: ResolvedAddress) => void
 }
@@ -58,28 +63,17 @@ export function CheckoutAddressSection({
   showTitle = false,
   hideContactFields = false,
   highlightPhoneError = false,
+  highlightIncompleteAddress = false,
+  disabled = false,
   onChange,
   onAddressResolved,
 }: Props) {
   const { t } = useI18n()
   const [autocompleteEnabled, setAutocompleteEnabled] = useState(isAddressAutocompleteEnabled())
-  const [addressProvider, setAddressProvider] = useState<'google' | 'mapbox' | null>(null)
   const [setupHint, setSetupHint] = useState<string | null>(null)
   const [focusStreetNumber, setFocusStreetNumber] = useState(() => needsStreetNumberChoice(address))
-  const searchInputName = `${prefix}-search`
   const prefillAttemptedRef = useRef(false)
-  const shouldFocusSearchRef = useRef(false)
-  const hasAddressCore = hasResolvedAddressCore(address)
-  const showAutocompleteSearch = autocompleteEnabled && !hasAddressCore
   const addressGeocodeKey = [address.line1, address.city, address.postalCode, address.country].join('|')
-
-  useEffect(() => {
-    if (!showAutocompleteSearch || !shouldFocusSearchRef.current) return
-    shouldFocusSearchRef.current = false
-    requestAnimationFrame(() => {
-      document.getElementById(searchInputName)?.focus()
-    })
-  }, [showAutocompleteSearch, searchInputName])
 
   useEffect(() => {
     if (address.streetNumber.trim() || address.isSnc) {
@@ -96,10 +90,9 @@ export function CheckoutAddressSection({
       if (enabled) {
         try {
           const status = await fetchAddressAutocompleteStatus()
-          setAddressProvider(status.provider)
           setSetupHint(status.setupHint ?? null)
         } catch {
-          setAddressProvider(null)
+          setSetupHint(null)
         }
       }
     })()
@@ -126,12 +119,8 @@ export function CheckoutAddressSection({
     onChange('country', resolved.country)
   }
 
-  function handleAddressResolved(resolved: ResolvedAddress) {
-    applyResolved(resolved)
-  }
-
   useEffect(() => {
-    if (!autocompleteEnabled || prefillAttemptedRef.current) return
+    if (!autocompleteEnabled || prefillAttemptedRef.current || disabled) return
     if (!hasPrefilledAddress(address)) return
     if (isCheckoutAddressValid(address)) {
       return
@@ -152,22 +141,11 @@ export function CheckoutAddressSection({
         checkoutStore.addressPrefillLoading = false
       }
     })()
-  }, [autocompleteEnabled, addressGeocodeKey])
-
-  function handleChangeAddress() {
-    prefillAttemptedRef.current = true
-    shouldFocusSearchRef.current = true
-    setFocusStreetNumber(false)
-    onChange('line1', '')
-    onChange('line2', '')
-    onChange('streetNumber', '')
-    onChange('isSnc', false)
-    onChange('city', '')
-    onChange('postalCode', '')
-    onChange('province', '')
-  }
+  }, [autocompleteEnabled, addressGeocodeKey, disabled])
 
   const civicoRequired = needsStreetNumberChoice(address)
+  const pulseLine1 =
+    highlightIncompleteAddress && !civicoRequired && !disabled
   const phoneInvalid =
     highlightPhoneError ||
     (Boolean((address.phone ?? '').trim()) && !isCheckoutPhoneValid(address.phone ?? ''))
@@ -190,6 +168,7 @@ export function CheckoutAddressSection({
                   placeholder={t('common.firstName')}
                   value={address.firstName}
                   autoComplete="given-name"
+                  readOnly={disabled}
                   onValueChange={(value) => onChange('firstName', value)}
                 />
               </StripeFieldGroup>
@@ -203,6 +182,7 @@ export function CheckoutAddressSection({
                   placeholder={t('common.lastName')}
                   value={address.lastName}
                   autoComplete="family-name"
+                  readOnly={disabled}
                   onValueChange={(value) => onChange('lastName', value)}
                 />
               </StripeFieldGroup>
@@ -225,6 +205,7 @@ export function CheckoutAddressSection({
                 defaultCountry={address.country}
                 required
                 invalid={phoneInvalid}
+                disabled={disabled}
                 onValueChange={(value) => onChange('phone', value)}
               />
             </StripeFieldGroup>
@@ -240,64 +221,31 @@ export function CheckoutAddressSection({
         </>
       ) : null}
 
-      {showAutocompleteSearch ? (
-        <div className="rounded-[14px] border border-[#d9c9a8] bg-[#f3eee4] p-4 shadow-[0_1px_2px_rgba(20,22,27,0.04)] sm:p-5">
-          <p className="text-[13px] font-bold tracking-[-0.01em] text-idl-graphite">
-            {t('checkout.address.autofillBanner')}
-          </p>
-          <p className="mt-1 text-xs leading-relaxed text-[#7a6f5c]">
-            {addressProvider === 'google'
-              ? t('checkout.address.googleHint')
-              : t('checkout.address.autofillHint')}
-          </p>
-          <div className="mt-3">
-            <StripeFieldGroup allowOverflow>
-              <AddressAutocompleteField
-                label={t('checkout.address.autofillBanner')}
-                name={searchInputName}
-                value={address.line1}
-                countryBias={address.country}
-                variant="stripe"
-                autoComplete="off"
-                placeholder={t('checkout.address.searchPlaceholder')}
-                onChange={(value) => onChange('line1', value)}
-                onResolved={handleAddressResolved}
-                onSetupHint={setSetupHint}
-              />
-            </StripeFieldGroup>
-          </div>
-          {setupHint ? <p className="mt-2 text-xs text-amber-800">{setupHint}</p> : null}
-        </div>
+      {civicoRequired ? (
+        <p className="rounded-[10px] border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm leading-relaxed text-amber-900">
+          {t('checkout.address.streetNumberHint')}
+        </p>
       ) : null}
 
-      <div className="overflow-hidden rounded-[14px] border border-idl-tech-border bg-idl-tech-panel p-4 shadow-[0_1px_2px_rgba(20,22,27,0.04)] sm:p-5">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-[13px] font-semibold text-idl-graphite">{t('checkout.address.detailsTitle')}</p>
-          {autocompleteEnabled && hasAddressCore ? (
-            <button
-              type="button"
-              onClick={handleChangeAddress}
-              className="text-sm font-semibold text-[#3a3a3d] underline decoration-[#a1a1aa] underline-offset-2 hover:decoration-[#3a3a3d]"
-            >
-              {t('checkout.address.changeAddress')}
-            </button>
-          ) : null}
-        </div>
-        {civicoRequired ? (
-          <p className="mb-3 rounded-[10px] border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm leading-relaxed text-amber-900">
-            {t('checkout.address.streetNumberHint')}
-          </p>
-        ) : null}
-        <CheckoutAddressFields
-          layout="card"
-          prefix={prefix}
-          address={address}
-          locked={false}
-          showCourierNotes={showCourierNotes}
-          focusStreetNumber={focusStreetNumber}
-          onChange={onChange}
-        />
-      </div>
+      <CheckoutAddressFields
+        layout="card"
+        prefix={prefix}
+        address={address}
+        locked={disabled}
+        showCourierNotes={showCourierNotes}
+        focusStreetNumber={focusStreetNumber}
+        pulseIncomplete={pulseLine1}
+        // Non legare a `disabled`: se autocomplete spegne per locked, showAddressDetails
+        // diventa true e i dettagli (civico/città/CAP) si espandono a torto.
+        line1Autocomplete={autocompleteEnabled}
+        onSetupHint={setSetupHint}
+        onLine1Resolved={(resolved) => applyResolved(resolved)}
+        onChange={onChange}
+      />
+
+      {setupHint && autocompleteEnabled ? (
+        <p className="text-xs text-amber-800">{setupHint}</p>
+      ) : null}
     </section>
   )
 }

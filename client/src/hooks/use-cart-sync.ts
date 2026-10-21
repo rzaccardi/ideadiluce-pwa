@@ -21,6 +21,9 @@ export function useCartSync(enabled = true, options?: { pollStock?: boolean }) {
       }
     }
 
+    // All’apertura mini-cart / ingresso flusso: sync subito (non solo al focus).
+    refresh()
+
     const onVisibilityChange = () => {
       if (!document.hidden) refresh()
     }

@@ -513,6 +513,7 @@ export async function estimateCartMaxLeadDays(
         leadTimeDays: snap.leadTimeDays,
         saleOk: snap.saleOk,
         orderable: snap.orderable,
+        isStorable: snap.isStorable,
       },
       line.quantity,
     )

@@ -139,6 +139,22 @@ export const checkoutStore = proxy({
   anagraficaCollectedAtAccount: false,
   /** Checkout ospite: email confermata senza login. */
   guestCheckoutAccepted: false,
+  /**
+   * Risultato debounced di POST /auth/check-email.
+   * `exists: true` → richiede login; `false` → guest silenzioso + createAccount.
+   */
+  emailLookup: {
+    status: 'idle' as 'idle' | 'loading' | 'ready' | 'error',
+    email: '' as string,
+    exists: null as boolean | null,
+  },
+  /** Forza UI password anche se check-email non ha ancora risposto exists. */
+  contactForceLogin: false,
+  /**
+   * Utente ha premuto Indietro dallo step indirizzi: resta sullo step contatto
+   * anche se autenticato (altrimenti lo skip automatico lo rimanderebbe avanti).
+   */
+  contactStepPinned: false,
   clientOrderRef: '',
   dropshipAddress: emptyCheckoutAddress(),
   savedShippingAddresses: [] as UserShippingAddressDTO[],

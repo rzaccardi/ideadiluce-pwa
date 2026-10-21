@@ -243,10 +243,11 @@ async function quotesFromDb(
   const zoneMethods = matchingZone?.methods ?? []
   const needsLiveRates = zoneHasLiveCarrierMethods(zoneMethods)
 
+  // Max lead sempre (anche zone flat/free): stessa matrice stock/LT del PDP/carrello.
   const [weightKg, maxLengthMeters, maxLeadDays, surchargeRules] = await Promise.all([
     needsLiveRates ? estimateCartWeightKg(ctx, cartItems) : Promise.resolve(1),
     needsLiveRates ? estimateCartMaxLengthMeters(ctx, cartItems) : Promise.resolve(0),
-    needsLiveRates ? estimateCartMaxLeadDays(ctx, cartItems) : Promise.resolve(null),
+    estimateCartMaxLeadDays(ctx, cartItems),
     needsLiveRates ? loadShippingSurchargeRules() : Promise.resolve(null),
   ])
 

@@ -30,6 +30,10 @@ type Props = {
   onChange: (value: string) => void
   onResolved: (address: ResolvedAddress) => void
   onSetupHint?: (hint: string | null) => void
+  /** Chiamato dopo il blur del campo (es. fallback inserimento manuale). */
+  onBlur?: () => void
+  /** Soft pulse: destinazione incompleta, metodi spedizione bloccati. */
+  pulseHint?: boolean
 }
 
 type DropdownRect = { top: number; left: number; width: number }
@@ -47,6 +51,8 @@ export function AddressAutocompleteField({
   onChange,
   onResolved,
   onSetupHint,
+  onBlur,
+  pulseHint = false,
 }: Props) {
   const { t } = useI18n()
   const isClient = useIsClient()
@@ -242,7 +248,10 @@ export function AddressAutocompleteField({
           field.onFocus(e)
           if (provider && suggestions.length > 0) setOpen(true)
         }}
-        onBlur={field.onBlur}
+        onBlur={(e) => {
+          field.onBlur(e)
+          onBlur?.()
+        }}
         onKeyDown={(e) => {
           if (!provider || !open || suggestions.length === 0) return
           if (e.key === 'ArrowDown') {
@@ -258,7 +267,7 @@ export function AddressAutocompleteField({
             setOpen(false)
           }
         }}
-        className={inputClass}
+        className={cn(inputClass, pulseHint && 'idl-checkout-line1-pulse')}
       />
       {provider && (loading || resolving) ? (
         <span

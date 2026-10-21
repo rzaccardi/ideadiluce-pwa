@@ -9,8 +9,14 @@ import { ApiRequestError } from '@/types/api'
 import type { CartAddedFeedback } from './cart-feedback'
 import { notifyCartItemAdded } from './cart-feedback'
 import { toServerCartAddHint, type CartAddProductHint } from './cart-add-hint'
-import { applyOptimisticAdd, isOptimisticCartId } from './cart-optimistic'
+import {
+  applyOptimisticAdd,
+  applyOptimisticQuantity,
+  applyOptimisticRemove,
+  isOptimisticCartId,
+} from './cart-optimistic'
 import { cartStore } from './cart.store'
+import type { CartDTO, CartItemDTO } from '@/types/dto'
 
 export type AddItemOptions = {
   feedback?: CartAddedFeedback
@@ -121,7 +127,117 @@ function enqueueCartMutation(task: () => Promise<void>): Promise<void> {
   return run
 }
 
+const QUANTITY_PATCH_DEBOUNCE_MS = 280
+const pendingQuantityByLine = new Map<string, number>()
+const quantityFlushTimers = new Map<string, ReturnType<typeof setTimeout>>()
+let stockCheckTimer: ReturnType<typeof setTimeout> | null = null
+
+function clearQuantityFlush(lineId: string) {
+  const timer = quantityFlushTimers.get(lineId)
+  if (timer) clearTimeout(timer)
+  quantityFlushTimers.delete(lineId)
+  pendingQuantityByLine.delete(lineId)
+}
+
+function scheduleDebouncedStockCheck() {
+  if (stockCheckTimer) clearTimeout(stockCheckTimer)
+  stockCheckTimer = setTimeout(() => {
+    stockCheckTimer = null
+    void checkCartAvailability()
+  }, 600)
+}
+
+function normalizeVariantKey(value: string | null | undefined): string {
+  if (value == null) return ''
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  const legacy = /^VAR-(\d+)$/i.exec(trimmed)
+  return legacy ? legacy[1] : trimmed
+}
+
+function parseOptimisticLineId(lineId: string): { productRef: string; variantRef: string } | null {
+  if (!lineId.startsWith('optimistic:')) return null
+  const rest = lineId.slice('optimistic:'.length)
+  const idx = rest.indexOf(':')
+  if (idx < 0) return { productRef: rest, variantRef: '' }
+  return { productRef: rest.slice(0, idx), variantRef: rest.slice(idx + 1) }
+}
+
+function lineMatchesIdentity(
+  line: Pick<CartItemDTO, 'id' | 'productRef' | 'productSlug' | 'variantRef'>,
+  identity: { lineId: string; productRef?: string; variantRef?: string | null },
+): boolean {
+  if (line.id === identity.lineId) return true
+  if (!identity.productRef) return false
+  const productOk =
+    line.productRef === identity.productRef || line.productSlug === identity.productRef
+  if (!productOk) return false
+  return normalizeVariantKey(line.variantRef) === normalizeVariantKey(identity.variantRef)
+}
+
+/** Risolve l’id riga server anche dopo un add ottimistico (id `optimistic:…`). */
+async function resolveServerLineId(identity: {
+  lineId: string
+  productRef?: string
+  variantRef?: string | null
+}): Promise<string | null> {
+  const local = cartStore.cart?.items.find((line) => lineMatchesIdentity(line, identity))
+  if (local && !local.id.startsWith('optimistic:')) return local.id
+
+  const parsed = parseOptimisticLineId(identity.lineId)
+  const productRef = identity.productRef ?? parsed?.productRef
+  const variantRef = identity.variantRef ?? parsed?.variantRef ?? null
+  if (!productRef) return null
+
+  let serverCart: CartDTO
+  try {
+    serverCart = await api.cart.get()
+  } catch {
+    return null
+  }
+  const match = serverCart.items.find((line) =>
+    lineMatchesIdentity(line, { lineId: identity.lineId, productRef, variantRef }),
+  )
+  return match?.id ?? null
+}
+
+async function flushPendingQuantityPatches() {
+  const pending = [...pendingQuantityByLine.entries()]
+  for (const [lineId] of pending) {
+    clearQuantityFlush(lineId)
+  }
+  for (const [lineId, quantity] of pending) {
+    const local = cartStore.cart?.items.find((line) => line.id === lineId)
+    const parsed = parseOptimisticLineId(lineId)
+    const identity = {
+      lineId,
+      productRef: local?.productRef ?? parsed?.productRef,
+      variantRef: local?.variantRef ?? parsed?.variantRef ?? null,
+    }
+    pendingMutationCount += 1
+    await enqueueCartMutation(async () => {
+      try {
+        const targetId = await resolveServerLineId(identity)
+        if (!targetId) return
+        const next = await api.cart.patchItem(targetId, { quantity })
+        if (pendingMutationCount <= 1) {
+          cartStore.cart = next
+          mirrorCartToLocalStorage()
+        }
+        cartStore.error = null
+      } catch (e) {
+        cartStore.error = errMessage(e)
+        await loadCart({ skipMirrorCheck: true, silent: true })
+        throw e
+      } finally {
+        pendingMutationCount -= 1
+      }
+    })
+  }
+}
+
 export async function waitForPendingCartMutations() {
+  await flushPendingQuantityPatches()
   let guard = 0
   while (pendingMutationCount > 0 && guard < 20) {
     await pendingCartMutations
@@ -223,34 +339,90 @@ export async function addItem(
 
 export async function updateItem(id: string, quantity: number) {
   markCartWrite()
-  cartStore.isLoading = true
   cartStore.error = null
-  try {
-    cartStore.cart = await api.cart.patchItem(id, { quantity })
-    mirrorCartToLocalStorage()
-    void checkCartAvailability()
-  } catch (e) {
-    cartStore.error = errMessage(e)
-    throw e
-  } finally {
-    cartStore.isLoading = false
+  const nextQty = Math.max(1, Math.floor(quantity))
+  const local = cartStore.cart?.items.find((line) => line.id === id)
+  const parsed = parseOptimisticLineId(id)
+  const identity = {
+    lineId: id,
+    productRef: local?.productRef ?? parsed?.productRef,
+    variantRef: local?.variantRef ?? parsed?.variantRef ?? null,
   }
+  cartStore.cart = applyOptimisticQuantity(cartStore.cart, id, nextQty)
+  mirrorCartToLocalStorage()
+
+  pendingQuantityByLine.set(id, nextQty)
+  const existing = quantityFlushTimers.get(id)
+  if (existing) clearTimeout(existing)
+
+  quantityFlushTimers.set(
+    id,
+    setTimeout(() => {
+      quantityFlushTimers.delete(id)
+      const qty = pendingQuantityByLine.get(id)
+      pendingQuantityByLine.delete(id)
+      if (qty == null) return
+
+      pendingMutationCount += 1
+      void enqueueCartMutation(async () => {
+        try {
+          const targetId = await resolveServerLineId(identity)
+          if (!targetId) return
+          const next = await api.cart.patchItem(targetId, { quantity: qty })
+          if (pendingMutationCount <= 1) {
+            cartStore.cart = next
+            mirrorCartToLocalStorage()
+          }
+          cartStore.error = null
+          scheduleDebouncedStockCheck()
+        } catch (e) {
+          cartStore.error = errMessage(e)
+          await loadCart({ skipMirrorCheck: true, silent: true })
+        } finally {
+          pendingMutationCount -= 1
+        }
+      })
+    }, QUANTITY_PATCH_DEBOUNCE_MS),
+  )
 }
 
-export async function removeItem(id: string, options?: { silent?: boolean }) {
+export async function removeItem(id: string, _options?: { silent?: boolean }) {
   markCartWrite()
-  if (!options?.silent) cartStore.isLoading = true
   cartStore.error = null
-  try {
-    cartStore.cart = await api.cart.removeItem(id)
-    mirrorCartToLocalStorage()
-    void checkCartAvailability()
-  } catch (e) {
-    cartStore.error = errMessage(e)
-    throw e
-  } finally {
-    if (!options?.silent) cartStore.isLoading = false
+  clearQuantityFlush(id)
+  const local = cartStore.cart?.items.find((line) => line.id === id)
+  const parsed = parseOptimisticLineId(id)
+  const identity = {
+    lineId: id,
+    productRef: local?.productRef ?? parsed?.productRef,
+    variantRef: local?.variantRef ?? parsed?.variantRef ?? null,
   }
+  cartStore.cart = applyOptimisticRemove(cartStore.cart, id)
+  mirrorCartToLocalStorage()
+  pendingMutationCount += 1
+
+  return enqueueCartMutation(async () => {
+    try {
+      const targetId = await resolveServerLineId(identity)
+      if (!targetId) {
+        cartStore.error = null
+        return
+      }
+      const next = await api.cart.removeItem(targetId)
+      if (pendingMutationCount <= 1) {
+        cartStore.cart = next
+        mirrorCartToLocalStorage()
+      }
+      cartStore.error = null
+      scheduleDebouncedStockCheck()
+    } catch (e) {
+      cartStore.error = errMessage(e)
+      await loadCart({ skipMirrorCheck: true, silent: true })
+      throw e
+    } finally {
+      pendingMutationCount -= 1
+    }
+  })
 }
 
 /** Dopo un ordine concluso: scarta il carrello in memoria (anche fetch già in corso). */

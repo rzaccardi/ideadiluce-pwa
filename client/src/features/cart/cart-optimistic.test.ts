@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { CartDTO } from '@/types/dto'
-import { applyOptimisticAdd, cartLineMatchesAdd, isOptimisticCartId } from './cart-optimistic'
+import {
+  applyOptimisticAdd,
+  applyOptimisticQuantity,
+  applyOptimisticRemove,
+  cartLineMatchesAdd,
+  isOptimisticCartId,
+} from './cart-optimistic'
 
 const emptyReservation = {
   enabled: false,
@@ -145,6 +151,30 @@ describe('applyOptimisticAdd', () => {
     expect(next.itemCount).toBe(1)
     expect(next.items[0]?.lineTotalEstimateCents).toBeNull()
     expect(next.items[0]?.clientUnitPriceEstimateCents).toBeNull()
+  })
+})
+
+describe('applyOptimisticQuantity', () => {
+  it('aggiorna quantità e totali riga', () => {
+    const next = applyOptimisticQuantity(cartWithLine(), 'line-1', 3)
+    expect(next?.items[0]?.quantity).toBe(3)
+    expect(next?.items[0]?.lineTotalEstimateCents).toBe(3000)
+    expect(next?.itemCount).toBe(3)
+    expect(next?.estimatedSubtotal).toBe(3000)
+  })
+
+  it('non scende sotto 1', () => {
+    const next = applyOptimisticQuantity(cartWithLine(), 'line-1', 0)
+    expect(next?.items[0]?.quantity).toBe(1)
+  })
+})
+
+describe('applyOptimisticRemove', () => {
+  it('rimuove la riga e azzera i conteggi', () => {
+    const next = applyOptimisticRemove(cartWithLine(), 'line-1')
+    expect(next?.items).toHaveLength(0)
+    expect(next?.itemCount).toBe(0)
+    expect(next?.estimatedSubtotal).toBe(0)
   })
 })
 

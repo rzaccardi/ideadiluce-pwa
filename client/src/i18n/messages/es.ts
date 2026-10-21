@@ -528,7 +528,7 @@ export const messages: Record<MessageKey, string> = {
   'checkout.contactInfo': 'Información de contacto',
   'checkout.shippingAddress': 'Dirección de envío',
   'checkout.billingAddress': 'Dirección de facturación',
-  'checkout.billingSameAsShipping': 'Igual que la dirección de envío',
+  'checkout.billingSameAsShipping': 'Dirección de facturación igual a la de envío',
   'checkout.continue': 'Continuar',
   'checkout.selectShipping': 'Selecciona un método de envío',
   'checkout.payment': 'Método de pago',
@@ -558,6 +558,11 @@ export const messages: Record<MessageKey, string> = {
   'checkout.backToCartConfirmTitle': '¿Volver al carrito?',
   'checkout.backToCartConfirmDescription':
     'Estás a punto de salir del checkout. Los datos introducidos podrían no guardarse.',
+  'checkout.cartExpired.title': 'Carrito caducado',
+  'checkout.cartExpired.description':
+    'La reserva del carrito ha caducado y los productos ya no están disponibles en esta sesión. Cierra el checkout para volver al carrito o a la tienda.',
+  'checkout.cartExpired.backToCart': 'Volver al carrito',
+  'checkout.cartExpired.browseCatalog': 'Ir a la tienda',
   'checkout.shipping.title': 'Método de envío',
   'checkout.shipping.noMethods': 'No hay métodos disponibles para esta dirección.',
   'checkout.shipping.addressIncomplete': 'Completa la dirección para ver las opciones de envío.',
@@ -574,6 +579,11 @@ export const messages: Record<MessageKey, string> = {
   'checkout.shipping.paidLocked': 'No seleccionable con envío gratuito activo.',
   'checkout.shipping.freeShippingLockedHint':
     'Tienes envío gratuito: puedes elegir entrega gratuita o recogida en tienda.',
+  'checkout.shipping.placeholder.free': 'Envío gratuito',
+  'checkout.shipping.placeholder.standard': 'Envío estándar',
+  'checkout.shipping.placeholder.dhl': 'DHL Express',
+  'checkout.shipping.placeholder.fedex': 'FedEx',
+  'checkout.shipping.placeholder.pickup': 'Recogida en tienda',
   'checkout.addresses.subtitle': 'Datos de facturación y dirección de factura.',
   'checkout.addresses.subtitleUnified':
     'Introduce las direcciones de facturación y envío, luego elige cómo recibir el pedido.',
@@ -863,6 +873,10 @@ export const messages: Record<MessageKey, string> = {
     'Han pasado más de 14 días desde la entrega. Ya no es posible iniciar la devolución de este pedido.',
   'orders.return.expiredTitle': 'Plazo de devolución vencido',
   'orders.return.expiredButton': 'Plazo vencido',
+  'orders.return.errorGeneric':
+    'No se ha podido enviar la solicitud de devolución. Inténtalo de nuevo más tarde.',
+  'orders.return.errorNotAllowed':
+    'La devolución aún no está disponible para este pedido. Solo es posible en pedidos confirmados.',
   'orders.shipment.title': 'Envío y paquete',
   'orders.shipment.carrier': 'Transportista',
   'orders.shipment.tracking': 'Seguimiento',
@@ -977,6 +991,21 @@ export const messages: Record<MessageKey, string> = {
   'checkout.account.notYou': '¿No eres tú?',
   'checkout.account.orDivider': 'o crear una cuenta',
   'checkout.account.registerError': 'Registro fallido. Inténtalo de nuevo o inicia sesión si ya tienes cuenta.',
+  'checkout.contact.title': 'Información de contacto',
+  'checkout.contact.registerTab': 'Registrarse',
+  'checkout.contact.loginTab': 'Iniciar sesión',
+  'checkout.contact.hint':
+    'Introduce tus datos para registrarte y continuar. ¿Ya tienes una cuenta?',
+  'checkout.contact.loginLink': 'Iniciar sesión',
+  'checkout.contact.loginRequired': 'Este email ya está registrado. Inicia sesión para continuar.',
+  'checkout.contact.checking': 'Comprobando email…',
+  'checkout.contact.checkError': 'No se pudo comprobar el email. Inténtalo de nuevo en breve.',
+  'checkout.contact.guestSilentHint':
+    'Completarás el pedido como invitado: tras el pago te enviaremos por email las credenciales de la nueva cuenta.',
+  'checkout.contact.continueAsGuestLink': 'Continuar sin iniciar sesión',
+  'checkout.contact.accountCreatedHint':
+    'Hemos creado una cuenta para ti: revisa tu email para las credenciales de acceso.',
+  'checkout.contact.generatePassword': 'Generar contraseña segura',
   'checkout.account.registerTab': 'Cuenta nueva',
   'checkout.account.requiredHint': 'Inicia sesión o crea una cuenta para continuar.',
   'checkout.address.changeAddress': 'Cambiar dirección',
@@ -993,6 +1022,7 @@ export const messages: Record<MessageKey, string> = {
   'checkout.address.isSnc': 'Sin número',
   'checkout.address.label': 'Dirección',
   'checkout.address.line1': 'Calle',
+  'checkout.address.line1Placeholder': 'Calle Gran Vía',
   'checkout.address.line2': 'Piso, puerta, etc. (opcional)',
   'checkout.address.lockEdits': 'Bloquear edición',
   'checkout.address.phoneOptional': 'Teléfono',
@@ -1003,6 +1033,7 @@ export const messages: Record<MessageKey, string> = {
   'checkout.address.streetNumber': 'Número',
   'checkout.address.streetNumberHint': 'Introduce el número para continuar, o selecciona «Sin número».',
   'checkout.address.unlockEdits': 'Editar detalles manualmente',
+  'checkout.address.enterManually': 'Introducir manualmente',
   'checkout.billing.businessTitle': 'Datos de facturación de empresa',
   'checkout.billing.clientOrderRefOptional': 'Tu referencia de pedido (opcional)',
   'checkout.billing.companyName': 'Razón social',
@@ -1063,7 +1094,6 @@ export const messages: Record<MessageKey, string> = {
   'checkout.payment.bankTransfer': 'Transferencia bancaria',
   'checkout.payment.card': 'Tarjeta / wallet',
   'checkout.payment.loadingModule': 'Cargando formulario de pago',
-  'checkout.poweredByStripe': 'Powered by Stripe',
   'checkout.register.changeCustomerType': 'Cambiar tipo de cliente',
   'checkout.register.firstName': 'Nombre',
   'checkout.register.lastName': 'Apellidos',
@@ -1078,7 +1108,6 @@ export const messages: Record<MessageKey, string> = {
   'checkout.review.clientOrderRef': 'Referencia del pedido',
   'checkout.review.detailsToggle': 'Detalles del pedido y dirección',
   'checkout.review.hint': 'Revisa tus datos antes de confirmar y pagar.',
-  'checkout.review.secureFooter': 'Powered by Stripe · Transacción cifrada SSL',
   'checkout.pricingConfirm.banner':
     'Los precios se han actualizado. Revisa el total y confirma antes de pagar.',
   'checkout.pricingConfirm.title': 'Confirma los nuevos precios',

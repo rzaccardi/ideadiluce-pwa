@@ -10,24 +10,20 @@ export function checkoutStepPageTitleKey(
     case 'account':
       return options?.accountConfirmed
         ? 'checkout.steps.pageTitle.accountConfirm'
-        : 'checkout.steps.pageTitle.account'
+        : 'checkout.contactInfo'
     case 'customer_type':
-      return 'checkout.steps.customerType'
+      return 'checkout.contactInfo'
     case 'addresses':
     case 'billing':
     case 'details':
-      return 'checkout.steps.addressesAndShipping'
     case 'shipping':
-      return 'checkout.shippingAddress'
     case 'delivery_recipient':
-      return 'checkout.steps.deliveryRecipient'
     case 'shipping_method':
-      return 'checkout.shipping.title'
+      return 'checkout.shippingAddress'
     case 'payment':
     case 'payment_method':
-      return 'checkout.payment'
     case 'review':
-      return 'checkout.steps.review'
+      return 'checkout.steps.group.payment'
     default:
       return 'checkout.steps.title'
   }

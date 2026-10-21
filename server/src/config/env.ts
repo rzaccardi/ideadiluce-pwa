@@ -156,7 +156,10 @@ const envSchema = z.object({
   ODOO_EMERGENCY_MODE: boolish.default(false),
   /** SMTP di fallback se Odoo mail non è raggiungibile (anche con ODOO_ENABLED). */
   SMTP_ENABLED: boolish.default(false),
-  /** Conferma ordine inviata dalla PWA. Spenta: la manda Odoo (modello IdeaDiLuce) quando registra il pagamento. */
+  /**
+   * Conferma ordine [PWA] via XML-RPC. Default false: la manda Odoo (IdeaDiLuce) al pagamento.
+   * Account ospite / altre mail PWA restano attivi.
+   */
   PWA_ORDER_CONFIRMATION_MAIL: boolish.default(false),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().default(587),

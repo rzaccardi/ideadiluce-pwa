@@ -11,7 +11,6 @@ import { authService } from './auth.service.js'
 import { AppError } from '../../types/errors.js'
 import type { UserDTO } from '../../types/dto.js'
 import type { OdooCallContext } from '../../adapters/odoo/odooClient.js'
-import { findOdooPortalUserByEmail } from '../../adapters/odoo/odooPortalUserAdapter.js'
 
 function normalizeEmail(email: string) {
   return email.toLowerCase().trim()
@@ -28,13 +27,20 @@ export const checkoutRegisterService = {
       password: string
       firstName: string
       lastName: string
-      phone: string
+      phone?: string
       customerSegment?: 'retail' | 'business'
+      companyName?: string
+      vatNumber?: string
     },
     sessionId: string,
     correlationId: string,
   ): Promise<UserDTO> {
     const normalized = normalizeEmail(input.email)
+    const phone = input.phone?.trim() ?? ''
+    const companyName =
+      input.customerSegment === 'business' ? input.companyName?.trim() || null : null
+    const vatNumber =
+      input.customerSegment === 'business' ? input.vatNumber?.trim() || null : null
     const ctx: OdooCallContext = { correlationId }
     const segment =
       input.customerSegment === 'business' ? ('BUSINESS' as const) : ('RETAIL' as const)
@@ -46,24 +52,14 @@ export const checkoutRegisterService = {
     let odooUid: number | null = null
 
     if (odooRequired) {
-      const existingPortal = await findOdooPortalUserByEmail(ctx, normalized)
-      if (existingPortal) {
-        // Portal già presente: non inventare account PWA: l'utente deve fare login.
-        throw new AppError(
-          'EMAIL_TAKEN',
-          'Email already registered on Odoo portal',
-          'Questa email è già registrata. Accedi con email e password.',
-          409,
-          false,
-        )
-      }
-
+      // Un solo check portal: provisionOdooAuthIdentity(rejectExistingPortal) evita
+      // il doppio search_read Odoo che c'era qui + dentro provision.
       const odoo = await provisionOdooAuthIdentity(ctx, {
         email: normalized,
         password: input.password,
         firstName: input.firstName,
         lastName: input.lastName,
-        phone: input.phone,
+        phone,
         rejectExistingPortal: true,
       })
       odooPartnerId = odoo.odooPartnerId
@@ -88,8 +84,10 @@ export const checkoutRegisterService = {
         email: normalized,
         firstName: input.firstName.trim(),
         lastName: input.lastName.trim(),
-        phone: input.phone.trim(),
+        phone,
         customerSegment: segment,
+        companyName,
+        vatNumber,
         clearLocalPassword: true,
       })
     } else {
@@ -102,8 +100,10 @@ export const checkoutRegisterService = {
             passwordHash,
             firstName: input.firstName.trim() || existing.firstName,
             lastName: input.lastName.trim() || existing.lastName,
-            phone: input.phone.trim() || existing.phone,
+            phone: phone || existing.phone,
             customerSegment: segment,
+            companyName,
+            vatNumber,
           },
         })
       } else {
@@ -112,8 +112,10 @@ export const checkoutRegisterService = {
           passwordHash,
           firstName: input.firstName.trim(),
           lastName: input.lastName.trim(),
-          phone: input.phone.trim(),
+          phone,
           customerSegment: segment,
+          companyName,
+          vatNumber,
         })
       }
     }
@@ -123,6 +125,7 @@ export const checkoutRegisterService = {
       sessionId,
       odooPartnerId,
       odooUid,
+      cartMode: 'adopt_session',
     })
   },
 }

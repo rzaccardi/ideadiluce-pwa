@@ -7,6 +7,12 @@ import { cn } from '@/utils/cn'
 import { CarrierLogo } from './CarrierLogo'
 import { CheckoutSelectableCard } from '@/components/checkout/stripe-ui/CheckoutStepPrimitives'
 
+/** Frame logo corriere condiviso (opzioni reali + placeholder). */
+export const SHIPPING_CARRIER_LOGO_FRAME =
+  'flex h-12 w-[5.75rem] shrink-0 items-center justify-center rounded-[10px] bg-white p-1.5 sm:h-14 sm:w-[6.75rem] sm:p-2 dark:bg-idl-cream'
+
+export const SHIPPING_CARRIER_LOGO = 'h-8 w-auto max-h-9 max-w-full sm:h-9'
+
 type Props = {
   quote: ShippingQuoteDTO
   selected: boolean
@@ -27,8 +33,12 @@ export function ShippingMethodOption({ quote, selected, selecting, disabled, loc
       onSelect={onSelect}
     >
       <div className={cn('flex items-center gap-3.5 sm:gap-4', locked && 'opacity-55')}>
-        <div className="flex size-[42px] shrink-0 items-center justify-center rounded-[9px] bg-white p-1 sm:p-1.5 dark:bg-idl-cream">
-          <CarrierLogo carrierCode={quote.carrierCode} source={quote.source} className="h-6 w-14 sm:h-7 sm:w-[4.5rem]" />
+        <div className={SHIPPING_CARRIER_LOGO_FRAME}>
+          <CarrierLogo
+            carrierCode={quote.carrierCode}
+            source={quote.source}
+            className={SHIPPING_CARRIER_LOGO}
+          />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[15px] font-bold text-idl-graphite">{quote.label}</p>
@@ -42,13 +52,7 @@ export function ShippingMethodOption({ quote, selected, selecting, disabled, loc
           ) : null}
         </div>
         <p className="shrink-0 text-right text-[15px] font-bold tabular-nums text-idl-graphite">
-          {selecting ? (
-            <span className="text-sm font-normal text-idl-muted">…</span>
-          ) : quote.amountCents === 0 ? (
-            t('checkout.summary.free')
-          ) : (
-            formatMoney(quote.amountCents, quote.currencyCode)
-          )}
+          {quote.amountCents === 0 ? t('checkout.summary.free') : formatMoney(quote.amountCents, quote.currencyCode)}
         </p>
       </div>
     </CheckoutSelectableCard>

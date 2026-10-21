@@ -46,4 +46,13 @@ describe('localizeApiUserMessage', () => {
       localizeApiUserMessage('Inserisci il numero civico oppure seleziona «Senza numero civico».', 'EN'),
     ).toBe('Enter the street number, or select “No street number”.')
   })
+
+  it('traduce i messaggi di reso non consentito', () => {
+    expect(localizeApiUserMessage('Reso possibile solo su ordini confermati', 'IT')).toBe(
+      'Il reso non è ancora disponibile per questo ordine. È possibile solo su ordini confermati.',
+    )
+    expect(localizeApiUserMessage('Reso possibile solo su ordini confermati', 'EN')).toBe(
+      'A return is not available for this order yet. Returns are only possible on confirmed orders.',
+    )
+  })
 })

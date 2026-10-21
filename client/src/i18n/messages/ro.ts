@@ -598,7 +598,7 @@ export const messages: Record<MessageKey, string> = {
   'checkout.contactInfo': 'Date de contact',
   'checkout.shippingAddress': 'Adresă de livrare',
   'checkout.billingAddress': 'Adresă de facturare',
-  'checkout.billingSameAsShipping': 'Aceeași ca adresa de livrare',
+  'checkout.billingSameAsShipping': 'Adresa de facturare la fel ca adresa de livrare',
   'checkout.continue': 'Continuă',
   'checkout.continueToShipping': 'Continuă către livrare',
   'checkout.continueToPayment': 'Continuă către plată',
@@ -635,6 +635,11 @@ export const messages: Record<MessageKey, string> = {
   'checkout.backToCartConfirmTitle': 'Revii la coș?',
   'checkout.backToCartConfirmDescription':
     'Ești pe cale să părăsești checkout-ul. Informațiile introduse s-ar putea să nu fie salvate.',
+  'checkout.cartExpired.title': 'Coș expirat',
+  'checkout.cartExpired.description':
+    'Rezervarea coșului a expirat și produsele nu mai sunt disponibile în această sesiune. Închide checkout-ul pentru a reveni la coș sau la magazin.',
+  'checkout.cartExpired.backToCart': 'Înapoi la coș',
+  'checkout.cartExpired.browseCatalog': 'Mergi la magazin',
   'checkout.shipping.title': 'Metodă de livrare',
   'checkout.shipping.noMethods': 'Nicio metodă disponibilă pentru această adresă.',
   'checkout.shipping.addressIncomplete': 'Completează adresa pentru a selecta o metodă de livrare.',
@@ -649,6 +654,11 @@ export const messages: Record<MessageKey, string> = {
   'checkout.shipping.paidLocked': 'Nu se poate selecta cât timp livrarea gratuită este activă.',
   'checkout.shipping.freeShippingLockedHint':
     'Beneficiezi de livrare gratuită: poți alege livrare gratuită sau ridicare din magazin.',
+  'checkout.shipping.placeholder.free': 'Livrare gratuită',
+  'checkout.shipping.placeholder.standard': 'Livrare standard',
+  'checkout.shipping.placeholder.dhl': 'DHL Express',
+  'checkout.shipping.placeholder.fedex': 'FedEx',
+  'checkout.shipping.placeholder.pickup': 'Ridicare din magazin',
   'checkout.shipping.diffFromBilling': 'Adresa de livrare este aceeași cu adresa de facturare',
   'checkout.shipping.sameAsBillingHint':
     'Livrăm la adresa de facturare. Completează datele de mai sus pentru a vedea opțiunile de livrare.',
@@ -677,6 +687,7 @@ export const messages: Record<MessageKey, string> = {
   'checkout.address.fullName': 'Nume și prenume',
   'checkout.address.phoneOptional': 'Telefon',
   'checkout.address.line1': 'Stradă',
+  'checkout.address.line1Placeholder': 'Calea Victoriei',
   'checkout.address.streetNumber': 'Număr',
   'checkout.address.isSnc': 'Fără număr',
   'checkout.address.streetNumberHint':
@@ -691,6 +702,7 @@ export const messages: Record<MessageKey, string> = {
   'checkout.address.detailsTitle': 'Detalii adresă',
   'checkout.address.lockEdits': 'Blochează modificările',
   'checkout.address.unlockEdits': 'Editează detaliile manual',
+  'checkout.address.enterManually': 'Introdu manual',
   'checkout.address.changeAddress': 'Schimbă adresa',
   'checkout.address.label': 'Adresă',
   'checkout.address.country': 'Țară',
@@ -710,6 +722,20 @@ export const messages: Record<MessageKey, string> = {
   'checkout.account.orDivider': 'sau creează un cont',
   'checkout.account.createAndContinue': 'Creează contul și continuă',
   'checkout.account.registerError': 'Înregistrarea a eșuat. Încearcă din nou sau autentifică-te dacă ai deja un cont.',
+  'checkout.contact.title': 'Informații de contact',
+  'checkout.contact.registerTab': 'Înregistrare',
+  'checkout.contact.loginTab': 'Autentificare',
+  'checkout.contact.hint': 'Introdu datele pentru a te înregistra și a continua. Ai deja un cont?',
+  'checkout.contact.loginLink': 'Autentificare',
+  'checkout.contact.loginRequired': 'Acest email este deja înregistrat. Autentifică-te pentru a continua.',
+  'checkout.contact.checking': 'Verificare email…',
+  'checkout.contact.checkError': 'Verificarea emailului a eșuat. Încearcă din nou în curând.',
+  'checkout.contact.guestSilentHint':
+    'Vei finaliza comanda ca oaspete: după plată îți vom trimite pe email datele noului cont.',
+  'checkout.contact.continueAsGuestLink': 'Continuă fără autentificare',
+  'checkout.contact.accountCreatedHint':
+    'Ți-am creat un cont: verifică emailul pentru datele de autentificare.',
+  'checkout.contact.generatePassword': 'Generează o parolă sigură',
   'checkout.register.firstName': 'Prenume',
   'checkout.register.lastName': 'Nume',
   'checkout.customerType.hint': 'Alege dacă cumperi ca persoană fizică sau ca firmă.',
@@ -761,7 +787,6 @@ export const messages: Record<MessageKey, string> = {
   'checkout.review.hint': 'Verifică datele înainte de confirmare și plată.',
   'checkout.review.summaryTitle': 'Rezumat comandă',
   'checkout.review.detailsToggle': 'Detalii comandă și adresă',
-  'checkout.review.secureFooter': 'Powered by Stripe · tranzacție criptată SSL',
   'checkout.pricingConfirm.banner':
     'Prețurile au fost actualizate. Verifică totalul și confirmă înainte de plată.',
   'checkout.pricingConfirm.title': 'Confirmă noile prețuri',
@@ -1080,6 +1105,10 @@ export const messages: Record<MessageKey, string> = {
     'Au trecut mai mult de 14 zile de la livrare. Nu mai poți iniția returul pentru această comandă.',
   'orders.return.expiredTitle': 'Termenul de retur a expirat',
   'orders.return.expiredButton': 'Termen expirat',
+  'orders.return.errorGeneric':
+    'Nu am putut trimite cererea de retur. Încearcă din nou mai târziu.',
+  'orders.return.errorNotAllowed':
+    'Returul nu este încă disponibil pentru această comandă. Este posibil doar pentru comenzile confirmate.',
   'orders.shipment.title': 'Expediere și colet',
   'orders.shipment.carrier': 'Curier',
   'orders.shipment.tracking': 'Tracking',
@@ -1147,7 +1176,6 @@ export const messages: Record<MessageKey, string> = {
   'checkout.payment.cardholderNameRequired': 'Introdu numele titularului cardului.',
   'checkout.payment.formNotReady': 'Formularul de plată nu este încă gata. Așteaptă un moment și încearcă din nou.',
   'checkout.payment.cardIncomplete': 'Completează datele cardului înainte de a plăti.',
-  'checkout.poweredByStripe': 'Powered by Stripe',
   'checkout.emailPlaceholder': 'email@example.com',
   'checkout.error.incompleteAddress':
     'Completează emailul și adresa de livrare (și pe cea de facturare, dacă este diferită).',

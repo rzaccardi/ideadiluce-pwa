@@ -816,6 +816,21 @@ export function toAppError(e: unknown, correlationId: string): AppError {
         { correlationId, odooName: e.odooName },
       )
     }
+    // Credenziali di servizio XML-RPC (non la password dell'utente checkout).
+    const serviceAuthFailed =
+      e.httpStatus === 401 ||
+      lower.includes('autenticazione odoo non riuscita') ||
+      (lower.includes('odoo_db') && lower.includes('password'))
+    if (serviceAuthFailed) {
+      return new AppError(
+        'ODOO_SERVICE_AUTH_FAILED',
+        msg,
+        'Registrazione non disponibile: autenticazione al gestionale fallita. Riprova più tardi; se persiste, verifica ODOO_DB / ODOO_USERNAME / ODOO_PASSWORD sul server.',
+        503,
+        true,
+        { correlationId, odooName: e.odooName },
+      )
+    }
     const dbMismatch =
       lower.includes('database') ||
       lower.includes('registry') ||

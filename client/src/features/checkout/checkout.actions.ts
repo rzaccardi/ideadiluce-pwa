@@ -62,6 +62,13 @@ function errMessage(e: unknown) {
   return e instanceof ApiRequestError ? (e.userMessage ?? e.message) : localeMessage('checkout.error.generic')
 }
 
+function shouldForceBillingSameAsShipping() {
+  return (
+    authStore.isAuthenticated &&
+    (checkoutStore.deliveryRecipient.mode ?? 'self') !== 'other'
+  )
+}
+
 function shippingAddressPayload() {
   if ((checkoutStore.deliveryRecipient.mode ?? 'self') === 'other') {
     // Destinatario dropship già salvato: usa l'id in draft.shipping.
@@ -71,10 +78,30 @@ function shippingAddressPayload() {
     const dropship = dropshipPayload()
     if (dropship) return { ...dropship }
   }
-  return { ...checkoutStore.draft.shipping }
+  // Spedizione-first: destinazione da shipping; nome/telefono possono vivere in anagrafica (billing).
+  const ship = { ...checkoutStore.draft.shipping }
+  const bill = checkoutStore.draft.billing
+  if (!ship.firstName.trim() && bill.firstName.trim()) ship.firstName = bill.firstName
+  if (!ship.lastName.trim() && bill.lastName.trim()) ship.lastName = bill.lastName
+  if (!(ship.phone ?? '').trim() && (bill.phone ?? '').trim()) ship.phone = bill.phone
+  return ship
 }
 
 function billingAddressPayload() {
+  // Same-as-shipping: non inviare billing incompleto/stale — source of truth = shipping.
+  if (
+    checkoutStore.draft.billingSameAsShipping &&
+    (checkoutStore.deliveryRecipient.mode ?? 'self') !== 'other'
+  ) {
+    const ship = shippingAddressPayload()
+    const bill = checkoutStore.draft.billing
+    return {
+      ...ship,
+      firstName: ship.firstName.trim() || bill.firstName,
+      lastName: ship.lastName.trim() || bill.lastName,
+      phone: (ship.phone ?? '').trim() || (bill.phone ?? ''),
+    }
+  }
   return { ...checkoutStore.draft.billing }
 }
 
@@ -250,13 +277,20 @@ function scheduleTaxRecalculate(delayMs = 450) {
   }, delayMs)
 }
 
-export async function refreshTaxBreakdown() {
-  checkoutDbg.fn('refreshTaxBreakdown', 'enter', { step: checkoutStore.currentStep })
+export async function refreshTaxBreakdown(via = 'refreshTaxBreakdown') {
+  checkoutDbg.fn('refreshTaxBreakdown', 'enter', { via, step: checkoutStore.currentStep })
+  if (checkoutStore.initLoadingPhase || checkoutStore.addressPrefillLoading) {
+    checkoutDbg.fn('refreshTaxBreakdown', 'skip', {
+      via,
+      reason: checkoutStore.addressPrefillLoading ? 'addressPrefillLoading' : 'initLoadingPhase',
+    })
+    return
+  }
   const ship = shippingAddressPayload()
   const bill = billingAddressPayload()
   if (!destinationComplete(ship)) {
     checkoutStore.taxBreakdown = null
-    checkoutDbg.fn('refreshTaxBreakdown', 'skip', { reason: 'destination incomplete' })
+    checkoutDbg.fn('refreshTaxBreakdown', 'skip', { via, reason: 'destination incomplete' })
     return
   }
   checkoutStore.taxCalculating = true
@@ -507,7 +541,7 @@ function scheduleShippingQuotesFetch(delayMs = 450) {
   }, delayMs)
 }
 
-async function refreshShippingQuotesIfNeeded() {
+export async function refreshShippingQuotesIfNeeded() {
   checkoutDbg.fn('refreshShippingQuotesIfNeeded', 'enter')
   const addr = shippingAddressPayload()
   if (!destinationComplete(addr)) {
@@ -547,27 +581,99 @@ function isCheckoutEmailValid(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)
 }
 
-/** Account step ok: autenticato oppure ospite con email confermata. */
-export function isCheckoutAccountReady(): boolean {
+/**
+ * Form checkout sbloccato: autenticato, oppure guest con email verificata come non registrata.
+ * Se l’email esiste già, resta bloccato finché non si fa login.
+ */
+export function isCheckoutFormUnlocked(): boolean {
+  if (authStore.isAuthenticated) return true
   if (!isCheckoutEmailValid(resolveCheckoutEmail())) return false
-  return authStore.isAuthenticated || checkoutStore.guestCheckoutAccepted
+  if (checkoutStore.emailLookup.exists === true || checkoutStore.contactForceLogin) return false
+  return checkoutStore.guestCheckoutAccepted && checkoutStore.emailLookup.exists === false
 }
 
-/** Accetta checkout ospite con email valida e passa allo step successivo. */
+/**
+ * UI Privato/Azienda: in anagrafica contatto (prima di nome/cognome), solo non autenticati.
+ */
+export function isCheckoutCustomerSegmentVisible(): boolean {
+  return !authStore.isAuthenticated
+}
+
+/** Account step ok: autenticato oppure ospite con email confermata (e non già registrata). */
+export function isCheckoutAccountReady(): boolean {
+  if (!isCheckoutEmailValid(resolveCheckoutEmail())) return false
+  if (authStore.isAuthenticated) return true
+  if (!checkoutStore.guestCheckoutAccepted) return false
+  if (checkoutStore.emailLookup.exists === true) return false
+  return true
+}
+
+/**
+ * Accetta checkout ospite con email valida.
+ * Non avanza di step: l’ospite resta sul contatto fino a Continua/registrazione.
+ */
 export function acceptGuestCheckout() {
   const email = resolveCheckoutEmail()
   if (!isCheckoutEmailValid(email)) {
     checkoutStore.error = localeMessage('checkout.error.incompleteStep')
     return false
   }
+  if (checkoutStore.emailLookup.exists === true) {
+    checkoutStore.error = localeMessage('checkout.contact.loginRequired')
+    return false
+  }
   checkoutStore.guestCheckoutAccepted = true
+  checkoutStore.contactForceLogin = false
   checkoutStore.error = null
   if (checkoutStore.customerSegment == null) {
     checkoutStore.customerSegment = 'retail'
   }
-  const next = getNextCheckoutStep('account')
-  if (next) checkoutStore.currentStep = next
   return true
+}
+
+export function setContactForceLogin(force: boolean) {
+  checkoutStore.contactForceLogin = force
+  if (force) {
+    checkoutStore.guestCheckoutAccepted = false
+  }
+}
+
+export function resetEmailLookup() {
+  checkoutStore.emailLookup = { status: 'idle', email: '', exists: null }
+  checkoutStore.guestCheckoutAccepted = false
+  checkoutStore.contactForceLogin = false
+}
+
+/** Aggiorna lo stato lookup email (usato dalla sezione contatto con debounce). */
+export function applyEmailLookupResult(email: string, exists: boolean) {
+  const normalized = email.trim().toLowerCase()
+  checkoutStore.emailLookup = { status: 'ready', email: normalized, exists }
+  if (exists) {
+    checkoutStore.guestCheckoutAccepted = false
+    return
+  }
+  // Email libera: sblocca il form; la registrazione con password resta in contatto.
+  if (!checkoutStore.contactForceLogin) {
+    acceptGuestCheckout()
+  }
+}
+
+export function setEmailLookupLoading(email: string) {
+  checkoutStore.emailLookup = {
+    status: 'loading',
+    email: email.trim().toLowerCase(),
+    exists: null,
+  }
+  checkoutStore.guestCheckoutAccepted = false
+}
+
+export function setEmailLookupError(email: string) {
+  checkoutStore.emailLookup = {
+    status: 'error',
+    email: email.trim().toLowerCase(),
+    exists: null,
+  }
+  checkoutStore.guestCheckoutAccepted = false
 }
 
 export function resolveCheckoutEmail(): string {
@@ -614,27 +720,19 @@ function isAddressReadyWithoutPhone(address: AddressInput): boolean {
 }
 
 /**
- * True quando manca un telefono valido e l’indirizzo è già pronto:
- * - destinazione spedizione senza telefono, oppure
- * - telefono fatturazione mancante (campo in alto) mentre la destinazione è pronta
- * (billingComplete blocca i metodi anche se lo shipping ha già un phone da ).
+ * True quando manca un telefono valido e la destinazione spedizione è già pronta.
+ * Sincronizza eventuali telefono/nome dal profilo o dall’anagrafica billing.
  */
 export function isShippingBlockedByMissingPhone(): boolean {
+  // Profilo → draft: evita blocchi con saved address senza phone ma telefono sul profilo.
+  syncCheckoutContactFromProfile()
+  syncShippingContactFromBillingIfNeeded()
+
   const shipping = shippingAddressPayload()
-  const billing = billingAddressPayload()
   const shippingReady = isAddressReadyWithoutPhone(shipping)
-  const billingReady = isAddressReadyWithoutPhone(billing)
-  if (!shippingReady && !billingReady) return false
+  if (!shippingReady) return false
 
-  const shippingPhoneOk = isCheckoutPhoneValid(shipping.phone ?? '')
-  const billingPhoneOk = isCheckoutPhoneValid(billing.phone ?? '')
-
-  if ((checkoutStore.deliveryRecipient.mode ?? 'self') === 'other') {
-    return shippingReady && !shippingPhoneOk
-  }
-
-  if (shippingReady) return !shippingPhoneOk || !billingPhoneOk
-  return billingReady && !billingPhoneOk
+  return !isCheckoutPhoneValid(shipping.phone ?? '')
 }
 
 function pickBestCheckoutPhone(...candidates: Array<string | null | undefined>): string {
@@ -676,15 +774,30 @@ function syncBillingContactFromShippingIfNeeded() {
   if (!bill.lastName.trim() && ship.lastName.trim()) bill.lastName = ship.lastName
 }
 
-function syncShippingDestinationFromBillingIfNeeded() {
+function syncBillingDestinationFromShippingIfNeeded() {
   if ((checkoutStore.deliveryRecipient.mode ?? 'self') === 'other') return
   if (!checkoutStore.draft.billingSameAsShipping) return
-  const bill = checkoutStore.draft.billing
   const ship = checkoutStore.draft.shipping
-  checkoutStore.draft.shipping = {
-    ...bill,
-    courierNotes: ship.courierNotes?.trim() ? ship.courierNotes : bill.courierNotes,
+  const bill = checkoutStore.draft.billing
+  // Contatto (nome/telefono) vive in anagrafica su billing; non azzerarlo se shipping è vuoto.
+  const firstName = ship.firstName.trim() || bill.firstName
+  const lastName = ship.lastName.trim() || bill.lastName
+  const phone = (ship.phone ?? '').trim() || (bill.phone ?? '')
+  if (!ship.firstName.trim() && firstName.trim()) ship.firstName = firstName
+  if (!ship.lastName.trim() && lastName.trim()) ship.lastName = lastName
+  if (!(ship.phone ?? '').trim() && phone.trim()) ship.phone = phone
+  checkoutStore.draft.billing = {
+    ...ship,
+    firstName,
+    lastName,
+    phone,
+    courierNotes: bill.courierNotes?.trim() ? bill.courierNotes : ship.courierNotes,
   }
+}
+
+/** @deprecated shipping-first: allinea billing ← shipping. */
+function syncShippingDestinationFromBillingIfNeeded() {
+  syncBillingDestinationFromShippingIfNeeded()
 }
 
 export function isAnagraficaCompartmentComplete(): boolean {
@@ -935,7 +1048,16 @@ export function shouldSkipCheckoutStep(step: CheckoutStep): boolean {
   if (isFrozenQuoteCheckout()) {
     return step !== 'payment' && step !== 'review'
   }
-  if (step === 'account' && isCheckoutAccountReady()) return true
+  // Skip contatto solo se loggato (ospite resta sullo step 1 fino a Continua/registrazione).
+  // contactStepPinned: Indietro da indirizzi → resta su contatto anche se autenticato.
+  if (
+    step === 'account' &&
+    authStore.isAuthenticated &&
+    isCheckoutAccountReady() &&
+    !checkoutStore.contactStepPinned
+  ) {
+    return true
+  }
   if (step === 'customer_type' && effectiveCustomerSegment() != null) return true
   return false
 }
@@ -956,6 +1078,8 @@ export function getNextCheckoutStep(from: CheckoutStep): CheckoutStep | null {
 }
 
 export function getPreviousCheckoutStep(from: CheckoutStep): CheckoutStep | null {
+  // Step indirizzi: Indietro porta sempre al contatto (anche se lo skip avanti lo salterebbe).
+  if (from === 'addresses' || from === 'billing') return 'account'
   let idx = stepIndex(from)
   if (idx <= 0) return null
   while (idx > 0) {
@@ -1432,6 +1556,9 @@ export function resetCheckout(options?: { legacyLayout?: boolean }) {
   checkoutStore.termsAccepted = false
   checkoutStore.anagraficaCollectedAtAccount = false
   checkoutStore.guestCheckoutAccepted = false
+  checkoutStore.emailLookup = { status: 'idle', email: '', exists: null }
+  checkoutStore.contactForceLogin = false
+  checkoutStore.contactStepPinned = false
   checkoutStore.checkoutMode = 'standard'
   checkoutStore.frozenOrderSummary = null
   checkoutStore.paymentRetryActive = false
@@ -1479,6 +1606,9 @@ export function clearCheckoutAfterLogout() {
   checkoutStore.anagraficaCollectedAtAccount = false
   checkoutStore.termsAccepted = false
   checkoutStore.guestCheckoutAccepted = false
+  checkoutStore.emailLookup = { status: 'idle', email: '', exists: null }
+  checkoutStore.contactForceLogin = false
+  checkoutStore.contactStepPinned = false
   invalidateCheckoutTransitionPrefetch()
   checkoutStore.deliveryRecipient = {
     mode: 'self',
@@ -1604,7 +1734,13 @@ export function setTermsAccepted(value: boolean) {
 }
 
 export function updateCheckoutEmail(email: string) {
+  const previous = checkoutStore.draft.email.trim().toLowerCase()
   checkoutStore.draft.email = email
+  const next = email.trim().toLowerCase()
+  if (previous !== next) {
+    checkoutStore.emailLookup = { status: 'idle', email: '', exists: null }
+    checkoutStore.guestCheckoutAccepted = false
+  }
 }
 
 export function updateCheckoutOrderNotes(notes: string) {
@@ -1619,6 +1755,18 @@ export function updateCheckoutAddress<K extends AddressKey>(
   value: AddressInput[K],
 ) {
   checkoutStore.draft[kind][key] = value
+  if (kind === 'shipping') {
+    if (key === 'phone' || key === 'firstName' || key === 'lastName') {
+      syncBillingContactFromShippingIfNeeded()
+    }
+    syncBillingDestinationFromShippingIfNeeded()
+    invalidateShippingIfDestinationChanged()
+    if (destinationComplete(shippingAddressPayload())) {
+      scheduleShippingQuotesFetch()
+    }
+    if (key === 'country') scheduleTaxRecalculate()
+    return
+  }
   if (kind === 'billing') {
     if (key === 'phone' || key === 'firstName' || key === 'lastName') {
       syncShippingContactFromBillingIfNeeded()
@@ -1628,14 +1776,8 @@ export function updateCheckoutAddress<K extends AddressKey>(
       scheduleShippingQuotesFetch()
     }
   }
-  if (kind === 'shipping' && (key === 'phone' || key === 'firstName' || key === 'lastName')) {
-    syncBillingContactFromShippingIfNeeded()
-  }
   invalidateShippingIfDestinationChanged()
-  if (kind === 'shipping') {
-    scheduleShippingQuotesFetch()
-  }
-  if (kind === 'shipping' || kind === 'billing') {
+  if (kind === 'billing') {
     scheduleTaxRecalculate()
   }
 }
@@ -1650,8 +1792,8 @@ export function setCheckoutAddressFields(
     if (value == null) continue
     ;(target as Record<string, unknown>)[key] = value
   }
-  if (kind === 'billing' && checkoutStore.draft.billingSameAsShipping) {
-    syncShippingDestinationFromBillingIfNeeded()
+  if (checkoutStore.draft.billingSameAsShipping) {
+    syncBillingDestinationFromShippingIfNeeded()
   }
   if (!options?.skipInvalidation) {
     invalidateShippingIfDestinationChanged()
@@ -1711,10 +1853,16 @@ export async function applyResolvedAddress(kind: 'billing' | 'shipping', resolve
 }
 
 export function setBillingSameAsShipping(value: boolean) {
-  checkoutStore.draft.billingSameAsShipping = value
-  if (value) checkoutStore.draft.shipping = { ...checkoutStore.draft.billing }
+  // Loggato + self: non si può spegnere — billing deve restare = shipping.
+  const next = shouldForceBillingSameAsShipping() ? true : value
+  checkoutStore.draft.billingSameAsShipping = next
+  // Spedizione-first: se coincidono, copia spedizione → fatturazione.
+  if (next) {
+    const ship = checkoutStore.draft.shipping
+    checkoutStore.draft.billing = { ...ship }
+  }
   invalidateShippingIfDestinationChanged()
-  if (value && destinationComplete(shippingAddressPayload())) {
+  if (destinationComplete(shippingAddressPayload())) {
     scheduleShippingQuotesFetch(0)
   }
 }
@@ -1738,6 +1886,21 @@ export function initShippingFromBilling() {
     ...bill,
     courierNotes: ship.courierNotes?.trim() ? ship.courierNotes : bill.courierNotes,
   }
+  if (destinationComplete(shippingAddressPayload())) {
+    scheduleShippingQuotesFetch(0)
+  }
+}
+
+/** Spedizione-first: allinea fatturazione ← spedizione (stesso indirizzo). */
+export function initBillingFromShipping() {
+  if ((checkoutStore.deliveryRecipient.mode ?? 'self') === 'other') {
+    checkoutStore.draft.billingSameAsShipping = false
+    return
+  }
+
+  const ship = checkoutStore.draft.shipping
+  checkoutStore.draft.billingSameAsShipping = true
+  checkoutStore.draft.billing = { ...ship }
   if (destinationComplete(shippingAddressPayload())) {
     scheduleShippingQuotesFetch(0)
   }
@@ -1849,6 +2012,10 @@ export async function advanceCheckoutStep() {
     return
   }
 
+  if (step === 'account' || step === 'customer_type') {
+    checkoutStore.contactStepPinned = false
+  }
+
   checkoutStore.error = null
   checkoutStore.isLoading = true
 
@@ -1938,8 +2105,14 @@ export function goBackCheckoutStep() {
     checkoutStore.payment = null
   }
 
-  const prev = getPreviousCheckoutStep(step)
-  if (prev) checkoutStore.currentStep = prev
+  // payment + review sono lo stesso macro-step UI → Indietro torna agli indirizzi.
+  const from = step === 'review' ? 'payment' : step
+  const prev = getPreviousCheckoutStep(from)
+  if (!prev) return
+  if (prev === 'account') {
+    checkoutStore.contactStepPinned = true
+  }
+  checkoutStore.currentStep = prev
 }
 
 export function canGoBackCheckoutStep(step: CheckoutStep = checkoutStore.currentStep): boolean {
@@ -2103,7 +2276,7 @@ type CheckoutDraftStep = 'details' | 'shipping' | 'payment_method' | 'lock'
 
 let checkoutDraftSyncPromise: Promise<void> | null = null
 
-function checkoutPaymentPrefetchFingerprint(): string {
+export function checkoutPaymentPrefetchFingerprint(): string {
   return [
     checkoutStore.selectedShippingMethodRef ?? '',
     checkoutStore.selectedPaymentMethod ?? '',
@@ -2127,7 +2300,7 @@ export function hasUsableCheckoutPaymentSession(): boolean {
 }
 
 /** Precarica ordine + sessione Stripe appena spedizione e dati sono completi. */
-export function prefetchCheckoutPayment(): void {
+export function prefetchCheckoutPayment(via = 'prefetchCheckoutPayment'): void {
   if (!isCheckoutAccountReady()) return
   if (checkoutStore.checkoutMode === 'frozen_quote') return
   if (checkoutStore.selectedPaymentMethod !== 'stripe') return
@@ -2140,7 +2313,7 @@ export function prefetchCheckoutPayment(): void {
   if (checkoutPaymentPrefetchPromise && checkoutPaymentPrefetchKey === key) return
 
   checkoutPaymentPrefetchKey = key
-  checkoutDbg.fn('prefetchCheckoutPayment', 'enter', { key })
+  checkoutDbg.fn('prefetchCheckoutPayment', 'enter', { via, key })
   checkoutPaymentPrefetchPromise = (async () => {
     try {
       if (!checkoutStore.order) {
@@ -2151,11 +2324,12 @@ export function prefetchCheckoutPayment(): void {
         await createPaymentSession({ silent: true })
       }
       checkoutDbg.fn('prefetchCheckoutPayment', 'exit', {
+        via,
         orderId: checkoutStore.order?.orderId,
         hasClientSecret: Boolean(checkoutStore.payment?.clientSecret),
       })
     } catch (e) {
-      checkoutDbg.fn('prefetchCheckoutPayment', 'error', { message: errMessage(e) })
+      checkoutDbg.fn('prefetchCheckoutPayment', 'error', { via, message: errMessage(e) })
     } finally {
       checkoutPaymentPrefetchPromise = null
     }
@@ -2240,11 +2414,16 @@ export async function syncCheckoutDraft(step: CheckoutDraftStep, options?: { sil
   }
 }
 
-export async function startCheckout(options?: { silent?: boolean }) {
-  checkoutDbg.fn('startCheckout', 'enter', { silent: options?.silent, step: checkoutStore.currentStep })
+export async function startCheckout(options?: { silent?: boolean; via?: string }) {
+  const via = options?.via ?? 'startCheckout'
+  checkoutDbg.fn('startCheckout', 'enter', {
+    via,
+    silent: options?.silent,
+    step: checkoutStore.currentStep,
+  })
   if (!isCheckoutAccountReady()) {
     checkoutStore.error = localeMessage('checkout.error.authRequired')
-    checkoutDbg.fn('startCheckout', 'skip', { reason: 'account not ready' })
+    checkoutDbg.fn('startCheckout', 'skip', { via, reason: 'account not ready' })
     throw new Error(checkoutStore.error)
   }
   if (!options?.silent) checkoutStore.isLoading = true
@@ -2265,12 +2444,13 @@ export async function startCheckout(options?: { silent?: boolean }) {
       orderNotes: checkoutStore.draft.orderNotes.trim() || undefined,
       vatValidated: checkoutStore.business.vatValidated || undefined,
       vatForceAccepted: checkoutStore.business.vatForceAccepted || undefined,
+      createAccount: !authStore.isAuthenticated,
       lockPrices: true,
     })
-    checkoutDbg.fn('startCheckout', 'exit', { orderId: checkoutStore.order?.orderId })
+    checkoutDbg.fn('startCheckout', 'exit', { via, orderId: checkoutStore.order?.orderId })
   } catch (e) {
     checkoutStore.error = errMessage(e)
-    checkoutDbg.fn('startCheckout', 'error', { message: checkoutStore.error })
+    checkoutDbg.fn('startCheckout', 'error', { via, message: checkoutStore.error })
     throw e
   } finally {
     if (!options?.silent) checkoutStore.isLoading = false
@@ -2342,8 +2522,10 @@ export async function refreshStaleStripePaymentSession(options?: { silent?: bool
   await createPaymentSession(options)
 }
 
-export async function prepareCheckoutPayment(options?: { silent?: boolean }) {
+export async function prepareCheckoutPayment(options?: { silent?: boolean; via?: string }) {
+  const via = options?.via ?? 'prepareCheckoutPayment'
   checkoutDbg.fn('prepareCheckoutPayment', 'enter', {
+    via,
     hasOrder: Boolean(checkoutStore.order),
     hasPayment: Boolean(checkoutStore.payment),
     method: checkoutStore.selectedPaymentMethod,
@@ -2360,6 +2542,7 @@ export async function prepareCheckoutPayment(options?: { silent?: boolean }) {
     await createPaymentSession(options)
   }
   checkoutDbg.fn('prepareCheckoutPayment', 'exit', {
+    via,
     orderId: checkoutStore.order?.orderId,
     hasClientSecret: Boolean(checkoutStore.payment?.clientSecret),
   })

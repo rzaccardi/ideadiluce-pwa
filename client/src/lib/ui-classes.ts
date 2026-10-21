@@ -31,10 +31,17 @@ export const ui = {
   mutedSm: 'text-sm text-idl-muted',
   divider: 'border-idl-border',
   dividerSubtle: 'border-idl-border/60',
-  /** Pulsante circolare solo-icona nell'header. */
+  /**
+   * Slot layout header: area fissa 38×38.
+   * Il contenuto fuori (es. badge carrello) non deve influire sull'allineamento.
+   */
+  headerIconSlot: 'relative inline-flex size-[38px] shrink-0 items-center justify-center overflow-visible',
+  /** Pulsante circolare solo-icona nell'header (dimensione unica: 38px). */
   headerIconBtn:
     'inline-flex size-[38px] shrink-0 items-center justify-center rounded-full border p-0',
   headerIcon: 'size-[18px] shrink-0',
+  /** Riga azioni icona nell'header. */
+  headerIconRow: 'flex shrink-0 items-center gap-2',
   /** Pulsanti header: solo icona sotto lg, testo da desktop. */
   headerAction:
     'inline-flex size-[38px] shrink-0 items-center justify-center gap-2 rounded-full border p-0 text-sm font-bold lg:size-auto lg:px-4 lg:py-2',

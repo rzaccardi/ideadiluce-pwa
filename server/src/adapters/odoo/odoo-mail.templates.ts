@@ -19,7 +19,6 @@ export const PWA_MAIL_TEMPLATE_KEYS = [
   'sync_exhausted_admin',
   'password_reset',
   'order_confirmation',
-  'bank_transfer_pending',
   'order_shipped',
   'abandoned_cart',
 ] as const
@@ -280,29 +279,6 @@ export const PWA_MAIL_TEMPLATES: Record<PwaMailTemplateKey, PwaMailTemplateDef> 
         Ti scriveremo di nuovo quando il pacco parte, con il link di tracking.
         <br><br>
         Grazie per la fiducia!`), 'Orders'),
-  },
-  bank_transfer_pending: {
-    key: 'bank_transfer_pending',
-    name: '[PWA] Istruzioni bonifico',
-    subject: 'Istruzioni per il bonifico - ordine {{order_number}}',
-    bodyHtml: wrap(mailCopy(`Ciao{{first_name_suffix}},
-        <br><br>
-        abbiamo registrato l'ordine <span style="font-weight:bold">{{order_number}}</span>.
-        Per confermarlo effettua il bonifico con questi dati:
-        <br><br>
-        Intestatario: <span style="font-weight:bold">{{holder}}</span>
-        <br>
-        IBAN: <span style="font-weight:bold">{{iban}}</span>{{bank_name_html}}
-        <br>
-        Causale: <span style="font-weight:bold">{{reference}}</span>
-        <br>
-        Importo: <span style="font-weight:bold">{{amount}}</span>
-        <br><br>
-        {{note}}
-        <br><br>
-        Spediremo dopo l'accredito.
-        <br>
-        Dettaglio ordine: <a href="{{order_url}}" style="color:#1a1a1a">{{order_url}}</a>`), 'Orders'),
   },
   order_shipped: {
     key: 'order_shipped',

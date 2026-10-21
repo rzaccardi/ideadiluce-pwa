@@ -106,7 +106,7 @@
 
   /* ── Layout ── */
   --max-width-idl-narrow: 62.5rem; /* 1000px */
-  --max-width-idl-wide: 82.5rem; /* 1320px */
+  --max-width-idl-wide: 90rem; /* 1440px — più spazio header su desktop medi */
   --max-width-idl-auth: 28.5rem; /* 456px */
 
   --spacing-site-header-mobile: 3.75rem;
