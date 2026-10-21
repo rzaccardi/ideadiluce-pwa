@@ -22,10 +22,14 @@ describe('mapOdooApiCarrier', () => {
 })
 
 describe('mapOdooApiPaymentMethod', () => {
-  it('mappa paypal e bonifico, resto carta', () => {
+  it('mappa paypal, bonifico e carta; non inventa card se assente', () => {
     expect(mapOdooApiPaymentMethod('paypal')).toBe('paypal')
     expect(mapOdooApiPaymentMethod('bank_transfer')).toBe('bank_transfer')
     expect(mapOdooApiPaymentMethod('stripe')).toBe('card')
+    expect(mapOdooApiPaymentMethod('card_nexi')).toBe('card')
+    expect(mapOdooApiPaymentMethod(null)).toBeNull()
+    expect(mapOdooApiPaymentMethod(undefined)).toBeNull()
+    expect(mapOdooApiPaymentMethod('')).toBeNull()
   })
 })
 

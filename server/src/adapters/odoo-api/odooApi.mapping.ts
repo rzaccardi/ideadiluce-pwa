@@ -18,13 +18,22 @@ import type {
   OdooApiPaymentMethod,
 } from './odooApi.types.js'
 
+/**
+ * Mappa il metodo PWA verso i valori API Odoo (`card` | `paypal` | `bank_transfer`).
+ * Restituisce `null` se sconosciuto/assente: non inventare `card` (altrimenti Odoo
+ * mostra «Pagamento previsto: card» anche sul bonifico).
+ */
 export function mapOdooApiPaymentMethod(
   method: PwaPaymentMethodDTO | string | null | undefined,
-): OdooApiPaymentMethod {
-  const key = String(method ?? '').toLowerCase()
+): OdooApiPaymentMethod | null {
+  const key = String(method ?? '')
+    .trim()
+    .toLowerCase()
+  if (!key) return null
   if (key === 'paypal') return 'paypal'
   if (key === 'bank_transfer') return 'bank_transfer'
-  return 'card'
+  if (key === 'card' || key === 'stripe' || key === 'card_nexi' || key === 'google_pay') return 'card'
+  return null
 }
 
 /** Codici vettore del proxy per la mappa Odoo `carrier → delivery.carrier`. */

@@ -375,6 +375,15 @@ async function registerPaymentApiV2(
   input: RegisterPaymentInput,
 ): Promise<RegisterPaymentOutcome> {
   const provider = mapOdooApiPaymentMethod(input.method === 'stripe' ? 'card' : input.method)
+  if (!provider) {
+    throw new AppError(
+      'PAYMENT_METHOD_NOT_SUPPORTED',
+      `Unsupported Odoo payment method: ${input.method}`,
+      'Metodo di pagamento non supportato per Odoo.',
+      400,
+      false,
+    )
+  }
   const body = {
     provider,
     amount_cents: input.amountCents,

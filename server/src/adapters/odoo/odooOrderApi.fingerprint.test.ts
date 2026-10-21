@@ -22,9 +22,22 @@ describe('checkoutLinesFingerprint', () => {
     expect(a).not.toBe(b)
   })
 
+  it('cambia quando cambia il metodo di pagamento (card → bonifico)', () => {
+    const lines = [{ product_id: 1, qty: 1 }]
+    const ship = { carrier: 'economy', amount_net: 8.07 }
+    const card = checkoutLinesFingerprint(lines, ship, 'stripe')
+    const bank = checkoutLinesFingerprint(lines, ship, 'bank_transfer')
+    const none = checkoutLinesFingerprint(lines, ship, null)
+    expect(card).not.toBe(bank)
+    expect(card).not.toBe(none)
+    expect(bank).not.toBe(none)
+  })
+
   it('è stabile a parità di contenuto', () => {
     const lines = [{ product_id: 10, qty: 2, price_unit_net: 1.5 }]
     const ship = { carrier: 'economy', amount_net: 8.07 }
-    expect(checkoutLinesFingerprint(lines, ship)).toBe(checkoutLinesFingerprint(lines, ship))
+    expect(checkoutLinesFingerprint(lines, ship, 'bank_transfer')).toBe(
+      checkoutLinesFingerprint(lines, ship, 'bank_transfer'),
+    )
   })
 })

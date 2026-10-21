@@ -13,8 +13,10 @@ import type {
 import { createOdooCustomerAdapter } from '../../adapters/odoo/odooCustomerAdapter.js'
 import { createOdooOrderAdapter } from '../../adapters/odoo/odooOrderAdapter.js'
 import { isOdooLiveConfigured, type OdooCallContext } from '../../adapters/odoo/odooClient.js'
+import { isOdooApiV2Configured } from '../../adapters/odoo-api/odooApiClient.js'
 import { syncSaleOrderFunnelState } from '../../adapters/odoo/odooFunnelSync.js'
 import { registerPayment } from '../../adapters/odoo/odooPaymentLive.js'
+import type { CheckoutFiscalInput } from '../checkout/checkout-order.types.js'
 import { createProviderPaymentSession } from '../../adapters/payments/paymentProviderAdapter.js'
 import { getStripePublishableKey, getStripeClientConfig, decodeStripeClientSecret } from '../../lib/stripe-config.js'
 import {
@@ -264,11 +266,75 @@ async function assertOrderAccessOrStripeSession(
   }
 }
 
+/**
+ * Re-POST del sale.order con il metodo di pagamento attuale.
+ * Necessario perché POST /orders è idempotente su client_ref: senza fingerprint
+ * sul payment method Odoo resta su «Pagamento previsto: card» anche col bonifico.
+ */
+async function resyncSaleOrderWithPaymentMethod(ctx: OdooCallContext, order: PwaOrder): Promise<void> {
+  if (!isOdooApiV2Configured()) return
+  if (!order.odooPartnerId || !order.paymentMethod) return
+  if (!env.ODOO_ENABLED || !isOdooLiveConfigured()) return
+
+  const cart = await prisma.cart.findUnique({
+    where: { id: order.cartId },
+    include: { items: true, shippingSelection: true },
+  })
+  if (!cart?.items.length) return
+
+  const fiscal = (order.fiscalJson as CheckoutFiscalInput | null) ?? null
+  await orderAdapter.syncSaleOrderDraft(ctx, {
+    odooPartnerId: order.odooPartnerId,
+    odooSaleOrderId: order.odooSaleOrderId,
+    pwaOrderId: order.id,
+    clientOrderRef: order.clientOrderRef ?? `PWA ${order.id}`,
+    orderNotes: order.orderNotes,
+    courierNotes: order.courierNotes,
+    paymentMethod: paymentMethodToDTO(order.paymentMethod),
+    billingAddress: (order.billingAddressJson as TestCheckoutAddressInput | null) ?? null,
+    shippingAddress: (order.shippingAddressJson as TestCheckoutAddressInput | null) ?? null,
+    dropshipAddress: (order.dropshipAddressJson as TestCheckoutAddressInput | null) ?? null,
+    fiscal,
+    currencyCode: order.currencyCode,
+    lines: cart.items.map((i) => ({
+      productRef: i.productRef,
+      variantRef: i.variantRef,
+      quantity: i.quantity,
+      unitPriceCents: i.clientUnitPriceEstimate ?? undefined,
+    })),
+    shippingLine: cart.shippingSelection
+      ? {
+          label: cart.shippingSelection.label,
+          amountCents: cart.shippingSelection.amountCents,
+          carrierCode: cart.shippingSelection.carrierCode,
+          serviceCode: cart.shippingSelection.serviceCode,
+        }
+      : null,
+    chargedCents: order.amountTotal,
+  })
+}
+
 async function syncOrderToOdoo(ctx: OdooCallContext, order: PwaOrder) {
   if (!order.odooSaleOrderId) {
     await enqueueOrderOdooSaga(order.id, { lastError: 'sale.order Odoo assente' })
     return
   }
+
+  let saleOrderId = order.odooSaleOrderId
+  if (order.paymentMethod) {
+    try {
+      await resyncSaleOrderWithPaymentMethod(ctx, order)
+      // Nuovo client_ref (fingerprint payment) → nuovo SO: rileggi l’id collegato.
+      const linked = await prisma.pwaOrder.findUnique({
+        where: { id: order.id },
+        select: { odooSaleOrderId: true },
+      })
+      if (linked?.odooSaleOrderId) saleOrderId = linked.odooSaleOrderId
+    } catch {
+      /* funnel sync sotto resta il fallback; saga se serve */
+    }
+  }
+
   const funnelState = {
     pwaOrderId: order.id,
     orderStatus: orderStatusToDTO(order.orderStatus),
@@ -280,7 +346,7 @@ async function syncOrderToOdoo(ctx: OdooCallContext, order: PwaOrder) {
     lastPaymentError: order.lastPaymentError,
     providerTransactionId: order.providerTransactionId,
   }
-  const syncStatus = await syncSaleOrderFunnelState(ctx, order.odooSaleOrderId, funnelState)
+  const syncStatus = await syncSaleOrderFunnelState(ctx, saleOrderId, funnelState)
   if (syncStatus !== 'skipped') {
     await prisma.pwaOrder.update({
       where: { id: order.id },

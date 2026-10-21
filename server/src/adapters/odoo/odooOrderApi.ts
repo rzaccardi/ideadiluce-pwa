@@ -40,14 +40,20 @@ function resolveVariantProductId(line: SaleOrderLineInput): number | null {
   return parseOdooVariantId(line.variantRef)
 }
 
-/** Fingerprint righe+spedizione: POST /orders è idempotente su client_ref e non aggiorna le righe. */
+/**
+ * Fingerprint righe+spedizione+metodo pagamento: POST /orders è idempotente su
+ * `client_ref` e non aggiorna payload già creati. Incluso il payment method così
+ * il passaggio Stripe→bonifico genera un nuovo SO con il metodo corretto.
+ */
 export function checkoutLinesFingerprint(
   lines: Array<{ product_id: number; qty: number; price_unit_net?: number }>,
   shipping: { carrier: string; amount_net: number } | null | undefined,
+  paymentMethod?: string | null,
 ): string {
   const payload = JSON.stringify({
     lines: lines.map((l) => ({ p: l.product_id, q: l.qty, u: l.price_unit_net ?? null })),
     shipping: shipping ? { c: shipping.carrier, a: shipping.amount_net } : null,
+    payment: mapOdooApiPaymentMethod(paymentMethod) ?? null,
   })
   return createHash('sha256').update(payload).digest('hex').slice(0, 10)
 }
@@ -119,14 +125,20 @@ function buildOrderPayload(
       false,
     )
   }
-  const clientRef = withCartFingerprint(baseRef, checkoutLinesFingerprint(lines, shipping))
+  const paymentMethod = mapOdooApiPaymentMethod(input.paymentMethod)
+  const clientRef = withCartFingerprint(
+    baseRef,
+    checkoutLinesFingerprint(lines, shipping, input.paymentMethod),
+  )
 
   const payload: OdooApiOrderWrite = {
     client_ref: clientRef,
     customer_id: input.odooPartnerId,
     currency: input.currencyCode || 'EUR',
     lines,
-    payment: { method: mapOdooApiPaymentMethod(input.paymentMethod) },
+  }
+  if (paymentMethod) {
+    payload.payment = { method: paymentMethod }
   }
 
   if (input.odooPartnerShippingId) payload.shipping_address_id = input.odooPartnerShippingId
