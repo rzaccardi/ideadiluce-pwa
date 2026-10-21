@@ -109,7 +109,9 @@ function buildOrderPayload(
         }
       : null
 
-  const baseRef = input.clientOrderRef?.trim() || (input.pwaOrderId ? `pwa-${input.pwaOrderId}` : '')
+  // Un solo client_ref per ordine PWA: i chiamanti passano sia `pwa-<id>` sia `PWA <id>` e Odoo
+  // riconosce il doppione solo a riferimento identico (prima: due SO per lo stesso checkout).
+  const baseRef = input.pwaOrderId ? `pwa-${input.pwaOrderId}` : input.clientOrderRef?.trim() || ''
   if (!baseRef) {
     throw new AppError(
       'ODOO_CLIENT_REF_MISSING',

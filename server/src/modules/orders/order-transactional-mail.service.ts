@@ -93,8 +93,10 @@ function shouldDeferOrderConfirmation(order: Pick<PwaOrder, 'odooSaleOrderId'>):
 
 export const orderTransactionalMail = {
   async sendOrderConfirmation(order: PwaOrder, correlationId: string): Promise<void> {
-    // Sempre i template [PWA] Idea di Luce (anche con API v2): la conferma nativa Odoo
-    // punta al portale Odoo/WordPress e non va usata come mail cliente.
+    // Spenta di default: Odoo conferma l'ordine quando la verifica del pagamento riesce e manda la
+    // sua conferma IdeaDiLuce (link all'area clienti del sito). Questa partiva anche se Odoo aveva
+    // rifiutato il pagamento, e con quella di Odoo il cliente ne riceveva due.
+    if (!env.PWA_ORDER_CONFIRMATION_MAIL) return
     if (alreadySent(order, 'orderConfirmation')) return
     if (shouldDeferOrderConfirmation(order)) {
       logger.info('order_mail.confirmation_deferred', {

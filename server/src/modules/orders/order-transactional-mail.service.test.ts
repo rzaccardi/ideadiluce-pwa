@@ -4,7 +4,7 @@ import type { PwaOrder } from '@prisma/client'
 const { sendPwaMail, finalizeGuestAccountForOrder, envState, odooConfigured } = vi.hoisted(() => ({
   sendPwaMail: vi.fn(),
   finalizeGuestAccountForOrder: vi.fn(),
-  envState: { ODOO_ENABLED: true, PUBLIC_SITE_URL: 'https://www.ideadiluce.com' },
+  envState: { ODOO_ENABLED: true, PUBLIC_SITE_URL: 'https://www.ideadiluce.com', PWA_ORDER_CONFIRMATION_MAIL: true },
   odooConfigured: { value: true },
 }))
 
@@ -66,6 +66,17 @@ describe('orderTransactionalMail', () => {
     odooConfigured.value = true
     vi.mocked(prisma.pwaOrder.findUnique).mockResolvedValue({ metadataJson: {} } as never)
     vi.mocked(prisma.pwaOrder.update).mockResolvedValue({} as never)
+  })
+
+  it('con PWA_ORDER_CONFIRMATION_MAIL spenta non invia la conferma: la manda Odoo', async () => {
+    envState.PWA_ORDER_CONFIRMATION_MAIL = false
+    try {
+      await orderTransactionalMail.notifyPaidCustomer(order(), 'c0')
+      expect(sendPwaMail).not.toHaveBeenCalled()
+      expect(finalizeGuestAccountForOrder).toHaveBeenCalledWith('ord-aaaaaaaa')
+    } finally {
+      envState.PWA_ORDER_CONFIRMATION_MAIL = true
+    }
   })
 
   it('invia conferma ordine collegata al sale.order e marca il metadata', async () => {
