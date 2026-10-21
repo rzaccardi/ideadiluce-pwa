@@ -712,6 +712,12 @@ async function promoteCheckpoint(locale: HubLocale): Promise<IndexBucket> {
     count: bucket.entries.length,
     details: Object.keys(bucket.detailsById).length,
   })
+  // Merchant feed / sitemap leggono solo la cache indice: dopo promote vanno rigenerati.
+  if (locale === 'IT') {
+    void import('../seo/seo-cache.service.js')
+      .then(({ refreshSeoCaches }) => refreshSeoCaches({ skipPwaRevalidate: true }))
+      .catch((err) => logger.warn('seo.cache_refresh_after_promote_failed', { err: String(err) }))
+  }
   return bucket
 }
 

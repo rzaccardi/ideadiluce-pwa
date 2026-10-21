@@ -114,13 +114,43 @@ export const shippingAdminService = {
 
   async listCredentials() {
     const rows = await prisma.carrierCredential.findMany()
-    return rows.map((c) => ({
-      ...c,
-      apiKey: redactSecret(c.apiKey),
-      apiSecret: redactSecret(c.apiSecret),
-      hasKey: Boolean(c.apiKey),
-      hasSecret: Boolean(c.apiSecret),
-    }))
+    return rows.map((c) => {
+      const envKey =
+        c.provider === CarrierProvider.DHL
+          ? env.DHL_API_KEY?.trim()
+          : env.FEDEX_CLIENT_ID?.trim()
+      const envSecret =
+        c.provider === CarrierProvider.DHL
+          ? env.DHL_API_SECRET?.trim()
+          : env.FEDEX_CLIENT_SECRET?.trim()
+      const envAccountId =
+        c.provider === CarrierProvider.DHL
+          ? env.DHL_ACCOUNT_NUMBER?.trim()
+          : env.FEDEX_ACCOUNT_NUMBER?.trim()
+      const envSandbox =
+        c.provider === CarrierProvider.DHL
+          ? env.DHL_SANDBOX
+          : env.FEDEX_API_BASE_URL
+            ? env.FEDEX_API_BASE_URL.includes('sandbox')
+            : undefined
+      const fromEnv = Boolean(envKey)
+      return {
+        ...c,
+        apiKey: redactSecret(c.apiKey),
+        apiSecret: redactSecret(c.apiSecret),
+        hasKey: Boolean(envKey || c.apiKey),
+        hasSecret: Boolean(envSecret || c.apiSecret),
+        credentialsSource: fromEnv ? ('env' as const) : ('db' as const),
+        // Valori effettivamente usati a runtime (env vince sul BO).
+        accountId: fromEnv ? (envAccountId ?? c.accountId) : c.accountId,
+        sandbox: fromEnv ? (envSandbox ?? c.sandbox) : c.sandbox,
+        enabled: fromEnv
+          ? c.provider === CarrierProvider.DHL
+            ? env.DHL_ENABLED
+            : env.FEDEX_ENABLED
+          : c.enabled,
+      }
+    })
   },
 
   async upsertCredential(data: {

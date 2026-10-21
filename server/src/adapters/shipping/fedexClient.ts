@@ -20,11 +20,20 @@ function apiBase(): string {
 
 async function credentials() {
   const row = await prisma.carrierCredential.findUnique({ where: { provider: CarrierProvider.FEDEX } })
-  const clientId = decryptSecret(row?.apiKey) ?? env.FEDEX_CLIENT_ID?.trim()
-  const clientSecret = decryptSecret(row?.apiSecret) ?? env.FEDEX_CLIENT_SECRET?.trim()
-  const accountNumber = row?.accountId ?? env.FEDEX_ACCOUNT_NUMBER?.trim()
+  // Env ha priorità sul BO: così le chiavi in .env/deploy vincono su quelle salvate in manage.
+  const clientId = env.FEDEX_CLIENT_ID?.trim() || decryptSecret(row?.apiKey) || null
+  const clientSecret = env.FEDEX_CLIENT_SECRET?.trim() || decryptSecret(row?.apiSecret) || null
+  const accountNumber = env.FEDEX_ACCOUNT_NUMBER?.trim() || row?.accountId || null
+  const sandboxFromEnv = env.FEDEX_API_BASE_URL
+    ? env.FEDEX_API_BASE_URL.includes('sandbox')
+    : undefined
   if (!clientId || !clientSecret) return null
-  return { clientId, clientSecret, accountNumber, sandbox: row?.sandbox ?? true }
+  return {
+    clientId,
+    clientSecret,
+    accountNumber,
+    sandbox: sandboxFromEnv ?? row?.sandbox ?? true,
+  }
 }
 
 async function getFedexAccessToken(): Promise<string | null> {

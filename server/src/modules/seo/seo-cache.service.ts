@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { logger } from '../../lib/logger.js'
+import { AppError } from '../../types/errors.js'
 import { buildLlmsTxt } from './llms.service.js'
 import { buildMerchantFeedXml } from './merchant-feed.service.js'
 import { listNavCatalogLandingPaths } from './nav-landing-paths.js'
@@ -137,6 +138,72 @@ async function warmupStorefrontLandingPages() {
   })
 }
 
+const building: Record<CacheKey, boolean> = {
+  sitemap: false,
+  merchantFeed: false,
+  llms: false,
+}
+
+const buildPromises: Partial<Record<CacheKey, Promise<CacheEntry>>> = {}
+
+function seoCacheNotReady(key: CacheKey): never {
+  throw new AppError(
+    'SEO_CACHE_NOT_READY',
+    `SEO cache "${key}" non disponibile`,
+    'Risorsa SEO in preparazione. Riprova tra poco.',
+    503,
+    true,
+    { key },
+  )
+}
+
+/** Un solo build per chiave alla volta (request path + scheduler condividono il lock). */
+function runSeoCacheBuild(key: CacheKey, build: () => Promise<CacheEntry>): Promise<CacheEntry> {
+  const inflight = buildPromises[key]
+  if (inflight) return inflight
+
+  building[key] = true
+  const promise = build()
+    .catch((err) => {
+      logger.warn('seo.cache_build_failed', { key, err: String(err) })
+      throw err
+    })
+    .finally(() => {
+      building[key] = false
+      delete buildPromises[key]
+    })
+  buildPromises[key] = promise
+  return promise
+}
+
+function ensureSeoCacheBuild(key: CacheKey, build: () => Promise<CacheEntry>) {
+  if (cache[key]) return
+  void runSeoCacheBuild(key, build).catch(() => undefined)
+}
+
+/**
+ * Serve la cache se pronta. Su miss: kick-off build in background e 503 subito
+ * (niente attesa fino a 120s che saturava i worker e loggava Unhandled error).
+ */
+async function waitForSeoCacheEntry(
+  key: CacheKey,
+  build: () => Promise<CacheEntry>,
+): Promise<CacheEntry> {
+  if (cache[key]) return cache[key]!
+
+  ensureSeoCacheBuild(key, build)
+
+  // Breve attesa: copre il caso in cui il build (es. da peek cache) finisce in pochi ms.
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const entry = cache[key]
+    if (entry) return entry
+    await new Promise((resolve) => setTimeout(resolve, 250))
+  }
+
+  if (cache[key]) return cache[key]!
+  seoCacheNotReady(key)
+}
+
 export async function refreshSeoCaches(options?: { skipPwaRevalidate?: boolean }) {
   if (refreshRunning) {
     return { skipped: true as const, reason: 'refresh_in_progress' }
@@ -145,9 +212,9 @@ export async function refreshSeoCaches(options?: { skipPwaRevalidate?: boolean }
   const startedAt = Date.now()
   try {
     const [sitemapEntry, merchantEntry] = await Promise.all([
-      buildAndStoreSitemap(),
-      buildAndStoreMerchantFeed(),
-      buildAndStoreLlms(),
+      runSeoCacheBuild('sitemap', buildAndStoreSitemap),
+      runSeoCacheBuild('merchantFeed', buildAndStoreMerchantFeed),
+      runSeoCacheBuild('llms', buildAndStoreLlms),
     ])
     const builtAt = sitemapEntry.builtAt
     void persistNavLandingPaths(builtAt)
@@ -193,7 +260,7 @@ async function buildAndStoreMerchantFeed(): Promise<CacheEntry> {
 
 /** Rigenera solo il feed Merchant (dopo salvataggio impostazioni BO). */
 export async function refreshMerchantFeed(): Promise<CacheEntry> {
-  return buildAndStoreMerchantFeed()
+  return runSeoCacheBuild('merchantFeed', buildAndStoreMerchantFeed)
 }
 
 async function buildAndStoreLlms(): Promise<CacheEntry> {
@@ -202,40 +269,6 @@ async function buildAndStoreLlms(): Promise<CacheEntry> {
   cache.llms = { body, builtAt, itemCount: null }
   void persistDiskCache('llms', cache.llms)
   return cache.llms
-}
-
-const building: Record<keyof typeof cache, boolean> = {
-  sitemap: false,
-  merchantFeed: false,
-  llms: false,
-}
-
-async function waitForSeoCacheEntry(
-  key: keyof typeof cache,
-  build: () => Promise<CacheEntry>,
-): Promise<CacheEntry> {
-  if (cache[key]) return cache[key]!
-
-  if (!building[key]) {
-    building[key] = true
-    try {
-      if (!cache[key]) return await build()
-    } catch (err) {
-      logger.warn('seo.cache_build_failed', { key, err: String(err) })
-      throw err
-    } finally {
-      building[key] = false
-    }
-  }
-
-  const maxAttempts = 240
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const entry = cache[key]
-    if (entry) return entry
-    await new Promise((resolve) => setTimeout(resolve, 500))
-  }
-
-  throw new Error(`SEO cache "${key}" non disponibile`)
 }
 
 type CachedSeoAsset = { body: string; builtAt: string }

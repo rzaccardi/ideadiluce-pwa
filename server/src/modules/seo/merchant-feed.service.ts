@@ -1,6 +1,7 @@
+import { mapOdooCatalogProductDetail } from '../../adapters/odoo-catalog/odooCatalogMapper.js'
 import { env } from '../../config/env.js'
 import { absoluteUrl, productPath, type HubLocale } from '../../lib/hub-locale.js'
-import { resolveCatalogProduct, listOdooCatalogProductSlugs } from '../catalog/catalogResolver.service.js'
+import { peekCachedProductDetails } from '../catalog/odoo-catalog-index.service.js'
 import type { ProductDetailDTO, ProductVariantDTO } from '../../types/dto.js'
 import {
   DEFAULT_MERCHANT_CENTER_SETTINGS,
@@ -209,7 +210,19 @@ ${itemXml.join('\n')}
 </rss>`
 }
 
-const MERCHANT_FEED_BATCH_SIZE = 8
+/**
+ * Feed Merchant solo dall'indice catalogo in memoria/disco (niente fetch live Odoo).
+ * Evita di competere con `catalog_index.details_batch` e timeout sulle route pubbliche.
+ */
+async function listCachedMerchantProducts(locale: HubLocale = 'IT'): Promise<ProductDetailDTO[]> {
+  const { detailsById } = await peekCachedProductDetails(locale)
+  const products: ProductDetailDTO[] = []
+  for (const raw of Object.values(detailsById)) {
+    if (!raw?.slug) continue
+    products.push(mapOdooCatalogProductDetail(raw, locale))
+  }
+  return products
+}
 
 export async function buildMerchantFeedXml(
   settings?: MerchantCenterSettingsDTO,
@@ -220,20 +233,13 @@ export async function buildMerchantFeedXml(
     return wrapMerchantFeedXml(siteBase, [])
   }
 
-  const slugs = await listOdooCatalogProductSlugs('IT')
+  const products = await listCachedMerchantProducts('IT')
   const items: string[] = []
 
-  for (let i = 0; i < slugs.length; i += MERCHANT_FEED_BATCH_SIZE) {
-    const batch = slugs.slice(i, i + MERCHANT_FEED_BATCH_SIZE)
-    const products = await Promise.all(
-      batch.map((slug) => resolveCatalogProduct({ correlationId: 'merchant-feed' }, slug, 'IT')),
-    )
-    for (const product of products) {
-      if (!product) continue
-      for (const offer of offersForProduct(product, siteBase, resolved)) {
-        if (!shouldIncludeOffer(offer, product, resolved)) continue
-        items.push(feedItemXml(offer, resolved))
-      }
+  for (const product of products) {
+    for (const offer of offersForProduct(product, siteBase, resolved)) {
+      if (!shouldIncludeOffer(offer, product, resolved)) continue
+      items.push(feedItemXml(offer, resolved))
     }
   }
 
@@ -246,12 +252,10 @@ export async function validateMerchantFeedSample(limit = 10): Promise<{
 }> {
   const settings = await getMerchantCenterSettingsDTO().catch(() => DEFAULT_MERCHANT_CENTER_SETTINGS)
   const siteBase = env.PUBLIC_SITE_URL
-  const slugs = (await listOdooCatalogProductSlugs('IT')).slice(0, limit)
+  const products = (await listCachedMerchantProducts('IT')).slice(0, limit)
   const items: MerchantFeedSampleRow[] = []
 
-  for (const slug of slugs) {
-    const product = await resolveCatalogProduct({ correlationId: 'merchant-feed' }, slug, 'IT')
-    if (!product) continue
+  for (const product of products) {
     for (const offer of offersForProduct(product, siteBase, settings)) {
       items.push({
         slug: product.slug,

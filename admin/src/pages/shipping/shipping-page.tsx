@@ -228,9 +228,19 @@ export function ShippingPage() {
                     <CardDescription>
                       {c.hasKey ? 'API key configurata' : 'Nessuna API key'} ·{' '}
                       {c.hasSecret ? 'secret configurato' : 'nessun secret'}
+                      {c.credentialsSource === 'env'
+                        ? ' · in uso da env (priorità su BO)'
+                        : null}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
+                    {c.credentialsSource === 'env' ? (
+                      <p className="mb-4 max-w-md text-sm text-gray-500">
+                        Le credenziali in env/deploy hanno priorità. I campi sotto restano un
+                        fallback se rimuovi le variabili{' '}
+                        {c.provider === 'DHL' ? 'DHL_*' : 'FEDEX_*'} dall&apos;ambiente.
+                      </p>
+                    ) : null}
                     <form
                       className="flex max-w-md flex-col gap-4"
                       onSubmit={(e) => {
@@ -240,11 +250,21 @@ export function ShippingPage() {
                     >
                       <div className="flex flex-wrap gap-4">
                         <label className="flex items-center gap-2 text-sm text-gray-700">
-                          <input type="checkbox" name="enabled" defaultChecked={c.enabled} />
+                          <input
+                            type="checkbox"
+                            name="enabled"
+                            defaultChecked={c.enabled}
+                            disabled={c.credentialsSource === 'env'}
+                          />
                           Abilitato
                         </label>
                         <label className="flex items-center gap-2 text-sm text-gray-700">
-                          <input type="checkbox" name="sandbox" defaultChecked={c.sandbox} />
+                          <input
+                            type="checkbox"
+                            name="sandbox"
+                            defaultChecked={c.sandbox}
+                            disabled={c.credentialsSource === 'env'}
+                          />
                           Sandbox
                         </label>
                       </div>
@@ -253,12 +273,20 @@ export function ShippingPage() {
                           name="accountId"
                           placeholder="Account number"
                           defaultValue={c.accountId ?? ''}
+                          readOnly={c.credentialsSource === 'env'}
                         />
                       </DetailField>
                       <DetailField label="API key">
                         <Input
                           name="apiKey"
-                          placeholder={c.hasKey ? 'API key (vuoto = non cambiare)' : 'API key'}
+                          placeholder={
+                            c.credentialsSource === 'env'
+                              ? 'Impostata da env'
+                              : c.hasKey
+                                ? 'API key (vuoto = non cambiare)'
+                                : 'API key'
+                          }
+                          disabled={c.credentialsSource === 'env'}
                         />
                       </DetailField>
                       <DetailField label="API secret">
@@ -267,13 +295,20 @@ export function ShippingPage() {
                           type="password"
                           autoComplete="new-password"
                           placeholder={
-                            c.hasSecret ? 'Secret (vuoto = non cambiare)' : 'API secret'
+                            c.credentialsSource === 'env'
+                              ? 'Impostato da env'
+                              : c.hasSecret
+                                ? 'Secret (vuoto = non cambiare)'
+                                : 'API secret'
                           }
+                          disabled={c.credentialsSource === 'env'}
                         />
                       </DetailField>
-                      <Button type="submit" variant="success" className="w-fit">
-                        Salva
-                      </Button>
+                      {c.credentialsSource === 'env' ? null : (
+                        <Button type="submit" variant="success" className="w-fit">
+                          Salva
+                        </Button>
+                      )}
                     </form>
                   </CardContent>
                 </Card>

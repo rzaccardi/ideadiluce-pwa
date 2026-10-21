@@ -52,7 +52,7 @@ import { CheckoutPaymentStep } from '@/components/checkout/stripe-ui/CheckoutPay
 import { CheckoutReviewStep } from '@/components/checkout/stripe-ui/CheckoutReviewStep'
 import { CheckoutStepBody } from '@/components/checkout/stripe-ui/CheckoutStepBody'
 import { CheckoutStepIndicator } from '@/components/checkout/stripe-ui/CheckoutStepIndicator'
-import { CheckoutInlineError } from '@/components/checkout/stripe-ui/StripeFields'
+import { StripeErrorBanner } from '@/components/checkout/stripe-ui/StripeFields'
 import { CheckoutPaymentSkeleton } from '@/components/checkout/CheckoutPaymentSkeleton'
 import { StripePaymentShell } from '@/components/checkout/StripePaymentShell'
 import type { StripePaymentFormHandle } from '@/components/checkout/StripePaymentForm'
@@ -674,7 +674,8 @@ export function CheckoutPage() {
             </p>
           ) : null}
 
-          {checkout.error ? <CheckoutInlineError message={checkout.error} /> : null}
+          {/* Fuori dallo step pagamento: toast globale. Sul pagamento → sopra «Metodo di pagamento». */}
+          {!showPaymentStep ? <StripeErrorBanner message={checkout.error} /> : null}
 
           {!lockedCheckout ? <CheckoutStepIndicator currentStep={step} /> : null}
 

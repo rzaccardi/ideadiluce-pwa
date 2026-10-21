@@ -25,6 +25,8 @@ export type ShippingCredential = {
   accountId: string | null
   hasKey: boolean
   hasSecret: boolean
+  /** `env` = chiavi da .env/deploy (hanno priorità); `db` = solo BO. */
+  credentialsSource?: 'env' | 'db'
 }
 
 export type ShippingSurchargeConfig = {

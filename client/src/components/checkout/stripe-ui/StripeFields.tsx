@@ -302,15 +302,16 @@ export function StripeErrorBanner({ message }: { message: string | null | undefi
   return <ToastOnError message={message} />
 }
 
-/** Errore visibile nel form checkout (carta incompleta / rifiutata), non solo toast. */
+/** Toast errore rosso inline (carta rifiutata / incompleta), sopra la sezione pagamento. */
 export function CheckoutInlineError({ message }: { message: string | null | undefined }) {
   if (!message?.trim()) return null
   return (
-    <p
+    <div
       role="alert"
-      className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/80 dark:bg-[#3a1518] dark:text-[#f5c4c4]"
+      className="idl-toast idl-toast--error relative w-full max-w-none"
+      style={{ width: '100%' }}
     >
-      {message}
-    </p>
+      <p className="idl-toast__title">{message}</p>
+    </div>
   )
 }

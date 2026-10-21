@@ -15,9 +15,10 @@ function apiBase(): string {
 
 async function credentials() {
   const row = await prisma.carrierCredential.findUnique({ where: { provider: CarrierProvider.DHL } })
-  const apiKey = decryptSecret(row?.apiKey) ?? env.DHL_API_KEY?.trim()
-  const apiSecret = decryptSecret(row?.apiSecret) ?? env.DHL_API_SECRET?.trim()
-  const accountNumber = row?.accountId ?? env.DHL_ACCOUNT_NUMBER?.trim()
+  // Env ha priorità sul BO: così le chiavi in .env/deploy vincono su quelle salvate in manage.
+  const apiKey = env.DHL_API_KEY?.trim() || decryptSecret(row?.apiKey) || null
+  const apiSecret = env.DHL_API_SECRET?.trim() || decryptSecret(row?.apiSecret) || null
+  const accountNumber = env.DHL_ACCOUNT_NUMBER?.trim() || row?.accountId || null
   if (!apiKey || !apiSecret) return null
   return { apiKey, apiSecret, accountNumber }
 }

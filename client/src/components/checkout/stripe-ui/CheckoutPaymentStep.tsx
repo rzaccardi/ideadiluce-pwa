@@ -12,7 +12,12 @@ import {
 import { CheckoutPaymentOptions } from './CheckoutPaymentOptions'
 import { useI18n } from '@/hooks/use-i18n'
 import { cn } from '@/utils/cn'
-import { CheckoutActionRow, StripePayButton, StripeSectionTitle } from './StripeFields'
+import {
+  CheckoutActionRow,
+  CheckoutInlineError,
+  StripePayButton,
+  StripeSectionTitle,
+} from './StripeFields'
 import { CheckoutStepBackButton } from './CheckoutStepBackButton'
 
 type Props = {
@@ -39,6 +44,7 @@ export function CheckoutPaymentStep({
 
   return (
     <section className={cn('space-y-5', disabled && 'pointer-events-none opacity-60')}>
+      {checkout.error ? <CheckoutInlineError message={checkout.error} /> : null}
       {embedded ? <StripeSectionTitle>{t('checkout.payment')}</StripeSectionTitle> : null}
 
       <CheckoutPaymentOptions
