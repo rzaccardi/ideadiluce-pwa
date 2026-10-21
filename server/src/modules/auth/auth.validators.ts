@@ -41,8 +41,9 @@ export const checkoutForgotPasswordBodySchema = z.object({
   email: z.string().email(),
 })
 
+/** Token opaco di Odoo: non validare lunghezza/formato (non è 64 hex). */
 export const resetPasswordBodySchema = z.object({
-  token: z.string().min(32),
+  token: z.string().min(1),
   password: z.string().min(8),
 })
 

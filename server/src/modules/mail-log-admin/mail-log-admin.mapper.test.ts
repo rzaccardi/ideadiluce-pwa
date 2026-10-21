@@ -90,7 +90,7 @@ describe('mail-log-admin mapper', () => {
   })
 
   it('riconosce i record PWA da header o template', () => {
-    expect(isPwaMailRecord({ headers: buildPwaMailHeaders('password_reset') })).toBe(true)
+    expect(isPwaMailRecord({ headers: buildPwaMailHeaders('account_welcome') })).toBe(true)
     expect(isPwaMailRecord({ mail_template_id: [3, '[PWA] Reimposta password'] })).toBe(true)
     expect(isPwaMailRecord({ headers: "{'X-PWA-Mail': '1'}", mail_template_id: false })).toBe(true)
     expect(isPwaMailRecord({ headers: false, mail_template_id: [9, 'Sales: Send by Email'] })).toBe(

@@ -226,6 +226,38 @@ export async function login(email: string, password: string) {
   }
 }
 
+/**
+ * Conferma token Odoo via PWA → API v2; se il backend ha già creato la sessione, la idrata.
+ * Altrimenti restituisce solo l’esito (l’utente potrà fare login manuale).
+ */
+export async function completePasswordReset(token: string, password: string) {
+  authStore.isLoading = true
+  authStore.error = null
+  try {
+    const { reset, user } = await api.auth.resetPassword(token, password)
+    if (!reset) {
+      throw new ApiRequestError(
+        'RESET_FAILED',
+        'Password reset failed',
+        400,
+        undefined,
+        'Impossibile aggiornare la password. Riprova.',
+        false,
+      )
+    }
+    if (user) {
+      await establishAuthenticatedSession(user)
+      return { loggedIn: true as const }
+    }
+    return { loggedIn: false as const }
+  } catch (e) {
+    authStore.error = errMessage(e)
+    throw e
+  } finally {
+    authStore.isLoading = false
+  }
+}
+
 export async function register(
   email: string,
   password: string,

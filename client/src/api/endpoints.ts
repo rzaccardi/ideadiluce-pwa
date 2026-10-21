@@ -72,10 +72,13 @@ export const api = {
       return apiClient.post<{ sent: boolean }>('/api/v1/auth/checkout-forgot-password', { email })
     },
     resetPassword(token: string, password: string) {
-      return apiClient.post<{ reset: boolean }>('/api/v1/auth/reset-password', {
-        token,
-        password,
-      })
+      return apiClient.post<{ reset: boolean; user: UserDTO | null; email?: string }>(
+        '/api/v1/auth/reset-password',
+        {
+          token,
+          password,
+        },
+      )
     },
     login(body: { email: string; password: string }) {
       return apiClient.post<{ user: UserDTO }>('/api/v1/auth/login', body)

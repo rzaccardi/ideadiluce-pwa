@@ -193,9 +193,9 @@ describe('sendPwaMail', () => {
       .mockResolvedValueOnce(odooAccepted())
 
     await sendPwaMail({ correlationId: 't2' }, {
-      templateKey: 'password_reset',
+      templateKey: 'account_welcome',
       emailTo: 'x@y.it',
-      vars: { hours: '24', reset_url: 'https://shop.example/reset?token=abc' },
+      vars: { first_name_suffix: '', login_url: 'https://shop.example/login' },
     })
 
     const models = odooExecuteKw.mock.calls.map((c: unknown[]) => `${c[1]}/${c[2]}`)
@@ -234,16 +234,16 @@ describe('sendPwaMail', () => {
     odooConfigured.value = false
 
     await sendPwaMail({ correlationId: 't4' }, {
-      templateKey: 'password_reset',
+      templateKey: 'abandoned_cart',
       emailTo: 'x@y.it',
-      vars: { hours: '24', reset_url: 'https://x/reset' },
+      vars: { first_name_suffix: '', cart_url: 'https://x/cart' },
     })
 
     expect(odooExecuteKw).not.toHaveBeenCalled()
     expect(sendMail).toHaveBeenCalledTimes(1)
     expect(sendMail.mock.calls[0]?.[0]).toMatchObject({
       to: 'x@y.it',
-      subject: 'Reimposta la password - Idea di Luce',
+      subject: expect.stringContaining('Idea di Luce'),
     })
   })
 
