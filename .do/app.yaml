@@ -173,8 +173,21 @@ services:
         type: SECRET
       - key: DHL_ENABLED
         value: "false"
+      - key: DHL_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: DHL_API_SECRET
+        scope: RUN_TIME
+        type: SECRET
       - key: FEDEX_ENABLED
         value: "false"
+      # Credenziali FedEx: solo RUN_TIME SECRET (mai BUILD_TIME / value in chiaro).
+      - key: FEDEX_CLIENT_ID
+        scope: RUN_TIME
+        type: SECRET
+      - key: FEDEX_CLIENT_SECRET
+        scope: RUN_TIME
+        type: SECRET
       - key: SPACES_REGION
         value: fra1
       - key: SPACES_ENDPOINT
