@@ -19,6 +19,7 @@ export const authController = {
       customerSegment?: 'retail' | 'business'
       companyName?: string
       vatNumber?: string
+      fiscalCode?: string
     }
     const sessionId = req.sessionRecord!.id
     const user = await authService.register(body, sessionId, req.correlationId)
@@ -58,6 +59,7 @@ export const authController = {
       customerSegment?: 'retail' | 'business'
       companyName?: string
       vatNumber?: string
+      fiscalCode?: string
     }
     const sessionId = req.sessionRecord!.id
     const user = await checkoutRegisterService.register(body, sessionId, req.correlationId)

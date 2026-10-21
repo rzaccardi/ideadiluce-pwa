@@ -736,6 +736,7 @@ export type MessageKey =
   | 'checkout.billing.businessTitle'
   | 'checkout.billing.companyName'
   | 'checkout.billing.vatNumber'
+  | 'checkout.billing.noVatNumber'
   | 'checkout.billing.fiscalCode'
   | 'checkout.billing.fiscalCodeOptional'
   | 'checkout.billing.pec'

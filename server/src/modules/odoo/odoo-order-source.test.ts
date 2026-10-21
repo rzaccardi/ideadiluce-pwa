@@ -12,6 +12,8 @@ describe('buildAccountSaleOrderDomain', () => {
       ['state', 'in', ['sale', 'done']],
       '&',
       ['state', 'in', ['draft', 'sent']],
+      '|',
+      ['tlb_hl_ref', '=ilike', 'PWA%'],
       ['client_order_ref', '=ilike', 'PWA%'],
       ['partner_id', 'in', [11913]],
     ])

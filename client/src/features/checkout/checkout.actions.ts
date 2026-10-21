@@ -893,8 +893,15 @@ function businessBillingComplete(): boolean {
     return true
   }
 
-  if (!b.companyName.trim() || !b.vatNumber.trim()) return false
+  if (!b.companyName.trim()) return false
   if (country === 'IT' && !b.pec.trim() && !b.sdiCode.trim()) return false
+
+  // Azienda senza P.IVA: obbligatorio CF validato, nessun check VAT/VIES.
+  if (b.noVatNumber) {
+    return Boolean(b.fiscalCode.trim()) && b.fiscalCodeValid === true
+  }
+
+  if (!b.vatNumber.trim()) return false
 
   if (country === 'IT') {
     return b.vatChecksumValid === true
@@ -1127,6 +1134,7 @@ function applyUserTaxProfileToCheckout(user: UserDTO) {
 
   if (user.vatNumber?.trim()) {
     checkoutStore.business.vatNumber = user.vatNumber
+    checkoutStore.business.noVatNumber = false
     checkoutStore.business.vatFormatValid = user.vatFormatValid ?? true
     checkoutStore.business.vatChecksumValid = user.vatChecksumValid ?? true
     checkoutStore.business.vatError = null
@@ -1142,6 +1150,8 @@ function applyUserTaxProfileToCheckout(user: UserDTO) {
     if (user.viesName) checkoutStore.business.vatCompanyName = user.viesName
     if (user.viesAddress) checkoutStore.business.viesAddress = user.viesAddress
     if (user.taxCheckedAt) checkoutStore.business.viesRequestDate = user.taxCheckedAt
+  } else if (user.fiscalCode?.trim() && (user.customerSegment === 'business' || user.isProfessional)) {
+    checkoutStore.business.noVatNumber = true
   }
 }
 
@@ -1544,6 +1554,7 @@ export function resetCheckout(options?: { legacyLayout?: boolean }) {
   checkoutStore.business = {
     companyName: '',
     vatNumber: '',
+    noVatNumber: false,
     fiscalCode: '',
     pec: '',
     sdiCode: '',
@@ -1640,6 +1651,7 @@ export function clearCheckoutAfterLogout() {
   checkoutStore.business = {
     companyName: '',
     vatNumber: '',
+    noVatNumber: false,
     fiscalCode: '',
     pec: '',
     sdiCode: '',
@@ -1742,6 +1754,30 @@ export function updateBusinessField(
   if (key === 'fiscalCode') {
     checkoutStore.business.fiscalCodeValid = null
     checkoutStore.business.fiscalCodeError = null
+  }
+}
+
+/** Azienda senza P.IVA: nasconde VAT e richiede CF (Odoo `l10n_it_codice_fiscale`). */
+export function setBusinessNoVatNumber(value: boolean) {
+  const b = checkoutStore.business
+  b.noVatNumber = value
+  checkoutStore.anagraficaCollectedAtAccount = false
+  if (value) {
+    b.vatNumber = ''
+    b.vatValidated = false
+    b.vatForceAccepted = false
+    b.vatCompanyName = null
+    b.viesAddress = null
+    b.viesRequestDate = null
+    b.vatFormatValid = null
+    b.vatChecksumValid = null
+    b.vatError = null
+    b.viesStatus = null
+    scheduleTaxRecalculate()
+  } else {
+    b.fiscalCode = ''
+    b.fiscalCodeValid = null
+    b.fiscalCodeError = null
   }
 }
 

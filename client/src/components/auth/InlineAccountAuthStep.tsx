@@ -181,6 +181,9 @@ export function InlineAccountAuthStep({
     }
 
     const trimmedEmail = email.trim()
+    const companyName = checkoutStore.business.companyName.trim()
+    const vatNumber = checkoutStore.business.vatNumber.trim()
+    const fiscalCode = checkoutStore.business.fiscalCode.trim()
     try {
       await checkoutRegister({
         email: trimmedEmail,
@@ -189,6 +192,9 @@ export function InlineAccountAuthStep({
         lastName: lastName.trim(),
         phone: trimmedPhone,
         customerSegment: collectCustomerTypeOnRegister ? segment : undefined,
+        companyName: segment === 'business' ? companyName || undefined : undefined,
+        vatNumber: segment === 'business' && vatNumber ? vatNumber : undefined,
+        fiscalCode: segment === 'business' && fiscalCode ? fiscalCode : undefined,
       })
       // Sessione PWA pronta: chiudi overlay auth prima di onAuthSuccess (prefill).
       clearAuthLoading()

@@ -57,11 +57,13 @@ function validateCheckoutBilling(
       message: 'Ragione sociale obbligatoria per ordini business.',
     })
   }
-  if (!business.vatNumber?.trim()) {
+  const hasVat = Boolean(business.vatNumber?.trim())
+  const hasFiscalCode = Boolean(business.fiscalCode?.trim())
+  if (!hasVat && !hasFiscalCode) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['business', 'vatNumber'],
-      message: 'Partita IVA obbligatoria per ordini business.',
+      message: 'Partita IVA o codice fiscale obbligatori per ordini business.',
     })
   }
 
@@ -178,11 +180,11 @@ export const patchBusinessSchema = z
         message: 'Ragione sociale obbligatoria.',
       })
     }
-    if (!data.vatNumber?.trim()) {
+    if (!data.vatNumber?.trim() && !data.fiscalCode?.trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['vatNumber'],
-        message: 'Partita IVA obbligatoria.',
+        message: 'Partita IVA o codice fiscale obbligatori.',
       })
     }
     if (!data.pec?.trim() && !data.sdiCode?.trim()) {

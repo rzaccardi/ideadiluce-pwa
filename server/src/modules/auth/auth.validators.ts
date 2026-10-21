@@ -12,6 +12,8 @@ export const registerBodySchema = z
     customerSegment: z.enum(['retail', 'business']).optional(),
     companyName: z.string().trim().min(1).optional(),
     vatNumber: z.string().trim().min(5).max(32).optional(),
+    /** CF azienda senza P.IVA → Odoo `l10n_it_codice_fiscale`. */
+    fiscalCode: z.string().trim().min(11).max(16).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.customerSegment !== 'business') return
@@ -22,11 +24,11 @@ export const registerBodySchema = z
         message: 'Company name required for business accounts',
       })
     }
-    if (!data.vatNumber?.trim()) {
+    if (!data.vatNumber?.trim() && !data.fiscalCode?.trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['vatNumber'],
-        message: 'VAT number required for business accounts',
+        message: 'VAT number or fiscal code required for business accounts',
       })
     }
   })
@@ -75,6 +77,8 @@ export const checkoutRegisterBodySchema = z
     customerSegment: z.enum(['retail', 'business']).optional(),
     companyName: z.string().trim().min(1).optional(),
     vatNumber: z.string().trim().min(5).max(32).optional(),
+    /** CF azienda senza P.IVA → Odoo `l10n_it_codice_fiscale`. */
+    fiscalCode: z.string().trim().min(11).max(16).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.customerSegment !== 'business') return
@@ -85,11 +89,11 @@ export const checkoutRegisterBodySchema = z
         message: 'Company name required for business accounts',
       })
     }
-    if (!data.vatNumber?.trim()) {
+    if (!data.vatNumber?.trim() && !data.fiscalCode?.trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['vatNumber'],
-        message: 'VAT number required for business accounts',
+        message: 'VAT number or fiscal code required for business accounts',
       })
     }
   })
