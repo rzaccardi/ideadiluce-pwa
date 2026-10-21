@@ -23,7 +23,18 @@ describe('validateFiscalCode', () => {
   it('rejects wrong length', () => {
     const result = validateFiscalCode('RSSMRA85')
     expect(result.valid).toBe(false)
-    expect(result.errors.some((e) => e.includes('16'))).toBe(true)
+    expect(result.errors.some((e) => e.includes('11') || e.includes('16'))).toBe(true)
+  })
+
+  it('accepts a valid 11-digit company fiscal code', () => {
+    const result = validateFiscalCode('01234567897')
+    expect(result.valid).toBe(true)
+    expect(result.normalized).toBe('01234567897')
+  })
+
+  it('rejects invalid 11-digit company fiscal code', () => {
+    const result = validateFiscalCode('01234567891')
+    expect(result.valid).toBe(false)
   })
 
   it('rejects empty input', () => {

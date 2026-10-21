@@ -1040,6 +1040,7 @@ export const messages: Record<MessageKey, string> = {
   'checkout.billing.businessTitle': 'Coordonnées de facturation professionnelle',
   'checkout.billing.clientOrderRefOptional': 'Votre référence de commande (facultatif)',
   'checkout.billing.companyName': 'Raison sociale',
+  'checkout.billing.noVatNumber': 'Votre entreprise n’a pas de n° de TVA',
   'checkout.billing.fiscalCode': 'Code fiscal',
   'checkout.billing.fiscalCodeInvalid': 'Code fiscal invalide',
   'checkout.billing.fiscalCodeOptional': 'Code fiscal (facultatif)',
@@ -1234,7 +1235,7 @@ export const messages: Record<MessageKey, string> = {
   'validation.pecOrSdiRequired':
     'Indiquez au moins une adresse PEC ou un code destinataire SDI.',
   'validation.fiscalCodeRequired': 'Le code fiscal est obligatoire.',
-  'validation.fiscalCodeLength': 'Le code fiscal doit contenir 16 caractères.',
+  'validation.fiscalCodeLength': 'Le code fiscal doit contenir 11 ou 16 caractères.',
   'validation.fiscalCodeFormat': 'Format de code fiscal invalide.',
   'validation.fiscalCodeInvalid': 'Code fiscal invalide.',
   'validation.vatDigits': 'Le numéro de TVA doit comporter 11 chiffres.',

@@ -28,6 +28,7 @@ const SALE_ORDER_DESIRED_FIELDS = [
     'validity_date',
     'commitment_date',
     'client_order_ref',
+    'tlb_hl_ref',
     'pricelist_id',
     'order_line',
     'origin',
@@ -84,8 +85,11 @@ async function saleOrderReadFields(ctx) {
     return SALE_ORDER_DESIRED_FIELDS.filter((f) => available.has(f));
 }
 function mapSaleOrder(row, partnerEmail) {
+    const tlbHlRef = text(row.tlb_hl_ref);
+    const clientOrderRef = text(row.client_order_ref);
     const source = detectOdooOrderSource({
-        clientOrderRef: text(row.client_order_ref),
+        clientOrderRef,
+        tlbHlRef,
         origin: text(row.origin),
         websiteId: many2OneId(row.website_id),
         xPwaCartToken: text(row.x_pwa_cart_token),
@@ -108,7 +112,7 @@ function mapSaleOrder(row, partnerEmail) {
         invoiceStatus: text(row.invoice_status),
         validityDate: text(row.validity_date),
         commitmentDate: text(row.commitment_date),
-        clientOrderRef: text(row.client_order_ref),
+        clientOrderRef: tlbHlRef ?? clientOrderRef,
         origin: text(row.origin),
         pricelistId: many2OneId(row.pricelist_id),
         pricelistName: many2OneName(row.pricelist_id),

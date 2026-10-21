@@ -5,12 +5,13 @@ import { useSnapshot } from 'valtio/react'
 import {
   checkoutStore,
   isBusinessCheckout,
+  setBusinessNoVatNumber,
   updateBusinessField,
   updateClientOrderRef,
   validateCheckoutVat,
   validateTaxFields,
 } from '@/features/checkout'
-import { CheckoutInfoNote } from './CheckoutStepPrimitives'
+import { CheckoutToggleCheckbox } from './CheckoutStepPrimitives'
 import { useI18n } from '@/hooks/use-i18n'
 import {
   StripeControlledInput,
@@ -42,9 +43,11 @@ export function CheckoutBusinessFieldsSection({
   const isItaly = billingCountry === 'IT'
   const isEuVat = !isItaly && /^[A-Z]{2}$/.test(billingCountry)
   const b = checkout.business
+  const noVat = b.noVatNumber
   const stepBusy =
     disabled || checkout.isLoading || checkout.initLoadingPhase != null || checkout.addressPrefillLoading
   const vatFieldBusy = stepBusy || b.taxValidating
+  const fiscalFieldBusy = stepBusy || b.taxValidating
 
   async function handleValidateVat() {
     try {
@@ -90,51 +93,93 @@ export function CheckoutBusinessFieldsSection({
           />
         </StripeFieldGroup>,
       )}
-      {fieldLabel(
-        'vatNumber',
-        t('checkout.billing.vatNumber'),
-        <>
-          <div className="flex items-stretch gap-2">
-            <StripeFieldGroup className="min-w-0 flex-1">
-              <StripeControlledInput
-                id="vatNumber"
-                name="vatNumber"
-                placeholder="IT12345678901"
-                value={checkout.business.vatNumber}
-                disabled={vatFieldBusy}
-                normalize={(v) => v.toUpperCase()}
-                onValueChange={(value) => updateBusinessField('vatNumber', value)}
-                onBlur={() => void handleTaxBlur()}
+      <CheckoutToggleCheckbox
+        checked={noVat}
+        disabled={stepBusy}
+        label={t('checkout.billing.noVatNumber')}
+        onChange={setBusinessNoVatNumber}
+      />
+      {noVat ? (
+        fieldLabel(
+          'fiscalCode',
+          t('checkout.billing.fiscalCode'),
+          <>
+            <div className="flex items-stretch gap-2">
+              <StripeFieldGroup className="min-w-0 flex-1">
+                <StripeControlledInput
+                  id="fiscalCode"
+                  name="fiscalCode"
+                  placeholder="RSSMRA80A01H501U"
+                  autoComplete="off"
+                  value={checkout.business.fiscalCode}
+                  disabled={fiscalFieldBusy}
+                  normalize={(v) => v.toUpperCase()}
+                  onValueChange={(value) => updateBusinessField('fiscalCode', value)}
+                  onBlur={() => void handleTaxBlur()}
+                />
+              </StripeFieldGroup>
+              <TaxVerifyButton
+                onClick={() => void handleTaxBlur()}
+                disabled={!b.fiscalCode.trim() || fiscalFieldBusy}
+                loading={b.taxValidating}
+                verified={b.fiscalCodeValid === true}
               />
-            </StripeFieldGroup>
-            <TaxVerifyButton
-              onClick={() => void (isEuVat ? handleValidateVat() : handleTaxBlur())}
-              disabled={!checkout.business.vatNumber.trim() || vatFieldBusy}
-              loading={b.taxValidating}
-              verified={
-                isItaly
-                  ? b.vatChecksumValid === true
-                  : isEuVat
-                    ? b.vatFormatValid === true && b.vatChecksumValid === true
-                    : false
-              }
+            </div>
+            <TaxValidationMessage
+              valid={b.fiscalCode.trim() ? b.fiscalCodeValid : null}
+              validLabel={t('checkout.billing.fiscalCodeValid')}
+              invalidLabel={t('checkout.billing.fiscalCodeInvalid')}
+              errorMessage={b.fiscalCode.trim() ? b.fiscalCodeError : null}
             />
-          </div>
-          <TaxValidationMessage
-            valid={
-              isItaly && b.vatNumber.trim()
-                ? b.vatChecksumValid
-                : isEuVat && b.vatNumber.trim()
-                  ? b.vatFormatValid && b.vatChecksumValid
-                  : null
-            }
-            validLabel={t('checkout.billing.vatFormatValid')}
-            invalidLabel={t('checkout.billing.vatFormatInvalid')}
-            errorMessage={b.vatNumber.trim() ? b.vatError : null}
-          />
-        </>,
+          </>,
+        )
+      ) : (
+        fieldLabel(
+          'vatNumber',
+          t('checkout.billing.vatNumber'),
+          <>
+            <div className="flex items-stretch gap-2">
+              <StripeFieldGroup className="min-w-0 flex-1">
+                <StripeControlledInput
+                  id="vatNumber"
+                  name="vatNumber"
+                  placeholder="IT12345678901"
+                  value={checkout.business.vatNumber}
+                  disabled={vatFieldBusy}
+                  normalize={(v) => v.toUpperCase()}
+                  onValueChange={(value) => updateBusinessField('vatNumber', value)}
+                  onBlur={() => void handleTaxBlur()}
+                />
+              </StripeFieldGroup>
+              <TaxVerifyButton
+                onClick={() => void (isEuVat ? handleValidateVat() : handleTaxBlur())}
+                disabled={!checkout.business.vatNumber.trim() || vatFieldBusy}
+                loading={b.taxValidating}
+                verified={
+                  isItaly
+                    ? b.vatChecksumValid === true
+                    : isEuVat
+                      ? b.vatFormatValid === true && b.vatChecksumValid === true
+                      : false
+                }
+              />
+            </div>
+            <TaxValidationMessage
+              valid={
+                isItaly && b.vatNumber.trim()
+                  ? b.vatChecksumValid
+                  : isEuVat && b.vatNumber.trim()
+                    ? b.vatFormatValid && b.vatChecksumValid
+                    : null
+              }
+              validLabel={t('checkout.billing.vatFormatValid')}
+              invalidLabel={t('checkout.billing.vatFormatInvalid')}
+              errorMessage={b.vatNumber.trim() ? b.vatError : null}
+            />
+          </>,
+        )
       )}
-      {(isEuVat || isItaly) && b.vatNumber.trim() ? (
+      {!noVat && (isEuVat || isItaly) && b.vatNumber.trim() ? (
         <div className={embedded ? 'space-y-2' : 'space-y-2 px-1'}>
           {b.viesStatus === 'valid' || b.vatValidated ? (
             <p className="text-xs text-emerald-700">
@@ -159,24 +204,8 @@ export function CheckoutBusinessFieldsSection({
           ) : null}
         </div>
       ) : null}
-      {isItaly ? (
-        <>
-          {fieldLabel(
-            'pec',
-            t('checkout.billing.pec'),
-            <StripeFieldGroup>
-              <StripeControlledInput
-                id="pec"
-                name="pec"
-                type="email"
-                placeholder="nome@pec.it"
-                value={checkout.business.pec}
-                disabled={stepBusy}
-                onValueChange={(value) => updateBusinessField('pec', value)}
-              />
-            </StripeFieldGroup>,
-          )}
-          {fieldLabel(
+      {isItaly
+        ? fieldLabel(
             'sdiCode',
             t('checkout.billing.sdiCode'),
             <StripeFieldGroup>
@@ -190,10 +219,8 @@ export function CheckoutBusinessFieldsSection({
                 onValueChange={(value) => updateBusinessField('sdiCode', value)}
               />
             </StripeFieldGroup>,
-          )}
-          {!embedded ? <CheckoutInfoNote>{t('checkout.billing.pecOrSdiHint')}</CheckoutInfoNote> : null}
-        </>
-      ) : null}
+          )
+        : null}
       {showClientOrderRef
         ? fieldLabel(
             'clientOrderRef',

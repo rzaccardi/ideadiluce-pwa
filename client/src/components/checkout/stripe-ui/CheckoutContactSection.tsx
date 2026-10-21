@@ -15,11 +15,13 @@ import {
   prepareCheckoutAfterAuth,
   setContactForceLogin,
   setCustomerSegment,
+  setBusinessNoVatNumber,
   setEmailLookupError,
   setEmailLookupLoading,
   updateBusinessField,
   updateCheckoutAddress,
   updateCheckoutEmail,
+  validateTaxFields,
 } from '@/features/checkout'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { PhonePrefixField } from '@/components/PhonePrefixField'
@@ -40,6 +42,9 @@ import {
 import { CheckoutAccountSection } from './CheckoutAccountSection'
 import { CheckoutCustomerTypeCards } from './CheckoutCustomerTypeCards'
 import { CheckoutRetailFiscalCodeField } from './CheckoutRetailFiscalCodeField'
+import { CheckoutToggleCheckbox } from './CheckoutStepPrimitives'
+import { TaxVerifyButton } from './TaxVerifyButton'
+import { TaxValidationMessage } from './TaxValidationMessage'
 
 const EMAIL_CHECK_DEBOUNCE_MS = 500
 
@@ -173,6 +178,8 @@ export function CheckoutContactSection() {
     const lastName = billing.lastName.trim()
     const companyName = checkout.business.companyName.trim()
     const vatNumber = checkout.business.vatNumber.trim()
+    const fiscalCode = checkout.business.fiscalCode.trim()
+    const noVat = checkout.business.noVatNumber
 
     if (!firstName || !lastName) {
       setRegisterError(t('checkout.error.incompleteStep'))
@@ -184,7 +191,10 @@ export function CheckoutContactSection() {
       setRegisterLoading(false)
       return
     }
-    if (segment === 'business' && (!companyName || !vatNumber)) {
+    if (
+      segment === 'business' &&
+      (!companyName || (noVat ? !fiscalCode : !vatNumber))
+    ) {
       setRegisterError(t('checkout.error.incompleteStep'))
       setRegisterLoading(false)
       return
@@ -207,7 +217,8 @@ export function CheckoutContactSection() {
         phone,
         customerSegment: segment,
         companyName: segment === 'business' ? companyName : undefined,
-        vatNumber: segment === 'business' ? vatNumber : undefined,
+        vatNumber: segment === 'business' && vatNumber ? vatNumber : undefined,
+        fiscalCode: segment === 'business' && fiscalCode ? fiscalCode : undefined,
       })
       // Sessione PWA pronta: chiudi overlay subito (non attendere prefill/cart).
       // La latenza Odoo (~partner+portal) resta sul register HTTP; eventuali mail
@@ -407,22 +418,110 @@ export function CheckoutContactSection() {
                   />
                 </StripeFieldGroup>
               </div>
-              <div>
-                <StripeFieldLabel htmlFor="checkout-reg-vat">
-                  {t('checkout.billing.vatNumber')}
-                </StripeFieldLabel>
-                <StripeFieldGroup>
-                  <StripeControlledInput
-                    id="checkout-reg-vat"
-                    name="checkout-reg-vat"
-                    placeholder="IT12345678901"
-                    value={checkout.business.vatNumber}
-                    normalize={(v) => v.toUpperCase()}
-                    onValueChange={(value) => updateBusinessField('vatNumber', value)}
-                    required
+
+              <CheckoutToggleCheckbox
+                checked={checkout.business.noVatNumber}
+                disabled={registerLoading || checkout.business.taxValidating}
+                label={t('checkout.billing.noVatNumber')}
+                onChange={setBusinessNoVatNumber}
+              />
+
+              {checkout.business.noVatNumber ? (
+                <div>
+                  <StripeFieldLabel htmlFor="checkout-reg-fiscal">
+                    {t('checkout.billing.fiscalCode')}
+                  </StripeFieldLabel>
+                  <div className="flex items-stretch gap-2">
+                    <StripeFieldGroup className="min-w-0 flex-1">
+                      <StripeControlledInput
+                        id="checkout-reg-fiscal"
+                        name="checkout-reg-fiscal"
+                        placeholder="RSSMRA80A01H501U"
+                        autoComplete="off"
+                        value={checkout.business.fiscalCode}
+                        disabled={registerLoading || checkout.business.taxValidating}
+                        normalize={(v) => v.toUpperCase()}
+                        onValueChange={(value) => updateBusinessField('fiscalCode', value)}
+                        onBlur={() => {
+                          if (checkoutStore.business.taxValidating || registerLoading) return
+                          void validateTaxFields().catch(() => undefined)
+                        }}
+                        required
+                      />
+                    </StripeFieldGroup>
+                    <TaxVerifyButton
+                      onClick={() => void validateTaxFields().catch(() => undefined)}
+                      disabled={
+                        !checkout.business.fiscalCode.trim() ||
+                        registerLoading ||
+                        checkout.business.taxValidating
+                      }
+                      loading={checkout.business.taxValidating}
+                      verified={checkout.business.fiscalCodeValid === true}
+                    />
+                  </div>
+                  <TaxValidationMessage
+                    valid={
+                      checkout.business.fiscalCode.trim()
+                        ? checkout.business.fiscalCodeValid
+                        : null
+                    }
+                    validLabel={t('checkout.billing.fiscalCodeValid')}
+                    invalidLabel={t('checkout.billing.fiscalCodeInvalid')}
+                    errorMessage={
+                      checkout.business.fiscalCode.trim()
+                        ? checkout.business.fiscalCodeError
+                        : null
+                    }
                   />
-                </StripeFieldGroup>
-              </div>
+                </div>
+              ) : (
+                <div>
+                  <StripeFieldLabel htmlFor="checkout-reg-vat">
+                    {t('checkout.billing.vatNumber')}
+                  </StripeFieldLabel>
+                  <div className="flex items-stretch gap-2">
+                    <StripeFieldGroup className="min-w-0 flex-1">
+                      <StripeControlledInput
+                        id="checkout-reg-vat"
+                        name="checkout-reg-vat"
+                        placeholder="IT12345678901"
+                        value={checkout.business.vatNumber}
+                        disabled={registerLoading || checkout.business.taxValidating}
+                        normalize={(v) => v.toUpperCase()}
+                        onValueChange={(value) => updateBusinessField('vatNumber', value)}
+                        onBlur={() => {
+                          if (checkoutStore.business.taxValidating || registerLoading) return
+                          void validateTaxFields().catch(() => undefined)
+                        }}
+                        required
+                      />
+                    </StripeFieldGroup>
+                    <TaxVerifyButton
+                      onClick={() => void validateTaxFields().catch(() => undefined)}
+                      disabled={
+                        !checkout.business.vatNumber.trim() ||
+                        registerLoading ||
+                        checkout.business.taxValidating
+                      }
+                      loading={checkout.business.taxValidating}
+                      verified={checkout.business.vatChecksumValid === true}
+                    />
+                  </div>
+                  <TaxValidationMessage
+                    valid={
+                      checkout.business.vatNumber.trim()
+                        ? checkout.business.vatChecksumValid
+                        : null
+                    }
+                    validLabel={t('checkout.billing.vatFormatValid')}
+                    invalidLabel={t('checkout.billing.vatFormatInvalid')}
+                    errorMessage={
+                      checkout.business.vatNumber.trim() ? checkout.business.vatError : null
+                    }
+                  />
+                </div>
+              )}
             </div>
           ) : null}
 
@@ -490,7 +589,10 @@ export function CheckoutContactSection() {
               !billing.lastName.trim() ||
               !isCheckoutPhoneValid(billing.phone ?? '') ||
               (business &&
-                (!checkout.business.companyName.trim() || !checkout.business.vatNumber.trim()))
+                (!checkout.business.companyName.trim() ||
+                  (checkout.business.noVatNumber
+                    ? !checkout.business.fiscalCode.trim()
+                    : !checkout.business.vatNumber.trim())))
             }
             loading={registerLoading}
             onClick={() => void handleRegister()}

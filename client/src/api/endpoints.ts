@@ -61,6 +61,7 @@ export const api = {
       customerSegment?: 'retail' | 'business'
       companyName?: string
       vatNumber?: string
+      fiscalCode?: string
     }) {
       return apiClient.post<{ user: UserDTO }>('/api/v1/auth/register', body)
     },
@@ -94,6 +95,7 @@ export const api = {
       customerSegment?: 'retail' | 'business'
       companyName?: string
       vatNumber?: string
+      fiscalCode?: string
     }) {
       return apiClient.post<{ user: UserDTO }>('/api/v1/auth/checkout-register', body)
     },

@@ -32,6 +32,7 @@ export const authRepository = {
     customerSegment?: CustomerSegment
     companyName?: string | null
     vatNumber?: string | null
+    fiscalCode?: string | null
   }) {
     const odooPartnerId = data.odooPartnerId ?? (await allocateLocalPartnerId())
     return prisma.customerSatellite.create({
@@ -45,6 +46,7 @@ export const authRepository = {
         customerSegment: data.customerSegment ?? 'RETAIL',
         companyName: data.companyName?.trim() || null,
         vatNumber: data.vatNumber?.trim() || null,
+        fiscalCode: data.fiscalCode?.trim() || null,
       },
     })
   },

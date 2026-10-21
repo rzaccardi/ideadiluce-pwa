@@ -183,6 +183,7 @@ export async function checkoutRegister(input: {
   customerSegment?: 'retail' | 'business'
   companyName?: string
   vatNumber?: string
+  fiscalCode?: string
 }) {
   authStore.isLoading = true
   authStore.error = null
@@ -235,6 +236,7 @@ export async function register(
     customerSegment?: 'retail' | 'business'
     companyName?: string
     vatNumber?: string
+    fiscalCode?: string
   },
 ) {
   authStore.isLoading = true
@@ -249,6 +251,7 @@ export async function register(
       customerSegment: extra?.customerSegment,
       companyName: extra?.companyName,
       vatNumber: extra?.vatNumber,
+      fiscalCode: extra?.fiscalCode,
     })
     await establishAuthenticatedSession(user)
   } catch (e) {

@@ -24,6 +24,7 @@ const SOURCE_TO_KEY: Record<string, MessageKey> = {
   'Inserire almeno PEC o codice destinatario SDI.': 'validation.pecOrSdiRequired',
   'Codice fiscale obbligatorio.': 'validation.fiscalCodeRequired',
   'Il codice fiscale deve avere 16 caratteri.': 'validation.fiscalCodeLength',
+  'Il codice fiscale deve avere 11 o 16 caratteri.': 'validation.fiscalCodeLength',
   'Formato codice fiscale non valido.': 'validation.fiscalCodeFormat',
   'Codice fiscale non valido.': 'validation.fiscalCodeInvalid',
   'La partita IVA deve avere 11 cifre.': 'validation.vatDigits',

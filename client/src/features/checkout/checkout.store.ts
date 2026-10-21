@@ -110,6 +110,8 @@ export const checkoutStore = proxy({
   business: {
     companyName: '',
     vatNumber: '',
+    /** Azienda senza P.IVA: usa codice fiscale (`l10n_it_codice_fiscale`) al posto del VAT. */
+    noVatNumber: false,
     fiscalCode: '',
     pec: '',
     sdiCode: '',

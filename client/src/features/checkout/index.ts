@@ -72,6 +72,7 @@ export {
   setDeliveryRecipientMode,
   updateDeliveryRecipientField,
   updateBusinessField,
+  setBusinessNoVatNumber,
   updateClientOrderRef,
   updateDropshipAddress,
   setTermsAccepted,

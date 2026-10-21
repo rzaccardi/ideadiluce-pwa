@@ -41,7 +41,7 @@ const PWA_CUSTOM_FIELDS = [
   'x_pwa_abandoned_at',
   'x_pwa_last_payment_error',
   'x_pwa_provider_transaction_id',
-  'client_order_ref',
+  'tlb_hl_ref',
 ] as const
 
 function adminCtx(req?: Request): OdooCallContext {

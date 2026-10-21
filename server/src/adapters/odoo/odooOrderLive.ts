@@ -229,8 +229,8 @@ export function createLiveOdooOrderAdapter(): OdooOrderAdapter {
       }
 
       const extraVals: Record<string, unknown> = {}
-      if (input.clientOrderRef?.trim()) {
-        extraVals.client_order_ref = input.clientOrderRef.trim()
+      if (input.clientOrderRef?.trim() && fields.has('tlb_hl_ref')) {
+        extraVals.tlb_hl_ref = input.clientOrderRef.trim()
       }
       appendOrderNoteFields(extraVals, fields, input)
       appendFiscalPosition(extraVals, fields, input)

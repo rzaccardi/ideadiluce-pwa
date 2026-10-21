@@ -66,3 +66,30 @@ describe('checkoutStartSchema retail fiscal code', () => {
     expect(result.success).toBe(true)
   })
 })
+
+describe('checkoutStartSchema business without VAT', () => {
+  it('accepts business with fiscal code instead of VAT', () => {
+    const result = checkoutStartSchema.safeParse({
+      ...baseCheckout,
+      customerSegment: 'business',
+      business: {
+        companyName: 'Associazione Test',
+        fiscalCode: 'RSSMRA85M01H501Q',
+        pec: 'associazione@pec.it',
+      },
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects business without VAT and without fiscal code', () => {
+    const result = checkoutStartSchema.safeParse({
+      ...baseCheckout,
+      customerSegment: 'business',
+      business: {
+        companyName: 'Associazione Test',
+        pec: 'associazione@pec.it',
+      },
+    })
+    expect(result.success).toBe(false)
+  })
+})

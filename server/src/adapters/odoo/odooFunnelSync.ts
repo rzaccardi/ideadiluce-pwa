@@ -59,8 +59,8 @@ export async function syncSaleOrderFunnelState(
       if (fields.has(field)) vals[field] = value
     }
 
-    if (fields.has('client_order_ref')) {
-      vals.client_order_ref = `PWA ${state.pwaOrderId}`
+    if (fields.has('tlb_hl_ref')) {
+      vals.tlb_hl_ref = `PWA ${state.pwaOrderId}`
     }
 
     if (Object.keys(vals).length > 0) {

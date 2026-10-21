@@ -15,6 +15,7 @@ type OdooOrderRow = {
   date_order: string
   partner_id: [number, string] | number | false
   client_order_ref?: string | false
+  tlb_hl_ref?: string | false
   origin?: string | false
 }
 
@@ -96,7 +97,7 @@ export async function importSocialProofFromOdoo(
     const [orders, products] = await Promise.all([
       orderIds.length
         ? odooExecuteKw<OdooOrderRow[]>(ctx, 'sale.order', 'read', [orderIds], {
-            fields: ['id', 'date_order', 'partner_id', 'client_order_ref', 'origin'],
+            fields: ['id', 'date_order', 'partner_id', 'client_order_ref', 'tlb_hl_ref', 'origin'],
           })
         : Promise.resolve([]),
       productIds.length
@@ -125,6 +126,7 @@ export async function importSocialProofFromOdoo(
 
       const source = detectOdooOrderSource({
         clientOrderRef: text(order.client_order_ref),
+        tlbHlRef: text(order.tlb_hl_ref),
         origin: text(order.origin),
         dateOrder: order.date_order,
       })

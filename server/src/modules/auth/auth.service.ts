@@ -249,6 +249,7 @@ export const authService = {
       customerSegment?: 'retail' | 'business'
       companyName?: string
       vatNumber?: string
+      fiscalCode?: string
     },
     sessionId: string,
     correlationId?: string,
@@ -256,11 +257,13 @@ export const authService = {
     const segment: CustomerSegment =
       input.customerSegment === 'business' ? 'BUSINESS' : 'RETAIL'
     if (segment === 'BUSINESS') {
-      if (!input.companyName?.trim() || !input.vatNumber?.trim()) {
+      const hasVat = Boolean(input.vatNumber?.trim())
+      const hasFiscalCode = Boolean(input.fiscalCode?.trim())
+      if (!input.companyName?.trim() || (!hasVat && !hasFiscalCode)) {
         throw new AppError(
           'VALIDATION_ERROR',
-          'Business registration requires company name and VAT',
-          'Per un account azienda sono obbligatori ragione sociale e Partita IVA.',
+          'Business registration requires company name and VAT or fiscal code',
+          'Per un account azienda sono obbligatori ragione sociale e Partita IVA (o codice fiscale se senza P.IVA).',
           400,
           false,
         )
@@ -298,7 +301,8 @@ export const authService = {
           segment === 'BUSINESS'
             ? {
                 companyName: input.companyName,
-                vatNumber: input.vatNumber,
+                vatNumber: input.vatNumber?.trim() || null,
+                fiscalCode: input.fiscalCode?.trim() || null,
                 isCompany: true,
               }
             : undefined,
@@ -317,7 +321,8 @@ export const authService = {
         phone: input.phone,
         customerSegment: segment,
         companyName: segment === 'BUSINESS' ? input.companyName : undefined,
-        vatNumber: segment === 'BUSINESS' ? input.vatNumber : undefined,
+        vatNumber: segment === 'BUSINESS' ? input.vatNumber?.trim() || null : undefined,
+        fiscalCode: segment === 'BUSINESS' ? input.fiscalCode?.trim() || null : undefined,
         clearLocalPassword: true,
       })
     } else {
@@ -331,7 +336,8 @@ export const authService = {
         phone: input.phone,
         customerSegment: segment,
         companyName: segment === 'BUSINESS' ? input.companyName : undefined,
-        vatNumber: segment === 'BUSINESS' ? input.vatNumber : undefined,
+        vatNumber: segment === 'BUSINESS' ? input.vatNumber?.trim() || null : undefined,
+        fiscalCode: segment === 'BUSINESS' ? input.fiscalCode?.trim() || null : undefined,
       })
     }
 

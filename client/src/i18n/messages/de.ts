@@ -1038,6 +1038,7 @@ export const messages: Record<MessageKey, string> = {
   'checkout.billing.businessTitle': 'Geschäftliche Rechnungsdaten',
   'checkout.billing.clientOrderRefOptional': 'Ihre Auftragsreferenz (optional)',
   'checkout.billing.companyName': 'Firmenname',
+  'checkout.billing.noVatNumber': 'Mein Unternehmen hat keine USt-IdNr.',
   'checkout.billing.fiscalCode': 'Steuer-ID',
   'checkout.billing.fiscalCodeInvalid': 'Ungültige Steuer-ID',
   'checkout.billing.fiscalCodeOptional': 'Steuer-ID (optional)',
@@ -1229,7 +1230,7 @@ export const messages: Record<MessageKey, string> = {
   'validation.pecOrSdiRequired':
     'Geben Sie mindestens eine PEC-Adresse oder einen SDI-Empfängercode an.',
   'validation.fiscalCodeRequired': 'Steuer-ID ist erforderlich.',
-  'validation.fiscalCodeLength': 'Die Steuer-ID muss 16 Zeichen haben.',
+  'validation.fiscalCodeLength': 'Die Steuer-ID muss 11 oder 16 Zeichen haben.',
   'validation.fiscalCodeFormat': 'Ungültiges Steuer-ID-Format.',
   'validation.fiscalCodeInvalid': 'Ungültige Steuer-ID.',
   'validation.vatDigits': 'Die USt-IdNr. muss 11 Ziffern haben.',

@@ -31,19 +31,19 @@ export const checkoutRegisterService = {
       customerSegment?: 'retail' | 'business'
       companyName?: string
       vatNumber?: string
+      fiscalCode?: string
     },
     sessionId: string,
     correlationId: string,
   ): Promise<UserDTO> {
     const normalized = normalizeEmail(input.email)
     const phone = input.phone?.trim() ?? ''
-    const companyName =
-      input.customerSegment === 'business' ? input.companyName?.trim() || null : null
-    const vatNumber =
-      input.customerSegment === 'business' ? input.vatNumber?.trim() || null : null
+    const isBusiness = input.customerSegment === 'business'
+    const companyName = isBusiness ? input.companyName?.trim() || null : null
+    const vatNumber = isBusiness ? input.vatNumber?.trim() || null : null
+    const fiscalCode = isBusiness ? input.fiscalCode?.trim() || null : null
     const ctx: OdooCallContext = { correlationId }
-    const segment =
-      input.customerSegment === 'business' ? ('BUSINESS' as const) : ('RETAIL' as const)
+    const segment = isBusiness ? ('BUSINESS' as const) : ('RETAIL' as const)
 
     assertOdooAuthReadyForIdentity()
     const odooRequired = isOdooAuthIdentityRequired()
@@ -61,6 +61,14 @@ export const checkoutRegisterService = {
         lastName: input.lastName,
         phone,
         rejectExistingPortal: true,
+        business: isBusiness
+          ? {
+              companyName,
+              vatNumber,
+              fiscalCode,
+              isCompany: true,
+            }
+          : undefined,
       })
       odooPartnerId = odoo.odooPartnerId
       odooUid = odoo.odooUserId
@@ -88,6 +96,7 @@ export const checkoutRegisterService = {
         customerSegment: segment,
         companyName,
         vatNumber,
+        fiscalCode,
         clearLocalPassword: true,
       })
     } else {
@@ -104,6 +113,7 @@ export const checkoutRegisterService = {
             customerSegment: segment,
             companyName,
             vatNumber,
+            fiscalCode,
           },
         })
       } else {
@@ -116,6 +126,7 @@ export const checkoutRegisterService = {
           customerSegment: segment,
           companyName,
           vatNumber,
+          fiscalCode,
         })
       }
     }

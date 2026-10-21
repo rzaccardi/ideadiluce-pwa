@@ -24,7 +24,7 @@ describe('registerBodySchema', () => {
     expect(result.success).toBe(true)
   })
 
-  it('richiede companyName e vatNumber per business', () => {
+  it('richiede companyName e vatNumber (o fiscalCode) per business', () => {
     const missingBoth = registerBodySchema.safeParse({
       email: 'azienda@example.com',
       password: 'password1',
@@ -47,6 +47,17 @@ describe('registerBodySchema', () => {
     if (!missingVat.success) {
       expect(missingVat.error.issues.some((i) => i.path.join('.') === 'vatNumber')).toBe(true)
     }
+  })
+
+  it('accetta business con companyName e fiscalCode senza vatNumber', () => {
+    const result = registerBodySchema.safeParse({
+      email: 'associazione@example.com',
+      password: 'password1',
+      customerSegment: 'business',
+      companyName: 'Associazione Sportiva',
+      fiscalCode: 'RSSMRA85M01H501Q',
+    })
+    expect(result.success).toBe(true)
   })
 
   it('rifiuta vatNumber troppo corto', () => {
