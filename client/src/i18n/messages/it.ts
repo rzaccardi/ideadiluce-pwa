@@ -580,6 +580,7 @@ export const messages: Record<MessageKey, string> = {
   'cart.quote.steps.pageSubtitle.account': 'Crea un account o accedi: il carrello resta collegato al tuo profilo.',
   'cart.quote.steps.pageSubtitle.details': 'Indica i dati di fatturazione e, se vuoi, aggiungi note per il team commerciale.',
   'cart.quote.estimateNotice': 'I totali nel riepilogo sono stime indicative. Riceverai un preventivo personalizzato via email.',
+  'cart.quote.payStore': 'Preventivo {store}',
   'wishlist.title': 'Preferiti',
   'wishlist.descriptionGuest': 'Salva i prodotti che ti interessano. Accedi per sincronizzarli su tutti i dispositivi.',
   'wishlist.descriptionAccount': 'I tuoi prodotti preferiti, pronti per l’acquisto.',
@@ -1200,6 +1201,12 @@ export const messages: Record<MessageKey, string> = {
   'impersonation.banner.viewing': 'Stai visualizzando la PWA come',
   'impersonation.banner.startedBy': '(impersonazione avviata da {admin})',
   'impersonation.banner.end': 'Esci da impersonazione',
+  'legacySite.notice.message':
+    'Stai usando il nuovo sito. Se qualcosa non funziona o non riesci a completare l’ordine, puoi continuare sul sito precedente.',
+  'legacySite.notice.cta': 'Apri il sito precedente',
+  'legacySite.checkout.hint':
+    'Non riesci a completare l’ordine? Puoi procedere sul sito precedente mentre sistemiamo questo.',
+  'legacySite.footer.link': 'Problemi con il nuovo sito? Continua su old.ideadiluce.com',
   'cart.floating.close': 'Chiudi carrello',
   'cart.floating.loading': 'Caricamento mini carrello…',
   'cart.floating.items': 'Articoli',

@@ -5,7 +5,7 @@ export const layers = {
  * I valori sotto vivono DENTRO questo contesto (`isolate`).
  */
   headerBar: 'z-50',
-  /** Utility strip: sopra il dimmer del mega menu. */
+  /** Banner legacy + utility strip: sopra il dimmer del mega menu. */
   utilityBar: 'z-[44]',
   /** Dimmer mega menu: sotto tutto lo chrome (banner, utility, header, pannello). */
   megaBackdrop: 'z-40',

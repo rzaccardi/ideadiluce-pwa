@@ -303,7 +303,7 @@ export function getBreadcrumbs(pathname: string, _search = ''): BreadcrumbItem[]
   if (pathname.startsWith('/experience')) {
     return [
       { label: 'Esperienza', href: '/experience' },
-      { label: 'Suoni di interfaccia' },
+      { label: 'Avviso sito precedente e suoni di interfaccia' },
     ]
   }
   if (pathname.startsWith('/uptime')) {
@@ -531,7 +531,7 @@ export function getPageMeta(pathname: string, _search = ''): {
   if (pathname.startsWith('/experience')) {
     return {
       title: 'Esperienza',
-      description: 'Suoni di interfaccia in negozio',
+      description: 'Avviso sito precedente al go-live e suoni di interfaccia in negozio',
       icon: Volume2Icon,
       iconClassName: 'text-slate-600',
       iconBgClassName: 'bg-slate-50',

@@ -512,6 +512,7 @@ export const messages: Record<MessageKey, string> = {
   'cart.quote.steps.pageSubtitle.account': 'Konto erstellen oder anmelden - der Warenkorb bleibt mit Ihrem Profil verknüpft.',
   'cart.quote.steps.pageSubtitle.details': 'Rechnungsdaten angeben und optional Notizen für das Vertriebsteam hinzufügen.',
   'cart.quote.estimateNotice': 'Die Summen in der Übersicht sind Richtwerte. Sie erhalten ein personalisiertes Angebot per E-Mail.',
+  'cart.quote.payStore': 'Angebot · {store}',
   'wishlist.title': 'Merkliste',
   'wishlist.descriptionGuest': 'Speichern Sie interessante Produkte. Melden Sie sich an, um sie auf allen Geräten zu synchronisieren.',
   'wishlist.descriptionAccount': 'Ihre Lieblingsprodukte, bereit zum Kauf.',
@@ -1141,6 +1142,12 @@ export const messages: Record<MessageKey, string> = {
   'impersonation.banner.end': 'Impersonation beenden',
   'impersonation.banner.startedBy': '(Impersonation gestartet von {admin})',
   'impersonation.banner.viewing': 'Sie sehen den Shop als',
+  'legacySite.notice.message':
+    'Sie nutzen unsere neue Website. Wenn etwas nicht funktioniert oder Sie die Bestellung nicht abschließen können, können Sie die vorherige Website weiter nutzen.',
+  'legacySite.notice.cta': 'Vorherige Website öffnen',
+  'legacySite.checkout.hint':
+    'Bestellung nicht möglich? Sie können auf der vorherigen Website fortfahren, während wir das klären.',
+  'legacySite.footer.link': 'Probleme mit der neuen Website? Weiter auf old.ideadiluce.com',
   'product.card.addAria': '{productName} in den Warenkorb',
   'product.card.addingAria': '{productName} wird hinzugefügt',
   'product.card.cartSr': 'Warenkorb',

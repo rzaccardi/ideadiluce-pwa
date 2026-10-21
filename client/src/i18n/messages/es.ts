@@ -485,6 +485,7 @@ export const messages: Record<MessageKey, string> = {
   'cart.quote.steps.pageSubtitle.account': 'Crea una cuenta o inicia sesión: el carrito permanece vinculado a tu perfil.',
   'cart.quote.steps.pageSubtitle.details': 'Indica los datos de facturación y, si quieres, añade notas para el equipo comercial.',
   'cart.quote.estimateNotice': 'Los totales del resumen son estimaciones orientativas. Recibirás un presupuesto personalizado por email.',
+  'cart.quote.payStore': 'Presupuesto · {store}',
   'cart.remove': 'Eliminar',
   'cart.empty.title': 'Tu carrito está vacío',
   'cart.empty.description': 'Añade productos de la tienda o vuelve a la página de inicio.',
@@ -1140,6 +1141,12 @@ export const messages: Record<MessageKey, string> = {
   'impersonation.banner.end': 'Terminar impersonación',
   'impersonation.banner.startedBy': '(impersonación iniciada por {admin})',
   'impersonation.banner.viewing': 'Estás viendo la tienda como',
+  'legacySite.notice.message':
+    'Estás en nuestro nuevo sitio. Si algo no funciona o no puedes completar el pedido, puedes continuar en el sitio anterior.',
+  'legacySite.notice.cta': 'Abrir el sitio anterior',
+  'legacySite.checkout.hint':
+    '¿No puedes completar el pedido? Puedes continuar en el sitio anterior mientras lo solucionamos.',
+  'legacySite.footer.link': '¿Problemas con el nuevo sitio? Continúa en old.ideadiluce.com',
   'product.card.addAria': 'Añadir {productName} al carrito',
   'product.card.addingAria': 'Añadiendo {productName} al carrito',
   'product.card.cartSr': 'Carrito',

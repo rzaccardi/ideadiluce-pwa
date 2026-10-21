@@ -486,6 +486,7 @@ export const messages: Record<MessageKey, string> = {
   'cart.quote.steps.pageSubtitle.account': 'Créez un compte ou connectez-vous - votre panier reste lié à votre profil.',
   'cart.quote.steps.pageSubtitle.details': 'Indiquez vos coordonnées de facturation et, si besoin, des notes pour l’équipe commerciale.',
   'cart.quote.estimateNotice': 'Les totaux du récapitulatif sont des estimations indicatives. Vous recevrez un devis personnalisé par e-mail.',
+  'cart.quote.payStore': 'Devis · {store}',
   'cart.remove': 'Supprimer',
   'cart.empty.title': 'Votre panier est vide',
   'cart.empty.description': 'Ajoutez des produits depuis la boutique ou retournez à l\'accueil.',
@@ -1143,6 +1144,12 @@ export const messages: Record<MessageKey, string> = {
   'impersonation.banner.end': 'Terminer l’impersonation',
   'impersonation.banner.startedBy': '(impersonation démarrée par {admin})',
   'impersonation.banner.viewing': 'Vous consultez la boutique en tant que',
+  'legacySite.notice.message':
+    'Vous êtes sur notre nouveau site. Si quelque chose ne fonctionne pas ou si vous ne parvenez pas à finaliser la commande, vous pouvez continuer sur l’ancien site.',
+  'legacySite.notice.cta': 'Ouvrir l’ancien site',
+  'legacySite.checkout.hint':
+    'Impossible de finaliser la commande ? Vous pouvez continuer sur l’ancien site pendant que nous corrigeons le problème.',
+  'legacySite.footer.link': 'Un souci avec le nouveau site ? Continuez sur old.ideadiluce.com',
   'product.card.addAria': 'Ajouter {productName} au panier',
   'product.card.addingAria': 'Ajout de {productName} au panier',
   'product.card.cartSr': 'Panier',

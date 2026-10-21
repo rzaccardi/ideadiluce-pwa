@@ -580,6 +580,7 @@ export const messages: Record<MessageKey, string> = {
   'cart.quote.steps.pageSubtitle.account': 'Create an account or sign in - your cart stays linked to your profile.',
   'cart.quote.steps.pageSubtitle.details': 'Enter billing details and optionally add notes for our sales team.',
   'cart.quote.estimateNotice': 'Totals in the summary are indicative estimates. You will receive a personalised quote by email.',
+  'cart.quote.payStore': 'Quote · {store}',
   'wishlist.title': 'Wishlist',
   'wishlist.descriptionGuest': 'Save products you like. Sign in to sync them across all your devices.',
   'wishlist.descriptionAccount': 'Your favorite products, ready to purchase.',
@@ -1188,6 +1189,12 @@ export const messages: Record<MessageKey, string> = {
   'impersonation.banner.viewing': 'You are viewing the shop as',
   'impersonation.banner.startedBy': '(impersonation started by {admin})',
   'impersonation.banner.end': 'End impersonation',
+  'legacySite.notice.message':
+    'You are on our new website. If something does not work or you cannot complete your order, you can continue on the previous site.',
+  'legacySite.notice.cta': 'Open the previous site',
+  'legacySite.checkout.hint':
+    'Unable to complete your order? You can continue on the previous site while we sort this out.',
+  'legacySite.footer.link': 'Having trouble with the new site? Continue on old.ideadiluce.com',
   'cart.floating.close': 'Close cart',
   'cart.floating.loading': 'Loading mini cart…',
   'cart.floating.items': 'Items',
