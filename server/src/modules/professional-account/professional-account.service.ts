@@ -41,35 +41,39 @@ async function storeVisura(
   requestId: string,
   file: { buffer: Buffer; originalname: string; mimetype: string },
 ): Promise<string | null> {
-  if (isSpacesConfigured()) {
-    const ext = path.extname(file.originalname).toLowerCase() || '.pdf'
-    const key = `professional-requests/${requestId}/${randomUUID()}${ext}`
-    const { PutObjectCommand, S3Client } = await import('@aws-sdk/client-s3')
-    const client = new S3Client({
-      endpoint: env.SPACES_ENDPOINT!.trim(),
-      region: env.SPACES_REGION?.trim() || 'us-east-1',
-      credentials: {
-        accessKeyId: env.SPACES_KEY!.trim(),
-        secretAccessKey: env.SPACES_SECRET!.trim(),
-      },
-      forcePathStyle: false,
-    })
-    await client.send(
-      new PutObjectCommand({
-        Bucket: env.SPACES_BUCKET!.trim(),
-        Key: key,
-        Body: file.buffer,
-        ContentType: file.mimetype || 'application/pdf',
-        ACL: 'public-read',
-      }),
-    )
-    return spacesPublicUrl(key)
-  }
-
   try {
+    if (isSpacesConfigured()) {
+      const ext = path.extname(file.originalname).toLowerCase() || '.pdf'
+      const key = `professional-requests/${requestId}/${randomUUID()}${ext}`
+      const { PutObjectCommand, S3Client } = await import('@aws-sdk/client-s3')
+      const client = new S3Client({
+        endpoint: env.SPACES_ENDPOINT!.trim(),
+        region: env.SPACES_REGION?.trim() || 'us-east-1',
+        credentials: {
+          accessKeyId: env.SPACES_KEY!.trim(),
+          secretAccessKey: env.SPACES_SECRET!.trim(),
+        },
+        forcePathStyle: false,
+      })
+      await client.send(
+        new PutObjectCommand({
+          Bucket: env.SPACES_BUCKET!.trim(),
+          Key: key,
+          Body: file.buffer,
+          ContentType: file.mimetype || 'application/pdf',
+          ACL: 'public-read',
+        }),
+      )
+      return spacesPublicUrl(key)
+    }
+
     const uploaded = await uploadProductImage(`professional-${requestId}`, file)
     return uploaded.url
-  } catch {
+  } catch (e) {
+    logger.warn('professional-account.visura_upload_failed', {
+      requestId,
+      error: e instanceof Error ? e.message : String(e),
+    })
     return null
   }
 }

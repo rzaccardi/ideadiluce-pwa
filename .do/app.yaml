@@ -172,9 +172,9 @@ services:
         scope: RUN_TIME
         type: SECRET
       - key: DHL_ENABLED
-        value: "false"
+        value: "true"
       - key: FEDEX_ENABLED
-        value: "false"
+        value: "true"
       - key: SPACES_REGION
         value: fra1
       - key: SPACES_ENDPOINT

@@ -64,6 +64,7 @@ export function resetCartForAuthChange() {
   cartStore.stockInsufficient = []
   cartStore.reservationExpiredNotice = false
   cartStore.error = null
+  clearLocalCartMirror()
 }
 
 // Source of truth: session cookie server-side. Il mirror `ideadiluce:cart-mirror:v1` salva solo

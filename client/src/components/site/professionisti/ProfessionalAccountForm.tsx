@@ -27,6 +27,9 @@ type Props = {
   registration: ProfessionistiPageContent['registration']
 }
 
+/** Allineato al limite multer server (`professional-account.routes`). */
+const VISURA_MAX_BYTES = 8 * 1024 * 1024
+
 export function ProfessionalAccountForm({ registration }: Props) {
   const { locale } = useLocale()
   const auth = useSnapshot(authStore)
@@ -102,6 +105,10 @@ export function ProfessionalAccountForm({ registration }: Props) {
     e.preventDefault()
     if (sector === 'Altro' && !sectorOther.trim()) {
       toast.error('Specifica il settore in "Altro"')
+      return
+    }
+    if (visuraFile && visuraFile.size > VISURA_MAX_BYTES) {
+      toast.error('La visura supera 8 MB. Riduci il file o usa un PDF più leggero.')
       return
     }
     setLoading(true)
@@ -305,9 +312,19 @@ export function ProfessionalAccountForm({ registration }: Props) {
           <input
             type="file"
             accept="application/pdf,image/jpeg,image/png"
-            onChange={(e) => setVisuraFile(e.target.files?.[0] ?? null)}
+            onChange={(e) => {
+              const file = e.target.files?.[0] ?? null
+              if (file && file.size > VISURA_MAX_BYTES) {
+                toast.error('La visura supera 8 MB. Riduci il file o usa un PDF più leggero.')
+                e.target.value = ''
+                setVisuraFile(null)
+                return
+              }
+              setVisuraFile(file)
+            }}
             className="mt-1.5 block w-full text-sm text-idl-muted file:mr-3 file:rounded-md file:border-0 file:bg-idl-graphite file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
           />
+          <p className="mt-1 text-xs text-idl-muted">PDF, JPG o PNG · max 8 MB</p>
         </label>
         <label className="block text-sm">
           <span className={ui.labelSm}>{fields.contactName}</span>
