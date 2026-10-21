@@ -472,6 +472,7 @@ export const quotesService = {
       void sendPwaMail(ctx, {
         templateKey: 'quote_received_customer',
         emailTo: user.email,
+        record: { model: 'sale.order', resId: row.odooSaleOrderId },
         vars: {
           odoo_ref_line: `Riferimento Odoo: SO${row.odooSaleOrderId}`,
         },

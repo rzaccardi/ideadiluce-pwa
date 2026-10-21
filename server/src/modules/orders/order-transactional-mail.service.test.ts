@@ -1,9 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PwaOrder } from '@prisma/client'
 
-const { sendPwaMail, finalizeGuestAccountForOrder } = vi.hoisted(() => ({
+const { sendPwaMail, finalizeGuestAccountForOrder, envState, odooConfigured } = vi.hoisted(() => ({
   sendPwaMail: vi.fn(),
   finalizeGuestAccountForOrder: vi.fn(),
+  envState: { ODOO_ENABLED: true, PUBLIC_SITE_URL: 'https://www.ideadiluce.com' },
+  odooConfigured: { value: true },
+}))
+
+vi.mock('../../config/env.js', () => ({
+  env: envState,
 }))
 
 vi.mock('../../lib/prisma.js', () => ({
@@ -25,6 +31,10 @@ vi.mock('../../lib/mail.js', () => ({
 
 vi.mock('../../adapters/odoo/odooMailAdapter.js', () => ({
   sendPwaMail,
+}))
+
+vi.mock('../../adapters/odoo/odooClient.js', () => ({
+  isOdooConfigured: () => odooConfigured.value,
 }))
 
 vi.mock('../auth/guest-account.service.js', () => ({
@@ -52,17 +62,20 @@ describe('orderTransactionalMail', () => {
     vi.clearAllMocks()
     sendPwaMail.mockResolvedValue(undefined)
     finalizeGuestAccountForOrder.mockResolvedValue(undefined)
+    envState.ODOO_ENABLED = true
+    odooConfigured.value = true
     vi.mocked(prisma.pwaOrder.findUnique).mockResolvedValue({ metadataJson: {} } as never)
     vi.mocked(prisma.pwaOrder.update).mockResolvedValue({} as never)
   })
 
-  it('invia conferma ordine e marca il metadata', async () => {
+  it('invia conferma ordine collegata al sale.order e marca il metadata', async () => {
     await orderTransactionalMail.sendOrderConfirmation(order(), 'c1')
     expect(sendPwaMail).toHaveBeenCalledWith(
       { correlationId: 'c1' },
       expect.objectContaining({
         templateKey: 'order_confirmation',
         emailTo: 'mario@test.it',
+        record: { model: 'sale.order', resId: 42 },
         vars: expect.objectContaining({
           first_name_suffix: ' Mario',
           order_number: `#IDL-${new Date().getFullYear()}-00042`,
@@ -72,6 +85,25 @@ describe('orderTransactionalMail', () => {
       }),
     )
     expect(prisma.pwaOrder.update).toHaveBeenCalled()
+  })
+
+  it('differisce la conferma se Odoo è attivo ma manca sale.order', async () => {
+    await orderTransactionalMail.sendOrderConfirmation(order({ odooSaleOrderId: null }), 'c1')
+    expect(sendPwaMail).not.toHaveBeenCalled()
+    expect(prisma.pwaOrder.update).not.toHaveBeenCalled()
+  })
+
+  it('invia subito la conferma senza record se Odoo è disabilitato', async () => {
+    envState.ODOO_ENABLED = false
+    odooConfigured.value = false
+    await orderTransactionalMail.sendOrderConfirmation(order({ odooSaleOrderId: null }), 'c1')
+    expect(sendPwaMail).toHaveBeenCalledWith(
+      { correlationId: 'c1' },
+      expect.objectContaining({
+        templateKey: 'order_confirmation',
+        record: undefined,
+      }),
+    )
   })
 
   it('usa il codice Odoo a 6 caratteri nell’URL area clienti', async () => {
